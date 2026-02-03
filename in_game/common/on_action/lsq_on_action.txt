@@ -1,0 +1,52 @@
+lsq_auto_expand_buildings = {
+	trigger = {
+		is_ai = no
+	}
+
+	effect = {
+		every_controlled_location = {
+			limit = {
+				has_variable_list = auto_expand_registered_buildings
+			}
+			every_buildings_in_location = {
+				limit = {
+					save_temporary_scope_as = the_building_for_on_action
+					location = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building_for_on_action } }
+				}
+				building_type = {
+					save_scope_as = the_building_type
+					set_local_variable = { name = double_building_cost value = building_base_cost_in_gold }
+					change_local_variable = { name = double_building_cost multiply = 2 }
+				}
+				if = {
+					limit = {
+						building_levels_under_construction = 0
+						building_potential_profit = building_profit	  # to check for full employment (buildings employing not 100% but still profitable and lowered target employment)
+						is_profitable = yes
+						is_opened = yes
+						is_at_max_level = no
+						is_full_capacity = yes
+						is_lacking_goods = no
+
+						NAND = { building_pop_type = burghers location = { is_burgher_positive_deficit = no } }  # checks if promoted pops of type are available if building type employes that pop type
+						NAND = { building_pop_type = laborers location = { is_labourer_positive_deficit = no } } # same here :3
+					}
+					location = {
+						if = {
+							limit = {
+								total_building_levels < modifier:free_building_levels
+								owner = {
+									NOT = { building_type_is_obsolete = scope:the_building_type } 
+									gold > local_var:double_building_cost 
+								}
+							}
+							construct_building = {
+								building_type = scope:the_building_type
+							}
+						}	
+					}
+				}
+			}
+		}
+	}
+}

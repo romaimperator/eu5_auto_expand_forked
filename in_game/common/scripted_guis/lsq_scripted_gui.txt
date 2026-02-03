@@ -1,0 +1,133 @@
+lsq_set_auto_expand_for_building = {
+	effect = {
+		save_scope_as = the_building
+		location = {
+		if = {
+			limit = {
+				is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building }
+			}
+			remove_list_variable = { name = auto_expand_registered_buildings target = scope:the_building }
+		} else = {
+			add_to_variable_list = { name = auto_expand_registered_buildings target = scope:the_building }
+		} }
+	} 
+}
+
+lsq_check_for_auto_expand_when_upgrading_building = {
+	effect = {
+		# given scope is the obsolete version of building that is being upgraded
+		save_scope_as = the_building  
+		location = {
+			if = {
+				limit = {
+					is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building }
+				}
+				remove_list_variable = { name = auto_expand_registered_buildings target = scope:the_building }
+				ordered_buildings_in_location = { # ordered_x always returnes first scope in ordering, therefore we get the most recently built building
+					order_by = building_index
+					save_scope_as = the_new_building
+					location = {
+						if = {
+							limit = {
+								NOT = { is_target_in_variable_list =  { name = auto_expand_registered_buildings target = scope:the_new_building } }
+							}
+							add_to_variable_list = { name = auto_expand_registered_buildings target = scope:the_new_building }
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+lsq_is_auto_expand_active_for_building = {
+	is_shown = {
+		save_temporary_scope_as = the_building
+		location = {
+		is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building }
+	} }
+}
+
+# following functions are used for gui/tooltips
+
+lsq_is_building_able_to_auto_expand = {
+	is_shown = {
+		building_type = {
+			save_temporary_scope_as = the_building_type
+		}
+
+		building_potential_profit = building_profit	  # to check for full employment (buildings employing not 100% but still profitable and lowered target employment)
+		OR = { is_profitable = yes building_level = 0 }
+		is_opened = yes
+		is_at_max_level = no
+		OR = { is_full_capacity = yes building_level = 0 }
+		is_lacking_goods = no
+
+		NAND = { building_pop_type = burghers location = { is_burgher_positive_deficit = no } }  # checks if promoted pops of type are available if building type employes that pop type
+		NAND = { building_pop_type = laborers location = { is_labourer_positive_deficit = no } } # same here :3
+
+		location = {
+			total_building_levels < modifier:free_building_levels
+			owner = {
+				NOT = { building_type_is_obsolete = scope:the_building_type } 
+			}
+		}
+	}
+}
+
+lsq_is_building_not_max_level_already = {
+	is_shown = {
+		is_at_max_level = no
+	}
+}
+
+lsq_is_building_profitable = {
+	is_shown = {
+		OR = { is_profitable = yes building_level = 0 }
+	}
+}
+
+lsq_is_building_open = {
+	is_shown = {
+		is_opened = yes
+	}
+}
+
+lsq_is_building_fully_employed = {
+	is_shown = {
+		building_potential_profit = building_profit
+		OR = { is_full_capacity = yes building_level = 0 }
+	}
+}
+
+lsq_is_building_not_lacking_goods = {
+	is_shown = {
+		is_lacking_goods = no
+	}
+}
+
+lsq_is_building_not_upgradable = {
+	is_shown = {
+		building_type = {
+			save_temporary_scope_as = the_building_type
+		}
+		location.owner = {
+			NOT = { building_type_is_obsolete = scope:the_building_type } 
+		}
+	}
+}
+
+lsq_is_location_pops_available = {
+	is_shown = {
+		NAND = { building_pop_type = burghers location = { is_burgher_positive_deficit = no } }  # checks if promoted pops of type are available if building type employes that pop type
+		NAND = { building_pop_type = laborers location = { is_labourer_positive_deficit = no } } # same here :3
+	}
+}
+
+lsq_is_location_under_building_limit = {
+	is_shown = {
+		location = {
+			total_building_levels < modifier:free_building_levels
+		}
+	}
+}
