@@ -1,0 +1,57 @@
+# This trigger is used by the GUI to see if the prerequisites for auto expanding RGO are met
+lsq_is_able_to_auto_expand_rgo = {
+	AND = {
+		lsq_is_rgo_not_max_level_already = yes
+		lsq_is_rgo_fully_employed = yes
+		# lsq_has_enough_raw_materials_for_rgo = yes
+	}
+}
+
+# This trigger is used by the on action to determine if the RGO should be auto expanded
+lsq_should_rgo_auto_expand = {
+	AND = {
+		lsq_is_rgo_not_max_level_already = yes
+		lsq_is_rgo_fully_employed = yes
+		# lsq_has_enough_raw_materials_for_rgo = yes
+		lsq_is_rgo_under_construction = no
+		lsq_is_there_enough_gold_available = yes
+	}
+}
+
+lsq_is_rgo_not_max_level_already = {
+	# is_full_expanded_rgo = no # not reliable as says it's fully expanded when the it's not at max level and not fully employed
+	var:lsq_max_max_rgo_workers > var:lsq_max_rgo_workers # max max is the maximum number of levels that can be built, max is the current number of levels, reguardless of employment
+}
+
+lsq_is_rgo_fully_employed = {
+	AND = { exists = var:lsq_should_build_early var:lsq_should_build_early = yes } # if it is fully staffed, lsq_should_build_early will always be yes so only need this check
+}
+
+lsq_is_rgo_under_construction = {
+	lsq_get_rgos_under_construction > 0
+}
+
+lsq_is_there_enough_gold_available = {
+	owner.gold > lsq_expand_rgo_max_cost
+}
+
+# Root = location. Checks if the market has enough construction goods for an RGO upgrade.
+# lsq_has_enough_raw_materials_for_rgo = {
+#     OR = {
+#         AND = {
+#             OR = {
+#                 raw_material ?= { goods_method = mining }
+#                 raw_material ?= { goods_method = farming }
+#                 raw_material ?= { goods_method = gathering }
+#             }
+#             market ?= { "stockpile_in_market(goods:lumber)" >= 0.1 }
+#         }
+#         AND = {
+#             OR = {
+#                 raw_material ?= { goods_method = hunting }
+#                 raw_material ?= { goods_method = forestry }
+#             }
+#             market ?= { "stockpile_in_market(goods:tools)" >= 0.1 }
+#         }
+#     }
+# }

@@ -1,0 +1,1357 @@
+lateralview = {
+	name = "expand_raw_goods_lateralview"
+
+	blockoverride "panel_header" {
+		window_header_alt = {
+			blockoverride "window_header_alt_color_texture"{
+				using = color_production_texture
+			}
+			blockoverride "header_text" {
+				text = "RAW_GOOD_BUILDER_TT"
+			}
+		}
+	}
+
+	blockoverride "panel_content" {
+		vbox = {
+			using = layoutpolicy_expanding
+			using = bg_main_inner_alt
+			using = window_main_tabs_margin_alt
+			
+			filtered_sorted_list = {
+				margin_top = 10
+				datacontext = "[ExpandRawGoodsLateralView.GetRawGoodLocationsSortSearch]"
+				name = "raw_good_location_filtered_list"
+
+				blockoverride "subheader_upper_divider"{
+					spacing = 5
+
+					widget = {
+						visible = "[ExpandRawGoodsLateralView.IsMarketFilterEnabled]"
+						layoutpolicy_horizontal = expanding
+						size = { -1 70 }
+
+						hbox = {
+							datacontext = "[ExpandRawGoodsLateralView.GetSelectedMarket]"
+
+							using = bg_market_card
+							using = bg_cabinet_card_frame
+
+							market_card = {
+								blockoverride "market_card_margins" {
+									margin = {5 5}
+									margin_right = 0
+								}
+							}
+
+							market_card_right_buttons = {
+								blockoverride "market_filter_buttons" {
+									vbox = {
+										layoutpolicy_vertical = expanding
+										spacing = 3
+		
+										filter_button_alt = {
+											size = { 23 23 }
+											blockoverride "filter_button_action" {
+												action_tooltip = {
+													click_type = left
+													click_mode = single
+													title = "TOGGLE_MARKET_SELECTION"
+													on_action = "[ExpandRawGoodsLateralView.ToggleExpandRawGoodsSelectMarket(PdxGuiWidget.FindParent('raw_good_location_filtered_list').Self)]"
+												}
+
+												action_tooltip = {
+													click_type = right
+													click_mode = single
+													title = "SCROLL_CAPITAL_MARKET_FILTER"
+													on_action = "[SelectDefaultFocusMarket]"
+												}
+											}
+											tooltipwidget = { BasicFunctionalTooltip = {} }
+														
+											blockoverride "glow_visible" {
+												visible = "[ExpandRawGoodsLateralView.IsExpandRawGoodsSelectMarketOpened(PdxGuiWidget.FindParent('raw_good_location_filtered_list').Self)]"
+											}
+										}
+		
+										button = {
+											using = market_filter_button
+											enabled = "[ExpandRawGoodsLateralView.IsMarketFilterEnabled]"
+											blockoverride "functional_tooltip" {
+												tooltipwidget = { BasicFunctionalTooltip = {} }
+				
+												action_tooltip = {
+													click_type = left
+													click_mode = single
+													enabled = "[ExpandRawGoodsLateralView.IsMarketFilterEnabled]"
+													title = "REMOVE_MARKET_FILTER"
+													on_action = "[ExpandRawGoodsLateralView.RemoveMarketFilter]"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+
+					widget = {
+						visible = "[Not(ExpandRawGoodsLateralView.IsMarketFilterEnabled)]"
+						layoutpolicy_horizontal = expanding
+						size = { -1 50 }
+
+						button_regular = {
+							size = { 100% 50 }
+
+							action_tooltip = {
+								click_type = left
+								click_mode = single
+								title = "TOGGLE_MARKET_SELECTION"
+								on_action = "[ExpandRawGoodsLateralView.ToggleExpandRawGoodsSelectMarket(PdxGuiWidget.FindParent('raw_good_location_filtered_list').Self)]"
+							}
+
+							action_tooltip = {
+								click_type = right
+								click_mode = single
+								title = "SCROLL_CAPITAL_MARKET_FILTER"
+								on_action = "[SelectDefaultFocusMarket]"
+							}
+							
+							tooltipwidget = { BasicFunctionalTooltip = {} }
+
+							hbox = {
+								layoutpolicy_horizontal = expanding
+								layoutpolicy_vertical = expanding
+								spacing = 5
+
+								margin_left = 8
+								margin_right = 5
+
+								text_single = {
+									align = center|nobaseline
+									layoutpolicy_horizontal = expanding
+									autoresize = no
+									fontsize_min = 12
+									text = "NOT_FILTERED_BY_MARKET"
+								}
+							}
+
+							filter_button_alt = {
+								size = { 25 25 }
+								parentanchor = right|vcenter
+								position = {-10 0}
+								blockoverride "filter_button_action" {
+									action_tooltip = {
+										click_type = left
+										click_mode = single
+										title = "TOGGLE_MARKET_SELECTION"
+										on_action = "[ExpandRawGoodsLateralView.ToggleExpandRawGoodsSelectMarket(PdxGuiWidget.FindParent('raw_good_location_filtered_list').Self)]"
+									}
+
+									action_tooltip = {
+										click_type = right
+										click_mode = single
+										title = "SCROLL_CAPITAL_MARKET_FILTER"
+										on_action = "[SelectDefaultFocusMarket]"
+									}
+								}
+								tooltipwidget = { BasicFunctionalTooltip = {} }
+								
+								blockoverride "glow_visible" {
+									visible = "[ExpandRawGoodsLateralView.IsExpandRawGoodsSelectMarketOpened(PdxGuiWidget.FindParent('raw_good_location_filtered_list').Self)]"
+								}
+							}
+						}
+					}
+
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						ignoreinvisible = yes
+
+						widget = {
+							layoutpolicy_horizontal = expanding
+							size = { -1 40 }
+							visible = "[ExpandRawGoodsLateralView.HasLastExpandingLocationItem]"
+
+							header_button_left = {
+								size = { 100% 100% }
+
+								datacontext = "[ExpandRawGoodsLateralView.GetExpandRankingItems]"
+								datacontext = "[ExpandRawGoodsLateralView.GetLastExpandingLocationItem]"
+								datacontext = "[RawGoodLocationItem.GetLocation]"
+								datacontext = "[Location.GetRawMaterial]"
+								datacontext = "[Location.GetMarket]"
+								
+								blockoverride "icon_overlay" {}
+								blockoverride "icon_texture" {
+									texture = "[GetGoodsIcon(Goods.Self)]"
+								}
+
+								blockoverride "text_top" {
+									text = "UNQUEUE_RGO_IN_LAST_LOCATION_ACTION_BUTTON"
+									fontsize = 13
+								}
+
+								blockoverride "text_bottom" {
+									visible = no
+								}
+
+								action_tooltip = {
+									click_type = left
+									click_mode = single
+									click_modifier = default
+
+									enabled = "[RawGoodLocationItem.CanReduceRGO]"
+									title = "LOCATION_VIEW_UNQUEUE_RGO_TITLE_LOCATION"
+									description = "[RawGoodLocationItem.GetReduceRGOTooltip]"
+									on_action = "[RawGoodLocationItem.ReduceRGO]"
+								}
+
+								action_tooltip = {
+									click_type = left
+									click_mode = single
+									click_modifier = ctrl
+
+									enabled = "[RawGoodLocationItem.CanReduceRGO]"
+									title = "LOCATION_VIEW_UNQUEUE_LATESTS_RGOS"
+									description = "[RawGoodLocationItem.GetReduceRGOTooltip]"
+									on_action = "[ExpandRawGoodsLateralView.CancelAllLastExpandingLocations]"
+								}
+
+								tooltipwidget = {
+									using = deuque_last_constructions_tt
+									blockoverride "title_text" {
+										text = "UNQUEUE_RGO_IN_LASTEST_TITLE"
+									}
+								}
+							}
+						}
+						
+						header_button_left = {
+							layoutpolicy_horizontal = expanding
+
+							visible = "[Not(ExpandRawGoodsLateralView.HasLastExpandingLocationItem)]"
+							enabled = no
+							
+							blockoverride "icon_overlay" {}
+							blockoverride "icon_texture" {
+								visible = no
+							}
+
+							blockoverride "text_top" {
+								text = "UNQUEUE_RGO_IN_LAST_LOCATION_ACTION_BUTTON"
+								fontsize = 13
+							}
+
+							blockoverride "text_bottom" {
+								visible = no
+							}
+
+							action_tooltip = {
+								click_type = left
+								click_mode = single
+								click_modifier = default
+
+								enabled = no
+								title = "LOCATION_VIEW_UNQUEUE_RGO_TITLE"
+								description = "[MakeItFailLoc('LOCATION_VIEW_REDUCE_RGO_NONE')]"
+							}
+
+							tooltipwidget = {
+								BasicFunctionalTooltip = {}
+							}
+						}
+
+						widget = {
+							layoutpolicy_horizontal = expanding
+							size = { -1 40 }
+							visible = "[ExpandRawGoodsLateralView.HasBestExpandingLocationItem]"
+							header_button_right = {
+								size = { 100% 100% }
+								
+								datacontext = "[ExpandRawGoodsLateralView.GetExpandRankingItems]"
+								datacontext = "[ExpandRawGoodsLateralView.GetBestExpandingLocationItem]"
+								datacontext = "[RawGoodLocationItem.GetLocation]"
+								datacontext = "[Location.GetRawMaterial]"
+								datacontext = "[Location.GetMarket]"
+
+								blockoverride "icon_overlay" {}
+								blockoverride "icon_texture" {
+									texture = "[GetGoodsIcon(Goods.Self)]"
+								}
+
+								blockoverride "text_top" {
+									text = "EXPAND_RGO_IN_BEST_LOCATION_ACTION_BUTTON"
+									fontsize = 13
+								}
+
+								blockoverride "text_bottom" {
+									visible = no
+								}
+
+								action_tooltip = {
+									click_type = left
+									click_mode = single	
+									click_modifier = default
+
+									enabled = "[RawGoodLocationItem.CanUpgradeRGO]"
+									title = "EXPAND_RGO_IN_BEST_LOCATION_ACTION"
+									description = "[RawGoodLocationItem.GetUpgradeRGOTooltip]"
+									cost = "[Location.GetRGOCost]"
+									conditions = "[RawGoodLocationItem.GetUpgradeRGOTooltip]"
+									on_action = "[ExpandRawGoodsLateralView.ExpandBestFromRankingItemsDefault]"
+								}
+
+								action_tooltip = {
+									click_type = left
+									click_mode = single
+									click_modifier = ctrl
+
+									enabled = "[RawGoodLocationItem.CanUpgradeRGO]"
+									title = "EXPAND_RGO_IN_BEST_LOCATION_ACTION_CTRL"
+									description = "[RawGoodLocationItem.GetUpgradeRGOTooltip]"
+									cost = "[Location.GetRGOCost]"
+									conditions = "[RawGoodLocationItem.GetUpgradeRGOTooltip]"
+									on_action = "[ExpandRawGoodsLateralView.ExpandBestFromRankingItemsCtrl]"
+								}
+
+								action_tooltip = {
+									click_type = left
+									click_mode = single
+									click_modifier = shift
+									
+									enabled = "[RawGoodLocationItem.CanUpgradeRGO]"
+									title = "EXPAND_RGO_IN_BEST_LOCATION_ACTION_SHIFT"
+									description = "[RawGoodLocationItem.GetUpgradeRGOTooltip]"
+									cost = "[Location.GetRGOCost]"
+									conditions = "[RawGoodLocationItem.GetUpgradeRGOTooltip]"
+									on_action = "[ExpandRawGoodsLateralView.ExpandBestFromRankingItemsShift]"
+								}
+
+								tooltipwidget = {
+									using = expand_rgo_ranking_tt
+									blockoverride "extra_rgo_content" {}
+								}
+							}
+						}
+
+						header_button_right = {
+							layoutpolicy_horizontal = expanding
+							
+							visible = "[Not(ExpandRawGoodsLateralView.HasBestExpandingLocationItem)]"
+							enabled = no
+							datacontext = "[ExpandRawGoodsLateralView.GetExpandRankingItems]"
+
+							blockoverride "icon_overlay" {}
+							blockoverride "icon_texture" {
+								visible = no
+							}
+
+							blockoverride "text_top" {
+								text = "EXPAND_RGO_IN_BEST_LOCATION_ACTION_BUTTON"
+								fontsize = 13
+							}
+
+							blockoverride "text_bottom" {
+								visible = no
+							}
+
+							action_tooltip = {
+								click_type = left
+								click_mode = single
+								
+								enabled = no
+								title = "LOCATION_VIEW_EXPAND_RGO_TITLE"
+								description = "EXPAND_RGO_IN_BEST_LOCATION_ACTION_EMPTY"
+							}
+
+							tooltipwidget = {
+								BasicFunctionalTooltip = {}
+							}
+						}
+					}
+				}
+
+				blockoverride "sort_buttons_filtered_list" {
+					sort_by_key_button = {
+						name = "name"
+						layoutpolicy_vertical = expanding
+						size = { 65 -1 }
+					}
+	
+					sort_by_key_button = {
+						name = "employment"
+						layoutpolicy_vertical = expanding
+						size = { 88 -1 }
+					}
+					sort_by_key_button = {
+						name = "population"
+						layoutpolicy_vertical = expanding
+						size = { 88 -1 }
+					}
+
+					sort_by_key_button = {
+						name = "profit"
+						using = layoutpolicy_expanding
+					}
+
+					sort_by_key_button = {
+						name = "income"
+						using = layoutpolicy_expanding
+					}
+
+					sort_by_key_button = {
+						name = "number_building"
+						layoutpolicy_vertical = expanding
+						size = { 145 -1 }
+					}
+				}
+
+				blockoverride "scroll_list_is_empty" {
+					visible = "[IsDataModelEmpty(ExpandRawGoodsLateralView.GetRawGoodLocationItems)]"
+				}
+
+				blockoverride "scroll_list_is_empty_text" {
+					text = "EXPAND_RAW_GOODS_SCROLL_LIST_EMPTY"
+				}
+
+				blockoverride "scroll_list_layout" {
+					fixedgridbox = {
+						addrow = 56
+						addcolumn = 100%
+						datamodel = "[ExpandRawGoodsLateralView.GetRawGoodLocationItems]"
+						item = {
+							widget = {
+								size = { 100% 56 }
+								widget = {
+									size = { 99% 54 }
+									parentanchor = center
+									hbox = {
+										using = layoutpolicy_expanding
+										using = bg_cabinet_card_frame
+										margin = {5 5}
+										using = build_rgo_entry
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+template build_rgo_entry {
+	# icon
+	datacontext = "[RawGoodLocationItem.GetLocation]"
+	hbox = {
+		layoutpolicy_vertical = expanding
+		card_header_button_04 = {
+			layoutpolicy_vertical = expanding
+			size = { 50 -1 }
+
+			tooltip_enabled = no
+
+			background = {
+				texture = "gfx/interface/component_tiles/balance_card_bg.dds"
+			}
+
+			
+			
+			piechart = {
+				visible = "[GreaterThan_CFixedPoint(Location.GetMaxRGOWorkers, '(CFixedPoint)0')]"
+				alwaystransparent = yes
+				parentanchor = center
+				size = { 35 35 }
+				using = piechart_angles
+				using = bg_circle
+				using = bg_circle_piechart
+
+				pieslice_no_highlight = {
+					filter_mouse = none
+					alwaystransparent = yes
+					texture = "gfx/interface/pie_charts/pie_chart_alpha_80_green.dds"
+					value = "[Divide_CFixedPoint(Location.GetEffectiveRGOWorkers, Location.GetMaxRGOWorkers)]"
+					color = { 1 1 1 1 }
+				}
+
+				pieslice_no_highlight = {
+					filter_mouse = none
+					alwaystransparent = yes
+					texture = "gfx/interface/pie_charts/pie_chart_alpha_80_red.dds"
+					value = "[Subtract_float('(float)1.0', FixedPointToFloatPercentageCapped(Divide_CFixedPoint(Location.GetEffectiveRGOWorkers, Location.GetMaxRGOWorkers), '(bool)yes'))]"
+					color = { 1 1 1 1 }
+				}
+			}
+
+			button = {
+				size = { 100% 100% }
+				parentanchor = center
+
+				action_tooltip = {
+					click_type = left
+					click_mode = single
+					title = "OPEN_GOOD_PANEL"
+					on_action = "[ShowGoods(Location.GetRawMaterial)]"
+				}
+
+				datacontext = "[Location.GetRawMaterial]"
+				datacontext = "[Location.GetOwner]"
+				datacontext = "[Location.GetMarket]"
+				tooltipwidget = {
+					using = location_rgo_button_tooltip
+				}
+				icon = {
+					alwaystransparent = yes
+					size = { 23 23 }
+					parentanchor = center
+					texture = "[GetGoodsIcon(Location.GetRawMaterial)]"
+				}
+			}
+
+			sort_by_highlight = {
+				size = { 100% 100% }
+				name = "name"
+			}
+		}
+	}
+
+	vbox = {
+		layoutpolicy_horizontal = expanding
+		widget = {
+			layoutpolicy_horizontal = expanding
+			size = {-1 46}
+
+			widget = {
+				size = {100% 46}
+				using = bg_paper_card
+				parentanchor = center
+				
+				hbox = {
+					layoutpolicy_horizontal = expanding
+					margin = {5 0}
+
+					hbox = { #Location Card
+						background = {
+							using = color_intense_brown_texture
+							modify_texture = {
+								texture = "[GetGraphicalCultureTexture('header_pattern')]"
+								texture_density = 2
+								spriteType = corneredtiled
+								blend_mode = overlay
+								alpha = 0.2
+							}
+
+							modify_texture = {
+								using = overlay_cloth_texture
+								blend_mode = overlay
+								alpha = 0.1
+							}
+						}
+						card_header_button_04 = {
+							size = {160 43}
+							
+							hbox = {
+								layoutpolicy_horizontal = expanding
+								margin_right = 4
+								vbox = {
+									layoutpolicy_horizontal = expanding
+									margin = {5 3}
+									margin_right = 0
+									spacing = 4
+									
+									hbox = { #top text
+										layoutpolicy_horizontal = expanding
+										spacing = 3
+										icon = {
+											size = { 15 15 }
+											texture = "[Location.GetRankIcon]"
+										}
+	
+										text_single = {
+											visible = "[IsDataModelEmpty(Location.GetCivilConstructions)]"
+											maximumsize = { 110 15}
+											alwaystransparent = no
+											align = left|nobaseline
+											autoresize = yes
+											using = Font_Size_Small
+											text = "[Location.GetNameWithNoTooltip]"
+											default_format = "#yellow_titles"
+							
+											sort_by_left_fade_highlight = {
+												size = { 200% 170% }
+												position = { 40 0 }
+												name = "name"
+											}
+										}
+
+										text_single = {
+											visible = "[Not(IsDataModelEmpty(Location.GetCivilConstructions))]"
+											maximumsize = { 75 15}
+											alwaystransparent = no
+											align = left|nobaseline
+											autoresize = yes
+											using = Font_Size_Small
+											text = "[Location.GetNameWithNoTooltip]"
+											default_format = "#yellow_titles"
+							
+											sort_by_left_fade_highlight = {
+												size = { 200% 170% }
+												position = { 40 0 }
+												name = "name"
+											}
+										}
+
+										text_single = {
+											visible = "[Not(IsDataModelEmpty(Location.GetCivilConstructions))]"
+											size = { 40 15}
+											alwaystransparent = no
+											align = left|nobaseline
+											autoresize = no
+											using = Font_Size_Small
+							
+											raw_text = " (#L +[GetDataModelSize(Location.GetCivilConstructions)]#! @construction!)"
+
+											hbox = {
+												datamodel = "[DataModelFirst(Location.GetCivilConstructions,'(int32)1')]"
+												item = {
+													hbox = {
+														using = layoutpolicy_expanding
+														tooltipwidget = {
+															using = Construction_tooltip
+														}
+													}
+												}
+											}
+										}
+	
+										expand = {}
+									}
+			
+									hbox = { #bottom rgo
+										layoutpolicy_horizontal = expanding
+										margin = { 2 0 }
+										margin_right = 8
+										hbox = {
+											hbox = {
+												spacing = 3
+												layoutpolicy_vertical = expanding
+												text_single = {
+													layoutpolicy_vertical = expanding
+													maximumsize = { 60 -1 }
+													align = center|nobaseline
+													autoresize = yes
+													fontsize = 13
+													text = "[Location.GetEffectiveUnEmployed(GetPopTypeByName('laborers'))]"
+															
+													sort_by_highlight = {
+														ignore_layout = yes
+														size = { 100% 100% }
+														name = "employment"
+													}
+												}
+			
+												icon = {
+													size = { 15 15 }
+													texture = "[GetGraphicalCultureTextureForPopType(GetPopTypeByName('laborers'))]"
+												}
+											}
+											tooltipwidget = {
+												SimpleContextualTooltipType = {
+													blockoverride "title_icon" {
+														icon = {
+															using = tooltip_title_icon_size
+															texture = "[GetGraphicalCultureTextureForPopType(GetPopTypeByName('laborers'))]"
+														}
+													}
+													blockoverride "concept_link" {
+														text = [available_population|E]
+													}
+
+													blockoverride "tooltip_extra_content" {
+														TooltipListBase = { 
+															TooltipListRowContent = {
+																TooltipManualTableField = {
+																	tooltipwidget = {
+																		using = location_promotion_tooltip
+																	}
+																	blockoverride "field_content" {
+																		text_single = {
+																			text = "BUILD_LOCATION_POP_PROMOTE"
+																		}
+																		expand = {}									
+																		text_single = {
+																			raw_text = "[Location.GetPromote]"
+																		}
+																	}
+																}
+															}
+														}
+													}
+											
+													lowpriotextcontext = BUILD_LOCATION_AVAILABLE_LABORERS
+												}
+											}
+										}
+
+										expand = {}
+
+										hbox = {
+											layoutpolicy_vertical = expanding
+											spacing = 3
+											text_single = {
+												layoutpolicy_vertical = expanding
+												maximumsize = { 60 -1 }
+												align = center|nobaseline
+												fontsize = 13
+												autoresize = yes
+												text = "[GetUnEmployedPeasantsFromLocation(Location.Self)]"
+
+												sort_by_highlight = {
+													ignore_layout = yes
+													size = { 100% 100% }
+													name = "population"
+												}
+											}
+											icon = {
+												size = { 15 15 }
+												texture = "gfx/interface/icons/pops/peasants.dds"
+											}
+		
+											tooltipwidget = {
+												using = available_peasants_tooltip
+											}
+										}
+
+									}
+								}
+
+								expand = {}
+
+								# icon_pie_left = {
+								# 	tooltipwidget = {
+								# 		using = location_tax_base_tooltip
+								# 	}
+								# 	blockoverride "PieSize" { size = { 35 35 } }
+								# 	blockoverride "pie_datamodel" {
+								# 		datacontext = "[Location.GetPopulationChart]"
+								# 		datacontext = "[LocationPopulationChart.GetPopsPiechartWidget]"
+								# 		datamodel = "[PopsPiechartWidget.GetTax]"
+								# 	}
+		
+								# 	blockoverride "pieslice_item" {
+								# 		pieslice_no_highlight = {
+								# 			texture = "gfx/interface/pie_charts/piechart_alpha.dds"
+								# 			texture_density = 2
+								# 			tooltip_enabled = no
+								# 			value = "[PopTaxItem.GetPercentage]"
+								# 			color = "[PopTaxItem.GetColor]"
+								# 			alpha = 0.99
+								# 			alwaystransparent = yes
+								# 		}
+								# 	}
+								# 	blockoverride "Icon_Size" { size = { 60% 60% } }
+								# 	blockoverride "Icon" {
+								# 		texture = "gfx/interface/icons/location_icons/tax_base.dds"
+								# 		texture_density = 2
+								# 		alwaystransparent = yes
+								# 	}
+		
+								# 	background = {
+								# 		texture = "gfx/interface/component_tiles/hud_corners/circle_frame.dds"
+								# 		texture_density = 2
+		
+								# 		modify_texture = {
+								# 			using = color_gold_texture
+								# 		}
+		
+								# 		using = overlay_gold
+								# 	}
+								# }
+
+							}
+
+							action_tooltip = {
+								click_type = left
+								click_mode = single
+								title = "GO_TO_LOCATION"
+								on_action = "[ShowLocation(Location.Self)]"
+							}
+							action_tooltip = {
+								click_type = right
+								click_mode = single
+			
+								cursor = "location_menu"
+								title = "CLICK_ACTION_LOCATION_CONTEXT_MENU"
+								on_action = "[PdxGuiWidget.ToggleContextMenu]"
+							}
+							ondoubleclick = "[PanToLocation(Location.Self)]"
+							onmousehierarchyenter = "[PdxGuiWidget.SetHighlightLocation(Location.Self)]"
+							tooltipwidget = {
+								using = location_simple_tooltip
+							}
+							contextmenu_widget = {
+								LocationContextMenu = {}
+							}
+						}
+					}
+
+					widget = { #subject
+						size = { 30 44 }
+						datacontext = "[RawGoodLocationItem.GetLocation]"
+						datacontext = "[RawGoodLocationItem.GetLocation.GetOwner]"
+
+						vbox = {
+							visible = "[Not(Country.IsPlayer)]"
+							spacing = 2
+							
+							icon = {
+								size = { 20 20 }
+								texture = "[GetSubjectTypeIcon(Country.GetDiplomacy.GetSubjectType)]"
+
+								tooltipwidget = {
+									using = SubjectTypeDetail_tooltip
+								}
+
+								alpha = 0.8
+								using = bg_circle_piechart
+								blockoverride "inside_color" {
+									modify_texture = {
+										using = color_bg_blue_texture
+										blend_mode = multiply
+									}
+								}
+								blockoverride "frame_color" {
+									modify_texture = {
+										using = color_new_gold_texture
+										blend_mode = multiply
+									}
+									modify_texture = {
+										using = color_gold_texture
+										# blend_mode = multiply
+										alpha = 0.5
+									}
+								}
+
+								glow = {
+									name = "drop_shadow"
+									glow_radius = 3
+									color = {0.0 0.0 0.0 1.0}
+									alpha = 0.3
+								}
+							}
+							
+							country_flag_very_small = {}
+						}
+					}
+					
+					expand = {}
+
+					hbox = {
+						spacing = 5
+
+						hbox = {
+							margin_right = 3
+							spacing = 5
+							layoutpolicy_horizontal = expanding
+							widget = { # taxbase
+								size = { 60 36 }
+								hbox = {
+									expand = {}
+									vbox = {
+										tooltipwidget = {
+											ContextualTooltipType = {
+												blockoverride "title_icon" {
+													icon = {
+														using = tooltip_title_icon_size
+														texture = "gfx/interface/icons/treaty_type/gold.dds"
+													}
+												}
+											
+												blockoverride "title_text" {
+													text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE"
+												}
+												
+												blockoverride "concept_link" {
+													text = [profit|E]
+												}
+												
+												blockoverride "tooltip_content" {
+													TooltipTextBlock = {
+														blockoverride "text" {
+															text = "PROFIT_EXPAND_RGO_TOOLTIP_TEXT"
+														}		
+													}
+													TooltipStringPairList = {
+														blockoverride "block_title" {
+															text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE_LIST"
+														}
+														blockoverride "tooltip_table_text_single" {
+															text_single = {
+																visible = "[EqualTo_int32('(int32)0',PdxGuiWidget.GetIndexInDataModel)]"
+																tooltipmeta = {
+																	texture = "gfx/interface/icons/treaty_type/gold.dds"
+																	game_concept = "[profit|e]"
+																}
+																block "field_text" { align = right|nobaseline }
+															}
+															text_single = {
+																visible = "[EqualTo_int32('(int32)1',PdxGuiWidget.GetIndexInDataModel)]"
+																tooltipmeta = {
+																	texture = "gfx/interface/icons/modifier_types/global_raw_material_output.dds"
+																	game_concept = "[output|e]"
+																}
+																block "field_text" { align = right|nobaseline }
+															}
+															text_single = {
+																visible = "[EqualTo_int32('(int32)2',PdxGuiWidget.GetIndexInDataModel)]"
+																tooltipmeta = {
+																	texture = "gfx/interface/icons/location_icons/control.dds"
+																	game_concept = "[control|e]"
+																}
+																block "field_text" { align = right|nobaseline }
+															}
+														}
+														textcontext = "[RawGoodLocationItem.GetProfitInfo]"
+													}
+	
+													TooltipTextBlock = {
+														visible = "[GreaterThan_CFixedPoint(Location.GetMaxRGOWorkers, '(CFixedPoint)0')]"
+														blockoverride "text" {
+															text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE_TEXT"
+														}		
+													}
+												}
+											}
+										}
+										# profit
+										text_single = {
+											size = { 60 18 }
+											autoresize = no
+											fontsize = 14
+											align = nobaseline|right
+											raw_text = "+[RawGoodLocationItem.GetProfitPerLevel|2]@wealth!"
+											datacontext = "[RawGoodLocationItem.GetLocation]"
+											datacontext = "[RawGoodLocationItem]"
+											
+											sort_by_highlight = {
+												size = { 105% 100% }
+												name = "profit"
+											}
+										}
+
+										# income
+										text_single = {
+											size = { 60 18 }
+											autoresize = no
+											fontsize = 14
+											align = nobaseline|right
+											raw_text = "[RawGoodLocationItem.GetIncomePerLevel|2+=]@income!"
+
+											sort_by_highlight = {
+												size = { 105% 100% }
+												name = "income"
+											}
+										}
+									}	
+								}
+
+							}
+							widget = {
+								size = { 70 30 }
+								hbox = { 
+									layoutpolicy_horizontal = expanding
+									expand = {}
+									text_single = {
+										datacontext = "[Location.GetMarket]"
+										datacontext = "[Location.GetMarket.GetMarketEntry(Location.GetRawMaterial)]"
+										maximumsize = { 70 18 }
+										align = nobaseline|right
+										fontsize = 14
+										raw_text = "[Location.GetMarket.GetPrice(Location.GetRawMaterial)|2]@[Location.GetRawMaterial.GetPriceDifferenceIconName(Location.GetMarket.GetPrice(Location.GetRawMaterial))]!"
+										tooltipwidget = {
+											using = goods_market_price_tooltip
+										}
+									}
+									
+									# LSQ Auto Expand RGO button
+									lsq_auto_expand_rgo_widget_expand_raw_goods_lateralview = {}
+								}
+							}
+						}
+
+
+
+						widget = { #builder
+							layoutpolicy_vertical = expanding
+							size = { 120 -1 }
+							alwaystransparent = no
+							filter_mouse = left|right
+							widget = {
+								parentanchor = center
+								size = { 100% 35 }
+								
+								sort_by_highlight = {
+									ignore_layout = yes
+									size = { 100% 100% }
+									name = "number_building"
+								}
+								
+								hbox = {
+									spacing = 5
+									using = bg_text_mask_container_brown
+									margin = {5 5}
+									
+									button_square_minus = {
+										size = { 21 21 }
+										enabled = "[RawGoodLocationItem.CanReduceRGO]"
+
+										action_tooltip = {
+											click_type = left
+											click_mode = single	
+											visible = "[Location.IsMaxRGOWorkersUnderConstruction]"
+											enabled = "[RawGoodLocationItem.CanReduceRGO]"
+											title = "LOCATION_VIEW_UNQUEUE_RGO_TITLE"
+											description = "[RawGoodLocationItem.GetReduceRGOTooltip]"
+											on_action = "[RawGoodLocationItem.ReduceRGO]"
+										}
+
+										action_tooltip = {
+											click_type = left
+											click_mode = confirm
+											click_modifier = default
+
+											visible = "[Not(Location.IsMaxRGOWorkersUnderConstruction)]"
+											enabled = "[RawGoodLocationItem.CanReduceRGO]"
+											title = "LOCATION_VIEW_REDUCE_RGO_TITLE"
+											description = "[RawGoodLocationItem.GetReduceRGOTooltip]"
+											on_action = "[RawGoodLocationItem.ReduceRGODefault]"
+										}
+
+										action_tooltip = {
+											click_type = left
+											click_mode = confirm
+											click_modifier = ctrl
+
+											visible = "[Not(Location.IsMaxRGOWorkersUnderConstruction)]"
+											enabled = "[RawGoodLocationItem.CanReduceRGO]"
+											title = "LOCATION_VIEW_REDUCE_RGO_TITLE_CTRL"
+											description = "[RawGoodLocationItem.GetReduceRGOTooltip]"
+											on_action = "[RawGoodLocationItem.ReduceRGOCtrl]"
+										}
+
+										action_tooltip = {
+											click_type = left
+											click_mode = confirm
+											click_modifier = shift
+
+											visible = "[Not(Location.IsMaxRGOWorkersUnderConstruction)]"
+											enabled = "[RawGoodLocationItem.CanReduceRGO]"
+											title = "LOCATION_VIEW_REDUCE_RGO_TITLE_SHIFT"
+											description = "[RawGoodLocationItem.GetReduceRGOTooltip]"
+											on_action = "[RawGoodLocationItem.ReduceRGOShift]"
+										}
+
+										datacontext = "[RawGoodLocationItem.GetLocation]"				
+										onmousehierarchyenter = "[PdxGuiWidget.SetHighlightLocation(Location.Self)]"
+										tooltipwidget = {
+											using = location_rgo_button_tooltip
+											blockoverride "location_rgo_cost_and_time" {
+												TooltipConditionList = {
+													blockoverride "block_title" { text = "LOCATION_VIEW_REDUCE_RGO_TITLE" }
+													datacontext = "[StringToConditionListOnlyPassedAndNeutral(RawGoodLocationItem.GetReduceRGOTooltip)]"
+													visible = "[ConditionList.HasItems]"
+												}
+											}
+										}
+									}
+	
+									widget = {
+										layoutpolicy_vertical = expanding
+										size = {55 -1}
+										text_single = {
+											parentanchor = center
+											maximumsize = {55 -1}
+											visible = "[Not(Location.IsMaxRGOWorkersUnderConstruction)]"
+											default_format = "#important_number"
+											align = nobaseline
+											datacontext = "[Location.GetRawMaterial]"
+											raw_text = "[Location.GetMaxRGOWorkers|0]/[Location.GetMaximumMaxRGOWorkersValueForUI|0L]"
+										}
+
+										text_single = {
+											parentanchor = center
+											maximumsize = {55 -1}
+											visible = "[Location.IsMaxRGOWorkersUnderConstruction]"
+											default_format = "#important_number"
+											align = nobaseline
+											datacontext = "[Location.GetRawMaterial]"
+											raw_text = "[Location.GetMaxRGOWorkers|0][Location.GetMaxRGOWorkersUnderConstruction|0+=]/[Location.GetMaximumMaxRGOWorkersValueForUI|0L]"
+										}
+										tooltipwidget = {
+											using = location_rgo_max_level_breakdown_tooltip
+										}
+									}
+
+									button_square_plus = {
+										size = { 21 21 }
+										enabled = "[RawGoodLocationItem.CanUpgradeRGO]"
+
+										action_tooltip = {
+											click_type = left
+											click_mode = single	
+											enabled = "[RawGoodLocationItem.CanUpgradeRGO]"
+											title = "LOCATION_VIEW_EXPAND_RGO_TITLE"
+											description = "[RawGoodLocationItem.GetUpgradeRGOTooltip]"
+											cost = "[Location.GetRGOCost]"
+											on_action = "[RawGoodLocationItem.UpgradeRGO]"
+										}
+
+										datacontext = "[RawGoodLocationItem.GetLocation]"				
+										onmousehierarchyenter = "[PdxGuiWidget.SetHighlightLocation(Location.Self)]"
+										tooltipwidget = {
+											using = location_rgo_button_tooltip
+										}
+									}
+
+								}
+							}
+						}
+					}
+
+					# text_single = { # tax rgo
+					# 	maximumsize = { 50 18 }
+					# 	fontsize = 13
+					# 	raw_text = "[RawGoodLocationItem.GetProfitPerLevel|2+=]@wealth!"
+					# 	datacontext = "[RawGoodLocationItem.GetLocation]"
+					# 	datacontext = "[RawGoodLocationItem]"
+					# 	tooltipwidget = {
+					# 		ContextualTooltipType = {
+					# 			blockoverride "title_icon" {
+					# 				icon = {
+					# 					using = tooltip_title_icon_size
+					# 					texture = "gfx/interface/icons/treaty_type/gold.dds"
+					# 				}
+					# 			}
+							
+					# 			blockoverride "title_text" {
+					# 				text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE"
+					# 			}
+													
+					# 			blockoverride "concept_link" {
+					# 				text = [profit|E]
+					# 			}
+							
+					# 			blockoverride "tooltip_content" {
+					# 				TooltipTextBlock = {
+					# 					blockoverride "text" {
+					# 						text = "PROFIT_EXPAND_RGO_TOOLTIP_TEXT"
+					# 					}		
+					# 				}
+					# 				TooltipStringPairList = {
+					# 					blockoverride "block_title" {
+					# 						text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE_LIST"
+					# 					}
+					# 					blockoverride "tooltip_table_text_single" {
+					# 						text_single = {
+					# 							visible = "[EqualTo_int32('(int32)0',PdxGuiWidget.GetIndexInDataModel)]"
+					# 							tooltipmeta = {
+					# 								texture = "gfx/interface/icons/treaty_type/gold.dds"
+					# 								game_concept = "[profit|e]"
+					# 							}
+					# 							block "field_text" { align = right|nobaseline }
+					# 						}
+					# 						text_single = {
+					# 							visible = "[EqualTo_int32('(int32)1',PdxGuiWidget.GetIndexInDataModel)]"
+					# 							tooltipmeta = {
+					# 								texture = "gfx/interface/icons/modifier_types/global_raw_material_output.dds"
+					# 								game_concept = "[output|e]"
+					# 							}
+					# 							block "field_text" { align = right|nobaseline }
+					# 						}
+					# 						text_single = {
+					# 							visible = "[EqualTo_int32('(int32)2',PdxGuiWidget.GetIndexInDataModel)]"
+					# 							tooltipmeta = {
+					# 								texture = "gfx/interface/icons/location_icons/control.dds"
+					# 								game_concept = "[control|e]"
+					# 							}
+					# 							block "field_text" { align = right|nobaseline }
+					# 						}
+					# 					}
+					# 					textcontext = "[RawGoodLocationItem.GetProfitInfo]"
+					# 				}
+
+					# 				TooltipTextBlock = {
+					# 					visible = "[GreaterThan_CFixedPoint(Location.GetMaxRGOWorkers, '(CFixedPoint)0')]"
+					# 					blockoverride "text" {
+					# 						text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE_TEXT"
+					# 					}		
+					# 				}
+					# 			}
+					# 		}
+					# 	}	
+		
+					# 	sort_by_highlight = {
+					# 		size = { 105% 200% }
+					# 		name = "profit"
+					# 	}
+					# }
+
+					# widget = { #queue rgo
+					# 	size = { 43 18 }
+					# 	datamodel = "[DataModelFirst(Location.GetCivilConstructions,'(int32)1')]"
+					# 	item = {
+					# 		text_single = {
+					# 			align = left
+					# 			fontsize = 12
+					# 			#autoresize = no #jon
+					# 			visible = "[Not(Or(Construction.IsStalled, Construction.GetLocation.HasStalledConstruction))]"
+					# 			text = "SPECIFIC_CONSTRUCTION_DURATION_DAYS_PLUS_QUEUE"
+					# 			parentanchor = vcenter
+					# 			tooltipwidget = {
+					# 				using = Construction_tooltip
+					# 			}
+					# 		}
+					# 		# text_single = { #No room
+					# 		# 	fontsize = 12
+					# 		# 	visible = "[Or(Construction.IsStalled, Construction.GetLocation.HasStalledConstruction)]"
+					# 		# 	text = "CONSTRUCTION_INFO_STALLED"
+					# 		# 	parentanchor = vcenter
+					# 		# 	tooltipwidget = {
+					# 		# 		using = Construction_tooltip
+					# 		# 	}
+					# 		# }
+					# 	}
+					# }
+
+					# widget = { #subject rgo
+					# 	size = { 48 25 }
+					# 	datacontext = "[RawGoodLocationItem.GetLocation]"
+					# 	datacontext = "[RawGoodLocationItem.GetLocation.GetOwner]"
+
+					# 	# subject info
+					# 	hbox = {
+					# 		visible = "[Not(Country.IsPlayer)]"
+					# 		spacing = 2
+							
+					# 		icon = {
+					# 			size = { 20 20 }
+					# 			texture = "[GetSubjectTypeIcon(Country.GetDiplomacy.GetSubjectType)]"
+
+					# 			tooltipwidget = {
+					# 				using = SubjectTypeDetail_tooltip
+					# 			}
+
+					# 			alpha = 0.8
+					# 			using = bg_circle_piechart
+					# 			blockoverride "inside_color" {
+					# 				modify_texture = {
+					# 					using = color_bg_blue_texture
+					# 					blend_mode = multiply
+					# 				}
+					# 			}
+					# 			blockoverride "frame_color" {
+					# 				modify_texture = {
+					# 					using = color_new_gold_texture
+					# 					blend_mode = multiply
+					# 				}
+					# 				modify_texture = {
+					# 					using = color_gold_texture
+					# 					# blend_mode = multiply
+					# 					alpha = 0.5
+					# 				}
+					# 			}
+
+					# 			glow = {
+					# 				name = "drop_shadow"
+					# 				glow_radius = 3
+					# 				color = {0.0 0.0 0.0 1.0}
+					# 				alpha = 0.3
+					# 			}
+					# 		}
+							
+					# 		country_flag_small = {}
+					# 	}
+					# }
+				}
+			}
+		}
+	}
+}
+
+select_menu_left = {
+	datacontext = "[GetQuickVisibleMarkets(Player.Self)]"
+	blockoverride "menu_setup" {
+		name = "expand_raw_goods_select_market"
+	}
+
+	blockoverride "close_button" {
+		onclick = "[ExpandRawGoodsSelectMarket.OnClose]"
+	}
+
+	blockoverride "select_content" {
+		select_menu_header = {
+			blockoverride "select_menu_header_extra" {
+				button_checkbox_visibility = {
+					size = { 32 32 }
+					tooltipwidget = { 
+						LeftClickButtonTooltip = {
+							blockoverride "onclick_text" { text = "TOGGLE_INRANGE_MARKETS" }
+						}
+					}
+					checked = "[ExpandRawGoodsSelectMarket.Parent.Vars.Exists( 'inrange_markets')]"
+					onclick = "[ExpandRawGoodsSelectMarket.Parent.Vars.Toggle( 'inrange_markets')]"
+				}
+
+				text_single = {
+					using = Font_Type_Headers
+					using = Font_Size_Small
+					align = nobaseline
+					text = "INRANGE_MARKETS"
+				}
+			}
+		}
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			spacing = 10
+
+			datamodel = "[QuickVisibleMarkets.GetVisibleMarkets]"
+			item = {
+				widget = {
+					size = { 485 70 }
+					visible = "[Or3(GreaterThan_CFixedPoint(Market.GetCountryPopulation(Player.Self),'(CFixedPoint)0'), GreaterThan_CFixedPoint(Market.GetTotalMerchantCapacity(Player.Self),'(CFixedPoint)0'), And(ExpandRawGoodsSelectMarket.Parent.Vars.Exists( 'inrange_markets'), IsMarketInRange(Market.Self)))]"
+
+					hbox = {
+						using = bg_market_card
+						using = bg_cabinet_card_frame
+
+						market_card = {
+							blockoverride "market_card_title_action"{
+								action_tooltip = {
+									click_type = left
+									click_mode = single
+									title = "TOGGLE_MARKET_SELECTION"
+									on_action = "[ExpandRawGoodsSelectMarket.Parent.FilterByMarket(Market.Self)]"
+								}
+			
+								action_tooltip = {
+									click_type = right
+									click_mode = single
+			
+									cursor = "market_menu"
+									title = "CLICK_ACTION_MARKET_CONTEXT_MENU"
+									on_action = "[PdxGuiWidget.ToggleContextMenu]"
+								}
+			
+								onmousehierarchyenter = "[PdxGuiWidget.SetHighlightMarket(Market.Self)]"
+								ondoubleclick = "[PanToLocation(Market.GetCenterLocation)]"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

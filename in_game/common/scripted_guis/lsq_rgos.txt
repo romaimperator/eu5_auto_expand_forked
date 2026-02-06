@@ -1,0 +1,117 @@
+lsq_set_auto_expand_for_rgo = {
+	effect = {
+		# market = { add_goods_supply = { goods = goods:lumber amount = -1 } }
+		if = { limit = { exists = var:auto_expand_rgo }
+			remove_variable = auto_expand_rgo
+		} else = {
+			set_variable = { name = auto_expand_rgo value = yes }
+		}
+		owner = { remove_variable = lsq_update_rgo_information }
+	}
+
+	is_shown = {
+		exists = var:auto_expand_rgo
+	}
+}
+
+lsq_is_able_to_auto_expand_rgo = {
+	is_shown = {
+		lsq_is_able_to_auto_expand_rgo = yes
+	}
+}
+
+lsq_is_rgo_not_max_level_already = {
+	is_shown = {
+		# Root scope is a location (passed from GUI). Use the location trigger for RGO max expansion.
+		lsq_is_rgo_not_max_level_already = yes
+	}
+}
+
+lsq_is_rgo_fully_employed = {
+	is_shown = {
+		# Root scope is a location (passed from GUI).
+		# True if the location's RGO building(s) are at full capacity (or none exists yet at level 0),
+		# OR if the location is not in a negative labourer deficit (i.e. can be filled, including imminent promotion).
+		lsq_is_rgo_fully_employed = yes
+	}
+}
+
+lsq_is_rgo_under_construction = {
+	is_shown = {
+		# Root scope is a location (passed from GUI).
+		lsq_is_rgo_under_construction = no
+	}
+}
+
+lsq_is_there_enough_gold_available = {
+	is_shown = {
+		# Root scope is a location (passed from GUI).
+		lsq_is_there_enough_gold_available = yes
+	}
+}
+
+# lsq_has_enough_raw_materials_for_rgo = {
+# 	is_shown = {
+# 		# Root scope is a location (passed from GUI).
+# 		lsq_has_enough_raw_materials_for_rgo = yes
+# 	}
+# }
+
+lsq_update_location_rgo_information = {
+	saved_scopes = { lsq_max_rgo_workers lsq_location_promotion lsq_max_max_rgo_workers }
+	effect = {
+		# root scope is a location (passed from GUI)
+
+		# handle storing the lsq_max_max_rgo_workers variable
+		set_variable = { name = lsq_max_max_rgo_workers value = scope:lsq_max_max_rgo_workers }
+
+		# handle storing the lsq_max_rgo_workers variable
+		set_variable = { name = lsq_max_rgo_workers value = scope:lsq_max_rgo_workers }
+		
+		# handle storing the lsq_location_promotion variable
+		# set_variable = { name = lsq_location_promotion value = scope:lsq_location_promotion }
+		# set_variable = { name = lsq_location_promotion_labourers value = { value = scope:lsq_location_promotion multiply = 1.5 } }
+		# set_variable = { name = lsq_location_promotion_labourers_plus_current_rgo_workers value = { value = local_var:lsq_location_promotion_labourers add = lsq_get_rgo_workers } }
+		set_local_variable = {
+			name = lsq_location_promotion_labourers_plus_current_rgo_workers
+			value = {
+				value = {
+					value = scope:lsq_location_promotion
+					multiply = 1.5
+				}
+				add = lsq_get_rgo_workers
+			}
+		}
+		if = { limit = { local_var:lsq_location_promotion_labourers_plus_current_rgo_workers >= scope:lsq_max_rgo_workers }
+			set_variable = { name = lsq_should_build_early value = yes }
+		} else = {
+			set_variable = { name = lsq_should_build_early value = no }
+		}
+
+		# After updating the RGO information, check if the RGO should be auto expanded
+		if = { limit = { AND = { exists = var:lsq_run_auto_expand_rgo exists = var:auto_expand_rgo } }
+			if = { limit = { lsq_should_rgo_auto_expand = yes }
+				construct_rgo_upgrade = {}
+			}
+			remove_variable = lsq_run_auto_expand_rgo
+		}
+	}
+}
+
+lsq_show_to_update_rgo_information = {
+	is_shown = {
+		NOT = { exists = var:lsq_update_rgo_information }
+	}
+}
+
+lsq_hidden_window_hide = {
+	effect = {
+		set_variable = { name = lsq_update_rgo_information value = yes }
+	}
+}
+
+lsq_trigger_update_rgo_information = {
+	effect = {
+		remove_variable = lsq_update_rgo_information
+	}
+}

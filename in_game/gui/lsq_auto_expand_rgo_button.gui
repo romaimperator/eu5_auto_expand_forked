@@ -1,0 +1,224 @@
+types lsq_auto_expand {
+	# used for location window (location_window.gui)
+	type lsq_auto_expand_rgo_widget_location_window = lsq_auto_expand_rgo_widget {
+		parentanchor = bottom|right
+		position = { 2 2 }
+	}
+
+	# used for construction menu in the expand rgos view (expand_raw_goods_lateralview.gui)
+	type lsq_auto_expand_rgo_widget_expand_raw_goods_lateralview = lsq_auto_expand_rgo_widget {
+	}
+
+    type lsq_auto_expand_rgo_widget = widget {
+        size = { 23 23 }
+		# button with green glow
+		lsq_auto_expand_checkbutton = {
+			visible = "[And(Location.IsPlayerLocation, GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+			size = { 100% 100% }
+			enabled = "[Location.IsPlayerLocation]"
+			tooltipwidget = {
+				using = lsq_RGO_Autoexpand_Tooltip
+			}
+			checked = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]" }
+			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).End)]"
+		}
+
+		# button with red glow
+		lsq_auto_expand_checkbutton = {
+			visible = "[And(Location.IsPlayerLocation, Not(GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)))]"
+			size = { 100% 100% }
+			blockoverride "glow_color" { color = {1.0 0.0 0.0 1.0} } # override default color to red
+			enabled = "[Location.IsPlayerLocation]"
+			tooltipwidget = {
+				using = lsq_RGO_Autoexpand_Tooltip
+			}
+			checked = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]" }
+			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).End)]"
+		}
+    }
+}
+
+template lsq_RGO_Autoexpand_Tooltip {	
+	ContextualTooltipType = {
+		blockoverride "title_icon" {
+			lsq_auto_expand_checkbutton = {
+				using = tooltip_title_icon_size
+				checked = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+				enabled = yes
+			}
+		}
+
+		blockoverride "title_text" {
+			raw_text = "Building Auto-Expand"
+		}
+
+		blockoverride "concept_link" {
+			text = [building|e]
+		}
+
+		blockoverride "tooltip_content" {
+			TooltipListBase = { 
+				blockoverride "block_title" {
+					raw_text = "Automatically constructs new RGO level at end of month, if enough gold is available, when the following conditions are met:"
+				}
+				TooltipListRowContent = { 
+					TooltipManualTableField = {
+						blockoverride "field_content" {
+							icon = {
+								using = lsq_tooltip_yes
+								visible = "[GetScriptedGui('lsq_is_rgo_not_max_level_already').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+							}
+							icon = {
+								using = lsq_tooltip_no
+								visible = "[Not(GetScriptedGui('lsq_is_rgo_not_max_level_already').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+							}
+							text_single = {
+								raw_text = "RGO is not max level already"
+							}
+							expand = {}
+						}
+					}
+					TooltipManualTableField = {
+						blockoverride "field_content" {
+							icon = {
+								using = lsq_tooltip_yes
+								visible = "[GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+							}
+							icon = {
+								using = lsq_tooltip_no
+								visible = "[Not(GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+							}
+							text_single = {
+								raw_text = "RGO is fully employed or will be with one month of promotions"
+							}
+							expand = {}
+						}
+					}
+					# TooltipManualTableField = {
+					# 	blockoverride "field_content" {
+					# 		icon = {
+					# 			using = lsq_tooltip_yes
+					# 			visible = "[GetScriptedGui('lsq_has_enough_raw_materials_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+					# 		}
+					# 		icon = {
+					# 			using = lsq_tooltip_no
+					# 			visible = "[Not(GetScriptedGui('lsq_has_enough_raw_materials_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+					# 		}
+					# 		text_single = {
+					# 			raw_text = "RGO has enough construction goods available"
+					# 		}
+					# 		expand = {}
+					# 	}
+					# }
+					TooltipManualTableField = {
+						visible = "[InDebugMode]"
+						blockoverride "field_content" {
+							background = {
+								using = bg_tooltip_debug
+							}
+							icon = {
+								using = lsq_tooltip_yes
+								visible = "[GetScriptedGui('lsq_is_rgo_under_construction').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+							}
+							icon = {
+								using = lsq_tooltip_no
+								visible = "[Not(GetScriptedGui('lsq_is_rgo_under_construction').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+							}
+							text_single = {
+								raw_text = "RGO isn't already under construction"
+							}
+							expand = {}
+						}
+					}
+					TooltipManualTableField = {
+						visible = "[InDebugMode]"
+						blockoverride "field_content" {
+							background = {
+								using = bg_tooltip_debug
+							}
+							icon = {
+								using = lsq_tooltip_yes
+								visible = "[GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+							}
+							icon = {
+								using = lsq_tooltip_no
+								visible = "[Not(GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+							}
+							text_single = {
+								raw_text = "Country doesn't have enough gold available"
+							}
+							expand = {}
+						}
+					}
+				}
+			}
+			
+			TooltipTextBlock = {
+				visible = "[And(GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+				blockoverride "text" {
+					raw_text = "RGO will expand if gold is available"
+				}
+				blockoverride "textblock_background_tint"  {
+					modify_texture = {
+						using = color_light_green_texture
+					}
+				}
+			}
+
+			TooltipTextBlock = {
+				visible = "[And(GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)))]"
+				blockoverride "text" {
+					raw_text = "RGO will not expand; conditions are not met"
+				}
+				blockoverride "textblock_background_tint"  {
+					modify_texture = {
+						using = color_red_texture
+					}
+				}
+			}
+			
+			vbox = {
+				visible = "[InDebugMode]"
+				background = {
+					using = bg_tooltip_debug
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "rgo_workers: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_rgo_workers')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "max_rgo_workers: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_max_rgo_workers')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "num_civil_constructions: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_num_civil_constructions')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "buildings_under_construction: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_buildings_under_construction')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "max_constructions_at_same_time: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_max_constructions_at_same_time')]"
+					}
+				}
+			}
+		}
+
+		blockoverride "tooltip_ui_action_block" {
+			TooltipFunctionalBlock = {
+				using = tooltip_left_click_template
+				blockoverride "action_left_text" {
+					raw_text = "Toggle Auto-Expand"
+				}
+			}
+		}
+	}	
+}
