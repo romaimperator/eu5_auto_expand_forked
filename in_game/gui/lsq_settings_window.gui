@@ -5,14 +5,41 @@ basic_dialog = {
 	visible = "[GetScriptedGui('lsq_show_settings_window').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 	parentanchor = center
 
-	button_close_alt = {
-		blockoverride "close_onclick" {
-			onclick = "[GetScriptedGui('lsq_hide_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+	blockoverride "header_obj" {
+		widget = {
+			layoutpolicy_horizontal = expanding
+			size = { -1 40 }
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				margin = { 45 10 }
+				spacing = 8
+				expand = {}
+				textbox = {
+					layoutpolicy_horizontal = fixed
+					autoresize = yes
+					using = text_multi_template
+					using = Font_Size_Big
+					default_format = "#yellow_titles"
+					fontsize = 22
+					fontsize_min = 15
+					align = center|nobaseline
+					block "header_text" {
+						raw_text = "LSQ: Settings"
+					}
+				}
+				expand = {}
+			}
+			button_close_alt = {
+				ignore_layout = yes
+				parentanchor = right|vcenter
+				position = { -45 0 }
+				blockoverride "close_properties" {}
+				size = { 27 27 }
+				blockoverride "close_onclick" {
+					onclick = "[GetScriptedGui('lsq_hide_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				}
+			}
 		}
-	}
-
-	blockoverride "header_text" {
-		raw_text = "LSQ: Settings"
 	}
 
 	blockoverride "content" {
@@ -21,10 +48,24 @@ basic_dialog = {
 			hbox = {
 				layoutpolicy_horizontal = expanding
 				spacing = 5
+				tooltipwidget = {
+					ContextualTooltipType = {
+						blockoverride "title_text" {
+							raw_text = "Gold to save"
+						}
+						blockoverride "tooltip_content" {
+							TooltipTextBlock = {
+								blockoverride "text" {
+									raw_text = "The gold to save is the amount of gold that must be available before any auto-expansion can occur. Neither a building nor an RGO will not auto-expand if the gold to save plus the estimate cost of the next level is greater than the country's current ducats."
+								}
+							}
+						}
+					}
+				}
 				expand = {}
 				text_single = {
 					autoresize = yes
-					raw_text = "Minimum gold reserve:"
+					raw_text = "Gold to save:"
 				}
 				button_default = {
 					size = { 24 24 }
