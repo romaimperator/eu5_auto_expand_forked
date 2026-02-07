@@ -22,6 +22,7 @@ types lsq_auto_expand {
 			checked = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]" }
 			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).End)]"
+			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 
 		# button with red glow
@@ -36,6 +37,7 @@ types lsq_auto_expand {
 			checked = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]" }
 			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).End)]"
+			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
     }
 }
@@ -196,6 +198,16 @@ template lsq_RGO_Autoexpand_Tooltip {
 				}
 				TooltipTextBlock = {
 					blockoverride "text" {
+						raw_text = "max_max_rgo_workers: [Location.GetMaximumMaxRGOWorkersValueForUI]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "ui version of max_rgo_workers: [Location.GetMaxRGOWorkers]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
 						raw_text = "num_civil_constructions: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_num_civil_constructions')]"
 					}
 				}
@@ -214,9 +226,12 @@ template lsq_RGO_Autoexpand_Tooltip {
 
 		blockoverride "tooltip_ui_action_block" {
 			TooltipFunctionalBlock = {
-				using = tooltip_left_click_template
+				using = tooltip_left_right_click_template
 				blockoverride "action_left_text" {
 					raw_text = "Toggle Auto-Expand"
+				}
+				blockoverride "action_right_text" {
+					raw_text = "Open Settings"
 				}
 			}
 		}

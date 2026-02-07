@@ -131,3 +131,66 @@ lsq_is_location_under_building_limit = {
 		}
 	}
 }
+
+lsq_show_settings_window = {
+	scope = country
+	effect = {
+		set_variable = { name = lsq_settings_window_visible value = yes }
+		if = {
+			limit = { NOT = { has_variable = lsq_minimum_gold } }
+			set_variable = { name = lsq_minimum_gold value = 0 }
+		}
+	}
+
+	is_shown = {
+		exists = var:lsq_settings_window_visible
+	}
+}
+lsq_hide_settings_window = {
+	effect = {
+		remove_variable = lsq_settings_window_visible
+	}
+}
+
+lsq_increase_minimum_gold = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold add = 10 }
+		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+	}
+}
+lsq_decrease_minimum_gold = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold subtract = 10 }
+		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+	}
+}
+lsq_increase_minimum_gold_100 = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold add = 100 }
+		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+	}
+}
+lsq_decrease_minimum_gold_100 = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold subtract = 100 }
+		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+	}
+}
+lsq_increase_minimum_gold_1000 = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold add = 1000 }
+		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+	}
+}
+lsq_decrease_minimum_gold_1000 = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold subtract = 1000 }
+		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+	}
+}
