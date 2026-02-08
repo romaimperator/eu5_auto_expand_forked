@@ -1,8 +1,26 @@
 # max cost is 50 gold base times an additional 33%. Using 50*1.34 = 67 for extra buffer.
-lsq_expand_rgo_max_cost = 67
+# lsq_expand_rgo_max_cost = 67
+lsq_expand_rgo_max_cost = 100 # Changing to 100 to align it with first level building costs of double 50 gold
+
+# Root scope is the player (passed from GUI)
+lsq_expected_gold_available_for_rgo = {
+	value = lsq_expand_rgo_max_cost
+	if = { limit = { exists = owner.var:lsq_minimum_gold_for_rgos }
+		add = owner.var:lsq_minimum_gold_for_rgos
+	}
+}
+
+lsq_get_minimum_gold_for_rgos = {
+	value = var:lsq_minimum_gold_for_rgos
+}
 
 lsq_get_max_rgo_workers = {
 	value = max_rgo_workers
+}
+
+lsq_get_max_rgo_workers_floor = {
+	value = max_rgo_workers
+	floor = yes
 }
 
 lsq_get_rgo_workers = {
@@ -27,8 +45,4 @@ lsq_get_rgos_under_construction = {
 
 lsq_get_max_constructions_at_same_time = {
 	value = modifier:max_constructions_at_same_time
-}
-
-lsq_get_minimum_gold = {
-	value = var:lsq_minimum_gold
 }

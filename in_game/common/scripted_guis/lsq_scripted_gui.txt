@@ -23,7 +23,7 @@ lsq_check_for_auto_expand_when_upgrading_building = {
 					is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building }
 				}
 				remove_list_variable = { name = auto_expand_registered_buildings target = scope:the_building }
-				ordered_buildings_in_location = { # ordered_x always returnes first scope in ordering, therefore we get the most recently built building
+				ordered_buildings_in_location = { # ordered_x always returns first scope in ordering, therefore we get the most recently built building
 					order_by = building_index
 					save_scope_as = the_new_building
 					location = {
@@ -136,9 +136,11 @@ lsq_show_settings_window = {
 	scope = country
 	effect = {
 		set_variable = { name = lsq_settings_window_visible value = yes }
-		if = {
-			limit = { NOT = { has_variable = lsq_minimum_gold } }
-			set_variable = { name = lsq_minimum_gold value = 0 }
+		if = { limit = { NOT = { has_variable = lsq_minimum_gold_for_buildings } }
+			set_variable = { name = lsq_minimum_gold_for_buildings value = 0 }
+		}
+		if = { limit = { NOT = { has_variable = lsq_minimum_gold_for_rgos } }
+			set_variable = { name = lsq_minimum_gold_for_rgos value = 0 }
 		}
 	}
 
@@ -152,45 +154,45 @@ lsq_hide_settings_window = {
 	}
 }
 
-lsq_increase_minimum_gold = {
+lsq_increase_minimum_gold_for_buildings = {
 	scope = country
 	effect = {
-		change_variable = { name = lsq_minimum_gold add = 10 }
-		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+		change_variable = { name = lsq_minimum_gold_for_buildings add = 10 }
+		clamp_variable = { name = lsq_minimum_gold_for_buildings min = 0 max = 10000 }
 	}
 }
-lsq_decrease_minimum_gold = {
+lsq_decrease_minimum_gold_for_buildings = {
 	scope = country
 	effect = {
-		change_variable = { name = lsq_minimum_gold subtract = 10 }
-		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+		change_variable = { name = lsq_minimum_gold_for_buildings subtract = 10 }
+		clamp_variable = { name = lsq_minimum_gold_for_buildings min = 0 max = 10000 }
 	}
 }
-lsq_increase_minimum_gold_100 = {
+lsq_increase_minimum_gold_for_buildings_100 = {
 	scope = country
 	effect = {
-		change_variable = { name = lsq_minimum_gold add = 100 }
-		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+		change_variable = { name = lsq_minimum_gold_for_buildings add = 100 }
+		clamp_variable = { name = lsq_minimum_gold_for_buildings min = 0 max = 10000 }
 	}
 }
-lsq_decrease_minimum_gold_100 = {
+lsq_decrease_minimum_gold_for_buildings_100 = {
 	scope = country
 	effect = {
-		change_variable = { name = lsq_minimum_gold subtract = 100 }
-		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+		change_variable = { name = lsq_minimum_gold_for_buildings subtract = 100 }
+		clamp_variable = { name = lsq_minimum_gold_for_buildings min = 0 max = 10000 }
 	}
 }
-lsq_increase_minimum_gold_1000 = {
+lsq_increase_minimum_gold_for_buildings_1000 = {
 	scope = country
 	effect = {
-		change_variable = { name = lsq_minimum_gold add = 1000 }
-		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+		change_variable = { name = lsq_minimum_gold_for_buildings add = 1000 }
+		clamp_variable = { name = lsq_minimum_gold_for_buildings min = 0 max = 10000 }
 	}
 }
-lsq_decrease_minimum_gold_1000 = {
+lsq_decrease_minimum_gold_for_buildings_1000 = {
 	scope = country
 	effect = {
-		change_variable = { name = lsq_minimum_gold subtract = 1000 }
-		clamp_variable = { name = lsq_minimum_gold min = 0 max = 10000 }
+		change_variable = { name = lsq_minimum_gold_for_buildings subtract = 1000 }
+		clamp_variable = { name = lsq_minimum_gold_for_buildings min = 0 max = 10000 }
 	}
 }

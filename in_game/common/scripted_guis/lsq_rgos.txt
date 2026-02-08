@@ -3,14 +3,44 @@ lsq_set_auto_expand_for_rgo = {
 		# market = { add_goods_supply = { goods = goods:lumber amount = -1 } }
 		if = { limit = { exists = var:auto_expand_rgo }
 			remove_variable = auto_expand_rgo
+			# If after turning off auto expand RGO in a location, there are no other locations within the same province, set the province-level variable
+			province = {
+				if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
+					remove_variable = lsq_auto_expand_rgo_on_in_at_least_one_location
+					set_variable = { name = lsq_auto_expand_rgo_on_in_at_least_one_location value = yes }
+				}
+			}
 		} else = {
 			set_variable = { name = auto_expand_rgo value = yes }
+			# Remove the province-level variable to indicate that there is at least one location with auto expand RGO on
+			province = { remove_variable = lsq_auto_expand_rgo_on_in_at_least_one_location }
 		}
 		owner = { remove_variable = lsq_update_rgo_information }
 	}
 
 	is_shown = {
 		exists = var:auto_expand_rgo
+	}
+}
+
+lsq_province_has_any_location_with_auto_expand_rgo = {
+	is_shown = {
+		# Auto expand is on in at least one location in the province if this variable is NOT set. That way, if we haven't explicitly set the variable, it won't be skipped in the data updating.
+		NOT = { exists = var:lsq_auto_expand_rgo_on_in_at_least_one_location }
+	}
+}
+
+lsq_update_all_provinces_auto_expand_rgo_information = {
+	effect = {
+		every_province = {
+			# set_variable = { name = lsq_auto_expand_rgo_on_in_at_least_one_location value = yes }
+			if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
+				set_variable = { name = lsq_auto_expand_rgo_on_in_at_least_one_location value = yes }
+			} else = {
+			# if = { limit = { any_location_in_province = { exists = var:auto_expand_rgo } } }
+				remove_variable = lsq_auto_expand_rgo_on_in_at_least_one_location
+			}
+		}
 	}
 }
 
@@ -58,12 +88,9 @@ lsq_is_there_enough_gold_available = {
 # }
 
 lsq_update_location_rgo_information = {
-	saved_scopes = { lsq_max_rgo_workers lsq_location_promotion lsq_max_max_rgo_workers }
+	saved_scopes = { lsq_max_rgo_workers lsq_location_promotion }
 	effect = {
 		# root scope is a location (passed from GUI)
-
-		# handle storing the lsq_max_max_rgo_workers variable
-		set_variable = { name = lsq_max_max_rgo_workers value = scope:lsq_max_max_rgo_workers }
 
 		# handle storing the lsq_max_rgo_workers variable
 		set_variable = { name = lsq_max_rgo_workers value = scope:lsq_max_rgo_workers } # this value from the UI is how many RGO levels are currently built
@@ -113,5 +140,48 @@ lsq_hidden_window_hide = {
 lsq_trigger_update_rgo_information = {
 	effect = {
 		remove_variable = lsq_update_rgo_information
+	}
+}
+
+lsq_increase_minimum_gold_for_rgos = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold_for_rgos add = 10 }
+		clamp_variable = { name = lsq_minimum_gold_for_rgos min = 0 max = 10000 }
+	}
+}
+lsq_decrease_minimum_gold_for_rgos = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold_for_rgos subtract = 10 }
+		clamp_variable = { name = lsq_minimum_gold_for_rgos min = 0 max = 10000 }
+	}
+}
+lsq_increase_minimum_gold_for_rgos_100 = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold_for_rgos add = 100 }
+		clamp_variable = { name = lsq_minimum_gold_for_rgos min = 0 max = 10000 }
+	}
+}
+lsq_decrease_minimum_gold_for_rgos_100 = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold_for_rgos subtract = 100 }
+		clamp_variable = { name = lsq_minimum_gold_for_rgos min = 0 max = 10000 }
+	}
+}
+lsq_increase_minimum_gold_for_rgos_1000 = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold_for_rgos add = 1000 }
+		clamp_variable = { name = lsq_minimum_gold_for_rgos min = 0 max = 10000 }
+	}
+}
+lsq_decrease_minimum_gold_for_rgos_1000 = {
+	scope = country
+	effect = {
+		change_variable = { name = lsq_minimum_gold_for_rgos subtract = 1000 }
+		clamp_variable = { name = lsq_minimum_gold_for_rgos min = 0 max = 10000 }
 	}
 }

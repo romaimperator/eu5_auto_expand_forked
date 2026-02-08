@@ -44,6 +44,7 @@ basic_dialog = {
 
 	blockoverride "content" {
 		vbox = {
+			margin = { 20 20 }
 			# Minimum gold reserve: current value + +/- buttons
 			hbox = {
 				layoutpolicy_horizontal = expanding
@@ -51,12 +52,12 @@ basic_dialog = {
 				tooltipwidget = {
 					ContextualTooltipType = {
 						blockoverride "title_text" {
-							raw_text = "Gold to save"
+							raw_text = "Gold to save before auto-expanding buildings"
 						}
 						blockoverride "tooltip_content" {
 							TooltipTextBlock = {
 								blockoverride "text" {
-									raw_text = "The gold to save is the amount of gold that must be available before any auto-expansion can occur. Neither a building nor an RGO will not auto-expand if the gold to save plus the estimate cost of the next level is greater than the country's current ducats. Put another way, the amount of gold you will have will never drop below the gold to save value."
+									raw_text = "The gold to save is the amount of gold that must be available before any auto-expansion can occur. A building will not auto-expand if the gold to save plus the estimate cost of the next level is greater than the country's current ducats. Put another way, the amount of gold you will have will never drop below the gold to save value."
 								}
 							}
 						}
@@ -65,7 +66,7 @@ basic_dialog = {
 				expand = {}
 				text_single = {
 					autoresize = yes
-					raw_text = "Gold to save:"
+					raw_text = "Gold to save before auto-expanding buildings:"
 				}
 				button_default = {
 					size = { 24 24 }
@@ -79,21 +80,21 @@ basic_dialog = {
 						click_mode = single
 						click_modifier = default
 						title = "Change Minimum Gold by #R -10#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_buildings').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 					}
 					action_tooltip = {
 						click_type = left
 						click_mode = single
 						click_modifier = shift
 						title = "Change Minimum Gold by #R -100#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_buildings_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 					}
 					action_tooltip = {
 						click_type = left
 						click_mode = single
 						click_modifier = ctrl
 						title = "Change Minimum Gold by #R -1000#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_buildings_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 					}
 				}
 				widget = {
@@ -101,7 +102,7 @@ basic_dialog = {
 					text_single = {
 						parentanchor = center
 						autoresize = yes
-						raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_gold')|0]@gold"
+						raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_gold_for_buildings')|0]@gold!"
 					}
 				}
 				button_default = {
@@ -116,24 +117,153 @@ basic_dialog = {
 						click_mode = single
 						click_modifier = default
 						title = "Change Minimum Gold by #G +10#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_buildings').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 					}
 					action_tooltip = {
 						click_type = left
 						click_mode = single
 						click_modifier = shift
 						title = "Change Minimum Gold by #G +100#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_buildings_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 					}
 					action_tooltip = {
 						click_type = left
 						click_mode = single
 						click_modifier = ctrl
 						title = "Change Minimum Gold by #G +1000#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_buildings_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 					}
 				}
 				expand = {}
+			}
+			hbox = {
+				margin_top = 20
+				layoutpolicy_horizontal = expanding
+				spacing = 5
+				tooltipwidget = {
+					ContextualTooltipType = {
+						blockoverride "title_text" {
+							raw_text = "Gold to save before auto-expanding RGOs"
+						}
+						blockoverride "tooltip_content" {
+							TooltipTextBlock = {
+								blockoverride "text" {
+									raw_text = "The gold to save is the amount of gold that must be available before any auto-expansion can occur. An RGO will not auto-expand if the gold to save plus the estimate cost of the next level is greater than the country's current ducats. Put another way, the amount of gold you will have will never drop below the gold to save value."
+								}
+							}
+						}
+					}
+				}
+				expand = {}
+				text_single = {
+					autoresize = yes
+					raw_text = "Gold to save before auto-expanding RGOs:"
+				}
+				button_default = {
+					size = { 24 24 }
+					text_single = {
+						parentanchor = center
+						raw_text = "-"
+					}
+					tooltipwidget = { BasicFunctionalTooltip = {} }
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = default
+						title = "Change Minimum Gold by #R -10#!"
+						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_rgos').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = shift
+						title = "Change Minimum Gold by #R -100#!"
+						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_rgos_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = ctrl
+						title = "Change Minimum Gold by #R -1000#!"
+						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_rgos_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+				}
+				widget = {
+					min_width = 60
+					text_single = {
+						parentanchor = center
+						autoresize = yes
+						raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_gold_for_rgos')|0]@gold!"
+					}
+				}
+				button_default = {
+					size = { 24 24 }
+					text_single = {
+						parentanchor = center
+						raw_text = "+"
+					}
+					tooltipwidget = { BasicFunctionalTooltip = { } }
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = default
+						title = "Change Minimum Gold by #G +10#!"
+						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_rgos').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = shift
+						title = "Change Minimum Gold by #G +100#!"
+						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_rgos_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = ctrl
+						title = "Change Minimum Gold by #G +1000#!"
+						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_rgos_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+				}
+				expand = {}
+			}
+			hbox = {
+				margin_top = 20
+				button_default = {
+					size = { 220 40 }
+					text_single = {
+						parentanchor = center
+						autoresize = yes
+						raw_text = "Update Province Cache"
+					}
+					tooltipwidget = {
+						ContextualTooltipType = {
+							blockoverride "title_text" {
+								raw_text = "Update Province Cache"
+							}
+							blockoverride "tooltip_content" {
+								TooltipTextBlock = {
+									blockoverride "text" {
+										raw_text = "Press this button to update the cache of which provinces have at least one location with auto-expand RGO on."
+									}
+
+									textbox = {
+										margin = { 10 10 }
+										using = tooltip_text_block_template
+										raw_text = "Click once if the game seems slower since the auto-expand RGO update or if the mod is auto-expanding an RGO before it's fully employed and it should hopefully fix it."
+									}
+
+									textbox = {
+										margin = { 10 10 }
+										using = tooltip_text_block_template
+										raw_text = "This should not be needed regularly."
+									}
+								}
+							}
+						}
+					}
+					onclick = "[GetScriptedGui('lsq_update_all_provinces_auto_expand_rgo_information').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				}
 			}
 		}
 	}

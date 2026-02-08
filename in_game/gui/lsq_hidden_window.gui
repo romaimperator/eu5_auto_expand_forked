@@ -31,23 +31,25 @@ widget = {
 				datamodel = "[Player.GetProvinces]"
 				item = {
 					vbox = {
+						visible = "[GetScriptedGui('lsq_province_has_any_location_with_auto_expand_rgo').IsShown(GuiScope.SetRoot(Province.MakeScope).End)]"
 						layoutpolicy_vertical = expanding
-						text_single = {
-							autoresize = yes
-							raw_text = "Province: [Province.GetName]"
-						}
+						# text_single = {
+						# 	autoresize = yes
+						# 	raw_text = "Province: [Province.GetName]"
+						# }
 						datamodel = "[Province.GetLocations]"
 						item = {
 							vbox = {
+								visible = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 								hbox = {
 									state = {
 										name = lsq_location_rgo_construction_update
-										on_finish = "[GetScriptedGui('lsq_update_location_rgo_information').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('lsq_max_rgo_workers', MakeScopeValue(Location.GetMaxRGOWorkers)).AddScope('lsq_location_promotion', MakeScopeValue(Location.GetPromoteValue)).AddScope('lsq_max_max_rgo_workers', MakeScopeValue(Location.GetMaximumMaxRGOWorkersValueForUI)).End)]"
+										on_finish = "[GetScriptedGui('lsq_update_location_rgo_information').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('lsq_max_rgo_workers', MakeScopeValue(Location.GetMaxRGOWorkers)).AddScope('lsq_location_promotion', MakeScopeValue(Location.GetPromoteValue)).End)]"
 									}
-									text_single = {
-										autoresize = yes
-										raw_text = "[Location.GetName] [Location.GetMaxRGOWorkers] [Location.GetMaxRGOWorkersUnderConstruction]"
-									}
+									# text_single = {
+									# 	autoresize = yes
+									# 	raw_text = "[Location.GetName] [Location.GetMaxRGOWorkers] [Location.GetMaxRGOWorkersUnderConstruction]"
+									# }
 								}
 							}
 						}

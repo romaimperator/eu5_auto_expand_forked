@@ -17,6 +17,7 @@ types lsq_auto_expand {
 			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]" }
 			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 
 		# button with red glow
@@ -31,6 +32,7 @@ types lsq_auto_expand {
 			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]" }
 			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
     }
 
@@ -51,6 +53,7 @@ types lsq_auto_expand {
 			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 			blockoverride "glow_visible" { visible = "[And(ObjectsEqual(LocationToBuildItem.GetBuilding.GetOwner, Player.Self), GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]" }
 			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 
 		# button with red glow
@@ -65,6 +68,7 @@ types lsq_auto_expand {
 			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 			blockoverride "glow_visible" { visible = "[And(ObjectsEqual(LocationToBuildItem.GetBuilding.GetOwner, Player.Self), GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]" }
 			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 	}
 
@@ -293,7 +297,7 @@ template lsq_Building_Autoexpand_Tooltip {
 			TooltipTextBlock = {
 				visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 				blockoverride "text" {
-					raw_text = "Building will expand if gold is available"
+					raw_text = "Building will expand if at least [GuiScope.SetRoot(Building.MakeScope).ScriptValue('lsq_expected_gold_available_for_building')|0]@gold! is available"
 				}
 				blockoverride "textblock_background_tint"  {
 					modify_texture = {
@@ -317,9 +321,12 @@ template lsq_Building_Autoexpand_Tooltip {
 
 		blockoverride "tooltip_ui_action_block" {
 			TooltipFunctionalBlock = {
-				using = tooltip_left_click_template
+				using = tooltip_left_right_click_template
 				blockoverride "action_left_text" {
 					raw_text = "Toggle Auto-Expand"
+				}
+				blockoverride "action_right_text" {
+					raw_text = "Open Settings"
 				}
 			}
 		}

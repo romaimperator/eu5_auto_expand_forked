@@ -20,7 +20,7 @@ lsq_should_rgo_auto_expand = {
 
 lsq_is_rgo_not_max_level_already = {
 	# is_full_expanded_rgo = no # not reliable as says it's fully expanded when the it's not at max level and not fully employed
-	var:lsq_max_max_rgo_workers > var:lsq_max_rgo_workers # max max is the maximum number of levels that can be built, max is the current number of levels, reguardless of employment
+	lsq_get_rgo_workers < lsq_get_max_rgo_workers_floor
 }
 
 lsq_is_rgo_fully_employed = {
@@ -32,7 +32,24 @@ lsq_is_rgo_under_construction = {
 }
 
 lsq_is_there_enough_gold_available = {
-	owner.gold > { value = lsq_expand_rgo_max_cost add = owner.var:lsq_minimum_gold }
+	trigger_if = { limit = { exists = owner.var:lsq_minimum_gold_for_rgos }
+		owner.gold > { value = lsq_expand_rgo_max_cost add = owner.var:lsq_minimum_gold_for_rgos }
+	} trigger_else = {
+		owner.gold > lsq_expand_rgo_max_cost
+	}
+}
+
+# Root = location. True if location has building auto expand and/or RGO auto expand (for settings list).
+lsq_location_has_auto_expand = {
+	OR = {
+		exists = var:auto_expand_rgo
+		any_buildings_in_location = {
+			limit = {
+				save_temporary_scope_as = the_building
+				location = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building } }
+			}
+		}
+	}
 }
 
 # Root = location. Checks if the market has enough construction goods for an RGO upgrade.
