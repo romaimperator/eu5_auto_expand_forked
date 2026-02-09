@@ -78,8 +78,10 @@ lsq_update_rgo_information_daily_tick = {
 		debug_log = "LSQ: running daily tick"
 		# set_variable = { name = lsq_update_rgo_information value = yes }
 		remove_variable = lsq_update_rgo_information
-		every_controlled_location = {
-			set_variable = { name = lsq_run_auto_expand_rgo value = yes }
+		if = { limit = { lsq_should_pause_auto_expand = no }
+			every_controlled_location = {
+				set_variable = { name = lsq_run_auto_expand_rgo value = yes }
+			}
 		}
 	}
 }

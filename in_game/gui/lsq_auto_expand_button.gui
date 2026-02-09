@@ -7,7 +7,7 @@ types lsq_auto_expand {
     type lsq_auto_expand_widget = widget {
         size = { 25 25 }
 		# button with green glow
-		lsq_auto_expand_checkbutton = { 
+		lsq_auto_expand_checkbutton = {
 			visible = "[And3(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing, GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 			size = { 100% 100% }
 			enabled = "[CanSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
@@ -38,12 +38,12 @@ types lsq_auto_expand {
 
 	# used in global construction menu (build_location_lateralview.gui)
 	# weird quirk with these: blockoverride "glow_visible" needs an extra AND check for building existing to I think only evaluate the 2 condition if building exits
-	# to not throw an error in the scripted GUI as building is NULL/invalid. Somehow doesnt apply to "checked =" tho 
+	# to not throw an error in the scripted GUI as building is NULL/invalid. Somehow doesnt apply to "checked =" tho
 	type lsq_auto_expand_widget_global_construction = widget {
 		datacontext = "[LocationToBuildItem.GetBuilding]"
 		size = { 25 25 }
 		# button with green glow
-		lsq_auto_expand_checkbutton = { 
+		lsq_auto_expand_checkbutton = {
 			visible = "[And3(ObjectsEqual(LocationToBuildItem.GetBuilding.GetOwner, Player.Self), LocationToBuildItem.GetBuildingType.IsProducing, GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 			size = { 100% 100% }
 			enabled = "[CanSubsidizeBuilding(LocationToBuildItem.GetBuilding.Self)]"
@@ -95,6 +95,99 @@ types lsq_auto_expand {
 			alpha = 0.6
 		}
 	}
+
+	type lsq_tooltip_row = TooltipManualTableField {
+		blockoverride "field_content" {
+			using = lsq_tooltip_row_background
+
+			hbox = {
+				layoutpolicy_vertical = expanding
+
+				# First element root line
+				widget = {
+					size = { 10 2 }
+					icon = {
+						block "first_element" { visible = no } # default is this isn't the first element
+						size = { 100% 100% }
+						parentanchor = right|vcenter
+						using = color_requirementlist_arrow_white_texture
+					}
+				}
+
+				# Vertical line to parent/sibling
+				icon = {
+					size = { 2 2 }
+					using = color_requirementlist_arrow_white_texture
+
+					icon = {
+						block "not_first_element" { visible = yes } # default is this isn't the first element
+						size = { 3 31 }
+						parentanchor = bottom
+						using = color_requirementlist_arrow_white_texture
+					}
+				}
+
+				# Last mile arrow to text
+				icon = {
+					size = { 30 2 }
+					using = color_requirementlist_arrow_white_texture
+				}
+			}
+
+			TooltipYesNoCheckbox = {}
+			textbox = {
+				layoutpolicy_horizontal = expanding
+				autoresize = yes
+				margin = { 0 5 }
+
+				align = nobaseline
+				using = text_multi_template
+				elide = right
+
+				block "row_text" { text = "Empty" }
+				block "field_text_format" {}
+			}
+			expand = {}
+		}
+	}
+
+	type lsq_tooltip_row_one_indent = lsq_tooltip_row {
+		margin_left = 30 # there's 10 px margin from the TooltipManualTableField so add 20 px to move it over exactly one square
+	}
+
+	type lsq_tooltip_row_two_indent = lsq_tooltip_row {
+		margin_left = 50 # there's 10 px margin from the TooltipManualTableField so add 40 px to move it over exactly two squares
+	}
+}
+
+template lsq_tooltip_row_background {
+	background = {
+		block "yes_visible" { visible = no }
+		using = color_mid_light_green_texture
+		alpha = 0.3
+
+		modify_texture = {
+			block "is_odd" { visible = no } # when this row index is odd (starting from 0), override this blockoverride "is_odd" { visible = yes }
+			using = color_white_texture
+			alpha = 0.1
+		}
+	}
+
+	background = {
+		block "no_visible" { visible = no }
+		using = color_mid_red_texture
+		alpha = 0.4
+
+		modify_texture = {
+			block "is_odd" { visible = no } # when this row index is odd (starting from 0), override this blockoverride "is_odd" { visible = yes }
+			using = color_white_texture
+			alpha = 0.1
+		}
+	}
+}
+
+template lsq_tooltip_row_is_odd {
+	blockoverride "is_odd" { visible = yes }
 }
 
 template lsq_auto_expand_icon {
@@ -121,7 +214,7 @@ template lsq_button_auto_expand_template {
 			block "glow_color" { # default color is green
 				color = {0.0 1.0 0.0 1.0}
 			}
-			
+
 			block "glow_visible" {
 				visible = no
 			}
@@ -139,7 +232,7 @@ template lsq_tooltip_no {
 	size = { 25 25 }
 }
 
-template lsq_Building_Autoexpand_Tooltip {	
+template lsq_Building_Autoexpand_Tooltip {
 	ContextualTooltipType = {
 		blockoverride "title_icon" {
 			lsq_auto_expand_checkbutton = {
@@ -158,142 +251,187 @@ template lsq_Building_Autoexpand_Tooltip {
 		}
 
 		blockoverride "tooltip_content" {
-			TooltipListBase = { 
+			TooltipListBase = {
 				blockoverride "block_title" {
 					raw_text = "Automatically constructs new building levels at end of month, if enough gold is available, when the following conditions are met:"
 				}
-				TooltipListRowContent = { 
-					TooltipManualTableField = {
-						blockoverride "field_content" {
-							icon = {
-								using = lsq_tooltip_yes
-								visible = "[GetScriptedGui('lsq_is_building_not_max_level_already').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_building_not_max_level_already').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "Building is not max level already"
-							}
-							expand = {}
+				TooltipListRowContent = {
+					lsq_tooltip_row = {
+						blockoverride "first_element" { visible = yes }
+						blockoverride "not_first_element" { visible = no }
+						blockoverride "yes_visible" {
+							visible = "[Not(GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+						}
+						blockoverride "no_visible" {
+							visible = "[GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Auto-expand is not paused"
 						}
 					}
-					TooltipManualTableField = {
-						blockoverride "field_content" {
-							icon = {
-								using = lsq_tooltip_yes
-								visible = "[GetScriptedGui('lsq_is_building_profitable').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_building_profitable').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "Building is profitable"
-							}
-							expand = {}
+					lsq_tooltip_row = {
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_building_profitable').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_building_profitable').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Building is profitable"
 						}
 					}
-					TooltipManualTableField = {
-						blockoverride "field_content" {
-							icon = {
-								using = lsq_tooltip_yes
-								visible = "[GetScriptedGui('lsq_is_building_open').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_building_open').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "Building is open"
-							}
-							expand = {}
+					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_building_open').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_building_open').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Building is open"
 						}
 					}
-					TooltipManualTableField = {
-						blockoverride "field_content" {
-							icon = {
-								using = lsq_tooltip_yes
-								visible = "[GetScriptedGui('lsq_is_building_fully_employed').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_building_fully_employed').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "Building is fully employed"
-							}
-							expand = {}
+					lsq_tooltip_row = {
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_building_fully_employed').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_building_fully_employed').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Building is fully employed"
 						}
 					}
-					TooltipManualTableField = {
-						blockoverride "field_content" {
-							icon = {
-								using = lsq_tooltip_yes
-								visible = "[GetScriptedGui('lsq_is_building_not_lacking_goods').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_building_not_lacking_goods').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "Building doesn't lack any goods"
-							}
-							expand = {}
+					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_building_not_lacking_goods').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_building_not_lacking_goods').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Building doesn't lack any goods"
 						}
 					}
-					TooltipManualTableField = {
-						blockoverride "field_content" {
-							icon = {
-								using = lsq_tooltip_yes
-								visible = "[GetScriptedGui('lsq_is_building_not_upgradable').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_building_not_upgradable').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "Building does NOT have an upgrade available"
-							}
-							expand = {}
+					lsq_tooltip_row = {
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_location_pops_available').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_location_pops_available').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Location has promoted pops of corresponding type available"
 						}
 					}
-					TooltipManualTableField = {
-						blockoverride "field_content" {
-							icon = {
-								using = lsq_tooltip_yes
-								visible = "[GetScriptedGui('lsq_is_location_pops_available').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_location_pops_available').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "Location has promoted pops of corresponding type available"
-							}
-							expand = {}
+					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_location_under_building_limit').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_location_under_building_limit').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Location has Supported Building Levels left"
 						}
 					}
-					TooltipManualTableField = {
-						blockoverride "field_content" {
-							icon = {
-								using = lsq_tooltip_yes
-								visible = "[GetScriptedGui('lsq_is_location_under_building_limit').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_location_under_building_limit').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "Location has Supported Building Levels left"
-							}
-							expand = {}
+					lsq_tooltip_row = {
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "At least one of these:"
+						}
+					}
+					lsq_tooltip_row_one_indent = {
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_building_not_max_level_already_and_not_obsolete').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_building_not_max_level_already_and_not_obsolete').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "All of these:"
+						}
+					}
+					lsq_tooltip_row_two_indent = {
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_building_not_max_level_already').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_building_not_max_level_already').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Building is not max level already"
+						}
+					}
+					lsq_tooltip_row_two_indent = {
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_building_obsolete').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "no_visible" {
+							visible = "[GetScriptedGui('lsq_is_building_obsolete').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Building does NOT have an upgrade available"
+						}
+					}
+					lsq_tooltip_row_one_indent = {
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_building_upgradeable_and_can_be_upgraded_by_owner').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_building_upgradeable_and_can_be_upgraded_by_owner').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "All of these:"
+						}
+					}
+					lsq_tooltip_row_two_indent = {
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_building_upgradeable').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_building_upgradeable').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Building type is upgradeable"
+						}
+					}
+					lsq_tooltip_row_two_indent = {
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_building_can_be_upgraded_by_owner').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_building_can_be_upgraded_by_owner').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Building can be upgraded by owner"
+						}
+					}
+					lsq_tooltip_row_two_indent = {
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_should_auto_expand_upgrade_buildings').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_should_auto_expand_upgrade_buildings').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Allow auto-expand to upgrade buildings"
 						}
 					}
 				}
 			}
-			
+
 			TooltipTextBlock = {
 				visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 				blockoverride "text" {
@@ -330,5 +468,5 @@ template lsq_Building_Autoexpand_Tooltip {
 				}
 			}
 		}
-	}	
+	}
 }

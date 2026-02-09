@@ -10,46 +10,59 @@ lsq_auto_expand_buildings = {
 	}
 
 	effect = {
-		every_controlled_location = {
-			limit = {
-				has_variable_list = auto_expand_registered_buildings
-			}
-			every_buildings_in_location = {
-				limit = {
-					save_temporary_scope_as = the_building_for_on_action
-					location = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building_for_on_action } }
-				}
-				building_type = {
-					save_scope_as = the_building_type
-					set_local_variable = { name = double_building_cost value = building_base_cost_in_gold }
-					change_local_variable = { name = double_building_cost multiply = 2 }
-				}
-				if = {
-					limit = {
-						building_levels_under_construction = 0
-						building_potential_profit = building_profit	  # to check for full employment (buildings employing not 100% but still profitable and lowered target employment)
-						is_profitable = yes
-						is_opened = yes
-						is_at_max_level = no
-						is_full_capacity = yes
-						is_lacking_goods = no
-
-						NAND = { building_pop_type = burghers location = { is_burgher_positive_deficit = no } }  # checks if promoted pops of type are available if building type employes that pop type
-						NAND = { building_pop_type = laborers location = { is_labourer_positive_deficit = no } } # same here :3
+		if = { limit = { lsq_should_pause_auto_expand = no }
+			debug_log = "Auto expanding buildings"
+			every_controlled_location = {
+				limit = { has_variable_list = auto_expand_registered_buildings }
+				every_buildings_in_location = {
+					limit = { location = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = prev } } }
+					save_scope_as = the_building_for_on_action
+					building_type = {
+						save_scope_as = the_building_type
+						set_local_variable = { name = double_building_cost value = building_base_cost_in_gold }
+						change_local_variable = { name = double_building_cost multiply = 2 }
 					}
-					location = {
+					scope:the_building_type = { debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+					if = { limit = { lsq_is_building_obsolete = no }
+						scope:the_building_type = { debug_log = "Building not obsolete [THIS.GetBuildingType.GetNameWithNoTooltip]" }
 						if = {
 							limit = {
-								total_building_levels < modifier:free_building_levels
-								owner = {
-									NOT = { building_type_is_obsolete = scope:the_building_type }
-									lsq_is_there_enough_gold_available_for_building = yes
+								lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
+								lsq_is_building_at_max_level = no
+								lsq_is_not_under_construction_and_gold_is_available = yes
+							}
+							scope:the_building_type = { debug_log = "Building passes first checks [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+							location = {
+								construct_building = {
+									building_type = scope:the_building_type
 								}
 							}
-							construct_building = {
-								building_type = scope:the_building_type
+						}
+					# Building type is obsolete so check if if can be upgraded
+					} else_if = { limit = { AND = { owner = { lsq_should_auto_expand_upgrade_buildings = yes } lsq_is_building_upgradeable_and_can_be_upgraded_by_owner = yes } }
+						scope:the_building_type = { debug_log = "Building is obsolete and upgradable [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+						if = {
+							limit = {
+								lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
+								lsq_is_not_under_construction_and_gold_is_available = yes
 							}
-						}	
+							scope:the_building_type = { debug_log = "Building passes checks for upgrading [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+							scope:the_building_type = { lsq_find_upgrade_building_type = yes }
+							if = { limit = { exists = scope:return_scope }
+								scope:return_scope = { debug_log = "Found upgrade building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+								location = {
+									construct_building = {
+										building_type = scope:return_scope
+									}
+									remove_list_variable = { name = auto_expand_registered_buildings target = scope:the_building_for_on_action }
+									ordered_buildings_in_location = {
+										order_by = building_index
+										max = 1
+										location = { add_to_variable_list = { name = auto_expand_registered_buildings target = prev } }
+									}
+								}
+							}
+						}
 					}
 				}
 			}

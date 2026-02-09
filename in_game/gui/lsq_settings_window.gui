@@ -45,7 +45,38 @@ basic_dialog = {
 	blockoverride "content" {
 		vbox = {
 			margin = { 20 20 }
-			# Minimum gold reserve: current value + +/- buttons
+			spacing = 10
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				spacing = 3
+				button_checkbox = {
+					size = { 20 20 }
+					checked = "[GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					onclick = "[GetScriptedGui('lsq_pause_auto_expand').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					tooltipwidget = { LeftClickButtonTooltip = { blockoverride "onclick_text" { raw_text = "If checked, auto-expand will not run anywhere. Use when you don't want auto-expand running but you don't want to have to disable and re-enable it." } } }
+				}
+				text_single = {
+					raw_text = "Pause auto-expand everywhere"
+				}
+				expand = {}
+			}
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				spacing = 3
+				button_checkbox = {
+					size = { 20 20 }
+					checked = "[GetScriptedGui('lsq_should_auto_expand_upgrade_buildings').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					onclick = "[GetScriptedGui('lsq_should_auto_expand_upgrade_buildings').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					tooltipwidget = { LeftClickButtonTooltip = { blockoverride "onclick_text" { raw_text = "If checked, auto-expand will upgrade buildings if they are obsolete." } } }
+				}
+				text_single = {
+					raw_text = "Auto-expand will upgrade buildings if they are obsolete"
+				}
+				expand = {}
+			}
+
 			hbox = {
 				layoutpolicy_horizontal = expanding
 				spacing = 5
@@ -137,7 +168,6 @@ basic_dialog = {
 				expand = {}
 			}
 			hbox = {
-				margin_top = 20
 				layoutpolicy_horizontal = expanding
 				spacing = 5
 				tooltipwidget = {
@@ -228,7 +258,6 @@ basic_dialog = {
 				expand = {}
 			}
 			hbox = {
-				margin_top = 20
 				button_default = {
 					size = { 220 40 }
 					text_single = {

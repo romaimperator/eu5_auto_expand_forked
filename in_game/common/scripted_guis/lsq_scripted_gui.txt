@@ -10,13 +10,13 @@ lsq_set_auto_expand_for_building = {
 		} else = {
 			add_to_variable_list = { name = auto_expand_registered_buildings target = scope:the_building }
 		} }
-	} 
+	}
 }
 
 lsq_check_for_auto_expand_when_upgrading_building = {
 	effect = {
 		# given scope is the obsolete version of building that is being upgraded
-		save_scope_as = the_building  
+		save_scope_as = the_building
 		location = {
 			if = {
 				limit = {
@@ -52,83 +52,84 @@ lsq_is_auto_expand_active_for_building = {
 
 lsq_is_building_able_to_auto_expand = {
 	is_shown = {
-		building_type = {
-			save_temporary_scope_as = the_building_type
-		}
+		# save_temporary_scope_as = the_building
+		# building_type = {
+		# 	save_temporary_scope_as = the_building_type
+		# }
 
-		building_potential_profit = building_profit	  # to check for full employment (buildings employing not 100% but still profitable and lowered target employment)
-		OR = { is_profitable = yes building_level = 0 }
-		is_opened = yes
-		is_at_max_level = no
-		OR = { is_full_capacity = yes building_level = 0 }
-		is_lacking_goods = no
+		# building_potential_profit = building_profit	  # to check for full employment (buildings employing not 100% but still profitable and lowered target employment)
+		# OR = { is_profitable = yes building_level = 0 }
+		# is_opened = yes
+		# OR = { is_full_capacity = yes building_level = 0 }
+		# is_lacking_goods = no
 
-		NAND = { building_pop_type = burghers location = { is_burgher_positive_deficit = no } }  # checks if promoted pops of type are available if building type employes that pop type
-		NAND = { building_pop_type = laborers location = { is_labourer_positive_deficit = no } } # same here :3
+		# NAND = { building_pop_type = burghers location = { is_burgher_positive_deficit = no } }  # checks if promoted pops of type are available if building type employes that pop type
+		# NAND = { building_pop_type = laborers location = { is_labourer_positive_deficit = no } } # same here :3
 
-		location = {
-			total_building_levels < modifier:free_building_levels
-			owner = {
-				NOT = { building_type_is_obsolete = scope:the_building_type } 
-			}
-		}
+		# location = {
+		# 	total_building_levels < modifier:free_building_levels
+		# 	OR = {
+		# 		AND = {
+		# 			scope:the_building = { is_at_max_level = no }
+		# 			owner = { NOT = { building_type_is_obsolete = scope:the_building_type } }
+		# 		}
+		# 		AND = {
+		# 			scope:the_building_type = { lsq_is_building_type_upgradeable = yes }
+		# 			scope:the_building = { lsq_is_building_can_be_upgraded_by_owner = yes }
+		# 		}
+		# 	}
+		# }
+		owner = { lsq_should_pause_auto_expand = no }
+		lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
+		lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
 	}
 }
 
 lsq_is_building_not_max_level_already = {
 	is_shown = {
-		is_at_max_level = no
+		lsq_is_building_at_max_level = no
 	}
 }
 
 lsq_is_building_profitable = {
 	is_shown = {
-		OR = { is_profitable = yes building_level = 0 }
+		lsq_is_building_profitable = yes
 	}
 }
 
 lsq_is_building_open = {
 	is_shown = {
-		is_opened = yes
+		lsq_is_building_open = yes
 	}
 }
 
 lsq_is_building_fully_employed = {
 	is_shown = {
-		building_potential_profit = building_profit
-		OR = { is_full_capacity = yes building_level = 0 }
+		lsq_is_building_fully_employed = yes
 	}
 }
 
 lsq_is_building_not_lacking_goods = {
 	is_shown = {
-		is_lacking_goods = no
+		lsq_is_building_lacking_goods = no
 	}
 }
 
-lsq_is_building_not_upgradable = {
+lsq_is_building_not_max_level_already_and_not_obsolete = {
 	is_shown = {
-		building_type = {
-			save_temporary_scope_as = the_building_type
-		}
-		location.owner = {
-			NOT = { building_type_is_obsolete = scope:the_building_type } 
-		}
+		lsq_is_building_not_max_level_already_and_not_obsolete = yes
 	}
 }
 
 lsq_is_location_pops_available = {
 	is_shown = {
-		NAND = { building_pop_type = burghers location = { is_burgher_positive_deficit = no } }  # checks if promoted pops of type are available if building type employes that pop type
-		NAND = { building_pop_type = laborers location = { is_labourer_positive_deficit = no } } # same here :3
+		lsq_is_location_pops_available = yes
 	}
 }
 
 lsq_is_location_under_building_limit = {
 	is_shown = {
-		location = {
-			total_building_levels < modifier:free_building_levels
-		}
+		lsq_is_location_under_building_limit = yes
 	}
 }
 
@@ -194,5 +195,64 @@ lsq_decrease_minimum_gold_for_buildings_1000 = {
 	effect = {
 		change_variable = { name = lsq_minimum_gold_for_buildings subtract = 1000 }
 		clamp_variable = { name = lsq_minimum_gold_for_buildings min = 0 max = 10000 }
+	}
+}
+
+lsq_is_building_obsolete = {
+	is_shown = {
+		lsq_is_building_obsolete = yes
+	}
+}
+
+lsq_is_building_upgradeable = {
+	is_shown = {
+		lsq_is_building_upgradeable = yes
+	}
+}
+
+lsq_building_can_be_upgraded_by_owner = {
+	is_shown = {
+		lsq_building_can_be_upgraded_by_owner = yes
+	}
+}
+
+lsq_is_building_upgradeable_and_can_be_upgraded_by_owner = {
+	is_shown = {
+		lsq_is_building_upgradeable_and_can_be_upgraded_by_owner = yes
+	}
+}
+
+lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = {
+	is_shown = {
+		lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
+	}
+}
+
+lsq_should_auto_expand_upgrade_buildings = {
+	effect = {
+		if = { limit = { exists = var:lsq_should_not_upgrade_buildings }
+			remove_variable = lsq_should_not_upgrade_buildings
+		} else = {
+			set_variable = { name = lsq_should_not_upgrade_buildings value = yes }
+		}
+	}
+
+	is_shown = {
+		lsq_should_auto_expand_upgrade_buildings = yes
+	}
+}
+
+# Root is the country
+lsq_pause_auto_expand = {
+	effect = {
+		if = { limit = { exists = var:lsq_pause_auto_expand }
+			remove_variable = lsq_pause_auto_expand
+		} else = {
+			set_variable = { name = lsq_pause_auto_expand value = yes }
+		}
+	}
+
+	is_shown = {
+		lsq_should_pause_auto_expand = yes
 	}
 }
