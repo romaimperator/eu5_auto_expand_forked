@@ -1,6 +1,27 @@
 types lsq_auto_expand {
     type lsq_auto_expand_checkbutton = checkbutton {
-        using = lsq_button_auto_expand_template
+		texture = "gfx/interface/buttons/checkbox_auto_expand.dds"
+		texture_density = 2
+		frame_grid = { 2 1 }
+		size = { 30 30 }
+
+		background = {
+			texture = "gfx/interface/buttons/checkbox_bg.dds"
+			texture_density = 2
+			using = color_dark_blue
+			glow = {
+				name = "green_glow"
+				glow_radius = 5
+				alpha = 1.0
+				block "glow_color" { # default color is green
+					color = {0.0 1.0 0.0 1.0}
+				}
+
+				block "glow_visible" {
+					visible = no
+				}
+			}
+		}
     }
 
 	# used for construction menu in location (prodcution_lateralview.gui)
@@ -71,155 +92,6 @@ types lsq_auto_expand {
 			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 	}
-
-
-
-	type lsq_is_auto_expand_on_icon_green = icon {
-		using = lsq_auto_expand_icon
-		visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End), GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End))]"
-		glow = {
-			name = "green_glow"
-			glow_radius = 4
-			color = {0.0 1.0 0.0 0.9}
-			alpha = 0.6
-		}
-	}
-
-	type lsq_is_auto_expand_on_icon_red = icon {
-		using = lsq_auto_expand_icon
-		visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End), Not(GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)))]"
-		glow = {
-			name = "red_glow"
-			glow_radius = 4
-			color = {1.0 0.0 0.0 0.9}
-			alpha = 0.6
-		}
-	}
-
-	type lsq_tooltip_row = TooltipManualTableField {
-		blockoverride "field_content" {
-			using = lsq_tooltip_row_background
-
-			hbox = {
-				layoutpolicy_vertical = expanding
-
-				# First element root line
-				widget = {
-					size = { 10 2 }
-					icon = {
-						block "first_element" { visible = no } # default is this isn't the first element
-						size = { 100% 100% }
-						parentanchor = right|vcenter
-						using = color_requirementlist_arrow_white_texture
-					}
-				}
-
-				# Vertical line to parent/sibling
-				icon = {
-					size = { 2 2 }
-					using = color_requirementlist_arrow_white_texture
-
-					icon = {
-						block "not_first_element" { visible = yes } # default is this isn't the first element
-						size = { 3 31 }
-						parentanchor = bottom
-						using = color_requirementlist_arrow_white_texture
-					}
-				}
-
-				# Last mile arrow to text
-				icon = {
-					size = { 30 2 }
-					using = color_requirementlist_arrow_white_texture
-				}
-			}
-
-			TooltipYesNoCheckbox = {}
-			textbox = {
-				layoutpolicy_horizontal = expanding
-				autoresize = yes
-				margin = { 0 5 }
-
-				align = nobaseline
-				using = text_multi_template
-				elide = right
-
-				block "row_text" { text = "Empty" }
-				block "field_text_format" {}
-			}
-			expand = {}
-		}
-	}
-
-	type lsq_tooltip_row_one_indent = lsq_tooltip_row {
-		margin_left = 30 # there's 10 px margin from the TooltipManualTableField so add 20 px to move it over exactly one square
-	}
-
-	type lsq_tooltip_row_two_indent = lsq_tooltip_row {
-		margin_left = 50 # there's 10 px margin from the TooltipManualTableField so add 40 px to move it over exactly two squares
-	}
-}
-
-template lsq_tooltip_row_background {
-	background = {
-		block "yes_visible" { visible = no }
-		using = color_mid_light_green_texture
-		alpha = 0.3
-
-		modify_texture = {
-			block "is_odd" { visible = no } # when this row index is odd (starting from 0), override this blockoverride "is_odd" { visible = yes }
-			using = color_white_texture
-			alpha = 0.1
-		}
-	}
-
-	background = {
-		block "no_visible" { visible = no }
-		using = color_mid_red_texture
-		alpha = 0.4
-
-		modify_texture = {
-			block "is_odd" { visible = no } # when this row index is odd (starting from 0), override this blockoverride "is_odd" { visible = yes }
-			using = color_white_texture
-			alpha = 0.1
-		}
-	}
-}
-
-template lsq_tooltip_row_is_odd {
-	blockoverride "is_odd" { visible = yes }
-}
-
-template lsq_auto_expand_icon {
-	parentanchor = bottom|left
-	texture = "gfx/interface/icons/flat_icons/icon_auto_expand_on.dds"
-	size = { 16 16 }
-	position = { -4 -14 }
-}
-
-template lsq_button_auto_expand_template {
-    texture = "gfx/interface/buttons/checkbox_auto_expand.dds"
-	texture_density = 2
-	frame_grid = { 2 1 }
-	size = { 30 30 }
-
-	background = {
-		texture = "gfx/interface/buttons/checkbox_bg.dds"
-		texture_density = 2
-		using = color_dark_blue
-		glow = {
-			name = "green_glow"
-			glow_radius = 5
-			alpha = 1.0
-			block "glow_color" { # default color is green
-				color = {0.0 1.0 0.0 1.0}
-			}
-
-			block "glow_visible" {
-				visible = no
-			}
-		}
-	}
 }
 
 template lsq_tooltip_yes {
@@ -270,6 +142,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_profitable').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -281,7 +154,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_open').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -293,6 +165,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_fully_employed').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -304,7 +177,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_not_lacking_goods').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -316,6 +188,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_location_pops_available').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -327,7 +200,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_location_under_building_limit').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -339,6 +211,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -350,7 +223,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_one_indent = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_not_max_level_already_and_not_obsolete').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -362,6 +234,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_two_indent = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_not_max_level_already').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -373,7 +246,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_two_indent = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[Not(GetScriptedGui('lsq_is_building_obsolete').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 						}
@@ -385,6 +257,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_one_indent = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_upgradeable_and_can_be_upgraded_by_owner_and_auto_expand_upgrade_is_on').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -396,7 +269,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_two_indent = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_upgradeable').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -408,6 +280,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_two_indent = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_building_can_be_upgraded_by_owner').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}

@@ -42,7 +42,7 @@ types lsq_auto_expand {
     }
 }
 
-template lsq_RGO_Autoexpand_Tooltip {	
+template lsq_RGO_Autoexpand_Tooltip {
 	ContextualTooltipType = {
 		blockoverride "title_icon" {
 			lsq_auto_expand_checkbutton = {
@@ -61,102 +61,81 @@ template lsq_RGO_Autoexpand_Tooltip {
 		}
 
 		blockoverride "tooltip_content" {
-			TooltipListBase = { 
+			TooltipListBase = {
 				blockoverride "block_title" {
 					raw_text = "Automatically constructs new RGO level at end of month, if enough gold is available, when the following conditions are met:"
 				}
-				TooltipListRowContent = { 
-					TooltipManualTableField = {
-						blockoverride "field_content" {
-							icon = {
-								using = lsq_tooltip_yes
-								visible = "[GetScriptedGui('lsq_is_rgo_not_max_level_already').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_rgo_not_max_level_already').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "RGO is not max level already"
-							}
-							expand = {}
+				TooltipListRowContent = {
+					lsq_tooltip_row = {
+						blockoverride "first_element" { visible = yes }
+						blockoverride "not_first_element" { visible = no }
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_rgo_not_max_level_already').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_rgo_not_max_level_already').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "RGO is not max level already"
 						}
 					}
-					TooltipManualTableField = {
-						blockoverride "field_content" {
-							icon = {
-								using = lsq_tooltip_yes
-								visible = "[GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "RGO is fully employed or will be with one month of promotions"
-							}
-							expand = {}
+					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "RGO is fully employed or will be with one month of promotions"
 						}
 					}
-					# TooltipManualTableField = {
-					# 	blockoverride "field_content" {
-					# 		icon = {
-					# 			using = lsq_tooltip_yes
-					# 			visible = "[GetScriptedGui('lsq_has_enough_raw_materials_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-					# 		}
-					# 		icon = {
-					# 			using = lsq_tooltip_no
-					# 			visible = "[Not(GetScriptedGui('lsq_has_enough_raw_materials_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
-					# 		}
-					# 		text_single = {
-					# 			raw_text = "RGO has enough construction goods available"
-					# 		}
-					# 		expand = {}
+					# lsq_tooltip_row = {
+					# 	blockoverride "yes_visible" {
+					# 		visible = "[GetScriptedGui('lsq_has_enough_raw_materials_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+					# 	}
+					# 	blockoverride "no_visible" {
+					# 		visible = "[Not(GetScriptedGui('lsq_has_enough_raw_materials_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+					# 	}
+					# 	blockoverride "row_text" {
+					# 		raw_text = "RGO has enough construction goods available"
 					# 	}
 					# }
-					TooltipManualTableField = {
+					lsq_tooltip_row = {
 						visible = "[InDebugMode]"
-						blockoverride "field_content" {
-							background = {
-								using = bg_tooltip_debug
-							}
-							icon = {
-								using = lsq_tooltip_yes
+						background = {
+							using = bg_tooltip_debug
+						}
+						blockoverride "yes_visible" {
 								visible = "[GetScriptedGui('lsq_is_rgo_under_construction').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_rgo_under_construction').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "RGO isn't already under construction"
-							}
-							expand = {}
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_rgo_under_construction').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "RGO isn't already under construction"
 						}
 					}
-					TooltipManualTableField = {
+					lsq_tooltip_row = {
 						visible = "[InDebugMode]"
-						blockoverride "field_content" {
-							background = {
-								using = bg_tooltip_debug
-							}
-							icon = {
-								using = lsq_tooltip_yes
-								visible = "[GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-							}
-							icon = {
-								using = lsq_tooltip_no
-								visible = "[Not(GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
-							}
-							text_single = {
-								raw_text = "Country doesn't have enough gold available"
-							}
-							expand = {}
+						using = lsq_tooltip_row_is_odd
+						background = {
+							using = bg_tooltip_debug
+						}
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Country doesn't have enough gold available"
 						}
 					}
 				}
 			}
-			
+
 			TooltipTextBlock = {
 				visible = "[And(GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 				blockoverride "text" {
@@ -180,7 +159,7 @@ template lsq_RGO_Autoexpand_Tooltip {
 					}
 				}
 			}
-			
+
 			vbox = {
 				visible = "[InDebugMode]"
 				background = {
@@ -240,5 +219,5 @@ template lsq_RGO_Autoexpand_Tooltip {
 				}
 			}
 		}
-	}	
+	}
 }
