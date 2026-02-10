@@ -1,22 +1,27 @@
-widget = {
-	name = lsq_hidden_window
+basic_dialog = {
+	name = "lsq_hidden_window"
 	widgetid = lsq_hidden_window
 	layer = top
-	alpha = 1
 	visible = "[EqualTo_CFixedPoint('(CFixedPoint)0', '(CFixedPoint)0')]"
-	
-	basic_dialog = {
-		position = { -10000 1 }
-		# position = { 1000 1000 }
-		blockoverride "header_text" {
-			raw_text = "LSQ: Hidden Window"
-		}
-		vbox = {		
+	parentanchor = center
+
+	position = { -10000 1 }
+	blockoverride "header_text" {
+		raw_text = "LSQ: Hidden Window"
+	}
+	blockoverride "content" {
+		vbox = {
 			visible = "[GetScriptedGui('lsq_show_to_update_rgo_information').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			vbox = {
 				state = {
-					name = lsq_hidden_window_hide
+					name = lsq_hidden_window_init
 					trigger_on_create = yes
+					next = lsq_hidden_window_hide
+					on_finish = "[GetScriptedGui('lsq_hidden_window_init').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_hide')]"
+				}
+				state = {
+					name = lsq_hidden_window_hide
 					next = lsq_hidden_window_show
 					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_show')]"
 				}
@@ -27,12 +32,10 @@ widget = {
 					on_finish = "[GetScriptedGui('lsq_hidden_window_hide').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 					next = lsq_hidden_window_hide
 				}
-				layoutpolicy_vertical = expanding
 				datamodel = "[Player.GetProvinces]"
 				item = {
 					vbox = {
 						visible = "[GetScriptedGui('lsq_province_has_any_location_with_auto_expand_rgo').IsShown(GuiScope.SetRoot(Province.MakeScope).End)]"
-						layoutpolicy_vertical = expanding
 						# text_single = {
 						# 	autoresize = yes
 						# 	raw_text = "Province: [Province.GetName]"

@@ -22,25 +22,6 @@ lsq_set_auto_expand_for_rgo = {
 	}
 }
 
-lsq_province_has_any_location_with_auto_expand_rgo = {
-	is_shown = {
-		# Auto expand is on in at least one location in the province if this variable is NOT set. That way, if we haven't explicitly set the variable, it won't be skipped in the data updating.
-		NOT = { exists = var:lsq_auto_expand_rgo_off_in_all_locations }
-	}
-}
-
-lsq_update_all_provinces_auto_expand_rgo_information = {
-	effect = {
-		every_province = {
-			if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
-				set_variable = { name = lsq_auto_expand_rgo_off_in_all_locations value = yes }
-			} else = {
-				remove_variable = lsq_auto_expand_rgo_off_in_all_locations
-			}
-		}
-	}
-}
-
 lsq_is_able_to_auto_expand_rgo = {
 	is_shown = {
 		lsq_is_able_to_auto_expand_rgo = yes
