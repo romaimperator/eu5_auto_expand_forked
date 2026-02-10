@@ -70,6 +70,18 @@ template lsq_RGO_Autoexpand_Tooltip {
 						blockoverride "first_element" { visible = yes }
 						blockoverride "not_first_element" { visible = no }
 						blockoverride "yes_visible" {
+							visible = "[Not(GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+						}
+						blockoverride "no_visible" {
+							visible = "[GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Auto-expand is not paused"
+						}
+					}
+					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_rgo_not_max_level_already').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 						}
 						blockoverride "no_visible" {
@@ -80,7 +92,7 @@ template lsq_RGO_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						using = lsq_tooltip_row_is_odd
+						blockoverride "vertical_line_size" { size = { 3 41 } }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 						}
@@ -103,6 +115,8 @@ template lsq_RGO_Autoexpand_Tooltip {
 					# 	}
 					# }
 					lsq_tooltip_row = {
+						blockoverride "vertical_line_size" { size = { 3 41 } }
+						using = lsq_tooltip_row_is_odd
 						visible = "[InDebugMode]"
 						background = {
 							using = bg_tooltip_debug
@@ -119,7 +133,6 @@ template lsq_RGO_Autoexpand_Tooltip {
 					}
 					lsq_tooltip_row = {
 						visible = "[InDebugMode]"
-						using = lsq_tooltip_row_is_odd
 						background = {
 							using = bg_tooltip_debug
 						}
