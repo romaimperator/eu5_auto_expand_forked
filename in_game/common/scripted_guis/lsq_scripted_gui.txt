@@ -2,14 +2,12 @@ lsq_set_auto_expand_for_building = {
 	effect = {
 		save_scope_as = the_building
 		location = {
-		if = {
-			limit = {
-				is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building }
+			if = { limit = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building } }
+				remove_list_variable = { name = auto_expand_registered_buildings target = scope:the_building }
+			} else = {
+				add_to_variable_list = { name = auto_expand_registered_buildings target = scope:the_building }
 			}
-			remove_list_variable = { name = auto_expand_registered_buildings target = scope:the_building }
-		} else = {
-			add_to_variable_list = { name = auto_expand_registered_buildings target = scope:the_building }
-		} }
+		}
 	}
 }
 
@@ -18,19 +16,13 @@ lsq_check_for_auto_expand_when_upgrading_building = {
 		# given scope is the obsolete version of building that is being upgraded
 		save_scope_as = the_building
 		location = {
-			if = {
-				limit = {
-					is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building }
-				}
+			if = { limit = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building } }
 				remove_list_variable = { name = auto_expand_registered_buildings target = scope:the_building }
 				ordered_buildings_in_location = { # ordered_x always returns first scope in ordering, therefore we get the most recently built building
 					order_by = building_index
 					save_scope_as = the_new_building
 					location = {
-						if = {
-							limit = {
-								NOT = { is_target_in_variable_list =  { name = auto_expand_registered_buildings target = scope:the_new_building } }
-							}
+						if = { limit = { NOT = { is_target_in_variable_list =  { name = auto_expand_registered_buildings target = scope:the_new_building } } }
 							add_to_variable_list = { name = auto_expand_registered_buildings target = scope:the_new_building }
 						}
 					}
@@ -43,9 +35,8 @@ lsq_check_for_auto_expand_when_upgrading_building = {
 lsq_is_auto_expand_active_for_building = {
 	is_shown = {
 		save_temporary_scope_as = the_building
-		location = {
-		is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building }
-	} }
+		location = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building } }
+	}
 }
 
 # following functions are used for gui/tooltips

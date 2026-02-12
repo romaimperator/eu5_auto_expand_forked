@@ -130,7 +130,7 @@ types LocationWindowTypes
 			parentanchor = center
 			position = {0 0}
 		}
-		
+
 		background = {
 			using = bg_round_corners_alt_texture
 			margin = {-1 0}
@@ -146,7 +146,7 @@ types LocationWindowTypes
 			}
 		}
 
-		using = bg_tile_shadow		
+		using = bg_tile_shadow
 		using = bg_cabinet_card_frame
 		blockoverride "cabinet_card_shadow" {
 			margin_bottom = 2
@@ -166,7 +166,7 @@ types LocationWindowTypes
 				vbox = {
 					block "margin_size" {
 						margin_top = 23
-					}	
+					}
 					widget = {
 						layoutpolicy_horizontal = expanding
 						block "number_size" {
@@ -249,14 +249,14 @@ types LocationWindowTypes
 							enabled = "[LocationBuildingItem.IsPlayerBuilding]"
 							on_action = "[LocationBuildingItem.OpenBuildingView]"
 						}
-	
+
 						action_tooltip = {
 							click_type = right
 							click_mode = single
 							title = "BUILD_BUILDING_FROM_LOCATION"
 							on_action = "[SelectLocationToBuildDefault(LocationBuildingItem.GetBuilding.GetType)]"
 						}
-						
+
 						tooltipwidget = {
 							using = Building_tooltip
 						}
@@ -293,28 +293,28 @@ types LocationWindowTypes
 						tooltipwidget = {
 							using = Construction_tooltip
 						}
-	
+
 						icon = {
 							texture = "gfx/interface/pie_charts/pie_chart_alpha_80.dds"
 							size = { 97% 97% }
 							parentanchor = center
 							color = { 0 0 0 1 }
 						}
-	
+
 						pieslice_no_highlight = {
 							texture = "gfx/interface/pie_charts/pie_chart_alpha_80.dds"
 							value = "[LocationBuildingItem.GetConstruction.GetProgress]"
 							color = { 0.01 0.6 0.9 1 }
 							alpha = 0.8
 						}
-	
+
 						pieslice_no_highlight = {
 							texture = "gfx/interface/pie_charts/pie_chart_alpha_80.dds"
 							value = "[Subtract_float('(float)100.0', LocationBuildingItem.GetConstruction.GetProgress)]"
 							color = { 0.0 0.1 0.1 1 }
 							alpha = 0.8
 						}
-	
+
 						icon = {
 							size = { 17 17 }
 							parentanchor = center
@@ -331,20 +331,20 @@ types LocationWindowTypes
 						datacontext = "[LocationBuildingItem.GetBuilding]"
 						using = bg_circle
 					}
-					
+
 					icon = {
 						parentanchor = bottom|left
 						texture = "gfx/interface/icons/alerts_icons/unprofitable.dds"
 						size = { 12 12 }
 						position = { 0 -2 }
 						visible = "[And3(
-							LessThan_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'), 
+							LessThan_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'),
 							Not(Building.IsSubsidized),
 							Not(LocationBuildingItem.IsLackingInput)
 						)]"
 						datacontext = "[LocationBuildingItem.GetBuilding]"
 						using = bg_circle
-					}		
+					}
 
 					icon = {
 						parentanchor = bottom|left
@@ -388,7 +388,7 @@ types LocationWindowTypes
 					}
 					background = {
 						texture = "gfx/interface/component_tiles/hud_corners/circle_frame.dds"
-						
+
 						modify_texture = {
 							using = color_new_gold_texture
 						}
@@ -405,7 +405,7 @@ types LocationWindowTypes
 					}
 				}
 			}
-				
+
 			# plus minus
 			widget = {
 				layoutpolicy_horizontal = expanding
@@ -437,7 +437,7 @@ types LocationWindowTypes
 									on_action = "[LocationBuildingItem.Destroy]"
 									on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
 								}
-			
+
 								action_tooltip = {
 									click_mode = single
 									click_type = left
@@ -471,7 +471,7 @@ types LocationWindowTypes
 							}
 						}
 					}
-	
+
 					button_square_plus = {
 						layoutpolicy_horizontal = expanding
 						block "square_icon_out_size_plus" {
@@ -492,30 +492,30 @@ types LocationWindowTypes
 							title = "CONSTRUCT_BUILDING_BUTTON"
 							description = "[LocationBuildingItem.GetExpandBuildingInfo]"
 							enabled = "[LocationBuildingItem.CanExpandBuilding]"
-	
+
 							on_action = "[LocationBuildingItem.ExpandBuilding]"
 						}
 						action_tooltip = {
 							click_type = left
 							click_mode = single
 							click_modifier = ctrl
-	
+
 							title = "BUILDING_IN_LOCATION_ACTION_CTRL"
 							description = "[LocationBuildingItem.GetExpandBuildingInfo]"
 							enabled = "[LocationBuildingItem.CanExpandBuilding]"
-	
+
 							on_action = "[ExpandBuildingCtrl(LocationBuildingItem.GetBuilding.Self)]"
 						}
-	
+
 						action_tooltip = {
 							click_type = left
 							click_mode = single
 							click_modifier = shift
-	
+
 							title = "BUILDING_IN_LOCATION_ACTION_SHIFT"
 							description = "[LocationBuildingItem.GetExpandBuildingInfo]"
 							enabled = "[LocationBuildingItem.CanExpandBuilding]"
-	
+
 							on_action = "[ExpandBuildingShift(LocationBuildingItem.GetBuilding.Self)]"
 						}
 						tooltipwidget = { using = construct_building_in_location_tt }
@@ -595,7 +595,7 @@ types LocationWindowTypes
 		block "location_buildings_tooltip_datamodel" {
 			datamodel = "[LocationView.GetLocationBuildings(PopType.Self)]"
 		}
-		
+
 		item = {
 			widget = {
 				size = { 65 89 }
@@ -620,7 +620,7 @@ types LocationWindowTypes
 							parentanchor = center
 							position = {0 0}
 						}
-					
+
 						blockoverride "number_size" {
 							size = { -1 20 }
 						}
@@ -629,7 +629,7 @@ types LocationWindowTypes
 						}
 						blockoverride "square_icon_out_size_plus" {
 							size = { -1 18 }
-						}	
+						}
 						blockoverride "square_icon_out_size_minus" {
 							size = { -1 18 }
 						}
@@ -645,7 +645,7 @@ types LocationWindowTypes
 		}
 	}
 
-	type garrison_sortie_button = header_action_button_left {		
+	type garrison_sortie_button = header_action_button_left {
 		blockoverride "icon_texture" {
 			texture = "gfx/interface/buttons/flats/garrison.dds"
 		}
@@ -675,15 +675,15 @@ types LocationWindowTypes
 				block "location_card_margins" {
 					margin = {5 5}
 					margin_right = 5
-				}	
+				}
 
 				# TOP CONTENT
 				hbox = {
 					using = layoutpolicy_expanding
 					# layoutstretchfactor_vertical = 5
 					margin_left = 1
-					spacing = 2 
-					
+					spacing = 2
+
 					# UPGRADE RANK
 					widget = {
 						size = { 33 33 }
@@ -751,7 +751,7 @@ types LocationWindowTypes
 								blockoverride "header_button_frame_inner" {visible = no}
 								blockoverride "header_button_icon_size" { size = { 31 31 } }
 								blockoverride "header_button_text_layout" {}
-								
+
 								blockoverride "icon_texture" {
 									texture = "[GetIntegrationLevelIcon(Location.GetIntegrationLevel)]"
 									size = {55% 55%}
@@ -765,7 +765,7 @@ types LocationWindowTypes
 								tooltipwidget = {
 									using = location_core_tooltip
 								}
-								
+
 								# BEING INTEGRATED
 								onclick = "[OpenLateralViewWithParams('government', 'tabcontent = cabinet')]"
 								piechart = {
@@ -775,30 +775,30 @@ types LocationWindowTypes
 									size = { 20 20 }
 									parentanchor = center
 									visible = "[And(Not(Location.IsOccupied), And(Location.HasOwner, Location.IsCurrentlyBeingIntegrated))]"
-	
+
 									pieslice = {
 										texture = "gfx/interface/pie_charts/pie_chart_alpha_80_green.dds"
 										value = "[Location.GetIntegrationProgressFloat]"
 										color = { 1 1 1 1 }
 										alwaystransparent = yes
 									}
-	
+
 									pieslice = {
 										texture = "gfx/interface/pie_charts/pie_chart_alpha_80_red.dds"
 										value = "[Subtract_float('(float)100.0', Location.GetIntegrationProgressFloat)]"
 										color = { 1 1 1 1 }
 										alwaystransparent = yes
 									}
-	
+
 									icon = {
 										size = { 58% 58% }
 										parentanchor = center
 										texture = "[GetIntegrationLevelIcon(Location.GetIntegrationLevel)]"
 										alwaystransparent = yes
-									}								
+									}
 								}
 							}
-							
+
 
 							# INTEGRATED
 							icon = {
@@ -1067,7 +1067,7 @@ types LocationWindowTypes
 							spacing = 5
 							widget = {
 								size = { 28 28 }
-								
+
 
 								tooltipwidget = {
 									using = AverageSatisfaction_tooltip
@@ -1531,7 +1531,7 @@ types LocationWindowTypes
 									size = { 20 20 }
 									texture = "gfx/interface/icons/flat_icons/building_panel/build.dds"
 								}
-								
+
 							}
 						}
 					}
@@ -1572,7 +1572,7 @@ types LocationWindowTypes
 						TooltipTextBlock = {
 							blockoverride "text" {
 								text = "AVAILABLE_ARMY_SLOT"
-							}									
+							}
 						}
 					}
 				}
@@ -1610,14 +1610,14 @@ types LocationWindowTypes
 						TooltipTextBlock = {
 							blockoverride "text" {
 								text = "AVAILABLE_NAVY_SLOT"
-							}									
+							}
 						}
 					}
 				}
 			}
 		}
 	}
-		
+
 	type location_card_right_buttons = hbox {
 		layoutpolicy_vertical = expanding
 		margin = {5 5}
@@ -2189,36 +2189,36 @@ template location_fort_status {
 			alwaystransparent = yes
 			texture = "gfx/interface/icons/flat_icons/no_fort.dds"
 		}
-	
+
 		piechart = {
 			visible = "[Location.HasFort]"
 			size = { 21 21 }
 			alwaystransparent = yes
-	
+
 			pieslice_no_highlight = {
 				texture = "gfx/interface/pie_charts/pie_chart_alpha_80_green.dds"
 				value = "[FixedPointToFloat(Location.GetGarrisonPercentage)]"
 				color = { 1 1 1 1 }
 				alwaystransparent = yes
 			}
-	
+
 			pieslice_no_highlight = {
 				texture = "gfx/interface/pie_charts/pie_chart_alpha_80_red.dds"
 				value = "[Subtract_float('(float)1.0', FixedPointToFloat(Location.GetGarrisonPercentage))]"
 				color = { 1 1 1 1 }
 				alwaystransparent = yes
 			}
-	
+
 			icon = {
 				size = { 62% 62% }
 				parentanchor = center
 				texture = "[GetConceptTexture('fort')]"
 				texture_density = 2
 			}
-	
+
 			using = bg_circle_piechart
 		}
-	
+
 		text_single = {
 			visible = "[And(Location.HasSiege, GreaterThan_int32(Location.GetFortLevel, '(int32)0' ))]"
 			text = "[Location.GetRomanFortLevel]"
@@ -2493,7 +2493,7 @@ template location_background {
 		visible = "[And4(
 			Not(Location.GetOwner.IsPlayer),
 			Not(GetPlayer.IsEnemy(Location.GetOwner.Self)),
-			Not(Location.GetOwner.IsAllied), 
+			Not(Location.GetOwner.IsAllied),
 			IsInDiplomaticRange(Location.GetOwner.Self))]"
 		using = color_bg_brown_texture
 		alpha = 0.8
@@ -2535,7 +2535,7 @@ lateralview = {
 			parentanchor = right|vcenter
 			size = { 40 40 }
 			position = { -30 0 }
-			
+
 			button = {
 				parentanchor = right|vcenter
 
@@ -2564,7 +2564,7 @@ lateralview = {
 			blockoverride "window_header_alt_color_texture"{
 				using = color_default_brown_texture
 			}
-			
+
 			blockoverride "header_text_object" {
 				hbox = {
 					button = {
@@ -2878,9 +2878,9 @@ lateralview = {
 										# raw_text = "[Add_float(FixedPointToFloat(Province.GetFoodFromMarket), FixedPointToFloat(Province.GetMonthlyFood))|+=2]"
 										visible = "[GreaterThanOrEqualTo_float(
 											Add_float(
-												FixedPointToFloat(Province.GetFoodFromMarket), 
+												FixedPointToFloat(Province.GetFoodFromMarket),
 												FixedPointToFloat(Province.GetMonthlyFood)
-											), 
+											),
 											'(float)0'
 										)]"
 										raw_text = "[Province.GetMonthlyFood|2H]"
@@ -2892,9 +2892,9 @@ lateralview = {
 									text_single = { ### PROVINCE FOOD (RED IF STOCKPILE IS DECREASING)
 										visible = "[LessThan_float(
 											Add_float(
-												FixedPointToFloat(Province.GetFoodFromMarket), 
+												FixedPointToFloat(Province.GetFoodFromMarket),
 												FixedPointToFloat(Province.GetMonthlyFood)
-											), 
+											),
 											'(float)0'
 										)]"
 										raw_text = "[Province.GetMonthlyFood|2R]"
@@ -2984,12 +2984,12 @@ lateralview = {
 					size = { 100% 40 }
 					datacontext = "[LocationView.GetLocation]"
 					visible = "[Location.IsOccupied]"
-					tooltipwidget = {										
+					tooltipwidget = {
 						ContextualTooltipType = {
-							blockoverride "title_text" {								
+							blockoverride "title_text" {
 								text = "game_concept_occupied"
 							}
-							
+
 							blockoverride "title_icon" {
 								country_flag_small = {
 									size = { 36 24 }
@@ -3011,7 +3011,7 @@ lateralview = {
 								}
 							}
 						}
-					}	
+					}
 					background = {
 						texture = "gfx/interface/colors/black.dds"
 						alpha = 1
@@ -3078,7 +3078,7 @@ lateralview = {
 										color = {0.0 0.0 0.0 1.0}
 										alpha = 0.3
 									}
-								}	
+								}
 							}
 
 							text_single = {
@@ -3089,13 +3089,13 @@ lateralview = {
 								using = Font_Type_Headers
 								using = Font_Size_Medium
 							}
-						}		
+						}
 					}
 				}
-			
+
 				vbox = {
 					expand = {}
-					
+
 					# IOs & PERIPHORA
 					widget = {
 						layoutpolicy_horizontal = expanding
@@ -3152,7 +3152,7 @@ lateralview = {
 												texture_density = 2
 											}
 											visible = "[And3(UIAction.IsVisible, InternationalOrganization.CanOwnLocations, Not(InternationalOrganization.IsLocationOwned(LocationView.GetLocation)))]"
-											
+
 											title = "add_location_to_international_organization"
 											actor = "[LocationView.GetPlayer]"
 											parameter = {
@@ -3169,14 +3169,14 @@ lateralview = {
 													blockoverride "title_icon_texture" {
 														texture = "[InternationalOrganization.GetIcon]"
 													}
-												
+
 													blockoverride "title_text" {
 														text = "ADD_TO_IO_TOOLTIP_T"
 													}
 													blockoverride "concept_link" {
 														text = "[international_organization|e]"
 													}
-													
+
 													blockoverride "tooltip_content" {
 														TooltipTextBlock = {
 															visible = "[Not(StringIsEmpty(UIAction.GetEffects))]"
@@ -3188,7 +3188,7 @@ lateralview = {
 										}
 									}
 								}
-								
+
 								# REMOVE FROM IO
 								hbox = {
 									spacing = 3
@@ -3208,7 +3208,7 @@ lateralview = {
 												texture_density = 2
 											}
 											visible = "[And3(UIAction.IsVisible, InternationalOrganization.CanOwnLocations, InternationalOrganization.IsLocationOwned(LocationView.GetLocation))]"
-											
+
 											title = "remove_location_from_international_organization"
 											actor = "[GetPlayer]"
 											parameter = {
@@ -3225,14 +3225,14 @@ lateralview = {
 													blockoverride "title_icon_texture" {
 														texture = "[InternationalOrganization.GetIcon]"
 													}
-												
+
 													blockoverride "title_text" {
 														text = "REMOVE_FROM_IO_TOOLTIP_T"
 													}
 													blockoverride "concept_link" {
 														text = "[international_organization|e]"
 													}
-													
+
 													blockoverride "tooltip_content" {
 														TooltipTextBlock = {
 															visible = "[Not(StringIsEmpty(UIAction.GetEffects))]"
@@ -3240,7 +3240,7 @@ lateralview = {
 														}
 
 														TooltipTextBlock = {
-															visible = "[InternationalOrganization.GetOnRemovedLocation(LocationView.GetLocation)]"										
+															visible = "[InternationalOrganization.GetOnRemovedLocation(LocationView.GetLocation)]"
 															blockoverride "text" { text = "[InternationalOrganization.GetOnRemovedLocation(LocationView.GetLocation)]" }
 														}
 													}
@@ -4119,11 +4119,11 @@ lateralview = {
 											name = "location_road"
 											size = { 125 40}
 											datacontext = "[LocationView.GetLocation]"
-											tooltipwidget = { 
+											tooltipwidget = {
 													blockoverride "shift_left_extra" {
 														replacement_shift_item = {}
 													}
-												BasicFunctionalTooltip = {} 
+												BasicFunctionalTooltip = {}
 											}
 
 											onmousehierarchyenter = "[LocationView.OnMouseEnterBuildRoadButton]"
@@ -4373,7 +4373,7 @@ lateralview = {
 														}
 													}
 												}
-												
+
 												# TAX BASE
 												widget = {
 													name = "location_tax_base"
@@ -4427,7 +4427,7 @@ lateralview = {
 															size = {37 37}
 															parentanchor = right|vcenter
 															using = bg_circle_piechart
-	
+
 															# TAX BASE CHART
 															# icon_pie_left = {
 															# 	parentanchor = center
@@ -4438,7 +4438,7 @@ lateralview = {
 															# 		datacontext = "[LocationPopulationChart.GetPopsPiechartWidget]"
 															# 		datamodel = "[PopsPiechartWidget.GetTax]"
 															# 	}
-	
+
 															# 	###Slices and Icon
 															# 	blockoverride "SliceTooltip" {}
 															# 	blockoverride "SliceValue" { value = "[PopTaxItem.GetPercentage]" }
@@ -4826,7 +4826,7 @@ lateralview = {
 													}
 												}
 											}
-											
+
 											hbox = {
 												margin = {3 0}
 												piechart = {
@@ -4838,28 +4838,28 @@ lateralview = {
 														using = LocationBuildingLevels_tooltip
 													}
 													using = piechart_angles
-	
+
 													pieslice_no_highlight = {
-														
+
 														texture = "gfx/interface/pie_charts/pie_chart_alpha_80.dds"
 														value = "[LocationView.GetLocation.GetBuildingLevelsPercentage]"
 														color = { 1 1 1 1 }
 													}
-	
+
 													pieslice_no_highlight = {
 														texture = "gfx/interface/pie_charts/pie_chart_alpha_80_green.dds"
 														value = "[Subtract_float('(float)100.0', LocationView.GetLocation.GetBuildingLevelsPercentage)]"
 														color = { 1 1 1 1 }
 													}
 													using = bg_circle_piechart
-	
+
 													icon = {
 														size = { 59% 59% }
 														parentanchor = center
 														texture = "[GetConceptTexture('supported_building_levels')]"
 													}
 												}
-												
+
 												piechart = {
 													visible = "[Location.HasTooManyBuildingLevel]"
 													using = bg_circle
@@ -4869,16 +4869,16 @@ lateralview = {
 														using = LocationBuildingLevels_tooltip
 													}
 													using = piechart_angles
-	
-							
+
+
 													pieslice_no_highlight = {
-														
+
 														texture = "gfx/interface/pie_charts/pie_chart_alpha_80_red.dds"
 														value = 100
 														color = { 1 1 1 1 }
 													}
 													using = bg_circle_piechart
-	
+
 													icon = {
 														size = { 59% 59% }
 														parentanchor = center
@@ -4907,12 +4907,12 @@ lateralview = {
 												hbox = {
 													spacing = 7
 													margin_left = 5
-													
+
 													widget = {
 														size = { 25 25 }
-														
+
 														using = bg_circle_piechart
-	
+
 														icon = {
 															size = { 80% 80% }
 															parentanchor = center
@@ -5324,7 +5324,7 @@ lateralview = {
 																			value = "[FixedPointToFloat(Location.GetUnEmployedPercentageWithConstruction(PopType.Self))]"
 																			direction = horizontal
 																		}
-	
+
 																		progressbar = {
 																			visible = "[And(LocationView.GetPopTypeItem(PopType.Self).HasPop, Not(GreaterThan_CFixedPoint(Location.GetExpectedUnEmployedValue(PopType.Self), '(CFixedPoint)0')))]"
 																			layoutpolicy_horizontal = expanding
@@ -5373,18 +5373,18 @@ lateralview = {
 																		texture = "[GetConceptTexture('buildings')]"
 																		texture_density = 2
 																	}
-																	
+
 																	tooltipwidget = {
 																		ContextualTooltipType = {
 																			datacontext = "[LocationView.GetLocation]"
 																			blockoverride "title_text" {
 																				text = "LOCATION_POPTYPE_BUILDINGS"
 																			}
-		
+
 																			blockoverride "concept_link" {
 																				text = "[buildings|e]"
 																			}
-		
+
 																			blockoverride "title_icon" {
 																				icon = {
 																					using = tooltip_title_icon_size
@@ -5394,14 +5394,14 @@ lateralview = {
 																						blend_mode = overlay
 																						alpha = 0.7
 																					}
-		
+
 																					modify_texture = {
 																						texture = "gfx/interface/buttons/buttons_texture.dds"
 																						texture_density = 2
 																						blend_mode = overlay
 																						alpha = 0.6
 																					}
-		
+
 																					glow = {
 																						name = "drop_shadow"
 																						glow_radius = 3
@@ -5410,14 +5410,14 @@ lateralview = {
 																					}
 																				}
 																			}
-		
+
 																			blockoverride "tooltip_content" {
 																				TooltipListBase = {
 																					TooltipListScrollArea = {
 																						blockoverride "block_scrollarea" {
 																							maximumsize = { -1 440 }
 																						}
-		
+
 																						blockoverride "scrollarea_content" {
 																							location_buildings_tooltip = {
 																								blockoverride "location_buildings_tooltip_datamodel" {
@@ -5433,8 +5433,8 @@ lateralview = {
 																			}
 																		}
 																	}
-																}	
-																
+																}
+
 																extra_list = {
 																	visible = "[GreaterThan_int32(LocationView.GetNumPopTypeBuildings(PopType.Self), '(int32)9')]"
 																	blockoverride "extra_list_text_content" {
@@ -5444,30 +5444,30 @@ lateralview = {
 																		texture = "gfx/interface/icons/flat_icons/balance/foreign_buildings.dds"
 																		texture_density = 2
 																	}
-																	
+
 																	tooltipwidget = {
 																		ContextualTooltipType = {
 																			blockoverride "title_text" {
 																				text = "game_concept_foreign_buildings"
 																			}
-			
+
 																			blockoverride "concept_link" {
 																				text = "[foreign_buildings|e]"
 																			}
-			
+
 																			blockoverride "title_icon" {
 																				icon = {
 																					using = tooltip_title_icon_size
 																					texture = "gfx/interface/icons/flat_icons/balance/foreign_buildings.dds"
 																				}
 																			}
-			
+
 																			blockoverride "tooltip_content" {
 																				TooltipListScrollArea = {
 																					blockoverride "block_scrollarea" {
 																						maximumsize = { -1 440 }
 																					}
-			
+
 																					blockoverride "scrollarea_content" {
 																						location_buildings_tooltip = {}
 																					}
@@ -5477,23 +5477,23 @@ lateralview = {
 																	}
 																}
 															}
-				
+
 														}
-													}	
+													}
 												}
 											}
 										}
 									}
-									
+
 									# MARKET
 									widget = {
 										layoutpolicy_horizontal = expanding
 										size = { -1 70 }
-									
+
 										hbox = {
 											using = bg_market_card
 											using = bg_cabinet_card_frame
-									
+
 											market_card = {
 												datacontext = "[LocationView.GetLocation]"
 												datacontext = "[LocationView.GetLocation.GetMarket]"
@@ -6297,7 +6297,7 @@ lateralview = {
 										visible = "[Or3(Location.HasOwner, LocationView.HasBuildingBasedOwners, LocationView.HasPopBasedOwners)]"
 									}
 
-									blockoverride "header_size" { 
+									blockoverride "header_size" {
 										visible = "[Location.HasOwner]"
 										# size = { 75 -1 } # this is the width needed for showing the flag of owner as well
 										size = { 40 -1 }
@@ -6412,7 +6412,7 @@ lateralview = {
 												# 		datacontext = "[Location.GetOwner]"
 												# 	}
 												# }
-												
+
 												expand = {}
 											}
 										}
@@ -6426,7 +6426,7 @@ lateralview = {
 											visible = "[Not(IsDataModelEmpty(Location.GetCores))]"
 											# layoutpolicy_vertical = expanding
 											margin_right = 2
-											
+
 											hbox = {
 												using = bg_text_mask_container_brown
 												margin = {2 2}
@@ -6628,8 +6628,8 @@ lateralview = {
 											}
 										}
 									}
-									
-									
+
+
 
 									# blockoverride "location_conditions_card_item" {
 									# 	hbox = {
@@ -6890,7 +6890,7 @@ lateralview = {
 																	blockoverride "concept_link" {
 																		text = [levy|E]
 																	}
-																	blockoverride "title_button" { 
+																	blockoverride "title_button" {
 																		hint_button = {
 																			action_tooltip = {
 																				title = "OPEN_HINT"
@@ -7008,7 +7008,7 @@ lateralview = {
 												}
 
 												hbox = {
-													visible = "[And(GreaterThan_int32(LocationView.GetAvailableArmySlots, '(int32)0' ), LessThan_int32(GetDataModelSize(LocationView.GetInProgressArmyConstructions), '(int32)8'))]" 
+													visible = "[And(GreaterThan_int32(LocationView.GetAvailableArmySlots, '(int32)0' ), LessThan_int32(GetDataModelSize(LocationView.GetInProgressArmyConstructions), '(int32)8'))]"
 													datamodel = "[DataModelRepeatedItem(LocationView.GetVisibleAvailableArmySlots('(int32)5'))]"
 													item = {
 														army_slot = {}
@@ -7358,7 +7358,7 @@ lateralview = {
 																		text = [levy|E]
 																	}
 
-																	blockoverride "title_button" { 
+																	blockoverride "title_button" {
 																		hint_button = {
 																			action_tooltip = {
 																				title = "OPEN_HINT"
@@ -7487,7 +7487,7 @@ lateralview = {
 												}
 
 												hbox = {
-													visible = "[And(GreaterThan_int32(LocationView.GetAvailableNavySlots, '(int32)0' ), LessThan_int32(GetDataModelSize(LocationView.GetInProgressNavyConstructions), '(int32)8'))]" 
+													visible = "[And(GreaterThan_int32(LocationView.GetAvailableNavySlots, '(int32)0' ), LessThan_int32(GetDataModelSize(LocationView.GetInProgressNavyConstructions), '(int32)8'))]"
 													datamodel = "[DataModelRepeatedItem(LocationView.GetVisibleAvailableNavySlots('(int32)5'))]"
 													item = {
 														navy_slot = {}
@@ -7674,7 +7674,7 @@ lateralview = {
 									spacing = 10
 									text_single = {
 										fontsize = 13
-										align = right|nobaseline	
+										align = right|nobaseline
 										text = "[LocationView.GetLocation.GetPopGrowth|2+=%]"
 									}
 									text_single = {
@@ -7690,9 +7690,9 @@ lateralview = {
 										tagtooltip_enabled = yes
 									}
 								}
-								
+
 							}
-				
+
 							expand = {}
 
 							# DEMOGRAPHY SHORTCUT
@@ -7769,7 +7769,7 @@ lateralview = {
 							}
 
 							expand = {}
-				
+
 							subheader_unified_icon = {
 								blockoverride "mirror_layout" { righttoleft = yes }
 								tooltipwidget = {
@@ -7787,7 +7787,7 @@ lateralview = {
 									spacing = 10
 									text_single = {
 										fontsize = 13
-										align = right|nobaseline	
+										align = right|nobaseline
 										text = "[LocationView.GetLocation.GetLocalMigrationAttraction]"
 									}
 									text_single = {
