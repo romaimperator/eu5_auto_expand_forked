@@ -1,85 +1,46 @@
-types lsq_auto_expand {
-    type lsq_auto_expand_checkbutton = checkbutton {
-		texture = "gfx/interface/buttons/checkbox_auto_expand.dds"
-		texture_density = 2
-		frame_grid = { 2 1 }
-		size = { 30 30 }
-
-		background = {
-			texture = "gfx/interface/buttons/checkbox_bg.dds"
-			texture_density = 2
-			using = color_dark_blue
-			glow = {
-				name = "green_glow"
-				glow_radius = 5
-				alpha = 1.0
-				block "glow_color" { color = {0.0 1.0 0.0 1.0} } # default color is green
-				block "glow_visible" { visible = no }
-			}
-		}
-	}
-
-	# used for construction menu in location (production_lateralview.gui)
-	type lsq_auto_expand_widget = widget {
-		size = { 25 25 }
-		lsq_auto_expand_production_buildings = {}
-		lsq_auto_expand_non_production_multi_level = {}
-	}
-
-	type lsq_auto_expand_production_buildings = widget {
-		visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing)]"
+types lsq_auto_expand_non_production_multi_level_types {
+	type lsq_auto_expand_non_production_multi_level = widget {
+		visible = "[And3(Not(Building.GetType.IsProducing), BuildingItem.HasBuildings, Building.GetType.IsMultipleLevels)]"
 		size = { 100% 100% }
-		lsq_auto_expand_production_buildings_checkbuttons = {}
+		lsq_auto_expand_non_production_multi_level_buildings_checkbuttons = {}
 	}
 
-	# used in global construction menu (build_location_lateralview.gui)
-	# weird quirk with these: blockoverride "glow_visible" needs an extra AND check for building existing to I think only evaluate the 2 condition if building exits
-	# to not throw an error in the scripted GUI as building is NULL/invalid. Somehow doesnt apply to "checked =" tho
-	type lsq_auto_expand_widget_global_construction = widget {
-		datacontext = "[LocationToBuildItem.GetBuilding]"
-		size = { 25 25 }
-		lsq_auto_expand_production_buildings_global_construction = {}
-		lsq_auto_expand_non_production_multi_level_global_construction = {}
-	}
-
-	type lsq_auto_expand_production_buildings_global_construction = widget {
-		visible = "[And(ObjectsEqual(Building.GetOwner, Player.Self), Building.GetType.IsProducing)]"
+	type lsq_auto_expand_non_production_multi_level_global_construction = widget {
+		visible = "[And3(Not(Building.GetType.IsProducing), ObjectsEqual(Building.GetOwner, Player.Self), Building.GetType.IsMultipleLevels)]"
 		size = { 100% 100% }
-		lsq_auto_expand_production_buildings_checkbuttons = {}
+		lsq_auto_expand_non_production_multi_level_buildings_checkbuttons = {}
 	}
 
-	type lsq_auto_expand_production_buildings_checkbuttons = widget {
+	type lsq_auto_expand_non_production_multi_level_buildings_checkbuttons = widget {
 		size = { 100% 100% }
 
 		# button with green glow
 		lsq_auto_expand_checkbutton = {
-			visible = "[GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+			visible = "[GetScriptedGui('lsq_is_non_production_multi_level_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 			size = { 100% 100% }
-			enabled = "[CanSubsidizeBuilding(Building.Self)]"
-			tooltipwidget = { using = lsq_Building_Autoexpand_Tooltip }
-			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]" }
-			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+			tooltipwidget = { using = lsq_Non_Production_Multi_Level_Building_Autoexpand_Tooltip }
+			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_non_production_multi_level_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_non_production_multi_level_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]" }
+			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_non_production_multi_level_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 
 		# button with red glow
 		lsq_auto_expand_checkbutton = {
-			visible = "[Not(GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+			visible = "[Not(GetScriptedGui('lsq_is_non_production_multi_level_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 			size = { 100% 100% }
 			blockoverride "glow_color" { color = {1.0 0.0 0.0 1.0} } # override default color to red
-			enabled = "[CanSubsidizeBuilding(Building.Self)]"
-			tooltipwidget = { using = lsq_Building_Autoexpand_Tooltip }
-			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]" }
-			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+			tooltipwidget = { using = lsq_Non_Production_Multi_Level_Building_Autoexpand_Tooltip }
+			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_non_production_multi_level_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_non_production_multi_level_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]" }
+			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_non_production_multi_level_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 	}
 
-	type lsq_production_building_plus_button = button_square_plus {
+	type lsq_non_production_multi_level_building_plus_button = button_square_plus {
 		size = { 15 15 }
-		visible = "[And(BuildingCandidate.GetBuilding.CanPlayerUpgrade, And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing))]"
+		visible = "[And(BuildingCandidate.GetBuilding.CanPlayerUpgrade, And3(Not(Building.GetType.IsProducing), BuildingItem.HasBuildings, Building.GetType.IsMultipleLevels))]"
 		blockoverride "square_icon_size" {
 			size = {13 13}
 		}
@@ -98,7 +59,7 @@ types lsq_auto_expand {
 			cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 			on_action = "[UpgradeBuildingDefault(BuildingType.Self, Location.Self)]"
 			# lsq upgrade check
-			on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+			on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_upgrading_non_production_multi_level_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 		}
 
 		action_tooltip = {
@@ -111,7 +72,7 @@ types lsq_auto_expand {
 			description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 			on_action = "[UpgradeBuildingCtrl(BuildingType.Self, Location.Self)]"
 			# lsq upgrade check
-			on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+			on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_upgrading_non_production_multi_level_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 			enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 		}
 
@@ -125,7 +86,7 @@ types lsq_auto_expand {
 			description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 			on_action = "[UpgradeBuildingShift(BuildingType.Self, Location.Self)]"
 			# lsq upgrade check
-			on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+			on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_upgrading_non_production_multi_level_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 			enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 		}
 
@@ -135,17 +96,16 @@ types lsq_auto_expand {
 	}
 }
 
-template lsq_tooltip_yes {
-	texture = "gfx/interface/icons/text_icons/trigger_yes.dds"
-	size = { 25 25 }
+template lsq_is_non_production_multi_level_building_able_to_auto_expand_visible = {
+	visible = "[GetScriptedGui('lsq_is_non_production_multi_level_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 }
 
-template lsq_tooltip_no {
-	texture = "gfx/interface/icons/text_icons/trigger_no.dds"
-	size = { 25 25 }
+template lsq_is_non_production_multi_level_building_able_to_auto_expand_not_visible = {
+	visible = "[Not(GetScriptedGui('lsq_is_non_production_multi_level_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 }
 
-template lsq_Building_Autoexpand_Tooltip {
+
+template lsq_Non_Production_Multi_Level_Building_Autoexpand_Tooltip {
 	ContextualTooltipType = {
 		blockoverride "title_icon" {
 			lsq_auto_expand_checkbutton = {
@@ -185,17 +145,6 @@ template lsq_Building_Autoexpand_Tooltip {
 					lsq_tooltip_row = {
 						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('lsq_is_building_profitable').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-						}
-						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('lsq_is_building_profitable').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
-						}
-						blockoverride "row_text" {
-							raw_text = "Building is profitable"
-						}
-					}
-					lsq_tooltip_row = {
-						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_open').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
 						blockoverride "no_visible" {
@@ -206,7 +155,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_fully_employed').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -218,6 +166,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_not_lacking_goods').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -229,7 +178,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "vertical_line_size" { size = { 3 41 } }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_location_pops_available').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
@@ -242,6 +190,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "vertical_line_size" { size = { 3 41 } }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_location_under_building_limit').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
@@ -254,7 +203,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -266,6 +214,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_one_indent = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_not_max_level_already_and_not_obsolete').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -277,7 +226,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_two_indent = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_not_max_level_already').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -289,6 +237,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_two_indent = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "vertical_line_size" { size = { 3 41 } }
 						blockoverride "yes_visible" {
 							visible = "[Not(GetScriptedGui('lsq_is_building_obsolete').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
@@ -301,7 +250,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_one_indent = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "vertical_line_size" { size = { 3 115 } }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_upgradeable_and_can_be_upgraded_by_owner_and_auto_expand_upgrade_is_on').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
@@ -314,6 +262,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_two_indent = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_upgradeable').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -325,7 +274,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_two_indent = {
-						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_building_can_be_upgraded_by_owner').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -337,6 +285,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row_two_indent = {
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_should_auto_expand_upgrade_buildings').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						}
@@ -351,7 +300,7 @@ template lsq_Building_Autoexpand_Tooltip {
 			}
 
 			TooltipTextBlock = {
-				visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+				visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_non_production_multi_level_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('lsq_is_non_production_multi_level_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 				blockoverride "text" {
 					raw_text = "Building will expand if at least [GuiScope.SetRoot(Building.MakeScope).ScriptValue('lsq_expected_gold_available_for_building')|0]@gold! is available"
 				}
@@ -363,7 +312,7 @@ template lsq_Building_Autoexpand_Tooltip {
 			}
 
 			TooltipTextBlock = {
-				visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]"
+				visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_non_production_multi_level_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('lsq_is_non_production_multi_level_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]"
 				blockoverride "text" {
 					raw_text = "Building will not expand; conditions are not met"
 				}

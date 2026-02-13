@@ -66,6 +66,63 @@ lsq_auto_expand_buildings = {
 					}
 				}
 			}
+
+			every_controlled_location = {
+				limit = { has_variable_list = auto_expand_registered_non_production_multi_level_buildings }
+				# debug_log = "Auto expanding non-production multi-level buildings [THIS.GetLocation.GetNameWithNoTooltip]"
+				every_in_list = {
+					variable = auto_expand_registered_non_production_multi_level_buildings
+					# debug_log = "Checking building [THIS.GetBuilding.GetType.GetNameWithNoTooltip]"
+					save_scope_as = the_building_for_on_action
+					building_type = {
+						save_scope_as = the_building_type
+						set_local_variable = { name = double_building_cost value = building_base_cost_in_gold }
+						change_local_variable = { name = double_building_cost multiply = 2 }
+					}
+					# scope:the_building_type = { debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+					if = { limit = { lsq_is_building_obsolete = no }
+						# scope:the_building_type = { debug_log = "Building not obsolete [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+						if = {
+							limit = {
+								lsq_non_production_multi_level_building_can_auto_expand_other_than_checking_for_upgrades = yes
+								lsq_is_building_at_max_level = no
+								lsq_is_not_under_construction_and_gold_is_available = yes
+							}
+							# scope:the_building_type = { debug_log = "Building passes first checks [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+							location = {
+								construct_building = {
+									building_type = scope:the_building_type
+								}
+							}
+						}
+					# Building type is obsolete so check if if can be upgraded
+					} else_if = { limit = { lsq_is_building_upgradeable_and_can_be_upgraded_by_owner_and_auto_expand_upgrade_is_on = yes }
+						# scope:the_building_type = { debug_log = "Building is obsolete and upgradable [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+						if = {
+							limit = {
+								lsq_non_production_multi_level_building_can_auto_expand_other_than_checking_for_upgrades = yes
+								lsq_is_not_under_construction_and_gold_is_available = yes
+							}
+							# scope:the_building_type = { debug_log = "Building passes checks for upgrading [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+							scope:the_building_type = { lsq_find_upgrade_building_type = yes }
+							if = { limit = { exists = scope:return_scope }
+								# scope:return_scope = { debug_log = "Found upgrade building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+								location = {
+									construct_building = {
+										building_type = scope:return_scope
+									}
+									remove_list_variable = { name = auto_expand_registered_non_production_multi_level_buildings target = scope:the_building_for_on_action }
+									ordered_buildings_in_location = {
+										order_by = building_index
+										max = 1
+										location = { add_to_variable_list = { name = auto_expand_registered_non_production_multi_level_buildings target = prev } }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }

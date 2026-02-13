@@ -1,8 +1,10 @@
 lsq_double_building_cost = {
-	building_type = {
-		value = building_base_cost_in_gold
-		multiply = 2
-	}
+	if = { limit = { lsq_is_building_obsolete = no }
+		building_type = { value = building_base_cost_in_gold }
+	} else_if = { limit = { lsq_is_building_upgradeable_and_can_be_upgraded_by_owner = yes }
+		building_type = { value = lsq_get_upgrade_building_cost }
+	} else = { value = 100 } # should never happen
+	multiply = 2
 }
 
 lsq_expected_gold_available_for_building = {
@@ -14,4 +16,86 @@ lsq_expected_gold_available_for_building = {
 
 lsq_get_minimum_gold_for_buildings = {
 	value = var:lsq_minimum_gold_for_buildings
+}
+
+# Effect expects building_type scope. Sets local variable return_value to the upgrade building type, or leaves it unset if not upgradeable.
+lsq_get_upgrade_building_cost = {
+		if = { limit = { this = building_type:armory } building_type:barracks = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:art_school } building_type:arts_academy = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:barracks } building_type:conscription_center = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:bastion } building_type:star_fort = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:beer_workshop } building_type:brewery_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:brewery } building_type:beer_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:brewery_manufactory } building_type:brewery_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:cannon_foundry } building_type:cannons_factory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:cannon_maker } building_type:cannon_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:cannon_workshop } building_type:cannon_foundry = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:castle } building_type:bastion = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:charcoal_maker } building_type:improved_charcoal_maker = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:cloth_guild } building_type:cloth_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:cloth_manufactory } building_type:textile_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:cloth_workshop } building_type:cloth_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:coastal_fort } building_type:naval_battery = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:distiller_manufactory } building_type:distiller_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:distillers_guild } building_type:distillers_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:distillers_workshop } building_type:distiller_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:dock } building_type:dry_dock = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:dry_dock } building_type:shipyard = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:dyes_guild } building_type:dyes_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:dyes_workshop } building_type:dyesworks = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:dyesworks } building_type:dyes_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:fine_cloth_guild } building_type:fine_cloth_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:fine_cloth_manufactory } building_type:fine_cloth_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:fine_cloth_workshop } building_type:fine_cloth_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:firearms_manufactory } building_type:firearms_factory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:furniture_guild } building_type:furniture_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:furniture_manufactory } building_type:furniture_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:furniture_workshop } building_type:furniture_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:glass_guild } building_type:glass_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:glass_workshop } building_type:glassworks = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:glassworks } building_type:glass_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:grand_shipyard } building_type:naval_base = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:grand_marketplace } building_type:commerce_center = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:gun_smith } building_type:guns_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:guns_workshop } building_type:firearms_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:hand_cannon_guild } building_type:gun_smith = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:iron_foundry } building_type:iron_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:korean_barracks } building_type:armory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:lacquerware_guild } building_type:lacquerware_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:lieutenancy } building_type:viceroyalty = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:marketplace } building_type:merchants_quarters = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:merchants_quarters } building_type:grand_marketplace = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:naval_supplies_guild } building_type:naval_supplies_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:naval_supplies_manufactory } building_type:naval_supplies_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:naval_supplies_workshop } building_type:naval_supplies_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:paper_guild } building_type:paper_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:paper_manufactory } building_type:paper_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:paper_workshop } building_type:paper_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:porcelain_guild } building_type:porcelain_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:pottery_guild } building_type:pottery_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:pottery_manufactory } building_type:pottery_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:pottery_workshop } building_type:pottery_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:printing_manufactory } building_type:printing_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:printing_press_shop } building_type:printing_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:provincial_garrison } building_type:armory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:putrefaction_works } building_type:putrefaction_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:regimental_camp } building_type:conscription_center = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:ruined_great_wall_of_china } building_type:repaired_great_wall_of_china = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:saltpeter_guild } building_type:saltpeter_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:saltpeter_workshop } building_type:putrefaction_works = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:scriptorium } building_type:printing_press_shop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:shipyard } building_type:grand_shipyard = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:star_fort } building_type:fortress = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:stockade } building_type:castle = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:tannery } building_type:tanning_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:tannery_manufactory } building_type:tannery_mill = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:tanning_workshop } building_type:tannery_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:tools_guild } building_type:tools_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:tools_workshop } building_type:iron_foundry = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:training_fields } building_type:regimental_camp = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:weapon_guild } building_type:weapon_workshop = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:weapon_manufactory } building_type:weapon_factory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:weapon_workshop } building_type:weapon_manufactory = { value = building_base_cost_in_gold } }
+	else_if = { limit = { this = building_type:winery } building_type:winery_manufactory = { value = building_base_cost_in_gold } }
+	else = { debug_log = "No upgrade building type found" }
 }

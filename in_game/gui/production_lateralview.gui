@@ -3473,62 +3473,9 @@ types Buildings {
 													tooltipwidget = { using = construct_building_in_location_tt }
 												}
 
-												button_square_plus = {
-													size = { 15 15 }
-													visible = "[BuildingCandidate.GetBuilding.CanPlayerUpgrade]"
-													blockoverride "square_icon_size" {
-														size = {13 13}
-													}
-													blockoverride "plusminus_icon" {
-														texture = "gfx/interface/buttons/flats/upgrade_button2.dds"
-													}
-													datacontext = "[BuildingItem.GetBuildingType.GetNextReplaced(Player.Self)]"
-													enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
-													action_tooltip = {
-														click_mode = single
-														click_type = left
-														click_modifier = default
-														title = "UPGRADE_BUILDING_ACTION"
-														enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
-														description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
-														cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
-														on_action = "[UpgradeBuildingDefault(BuildingType.Self, Location.Self)]"
-														# lsq upgrade check
-														on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
-													}
-
-													action_tooltip = {
-														click_type = left
-														click_mode = single
-														click_modifier = ctrl
-
-														title = "UPGRADE_BUILDING_ACTION_CTRL"
-														cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
-														description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
-														on_action = "[UpgradeBuildingCtrl(BuildingType.Self, Location.Self)]"
-														# lsq upgrade check
-														on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
-														enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
-													}
-
-													action_tooltip = {
-														click_type = left
-														click_mode = single
-														click_modifier = shift
-
-														title = "UPGRADE_BUILDING_ACTION_SHIFT"
-														cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
-														description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
-														on_action = "[UpgradeBuildingShift(BuildingType.Self, Location.Self)]"
-														# lsq upgrade check
-														on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
-														enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
-													}
-
-													tooltipwidget = {
-														using = construct_building_in_location_tt
-													}
-												}
+												# LSQ plus button
+												lsq_production_building_plus_button = {}
+												lsq_non_production_multi_level_building_plus_button = {}
 											}
 										}
 									}
