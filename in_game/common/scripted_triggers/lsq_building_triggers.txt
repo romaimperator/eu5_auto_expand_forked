@@ -106,7 +106,10 @@ lsq_is_building_profitable = {
 # Root is the building
 lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 	AND = {
-		lsq_is_building_profitable = yes
+		OR = {
+			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_is_building_profitable = yes }
+			building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
+		}
 		lsq_is_building_open = yes
 		lsq_is_building_fully_employed = yes
 		lsq_is_building_lacking_goods = no
@@ -136,4 +139,31 @@ lsq_should_auto_expand_upgrade_buildings = {
 # Root is the country
 lsq_should_pause_auto_expand = {
 	exists = var:lsq_pause_auto_expand
+}
+
+# Root is the building type
+lsq_is_building_type_production_building = {
+	AND = {
+		has_global_variable_map = lsq_building_type_to_is_production_building
+		is_key_in_global_variable_map = { name = lsq_building_type_to_is_production_building target = this }
+		"global_variable_map(lsq_building_type_to_is_production_building|this)" = 1
+	}
+}
+
+# Root is the building type
+lsq_is_building_type_non_production_multi_level_building = {
+	AND = {
+		has_global_variable_map = lsq_building_type_to_is_non_production_multi_level_building
+		is_key_in_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building target = this }
+		"global_variable_map(lsq_building_type_to_is_non_production_multi_level_building|this)" = 1
+	}
+}
+
+# Root is the building type
+lsq_is_building_type_one_per_location_building = {
+	AND = {
+		has_global_variable_map = lsq_building_type_to_is_one_per_location_building
+		is_key_in_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building target = this }
+		"global_variable_map(lsq_building_type_to_is_one_per_location_building|this)" = 1
+	}
 }

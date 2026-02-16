@@ -3350,7 +3350,7 @@ types Buildings {
 												margin = {0 5}
 
 												button_square_minus = {
-													size = { 15 15 }
+													size = { 15 15 } # LSQ reduced size
 													visible = "[Not(GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0'))]"
 													enabled = "[CanDestroyBuilding(Building.Self)]"
 													action_tooltip = {
@@ -3360,6 +3360,8 @@ types Buildings {
 														visible = "[Not(GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0'))]"
 														enabled = "[CanDestroyBuilding(Building.Self)]"
 														description = "[GetDestroyBuildingInfo(Building.Self)]"
+														# LSQ check if auto-expand is on when destroying a building level
+														on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 														on_action = "[DestroyBuilding(Building.Self)]"
 														on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
 													}
@@ -3373,7 +3375,7 @@ types Buildings {
 												}
 
 												button_square_minus = {
-													size = { 15 15 }
+													size = { 15 15 } # LSQ reduced size
 													visible = "[GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0')]"
 													enabled = "[CanCancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
 													action_tooltip = {
@@ -3383,6 +3385,8 @@ types Buildings {
 														visible = "[GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0')]"
 														enabled = "[CanCancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
 														description = "[GetCancelConstructionInfo(Building.GetUnderConstructionForPlayer.Self)]"
+														# LSQ check if auto-expand is on when removing the building level from queue
+														on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 														on_action = "[CancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
 													}
 
@@ -3475,7 +3479,6 @@ types Buildings {
 
 												# LSQ plus button
 												lsq_production_building_plus_button = {}
-												lsq_non_production_multi_level_building_plus_button = {}
 											}
 										}
 									}

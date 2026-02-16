@@ -21,14 +21,8 @@ types lsq_auto_expand {
 
 	# used for construction menu in location (production_lateralview.gui)
 	type lsq_auto_expand_widget = widget {
+		visible = "[GetScriptedGui('lsq_is_auto_expand_visible_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 		size = { 25 25 }
-		lsq_auto_expand_production_buildings = {}
-		lsq_auto_expand_non_production_multi_level = {}
-	}
-
-	type lsq_auto_expand_production_buildings = widget {
-		visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing)]"
-		size = { 100% 100% }
 		lsq_auto_expand_production_buildings_checkbuttons = {}
 	}
 
@@ -38,13 +32,7 @@ types lsq_auto_expand {
 	type lsq_auto_expand_widget_global_construction = widget {
 		datacontext = "[LocationToBuildItem.GetBuilding]"
 		size = { 25 25 }
-		lsq_auto_expand_production_buildings_global_construction = {}
-		lsq_auto_expand_non_production_multi_level_global_construction = {}
-	}
-
-	type lsq_auto_expand_production_buildings_global_construction = widget {
-		visible = "[And(ObjectsEqual(Building.GetOwner, Player.Self), Building.GetType.IsProducing)]"
-		size = { 100% 100% }
+		visible = "[GetScriptedGui('lsq_is_auto_expand_visible_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 		lsq_auto_expand_production_buildings_checkbuttons = {}
 	}
 
@@ -55,7 +43,7 @@ types lsq_auto_expand {
 		lsq_auto_expand_checkbutton = {
 			visible = "[GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 			size = { 100% 100% }
-			enabled = "[CanSubsidizeBuilding(Building.Self)]"
+			# enabled = "[CanSubsidizeBuilding(Building.Self)]"
 			tooltipwidget = { using = lsq_Building_Autoexpand_Tooltip }
 			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]" }
@@ -68,7 +56,7 @@ types lsq_auto_expand {
 			visible = "[Not(GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 			size = { 100% 100% }
 			blockoverride "glow_color" { color = {1.0 0.0 0.0 1.0} } # override default color to red
-			enabled = "[CanSubsidizeBuilding(Building.Self)]"
+			# enabled = "[CanSubsidizeBuilding(Building.Self)]"
 			tooltipwidget = { using = lsq_Building_Autoexpand_Tooltip }
 			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]" }
@@ -79,7 +67,7 @@ types lsq_auto_expand {
 
 	type lsq_production_building_plus_button = button_square_plus {
 		size = { 15 15 }
-		visible = "[And(BuildingCandidate.GetBuilding.CanPlayerUpgrade, And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing))]"
+		visible = "[BuildingCandidate.GetBuilding.CanPlayerUpgrade]"
 		blockoverride "square_icon_size" {
 			size = {13 13}
 		}
@@ -183,6 +171,7 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						visible = "[GetScriptedGui('lsq_is_building_type_producing').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End)]"
 						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_profitable').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"

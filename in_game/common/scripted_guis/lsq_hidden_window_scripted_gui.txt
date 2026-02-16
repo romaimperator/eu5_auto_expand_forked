@@ -1,11 +1,24 @@
 lsq_hidden_window_init = {
 	effect = {
-		every_province = {
-			if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
-				set_variable = { name = lsq_auto_expand_rgo_off_in_all_locations value = yes }
-			} else = {
-				remove_variable = lsq_auto_expand_rgo_off_in_all_locations
+		# debug_log = "LSQ: country is [THIS.GetCountry.GetNameWithNoTooltip]"
+		if = { limit = { AND = { NOT = { exists = global_var:lsq_hidden_window_initialized } is_human = yes } }
+			set_global_variable = { name = lsq_hidden_window_initialized value = yes }
+			# debug_log = "LSQ: Initializing hidden window"
+			every_province = {
+				if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
+					set_variable = { name = lsq_auto_expand_rgo_off_in_all_locations value = yes }
+				} else = {
+					remove_variable = lsq_auto_expand_rgo_off_in_all_locations
+				}
 			}
+			set_variable = { name = every_building_type_count value = 0 }
+			every_building_type = {
+				# debug_log = "LSQ: Adding building type [THIS.GetBuildingType.GetNameWithNoTooltip] to every_building_type_list"
+				root = { add_to_variable_list = { name = every_building_type_list target = prev } }
+				root = { change_variable = { name = every_building_type_count add = 1 } }
+			}
+		# } else = {
+			# debug_log = "LSQ: Hidden window already initialized or country is not human"
 		}
 	}
 }
@@ -26,5 +39,51 @@ lsq_update_all_provinces_auto_expand_rgo_information = {
 				remove_variable = lsq_auto_expand_rgo_off_in_all_locations
 			}
 		}
+	}
+}
+
+# Root is the player
+lsq_should_building_type_section_show = {
+	is_shown = {
+		OR = {
+			NOT = { has_global_variable_map = lsq_building_type_processed }
+			AND = {
+				has_global_variable_map = lsq_building_type_processed
+				global_variable_map_size = { name = lsq_building_type_processed value < var:every_building_type_count }
+			}
+		}
+	}
+}
+
+# Root is the country
+lsq_building_type_section_buildings_init = {
+	saved_scopes = { building_type is_producing is_multiple_levels }
+	effect = {
+			# debug_log = "LSQ: Initializing buildings [TopScope.sBuildingType('building_type').GetNameWithNoTooltip]"
+
+			if = { limit = { scope:is_producing = yes }
+				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
+			} else = {
+				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 0 }
+			}
+			if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = yes } }
+				add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 1 }
+			} else = {
+				add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
+			}
+			if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = no } }
+				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
+			} else = {
+				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
+			}
+
+			add_to_global_variable_map = { name = lsq_building_type_processed key = scope:building_type value = 1 }
+	}
+}
+
+# Root is the building type
+lsq_is_building_type_processed = {
+	is_shown = {
+		is_key_in_global_variable_map = { name = lsq_building_type_processed target = this }
 	}
 }
