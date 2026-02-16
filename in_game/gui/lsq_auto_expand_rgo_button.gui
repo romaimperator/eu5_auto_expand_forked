@@ -10,6 +10,7 @@ types lsq_auto_expand {
 	}
 
 	type lsq_auto_expand_rgo_widget = widget {
+		visible = "[Location.IsPlayerLocation]"
 		size = { 23 23 }
 		tooltipwidget = {
 			using = lsq_RGO_Autoexpand_Tooltip
@@ -17,23 +18,15 @@ types lsq_auto_expand {
 
 		# button with green glow
 		lsq_auto_expand_checkbutton = {
-			visible = "[And(Location.IsPlayerLocation, GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 			size = { 100% 100% }
 			enabled = "[Location.IsPlayerLocation]"
 			checked = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]" }
-			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).End)]"
-			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-		}
-
-		# button with red glow
-		lsq_auto_expand_checkbutton = {
-			visible = "[And(Location.IsPlayerLocation, Not(GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)))]"
-			size = { 100% 100% }
-			blockoverride "glow_color" { color = {1.0 0.0 0.0 1.0} } # override default color to red
-			enabled = "[Location.IsPlayerLocation]"
-			checked = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]" }
+			blockoverride "green_glow_visible" {
+				visible = "[And(GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+			}
+			blockoverride "red_glow_visible" {
+				visible = "[And(GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)))]"
+			}
 			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).End)]"
 			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
@@ -44,7 +37,6 @@ template lsq_RGO_Autoexpand_Tooltip {
 	ContextualTooltipType = {
 		state = {
 			name = _show
-			duration = 0.1 # delay seems to make it much harder to have the click fail when clicking the checkbutton when the info needs updating
 			on_finish = "[GetScriptedGui('lsq_update_location_rgo_information').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('lsq_max_rgo_workers', MakeScopeValue(Location.GetMaxRGOWorkers)).AddScope('lsq_location_promotion', MakeScopeValue(Location.GetPromoteValue)).End)]"
 		}
 

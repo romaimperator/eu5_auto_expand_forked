@@ -13,8 +13,20 @@ types lsq_auto_expand {
 				name = "green_glow"
 				glow_radius = 5
 				alpha = 1.0
-				block "glow_color" { color = {0.0 1.0 0.0 1.0} } # default color is green
-				block "glow_visible" { visible = no }
+				color = {0.0 1.0 0.0 1.0} # green
+				block "green_glow_visible" { visible = no }
+			}
+		}
+		background = {
+			texture = "gfx/interface/buttons/checkbox_bg.dds"
+			texture_density = 2
+			using = color_dark_blue
+			glow = {
+				name = "red_glow"
+				glow_radius = 5
+				alpha = 1.0
+				color = {1.0 0.0 0.0 1.0} # red
+				block "red_glow_visible" { visible = no }
 			}
 		}
 	}
@@ -41,25 +53,15 @@ types lsq_auto_expand {
 
 		# button with green glow
 		lsq_auto_expand_checkbutton = {
-			visible = "[GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 			size = { 100% 100% }
-			# enabled = "[CanSubsidizeBuilding(Building.Self)]"
 			tooltipwidget = { using = lsq_Building_Autoexpand_Tooltip }
 			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]" }
-			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
-			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-		}
-
-		# button with red glow
-		lsq_auto_expand_checkbutton = {
-			visible = "[Not(GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
-			size = { 100% 100% }
-			blockoverride "glow_color" { color = {1.0 0.0 0.0 1.0} } # override default color to red
-			# enabled = "[CanSubsidizeBuilding(Building.Self)]"
-			tooltipwidget = { using = lsq_Building_Autoexpand_Tooltip }
-			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-			blockoverride "glow_visible" { visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]" }
+			blockoverride "green_glow_visible" {
+				visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+			}
+			blockoverride "red_glow_visible" {
+				visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))))]"
+			}
 			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
