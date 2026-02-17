@@ -133,6 +133,16 @@ lsq_show_settings_window = {
 		# every_building_type = {
 		# 	root = { add_to_variable_list = { name = every_building_type_list target = prev } }
 		# }
+
+		add_to_variable_list = { name = lsq_auto_build_building_types_list target = building_type:temple }
+
+		clear_variable_list = lsq_all_controlled_locations_list
+		ordered_controlled_location = {
+			order_by = max_control
+			save_scope_as = location
+			min = all
+			root = { add_to_variable_list = { name = lsq_all_controlled_locations_list target = scope:location } }
+		}
 	}
 
 	is_shown = {
@@ -269,5 +279,76 @@ lsq_pause_auto_expand = {
 
 	is_shown = {
 		lsq_should_pause_auto_expand = yes
+	}
+}
+
+# Auto-build one-per-location buildings (temple, etc.)
+# Root is the country. Toggles whether to auto-build the building type in scope:building_type.
+lsq_toggle_auto_build_building_type = {
+	effect = {
+		if = { limit = { is_target_in_variable_list = { name = lsq_auto_build_building_types_enabled target = scope:building_type } }
+			remove_list_variable = { name = lsq_auto_build_building_types_enabled target = scope:building_type }
+		} else = {
+			add_to_variable_list = { name = lsq_auto_build_building_types_enabled target = scope:building_type }
+		}
+	}
+
+	is_shown = {
+		always = yes
+	}
+}
+
+# Root is the country. Is building type (scope:building_type) in the auto-build enabled list?
+lsq_is_auto_build_building_type_enabled = {
+	is_shown = {
+		is_target_in_variable_list = { name = lsq_auto_build_building_types_enabled target = scope:building_type }
+	}
+}
+
+# Root is the country. scope:building_type and scope:location. True if location does not have the building type.
+lsq_location_should_show_in_auto_build_tooltip = {
+	is_shown = {
+		scope:location = { lsq_location_allowed_to_build_temple = yes }
+	}
+}
+
+# Root is the location
+lsq_location_will_auto_build_temple = {
+	is_shown = {
+		lsq_location_can_auto_build_temple = yes
+	}
+}
+
+# Root is the location. Also expects the scope building_type
+lsq_auto_build_check_no_existing_building = {
+	is_shown = {
+		lsq_auto_build_check_no_building_type = { target = scope:building_type }
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_town_or_city = {
+	is_shown = {
+		lsq_auto_build_check_town_or_city = yes
+	}
+}
+
+# Root is the location. Also expects the scope building_type
+lsq_auto_build_check_pops_available = {
+	is_shown = {
+		lsq_auto_build_check_pops_available = { target = scope:building_type }
+	}
+}
+
+# Root is the building type. Also expects the scope country
+lsq_auto_build_check_owner_gold_available = {
+	is_shown = {
+		lsq_auto_build_check_owner_gold_available = yes
+	}
+}
+
+lsq_auto_build_check_any_location_can_auto_build_temple = {
+	is_shown = {
+		lsq_auto_build_check_any_location_can_auto_build_temple = yes
 	}
 }
