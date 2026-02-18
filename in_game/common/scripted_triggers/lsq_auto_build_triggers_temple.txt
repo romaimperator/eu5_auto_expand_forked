@@ -1,5 +1,4 @@
-# Temple-specific trigger (root = location). True if location can have a temple auto-built:
-# location can build it (town/city), has clergy pops available, doesn't already have a temple, country has enough gold.
+# Root is the location
 lsq_location_can_auto_build_temple = {
 	AND = {
 		owner = { lsq_should_pause_auto_expand = no }
@@ -13,6 +12,7 @@ lsq_location_can_auto_build_temple = {
 # Root is the location
 lsq_location_allowed_to_build_temple = {
 	AND = {
+		lsq_auto_build_check_building_researched_temple = yes
 		lsq_auto_build_check_no_building_type = { target = building_type:temple }
 		lsq_auto_build_check_town_or_city = yes
 	}
@@ -29,4 +29,9 @@ lsq_location_will_auto_build_temple = {
 # Root is the location
 lsq_auto_build_check_pops_available_temple = {
 	is_clergy_positive_deficit = no
+}
+
+# Root is the location
+lsq_auto_build_check_building_researched_temple = {
+	always = yes # not locked behind a tech
 }

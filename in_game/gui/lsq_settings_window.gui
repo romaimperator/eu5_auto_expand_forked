@@ -319,7 +319,7 @@ basic_dialog = {
 									blockoverride "tooltip_content" {
 										TooltipTextBlock = {
 											blockoverride "text" {
-												raw_text = "If checked, the mod will automatically build a [BuildingType.GetName] in each qualifying location on the month tick (when the location can build it, has enough pops, doesn't already have it, and the country has enough gold)."
+												raw_text = "If checked, the mod will automatically build a [BuildingType.GetName] in each qualifying location on the month tick (when the conditions are met and the country has enough gold)."
 											}
 										}
 									}
@@ -334,7 +334,7 @@ basic_dialog = {
 							text_single = {
 								margin_left = 5
 								datacontext = "[BuildingType.MakeScope]"
-								raw_text = "[BuildingType.GetNameWithNoTooltip]"
+								raw_text = "[BuildingType.GetNameWithNoTooltip] ([GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_will_auto_build')|0]/[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_allowed_to_build')|0])"
 							}
 							tooltipwidget = {
 								ContextualTooltipType = {
@@ -344,13 +344,36 @@ basic_dialog = {
 									blockoverride "tooltip_content" {
 										vbox = {
 											spacing = 5
-											text_single = {
+											hbox = {
+												margin = { 10 10 }
+												spacing = 10
 												visible = "[GetScriptedGui('lsq_auto_build_check_any_location_allowed_to_build').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
-												raw_text = "Hover over a location to see if it will auto-build a [BuildingType.GetName]:"
+												vbox = {
+													text_single = {
+														raw_text = "Locations auto-building next month tick with enough gold:"
+													}
+													text_single = {
+														raw_text = "Locations capable of building a [BuildingType.GetName]:"
+													}
+												}
+												vbox = {
+													text_single = {
+														raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_will_auto_build')|0]"
+													}
+													text_single = {
+														raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_allowed_to_build')|0]"
+													}
+												}
 											}
-											text_single = {
+											vbox = {
 												visible = "[Not(GetScriptedGui('lsq_auto_build_check_any_location_allowed_to_build').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
-												raw_text = "No locations can auto-build a [BuildingType.GetName]"
+												text_single = {
+													raw_text = "No locations can auto-build a [BuildingType.GetName]"
+												}
+												text_single = {
+													visible = "[Not(GetScriptedGui('lsq_auto_build_check_building_researched').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
+													raw_text = "[BuildingType.GetName] is not researched."
+												}
 											}
 											TooltipListBase = {
 												TooltipScrolledContentSection = {

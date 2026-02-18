@@ -1,0 +1,39 @@
+# Root is the location
+lsq_location_can_auto_build_bridge_infrastructure = {
+	AND = {
+		owner = { lsq_should_pause_auto_expand = no }
+		lsq_auto_build_check_no_building_type = { target = building_type:bridge_infrastructure }
+		lsq_auto_build_check_has_a_river = yes
+		lsq_auto_build_check_has_at_least_one_road = yes
+		lsq_auto_build_check_pops_available_bridge_infrastructure = yes
+		building_type:bridge_infrastructure = { lsq_auto_build_check_owner_gold_available = yes }
+	}
+}
+
+# Root is the location
+lsq_location_allowed_to_build_bridge_infrastructure = {
+	AND = {
+		lsq_auto_build_check_building_researched_bridge_infrastructure = yes
+		lsq_auto_build_check_no_building_type = { target = building_type:bridge_infrastructure }
+		lsq_auto_build_check_has_a_river = yes
+		lsq_auto_build_check_has_at_least_one_road = yes
+	}
+}
+
+# Root is the location
+lsq_location_will_auto_build_bridge_infrastructure = {
+	AND = {
+		lsq_location_allowed_to_build_bridge_infrastructure = yes
+		lsq_auto_build_check_pops_available_bridge_infrastructure = yes
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_pops_available_bridge_infrastructure = {
+	is_labourer_positive_deficit = yes
+}
+
+# Root is the location
+lsq_auto_build_check_building_researched_bridge_infrastructure = {
+	always = yes # not locked behind a tech
+}

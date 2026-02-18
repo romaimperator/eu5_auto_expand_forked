@@ -1,0 +1,47 @@
+# Root is the location
+lsq_location_can_auto_build_university = {
+	AND = {
+		owner = { lsq_should_pause_auto_expand = no }
+		lsq_auto_build_check_no_building_type = { target = building_type:university }
+		lsq_auto_build_check_town_or_city = yes
+		lsq_auto_build_check_is_a_core = yes
+		lsq_auto_build_check_university_not_blocked = yes
+		lsq_auto_build_check_university_researched = yes
+		lsq_auto_build_check_pops_available_university = yes
+		building_type:university = { lsq_auto_build_check_owner_gold_available = yes }
+	}
+}
+
+# Root is the location
+lsq_location_allowed_to_build_university = {
+	AND = {
+		lsq_auto_build_check_building_researched_university = yes
+		lsq_auto_build_check_no_building_type = { target = building_type:university }
+		lsq_auto_build_check_town_or_city = yes
+		lsq_auto_build_check_is_a_core = yes
+		lsq_auto_build_check_university_not_blocked = yes
+		lsq_auto_build_check_university_researched = yes
+	}
+}
+
+# Root is the location
+lsq_location_will_auto_build_university = {
+	AND = {
+		lsq_location_allowed_to_build_university = yes
+		lsq_auto_build_check_pops_available_university = yes
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_pops_available_university = {
+	# is_burgher_positive_deficit = yes
+	always = yes # todo: implement this
+}
+
+lsq_auto_build_check_university_not_blocked = {
+	owner = { modifier:university_construction_blocked = no }
+}
+
+lsq_auto_build_check_building_researched_university = {
+	owner = { has_advance = university_advance }
+}
