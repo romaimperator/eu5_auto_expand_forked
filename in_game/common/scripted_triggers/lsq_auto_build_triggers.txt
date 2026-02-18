@@ -1,24 +1,11 @@
 # Triggers for auto-building one-per-location buildings (temple, etc.) on month tick.
 # To add another building type: add a new trigger following the pattern below and add a block in the on_action.
 
-# Temple-specific trigger (root = location). True if location can have a temple auto-built:
-# location can build it (town/city), has clergy pops available, doesn't already have a temple, country has enough gold.
-lsq_location_can_auto_build_temple = {
-	AND = {
-		owner = { lsq_should_pause_auto_expand = no }
-		lsq_auto_build_check_no_building_type = { target = building_type:temple }
-		lsq_auto_build_check_town_or_city = yes
-		lsq_auto_build_temple_check_clergy = yes
-		building_type:temple = { lsq_auto_build_check_owner_gold_available = yes }
-	}
-}
+# Generic triggers for auto-building
 
-# Root is the location
-lsq_location_allowed_to_build_temple = {
-	AND = {
-		lsq_auto_build_check_no_building_type = { target = building_type:temple }
-		lsq_auto_build_check_town_or_city = yes
-	}
+# Root is the building type. Also expects the scope country
+lsq_auto_build_check_owner_gold_available = {
+	scope:country.gold > lsq_expected_gold_available_for_building_type
 }
 
 # Root is the location
@@ -39,37 +26,46 @@ lsq_auto_build_check_rural = {
 	location_rank = location_rank:rural
 }
 
-lsq_auto_build_check_pops_available = {
-	trigger_if = { $target$ = building_type:temple } {
-		lsq_auto_build_temple_check_clergy = yes
-	}
-}
-
-# Root is the location
-lsq_auto_build_temple_check_clergy = {
-	is_clergy_positive_deficit = no
-}
-
-# Root is the building type. Also expects the scope country
-lsq_auto_build_check_owner_gold_available = {
-	scope:country.gold > lsq_expected_gold_available_for_building_type
-}
-
-# Root is the country
-lsq_auto_build_check_any_location_can_auto_build_temple = {
+# Root is the country. Expects the building type as a target
+lsq_auto_build_check_any_location_allowed_to_build = {
 	any_controlled_location = {
-		# lsq_location_can_auto_build_temple = yes
-		lsq_location_allowed_to_build_temple = yes
+		lsq_location_allowed_to_build = { target = $target$ }
 	}
 }
 
-# Root is the country also expects the scope building_type
-lsq_auto_build_check_any_location_can_build = {
-	any_controlled_location = {
-		lsq_location_can_auto_build = { target = scope:building_type }
-	}
-}
-
+# Root is the location. Expects the building type as a target
 lsq_location_can_auto_build = {
-	lsq_location_can_auto_build_$target$ = yes
+	trigger_if = { limit = { $target$ = building_type:temple }
+		lsq_location_can_auto_build_temple = yes
+	} trigger_else = {
+		always = no
+	}
+}
+
+# Root is the location. Expects the building type as a target
+lsq_auto_build_will_auto_build = {
+	owner = { lsq_should_pause_auto_expand = no }
+	trigger_if = { limit = { $target$ = building_type:temple }
+		lsq_location_will_auto_build_temple = yes
+	} trigger_else = {
+		always = no
+	}
+}
+
+# Root is the location. Expects the building type as a target
+lsq_location_allowed_to_build = {
+	trigger_if = { limit = { $target$ = building_type:temple }
+		lsq_location_allowed_to_build_temple = yes
+	} trigger_else = {
+		always = no
+	}
+}
+
+# Root is the location. Expects the building type as a target
+lsq_auto_build_check_pops_available = {
+	trigger_if = { limit = { $target$ = building_type:temple }
+		lsq_auto_build_check_pops_available_temple = yes
+	} trigger_else = {
+		always = no
+	}
 }
