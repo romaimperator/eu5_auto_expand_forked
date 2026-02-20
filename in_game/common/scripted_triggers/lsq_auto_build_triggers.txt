@@ -36,19 +36,32 @@ lsq_auto_build_check_has_a_river = {
 	has_river = yes
 }
 
-# Root is the location
+# Root is the location, assuming the core of subject if checking a subject location
 lsq_auto_build_check_is_a_core = {
 	is_core_of = owner
 }
 
-# Root is the country. Expects the building type as a target
+# Root is the country. Expects the building type as a target, also expects the scope country
 lsq_auto_build_check_any_location_allowed_to_build = {
-	any_controlled_location = {
-		lsq_location_allowed_to_build = { target = $target$ }
+	trigger_if = { limit = { is_target_in_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type } }
+		OR = {
+			any_controlled_location = {
+				lsq_location_allowed_to_build = { target = $target$ }
+			}
+			any_subject_or_below = {
+				any_controlled_location = {
+					lsq_location_allowed_to_build = { target = $target$ }
+				}
+			}
+		}
+	} trigger_else = {
+		any_controlled_location = {
+			lsq_location_allowed_to_build = { target = $target$ }
+		}
 	}
 }
 
-# Root is the location. Expects the building type as a target and a trigger name
+# Root is the location. Expects the building type as a target and a trigger name, also expects the scope country
 lsq_auto_build_switch_based_on_building_type = {
 	trigger_if = { limit = { $target$ = building_type:temple }
 		lsq_$trigger_name$_temple = yes
@@ -65,28 +78,27 @@ lsq_auto_build_switch_based_on_building_type = {
 	}
 }
 
-# Root is the location. Expects the building type as a target
+# Root is the location. Expects the building type as a target, also expects the scope country
 lsq_location_can_auto_build = {
 	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = location_can_auto_build }
 }
 
-# Root is the location. Expects the building type as a target
+# Root is the location. Expects the building type as a target, also expects the scope country
 lsq_auto_build_will_auto_build = {
-	owner = { lsq_should_pause_auto_expand = no }
 	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = location_will_auto_build }
 }
 
-# Root is the location. Expects the building type as a target
+# Root is the location. Expects the building type as a target, also expects the scope country
 lsq_location_allowed_to_build = {
 	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = location_allowed_to_build }
 }
 
-# Root is the location. Expects the building type as a target
+# Root is the location. Expects the building type as a target, also expects the scope country
 lsq_auto_build_check_pops_available = {
 	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = auto_build_check_pops_available }
 }
 
-# Root is the location. Expects the building type as a target
+# Root is the location. Expects the building type as a target, also expects the scope country
 lsq_auto_build_check_building_researched = {
 	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = auto_build_check_building_researched }
 }

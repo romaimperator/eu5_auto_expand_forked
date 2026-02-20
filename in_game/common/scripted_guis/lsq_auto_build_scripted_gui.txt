@@ -17,7 +17,25 @@ lsq_is_auto_build_building_type_enabled = {
 	}
 }
 
-# Root is the location.
+# Root is the country. Toggles whether to auto-build the building type in scope:building_type in subjects.
+lsq_toggle_auto_build_building_type_in_subjects = {
+	effect = {
+		if = { limit = { is_target_in_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type } }
+			remove_list_variable = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type }
+		} else = {
+			add_to_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type }
+		}
+	}
+}
+
+# Root is the country. Is building type (scope:building_type) in the auto-build in subjects list?
+lsq_is_auto_build_building_type_in_subjects_enabled = {
+	is_shown = {
+		is_target_in_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type }
+	}
+}
+
+# Root is the location. Also expects the scope building type.
 lsq_auto_build_check_pops_available = {
 	is_shown = {
 		lsq_auto_build_check_pops_available = { target = scope:building_type }
@@ -31,7 +49,7 @@ lsq_auto_build_check_owner_gold_available = {
 	}
 }
 
-# Root is the location. Also expects the scope building_type.
+# Root is the location. Also expects the scope building_type and country.
 lsq_location_allowed_to_build = {
 	is_shown = {
 		lsq_location_allowed_to_build = { target = scope:building_type }
@@ -45,7 +63,7 @@ lsq_location_will_auto_build = {
 	}
 }
 
-# Root is the country. Also expects the scope building_type.
+# Root is the country. Also expects the scope building_type and country.
 lsq_auto_build_check_any_location_allowed_to_build = {
 	is_shown = {
 		lsq_auto_build_check_any_location_allowed_to_build = { target = scope:building_type }

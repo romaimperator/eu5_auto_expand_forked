@@ -12,19 +12,33 @@ lsq_auto_build_one_per_location_buildings = {
 	}
 
 	effect = {
+		save_scope_as = country
+		lsq_auto_build_init_locations_lists = {} # Update the lists of locations
     debug_log = "Auto-building one-per-location buildings"
 		every_in_list = {
 			variable = lsq_auto_build_building_types_enabled
 			save_scope_as = building_type
 			debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip]"
 			root = {
-				save_scope_as = country
-				ordered_controlled_location = {
-					order_by = max_control
-					limit = { lsq_location_can_auto_build = { target = scope:building_type } }
-					max = lsq_max_guess_at_number_of_locations
-          debug_log = "Building [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip] in [THIS.GetLocation.GetNameWithNoTooltip]"
-					construct_building = { building_type = scope:building_type }
+				if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type } } }
+					ordered_controlled_location = {
+						order_by = max_control
+						limit = { lsq_location_can_auto_build = { target = scope:building_type } }
+						max = lsq_max_guess_at_number_of_locations
+						debug_log = "Building [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip] in [THIS.GetLocation.GetNameWithNoTooltip]"
+						construct_building = { building_type = scope:building_type }
+					}
+				} else = {
+					every_in_list = {
+						variable = lsq_all_locations_including_subjects_list
+						limit = { lsq_location_can_auto_build = { target = scope:building_type } }
+						debug_log = "Building [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip] in [THIS.GetLocation.GetNameWithNoTooltip]"
+						construct_building = {
+							building_type = scope:building_type
+							owner = scope:country
+							payer = scope:country
+						}
+					}
 				}
 			}
 		}

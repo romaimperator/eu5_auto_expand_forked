@@ -294,212 +294,126 @@ basic_dialog = {
 			}
 			horizontal_separator = {}
 			# Auto-build one-per-location buildings (temple, etc.). Row: checkbox left, building icon, building name.
-			vbox = {
+			text_single = {
+				raw_text = "Auto-build one-per-location buildings:"
+			}
+			hbox = {
 				layoutpolicy_horizontal = expanding
-				spacing = 5
-				datamodel = "[GetPlayer.MakeScope.GetList('lsq_auto_build_building_types_list')]"
-
-				text_single = {
-					raw_text = "Auto-build one-per-location buildings:"
-				}
-				item = {
+				layoutpolicy_vertical = expanding
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					spacing = 5
 					hbox = {
-						datacontext = "[Scope.GetBuildingType]"
 						layoutpolicy_horizontal = expanding
-						spacing = 8
-						button_checkbox = {
-							size = { 20 20 }
-							checked = "[GetScriptedGui('lsq_is_auto_build_building_type_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
-							onclick = "[GetScriptedGui('lsq_toggle_auto_build_building_type').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
-							tooltipwidget = {
-								ContextualTooltipType = {
-									blockoverride "title_text" {
-										raw_text = "Auto-build a [BuildingType.GetName]"
-									}
-									blockoverride "tooltip_content" {
-										TooltipTextBlock = {
-											blockoverride "text" {
-												raw_text = "If checked, the mod will automatically build a [BuildingType.GetName] in each qualifying location on the month tick (when the conditions are met and the country has enough gold)."
-											}
-										}
-									}
-								}
-							}
-						}
-						hbox = {
-							icon = {
-								size = { 24 24 }
-								texture = "[GetBuildingIcon(BuildingType.Self)]"
-							}
-							text_single = {
-								margin_left = 5
-								datacontext = "[BuildingType.MakeScope]"
-								raw_text = "[BuildingType.GetNameWithNoTooltip] ([GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_will_auto_build')|0]/[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_allowed_to_build')|0])"
-							}
-							tooltipwidget = {
-								ContextualTooltipType = {
-									blockoverride "title_text" {
-										raw_text = "Locations without a [BuildingType.GetName]"
-									}
-									blockoverride "tooltip_content" {
-										vbox = {
-											spacing = 5
-											hbox = {
-												margin = { 10 10 }
-												spacing = 10
-												visible = "[GetScriptedGui('lsq_auto_build_check_any_location_allowed_to_build').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
-												vbox = {
-													text_single = {
-														raw_text = "Locations auto-building next month tick with enough gold:"
-													}
-													text_single = {
-														raw_text = "Locations capable of building a [BuildingType.GetName]:"
-													}
-												}
-												vbox = {
-													text_single = {
-														raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_will_auto_build')|0]"
-													}
-													text_single = {
-														raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_allowed_to_build')|0]"
-													}
-												}
-											}
-											vbox = {
-												visible = "[Not(GetScriptedGui('lsq_auto_build_check_any_location_allowed_to_build').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
-												text_single = {
-													raw_text = "No locations can auto-build a [BuildingType.GetName]"
-												}
-												text_single = {
-													visible = "[Not(GetScriptedGui('lsq_auto_build_check_building_researched').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
-													raw_text = "[BuildingType.GetName] is not researched."
-												}
-											}
-											TooltipListBase = {
-												TooltipScrolledContentSection = {
-													visible = "[GetScriptedGui('lsq_auto_build_check_any_location_allowed_to_build').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
-													blockoverride "section_content" {
-														TooltipListColumnContent = {
-															TooltipTableColumn = {
-																layoutpolicy_vertical = expanding
-																blockoverride "column_title" {}
-																blockoverride "column_title_text" { text = "[location|e]" }
-																blockoverride "column_title_right" { expand = {} }
-
-																blockoverride "field_left" {
-																	datacontext = "[Scope.GetLocation]"
-																	# icon = {
-																	# 	size = { 25 25 }
-																	# 	texture = "[Location.GetRankIcon]"
-																	# }
-																}
-
-																blockoverride "tooltip_table_text_single" {
-																	hbox = {
-																		icon = {
-																			visible = "[GetScriptedGui('lsq_location_will_auto_build').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
-																			using = lsq_icon_green_glow
-																		}
-																		icon = {
-																			visible = "[Not(GetScriptedGui('lsq_location_will_auto_build').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
-																			using = lsq_icon_red_glow
-																		}
-																		text_single = {
-																			margin_left = 5
-																			default_format = "#subtle_name"
-																			align = left|nobaseline
-																			raw_text = "[Location.GetNameWithNoTooltip]"
-																		}
-																		tooltipwidget = {
-																			ContextualTooltipType = {
-																				blockoverride "title_text" {
-																					raw_text = "[Location.GetName]"
-																				}
-																				blockoverride "tooltip_content" {
-																					TooltipListBase = {
-																						blockoverride "block_title" {
-																							raw_text = "Conditions for auto-build:"
-																						}
-																						TooltipListRowContent = {
-																							lsq_tooltip_row = {
-																								blockoverride "first_element" { visible = yes }
-																								blockoverride "not_first_element" { visible = no }
-																								blockoverride "yes_visible" {
-																									visible = "[Not(GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
-																								}
-																								blockoverride "no_visible" {
-																									visible = "[GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-																								}
-																								blockoverride "row_text" {
-																									raw_text = "Auto-expand is not paused"
-																								}
-																							}
-																							lsq_tooltip_row = {
-																								using = lsq_tooltip_row_is_odd
-																								blockoverride "vertical_line_size" { size = { 3 31 } }
-																								blockoverride "yes_visible" {
-																									visible = "[GetScriptedGui('lsq_auto_build_check_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
-																								}
-																								blockoverride "no_visible" {
-																									visible = "[Not(GetScriptedGui('lsq_auto_build_check_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
-																								}
-																								blockoverride "row_text" {
-																									raw_text = "Location has pops available"
-																								}
-																							}
-																							# lsq_tooltip_row = {
-																							# 	blockoverride "vertical_line_size" { size = { 3 31 } }
-																							# 	blockoverride "yes_visible" {
-																							# 		visible = "[GetScriptedGui('lsq_auto_build_check_owner_gold_available').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
-																							# 	}
-																							# 	blockoverride "no_visible" {
-																							# 		visible = "[Not(GetScriptedGui('lsq_auto_build_check_owner_gold_available').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
-																							# 	}
-																							# 	blockoverride "row_text" {
-																							# 		raw_text = "Country has [GetPlayer.GetCurrencyValue('gold')]@gold! vs required [GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_expected_gold_available_for_building_type')]@gold!"
-																							# 	}
-																							# }
-																						}
-																					}
-																				}
-																			}
-																		}
-																	}
-																}
-
-																blockoverride "field_right" { expand = {} }
-															}
-
-															TooltipTableColumn = {
-																layoutpolicy_vertical = expanding
-																blockoverride "column_title" {}
-																blockoverride "column_title_left" { expand = {} }
-																blockoverride "column_title_text" { text = "[max_control|e]" }
-
-																blockoverride "field_left" {
-																	expand = {}
-																	datacontext = "[Scope.GetLocation]"
-																}
-																blockoverride "field_text" {
-																	text = "[Location.GetMaxControl]"
-																}
-															}
-
-															blockoverride "visibility" {
-																# If the data model index is -1, we are processing the TooltipTableField for the column title so we don't have a location to check. This prevents an error when processing the visibility of that field
-																visible = "[Or(EqualTo_int32(PdxGuiWidget.GetIndexInDataModel, '(int32)-1'), And(Not(EqualTo_int32(PdxGuiWidget.GetIndexInDataModel, '(int32)-1')), GetScriptedGui('lsq_location_allowed_to_build').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)))]"
-															}
-															blockoverride "column_datamodel"  {  datamodel = "[GetPlayer.MakeScope.GetList('lsq_all_controlled_locations_list')]" }
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
+						text_single = {
+							margin_left = 5
+							raw_text = "Enabled?"
 						}
 						expand = {}
+					}
+					datamodel = "[GetPlayer.MakeScope.GetList('lsq_auto_build_building_types_list')]"
+					item = {
+						hbox = {
+							datacontext = "[Scope.GetBuildingType]"
+							layoutpolicy_horizontal = expanding
+							spacing = 8
+							button_checkbox = {
+								size = { 20 20 }
+								checked = "[GetScriptedGui('lsq_is_auto_build_building_type_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								onclick = "[GetScriptedGui('lsq_toggle_auto_build_building_type').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								tooltipwidget = {
+									ContextualTooltipType = {
+										blockoverride "title_text" {
+											raw_text = "Auto-build a [BuildingType.GetName]"
+										}
+										blockoverride "tooltip_content" {
+											TooltipTextBlock = {
+												blockoverride "text" {
+													raw_text = "If checked, the mod will automatically build a [BuildingType.GetName] in each qualifying location on the month tick (when the conditions are met and the country has enough gold)."
+												}
+											}
+										}
+									}
+								}
+							}
+							hbox = {
+								visible = "[Not(GetScriptedGui('lsq_is_auto_build_building_type_in_subjects_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
+								icon = {
+									size = { 24 24 }
+									texture = "[GetBuildingIcon(BuildingType.Self)]"
+								}
+								text_single = {
+									margin_left = 5
+									datacontext = "[BuildingType.MakeScope]"
+									raw_text = "[BuildingType.GetNameWithNoTooltip] ([GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_will_auto_build')|0]/[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_allowed_to_build')|0])"
+								}
+								tooltipwidget = {
+									lsq_auto_build_building_type_tooltip = {
+										blockoverride "column_datamodel"  { datamodel = "[GetPlayer.MakeScope.GetList('lsq_all_controlled_locations_list')]" }
+									}
+								}
+							}
+							hbox = {
+								visible = "[GetScriptedGui('lsq_is_auto_build_building_type_in_subjects_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								icon = {
+									size = { 24 24 }
+									texture = "[GetBuildingIcon(BuildingType.Self)]"
+								}
+								text_single = {
+									margin_left = 5
+									datacontext = "[BuildingType.MakeScope]"
+									raw_text = "[BuildingType.GetNameWithNoTooltip] ([GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_including_subjects_will_auto_build')|0]/[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_including_subjects_allowed_to_build')|0])"
+								}
+								tooltipwidget = {
+									lsq_auto_build_building_type_tooltip = {
+										blockoverride "column_datamodel"  { datamodel = "[GetPlayer.MakeScope.GetList('lsq_all_locations_including_subjects_list')]" }
+									}
+								}
+							}
+							expand = {}
+						}
+					}
+				}
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					spacing = 5
+
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						text_single = {
+							margin_left = 5
+							raw_text = "Subjects?"
+						}
+						expand = {}
+					}
+					datamodel = "[GetPlayer.MakeScope.GetList('lsq_auto_build_building_types_list')]"
+					item = {
+						hbox = {
+							datacontext = "[Scope.GetBuildingType]"
+							layoutpolicy_horizontal = expanding
+							spacing = 8
+							button_checkbox = {
+								size = { 20 20 }
+								checked = "[GetScriptedGui('lsq_is_auto_build_building_type_in_subjects_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								onclick = "[GetScriptedGui('lsq_toggle_auto_build_building_type_in_subjects').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								tooltipwidget = {
+									ContextualTooltipType = {
+										blockoverride "title_text" {
+											raw_text = "Auto-build in subjects"
+										}
+										blockoverride "tooltip_content" {
+											TooltipTextBlock = {
+												blockoverride "text" {
+													raw_text = "If checked, the mod will automatically build a [BuildingType.GetName] in each qualifying location on the month tick (when the conditions are met and the country has enough gold) in subjects in addition to your own territory."
+												}
+											}
+										}
+									}
+								}
+							}
+							expand = {}
+						}
 					}
 				}
 			}
