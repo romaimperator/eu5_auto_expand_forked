@@ -1,0 +1,41 @@
+# Root is the location, also expects the scope country
+lsq_location_can_auto_build_pound_lock_canal_infrastructure = {
+	AND = {
+		lsq_location_will_auto_build_pound_lock_canal_infrastructure = yes
+		building_type:pound_lock_canal_infrastructure = { lsq_auto_build_check_owner_gold_available = yes }
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_allowed_to_build_pound_lock_canal_infrastructure = {
+	AND = {
+		lsq_auto_build_check_building_researched_pound_lock_canal_infrastructure = yes
+		lsq_auto_build_check_no_building_type = { target = building_type:pound_lock_canal_infrastructure }
+		OR = {
+			is_coastal = yes
+			has_river = yes
+			is_adjacent_to_lake = yes
+		}
+		development >= 20
+		lsq_auto_build_check_city = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_will_auto_build_pound_lock_canal_infrastructure = {
+	AND = {
+		scope:country = { lsq_should_pause_auto_expand = no }
+		lsq_location_allowed_to_build_pound_lock_canal_infrastructure = yes
+		lsq_auto_build_check_pops_available_pound_lock_canal_infrastructure = yes
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_pops_available_pound_lock_canal_infrastructure = {
+	lsq_auto_build_check_laborers_available_or_will_be = yes
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_building_researched_pound_lock_canal_infrastructure = {
+	scope:country = { has_advance = pound_lock_canals_advance }
+}

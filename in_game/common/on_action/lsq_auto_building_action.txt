@@ -12,31 +12,62 @@ lsq_auto_build_one_per_location_buildings = {
 	}
 
 	effect = {
+		# save_scope_as = country
+		# lsq_auto_build_init_locations_lists = {} # Update the lists of locations
+    # debug_log = "Auto-building one-per-location buildings"
+		# every_in_list = {
+		# 	variable = lsq_auto_build_building_types_enabled
+		# 	save_scope_as = building_type
+		# 	debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip]"
+		# 	root = {
+		# 		if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type } } }
+		# 			ordered_controlled_location = {
+		# 				order_by = max_control
+		# 				limit = { lsq_location_can_auto_build = { target = scope:building_type } }
+		# 				max = lsq_max_guess_at_number_of_locations
+		# 				debug_log = "Building [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip] in [THIS.GetLocation.GetNameWithNoTooltip]"
+		# 				construct_building = { building_type = scope:building_type }
+		# 			}
+		# 		} else = {
+		# 			every_in_list = {
+		# 				variable = lsq_all_locations_including_subjects_list
+		# 				limit = { lsq_location_can_auto_build = { target = scope:building_type } }
+		# 				debug_log = "Building [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip] in [THIS.GetLocation.GetNameWithNoTooltip]"
+		# 				construct_building = {
+		# 					building_type = scope:building_type
+		# 					owner = scope:country
+		# 					payer = scope:country
+		# 				}
+		# 			}
+		# 		}
+		# 	}
+		# }
+
 		save_scope_as = country
 		lsq_auto_build_init_locations_lists = {} # Update the lists of locations
     debug_log = "Auto-building one-per-location buildings"
 		every_in_list = {
-			variable = lsq_auto_build_building_types_enabled
-			save_scope_as = building_type
-			debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip]"
-			root = {
-				if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type } } }
-					ordered_controlled_location = {
-						order_by = max_control
-						limit = { lsq_location_can_auto_build = { target = scope:building_type } }
-						max = lsq_max_guess_at_number_of_locations
-						debug_log = "Building [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip] in [THIS.GetLocation.GetNameWithNoTooltip]"
-						construct_building = { building_type = scope:building_type }
-					}
-				} else = {
-					every_in_list = {
-						variable = lsq_all_locations_including_subjects_list
-						limit = { lsq_location_can_auto_build = { target = scope:building_type } }
-						debug_log = "Building [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip] in [THIS.GetLocation.GetNameWithNoTooltip]"
-						construct_building = {
-							building_type = scope:building_type
-							owner = scope:country
-							payer = scope:country
+			variable = lsq_all_locations_including_subjects_list # this list has all directly owned locations sorted by max control first and then all subjects locations sorted by max control
+			save_scope_as = location
+
+			scope:country = {
+				every_in_list = {
+					variable = lsq_auto_build_building_types_enabled
+					save_scope_as = building_type
+
+					scope:location = {
+						debug_log = "Checking building [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip] in [THIS.GetLocation.GetNameWithNoTooltip]"
+						if = { limit = { AND = { lsq_get_open_build_queue_slots > 0 lsq_location_can_auto_build = { target = scope:building_type } } }
+							debug_log = "Building [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip] in [THIS.GetLocation.GetNameWithNoTooltip]"
+							if = { limit = { owner = scope:country }
+								construct_building = { building_type = scope:building_type }
+							} else_if = { limit = { scope:country = { is_target_in_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type } } }
+								construct_building = {
+									building_type = scope:building_type
+									owner = scope:country
+									payer = scope:country
+								}
+							}
 						}
 					}
 				}

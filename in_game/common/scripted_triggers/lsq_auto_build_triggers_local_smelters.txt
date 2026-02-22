@@ -1,0 +1,42 @@
+# Root is the location, also expects the scope country
+lsq_location_can_auto_build_local_smelters = {
+	AND = {
+		lsq_location_will_auto_build_local_smelters = yes
+		building_type:local_smelters = { lsq_auto_build_check_owner_gold_available = yes }
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_allowed_to_build_local_smelters = {
+	AND = {
+		lsq_auto_build_check_building_researched_local_smelters = yes
+		lsq_auto_build_check_no_building_type = { target = building_type:local_smelters }
+		lsq_auto_build_check_rural = yes
+		OR = {
+			raw_material = goods:iron
+			raw_material = goods:copper
+			raw_material = goods:tin
+			raw_material = goods:lead
+		}
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_will_auto_build_local_smelters = {
+	AND = {
+		scope:country = { lsq_should_pause_auto_expand = no }
+		lsq_location_allowed_to_build_local_smelters = yes
+		lsq_auto_build_check_pops_available_local_smelters = yes
+		lsq_auto_build_check_rgo_level_requirement_met = { target = building_type:local_smelters }
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_pops_available_local_smelters = {
+	lsq_auto_build_check_laborers_available_or_will_be = yes
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_building_researched_local_smelters = {
+	scope:country = { has_advance = local_smelters_advance }
+}

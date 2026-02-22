@@ -135,18 +135,106 @@ types lsq_auto_build_tooltip_types {
                                     raw_text = "Location has pops available"
                                   }
                                 }
-                                # lsq_tooltip_row = {
-                                # 	blockoverride "vertical_line_size" { size = { 3 31 } }
-                                # 	blockoverride "yes_visible" {
-                                # 		visible = "[GetScriptedGui('lsq_auto_build_check_owner_gold_available').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
-                                # 	}
-                                # 	blockoverride "no_visible" {
-                                # 		visible = "[Not(GetScriptedGui('lsq_auto_build_check_owner_gold_available').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
-                                # 	}
-                                # 	blockoverride "row_text" {
-                                # 		raw_text = "Country has [GetPlayer.GetCurrencyValue('gold')]@gold! vs required [GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_expected_gold_available_for_building_type')]@gold!"
-                                # 	}
-                                # }
+                                lsq_tooltip_row = {
+                                  visible = "[GetScriptedGui('lsq_auto_build_show_rgo_level_tooltip_row').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+                                  blockoverride "vertical_line_size" { size = { 3 31 } }
+                                  blockoverride "yes_visible" {
+                                    visible = "[GetScriptedGui('lsq_auto_build_check_rgo_level_requirement_met').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+                                  }
+                                  blockoverride "no_visible" {
+                                    visible = "[Not(GetScriptedGui('lsq_auto_build_check_rgo_level_requirement_met').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+                                  }
+                                  blockoverride "row_text" {
+                                    raw_text = "Has required RGO [Select_CString(GetScriptedGui('lsq_is_sawmill_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).End), 'or lumbermill ', '')]levels constructed (min [GuiScope.ScriptValue('lsq_auto_build_required_rgo_levels_before_improvement_building')])"
+                                  }
+                                }
+                                lsq_tooltip_row = {
+                                  visible = "[InDebugMode]"
+                                	blockoverride "vertical_line_size" { size = { 3 31 } }
+                                  background = {
+                                    using = bg_tooltip_debug
+                                  }
+                                  blockoverride "yes_visible" {
+                                    visible = "[GetScriptedGui('lsq_auto_build_check_owner_gold_available').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+                                  }
+                                  blockoverride "no_visible" {
+                                    visible = "[Not(GetScriptedGui('lsq_auto_build_check_owner_gold_available').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+                                  }
+                                  blockoverride "row_text" {
+                                    raw_text = "Country has [GetPlayer.GetCurrencyValue('gold')]@gold! vs required [GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_expected_gold_available_for_building_type')]@gold!"
+                                  }
+                                }
+                              }
+                            }
+
+                            TooltipTextBlock = {
+                              visible = "[And(GetScriptedGui('lsq_is_auto_build_building_type_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End), GetScriptedGui('lsq_location_will_auto_build').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+                              blockoverride "text" {
+                                raw_text = "Building will expand if at least [GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_expected_gold_available_for_building_type')|0]@gold! is available"
+                              }
+                              blockoverride "textblock_background_tint"  {
+                                modify_texture = {
+                                  using = color_light_green_texture
+                                }
+                              }
+                            }
+
+                            TooltipTextBlock = {
+                              visible = "[And(GetScriptedGui('lsq_is_auto_build_building_type_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End), Not(GetScriptedGui('lsq_location_will_auto_build').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]"
+                              blockoverride "text" {
+                                raw_text = "Building will not expand; conditions are not met"
+                              }
+                              blockoverride "textblock_background_tint"  {
+                                modify_texture = {
+                                  using = color_red_texture
+                                }
+                              }
+                            }
+
+                            vbox = {
+                              visible = "[InDebugMode]"
+                              background = {
+                                using = bg_tooltip_debug
+                              }
+                              TooltipTextBlock = {
+                                blockoverride "text" {
+                                  raw_text = "lsq_local_pop_promotion_speed: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_pop_promotion_speed')]"
+                                }
+                              }
+                              TooltipTextBlock = {
+                                blockoverride "text" {
+                                  raw_text = "lsq_local_pop_promotion_speed_modifier: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_pop_promotion_speed_modifier')]"
+                                }
+                              }
+                              TooltipTextBlock = {
+                                blockoverride "text" {
+                                  raw_text = "lsq_local_pop_promotion_speed_scaled: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_pop_promotion_speed_scaled')]"
+                                }
+                              }
+                              TooltipTextBlock = {
+                                blockoverride "text" {
+                                  raw_text = "lsq_global_pop_promotion_speed: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_pop_promotion_speed')]"
+                                }
+                              }
+                              TooltipTextBlock = {
+                                blockoverride "text" {
+                                  raw_text = "lsq_global_pop_promotion_speed_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_pop_promotion_speed_modifier')]"
+                                }
+                              }
+                              TooltipTextBlock = {
+                                blockoverride "text" {
+                                  raw_text = "lsq_combined_pop_promotion_speed: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_combined_pop_promotion_speed')]"
+                                }
+                              }
+                              TooltipTextBlock = {
+                                blockoverride "text" {
+                                  raw_text = "UI pop promotion speed: [Location.GetPromoteValue]"
+                                }
+                              }
+                              TooltipTextBlock = {
+                                blockoverride "text" {
+                                  raw_text = "lsq_location_lumber_mill_level: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_location_lumber_mill_level')]"
+                                }
                               }
                             }
                           }

@@ -1,0 +1,43 @@
+# Root is the location, also expects the scope country
+lsq_location_can_auto_build_sawmill = {
+	AND = {
+		lsq_location_will_auto_build_sawmill = yes
+		building_type:sawmill = { lsq_auto_build_check_owner_gold_available = yes }
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_allowed_to_build_sawmill = {
+	AND = {
+		lsq_auto_build_check_building_researched_sawmill = yes
+		lsq_auto_build_check_no_building_type = { target = building_type:sawmill }
+		lsq_auto_build_check_rural = yes
+		OR = {
+			vegetation = woods
+			vegetation = forest
+			vegetation = farmland
+			vegetation = jungle
+			raw_material = goods:lumber
+		}
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_will_auto_build_sawmill = {
+	AND = {
+		scope:country = { lsq_should_pause_auto_expand = no }
+		lsq_location_allowed_to_build_sawmill = yes
+		lsq_auto_build_check_pops_available_sawmill = yes
+		lsq_auto_build_check_rgo_level_requirement_met = { target = building_type:sawmill }
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_pops_available_sawmill = {
+	lsq_auto_build_check_laborers_available_or_will_be = yes
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_building_researched_sawmill = {
+	always = yes # not locked behind an advance
+}
