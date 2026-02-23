@@ -26,7 +26,7 @@ lsq_location_will_auto_build_windmill = {
 		scope:country = { lsq_should_pause_auto_expand = no }
 		lsq_location_allowed_to_build_windmill = yes
 		lsq_auto_build_check_pops_available_windmill = yes
-		lsq_auto_build_check_rgo_level_requirement_met = { target = building_type:windmill }
+		lsq_auto_build_check_rgo_level_requirement_met_windmill = yes
 	}
 }
 
@@ -38,4 +38,15 @@ lsq_auto_build_check_pops_available_windmill = {
 # Root is the location, also expects the scope country
 lsq_auto_build_check_building_researched_windmill = {
 	scope:country = { has_advance = windmills_advance }
+}
+
+lsq_auto_build_check_rgo_level_requirement_met_windmill = {
+	AND = {
+		OR = {
+			raw_material = goods:wheat
+			raw_material = goods:millet
+			raw_material = goods:rice
+		}
+		lsq_get_ui_saved_max_rgo_workers >= scope:country.var:lsq_required_rgo_levels_before_windmill
+	}
 }

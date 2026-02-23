@@ -28,7 +28,7 @@ lsq_location_will_auto_build_sawmill = {
 		scope:country = { lsq_should_pause_auto_expand = no }
 		lsq_location_allowed_to_build_sawmill = yes
 		lsq_auto_build_check_pops_available_sawmill = yes
-		lsq_auto_build_check_rgo_level_requirement_met = { target = building_type:sawmill }
+		lsq_auto_build_check_rgo_level_requirement_met_sawmill = yes
 	}
 }
 
@@ -40,4 +40,13 @@ lsq_auto_build_check_pops_available_sawmill = {
 # Root is the location, also expects the scope country
 lsq_auto_build_check_building_researched_sawmill = {
 	always = yes # not locked behind an advance
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_rgo_level_requirement_met_sawmill = {
+	OR = {
+		AND = { raw_material = goods:lumber lsq_get_ui_saved_max_rgo_workers >= scope:country.var:lsq_required_rgo_levels_before_sawmill }
+		AND = { has_building = building_type:lumber_mill "building(building_type:lumber_mill|owner)" = { building_level >= scope:country.var:lsq_required_rgo_levels_before_sawmill } }
+		scope:country.var:lsq_required_rgo_levels_before_sawmill = 0
+	}
 }

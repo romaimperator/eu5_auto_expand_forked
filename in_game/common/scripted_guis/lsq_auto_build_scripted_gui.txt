@@ -170,6 +170,46 @@ lsq_auto_build_show_rgo_level_tooltip_row = {
 	}
 }
 
+# Root is the country. Expects scope building_type (sawmill/windmill/local_smelters). Increase required RGO levels before building this improvement by 1.
+lsq_increase_required_rgo_levels_before_improvement_building = {
+	scope = country
+	effect = {
+		if = { limit = { scope:building_type = building_type:sawmill }
+			change_variable = { name = lsq_required_rgo_levels_before_sawmill add = 1 }
+			clamp_variable = { name = lsq_required_rgo_levels_before_sawmill min = 0 max = 20 }
+		} else_if = { limit = { scope:building_type = building_type:windmill }
+			change_variable = { name = lsq_required_rgo_levels_before_windmill add = 1 }
+			clamp_variable = { name = lsq_required_rgo_levels_before_windmill min = 0 max = 20 }
+		} else_if = { limit = { scope:building_type = building_type:local_smelters }
+			change_variable = { name = lsq_required_rgo_levels_before_local_smelters add = 1 }
+			clamp_variable = { name = lsq_required_rgo_levels_before_local_smelters min = 0 max = 20 }
+		}
+	}
+	is_shown = {
+		lsq_auto_build_show_rgo_level_tooltip_row = yes
+	}
+}
+
+# Root is the country. Expects scope building_type (sawmill/windmill/local_smelters). Decrease required RGO levels before building this improvement by 1.
+lsq_decrease_required_rgo_levels_before_improvement_building = {
+	scope = country
+	effect = {
+		if = { limit = { scope:building_type = building_type:sawmill }
+			change_variable = { name = lsq_required_rgo_levels_before_sawmill subtract = 1 }
+			clamp_variable = { name = lsq_required_rgo_levels_before_sawmill min = 0 max = 20 }
+		} else_if = { limit = { scope:building_type = building_type:windmill }
+			change_variable = { name = lsq_required_rgo_levels_before_windmill subtract = 1 }
+			clamp_variable = { name = lsq_required_rgo_levels_before_windmill min = 0 max = 20 }
+		} else_if = { limit = { scope:building_type = building_type:local_smelters }
+			change_variable = { name = lsq_required_rgo_levels_before_local_smelters subtract = 1 }
+			clamp_variable = { name = lsq_required_rgo_levels_before_local_smelters min = 0 max = 20 }
+		}
+	}
+	is_shown = {
+		lsq_auto_build_show_rgo_level_tooltip_row = yes
+	}
+}
+
 # Root is the location. Also expects the scope building_type and country. True when location has required RGO/lumber levels for this building type.
 lsq_auto_build_check_rgo_level_requirement_met = {
 	is_shown = {
