@@ -75,6 +75,11 @@ lsq_auto_build_number_of_locations_allowed_to_build = {
       limit = { lsq_location_allowed_to_build_local_smelters = yes }
       add = 1
     }
+  } else_if = { limit = { scope:building_type = building_type:protected_harbor }
+    every_controlled_location = {
+      limit = { lsq_location_allowed_to_build_protected_harbor = yes }
+      add = 1
+    }
   }
 }
 
@@ -149,6 +154,11 @@ lsq_auto_build_number_of_locations_will_auto_build = {
   } else_if = { limit = { scope:building_type = building_type:local_smelters }
     every_controlled_location = {
       limit = { lsq_location_will_auto_build_local_smelters = yes }
+      add = 1
+    }
+  } else_if = { limit = { scope:building_type = building_type:protected_harbor }
+    every_controlled_location = {
+      limit = { lsq_location_will_auto_build_protected_harbor = yes }
       add = 1
     }
   }
@@ -260,6 +270,13 @@ lsq_auto_build_number_of_locations_including_subjects_allowed_to_build = {
         add = 1
       }
     }
+  } else_if = { limit = { scope:building_type = building_type:protected_harbor }
+    every_subject_or_below = {
+      every_controlled_location = {
+        limit = { lsq_location_allowed_to_build_protected_harbor = yes }
+        add = 1
+      }
+    }
   }
 }
 
@@ -361,6 +378,13 @@ lsq_auto_build_number_of_locations_including_subjects_will_auto_build = {
     every_subject_or_below = {
       every_controlled_location = {
         limit = { lsq_location_will_auto_build_local_smelters = yes }
+        add = 1
+      }
+    }
+  } else_if = { limit = { scope:building_type = building_type:protected_harbor }
+    every_subject_or_below = {
+      every_controlled_location = {
+        limit = { lsq_location_will_auto_build_protected_harbor = yes }
         add = 1
       }
     }
