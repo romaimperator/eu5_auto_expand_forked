@@ -5,7 +5,7 @@ basic_dialog = {
 	visible = "[And(GetPlayer.Exists, GetScriptedGui('lsq_show_settings_window').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 	parentanchor = center
 
-	blockoverride "block_scrollarea" { maximumsize = { -1 750 } }
+	blockoverride "block_scrollarea" { maximumsize = { -1 800 } }
 
 	blockoverride "header_obj" {
 		widget = {
@@ -293,6 +293,95 @@ basic_dialog = {
 						click_modifier = ctrl
 						title = "Change Minimum Gold by #G +1000#!"
 						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_rgos_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+				}
+			}
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				spacing = 5
+				tooltipwidget = {
+					ContextualTooltipType = {
+						blockoverride "title_text" {
+							raw_text = "Gold to save before auto-building"
+						}
+						blockoverride "tooltip_content" {
+							TooltipTextBlock = {
+								blockoverride "text" {
+									raw_text = "The gold to save is the amount of gold that must be available before any auto-building can occur. A building will not be auto-built if the gold to save plus the estimate cost is greater than the country's current ducats. Put another way, the amount of gold you will have will never drop below the gold to save value."
+								}
+							}
+						}
+					}
+				}
+				text_single = {
+					autoresize = yes
+					raw_text = "Gold to save before auto-building:"
+				}
+				expand = {}
+				button_default = {
+					size = { 24 24 }
+					text_single = {
+						parentanchor = center
+						raw_text = "-"
+					}
+					tooltipwidget = { BasicFunctionalTooltip = {} }
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = default
+						title = "Change Minimum Gold by #R -10#!"
+						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = shift
+						title = "Change Minimum Gold by #R -100#!"
+						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = ctrl
+						title = "Change Minimum Gold by #R -1000#!"
+						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_auto_build_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+				}
+				widget = {
+					min_width = 60
+					text_single = {
+						parentanchor = center
+						autoresize = yes
+						raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_gold_for_auto_build')|0]@gold!"
+					}
+				}
+				button_default = {
+					size = { 24 24 }
+					text_single = {
+						parentanchor = center
+						raw_text = "+"
+					}
+					tooltipwidget = { BasicFunctionalTooltip = { } }
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = default
+						title = "Change Minimum Gold by #G +10#!"
+						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = shift
+						title = "Change Minimum Gold by #G +100#!"
+						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						click_modifier = ctrl
+						title = "Change Minimum Gold by #G +1000#!"
+						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_auto_build_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 					}
 				}
 			}
