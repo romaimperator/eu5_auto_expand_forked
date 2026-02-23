@@ -1,3 +1,82 @@
+# Root is the country. Expects scope:drop_target_bt and scope:dragged_bt (saved in chain). Reorders lsq_auto_build_building_types_list so dragged is before drop target.
+lsq_auto_build_reorder_list_effect = {
+  set_local_variable = { name = i value = 0 }
+  # debug_log = "Reordering list"
+  every_in_list = {
+    variable = lsq_auto_build_building_types_list
+    save_scope_as = current_bt
+    # debug_log = "Adding building type [THIS.GetBuildingType.GetNameWithNoTooltip] to temp list"
+    scope:country = { add_to_variable_list = { name = lsq_auto_build_order_temp target = scope:current_bt } }
+  }
+  clear_variable_list = lsq_auto_build_building_types_list
+  set_local_variable = { name = done value = 0 }
+  every_in_list = {
+    variable = lsq_auto_build_order_temp
+    save_scope_as = current_bt
+    if = { limit = { NOT = { this = scope:building_type } }
+      if = { limit = { local_var:i = local_var:lsq_auto_build_move_target_index }
+        # debug_log = "Adding building type [THIS.GetBuildingType.GetNameWithNoTooltip] with moving building type [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip]"
+        scope:country = { add_to_variable_list = { name = lsq_auto_build_building_types_list target = scope:building_type } }
+        scope:country = { add_to_variable_list = { name = lsq_auto_build_building_types_list target = scope:current_bt } }
+        set_local_variable = { name = done value = 1 }
+      } else = {
+        # debug_log = "Adding building type [THIS.GetBuildingType.GetNameWithNoTooltip]"
+        scope:country = { add_to_variable_list = { name = lsq_auto_build_building_types_list target = scope:current_bt } }
+      }
+      change_local_variable = { name = i add = 1 }
+    }
+  }
+  if = { limit = { local_var:done = 0 }
+    # debug_log = "Adding building type [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip] to end of list"
+    scope:country = { add_to_variable_list = { name = lsq_auto_build_building_types_list target = scope:building_type } }
+  }
+  clear_variable_list = lsq_auto_build_order_temp
+}
+
+# Root is the country. Expects scope:building_type (the row to move). Moves it one position earlier in the list.
+lsq_auto_build_move_building_type_up_effect = {
+  # debug_log = "Moving building type up"
+  set_local_variable = { name = lsq_auto_build_move_index value = 0 }
+  set_local_variable = { name = lsq_auto_build_move_done value = 0 }
+  every_in_list = {
+    variable = lsq_auto_build_building_types_list
+    save_scope_as = current_bt
+    # debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip] for matching [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip]"
+    if = { limit = { this = scope:building_type }
+      scope:country = {
+        if = { limit = { AND = { local_var:lsq_auto_build_move_index >= 1 local_var:lsq_auto_build_move_done = 0 } }
+          set_local_variable = { name = lsq_auto_build_move_target_index value = { value = local_var:lsq_auto_build_move_index subtract = 1 } }
+          lsq_auto_build_reorder_list_effect = {}
+          set_local_variable = { name = lsq_auto_build_move_done value = 1 }
+        }
+      }
+    }
+    change_local_variable = { name = lsq_auto_build_move_index add = 1 }
+    save_scope_as = previous_bt
+  }
+}
+
+# Root is the country. Expects scope:building_type (the row to move). Moves it one position later in the list.
+lsq_auto_build_move_building_type_down_effect = {
+  # debug_log = "Moving building type down"
+  set_local_variable = { name = lsq_auto_build_move_index value = 0 }
+  set_local_variable = { name = lsq_auto_build_move_done value = 0 }
+  every_in_list = {
+    variable = lsq_auto_build_building_types_list
+    save_scope_as = current_bt
+    # debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip] for matching [SCOPE.sBuildingType('building_type').GetNameWithNoTooltip]"
+    scope:country = {
+      if = { limit = { AND = { scope:current_bt = scope:building_type local_var:lsq_auto_build_move_done = 0 } }
+        set_local_variable = { name = lsq_auto_build_move_target_index value = { value = local_var:lsq_auto_build_move_index add = 1 } }
+        lsq_auto_build_reorder_list_effect = {}
+        set_local_variable = { name = lsq_auto_build_move_done value = 1 }
+      }
+      change_local_variable = { name = lsq_auto_build_move_index add = 1 }
+    }
+    save_scope_as = previous_bt
+  }
+}
+
 # Root is the country
 lsq_auto_build_init_variables = {
   clear_variable_list = lsq_auto_build_building_types_list

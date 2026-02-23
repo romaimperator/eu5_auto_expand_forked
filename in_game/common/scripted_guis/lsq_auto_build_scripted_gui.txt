@@ -1,4 +1,39 @@
 # Auto-build one-per-location buildings (temple, etc.)
+# Root is the country. Move scope:building_type one position earlier in the list.
+lsq_auto_build_move_building_type_up = {
+	effect = {
+		lsq_auto_build_move_building_type_up_effect = {}
+	}
+}
+
+# Root is the country. Move scope:building_type one position later in the list.
+lsq_auto_build_move_building_type_down = {
+	effect = {
+		lsq_auto_build_move_building_type_down_effect = {}
+	}
+}
+
+# Root is the country. Move scope:building_type to the top of the list (index 0). Used for shift+click on Up arrow.
+lsq_auto_build_move_building_type_to_top = {
+	effect = {
+		set_local_variable = { name = lsq_auto_build_move_target_index value = 0 }
+		lsq_auto_build_reorder_list_effect = {}
+	}
+}
+
+# Root is the country. Move scope:building_type to the bottom of the list (last index). Used for shift+click on Down arrow.
+lsq_auto_build_move_building_type_to_bottom = {
+	effect = {
+		set_local_variable = { name = types_list_size value = 0 }
+		every_in_list = {
+			variable = lsq_auto_build_building_types_list
+			change_local_variable = { name = types_list_size add = 1 }
+		}
+		set_local_variable = { name = lsq_auto_build_move_target_index value = { value = local_var:types_list_size subtract = 1 } }
+		lsq_auto_build_reorder_list_effect = {}
+	}
+}
+
 # Root is the country. Toggles whether to auto-build the building type in scope:building_type.
 lsq_toggle_auto_build_building_type = {
 	effect = {
