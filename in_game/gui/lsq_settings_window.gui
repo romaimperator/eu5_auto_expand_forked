@@ -5,7 +5,7 @@ basic_dialog = {
 	visible = "[And(GetPlayer.Exists, GetScriptedGui('lsq_show_settings_window').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 	parentanchor = center
 
-	blockoverride "block_scrollarea" { maximumsize = { -1 700 } }
+	blockoverride "block_scrollarea" { maximumsize = { -1 750 } }
 
 	blockoverride "header_obj" {
 		widget = {
@@ -46,6 +46,8 @@ basic_dialog = {
 
 	blockoverride "content" {
 		vbox = {
+			maximumsize = { 600 -1 }
+			minimumsize = { 600 -1 }
 			margin = { 20 20 }
 			spacing = 10
 
@@ -89,7 +91,7 @@ basic_dialog = {
 			hbox = {
 				layoutpolicy_horizontal = expanding
 				spacing = 3
-				button_checkbox = {
+				checkbox_square_alt = {
 					size = { 20 20 }
 					checked = "[GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 					onclick = "[GetScriptedGui('lsq_pause_auto_expand').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
@@ -104,7 +106,7 @@ basic_dialog = {
 			hbox = {
 				layoutpolicy_horizontal = expanding
 				spacing = 3
-				button_checkbox = {
+				checkbox_square_alt = {
 					size = { 20 20 }
 					checked = "[GetScriptedGui('lsq_should_auto_expand_upgrade_buildings').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 					onclick = "[GetScriptedGui('lsq_should_auto_expand_upgrade_buildings').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
@@ -303,7 +305,9 @@ basic_dialog = {
 				layoutpolicy_horizontal = expanding
 				layoutpolicy_vertical = expanding
 				vbox = {
+					max_width = 72
 					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
 					spacing = 5
 					hbox = {
 						layoutpolicy_horizontal = expanding
@@ -372,6 +376,8 @@ basic_dialog = {
 					}
 				}
 				vbox = {
+					# layoutpolicy_horizontal = fixed
+					min_width = 300
 					spacing = 5
 					hbox = {
 						layoutpolicy_horizontal = expanding
@@ -387,12 +393,16 @@ basic_dialog = {
 							datacontext = "[Scope.GetBuildingType]"
 							layoutpolicy_horizontal = expanding
 							spacing = 8
-							button_checkbox = {
-								size = { 20 20 }
+							checkbox_square_alt = {
+								size = { 24 24 }
+								# frame = "[Select_int32(GetScriptedGui('lsq_is_auto_build_building_type_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End), '(int32)2', '(int32)1')]"
 								checked = "[GetScriptedGui('lsq_is_auto_build_building_type_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+
 								onclick = "[GetScriptedGui('lsq_toggle_auto_build_building_type').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								onrightclick = "[GetScriptedGui('lsq_toggle_all_auto_build_building_types').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+
 								tooltipwidget = {
-									ContextualTooltipType = {
+									SimpleContextualTooltipType = {
 										blockoverride "title_text" {
 											raw_text = "Auto-build a [BuildingType.GetName]"
 										}
@@ -400,6 +410,17 @@ basic_dialog = {
 											TooltipTextBlock = {
 												blockoverride "text" {
 													raw_text = "If checked, the mod will automatically build a [BuildingType.GetName] in each qualifying location on the month tick (when the conditions are met and the country has enough gold)."
+												}
+											}
+										}
+										blockoverride "tooltip_ui_action_block" {
+											TooltipFunctionalBlock = {
+												using = tooltip_left_right_click_template
+												blockoverride "action_left_text" {
+													text = "TOGGLE_SELECTION"
+												}
+												blockoverride "action_right_text" {
+													text = "TOGGLE_ALL"
 												}
 											}
 										}
@@ -446,7 +467,6 @@ basic_dialog = {
 				}
 				vbox = {
 					layoutpolicy_horizontal = expanding
-					layoutpolicy_vertical = expanding
 					spacing = 5
 
 					hbox = {
@@ -463,12 +483,14 @@ basic_dialog = {
 							datacontext = "[Scope.GetBuildingType]"
 							layoutpolicy_horizontal = expanding
 							spacing = 8
-							button_checkbox = {
-								size = { 20 20 }
+							checkbox_square_alt = {
+								size = { 24 24 }
 								checked = "[GetScriptedGui('lsq_is_auto_build_building_type_in_subjects_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
 								onclick = "[GetScriptedGui('lsq_toggle_auto_build_building_type_in_subjects').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								onrightclick = "[GetScriptedGui('lsq_toggle_all_auto_build_building_types_in_subjects').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+
 								tooltipwidget = {
-									ContextualTooltipType = {
+									SimpleContextualTooltipType = {
 										blockoverride "title_text" {
 											raw_text = "Auto-build in subjects"
 										}
@@ -476,6 +498,17 @@ basic_dialog = {
 											TooltipTextBlock = {
 												blockoverride "text" {
 													raw_text = "If checked, the mod will automatically build a [BuildingType.GetName] in each qualifying location on the month tick (when the conditions are met and the country has enough gold) in subjects in addition to your own territory."
+												}
+											}
+										}
+										blockoverride "tooltip_ui_action_block" {
+											TooltipFunctionalBlock = {
+												using = tooltip_left_right_click_template
+												blockoverride "action_left_text" {
+													text = "TOGGLE_SELECTION"
+												}
+												blockoverride "action_right_text" {
+													text = "TOGGLE_ALL"
 												}
 											}
 										}

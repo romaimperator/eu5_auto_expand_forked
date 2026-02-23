@@ -45,6 +45,50 @@ lsq_toggle_auto_build_building_type = {
 	}
 }
 
+# Root is the country.
+lsq_toggle_all_auto_build_building_types = {
+	effect = {
+		save_scope_as = country
+		set_local_variable = { name = enabled_count value = 0 }
+		every_in_list = {
+			variable = lsq_auto_build_building_types_enabled
+			change_local_variable = { name = enabled_count add = 1 }
+		}
+
+		if = { limit = { variable_list_size = { name = lsq_auto_build_building_types_list value > local_var:enabled_count } }
+			every_in_list = {
+				variable = lsq_auto_build_building_types_list
+				save_scope_as = building_type
+				scope:country = { add_to_variable_list = { name = lsq_auto_build_building_types_enabled target = scope:building_type } }
+			}
+		} else = {
+			clear_variable_list = lsq_auto_build_building_types_enabled
+		}
+	}
+}
+
+# Root is the country.
+lsq_toggle_all_auto_build_building_types_in_subjects = {
+	effect = {
+		save_scope_as = country
+		set_local_variable = { name = enabled_count value = 0 }
+		every_in_list = {
+			variable = lsq_auto_build_building_types_in_subjects_enabled
+			change_local_variable = { name = enabled_count add = 1 }
+		}
+
+		if = { limit = { variable_list_size = { name = lsq_auto_build_building_types_list value > local_var:enabled_count } }
+			every_in_list = {
+				variable = lsq_auto_build_building_types_list
+				save_scope_as = building_type
+				scope:country = { add_to_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type } }
+			}
+		} else = {
+			clear_variable_list = lsq_auto_build_building_types_in_subjects_enabled
+		}
+	}
+}
+
 # Root is the country. Is building type (scope:building_type) in the auto-build enabled list?
 lsq_is_auto_build_building_type_enabled = {
 	is_shown = {
