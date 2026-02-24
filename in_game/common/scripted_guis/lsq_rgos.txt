@@ -14,7 +14,7 @@ lsq_set_auto_expand_for_rgo = {
 			# Remove the province-level variable to indicate that there is at least one location with auto expand RGO on
 			province = { remove_variable = lsq_auto_expand_rgo_off_in_all_locations }
 		}
-		owner = { remove_variable = lsq_update_rgo_information }
+		# owner = { remove_variable = lsq_update_rgo_information }
 	}
 
 	is_shown = {
@@ -64,63 +64,6 @@ lsq_is_there_enough_gold_available = {
 # 		lsq_has_enough_raw_materials_for_rgo = yes
 # 	}
 # }
-
-lsq_update_location_rgo_information = {
-	saved_scopes = { lsq_max_rgo_workers lsq_location_promotion }
-	effect = {
-		# root scope is a location (passed from GUI)
-		# debug_log = "LSQ: Updating location RGO information for [THIS.GetLocation.GetNameWithNoTooltip]"
-
-		# handle storing the lsq_max_rgo_workers variable
-		set_variable = { name = lsq_max_rgo_workers value = scope:lsq_max_rgo_workers } # this value from the UI is how many RGO levels are currently built
-
-		# handle storing the lsq_location_promotion variable
-		# set_variable = { name = lsq_location_promotion value = scope:lsq_location_promotion }
-		# set_variable = { name = lsq_location_promotion_labourers value = { value = scope:lsq_location_promotion multiply = 1.5 } }
-		# set_variable = { name = lsq_location_promotion_labourers_plus_current_rgo_workers value = { value = local_var:lsq_location_promotion_labourers add = lsq_get_rgo_workers } }
-		set_local_variable = {
-			name = lsq_location_promotion_labourers_plus_current_rgo_workers
-			value = {
-				value = {
-					value = scope:lsq_location_promotion
-					multiply = 1.5
-				}
-				add = lsq_get_rgo_workers
-			}
-		}
-		if = { limit = { local_var:lsq_location_promotion_labourers_plus_current_rgo_workers >= scope:lsq_max_rgo_workers }
-			set_variable = { name = lsq_should_build_early value = yes }
-		} else = {
-			set_variable = { name = lsq_should_build_early value = no }
-		}
-
-		# After updating the RGO information, check if the RGO should be auto expanded
-		if = { limit = { AND = { exists = var:lsq_run_auto_expand_rgo exists = var:auto_expand_rgo } }
-			if = { limit = { lsq_should_rgo_auto_expand = yes }
-				construct_rgo_upgrade = {}
-			}
-			remove_variable = lsq_run_auto_expand_rgo
-		}
-	}
-}
-
-lsq_show_to_update_rgo_information = {
-	is_shown = {
-		NOT = { exists = var:lsq_update_rgo_information }
-	}
-}
-
-lsq_hidden_window_hide = {
-	effect = {
-		set_variable = { name = lsq_update_rgo_information value = yes }
-	}
-}
-
-lsq_trigger_update_rgo_information = {
-	effect = {
-		remove_variable = lsq_update_rgo_information
-	}
-}
 
 lsq_increase_minimum_gold_for_rgos = {
 	scope = country

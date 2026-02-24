@@ -26,53 +26,6 @@ basic_dialog = {
 					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_init')]"
 				}
 			}
-			vbox = {
-				visible = "[GetScriptedGui('lsq_show_to_update_rgo_information').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-				state = {
-					name = lsq_init
-					trigger_on_create = yes
-					next = lsq_hidden_window_hide
-					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_hide')]"
-				}
-				state = {
-					name = lsq_hidden_window_hide
-					next = lsq_hidden_window_show
-					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_show')]"
-				}
-				state = {
-					name = lsq_hidden_window_show
-					duration = 1
-					on_finish = "[PdxGuiTriggerAllAnimations('lsq_location_rgo_construction_update')]"
-					on_finish = "[GetScriptedGui('lsq_hidden_window_hide').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-					next = lsq_hidden_window_hide
-				}
-				datamodel = "[Player.GetProvinces]"
-				item = {
-					vbox = {
-						# visible = "[GetScriptedGui('lsq_province_has_any_location_with_auto_expand_rgo').IsShown(GuiScope.SetRoot(Province.MakeScope).End)]"
-						# text_single = {
-						# 	autoresize = yes
-						# 	raw_text = "Province: [Province.GetName]"
-						# }
-						datamodel = "[Province.GetLocations]"
-						item = {
-							vbox = {
-								# visible = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-								hbox = {
-									state = {
-										name = lsq_location_rgo_construction_update
-										on_finish = "[GetScriptedGui('lsq_update_location_rgo_information').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('lsq_max_rgo_workers', MakeScopeValue(Location.GetMaxRGOWorkers)).AddScope('lsq_location_promotion', MakeScopeValue(Location.GetPromoteValue)).End)]"
-									}
-									# text_single = {
-									# 	autoresize = yes
-									# 	raw_text = "[Location.GetName] [Location.GetMaxRGOWorkers] [Location.GetMaxRGOWorkersUnderConstruction]"
-									# }
-								}
-							}
-						}
-					}
-				}
-			}
 
 			vbox = {
 				name = building_type_section
