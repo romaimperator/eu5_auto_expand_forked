@@ -1169,6 +1169,14 @@
 					text = "[SelectLocalization(BuildInLocationLateralView.GetBuildingType.IsForeign,'BUILD_LOCATION_FOREIGN_EMPTY', 'BUILD_LOCATION_EMPTY')]"
 				}
 				blockoverride "scroll_list_content" {
+					state = {
+						name = "testing_show"
+						trigger_on_create = yes
+						duration = 0.25
+						on_finish = "[GetScriptedGui('lsq_testing_overall').Execute(GuiScope.SetRoot(Player.MakeScope).End)]"
+						on_finish = "[PdxGuiTriggerAllAnimations('lsq_testing_show')]"
+						on_finish = "[PdxGuiWidget.TriggerAnimation('testing_show')]"
+					}
 					addcolumn = 100%
 					addrow = 56
 					datamodel = "[BuildInLocationLateralView.GetItems]"
@@ -1614,6 +1622,13 @@ template build_location_entry {
 						}
 					}
 
+					widget = {
+						state = {
+							name = lsq_testing_show
+							on_finish = "[GetScriptedGui('lsq_testing').Execute(GuiScope.SetRoot(Player.MakeScope).AddScope('location', LocationToBuildItem.GetLocation.MakeScope).End)]"
+						}
+						text_single = { raw_text = "hi" }
+					}
 					# lsq auto-expand button
 					lsq_auto_expand_widget_global_construction = {}
 
