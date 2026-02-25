@@ -1,28 +1,30 @@
-lsq_double_building_cost = {
-	if = { limit = { lsq_is_building_obsolete = no }
-		building_type = { value = building_base_cost_in_gold }
-	} else_if = { limit = { lsq_is_building_upgradeable_and_can_be_upgraded_by_owner = yes }
-		building_type = { value = lsq_get_upgrade_building_cost }
+# Root is the building type, also expects scope:country
+lsq_double_building_type_cost = {
+	if = { limit = { lsq_is_building_type_obsolete = no }
+		value = building_base_cost_in_gold
+	} else_if = { limit = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
+		value = lsq_get_upgrade_building_cost
 	} else = { value = 100 } # should never happen
 	multiply = 2
 }
 
-lsq_expected_gold_available_for_building = {
-	value = lsq_double_building_cost
-	if = { limit = { exists = location.owner.var:lsq_minimum_gold_for_buildings }
-		add = location.owner.var:lsq_minimum_gold_for_buildings
+# Root is the building type, also expects scope:country
+lsq_expected_gold_available_for_building_type_for_auto_expand = {
+	value = lsq_double_building_type_cost
+	scope:country = {
+		if = { limit = { exists = lsq_get_minimum_gold_for_buildings }
+			add = lsq_get_minimum_gold_for_buildings
+		}
 	}
 }
 
-lsq_double_building_type_cost = {
-	value = building_base_cost_in_gold
-	multiply = 2
-}
-
-lsq_expected_gold_available_for_building_type = {
+# Root is the building type, also expects scope:country
+lsq_expected_gold_available_for_building_type_for_auto_build = {
 	value = lsq_double_building_type_cost
-	if = { limit = { exists = scope:country.var:lsq_minimum_gold_for_auto_build }
-		add = scope:country.var:lsq_minimum_gold_for_auto_build
+	scope:country = {
+		if = { limit = { exists = lsq_get_minimum_gold_for_auto_build }
+			add = lsq_get_minimum_gold_for_auto_build
+		}
 	}
 }
 

@@ -67,6 +67,32 @@ types lsq_auto_expand {
 		}
 	}
 
+	# used for construction menu in location (production_lateralview.gui)
+	type lsq_auto_expand_widget_for_building_type = widget {
+		visible = "[GetScriptedGui('lsq_is_auto_expand_visible_for_building_type').IsShown(GuiScope.SetRoot(Building.GetType.MakeScope).End)]"
+		size = { 25 25 }
+		lsq_auto_expand_production_building_types_checkbuttons = {}
+	}
+
+	type lsq_auto_expand_production_building_types_checkbuttons = widget {
+		size = { 100% 100% }
+
+		# button with green glow
+		lsq_auto_expand_checkbutton = {
+			size = { 100% 100% }
+			tooltipwidget = { using = lsq_Building_Autoexpand_Tooltip }
+			checked = "[GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+			blockoverride "green_glow_visible" {
+				visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+			}
+			blockoverride "red_glow_visible" {
+				visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))))]"
+			}
+			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+	}
+
 	type lsq_production_building_plus_button = button_square_plus {
 		size = { 15 15 } # LSQ reduced size
 		visible = "[BuildingCandidate.GetBuilding.CanPlayerUpgrade]"
@@ -344,7 +370,7 @@ template lsq_Building_Autoexpand_Tooltip {
 			TooltipTextBlock = {
 				visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 				blockoverride "text" {
-					raw_text = "Building will expand if at least [GuiScope.SetRoot(Building.MakeScope).ScriptValue('lsq_expected_gold_available_for_building')|0]@gold! is available"
+					raw_text = "Building will expand if at least [GuiScope.SetRoot(Building.GetType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_expected_gold_available_for_building_type_for_auto_expand')|0]@gold! is available"
 				}
 				blockoverride "textblock_background_tint"  {
 					modify_texture = {

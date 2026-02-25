@@ -12,14 +12,19 @@ lsq_auto_expand_buildings = {
 	effect = {
 		if = { limit = { lsq_should_pause_auto_expand = no }
 			# debug_log = "Auto expanding buildings"
+			save_scope_as = country
 			every_controlled_location = {
 				limit = { has_variable_list = auto_expand_registered_buildings }
+				save_scope_as = location
 				# debug_log = "Auto expanding buildings in [THIS.GetLocation.GetNameWithNoTooltip]"
 				every_in_list = {
 					variable = auto_expand_registered_buildings
 					# debug_log = "Checking building [THIS.GetBuilding.GetType.GetNameWithNoTooltip]"
 					save_scope_as = the_building_for_on_action
-					set_local_variable = { name = double_building_cost value = lsq_expected_gold_available_for_building }
+					building_type = {
+						save_temporary_scope_as = the_building_type
+						set_local_variable = { name = double_building_cost value = lsq_expected_gold_available_for_building_type_for_auto_expand }
+					}
 					# scope:the_building_type = { debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
 					if = { limit = { lsq_is_building_obsolete = no }
 						# scope:the_building_type = { debug_log = "Building not obsolete [THIS.GetBuildingType.GetNameWithNoTooltip]" }
