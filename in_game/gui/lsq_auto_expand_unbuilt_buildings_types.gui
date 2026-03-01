@@ -1,0 +1,207 @@
+﻿types lsq_auto_expand_unbuilt_buildings_types {
+  type lsq_auto_expand_unbuilt_buildings_card_header_button_04 = card_header_button_04 {
+    size = { 100% 100% }
+    # blockoverride "button_simple_max_size" {}
+
+    datacontext = "[BuildingItem.GetNoCandidateUIAction]"
+    visible = "[And(UIActionProvider.IsVisible, Not(UIActionProvider.IsEnabled))]"
+    enabled = yes # LSQ make sure the button_action_provider template doesn't disable the auto-expand button
+    alpha = 0.0001 # LSQ set super low alpha to basically hide the text of the button but leave it present so it takes up space to position the auto-expand button correctly
+    filter_mouse = all # LSQ I think this makes it so clicks pass through to the underlying button with the exception of the auto-expand button
+
+    upframe = 1
+    overframe = 1
+    downframe = 1
+
+    using = button_action_provider
+
+    datacontext = "[BuildingItem.GetBuildingType]"
+
+    tooltipwidget = {
+      using = BuildingType_tooltip
+      blockoverride "production_method_simple_good_tooltip" {
+        datacontext = "[Location.GetMarket]"
+        tooltipwidget = {
+
+          using = SpecificGoodsMarket_tooltip
+        }
+      }
+    }
+
+    hbox = {
+      layoutpolicy_horizontal = expanding
+      layoutpolicy_vertical = expanding
+      spacing = 5
+      margin_right = 10
+
+      # icon
+      vbox = {
+        # alpha = 0
+        layoutpolicy_horizontal = expanding
+        layoutpolicy_vertical = expanding
+        ignoreinvisible = yes
+        margin = {5 0}
+        maximumsize = { 50 -1 }
+
+        # using = bg_cabinet_card_frame
+        blockoverride "market_card_extra" {
+          visible	= no
+        }
+        blockoverride "market_card_frame_extra" {
+          mirror = horizontal
+          margin = {-3 -3}
+        }
+
+        icon = {
+          size = { 29 29 }
+          texture = "[GetBuildingIcon(BuildingItem.GetBuildingType.Self)]"
+
+          sort_by_highlight = {
+            name = "name"
+          }
+        }
+      }
+
+      text_single = {
+        # alpha = 0
+        autoresize = no
+        size = { 160 15 }
+        align = left|nobaseline
+        default_format = "#yellow_titles"
+        text = "[BuildingItem.GetBuildingType.GetNameWithNoTooltip]"
+        datacontext = "[BuildingItem.GetBuildingType]"
+      }
+
+      expand = {}
+
+      hbox = {
+        # alpha = 0
+        margin_right = 3
+        spacing = 5
+        layoutpolicy_horizontal = expanding
+
+        widget = { #profit / income
+          # visible = no
+          size = { 60 36 }
+          vbox = { #built
+            expand = {}
+            visible = "[BuildingItem.GetBuildingType.IsProducing]"
+            tooltipwidget = {
+              using = BuildingTypeProfit_Tooltip
+            }
+
+            text_single = { #profit
+              visible = "[Not(LessThan_CFixedPoint(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self), '(CFixedPoint)0'))]"
+              size = { 60 18 }
+              autoresize = no
+              align = nobaseline|right
+              fontsize = 14
+              raw_text = "+[GetBuildingTypeProfitInLocation(BuildingItem.GetBuildingType, Location.Self)|2]@wealth!"
+
+              sort_by_highlight = {
+                size = { 105% 100% }
+                name = "profit"
+              }
+            }
+            text_single = { #profit (unprofitable)
+              visible = "[LessThan_CFixedPoint(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self), '(CFixedPoint)0')]"
+              size = { 60 18 }
+              autoresize = no
+              align = nobaseline|right
+              fontsize = 14
+              raw_text = "[GetBuildingTypeProfitInLocation(BuildingItem.GetBuildingType, Location.Self)|2+=]@wealth!"
+
+              sort_by_highlight = {
+                size = { 105% 100% }
+                name = "profit"
+              }
+            }
+
+            text_single = { #income
+              size = { 60 18 }
+              autoresize = no
+              align = nobaseline|right
+              fontsize = 14
+              raw_text = "[GetBuildingTypeIncomeToOwnerInLocation(BuildingItem.GetBuildingType, Location.Self)|+=2]@income!"
+
+              sort_by_highlight = {
+                size = { 105% 100% }
+                name = "income"
+              }
+            }
+          }
+        }
+
+        widget = { #efficiency
+          # visible = no
+          datacontext = "[BuildingItem.GetBuildingType]"
+          datacontext = "[Location]"
+          size = { 70 36 }
+          hbox = { #unbuilt
+            visible = "[BuildingItem.GetBuildingType.IsProducing]"
+            expand = {}
+            text_single = {
+              maximumsize = { 70 18 }
+              default_format = "@bold!"
+              fontsize = 14
+              text = "BUILDING_TYPE_POSSIBLE_PROD_EFFICIENCY"
+              tooltipwidget = {
+                SimpleContextualStringPairTooltipType = {
+                  blockoverride "title_icon" {
+                    icon = {
+                      using = tooltip_title_icon_size
+                      texture = "gfx/interface/icons/flat_icons/building_panel/production_efficiency.dds"
+                    }
+                  }
+                  blockoverride "concept_link" {
+                    text = "[production_efficiency|e]"
+                  }
+                  lowpriotextcontext = "[BuildingItem.GetBuildingType.ProductionEfficiencyInfo(Location.GetOwnerPtr, Location.Self)]"
+                }
+              }
+            }
+          }
+        }
+      }
+
+      widget = {
+        size = { 140 25 }
+
+        hbox = {
+          layoutpolicy_horizontal = expanding
+
+          ### lsq new button
+          lsq_auto_expand_widget_for_building_type = {
+            alpha = 10000
+          }
+
+          expand = {}
+          widget = {
+            # alpha = 0
+            size = { 25 25 }
+            using = bg_circle_piechart
+
+            icon = {
+              visible = "[BuildingItem.GetBuildingType.BuildOnlyInCapital]"
+              texture = "gfx/interface/buttons/flats/move_capital_button.dds"
+              size = { 18 18 }
+              parentanchor = center
+              position = {-1 0}
+              using = color_new_gold
+            }
+            icon = {
+              visible = "[Not(BuildingItem.GetBuildingType.BuildOnlyInCapital)]"
+              texture = "gfx/interface/icons/flat_icons/building_panel/build_button.dds"
+              size = { 18 18 }
+              parentanchor = center
+              position = {-1 0}
+              using = color_new_gold
+            }
+          }
+        }
+      }
+
+
+    }
+  }
+}
