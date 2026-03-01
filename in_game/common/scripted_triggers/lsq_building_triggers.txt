@@ -97,14 +97,6 @@ lsq_is_building_not_max_level_already_and_not_obsolete = {
 }
 
 # Root is the building
-lsq_is_location_pops_available = {
-	AND = {
-		NAND = { building_pop_type = burghers location = { is_burgher_positive_deficit = no } }  # checks if promoted pops of type are available if building type employes that pop type
-		NAND = { building_pop_type = laborers location = { is_labourer_positive_deficit = no } } # same here :3
-	}
-}
-
-# Root is the building
 lsq_is_building_fully_employed = {
 	AND = {
 		building_potential_profit = building_profit
@@ -131,6 +123,7 @@ lsq_is_building_profitable = {
 # Root is the building
 lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 	location = { save_temporary_scope_as = location }
+	building_type = { save_temporary_scope_as = building_type }
 	AND = {
 		OR = {
 			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_is_building_profitable = yes }
@@ -139,7 +132,7 @@ lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 		lsq_is_building_open = yes
 		lsq_is_building_fully_employed = yes
 		lsq_is_building_lacking_goods = no
-		building_type = { lsq_is_location_pops_available = yes }
+		location = { lsq_location_has_enough_pops_available = yes }
 		location = { lsq_is_location_under_building_limit = yes }
 	}
 }
@@ -160,7 +153,7 @@ lsq_location_will_auto_expand_from_zero_levels = {
 			scope:building_type = { lsq_is_building_type_production_building = yes }
 			scope:building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
 		}
-		scope:building_type = { lsq_is_location_pops_available = yes }
+		lsq_location_has_enough_pops_available = yes
 		lsq_can_afford_switch_based_on_building_type = { target = scope:building_type }
 		lsq_is_location_under_building_limit = yes
 	}
