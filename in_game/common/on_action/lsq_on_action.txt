@@ -19,49 +19,70 @@ lsq_auto_expand_buildings = {
 				# debug_log = "Auto expanding buildings in [THIS.GetLocation.GetNameWithNoTooltip]"
 				every_in_list = {
 					variable = auto_expand_registered_buildings
-					# debug_log = "Checking building [THIS.GetBuilding.GetType.GetNameWithNoTooltip]"
-					save_scope_as = the_building_for_on_action
-					building_type = {
-						save_temporary_scope_as = the_building_type
-						set_local_variable = { name = double_building_cost value = lsq_expected_gold_available_for_building_type_for_auto_expand }
-					}
+					save_scope_as = the_building_type
+					save_scope_as = building_type
 					# scope:the_building_type = { debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-					if = { limit = { lsq_is_building_obsolete = no }
-						# scope:the_building_type = { debug_log = "Building not obsolete [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-						if = {
-							limit = {
-								lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
-								lsq_is_building_at_max_level = no
-								lsq_is_not_under_construction_and_gold_is_available = yes
+					set_local_variable = { name = double_building_cost value = lsq_expected_gold_available_for_building_type_for_auto_expand }
+					if = { limit = { scope:location = { has_building = scope:the_building_type } }
+					scope:location = { "building(scope:the_building_type|scope:country)" = { save_scope_as = the_building_for_on_action } }
+						# scope:the_building_for_on_action = { debug_log = "Checking building [THIS.GetBuilding.GetType.GetNameWithNoTooltip]" }
+						if = { limit = { lsq_is_building_type_obsolete = no }
+							# scope:the_building_type = { debug_log = "Building not obsolete [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+							if = { limit = {
+									scope:the_building_for_on_action = {
+										lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
+										lsq_is_building_at_max_level = no
+										lsq_is_not_under_construction_and_gold_is_available = yes
+									}
+								}
+								# scope:the_building_type = { debug_log = "Building passes checks [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+								scope:location = { construct_building = { building_type = scope:the_building_type } }
 							}
-							# scope:the_building_type = { debug_log = "Building passes first checks [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-							location = {
-								construct_building = {
-									building_type = scope:the_building_type
+						# Building type is obsolete so check if if can be upgraded
+						} else_if = { limit = {
+								lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
+								scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
+							}
+							# scope:the_building_type = { debug_log = "Building is obsolete and upgradable [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+							if = { limit = {
+									scope:the_building_for_on_action = {
+										lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
+										lsq_is_not_under_construction_and_gold_is_available = yes
+									}
+								}
+								# scope:the_building_type = { debug_log = "Building passes checks for upgrading [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+								scope:the_building_type = { lsq_find_upgrade_building_type = yes }
+								if = { limit = { exists = scope:return_scope }
+									# scope:return_scope = { debug_log = "Found upgrade building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+									scope:location = {
+										construct_building = { building_type = scope:return_scope }
+										remove_list_variable = { name = auto_expand_registered_buildings target = scope:the_building_type }
+										add_to_variable_list = { name = auto_expand_registered_buildings target = scope:return_scope }
+									}
 								}
 							}
 						}
-					# Building type is obsolete so check if if can be upgraded
-					} else_if = { limit = { lsq_is_building_upgradeable_and_can_be_upgraded_by_owner_and_auto_expand_upgrade_is_on = yes }
-						# scope:the_building_type = { debug_log = "Building is obsolete and upgradable [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-						if = {
-							limit = {
-								lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
-								lsq_is_not_under_construction_and_gold_is_available = yes
+					} else = {
+						# If we're here, the building has no levels and isn't yet queued for construction so we only have a building type to check stuff with
+						# scope:the_building_type = { debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+						if = { limit = { lsq_is_building_type_obsolete = no }
+							# scope:the_building_type = { debug_log = "Building not obsolete [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+							if = { limit = { scope:location = { lsq_location_can_auto_expand_from_zero_levels = yes } }
+								# scope:the_building_type = { debug_log = "Building passes first checks [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+								scope:location = { construct_building = { building_type = scope:the_building_type } }
 							}
-							# scope:the_building_type = { debug_log = "Building passes checks for upgrading [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-							scope:the_building_type = { lsq_find_upgrade_building_type = yes }
-							if = { limit = { exists = scope:return_scope }
-								# scope:return_scope = { debug_log = "Found upgrade building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-								location = {
-									construct_building = {
-										building_type = scope:return_scope
-									}
-									remove_list_variable = { name = auto_expand_registered_buildings target = scope:the_building_for_on_action }
-									ordered_buildings_in_location = {
-										order_by = building_index
-										max = 1
-										location = { add_to_variable_list = { name = auto_expand_registered_buildings target = prev } }
+						# Building type is obsolete so check if if can be upgraded
+						} else_if = { limit = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes scope:country = { lsq_should_auto_expand_upgrade_buildings = yes } }
+							# scope:the_building_type = { debug_log = "Building is obsolete and upgradable [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+							if = { limit = { scope:location = { lsq_location_can_auto_expand_from_zero_levels = yes } }
+								# scope:the_building_type = { debug_log = "Building passes checks for upgrading [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+								scope:the_building_type = { lsq_find_upgrade_building_type = yes }
+								if = { limit = { exists = scope:return_scope }
+									# scope:return_scope = { debug_log = "Found upgrade building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
+									scope:location = {
+										construct_building = { building_type = scope:return_scope }
+										remove_list_variable = { name = auto_expand_registered_buildings target = scope:the_building_type }
+										add_to_variable_list = { name = auto_expand_registered_buildings target = scope:return_scope }
 									}
 								}
 							}
@@ -69,6 +90,6 @@ lsq_auto_expand_buildings = {
 					}
 				}
 			}
-		}
-	}
-}
+		} # end if should auto expand enabled
+	} # end effect
+} # end lsq_auto_expand_buildings

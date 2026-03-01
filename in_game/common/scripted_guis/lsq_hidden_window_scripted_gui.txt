@@ -1,9 +1,9 @@
 ﻿lsq_hidden_window_init = {
 	effect = {
-		# debug_log = "LSQ: country is [THIS.GetCountry.GetNameWithNoTooltip]"
+		# debug_log = "LSQ: hidden window init, country is [THIS.GetCountry.GetNameWithNoTooltip]"
 		if = { limit = { AND = { NOT = { exists = global_var:lsq_hidden_window_initialized } is_human = yes } }
 			set_global_variable = { name = lsq_hidden_window_initialized value = yes }
-			# debug_log = "LSQ: Initializing hidden window"
+			debug_log = "LSQ: Initializing hidden window"
 			every_province = {
 				if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
 					set_variable = { name = lsq_auto_expand_rgo_off_in_all_locations value = yes }
@@ -19,8 +19,28 @@
 			}
 
 			lsq_auto_build_init_variables = {}
+
 		# } else = {
 			# debug_log = "LSQ: Hidden window already initialized or country is not human"
+		}
+
+		if = { limit = { AND = { NOT = { exists = global_var:lsq_migrate_auto_expand_registered_buildings } is_human = yes } }
+			debug_log = "LSQ: Migrating auto expand registered buildings"
+			every_controlled_location = {
+				limit = { has_variable_list = auto_expand_registered_buildings }
+				save_scope_as = location
+				every_in_list = {
+					variable = auto_expand_registered_buildings
+					save_scope_as = building
+					if = { limit = { exists = building_type }
+						scope:location = {
+							remove_list_variable = { name = auto_expand_registered_buildings target = scope:building }
+							add_to_variable_list = { name = auto_expand_registered_buildings target = scope:building.building_type }
+						}
+					}
+				}
+			}
+			set_global_variable = { name = lsq_migrate_auto_expand_registered_buildings value = yes }
 		}
 	}
 }
