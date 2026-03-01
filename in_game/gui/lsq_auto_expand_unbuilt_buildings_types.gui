@@ -4,10 +4,10 @@
     # blockoverride "button_simple_max_size" {}
 
     datacontext = "[BuildingItem.GetNoCandidateUIAction]"
-    visible = "[And(UIActionProvider.IsVisible, Not(UIActionProvider.IsEnabled))]"
+    visible = "[And(UIActionProvider.IsVisible, Not(UIActionProvider.IsEnabled))]" # LSQ only show this one if the original button is not enabled
     enabled = yes # LSQ make sure the button_action_provider template doesn't disable the auto-expand button
     alpha = 0.0001 # LSQ set super low alpha to basically hide the text of the button but leave it present so it takes up space to position the auto-expand button correctly
-    filter_mouse = all # LSQ I think this makes it so clicks pass through to the underlying button with the exception of the auto-expand button
+    filter_mouse = left|right # LSQ I think this makes it so clicks pass through to the underlying button with the exception of the auto-expand button (needs to be left|right not all because all also filters out scrolling)
 
     upframe = 1
     overframe = 1
@@ -36,7 +36,6 @@
 
       # icon
       vbox = {
-        # alpha = 0
         layoutpolicy_horizontal = expanding
         layoutpolicy_vertical = expanding
         ignoreinvisible = yes
@@ -63,7 +62,6 @@
       }
 
       text_single = {
-        # alpha = 0
         autoresize = no
         size = { 160 15 }
         align = left|nobaseline
@@ -75,13 +73,11 @@
       expand = {}
 
       hbox = {
-        # alpha = 0
         margin_right = 3
         spacing = 5
         layoutpolicy_horizontal = expanding
 
         widget = { #profit / income
-          # visible = no
           size = { 60 36 }
           vbox = { #built
             expand = {}
@@ -133,7 +129,6 @@
         }
 
         widget = { #efficiency
-          # visible = no
           datacontext = "[BuildingItem.GetBuildingType]"
           datacontext = "[Location]"
           size = { 70 36 }
@@ -177,7 +172,6 @@
 
           expand = {}
           widget = {
-            # alpha = 0
             size = { 25 25 }
             using = bg_circle_piechart
 
