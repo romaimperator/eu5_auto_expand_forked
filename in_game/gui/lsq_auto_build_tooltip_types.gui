@@ -136,6 +136,19 @@
                                   }
                                 }
                                 lsq_tooltip_row = {
+                                  blockoverride "vertical_line_size" { size = { 3 31 } }
+                                  blockoverride "yes_visible" {
+                                    visible = "[GetScriptedGui('lsq_auto_build_check_can_afford').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+                                  }
+                                  blockoverride "no_visible" {
+                                    visible = "[Not(GetScriptedGui('lsq_auto_build_check_can_afford').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+                                  }
+                                  blockoverride "row_text" {
+                                    raw_text = "Enough construction goods available"
+                                  }
+                                }
+                                lsq_tooltip_row = {
+                                  using = lsq_tooltip_row_is_odd
                                   visible = "[GetScriptedGui('lsq_auto_build_show_rgo_level_tooltip_row').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
                                   blockoverride "vertical_line_size" { size = { 3 31 } }
                                   blockoverride "yes_visible" {

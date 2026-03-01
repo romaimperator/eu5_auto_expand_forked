@@ -36,6 +36,14 @@ lsq_get_minimum_gold_for_buildings = {
 	value = var:lsq_minimum_gold_for_buildings
 }
 
+# Root is the location, also expects scope:good
+lsq_get_max_required_construction_demand_to_still_allow_building = {
+	value = "market.goods_supply_in_market(scope:good)"
+	add = "market.stockpile_in_market(scope:good)"
+	multiply = 2
+	subtract = "market.goods_demand_in_market(scope:good)"
+}
+
 # Effect expects building_type scope. Sets local variable return_value to the upgrade building type, or leaves it unset if not upgradeable.
 lsq_get_upgrade_building_cost = {
 		if = { limit = { this = building_type:armory } building_type:barracks = { value = building_base_cost_in_gold } }
