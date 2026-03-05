@@ -146,7 +146,7 @@ def generate_file(game_root:, auto_build_triggers_path:, output_path:)
 
   output_text = build_switch_trigger_text(building_to_pop_type)
   output_path.dirname.mkpath unless output_path.dirname.directory?
-  File.write(output_path, output_text + "\n")
+  File.write(output_path, "\uFEFF" + output_text + "\n")
   puts "Generated #{output_path} (#{building_to_pop_type.size} building_type branches)"
 end
 
