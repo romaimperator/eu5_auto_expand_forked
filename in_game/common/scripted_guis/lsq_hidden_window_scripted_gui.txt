@@ -29,13 +29,18 @@
 			every_controlled_location = {
 				limit = { has_variable_list = auto_expand_registered_buildings }
 				save_scope_as = location
+				# debug_log = "LSQ: Migrating auto expand registered buildings for location [THIS.GetLocation.GetNameWithNoTooltip]"
 				every_in_list = {
 					variable = auto_expand_registered_buildings
 					save_scope_as = building
-					if = { limit = { exists = building_type }
+					# debug_log = "LSQ: Migrating auto expand registered buildings for building [THIS.GetBuilding.GetNameWithNoTooltip]"
+					if = { limit = { AND = { scope_type = building exists = building_type } }
 						scope:location = {
-							remove_list_variable = { name = auto_expand_registered_buildings target = scope:building }
-							add_to_variable_list = { name = auto_expand_registered_buildings target = scope:building.building_type }
+							add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building.building_type }
+						}
+					} else_if = { limit = { scope_type = building_type }
+						scope:location = {
+							add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building }
 						}
 					}
 				}
@@ -64,6 +69,7 @@ lsq_building_type_section_buildings_init = {
 	effect = {
 			# debug_log = "LSQ: Initializing buildings [TopScope.sBuildingType('building_type').GetNameWithNoTooltip]"
 
+			# Set the which type of building this should be treated as
 			if = { limit = { scope:is_producing = yes }
 				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
 			} else = {
@@ -80,6 +86,14 @@ lsq_building_type_section_buildings_init = {
 				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
 			}
 
+			# Set if this building type is a fort for discount purposes
+			if = { limit = { scope:is_fort = yes }
+				add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 1 }
+			} else = {
+				add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 0 }
+			}
+
+			# Set that this building type has been processed
 			add_to_global_variable_map = { name = lsq_building_type_processed key = scope:building_type value = 1 }
 	}
 }

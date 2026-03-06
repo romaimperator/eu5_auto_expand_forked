@@ -1,12 +1,12 @@
 ﻿lsq_set_auto_expand_for_building = {
 	effect = {
 		save_scope_as = the_building
-		scope:the_building = { building_type = { save_temporary_scope_as = building_type } }
+		building_type = { save_scope_as = building_type }
 		location = {
-			if = { limit = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:building_type } }
-				remove_list_variable = { name = auto_expand_registered_buildings target = scope:building_type }
+			if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
+				remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
 			} else = {
-				add_to_variable_list = { name = auto_expand_registered_buildings target = scope:building_type }
+				add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
 			}
 		}
 	}
@@ -18,8 +18,8 @@ lsq_check_for_auto_expand_when_upgrading_building = {
 		save_scope_as = the_building
 		scope:the_building = { building_type = { save_temporary_scope_as = old_building_type } }
 		location = {
-			if = { limit = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:old_building_type } }
-				remove_list_variable = { name = auto_expand_registered_buildings target = scope:old_building_type }
+			if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type } }
+				remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type }
 				ordered_buildings_in_location = { # ordered_x always returns first scope in ordering, therefore we get the most recently built building
 					order_by = building_index
 					save_scope_as = the_new_building
@@ -27,8 +27,8 @@ lsq_check_for_auto_expand_when_upgrading_building = {
 						building_type = { save_temporary_scope_as = new_building_type }
 					}
 					location = {
-						if = { limit = { NOT = { is_target_in_variable_list =  { name = auto_expand_registered_buildings target = scope:new_building_type } } }
-							add_to_variable_list = { name = auto_expand_registered_buildings target = scope:new_building_type }
+						if = { limit = { NOT = { is_target_in_variable_list =  { name = lsq_auto_expand_registered_building_types target = scope:new_building_type } } }
+							add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type }
 						}
 					}
 				}
@@ -41,8 +41,8 @@ lsq_check_for_auto_expand_when_removing_building = {
 		save_scope_as = the_building
 		scope:the_building = { building_type = { save_temporary_scope_as = building_type } }
 		location = {
-			if = { limit = { AND = { scope:the_building = { building_level < 2 } is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:building_type } } }
-				remove_list_variable = { name = auto_expand_registered_buildings target = scope:building_type }
+			if = { limit = { AND = { scope:the_building = { building_level < 2 } is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } } }
+				remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
 			}
 		}
 	}
@@ -61,7 +61,7 @@ lsq_is_auto_expand_active_for_building = {
 	is_shown = {
 		save_temporary_scope_as = the_building
 		scope:the_building = { building_type = { save_temporary_scope_as = building_type } }
-		location = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:building_type } }
+		location = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
 	}
 }
 
@@ -69,10 +69,10 @@ lsq_set_auto_expand_for_building_type = {
 	effect = {
 		save_scope_as = building_type
 		scope:location = {
-			if = { limit = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:building_type } }
-				remove_list_variable = { name = auto_expand_registered_buildings target = scope:building_type }
+			if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
+				remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
 			} else = {
-				add_to_variable_list = { name = auto_expand_registered_buildings target = scope:building_type }
+				add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
 			}
 		}
 	}
@@ -81,7 +81,7 @@ lsq_set_auto_expand_for_building_type = {
 lsq_is_auto_expand_active_for_building_type = {
 	is_shown = {
 		save_temporary_scope_as = building_type
-		scope:location = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:building_type } }
+		scope:location = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
 	}
 }
 
@@ -155,31 +155,7 @@ lsq_is_location_under_building_limit = {
 lsq_show_settings_window = {
 	scope = country
 	effect = {
-		# clear_global_variable_map = lsq_building_type_to_is_production_building
-		# clear_global_variable_map = lsq_building_type_to_is_non_production_multi_level_building
-		# clear_global_variable_map = lsq_building_type_to_is_one_per_location_building
 		set_variable = { name = lsq_settings_window_visible value = yes }
-		if = { limit = { NOT = { has_variable = lsq_minimum_gold_for_buildings } }
-			set_variable = { name = lsq_minimum_gold_for_buildings value = 0 }
-		}
-		if = { limit = { NOT = { has_variable = lsq_minimum_gold_for_rgos } }
-			set_variable = { name = lsq_minimum_gold_for_rgos value = 0 }
-		}
-		if = { limit = { NOT = { has_variable = lsq_minimum_gold_for_auto_build } }
-			set_variable = { name = lsq_minimum_gold_for_auto_build value = 0 }
-		}
-		if = { limit = { NOT = { has_variable = lsq_required_rgo_levels_before_sawmill } }
-			set_variable = { name = lsq_required_rgo_levels_before_sawmill value = 5 }
-		}
-		if = { limit = { NOT = { has_variable = lsq_required_rgo_levels_before_windmill } }
-			set_variable = { name = lsq_required_rgo_levels_before_windmill value = 5 }
-		}
-		if = { limit = { NOT = { has_variable = lsq_required_rgo_levels_before_local_smelters } }
-			set_variable = { name = lsq_required_rgo_levels_before_local_smelters value = 5 }
-		}
-		# every_building_type = {
-		# 	root = { add_to_variable_list = { name = every_building_type_list target = prev } }
-		# }
 
 		lsq_auto_build_init_variables = {}
 	}
@@ -315,6 +291,11 @@ lsq_decrease_minimum_gold_for_auto_build_1000 = {
 lsq_is_building_obsolete = {
 	is_shown = {
 		lsq_is_building_obsolete = yes
+	}
+}
+lsq_is_building_type_obsolete = {
+	is_shown = {
+		scope:building_type = { lsq_is_building_type_obsolete = yes }
 	}
 }
 

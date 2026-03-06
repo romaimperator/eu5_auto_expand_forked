@@ -174,7 +174,7 @@
 					text_single = {
 						parentanchor = center
 						autoresize = yes
-						raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_gold_for_buildings')|0]@gold!"
+						raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_gold_for_auto_expand')|0]@gold!"
 					}
 				}
 				button_default = {
@@ -397,7 +397,8 @@
 						blockoverride "tooltip_content" {
 							TooltipTextBlock = {
 								blockoverride "text" {
-									raw_text = "Every month tick, the mod will go through the list of locations (highest control first and all directly controlled locations before any subject locations) and queue up any buildings that have auto-build enabled and meet the requirements. Every auto-build building that can be queued in a location will be queued (up to the location's open construction slots) before moving on to the next location."
+									# raw_text = "Every month tick, the mod will go through the list of locations (highest control first and all directly controlled locations before any subject locations) and queue up any buildings that have auto-build enabled and meet the requirements. Every auto-build building that can be queued in a location will be queued (up to the location's open construction slots) before moving on to the next location."
+									raw_text = "Every month tick, the mod will go through each enabled auto-build building type and then check every location (highest control first and all directly controlled locations before any subject locations) to see if it meets all of the requirements. If it does, the building will be queued (up to the location's open construction slots) before moving on to the next building type."
 								}
 							}
 						}
@@ -537,6 +538,7 @@
 									texture = "[GetBuildingIcon(BuildingType.Self)]"
 								}
 								text_single = {
+									alpha = "[Select_CFixedPoint(GetScriptedGui('lsq_auto_build_check_building_researched').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End), '(CFixedPoint)1', '(CFixedPoint)0.4')]"
 									margin_left = 5
 									datacontext = "[BuildingType.MakeScope]"
 									raw_text = "[BuildingType.GetNameWithNoTooltip] ([GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_will_auto_build')|0]/[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_allowed_to_build')|0])"
@@ -554,6 +556,7 @@
 									texture = "[GetBuildingIcon(BuildingType.Self)]"
 								}
 								text_single = {
+									alpha = "[Select_CFixedPoint(GetScriptedGui('lsq_auto_build_check_building_researched').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End), '(CFixedPoint)1', '(CFixedPoint)0.4')]"
 									margin_left = 5
 									datacontext = "[BuildingType.MakeScope]"
 									raw_text = "[BuildingType.GetNameWithNoTooltip] ([GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_including_subjects_will_auto_build')|0]/[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_including_subjects_allowed_to_build')|0])"
@@ -720,6 +723,7 @@
 					raw_text = "Reset auto-build priorities to default"
 				}
 				onclick = "[GetScriptedGui('lsq_reset_auto_build_priorities_to_default').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				tooltipwidget = { BasicFunctionalTooltip = {} }
 			}
 			horizontal_separator = {}
 		}

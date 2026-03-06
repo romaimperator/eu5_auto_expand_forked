@@ -84,9 +84,31 @@ lsq_update_rgo_information_daily_tick = {
 			if = { limit = { has_variable_list = lsq_rgo_auto_expand_check_list }
 				every_in_list = {
 					variable = lsq_rgo_auto_expand_check_list
-					limit = { AND = { exists = var:auto_expand_rgo lsq_should_rgo_auto_expand = yes } }
-					scope:country = { remove_list_variable = { name = lsq_rgo_auto_expand_check_list target = prev } }
-					# debug_log = "LSQ: constructing RGO upgrade in [THIS.GetLocation.GetNameWithNoTooltip]"
+					limit = { exists = var:auto_expand_rgo }
+					save_scope_as = location
+					# Remove the location from the list regardless of whether it is constructed or not so we don't repeatedly check the same location an extra time over and over.
+					scope:country = { remove_list_variable = { name = lsq_rgo_auto_expand_check_list target = scope:location } }
+					if = { limit = { lsq_should_rgo_auto_expand = yes }
+						# debug_log = "LSQ: constructing RGO upgrade in [THIS.GetLocation.GetNameWithNoTooltip]"
+						# debug_log = "LSQ: laborers available: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_location_laborers_available')]"
+						# debug_log = "LSQ: laborers: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_number_of_laborers')]"
+						# debug_log = "LSQ: laborers needed for buildings: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_location_laborers_needed_for_buildings')]"
+						# debug_log = "LSQ: laborers needed for RGO: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_modifier_rgo_level')]"
+						# debug_log = "LSQ: RGOs under construction: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_get_rgos_under_construction')]"
+						# debug_log = "LSQ: slaves: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_number_of_slaves')]"
+						# debug_log = "LSQ: local laborers desired pop: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_local_laborers_desired_pop')]"
+						construct_rgo_upgrade = {}
+					}
+				}
+			}
+			ordered_controlled_location = {
+				order_by = max_control
+				max = lsq_max_guess_at_number_of_locations
+				check_range_bounds = no
+				limit = { exists = var:auto_expand_rgo }
+				save_scope_as = location
+				if = { limit = { lsq_should_rgo_auto_expand = yes }
+					# debug_log = "LSQ: adding to list constructing RGO upgrade in [THIS.GetLocation.GetNameWithNoTooltip]"
 					# debug_log = "LSQ: laborers available: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_location_laborers_available')]"
 					# debug_log = "LSQ: laborers: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_number_of_laborers')]"
 					# debug_log = "LSQ: laborers needed for buildings: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_location_laborers_needed_for_buildings')]"
@@ -94,23 +116,8 @@ lsq_update_rgo_information_daily_tick = {
 					# debug_log = "LSQ: RGOs under construction: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_get_rgos_under_construction')]"
 					# debug_log = "LSQ: slaves: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_number_of_slaves')]"
 					# debug_log = "LSQ: local laborers desired pop: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_local_laborers_desired_pop')]"
-					construct_rgo_upgrade = {}
+					scope:country = { add_to_variable_list = { name = lsq_rgo_auto_expand_check_list target = scope:location } }
 				}
-			}
-			ordered_controlled_location = {
-				order_by = max_control
-				max = lsq_max_guess_at_number_of_locations
-				check_range_bounds = no
-				limit = { AND = { exists = var:auto_expand_rgo lsq_should_rgo_auto_expand = yes } }
-				# debug_log = "LSQ: adding to list constructing RGO upgrade in [THIS.GetLocation.GetNameWithNoTooltip]"
-				# debug_log = "LSQ: laborers available: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_location_laborers_available')]"
-				# debug_log = "LSQ: laborers: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_number_of_laborers')]"
-				# debug_log = "LSQ: laborers needed for buildings: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_location_laborers_needed_for_buildings')]"
-				# debug_log = "LSQ: laborers needed for RGO: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_modifier_rgo_level')]"
-				# debug_log = "LSQ: RGOs under construction: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_get_rgos_under_construction')]"
-				# debug_log = "LSQ: slaves: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_number_of_slaves')]"
-				# debug_log = "LSQ: local laborers desired pop: [GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_local_laborers_desired_pop')]"
-				scope:country = { add_to_variable_list = { name = lsq_rgo_auto_expand_check_list target = prev } }
 			}
 		}
 	}

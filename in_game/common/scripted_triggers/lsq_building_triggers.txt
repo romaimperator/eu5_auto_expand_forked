@@ -1,17 +1,26 @@
-﻿# Root is the building and requires local_var:double_building_cost
-lsq_is_there_enough_gold_available_for_building = {
-	# owner = {
-		# OR = {
-		# 	AND = { exists = var:lsq_minimum_gold_for_buildings gold > { value = local_var:double_building_cost add = var:lsq_minimum_gold_for_buildings } }
-		# 	AND = { NOT = { exists = var:lsq_minimum_gold_for_buildings } gold > local_var:double_building_cost }
-		# }
-	# }
-	owner.gold > local_var:double_building_cost
-}
-
-# Root is the building type. Also expects the scope country
+﻿# Expects scopes: building type, country, and location
 lsq_auto_expand_check_owner_gold_available = {
 	scope:country.gold > lsq_expected_gold_available_for_building_type_for_auto_expand
+}
+
+# Expects scopes: building type
+lsq_does_building_type_count_for_port_building_cost_modifier = {
+	OR = {
+		scope:building_type = building_type:dock
+		scope:building_type = building_type:dry_dock
+		scope:building_type = building_type:shipyard
+		scope:building_type = building_type:grand_shipyard
+		scope:building_type = building_type:naval_base
+	}
+}
+
+# Expects scopes: building type
+lsq_does_building_type_count_for_fort_building_cost_modifier = {
+	AND = {
+		has_global_variable_map = lsq_building_type_to_is_fort
+		is_key_in_global_variable_map = { name = lsq_building_type_to_is_fort target = scope:building_type }
+		"global_variable_map(lsq_building_type_to_is_fort|scope:building_type)" = 1
+	}
 }
 
 # Root is the building
@@ -37,9 +46,9 @@ lsq_is_building_type_upgradeable = {
 lsq_building_can_be_upgraded_by_owner = {
 	building_can_be_upgraded_by = owner
 }
-# Root is the building type
+# Root is the location, also expects scope:building_type and scope:country
 lsq_building_type_can_be_upgraded_by_owner = {
-	"building(this|scope:country)" = { building_can_be_upgraded_by = scope:country }
+	"building(scope:building_type|scope:country)" = { building_can_be_upgraded_by = scope:country }
 }
 
 # Root is the building
@@ -49,10 +58,10 @@ lsq_is_building_upgradeable_and_can_be_upgraded_by_owner = {
 		lsq_building_can_be_upgraded_by_owner = yes
 	}
 }
-# Root is the building type
+# Root is the location, also expects scope:building_type and scope:country
 lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = {
 	AND = {
-		lsq_is_building_type_upgradeable = yes
+		scope:building_type = { lsq_is_building_type_upgradeable = yes }
 		lsq_building_type_can_be_upgraded_by_owner = yes
 	}
 }
@@ -137,11 +146,11 @@ lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 	}
 }
 
-# Root is the location, also expects scope:building_type and scope:country
+# Expects scopes: building type, country, and location
 lsq_location_can_auto_expand_from_zero_levels = {
 	AND = {
-		lsq_location_will_auto_expand_from_zero_levels = yes
-		scope:building_type = { lsq_auto_expand_check_owner_gold_available = yes }
+		scope:location = { lsq_location_will_auto_expand_from_zero_levels = yes }
+		lsq_auto_expand_check_owner_gold_available = yes
 	}
 }
 
@@ -164,11 +173,11 @@ lsq_is_not_under_construction = {
 	building_levels_under_construction = 0
 }
 
-# Root is the building
+# Expects scopes: building, building type, country, and location
 lsq_is_not_under_construction_and_gold_is_available = {
 	AND = {
 		lsq_is_not_under_construction = yes
-		lsq_is_there_enough_gold_available_for_building = yes
+		lsq_auto_expand_check_owner_gold_available = yes
 	}
 }
 

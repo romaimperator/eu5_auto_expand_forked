@@ -1,9 +1,6 @@
-﻿# Triggers for auto-building one-per-location buildings (temple, etc.) on month tick.
-# To add another building type: add a new trigger following the pattern below and add a block in the on_action.
+﻿# Generic triggers for auto-building
 
-# Generic triggers for auto-building
-
-# Root is the building type. Also expects the scope country
+# Expects scopes: building_type, country, location
 lsq_auto_build_check_owner_gold_available = {
 	scope:country.gold > lsq_expected_gold_available_for_building_type_for_auto_build
 }
@@ -165,9 +162,9 @@ lsq_auto_build_switch_based_on_building_type = {
 	}
 }
 
-# Root is the location. Expects the building type as a target, also expects the scope country
+# Expects scopes: building_type, country, location
 lsq_location_can_auto_build = {
-	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = location_can_auto_build }
+	lsq_auto_build_switch_based_on_building_type = { target = scope:building_type trigger_name = location_can_auto_build }
 }
 
 # Root is the location. Expects the building type as a target, also expects the scope country

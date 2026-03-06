@@ -12,9 +12,6 @@
 	type lsq_auto_expand_rgo_widget = widget {
 		visible = "[Location.IsPlayerLocation]"
 		size = { 23 23 }
-		tooltipwidget = {
-			using = lsq_RGO_Autoexpand_Tooltip
-		}
 
 		# button with green glow
 		lsq_auto_expand_checkbutton = {
@@ -29,6 +26,9 @@
 			}
 			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).End)]"
 			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			tooltipwidget = {
+				using = lsq_RGO_Autoexpand_Tooltip
+			}
 		}
 	}
 }
@@ -83,7 +83,6 @@ template lsq_RGO_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						blockoverride "vertical_line_size" { size = { 3 41 } }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 						}
@@ -91,7 +90,7 @@ template lsq_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO is fully employed or will be with one month of promotions"
+							text = "Location has enough [ShowPopTypeName('laborers')] and/or [ShowPopTypeName('slaves')]"
 						}
 					}
 					# lsq_tooltip_row = {
@@ -106,7 +105,6 @@ template lsq_RGO_Autoexpand_Tooltip {
 					# 	}
 					# }
 					lsq_tooltip_row = {
-						blockoverride "vertical_line_size" { size = { 3 41 } }
 						using = lsq_tooltip_row_is_odd
 						visible = "[InDebugMode]"
 						background = {
@@ -124,26 +122,34 @@ template lsq_RGO_Autoexpand_Tooltip {
 					}
 					lsq_tooltip_row = {
 						visible = "[InDebugMode]"
-						background = {
-							using = bg_tooltip_debug
-						}
+						background = { using = bg_tooltip_debug }
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+							visible = "[GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+							visible = "[Not(GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "Country doesn't have enough gold available"
+							raw_text = "Country has [GetPlayer.GetCurrencyValue('gold')]@gold! vs required [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_expected_gold_available_for_rgo_auto_expand')]@gold!"
 						}
 					}
 				}
 			}
 
-			TooltipTextBlock = {
+			LSQTooltipTextBlockContainer = {
 				visible = "[And(GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
-				blockoverride "text" {
-					raw_text = "RGO will expand if at least [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_expected_gold_available_for_rgo')|0]@gold! is available"
+
+				blockoverride "text_content" {
+					LSQTooltipTextBox = {
+						blockoverride "text" {
+							raw_text = "RGO will expand if at least [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_expected_gold_available_for_rgo_auto_expand')|2]@gold! is available"
+						}
+					}
+					LSQTooltipTextBox = {
+						blockoverride "text" {
+							raw_text = "(min [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_gold_for_rgos')|0L]@gold! + cost [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_get_adjusted_construction_cost_for_rgo')|2L]@gold!)"
+						}
+					}
 				}
 				blockoverride "textblock_background_tint"  {
 					modify_texture = {
@@ -169,109 +175,212 @@ template lsq_RGO_Autoexpand_Tooltip {
 				background = {
 					using = bg_tooltip_debug
 				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_get_rgo_workers: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_rgo_workers')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_get_max_rgo_workers: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_max_rgo_workers')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_get_max_rgo_workers_floor: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_max_rgo_workers_floor')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "max_max_rgo_workers: [Location.GetMaximumMaxRGOWorkersValueForUI]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "ui version of max_rgo_workers: [Location.GetMaxRGOWorkers]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "saved ui version of max_rgo_workers: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_ui_saved_max_rgo_workers')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "num_civil_constructions: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_num_civil_constructions')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "buildings_under_construction: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_buildings_under_construction')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "max_constructions_at_same_time: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_max_constructions_at_same_time')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "open_build_queue_slots: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_open_build_queue_slots')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_local_laborers_desired_pop: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_laborers_desired_pop')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_local_laborers_desired_pop_scaled: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_laborers_desired_pop_scaled')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_global_laborers_desired_pop: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_desired_pop')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_global_laborers_desired_pop_scaled: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_desired_pop_scaled')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_global_laborers_rural_desired_pop: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_rural_desired_pop')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_global_laborers_rural_desired_pop_scaled: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_rural_desired_pop_scaled')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_global_laborers_city_desired_pop: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_city_desired_pop')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_global_laborers_city_desired_pop_scaled: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_city_desired_pop_scaled')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_location_laborers_pop_count: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_location_laborers_pop_count')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "lsq_location_laborers_available: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_location_laborers_available')]"
-					}
-				}
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_get_rgo_workers: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_rgo_workers')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_get_max_rgo_workers: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_max_rgo_workers')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_get_max_rgo_workers_floor: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_max_rgo_workers_floor')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "max_max_rgo_workers: [Location.GetMaximumMaxRGOWorkersValueForUI]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "ui version of max_rgo_workers: [Location.GetMaxRGOWorkers]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "num_civil_constructions: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_num_civil_constructions')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "buildings_under_construction: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_buildings_under_construction')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "max_constructions_at_same_time: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_max_constructions_at_same_time')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "open_build_queue_slots: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_get_open_build_queue_slots')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_local_laborers_desired_pop: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_laborers_desired_pop')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_local_laborers_desired_pop_scaled: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_laborers_desired_pop_scaled')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_global_laborers_desired_pop: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_desired_pop')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_global_laborers_desired_pop_scaled: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_desired_pop_scaled')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_global_laborers_rural_desired_pop: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_rural_desired_pop')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_global_laborers_rural_desired_pop_scaled: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_rural_desired_pop_scaled')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_global_laborers_city_desired_pop: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_city_desired_pop')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_global_laborers_city_desired_pop_scaled: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_city_desired_pop_scaled')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_location_laborers_pop_count: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_location_laborers_pop_count')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "lsq_location_laborers_available: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_location_laborers_available')]"
+				# 	}
+				# }
 				TooltipTextBlock = {
 					blockoverride "text" {
 						raw_text = "lsq_modifier_rgo_level: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_modifier_rgo_level')]"
+					}
+				}
+				TooltipTextBlock = {
+					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_build_new_buildings_cost'), '(CFixedPoint)0'))]"
+					blockoverride "text" {
+						raw_text = "lsq_local_build_new_buildings_cost: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_build_new_buildings_cost')]"
+					}
+				}
+				TooltipTextBlock = {
+					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_build_buildings_cost'), '(CFixedPoint)0'))]"
+					blockoverride "text" {
+						raw_text = "lsq_local_build_buildings_cost: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_build_buildings_cost')]"
+					}
+				}
+				TooltipTextBlock = {
+					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_port_build_buildings_cost'), '(CFixedPoint)0'))]"
+					blockoverride "text" {
+						raw_text = "lsq_local_port_build_buildings_cost: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_port_build_buildings_cost')]"
+					}
+				}
+				TooltipTextBlock = {
+					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_build_buildings_cost'), '(CFixedPoint)0'))]"
+					blockoverride "text" {
+						raw_text = "lsq_global_build_buildings_cost: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_build_buildings_cost')]"
+					}
+				}
+				TooltipTextBlock = {
+					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_fort_build_buildings_cost'), '(CFixedPoint)0'))]"
+					blockoverride "text" {
+						raw_text = "lsq_global_fort_build_buildings_cost: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_fort_build_buildings_cost')]"
+					}
+				}
+				TooltipTextBlock = {
+					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_port_build_buildings_cost'), '(CFixedPoint)0'))]"
+					blockoverride "text" {
+						raw_text = "lsq_global_port_build_buildings_cost: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_port_build_buildings_cost')]"
+					}
+				}
+				TooltipTextBlock = {
+					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_urban_build_buildings_cost'), '(CFixedPoint)0'))]"
+					blockoverride "text" {
+						raw_text = "lsq_global_urban_build_buildings_cost: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_urban_build_buildings_cost')]"
+					}
+				}
+				TooltipTextBlock = {
+					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_rural_build_buildings_cost'), '(CFixedPoint)0'))]"
+					blockoverride "text" {
+						raw_text = "lsq_global_rural_build_buildings_cost: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_rural_build_buildings_cost')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_building_age_1_traditions_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_building_age_1_traditions_cost_modifier')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_building_age_2_renaissance_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_building_age_2_renaissance_cost_modifier')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_building_age_3_discovery_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_building_age_3_discovery_cost_modifier')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_building_age_4_reformation_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_building_age_4_reformation_cost_modifier')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_building_age_5_absolutism_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_building_age_5_absolutism_cost_modifier')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_building_age_6_revolutions_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_building_age_6_revolutions_cost_modifier')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_expensive_building_age_1_traditions_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_expensive_building_age_1_traditions_cost_modifier')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_expensive_building_age_2_renaissance_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_expensive_building_age_2_renaissance_cost_modifier')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_expensive_building_age_3_discovery_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_expensive_building_age_3_discovery_cost_modifier')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_expensive_building_age_4_reformation_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_expensive_building_age_4_reformation_cost_modifier')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_expensive_building_age_5_absolutism_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_expensive_building_age_5_absolutism_cost_modifier')]"
+					}
+				}
+				TooltipTextBlock = {
+					blockoverride "text" {
+						raw_text = "lsq_p_expensive_building_age_6_revolutions_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_p_expensive_building_age_6_revolutions_cost_modifier')]"
 					}
 				}
 			}

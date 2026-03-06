@@ -1,4 +1,79 @@
-﻿# Root is the building type, also expects scope:country
+﻿# Expects scopes: building_type
+lsq_base_building_type_cost = {
+	value = scope:building_type.building_base_cost_in_gold
+}
+
+# Expects scopes: location, building_type, country
+lsq_adjustment_to_base_building_cost = {
+	scope:location = {
+		value = 0
+		scope:country = { add = modifier:global_build_buildings_cost }
+		if = { limit = { lsq_does_building_type_count_for_fort_building_cost_modifier = yes }
+			scope:country = { add = modifier:global_fort_build_buildings_cost }
+		}
+		if = { limit = { lsq_does_building_type_count_for_port_building_cost_modifier = yes }
+			scope:country = { add = modifier:global_port_build_buildings_cost }
+			add = modifier:local_port_build_buildings_cost
+		}
+		if = { limit = { lsq_auto_build_check_town_or_city = yes }
+			scope:country = { add = modifier:global_urban_build_buildings_cost }
+		} else_if = { limit = { lsq_auto_build_check_rural = yes }
+			scope:country = { add = modifier:global_rural_build_buildings_cost }
+		}
+		add = modifier:local_build_buildings_cost
+		add = modifier:local_build_new_buildings_cost
+		if = { limit = { AND = { exists = scope:upgrade_building_type lsq_building_levels_left_to_upgrade > 0 } }
+			add = define:NEconomy|UPGRADE_PRICE_MODIFIER
+		}
+	}
+}
+
+# Root is the location, also expects scopes: building_type, country, and upgrade_building_type
+lsq_building_levels_left_to_upgrade = {
+	value = 0
+	"building(scope:building_type|scope:country)" = { add = building_level }
+	every_buildings_in_location = {
+		limit = { building_type = scope:upgrade_building_type }
+		subtract = building_levels_under_construction
+	}
+}
+
+# Root is the location, also expects scope:building_type, scope:country
+lsq_adjusted_building_type_cost = {
+	if = { limit = { NOT = { exists = scope:location } }
+		save_temporary_scope_as = location
+	}
+	if = { limit = { exists = scope:upgrade_building_type }
+		scope:upgrade_building_type = { value = building_base_cost_in_gold }
+	} else = {
+		scope:building_type = { value = building_base_cost_in_gold }
+	}
+	multiply = {
+		value = 1
+		add = lsq_adjustment_to_base_building_cost
+	}
+	multiply = {
+		value = 1
+		add = lsq_get_construction_cost_adjustment_for_building_type
+	}
+	multiply = {
+		value = 1
+		add = scope:country.inflation
+	}
+}
+
+# Expects scopes: building_type, country, and location
+lsq_adjusted_building_type_cost_accounting_for_upgrades = {
+	scope:location = {
+		if = { limit = { scope:building_type = { lsq_is_building_type_obsolete = no } }
+			value = lsq_adjusted_building_type_cost
+		} else_if = { limit = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
+			value = lsq_adjusted_upgrade_cost
+		} else = { value = -1 } # should never happen
+	}
+}
+
+# Root is the building type, also expects scope:country
 lsq_double_building_type_cost = {
 	if = { limit = { lsq_is_building_type_obsolete = no }
 		value = building_base_cost_in_gold
@@ -8,31 +83,36 @@ lsq_double_building_type_cost = {
 	multiply = 2
 }
 
-# Root is the building type, also expects scope:country
+# Root is the building type, also expects scope:country and scope:location
 lsq_expected_gold_available_for_building_type_for_auto_expand = {
-	value = lsq_double_building_type_cost
+	if = { limit = { NOT = { exists = scope:building_type } }
+		save_temporary_scope_as = building_type
+	}
+	scope:location = { value = lsq_adjusted_building_type_cost_accounting_for_upgrades }
 	scope:country = {
 		if = { limit = { exists = var:lsq_minimum_gold_for_buildings }
-			add = lsq_get_minimum_gold_for_buildings
+			add = lsq_get_minimum_gold_for_auto_expand
 		}
 	}
 }
 
-# Root is the building type, also expects scope:country
+# Expects scopes: building_type, country, location
 lsq_expected_gold_available_for_building_type_for_auto_build = {
-	value = lsq_double_building_type_cost
+	value = lsq_adjusted_building_type_cost
 	scope:country = {
-		if = { limit = { exists = lsq_get_minimum_gold_for_auto_build }
-			add = lsq_get_minimum_gold_for_auto_build
+		if = { limit = { exists = var:lsq_minimum_gold_for_auto_build }
+			add = var:lsq_minimum_gold_for_auto_build
 		}
 	}
 }
 
 lsq_get_minimum_gold_for_auto_build = {
-	value = var:lsq_minimum_gold_for_auto_build
+	if = { limit = { exists = var:lsq_minimum_gold_for_auto_build }
+		value = var:lsq_minimum_gold_for_auto_build
+	} else = { value = -1 } # should never happen
 }
 
-lsq_get_minimum_gold_for_buildings = {
+lsq_get_minimum_gold_for_auto_expand = {
 	value = var:lsq_minimum_gold_for_buildings
 }
 
@@ -42,6 +122,23 @@ lsq_get_max_required_construction_demand_to_still_allow_building = {
 	add = "market.stockpile_in_market(scope:good)"
 	multiply = 2
 	subtract = "market.goods_demand_in_market(scope:good)"
+}
+
+# Expects scopes: good, location
+lsq_get_construction_good_adjustment = {
+	if = { limit = { "scope:location.market.market_price(scope:good)" > "default_price(scope:good)" }
+		value = "scope:location.market.market_price(scope:good)"
+		divide = "default_price(scope:good)"
+		subtract = 1
+		divide = 3
+	} else_if = { limit = { "scope:location.market.market_price(scope:good)" < "default_price(scope:good)" }
+		value = "default_price(scope:good)"
+		divide = "scope:location.market.market_price(scope:good)"
+		subtract = 1
+		multiply = -10
+	} else = {
+		value = 0
+	}
 }
 
 # Effect expects building_type scope. Sets local variable return_value to the upgrade building type, or leaves it unset if not upgradeable.
@@ -123,5 +220,235 @@ lsq_get_upgrade_building_cost = {
 	else_if = { limit = { this = building_type:weapon_manufactory } building_type:weapon_factory = { value = building_base_cost_in_gold } }
 	else_if = { limit = { this = building_type:weapon_workshop } building_type:weapon_manufactory = { value = building_base_cost_in_gold } }
 	else_if = { limit = { this = building_type:winery } building_type:winery_manufactory = { value = building_base_cost_in_gold } }
-	# else = { debug_log = "No upgrade building type found" }
 }
+
+lsq_adjusted_upgrade_cost = {
+	if = { limit = { scope:building_type = building_type:armory } building_type:barracks = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:art_school } building_type:arts_academy = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:barracks } building_type:conscription_center = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:bastion } building_type:star_fort = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:beer_workshop } building_type:brewery_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:brewery } building_type:beer_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:brewery_manufactory } building_type:brewery_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:cannon_foundry } building_type:cannons_factory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:cannon_maker } building_type:cannon_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:cannon_workshop } building_type:cannon_foundry = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:castle } building_type:bastion = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:charcoal_maker } building_type:improved_charcoal_maker = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:cloth_guild } building_type:cloth_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:cloth_manufactory } building_type:textile_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:cloth_workshop } building_type:cloth_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:coastal_fort } building_type:naval_battery = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:distiller_manufactory } building_type:distiller_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:distillers_guild } building_type:distillers_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:distillers_workshop } building_type:distiller_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:dock } building_type:dry_dock = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:dry_dock } building_type:shipyard = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:dyes_guild } building_type:dyes_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:dyes_workshop } building_type:dyesworks = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:dyesworks } building_type:dyes_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:fine_cloth_guild } building_type:fine_cloth_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:fine_cloth_manufactory } building_type:fine_cloth_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:fine_cloth_workshop } building_type:fine_cloth_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:firearms_manufactory } building_type:firearms_factory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:furniture_guild } building_type:furniture_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:furniture_manufactory } building_type:furniture_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:furniture_workshop } building_type:furniture_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:glass_guild } building_type:glass_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:glass_workshop } building_type:glassworks = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:glassworks } building_type:glass_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:grand_shipyard } building_type:naval_base = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:grand_marketplace } building_type:commerce_center = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:gun_smith } building_type:guns_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:guns_workshop } building_type:firearms_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:hand_cannon_guild } building_type:gun_smith = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:iron_foundry } building_type:iron_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:korean_barracks } building_type:armory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:lacquerware_guild } building_type:lacquerware_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:lieutenancy } building_type:viceroyalty = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:marketplace } building_type:merchants_quarters = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:merchants_quarters } building_type:grand_marketplace = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:naval_supplies_guild } building_type:naval_supplies_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:naval_supplies_manufactory } building_type:naval_supplies_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:naval_supplies_workshop } building_type:naval_supplies_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:paper_guild } building_type:paper_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:paper_manufactory } building_type:paper_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:paper_workshop } building_type:paper_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:porcelain_guild } building_type:porcelain_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:pottery_guild } building_type:pottery_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:pottery_manufactory } building_type:pottery_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:pottery_workshop } building_type:pottery_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:printing_manufactory } building_type:printing_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:printing_press_shop } building_type:printing_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:provincial_garrison } building_type:armory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:putrefaction_works } building_type:putrefaction_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:regimental_camp } building_type:conscription_center = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:ruined_great_wall_of_china } building_type:repaired_great_wall_of_china = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:saltpeter_guild } building_type:saltpeter_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:saltpeter_workshop } building_type:putrefaction_works = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:scriptorium } building_type:printing_press_shop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:shipyard } building_type:grand_shipyard = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:star_fort } building_type:fortress = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:stockade } building_type:castle = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:tannery } building_type:tanning_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:tannery_manufactory } building_type:tannery_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:tanning_workshop } building_type:tannery_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:tools_guild } building_type:tools_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:tools_workshop } building_type:iron_foundry = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:training_fields } building_type:regimental_camp = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:weapon_guild } building_type:weapon_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:weapon_manufactory } building_type:weapon_factory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:weapon_workshop } building_type:weapon_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+	else_if = { limit = { scope:building_type = building_type:winery } building_type:winery_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+}
+lsq_get_adjustment_to_base_building_cost_for_upgrade = {
+	if = { limit = { scope:building_type = building_type:armory } building_type:barracks = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:art_school } building_type:arts_academy = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:barracks } building_type:conscription_center = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:bastion } building_type:star_fort = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:beer_workshop } building_type:brewery_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:brewery } building_type:beer_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:brewery_manufactory } building_type:brewery_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:cannon_foundry } building_type:cannons_factory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:cannon_maker } building_type:cannon_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:cannon_workshop } building_type:cannon_foundry = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:castle } building_type:bastion = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:charcoal_maker } building_type:improved_charcoal_maker = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:cloth_guild } building_type:cloth_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:cloth_manufactory } building_type:textile_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:cloth_workshop } building_type:cloth_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:coastal_fort } building_type:naval_battery = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:distiller_manufactory } building_type:distiller_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:distillers_guild } building_type:distillers_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:distillers_workshop } building_type:distiller_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:dock } building_type:dry_dock = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:dry_dock } building_type:shipyard = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:dyes_guild } building_type:dyes_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:dyes_workshop } building_type:dyesworks = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:dyesworks } building_type:dyes_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:fine_cloth_guild } building_type:fine_cloth_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:fine_cloth_manufactory } building_type:fine_cloth_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:fine_cloth_workshop } building_type:fine_cloth_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:firearms_manufactory } building_type:firearms_factory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:furniture_guild } building_type:furniture_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:furniture_manufactory } building_type:furniture_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:furniture_workshop } building_type:furniture_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:glass_guild } building_type:glass_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:glass_workshop } building_type:glassworks = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:glassworks } building_type:glass_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:grand_shipyard } building_type:naval_base = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:grand_marketplace } building_type:commerce_center = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:gun_smith } building_type:guns_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:guns_workshop } building_type:firearms_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:hand_cannon_guild } building_type:gun_smith = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:iron_foundry } building_type:iron_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:korean_barracks } building_type:armory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:lacquerware_guild } building_type:lacquerware_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:lieutenancy } building_type:viceroyalty = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:marketplace } building_type:merchants_quarters = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:merchants_quarters } building_type:grand_marketplace = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:naval_supplies_guild } building_type:naval_supplies_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:naval_supplies_manufactory } building_type:naval_supplies_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:naval_supplies_workshop } building_type:naval_supplies_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:paper_guild } building_type:paper_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:paper_manufactory } building_type:paper_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:paper_workshop } building_type:paper_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:porcelain_guild } building_type:porcelain_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:pottery_guild } building_type:pottery_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:pottery_manufactory } building_type:pottery_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:pottery_workshop } building_type:pottery_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:printing_manufactory } building_type:printing_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:printing_press_shop } building_type:printing_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:provincial_garrison } building_type:armory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:putrefaction_works } building_type:putrefaction_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:regimental_camp } building_type:conscription_center = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:ruined_great_wall_of_china } building_type:repaired_great_wall_of_china = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:saltpeter_guild } building_type:saltpeter_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:saltpeter_workshop } building_type:putrefaction_works = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:scriptorium } building_type:printing_press_shop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:shipyard } building_type:grand_shipyard = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:star_fort } building_type:fortress = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:stockade } building_type:castle = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:tannery } building_type:tanning_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:tannery_manufactory } building_type:tannery_mill = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:tanning_workshop } building_type:tannery_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:tools_guild } building_type:tools_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:tools_workshop } building_type:iron_foundry = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:training_fields } building_type:regimental_camp = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:weapon_guild } building_type:weapon_workshop = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:weapon_manufactory } building_type:weapon_factory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:weapon_workshop } building_type:weapon_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+	else_if = { limit = { scope:building_type = building_type:winery } building_type:winery_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+}
+
+
+
+lsq_p_building_age_1_traditions_cost_modifier = {
+	value = modifier:p_building_age_1_traditions_cost_modifier
+}
+lsq_p_building_age_2_renaissance_cost_modifier = {
+	value = modifier:p_building_age_2_renaissance_cost_modifier
+}
+lsq_p_building_age_3_discovery_cost_modifier = {
+	value = modifier:p_building_age_3_discovery_cost_modifier
+}
+lsq_p_building_age_4_reformation_cost_modifier = {
+	value = modifier:p_building_age_4_reformation_cost_modifier
+}
+lsq_p_building_age_5_absolutism_cost_modifier = {
+	value = modifier:p_building_age_5_absolutism_cost_modifier
+}
+lsq_p_building_age_6_revolutions_cost_modifier = {
+	value = modifier:p_building_age_6_revolutions_cost_modifier
+}
+lsq_p_expensive_building_age_1_traditions_cost_modifier = {
+	value = modifier:p_expensive_building_age_1_traditions_cost_modifier
+}
+lsq_p_expensive_building_age_2_renaissance_cost_modifier = {
+	value = modifier:p_expensive_building_age_2_renaissance_cost_modifier
+}
+lsq_p_expensive_building_age_3_discovery_cost_modifier = {
+	value = modifier:p_expensive_building_age_3_discovery_cost_modifier
+}
+lsq_p_expensive_building_age_4_reformation_cost_modifier = {
+	value = modifier:p_expensive_building_age_4_reformation_cost_modifier
+}
+lsq_p_expensive_building_age_5_absolutism_cost_modifier = {
+	value = modifier:p_expensive_building_age_5_absolutism_cost_modifier
+}
+lsq_p_expensive_building_age_6_revolutions_cost_modifier = {
+	value = modifier:p_expensive_building_age_6_revolutions_cost_modifier
+}
+
+lsq_local_build_new_buildings_cost = {
+	value = modifier:local_build_new_buildings_cost
+}
+lsq_local_build_buildings_cost = {
+	value = modifier:local_build_buildings_cost
+}
+lsq_local_port_build_buildings_cost = {
+	value = modifier:local_port_build_buildings_cost
+}
+lsq_global_build_buildings_cost = {
+	value = modifier:global_build_buildings_cost
+}
+lsq_global_fort_build_buildings_cost = {
+	value = modifier:global_fort_build_buildings_cost
+}
+lsq_global_port_build_buildings_cost = {
+	value = modifier:global_port_build_buildings_cost
+}
+lsq_global_urban_build_buildings_cost = {
+	value = modifier:global_urban_build_buildings_cost
+}
+lsq_global_rural_build_buildings_cost = {
+	value = modifier:global_rural_build_buildings_cost
+}
+# Tag: global_build_buildings_cost, Categories: Country, , All,
+# Tag: global_fort_build_buildings_cost, Categories: Country, , All,
+# Tag: global_port_build_buildings_cost, Categories: Country, , All,
+# Tag: local_port_build_buildings_cost, Categories: Location, , All,
+# Tag: global_urban_build_buildings_cost, Categories: Country, , All,
+# Tag: global_rural_build_buildings_cost, Categories: Country, , All,
+# Tag: local_build_buildings_cost, Categories: Location, , All,
+# Tag: local_build_new_buildings_cost, Categories: Location, , All,
