@@ -178,10 +178,20 @@
                               }
                             }
 
-                            TooltipTextBlock = {
+                            LSQTooltipTextBlockContainer = {
                               visible = "[And(GetScriptedGui('lsq_is_auto_build_building_type_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End), GetScriptedGui('lsq_location_will_auto_build').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
-                              blockoverride "text" {
-                                raw_text = "Building will expand if at least [GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_expected_gold_available_for_building_type_for_auto_build')|2L]@gold! is available (min [GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_get_minimum_gold_for_auto_build')|0L]@gold! + cost [GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_adjusted_building_type_cost')|2L]@gold!)"
+
+                              blockoverride "text_content" {
+                                LSQTooltipTextBox = {
+                                  blockoverride "text" {
+                                    raw_text = "Building will expand if at least [GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_expected_gold_available_for_building_type_for_auto_build')|2L]@gold! is available"
+                                  }
+                                }
+                                LSQTooltipTextBox = {
+                                  blockoverride "text" {
+                                    raw_text = "(min [GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_get_minimum_gold_for_auto_build')|0L]@gold! + cost [GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_adjusted_building_type_cost')|2L]@gold!)"
+                                  }
+                                }
                               }
                               blockoverride "textblock_background_tint"  {
                                 modify_texture = {
