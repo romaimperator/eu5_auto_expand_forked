@@ -31,6 +31,26 @@
 			}
 		}
 	}
+
+	type lsq_debug_location_pop_type_breakdown = LSQTooltipTextBlockContainer {
+		blockoverride "text_content" {
+			LSQTooltipTextBox = {
+				blockoverride "text" {
+					raw_text = "[PopType.GetName] pop count: [GuiScope.SetRoot(Location.MakeScope).ScriptValue(Concatenate3('lsq_location_', PopType.GetKey, '_pop_count'))]"
+				}
+			}
+			LSQTooltipTextBox = {
+				blockoverride "text" {
+					raw_text = "buildings need: [GuiScope.SetRoot(Location.MakeScope).ScriptValue(Concatenate3('lsq_location_', PopType.GetKey, '_needed_for_buildings'))]"
+				}
+			}
+			LSQTooltipTextBox = {
+				blockoverride "text" {
+					raw_text = "available: [GuiScope.SetRoot(Location.MakeScope).ScriptValue(Concatenate3('lsq_location_', PopType.GetKey, '_available'))]"
+				}
+			}
+		}
+	}
 }
 
 template lsq_RGO_Autoexpand_Tooltip {
@@ -260,16 +280,12 @@ template lsq_RGO_Autoexpand_Tooltip {
 				# 		raw_text = "lsq_global_laborers_city_desired_pop_scaled: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_city_desired_pop_scaled')]"
 				# 	}
 				# }
-				# TooltipTextBlock = {
-				# 	blockoverride "text" {
-				# 		raw_text = "lsq_location_laborers_pop_count: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_location_laborers_pop_count')]"
-				# 	}
-				# }
-				# TooltipTextBlock = {
-				# 	blockoverride "text" {
-				# 		raw_text = "lsq_location_laborers_available: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_location_laborers_available')]"
-				# 	}
-				# }
+				lsq_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('nobles')]" }
+				lsq_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('clergy')]" }
+				lsq_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('burghers')]" }
+				lsq_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('laborers')]" }
+				lsq_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('soldiers')]" }
+				lsq_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('peasants')]" }
 				TooltipTextBlock = {
 					blockoverride "text" {
 						raw_text = "lsq_modifier_rgo_level: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_modifier_rgo_level')]"
