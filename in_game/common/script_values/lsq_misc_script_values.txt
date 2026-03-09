@@ -111,8 +111,9 @@ lsq_global_laborers_city_desired_pop_scaled = {
 lsq_location_nobles_needed_for_buildings = {
   value = 0
   every_buildings_in_location = {
-    limit = { building_pop_type = nobles is_opened = yes }
-    add = building_employment_size_amount
+    limit = { building_pop_type = nobles }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
   }
 }
 
@@ -126,8 +127,9 @@ lsq_location_nobles_available = {
 lsq_location_clergy_needed_for_buildings = {
   value = 0
   every_buildings_in_location = {
-    limit = { building_pop_type = clergy is_opened = yes }
-    add = building_employment_size_amount
+    limit = { building_pop_type = clergy }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
   }
 }
 
@@ -141,8 +143,9 @@ lsq_location_clergy_available = {
 lsq_location_burghers_needed_for_buildings = {
   value = 0
   every_buildings_in_location = {
-    limit = { building_pop_type = burghers is_opened = yes }
-    add = building_employment_size_amount
+    limit = { building_pop_type = burghers }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
   }
 }
 
@@ -156,12 +159,20 @@ lsq_location_burghers_available = {
 lsq_location_laborers_needed_for_buildings = {
   value = 0
   every_buildings_in_location = {
-    limit = { building_pop_type = laborers is_opened = yes }
-    add = building_employment_size_amount
+    limit = { building_pop_type = laborers }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
   }
 }
 
+lsq_location_nobles_pop_count = { value = num_pop_type:nobles }
+lsq_location_clergy_pop_count = { value = num_pop_type:clergy }
+lsq_location_burghers_pop_count = { value = num_pop_type:burghers }
 lsq_location_laborers_pop_count = { value = num_pop_type:laborers }
+lsq_location_soldiers_pop_count = { value = num_pop_type:soldiers }
+lsq_location_peasants_pop_count = { value = num_pop_type:peasants }
+lsq_location_slaves_pop_count = { value = num_pop_type:slaves }
+lsq_location_tribesmen_pop_count = { value = num_pop_type:tribesmen }
 
 # Root is the location
 lsq_location_laborers_available = {
@@ -178,8 +189,9 @@ lsq_location_laborers_available = {
 lsq_location_soldiers_needed_for_buildings = {
   value = 0
   every_buildings_in_location = {
-    limit = { building_pop_type = soldiers is_opened = yes }
-    add = building_employment_size_amount
+    limit = { building_pop_type = soldiers }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
   }
 }
 
@@ -193,8 +205,9 @@ lsq_location_soldiers_available = {
 lsq_location_peasants_needed_for_buildings = {
   value = 0
   every_buildings_in_location = {
-    limit = { building_pop_type = peasants is_opened = yes }
-    add = building_employment_size_amount
+    limit = { building_pop_type = peasants }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
   }
 }
 
@@ -208,8 +221,9 @@ lsq_location_peasants_available = {
 lsq_location_slaves_needed_for_buildings = {
   value = 0
   every_buildings_in_location = {
-    limit = { building_pop_type = slaves is_opened = yes }
-    add = building_employment_size_amount
+    limit = { building_pop_type = slaves }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
   }
 }
 
@@ -223,8 +237,9 @@ lsq_location_slaves_available = {
 lsq_location_tribesmen_needed_for_buildings = {
   value = 0
   every_buildings_in_location = {
-    limit = { building_pop_type = tribesmen is_opened = yes }
-    add = building_employment_size_amount
+    limit = { building_pop_type = tribesmen }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
   }
 }
 
@@ -232,6 +247,28 @@ lsq_location_tribesmen_needed_for_buildings = {
 lsq_location_tribesmen_available = {
   value = num_pop_type:tribesmen
   subtract = lsq_location_tribesmen_needed_for_buildings
+}
+
+# Includes potential employment from levels under construction and from buildings that are subsidized but not fully employed
+# Expects scope: building
+lsq_building_employment_required = {
+  value = 0
+  scope:building = {
+    if = { limit = { is_opened = yes }
+      if = { limit = { AND = { building_type = { lsq_is_building_type_production_building = yes } is_subsidized = yes } }
+        add = {
+          value = building_level
+          multiply = building_type.employment_size
+        }
+      } else = {
+        add = building_employment_size_amount
+      }
+      add = {
+        value = building_levels_under_construction
+        multiply = building_type.employment_size
+      }
+    }
+  }
 }
 
 lsq_location_lumber_mill_level = {
