@@ -1,0 +1,39 @@
+﻿on_annexed = {
+  on_actions = {
+    lsq_on_annexed
+  }
+}
+
+on_subject_created = {
+  on_actions = {
+    lsq_on_subject_created
+  }
+}
+
+lsq_on_annexed = {
+  trigger = {
+    is_ai = no
+  }
+
+  effect = {
+    # When this runs, the locations in the annexed country still have their previous max control so they will be in the wrong position in the lists
+    save_scope_as = country
+    # debug_log = "Updating locations lists"
+    lsq_auto_build_init_locations_lists = {} # Update the lists of locations
+  }
+}
+
+lsq_on_subject_created = {
+  trigger = {
+    scope:overlord = { is_ai = no }
+  }
+
+  effect = {
+    scope:overlord = {
+      # When this runs, the locations in the newly created subject still have their previous max control so they will be in the wrong position in the lists
+      save_scope_as = country
+      # debug_log = "Updating locations lists"
+      lsq_auto_build_init_locations_lists = {} # Update the lists of locations
+    }
+  }
+}

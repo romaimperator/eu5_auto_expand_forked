@@ -1,0 +1,42 @@
+﻿# Root is the location, also expects the scope country
+# Auto-builder only builds one market village per location (no further levels).
+lsq_location_can_auto_build_market_village = {
+	AND = {
+		lsq_location_will_auto_build_market_village = yes
+		lsq_auto_build_check_owner_gold_available = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_allowed_to_build_market_village = {
+	AND = {
+		lsq_auto_build_check_building_researched_market_village = yes
+		lsq_auto_build_check_no_building_type = { target = building_type:market_village }
+		lsq_auto_build_check_rural = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_will_auto_build_market_village = {
+	AND = {
+		scope:country = { lsq_should_pause_auto_expand = no }
+		lsq_location_allowed_to_build_market_village = yes
+		lsq_auto_build_check_pops_available_market_village = yes
+		lsq_auto_build_check_can_afford_market_village = yes
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_pops_available_market_village = {
+	lsq_auto_build_check_peasants_available_or_will_be = yes
+}
+
+# Root is the location
+lsq_auto_build_check_can_afford_market_village = {
+	lsq_can_afford_switch_based_on_building_type = { target = building_type:market_village }
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_building_researched_market_village = {
+	always = yes # not locked behind an advance
+}

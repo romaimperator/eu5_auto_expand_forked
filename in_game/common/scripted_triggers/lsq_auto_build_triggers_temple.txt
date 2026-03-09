@@ -1,0 +1,41 @@
+﻿# Root is the location, also expects the scope country
+lsq_location_can_auto_build_temple = {
+	AND = {
+		lsq_location_will_auto_build_temple = yes
+		lsq_auto_build_check_owner_gold_available = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_allowed_to_build_temple = {
+	AND = {
+		lsq_auto_build_check_building_researched_temple = yes
+		lsq_auto_build_check_no_building_type = { target = building_type:temple }
+		lsq_auto_build_check_town_or_city = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_will_auto_build_temple = {
+	AND = {
+		scope:country = { lsq_should_pause_auto_expand = no }
+		lsq_location_allowed_to_build_temple = yes
+		lsq_auto_build_check_pops_available_temple = yes
+		lsq_auto_build_check_can_afford_temple = yes
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_pops_available_temple = {
+	lsq_auto_build_check_clergy_available_or_will_be = yes
+}
+
+# Root is the location
+lsq_auto_build_check_can_afford_temple = {
+	lsq_can_afford_switch_based_on_building_type = { target = building_type:temple }
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_building_researched_temple = {
+	always = yes # not locked behind a tech
+}

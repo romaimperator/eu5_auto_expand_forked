@@ -1,0 +1,193 @@
+﻿# Generic triggers for auto-building
+
+# Expects scopes: building_type, country, location
+lsq_auto_build_check_owner_gold_available = {
+	scope:country.gold > lsq_expected_gold_available_for_building_type_for_auto_build
+}
+
+# Root is the location
+lsq_auto_build_check_no_building_type = {
+	NOT = { has_building = $target$ }
+}
+
+# Root is the location
+lsq_auto_build_check_city = {
+	location_rank = location_rank:city
+}
+
+# Root is the location
+lsq_auto_build_check_town_or_city = {
+	OR = {
+		location_rank = location_rank:town
+		location_rank = location_rank:city
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_rural = {
+	location_rank = location_rank:rural_settlement
+}
+
+# Root is the location
+lsq_auto_build_check_has_at_least_one_road = {
+	num_roads > 0
+}
+
+# Root is the location
+lsq_auto_build_check_has_a_river = {
+	has_river = yes
+}
+
+# Root is the location, assuming the core of subject if checking a subject location
+lsq_auto_build_check_is_a_core = {
+	is_core_of = owner
+}
+
+# Root is the location
+lsq_auto_build_check_nobles_available_or_will_be = {
+	0 <= { value = lsq_combined_pop_promotion_speed_for_nobles add = lsq_location_nobles_available }
+}
+
+# Root is the location
+lsq_auto_build_check_clergy_available_or_will_be = {
+	0 <= { value = lsq_combined_pop_promotion_speed_for_clergy add = lsq_location_clergy_available }
+}
+
+# Root is the location
+lsq_auto_build_check_burghers_available_or_will_be = {
+	0 <= { value = lsq_combined_pop_promotion_speed_for_burghers add = lsq_location_burghers_available }
+}
+
+# Root is the location
+lsq_auto_build_check_laborers_available_or_will_be = {
+	0 <= { value = lsq_combined_pop_promotion_speed_for_laborers add = lsq_location_laborers_available }
+}
+
+# Root is the location
+lsq_auto_build_check_soldiers_available_or_will_be = {
+	0 <= { value = lsq_combined_pop_promotion_speed_for_soldiers add = lsq_location_soldiers_available }
+}
+
+# Root is the location
+lsq_auto_build_check_peasants_available_or_will_be = {
+	0 <= { value = lsq_combined_pop_promotion_speed_for_peasants add = lsq_location_peasants_available }
+}
+
+# Root is the location
+lsq_auto_build_check_slaves_available_or_will_be = {
+	0 <= { value = lsq_location_slaves_available } # these don't get promoted in the same way
+}
+
+# Root is the location
+lsq_auto_build_check_tribesmen_available_or_will_be = {
+	0 <= { value = lsq_location_tribesmen_available } # these don't get promoted in the same way
+}
+
+# Root is the location. Expects the building type as target and scope country. True when location has enough RGO/lumber levels for this building type (sawmill: RGO or lumber_mill >= required; windmill/local_smelters: RGO >= required).
+lsq_auto_build_check_rgo_level_requirement_met = {
+	trigger_if = { limit = { $target$ = building_type:sawmill }
+		lsq_auto_build_check_rgo_level_requirement_met_sawmill = yes
+	} trigger_else_if = { limit = { $target$ = building_type:windmill }
+		lsq_auto_build_check_rgo_level_requirement_met_windmill = yes
+	} trigger_else_if = { limit = { $target$ = building_type:local_smelters }
+		lsq_auto_build_check_rgo_level_requirement_met_local_smelters = yes
+	} trigger_else = {
+		always = no
+	}
+}
+
+# Expects the scope building_type. True only for sawmill, windmill, local_smelters (so tooltip row "Has required RGO levels" is shown only for those).
+lsq_auto_build_show_rgo_level_tooltip_row = {
+	OR = {
+		scope:building_type = building_type:sawmill
+		scope:building_type = building_type:windmill
+		scope:building_type = building_type:local_smelters
+	}
+}
+
+# Root is the country. Expects the building type as a target, also expects the scope country
+lsq_auto_build_check_any_location_allowed_to_build = {
+	trigger_if = { limit = { is_target_in_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type } }
+		OR = {
+			any_controlled_location = {
+				lsq_location_allowed_to_build = { target = $target$ }
+			}
+			any_subject_or_below = {
+				any_controlled_location = {
+					lsq_location_allowed_to_build = { target = $target$ }
+				}
+			}
+		}
+	} trigger_else = {
+		any_controlled_location = {
+			lsq_location_allowed_to_build = { target = $target$ }
+		}
+	}
+}
+
+# Root is the location. Expects the building type as a target and a trigger name, also expects the scope country
+lsq_auto_build_switch_based_on_building_type = {
+	trigger_if = { limit = { $target$ = building_type:temple }
+		lsq_$trigger_name$_temple = yes
+	} trigger_else_if = { limit = { $target$ = building_type:library }
+		lsq_$trigger_name$_library = yes
+	} trigger_else_if = { limit = { $target$ = building_type:settlement_building }
+		lsq_$trigger_name$_settlement_building = yes
+	} trigger_else_if = { limit = { $target$ = building_type:bridge_infrastructure }
+		lsq_$trigger_name$_bridge_infrastructure = yes
+	} trigger_else_if = { limit = { $target$ = building_type:pound_lock_canal_infrastructure }
+		lsq_$trigger_name$_pound_lock_canal_infrastructure = yes
+	} trigger_else_if = { limit = { $target$ = building_type:university }
+		lsq_$trigger_name$_university = yes
+	} trigger_else_if = { limit = { $target$ = building_type:hospital }
+		lsq_$trigger_name$_hospital = yes
+	} trigger_else_if = { limit = { $target$ = building_type:minting_office }
+		lsq_$trigger_name$_minting_office = yes
+	} trigger_else_if = { limit = { $target$ = building_type:counting_house }
+		lsq_$trigger_name$_counting_house = yes
+	} trigger_else_if = { limit = { $target$ = building_type:wharf }
+		lsq_$trigger_name$_wharf = yes
+	} trigger_else_if = { limit = { $target$ = building_type:market_village }
+		lsq_$trigger_name$_market_village = yes
+	} trigger_else_if = { limit = { $target$ = building_type:sawmill }
+		lsq_$trigger_name$_sawmill = yes
+	} trigger_else_if = { limit = { $target$ = building_type:windmill }
+		lsq_$trigger_name$_windmill = yes
+	} trigger_else_if = { limit = { $target$ = building_type:local_smelters }
+		lsq_$trigger_name$_local_smelters = yes
+	} trigger_else_if = { limit = { $target$ = building_type:protected_harbor }
+		lsq_$trigger_name$_protected_harbor = yes
+	} trigger_else = {
+		always = no
+	}
+}
+
+# Expects scopes: building_type, country, location
+lsq_location_can_auto_build = {
+	lsq_auto_build_switch_based_on_building_type = { target = scope:building_type trigger_name = location_can_auto_build }
+}
+
+# Root is the location. Expects the building type as a target, also expects the scope country
+lsq_auto_build_will_auto_build = {
+	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = location_will_auto_build }
+}
+
+# Root is the location. Expects the building type as a target, also expects the scope country
+lsq_location_allowed_to_build = {
+	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = location_allowed_to_build }
+}
+
+# Root is the location. Expects the building type as a target, also expects the scope country
+lsq_auto_build_check_pops_available = {
+	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = auto_build_check_pops_available }
+}
+
+# Root is the location. Expects the building type as a target, also expects the scope country
+lsq_auto_build_check_can_afford = {
+	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = auto_build_check_can_afford }
+}
+
+# Root is the location. Expects the building type as a target, also expects the scope country
+lsq_auto_build_check_building_researched = {
+	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = auto_build_check_building_researched }
+}

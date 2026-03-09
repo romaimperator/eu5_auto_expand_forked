@@ -1,9 +1,9 @@
-lsq_hidden_window_init = {
+﻿lsq_hidden_window_init = {
 	effect = {
-		# debug_log = "LSQ: country is [THIS.GetCountry.GetNameWithNoTooltip]"
+		# debug_log = "LSQ: hidden window init, country is [THIS.GetCountry.GetNameWithNoTooltip]"
 		if = { limit = { AND = { NOT = { exists = global_var:lsq_hidden_window_initialized } is_human = yes } }
 			set_global_variable = { name = lsq_hidden_window_initialized value = yes }
-			# debug_log = "LSQ: Initializing hidden window"
+			debug_log = "LSQ: Initializing hidden window"
 			every_province = {
 				if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
 					set_variable = { name = lsq_auto_expand_rgo_off_in_all_locations value = yes }
@@ -17,27 +17,35 @@ lsq_hidden_window_init = {
 				root = { add_to_variable_list = { name = every_building_type_list target = prev } }
 				root = { change_variable = { name = every_building_type_count add = 1 } }
 			}
+
+			lsq_auto_build_init_variables = {}
+
 		# } else = {
 			# debug_log = "LSQ: Hidden window already initialized or country is not human"
 		}
-	}
-}
 
-lsq_province_has_any_location_with_auto_expand_rgo = {
-	is_shown = {
-		# Auto expand is on in at least one location in the province if this variable is NOT set. That way, if we haven't explicitly set the variable, it won't be skipped in the data updating.
-		NOT = { exists = var:lsq_auto_expand_rgo_off_in_all_locations }
-	}
-}
-
-lsq_update_all_provinces_auto_expand_rgo_information = {
-	effect = {
-		every_province = {
-			if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
-				set_variable = { name = lsq_auto_expand_rgo_off_in_all_locations value = yes }
-			} else = {
-				remove_variable = lsq_auto_expand_rgo_off_in_all_locations
+		if = { limit = { AND = { NOT = { exists = global_var:lsq_migrate_auto_expand_registered_buildings } is_human = yes } }
+			debug_log = "LSQ: Migrating auto expand registered buildings"
+			every_controlled_location = {
+				limit = { has_variable_list = auto_expand_registered_buildings }
+				save_scope_as = location
+				# debug_log = "LSQ: Migrating auto expand registered buildings for location [THIS.GetLocation.GetNameWithNoTooltip]"
+				every_in_list = {
+					variable = auto_expand_registered_buildings
+					save_scope_as = building
+					# debug_log = "LSQ: Migrating auto expand registered buildings for building [THIS.GetBuilding.GetNameWithNoTooltip]"
+					if = { limit = { AND = { scope_type = building exists = building_type } }
+						scope:location = {
+							add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building.building_type }
+						}
+					} else_if = { limit = { scope_type = building_type }
+						scope:location = {
+							add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building }
+						}
+					}
+				}
 			}
+			set_global_variable = { name = lsq_migrate_auto_expand_registered_buildings value = yes }
 		}
 	}
 }
@@ -57,10 +65,11 @@ lsq_should_building_type_section_show = {
 
 # Root is the country
 lsq_building_type_section_buildings_init = {
-	saved_scopes = { building_type is_producing is_multiple_levels }
+	saved_scopes = { building_type is_producing is_multiple_levels is_fort }
 	effect = {
 			# debug_log = "LSQ: Initializing buildings [TopScope.sBuildingType('building_type').GetNameWithNoTooltip]"
 
+			# Set the which type of building this should be treated as
 			if = { limit = { scope:is_producing = yes }
 				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
 			} else = {
@@ -77,6 +86,14 @@ lsq_building_type_section_buildings_init = {
 				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
 			}
 
+			# Set if this building type is a fort for discount purposes
+			if = { limit = { scope:is_fort = yes }
+				add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 1 }
+			} else = {
+				add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 0 }
+			}
+
+			# Set that this building type has been processed
 			add_to_global_variable_map = { name = lsq_building_type_processed key = scope:building_type value = 1 }
 	}
 }

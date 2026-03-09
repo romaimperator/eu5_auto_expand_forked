@@ -1,4 +1,4 @@
-# This trigger is used by the GUI to see if the prerequisites for auto expanding RGO are met
+﻿# This trigger is used by the GUI to see if the prerequisites for auto expanding RGO are met
 lsq_is_able_to_auto_expand_rgo = {
 	AND = {
 		owner = { lsq_should_pause_auto_expand = no }
@@ -9,48 +9,35 @@ lsq_is_able_to_auto_expand_rgo = {
 }
 
 # This trigger is used by the on action to determine if the RGO should be auto expanded
+# Expects scopes: country, location
 lsq_should_rgo_auto_expand = {
-	AND = {
-		owner = { lsq_should_pause_auto_expand = no }
-		lsq_is_rgo_not_max_level_already = yes
-		lsq_is_rgo_fully_employed = yes
-		# lsq_has_enough_raw_materials_for_rgo = yes
-		lsq_is_rgo_under_construction = no
-		lsq_is_there_enough_gold_available = yes
+	scope:location = {
+		AND = {
+			scope:country = { lsq_should_pause_auto_expand = no }
+			lsq_is_rgo_not_max_level_already = yes
+			lsq_is_rgo_fully_employed = yes
+			# lsq_has_enough_raw_materials_for_rgo = yes
+			lsq_is_rgo_under_construction = no
+			lsq_is_there_enough_gold_available = yes
+		}
 	}
 }
 
 lsq_is_rgo_not_max_level_already = {
-	is_full_expanded_rgo = no
+	lsq_modifier_rgo_level < lsq_get_max_rgo_workers_floor
 }
 
 lsq_is_rgo_fully_employed = {
-	AND = { exists = var:lsq_should_build_early var:lsq_should_build_early = yes } # if it is fully staffed, lsq_should_build_early will always be yes so only need this check
+	lsq_auto_build_check_laborers_available_or_will_be = yes
 }
 
 lsq_is_rgo_under_construction = {
 	lsq_get_rgos_under_construction > 0
 }
 
+# Expects scopes: country, location
 lsq_is_there_enough_gold_available = {
-	trigger_if = { limit = { exists = owner.var:lsq_minimum_gold_for_rgos }
-		owner.gold > { value = lsq_expand_rgo_max_cost add = owner.var:lsq_minimum_gold_for_rgos }
-	} trigger_else = {
-		owner.gold > lsq_expand_rgo_max_cost
-	}
-}
-
-# Root = location. True if location has building auto expand and/or RGO auto expand (for settings list).
-lsq_location_has_auto_expand = {
-	OR = {
-		exists = var:auto_expand_rgo
-		any_buildings_in_location = {
-			limit = {
-				save_temporary_scope_as = the_building
-				location = { is_target_in_variable_list = { name = auto_expand_registered_buildings target = scope:the_building } }
-			}
-		}
-	}
+	scope:country.gold > lsq_expected_gold_available_for_rgo_auto_expand
 }
 
 # Root = location. Checks if the market has enough construction goods for an RGO upgrade.

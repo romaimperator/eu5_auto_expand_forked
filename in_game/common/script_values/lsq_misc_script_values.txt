@@ -1,0 +1,280 @@
+﻿lsq_max_guess_at_number_of_locations = 1000000
+
+# Root is country. Expects scope building_type. Returns required RGO/lumber levels before auto-building this improvement (sawmill/windmill/local_smelters).
+lsq_get_required_rgo_levels_before_improvement_building = {
+	if = { limit = { scope:building_type = building_type:sawmill }
+		value = var:lsq_required_rgo_levels_before_sawmill
+	} else_if = { limit = { scope:building_type = building_type:windmill }
+		value = var:lsq_required_rgo_levels_before_windmill
+	} else_if = { limit = { scope:building_type = building_type:local_smelters }
+		value = var:lsq_required_rgo_levels_before_local_smelters
+	} else = { value = 0 }
+}
+
+lsq_local_pop_promotion_speed = {
+  value = modifier:local_pop_promotion_speed
+}
+
+lsq_local_pop_promotion_speed_modifier = {
+  value = modifier:local_pop_promotion_speed_modifier
+}
+
+lsq_local_pop_promotion_speed_scaled = {
+  value = modifier:local_pop_promotion_speed_scaled
+}
+
+lsq_global_pop_promotion_speed = {
+  value = modifier:global_pop_promotion_speed
+}
+
+lsq_global_pop_promotion_speed_modifier = {
+  value = modifier:global_pop_promotion_speed_modifier
+}
+
+# Root is the location
+lsq_combined_pop_promotion_speed = {
+  value = modifier:local_pop_promotion_speed
+  owner = { add = modifier:global_pop_promotion_speed }
+  add = {
+    value = modifier:local_pop_promotion_speed_scaled
+    multiply = population
+  }
+  multiply = {
+    value = 1
+    owner = { add = modifier:global_pop_promotion_speed_modifier }
+    add = modifier:local_pop_promotion_speed_modifier
+  }
+}
+
+# Root is the location
+lsq_combined_pop_promotion_speed_for_nobles = {
+  value = lsq_combined_pop_promotion_speed
+  multiply = 0.1
+}
+
+# Root is the location
+lsq_combined_pop_promotion_speed_for_clergy = {
+  value = lsq_combined_pop_promotion_speed
+  multiply = 0.1
+}
+
+# Root is the location
+lsq_combined_pop_promotion_speed_for_burghers = {
+  value = lsq_combined_pop_promotion_speed
+  multiply = 0.5
+}
+
+# Root is the location
+lsq_combined_pop_promotion_speed_for_laborers = {
+  value = lsq_combined_pop_promotion_speed
+  multiply = 1.5
+}
+
+# Root is the location
+lsq_combined_pop_promotion_speed_for_soldiers = {
+  value = lsq_combined_pop_promotion_speed
+  multiply = 1.0
+}
+
+# Root is the location
+lsq_combined_pop_promotion_speed_for_peasants = {
+  value = lsq_combined_pop_promotion_speed
+  multiply = 0.5
+}
+
+lsq_local_laborers_desired_pop = {
+  value = modifier:local_laborers_desired_pop
+}
+lsq_local_laborers_desired_pop_scaled = {
+  value = modifier:local_laborers_desired_pop_scaled
+}
+lsq_global_laborers_desired_pop = {
+  value = modifier:global_laborers_desired_pop
+}
+lsq_global_laborers_desired_pop_scaled = {
+  value = modifier:global_laborers_desired_pop_scaled
+}
+lsq_global_laborers_rural_desired_pop = {
+  value = modifier:global_laborers_rural_desired_pop
+}
+lsq_global_laborers_rural_desired_pop_scaled = {
+  value = modifier:global_laborers_rural_desired_pop_scaled
+}
+lsq_global_laborers_city_desired_pop = {
+  value = modifier:global_laborers_city_desired_pop
+}
+lsq_global_laborers_city_desired_pop_scaled = {
+  value = modifier:global_laborers_city_desired_pop_scaled
+}
+
+# Root is the location
+lsq_location_nobles_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = nobles }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
+  }
+}
+
+# Root is the location
+lsq_location_nobles_available = {
+  value = num_pop_type:nobles
+  subtract = lsq_location_nobles_needed_for_buildings
+}
+
+# Root is the location
+lsq_location_clergy_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = clergy }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
+  }
+}
+
+# Root is the location
+lsq_location_clergy_available = {
+  value = num_pop_type:clergy
+  subtract = lsq_location_clergy_needed_for_buildings
+}
+
+# Root is the location
+lsq_location_burghers_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = burghers }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
+  }
+}
+
+# Root is the location
+lsq_location_burghers_available = {
+  value = num_pop_type:burghers
+  subtract = lsq_location_burghers_needed_for_buildings
+}
+
+# Root is the location
+lsq_location_laborers_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = laborers }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
+  }
+}
+
+lsq_location_nobles_pop_count = { value = num_pop_type:nobles }
+lsq_location_clergy_pop_count = { value = num_pop_type:clergy }
+lsq_location_burghers_pop_count = { value = num_pop_type:burghers }
+lsq_location_laborers_pop_count = { value = num_pop_type:laborers }
+lsq_location_soldiers_pop_count = { value = num_pop_type:soldiers }
+lsq_location_peasants_pop_count = { value = num_pop_type:peasants }
+lsq_location_slaves_pop_count = { value = num_pop_type:slaves }
+lsq_location_tribesmen_pop_count = { value = num_pop_type:tribesmen }
+
+# Root is the location
+lsq_location_laborers_available = {
+  value = num_pop_type:laborers
+  subtract = lsq_location_laborers_needed_for_buildings
+  subtract = {
+    value = lsq_modifier_rgo_level
+    add = lsq_get_rgos_under_construction
+    subtract = num_pop_type:slaves
+  }
+}
+
+# Root is the location
+lsq_location_soldiers_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = soldiers }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
+  }
+}
+
+# Root is the location
+lsq_location_soldiers_available = {
+  value = num_pop_type:soldiers
+  subtract = lsq_location_soldiers_needed_for_buildings
+}
+
+# Root is the location
+lsq_location_peasants_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = peasants }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
+  }
+}
+
+# Root is the location
+lsq_location_peasants_available = {
+  value = num_pop_type:peasants
+  subtract = lsq_location_peasants_needed_for_buildings
+}
+
+# Root is the location
+lsq_location_slaves_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = slaves }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
+  }
+}
+
+# Root is the location
+lsq_location_slaves_available = {
+  value = num_pop_type:slaves
+  subtract = lsq_location_slaves_needed_for_buildings
+}
+
+# Root is the location
+lsq_location_tribesmen_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = tribesmen }
+    save_temporary_scope_as = building
+    add = lsq_building_employment_required
+  }
+}
+
+# Root is the location
+lsq_location_tribesmen_available = {
+  value = num_pop_type:tribesmen
+  subtract = lsq_location_tribesmen_needed_for_buildings
+}
+
+# Includes potential employment from levels under construction and from buildings that are subsidized but not fully employed
+# Expects scope: building
+lsq_building_employment_required = {
+  value = 0
+  scope:building = {
+    if = { limit = { is_opened = yes }
+      if = { limit = { AND = { building_type = { lsq_is_building_type_production_building = yes } is_subsidized = yes } }
+        add = {
+          value = building_level
+          multiply = building_type.employment_size
+        }
+      } else = {
+        add = building_employment_size_amount
+      }
+      add = {
+        value = building_levels_under_construction
+        multiply = building_type.employment_size
+      }
+    }
+  }
+}
+
+lsq_location_lumber_mill_level = {
+  if = { limit = { has_building = building_type:lumber_mill }
+    "building(building_type:lumber_mill|owner)" = { value = building_level }
+  } else = {
+    value = -1
+  }
+}

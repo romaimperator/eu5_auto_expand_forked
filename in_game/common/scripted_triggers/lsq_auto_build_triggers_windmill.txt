@@ -1,0 +1,58 @@
+﻿# Root is the location, also expects the scope country
+lsq_location_can_auto_build_windmill = {
+	AND = {
+		lsq_location_will_auto_build_windmill = yes
+		lsq_auto_build_check_owner_gold_available = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_allowed_to_build_windmill = {
+	AND = {
+		lsq_auto_build_check_building_researched_windmill = yes
+		lsq_auto_build_check_no_building_type = { target = building_type:windmill }
+		lsq_auto_build_check_rural = yes
+		OR = {
+			raw_material = goods:wheat
+			raw_material = goods:rice
+			raw_material = goods:millet
+		}
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_will_auto_build_windmill = {
+	AND = {
+		scope:country = { lsq_should_pause_auto_expand = no }
+		lsq_location_allowed_to_build_windmill = yes
+		lsq_auto_build_check_pops_available_windmill = yes
+		lsq_auto_build_check_rgo_level_requirement_met_windmill = yes
+		lsq_auto_build_check_can_afford_windmill = yes
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_pops_available_windmill = {
+	lsq_auto_build_check_laborers_available_or_will_be = yes
+}
+
+# Root is the location
+lsq_auto_build_check_can_afford_windmill = {
+	lsq_can_afford_switch_based_on_building_type = { target = building_type:windmill }
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_building_researched_windmill = {
+	scope:country = { has_advance = windmills_advance }
+}
+
+lsq_auto_build_check_rgo_level_requirement_met_windmill = {
+	AND = {
+		OR = {
+			raw_material = goods:wheat
+			raw_material = goods:millet
+			raw_material = goods:rice
+		}
+		lsq_modifier_rgo_level >= scope:country.var:lsq_required_rgo_levels_before_windmill
+	}
+}

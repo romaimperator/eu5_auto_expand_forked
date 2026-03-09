@@ -1,10 +1,25 @@
-# Root is the building and requires local_var:double_building_cost
-lsq_is_there_enough_gold_available_for_building = {
-	owner = {
-		OR = {
-			AND = { exists = var:lsq_minimum_gold_for_buildings gold > { value = local_var:double_building_cost add = var:lsq_minimum_gold_for_buildings } }
-			AND = { NOT = { exists = var:lsq_minimum_gold_for_buildings } gold > local_var:double_building_cost }
-		}
+﻿# Expects scopes: building type, country, and location
+lsq_auto_expand_check_owner_gold_available = {
+	scope:country.gold > lsq_expected_gold_available_for_building_type_for_auto_expand
+}
+
+# Expects scopes: building type
+lsq_does_building_type_count_for_port_building_cost_modifier = {
+	OR = {
+		scope:building_type = building_type:dock
+		scope:building_type = building_type:dry_dock
+		scope:building_type = building_type:shipyard
+		scope:building_type = building_type:grand_shipyard
+		scope:building_type = building_type:naval_base
+	}
+}
+
+# Expects scopes: building type
+lsq_does_building_type_count_for_fort_building_cost_modifier = {
+	AND = {
+		has_global_variable_map = lsq_building_type_to_is_fort
+		is_key_in_global_variable_map = { name = lsq_building_type_to_is_fort target = scope:building_type }
+		"global_variable_map(lsq_building_type_to_is_fort|scope:building_type)" = 1
 	}
 }
 
@@ -13,15 +28,27 @@ lsq_is_building_obsolete = {
 	building_type = { save_temporary_scope_as = the_building_type }
 	owner = { building_type_is_obsolete = scope:the_building_type }
 }
+# Root is the building type, also expects scope:country
+lsq_is_building_type_obsolete = {
+	scope:country = { building_type_is_obsolete = prev }
+}
 
 # Root is the building
 lsq_is_building_upgradeable = {
 	building_type = { is_upgradeable = yes }
 }
+# Root is the building type
+lsq_is_building_type_upgradeable = {
+	is_upgradeable = yes
+}
 
 # Root is the building
 lsq_building_can_be_upgraded_by_owner = {
 	building_can_be_upgraded_by = owner
+}
+# Root is the location, also expects scope:building_type and scope:country
+lsq_building_type_can_be_upgraded_by_owner = {
+	"building(scope:building_type|scope:country)" = { building_can_be_upgraded_by = scope:country }
 }
 
 # Root is the building
@@ -29,6 +56,13 @@ lsq_is_building_upgradeable_and_can_be_upgraded_by_owner = {
 	AND = {
 		lsq_is_building_upgradeable = yes
 		lsq_building_can_be_upgraded_by_owner = yes
+	}
+}
+# Root is the location, also expects scope:building_type and scope:country
+lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = {
+	AND = {
+		scope:building_type = { lsq_is_building_type_upgradeable = yes }
+		lsq_building_type_can_be_upgraded_by_owner = yes
 	}
 }
 
@@ -53,9 +87,9 @@ lsq_is_building_lacking_goods = {
 	is_lacking_goods = yes
 }
 
-# Root is the building
+# Root is the location
 lsq_is_location_under_building_limit = {
-	location = { total_building_levels < modifier:free_building_levels }
+	total_building_levels < modifier:free_building_levels
 }
 
 # Root is the building
@@ -68,14 +102,6 @@ lsq_is_building_not_max_level_already_and_not_obsolete = {
 	AND = {
 		lsq_is_building_at_max_level = no
 		lsq_is_building_obsolete = no
-	}
-}
-
-# Root is the building
-lsq_is_location_pops_available = {
-	AND = {
-		NAND = { building_pop_type = burghers location = { is_burgher_positive_deficit = no } }  # checks if promoted pops of type are available if building type employes that pop type
-		NAND = { building_pop_type = laborers location = { is_labourer_positive_deficit = no } } # same here :3
 	}
 }
 
@@ -105,6 +131,8 @@ lsq_is_building_profitable = {
 
 # Root is the building
 lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
+	location = { save_temporary_scope_as = location }
+	building_type = { save_temporary_scope_as = building_type }
 	AND = {
 		OR = {
 			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_is_building_profitable = yes }
@@ -113,7 +141,29 @@ lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 		lsq_is_building_open = yes
 		lsq_is_building_fully_employed = yes
 		lsq_is_building_lacking_goods = no
-		lsq_is_location_pops_available = yes
+		location = { lsq_location_has_enough_pops_available = yes }
+		location = { lsq_is_location_under_building_limit = yes }
+	}
+}
+
+# Expects scopes: building type, country, and location
+lsq_location_can_auto_expand_from_zero_levels = {
+	AND = {
+		scope:location = { lsq_location_will_auto_expand_from_zero_levels = yes }
+		lsq_auto_expand_check_owner_gold_available = yes
+	}
+}
+
+# Root is the location, also expects scope:building_type and scope:country
+lsq_location_will_auto_expand_from_zero_levels = {
+	AND = {
+		scope:country = { lsq_should_pause_auto_expand = no }
+		OR = {
+			scope:building_type = { lsq_is_building_type_production_building = yes }
+			scope:building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
+		}
+		lsq_location_has_enough_pops_available = yes
+		lsq_can_afford_switch_based_on_building_type = { target = scope:building_type }
 		lsq_is_location_under_building_limit = yes
 	}
 }
@@ -123,11 +173,11 @@ lsq_is_not_under_construction = {
 	building_levels_under_construction = 0
 }
 
-# Root is the building
+# Expects scopes: building, building type, country, and location
 lsq_is_not_under_construction_and_gold_is_available = {
 	AND = {
 		lsq_is_not_under_construction = yes
-		lsq_is_there_enough_gold_available_for_building = yes
+		lsq_auto_expand_check_owner_gold_available = yes
 	}
 }
 
@@ -166,4 +216,9 @@ lsq_is_building_type_one_per_location_building = {
 		is_key_in_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building target = this }
 		"global_variable_map(lsq_building_type_to_is_one_per_location_building|this)" = 1
 	}
+}
+
+# Root is the location, also expects scope:building_type
+lsq_are_there_enough_construction_goods_available_for_building_type = {
+	lsq_can_afford_switch_based_on_building_type = { target = scope:building_type }
 }

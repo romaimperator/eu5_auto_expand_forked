@@ -1,12 +1,52 @@
-# max cost is 50 gold base times an additional 33%. Using 50*1.34 = 67 for extra buffer.
-# lsq_expand_rgo_max_cost = 67
-lsq_expand_rgo_max_cost = 100 # Changing to 100 to align it with first level building costs of double 50 gold
+﻿# Expects scopes: country, location
+lsq_expected_gold_available_for_rgo_auto_expand = {
+	value = lsq_get_adjusted_construction_cost_for_rgo
+	if = { limit = { exists = scope:country.var:lsq_minimum_gold_for_rgos }
+		add = scope:country.var:lsq_minimum_gold_for_rgos
+	}
+}
 
-# Root scope is the player (passed from GUI)
-lsq_expected_gold_available_for_rgo = {
-	value = lsq_expand_rgo_max_cost
-	if = { limit = { exists = owner.var:lsq_minimum_gold_for_rgos }
-		add = owner.var:lsq_minimum_gold_for_rgos
+# Expects scopes: country, location
+lsq_get_adjusted_construction_cost_for_rgo = {
+	value = 50 # 50 gold is the base cost of all types of RGO defined in in_game/common/prices/00_hardcoded.txt
+	multiply = {
+		value = 1
+		add = lsq_get_construction_cost_adjustment_for_rgo
+	}
+	if = { limit = { scope:location.raw_material = { goods_method = mining } }
+	# debug_log = "LSQ: expand_rgo_mining_cost_modifier: [TopScope.sCountry('country').GetModifier('expand_rgo_mining_cost_modifier')]"
+		multiply = {
+			value = 1
+			add = scope:country.modifier:expand_rgo_mining_cost_modifier
+		}
+	}
+	if = { limit = { scope:location.raw_material = { goods_method = farming } }
+		multiply = {
+			value = 1
+			add = scope:country.modifier:expand_rgo_farming_cost_modifier
+		}
+	}
+	if = { limit = { scope:location.raw_material = { goods_method = hunting } }
+		multiply = {
+			value = 1
+			add = scope:country.modifier:expand_rgo_hunting_cost_modifier
+		}
+	}
+	if = { limit = { scope:location.raw_material = { goods_method = gathering } }
+		multiply = {
+			value = 1
+			add = scope:country.modifier:expand_rgo_gathering_cost_modifier
+		}
+	}
+	if = { limit = { scope:location.raw_material = { goods_method = forestry } }
+		multiply = {
+			value = 1
+			add = scope:country.modifier:expand_rgo_forestry_cost_modifier
+		}
+	}
+	multiply = {
+		value = 1
+		add = scope:country.inflation
 	}
 }
 
@@ -45,4 +85,15 @@ lsq_get_rgos_under_construction = {
 
 lsq_get_max_constructions_at_same_time = {
 	value = modifier:max_constructions_at_same_time
+}
+
+# Root scope is the location
+lsq_get_open_build_queue_slots = {
+	value = lsq_get_max_constructions_at_same_time
+	subtract = num_civil_constructions
+}
+
+# Root scope is the location
+lsq_modifier_rgo_level = {
+  value = modifier:lsq_rgo_level
 }

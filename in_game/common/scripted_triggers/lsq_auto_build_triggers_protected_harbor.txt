@@ -1,0 +1,42 @@
+﻿# Root is the location, also expects the scope country
+lsq_location_can_auto_build_protected_harbor = {
+	AND = {
+		lsq_location_will_auto_build_protected_harbor = yes
+		lsq_auto_build_check_owner_gold_available = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_allowed_to_build_protected_harbor = {
+	AND = {
+		lsq_auto_build_check_building_researched_protected_harbor = yes
+		lsq_auto_build_check_no_building_type = { target = building_type:protected_harbor }
+		is_port = yes
+		lsq_auto_build_check_town_or_city = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_will_auto_build_protected_harbor = {
+	AND = {
+		scope:country = { lsq_should_pause_auto_expand = no }
+		lsq_location_allowed_to_build_protected_harbor = yes
+		lsq_auto_build_check_pops_available_protected_harbor = yes
+		lsq_auto_build_check_can_afford_protected_harbor = yes
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_pops_available_protected_harbor = {
+	lsq_auto_build_check_laborers_available_or_will_be = yes
+}
+
+# Root is the location
+lsq_auto_build_check_can_afford_protected_harbor = {
+	lsq_can_afford_switch_based_on_building_type = { target = building_type:protected_harbor }
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_building_researched_protected_harbor = {
+	scope:country = { has_advance = protected_harbor_advance }
+}
