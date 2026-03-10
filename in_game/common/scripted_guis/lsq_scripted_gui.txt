@@ -3,10 +3,20 @@
 		save_scope_as = the_building
 		building_type = { save_scope_as = building_type }
 		location = {
-			if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
-				remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+			if = { limit = { NOT = { exists = scope:set_off } }
+				if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
+					remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				} else = {
+					add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				}
 			} else = {
-				add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				if = { limit = { scope:set_off = yes }
+					# debug_log = "LSQ: scope:set_off is yes"
+					remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				} else = {
+					# debug_log = "LSQ: scope:set_off is no"
+					add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				}
 			}
 		}
 	}
@@ -69,10 +79,20 @@ lsq_set_auto_expand_for_building_type = {
 	effect = {
 		save_scope_as = building_type
 		scope:location = {
-			if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
-				remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+			if = { limit = { NOT = { exists = scope:set_off } }
+				if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
+					remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				} else = {
+					add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				}
 			} else = {
-				add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				if = { limit = { scope:set_off = yes }
+					# debug_log = "LSQ: scope:set_off is yes"
+					remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				} else = {
+					# debug_log = "LSQ: scope:set_off is no"
+					add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				}
 			}
 		}
 	}
@@ -364,22 +384,5 @@ lsq_has_enough_goods_for_construction_demand = {
 lsq_are_there_enough_construction_goods_available_for_building_type = {
 	is_shown = {
 		lsq_are_there_enough_construction_goods_available_for_building_type = yes
-	}
-}
-
-lsq_testing = {
-	effect = {
-		add_to_variable_list = { name = lsq_testing_list target = scope:location }
-	}
-
-	is_shown = {
-		always = yes
-	}
-}
-
-lsq_testing_overall = {
-	effect = {
-		debug_log = "LSQ: Testing overall"
-		clear_variable_list = lsq_testing_list
 	}
 }
