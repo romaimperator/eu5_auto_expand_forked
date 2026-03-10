@@ -149,14 +149,11 @@ def build_switch_trigger_text(building_ids)
   if building_ids.empty?
     lines << "\talways = no"
   else
+    lines << "\tswitch = { trigger = $target$"
     building_ids.each_with_index do |building_type, index|
-      branch = index.zero? ? "trigger_if" : "trigger_else_if"
-      lines << "\t#{branch} = { limit = { $target$ = building_type:#{building_type} }"
-      lines << "\t\tlsq_can_afford_#{building_type} = yes"
-      lines << "\t}"
+      lines << "\t\tbuilding_type:#{building_type} = { lsq_can_afford_#{building_type} = yes }"
     end
-    lines << "\ttrigger_else = {"
-    lines << "\t\talways = no"
+    lines << "\t\tfallback = { always = no }"
     lines << "\t}"
   end
 

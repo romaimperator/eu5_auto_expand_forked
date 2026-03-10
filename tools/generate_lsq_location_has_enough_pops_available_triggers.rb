@@ -118,15 +118,12 @@ def build_switch_trigger_text(building_to_pop_type)
   if building_to_pop_type.empty?
     lines << "\talways = no"
   else
+    lines << "\tswitch = { trigger = scope:building_type"
     building_to_pop_type.keys.sort.each_with_index do |building_type, index|
       pop_type = building_to_pop_type[building_type]
-      branch = index.zero? ? "trigger_if" : "trigger_else_if"
-      lines << "\t#{branch} = { limit = { scope:building_type = building_type:#{building_type} }"
-      lines << "\t\tlsq_auto_build_check_#{pop_type}_available_or_will_be = yes"
-      lines << "\t}"
+      lines << "\t\tbuilding_type:#{building_type} = { lsq_auto_build_check_#{pop_type}_available_or_will_be = yes }"
     end
-    lines << "\ttrigger_else = {"
-    lines << "\t\talways = no"
+    lines << "\t\tfallback = { always = no }"
     lines << "\t}"
   end
 

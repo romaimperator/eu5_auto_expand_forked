@@ -85,14 +85,11 @@ lsq_auto_build_check_tribesmen_available_or_will_be = {
 
 # Root is the location. Expects the building type as target and scope country. True when location has enough RGO/lumber levels for this building type (sawmill: RGO or lumber_mill >= required; windmill/local_smelters: RGO >= required).
 lsq_auto_build_check_rgo_level_requirement_met = {
-	trigger_if = { limit = { $target$ = building_type:sawmill }
-		lsq_auto_build_check_rgo_level_requirement_met_sawmill = yes
-	} trigger_else_if = { limit = { $target$ = building_type:windmill }
-		lsq_auto_build_check_rgo_level_requirement_met_windmill = yes
-	} trigger_else_if = { limit = { $target$ = building_type:local_smelters }
-		lsq_auto_build_check_rgo_level_requirement_met_local_smelters = yes
-	} trigger_else = {
-		always = no
+	switch = { trigger = $target$
+		building_type:sawmill = { lsq_auto_build_check_rgo_level_requirement_met_sawmill = yes }
+		building_type:windmill = { lsq_auto_build_check_rgo_level_requirement_met_windmill = yes }
+		building_type:local_smelters = { lsq_auto_build_check_rgo_level_requirement_met_local_smelters = yes }
+		fallback = { always = no }
 	}
 }
 
@@ -127,38 +124,23 @@ lsq_auto_build_check_any_location_allowed_to_build = {
 
 # Root is the location. Expects the building type as a target and a trigger name, also expects the scope country
 lsq_auto_build_switch_based_on_building_type = {
-	trigger_if = { limit = { $target$ = building_type:temple }
-		lsq_$trigger_name$_temple = yes
-	} trigger_else_if = { limit = { $target$ = building_type:library }
-		lsq_$trigger_name$_library = yes
-	} trigger_else_if = { limit = { $target$ = building_type:settlement_building }
-		lsq_$trigger_name$_settlement_building = yes
-	} trigger_else_if = { limit = { $target$ = building_type:bridge_infrastructure }
-		lsq_$trigger_name$_bridge_infrastructure = yes
-	} trigger_else_if = { limit = { $target$ = building_type:pound_lock_canal_infrastructure }
-		lsq_$trigger_name$_pound_lock_canal_infrastructure = yes
-	} trigger_else_if = { limit = { $target$ = building_type:university }
-		lsq_$trigger_name$_university = yes
-	} trigger_else_if = { limit = { $target$ = building_type:hospital }
-		lsq_$trigger_name$_hospital = yes
-	} trigger_else_if = { limit = { $target$ = building_type:minting_office }
-		lsq_$trigger_name$_minting_office = yes
-	} trigger_else_if = { limit = { $target$ = building_type:counting_house }
-		lsq_$trigger_name$_counting_house = yes
-	} trigger_else_if = { limit = { $target$ = building_type:wharf }
-		lsq_$trigger_name$_wharf = yes
-	} trigger_else_if = { limit = { $target$ = building_type:market_village }
-		lsq_$trigger_name$_market_village = yes
-	} trigger_else_if = { limit = { $target$ = building_type:sawmill }
-		lsq_$trigger_name$_sawmill = yes
-	} trigger_else_if = { limit = { $target$ = building_type:windmill }
-		lsq_$trigger_name$_windmill = yes
-	} trigger_else_if = { limit = { $target$ = building_type:local_smelters }
-		lsq_$trigger_name$_local_smelters = yes
-	} trigger_else_if = { limit = { $target$ = building_type:protected_harbor }
-		lsq_$trigger_name$_protected_harbor = yes
-	} trigger_else = {
-		always = no
+	switch = { trigger = $target$
+		building_type:temple = { lsq_$trigger_name$_temple = yes }
+		building_type:library = { lsq_$trigger_name$_library = yes }
+		building_type:settlement_building = { lsq_$trigger_name$_settlement_building = yes }
+		building_type:bridge_infrastructure = { lsq_$trigger_name$_bridge_infrastructure = yes }
+		building_type:pound_lock_canal_infrastructure = { lsq_$trigger_name$_pound_lock_canal_infrastructure = yes }
+		building_type:university = { lsq_$trigger_name$_university = yes }
+		building_type:hospital = { lsq_$trigger_name$_hospital = yes }
+		building_type:minting_office = { lsq_$trigger_name$_minting_office = yes }
+		building_type:counting_house = { lsq_$trigger_name$_counting_house = yes }
+		building_type:wharf = { lsq_$trigger_name$_wharf = yes }
+		building_type:market_village = { lsq_$trigger_name$_market_village = yes }
+		building_type:sawmill = { lsq_$trigger_name$_sawmill = yes }
+		building_type:windmill = { lsq_$trigger_name$_windmill = yes }
+		building_type:local_smelters = { lsq_$trigger_name$_local_smelters = yes }
+		building_type:protected_harbor = { lsq_$trigger_name$_protected_harbor = yes }
+		fallback = { always = no }
 	}
 }
 
