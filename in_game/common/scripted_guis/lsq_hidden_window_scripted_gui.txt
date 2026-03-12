@@ -1,4 +1,15 @@
-﻿lsq_hidden_window_init = {
+﻿lsq_hidden_window_one_time_save_load_init = {
+	effect = {
+		debug_log = "LSQ: One time save load init"
+		clear_global_variable_map = lsq_building_type_processed
+		clear_global_variable_map = lsq_building_type_to_is_production_building
+		clear_global_variable_map = lsq_building_type_to_is_non_production_multi_level_building
+		clear_global_variable_map = lsq_building_type_to_is_one_per_location_building
+		clear_global_variable_map = lsq_building_type_to_is_fort
+	}
+}
+
+lsq_hidden_window_init = {
 	effect = {
 		# debug_log = "LSQ: hidden window init, country is [THIS.GetCountry.GetNameWithNoTooltip]"
 		if = { limit = { AND = { NOT = { exists = global_var:lsq_hidden_window_initialized } is_human = yes } }
@@ -69,8 +80,28 @@ lsq_building_type_section_buildings_init = {
 	effect = {
 			# debug_log = "LSQ: Initializing buildings [TopScope.sBuildingType('building_type').GetNameWithNoTooltip]"
 
+			# remove_from_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type }
+			# remove_from_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type }
+			# remove_from_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type }
+			# remove_from_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type }
 			# Set the which type of building this should be treated as
-			if = { limit = { scope:is_producing = yes }
+			# if = { limit = { scope:is_producing = yes }
+			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
+			# } else = {
+			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 0 }
+			# }
+			# if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = yes } }
+			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 1 }
+			# } else = {
+			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
+			# }
+			# if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = no } }
+			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
+			# } else = {
+			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
+			# }
+			# Set the which type of building this should be treated as
+			if = { limit = { AND = { scope:is_producing = yes scope:is_multiple_levels = yes } }
 				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
 			} else = {
 				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 0 }
@@ -80,7 +111,7 @@ lsq_building_type_section_buildings_init = {
 			} else = {
 				add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
 			}
-			if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = no } }
+			if = { limit = { scope:is_multiple_levels = no }
 				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
 			} else = {
 				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
@@ -101,6 +132,9 @@ lsq_building_type_section_buildings_init = {
 # Root is the building type
 lsq_is_building_type_processed = {
 	is_shown = {
-		is_key_in_global_variable_map = { name = lsq_building_type_processed target = this }
+		AND = {
+			has_global_variable_map = lsq_building_type_processed
+			is_key_in_global_variable_map = { name = lsq_building_type_processed target = this }
+		}
 	}
 }
