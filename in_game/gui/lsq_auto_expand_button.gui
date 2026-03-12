@@ -195,12 +195,17 @@
 	}
 
 	type lsq_mass_auto_expand_button_bll = hbox {
+		visible = "[GetScriptedGui('lsq_is_auto_expand_visible_for_building_type').IsShown(GuiScope.SetRoot(BuildInLocationLateralView.GetBuildingType.MakeScope).End)]"
 		name = "lsq_parent_of_auto_expand_active_locations"
 		vbox = {
+			size = { 0 0 }
+			scissor = yes
+			ignore_layout = yes
 			name = "lsq_auto_expand_active_locations"
 			datamodel = "[BuildInLocationLateralView.GetItems]"
 			item = {
 				overlappingitembox = {
+					ignore_layout = yes
 					visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(LocationToBuildItem.GetBuildingType.MakeScope).AddScope('location', LocationToBuildItem.GetLocation.MakeScope).End)]"
 					# text_single = { raw_text = "bye" }
 				}
@@ -208,10 +213,14 @@
 		}
 
 		vbox = {
+			size = { 0 0 }
+			scissor = yes
+			ignore_layout = yes
 			name = "lsq_auto_expand_possible_locations"
 			datamodel = "[BuildInLocationLateralView.GetItems]"
 			item = {
 				overlappingitembox = {
+					ignore_layout = yes
 					visible = "[ObjectsEqual(LocationToBuildItem.GetLocation.GetOwner, GetPlayer)]"
 					state = {
 						name = "lsq_auto_expand_production_buildings_checkbuttons_click"
@@ -231,9 +240,6 @@
 			# blockoverride "red_glow_visible" {
 				# visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]"
 			# }
-			# onclick = "[GetScriptedGui('lsq_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
-			# onclick = "[PdxGuiTriggerAllAnimations('lsq_testing_show')]"
-			# onclick = "[GetScriptedGui('lsq_testing_list').Execute(GuiScope.SetRoot(Player.MakeScope).End)]"
 			onclick = "[PdxGuiTriggerAllAnimations('lsq_auto_expand_production_buildings_checkbuttons_click')]"
 			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
