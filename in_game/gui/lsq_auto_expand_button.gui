@@ -244,6 +244,65 @@
 			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 	}
+
+	type lsq_mass_auto_expand_button_pl = hbox {
+		visible = "[And(Not(GetScriptedGui('lsq_is_building_type_one_per_location').IsShown(GuiScope.AddScope('building_type', BuildingItem.GetBuildingType.MakeScope).End)), Not(IsDataModelEmpty(BuildingItem.GetBuildings)))]"
+		# text_single = { raw_text = "[GetDataModelSize(BuildingItem.GetBuildings)]"}
+		name = "lsq_parent_of_auto_expand_active_locations"
+		vbox = {
+			name = "lsq_auto_expand_active_locations"
+			datamodel = "[BuildingItem.GetBuildings]"
+			item = {
+				overlappingitembox = {
+					visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(Building.GetType.MakeScope).AddScope('location', Building.GetLocation.MakeScope).End)]"
+				}
+			}
+		}
+
+		vbox = {
+			name = "lsq_auto_expand_possible_locations"
+			datamodel = "[BuildingItem.GetBuildings]"
+			item = {
+				overlappingitembox = {
+					visible = "[ObjectsEqual(Building.GetLocation.GetOwner, GetPlayer)]"
+				}
+			}
+		}
+
+		vbox = {
+			name = "lsq_auto_expand_possible_locations_for_toggle"
+			visible = "[GetVariableSystem.Exists(Concatenate('lsq_building_', BuildingItem.GetBuildingType.GetName))]"
+			datamodel = "[BuildingItem.GetBuildings]"
+			item = {
+				overlappingitembox = {
+					visible = "[ObjectsEqual(Building.GetLocation.GetOwner, GetPlayer)]"
+					state = {
+						name = "lsq_mass_auto_expand_button_production_lateralview_click"
+						on_finish = "[GetScriptedGui('lsq_set_auto_expand_for_building_type').Execute(GuiScope.SetRoot(Building.GetType.MakeScope).AddScope('location', Building.GetLocation.MakeScope).AddScope('set_off', MakeScopeBool(GreaterThanOrEqualTo_int32(PdxGuiWidget.AccessParent.AccessParent.FindChild('lsq_auto_expand_active_locations').CountVisibleChildren, PdxGuiWidget.AccessParent.CountVisibleChildren))).End)]"
+
+					}
+					text_single = {
+						raw_text = "[Building.GetLocation.GetNameWithNoTooltip]"
+					}
+				}
+			}
+		}
+
+		lsq_auto_expand_checkbutton = {
+			# tooltipwidget = { using = lsq_Mass_Autoexpand_Tooltip }
+			checked = "[EqualTo_int32(PdxGuiWidget.AccessParent.FindChild('lsq_auto_expand_possible_locations').CountVisibleChildren, PdxGuiWidget.AccessParent.FindChild('lsq_auto_expand_active_locations').CountVisibleChildren)]"
+			blockoverride "green_glow_visible" {
+				visible = "[EqualTo_int32(PdxGuiWidget.AccessParent.AccessParent.AccessParent.FindChild('lsq_auto_expand_possible_locations').CountVisibleChildren, PdxGuiWidget.AccessParent.AccessParent.AccessParent.FindChild('lsq_auto_expand_active_locations').CountVisibleChildren)]"
+			}
+			# blockoverride "red_glow_visible" {
+				# visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]"
+			# }
+			onclick = "[GetVariableSystem.Toggle(Concatenate('lsq_building_', BuildingItem.GetBuildingType.GetName))]"
+			onmousehierarchyenter = "[PdxGuiTriggerAllAnimations('lsq_mass_auto_expand_button_production_lateralview_click')]"
+			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			# onmousehierarchyleave = "[GetVariableSystem.Clear(Concatenate('lsq_building_', BuildingItem.GetBuildingType.GetName))]"
+		}
+	}
 }
 
 template lsq_tooltip_yes {
