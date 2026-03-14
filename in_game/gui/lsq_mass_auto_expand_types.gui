@@ -1,0 +1,222 @@
+﻿types lsq_mass_auto_expand {
+  type lsq_cannot_build_mass_auto_expand_widget = widget {
+    layoutpolicy_horizontal = expanding
+    size = { -1 40 }
+    visible = "[Not(BuildInLocationLateralView.HasBestBuildLocationItem)]"
+    header_button_right = {
+      size = { 100% 100%}
+      visible = "[Not(Player.CanUpgradeBuildingType(BuildInLocationLateralView.GetBuildingType))]"
+
+      enabled = no
+      datacontext = "[BuildInLocationLateralView.GetBuildRankingItems]"
+      datacontext = "[BuildInLocationLateralView.GetBuildingType]"
+
+      blockoverride "icon_overlay" {}
+      blockoverride "icon_texture" {
+        visible = no
+      }
+
+      blockoverride "header_button_text_layout" {
+        hbox = {
+          using = layoutpolicy_expanding
+          margin = { 5 0 }
+          margin_left = 10
+
+          icon = {
+            size = { 25 25 }
+            texture = "gfx/interface/icons/flat_icons/mass_construct.dds"
+          }
+
+          # LSQ mass auto-expand button
+          lsq_mass_auto_expand_button_bll = {
+            alpha = 0
+            enabled = no
+          }
+
+          text_single = {
+            fontsize = 13
+            layoutpolicy_horizontal = expanding
+            autoresize = no
+            align = center
+            size = { -1 20 }
+            text = "BUILDING_BEST_IN_LOCATION_ACTION_BUTTON"
+          }
+        }
+      }
+
+      action_tooltip = {
+        click_type = left
+        click_mode = single
+
+        title = "BUILDING_ACTION"
+        enabled = no
+        description = "BUILDING_IN_LOCATION_ACTION_NO_LOCATION"
+      }
+
+      tooltipwidget = {
+        BasicFunctionalTooltip = {}
+      }
+    }
+    header_button_right = {
+      alpha = 0.0001 # LSQ set super low alpha to basically hide the text of the button but leave it present so it takes up space to position the auto-expand button correctly
+      filter_mouse = left|right # LSQ I think this makes it so clicks pass through to the underlying button with the exception of the auto-expand button (needs to be left|right not all because all also filters out scrolling)
+      size = { 100% 100%}
+      visible = "[Not(Player.CanUpgradeBuildingType(BuildInLocationLateralView.GetBuildingType))]"
+
+      enabled = yes # LSQ enable the button so that the mass auto-expand button isn't disabled
+      datacontext = "[BuildInLocationLateralView.GetBuildRankingItems]"
+      datacontext = "[BuildInLocationLateralView.GetBuildingType]"
+
+      blockoverride "icon_overlay" {}
+      blockoverride "icon_texture" {
+        visible = no
+      }
+
+      blockoverride "header_button_text_layout" {
+        hbox = {
+          using = layoutpolicy_expanding
+          margin = { 5 0 }
+          margin_left = 10
+
+          icon = {
+            size = { 25 25 }
+            texture = "gfx/interface/icons/flat_icons/mass_construct.dds"
+          }
+
+          # LSQ mass auto-expand button
+          lsq_mass_auto_expand_button_bll = { alpha = 10000 }
+
+          text_single = {
+            fontsize = 13
+            layoutpolicy_horizontal = expanding
+            autoresize = no
+            align = center
+            size = { -1 20 }
+            text = "BUILDING_BEST_IN_LOCATION_ACTION_BUTTON"
+          }
+        }
+      }
+
+      action_tooltip = {
+        click_type = left
+        click_mode = single
+
+        title = "BUILDING_ACTION"
+        enabled = no
+        description = "BUILDING_IN_LOCATION_ACTION_NO_LOCATION"
+      }
+
+      tooltipwidget = {
+        BasicFunctionalTooltip = {}
+      }
+    }
+
+    header_button_right = {
+      size = { 100% 100%}
+      visible = "[Player.CanUpgradeBuildingType(BuildInLocationLateralView.GetBuildingType)]"
+
+      enabled = no
+      datacontext = "[BuildInLocationLateralView.GetBuildRankingItems]"
+      datacontext = "[BuildInLocationLateralView.GetBuildingType.GetNextReplaced(Player.Self)]"
+
+      blockoverride "icon_overlay" {}
+      blockoverride "icon_texture" {
+        visible = no
+      }
+
+      blockoverride "header_button_text_layout" {
+        hbox = {
+          using = layoutpolicy_expanding
+          margin = { 5 0 }
+          margin_left = 10
+
+          icon = {
+            size = { 25 25 }
+            texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+          }
+
+          # LSQ mass auto-expand button
+          lsq_mass_auto_expand_button_bll = {
+            alpha = 0
+            enabled = no
+          }
+
+          text_single = {
+            fontsize = 13
+            layoutpolicy_horizontal = expanding
+            autoresize = no
+            align = center
+            size = { -1 20 }
+            text = "UPGRADING_BEST_IN_LOCATION_ACTION_BUTTON"
+          }
+        }
+      }
+
+      action_tooltip = {
+        click_type = left
+        click_mode = single
+
+        title = "UPGRADING_ACTION"
+        enabled = no
+        description = "UPGRADING_IN_LOCATION_ACTION_NO_LOCATION"
+      }
+
+      tooltipwidget = {
+        BasicFunctionalTooltip = {}
+      }
+    }
+    header_button_right = {
+      alpha = 0.0001 # LSQ set super low alpha to basically hide the text of the button but leave it present so it takes up space to position the auto-expand button correctly
+      filter_mouse = left|right # LSQ I think this makes it so clicks pass through to the underlying button with the exception of the auto-expand button (needs to be left|right not all because all also filters out scrolling)
+      size = { 100% 100%}
+      visible = "[Player.CanUpgradeBuildingType(BuildInLocationLateralView.GetBuildingType)]"
+
+      enabled = yes # LSQ enable the button so that the mass auto-expand button isn't disabled
+      datacontext = "[BuildInLocationLateralView.GetBuildRankingItems]"
+      datacontext = "[BuildInLocationLateralView.GetBuildingType.GetNextReplaced(Player.Self)]"
+
+      blockoverride "icon_overlay" {}
+      blockoverride "icon_texture" {
+        visible = no
+      }
+
+      blockoverride "header_button_text_layout" {
+        hbox = {
+          using = layoutpolicy_expanding
+          margin = { 5 0 }
+          margin_left = 10
+
+          icon = {
+            size = { 25 25 }
+            texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+          }
+
+          # LSQ mass auto-expand button
+          lsq_mass_auto_expand_button_bll = { alpha = 10000 }
+
+          text_single = {
+            fontsize = 13
+            layoutpolicy_horizontal = expanding
+            autoresize = no
+            align = center
+            size = { -1 20 }
+            text = "UPGRADING_BEST_IN_LOCATION_ACTION_BUTTON"
+          }
+        }
+      }
+
+      action_tooltip = {
+        click_type = left
+        click_mode = single
+
+        title = "UPGRADING_ACTION"
+        enabled = no
+        description = "UPGRADING_IN_LOCATION_ACTION_NO_LOCATION"
+      }
+
+      tooltipwidget = {
+        BasicFunctionalTooltip = {}
+      }
+    }
+  }
+}
