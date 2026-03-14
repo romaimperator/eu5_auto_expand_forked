@@ -1,18 +1,34 @@
 ﻿lsq_set_auto_expand_for_rgo = {
 	effect = {
 		# market = { add_goods_supply = { goods = goods:lumber amount = -1 } }
-		if = { limit = { exists = var:auto_expand_rgo }
-			remove_variable = auto_expand_rgo
-			# If after turning off auto expand RGO in a location, there are no other locations within the same province, set the province-level variable
-			province = {
-				if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
-					set_variable = { name = lsq_auto_expand_rgo_off_in_all_locations value = yes }
+		if = { limit = { NOT = { exists = scope:set_off } }
+			if = { limit = { exists = var:auto_expand_rgo }
+				remove_variable = auto_expand_rgo
+				# If after turning off auto expand RGO in a location, there are no other locations within the same province, set the province-level variable
+				province = {
+					if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
+						set_variable = { name = lsq_auto_expand_rgo_off_in_all_locations value = yes }
+					}
 				}
+			} else = {
+				set_variable = { name = auto_expand_rgo value = yes }
+				# Remove the province-level variable to indicate that there is at least one location with auto expand RGO on
+				province = { remove_variable = lsq_auto_expand_rgo_off_in_all_locations }
 			}
 		} else = {
-			set_variable = { name = auto_expand_rgo value = yes }
-			# Remove the province-level variable to indicate that there is at least one location with auto expand RGO on
-			province = { remove_variable = lsq_auto_expand_rgo_off_in_all_locations }
+			if = { limit = { scope:set_off = yes }
+				remove_variable = auto_expand_rgo
+				# If after turning off auto expand RGO in a location, there are no other locations within the same province, set the province-level variable
+				province = {
+					if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
+						set_variable = { name = lsq_auto_expand_rgo_off_in_all_locations value = yes }
+					}
+				}
+			} else = {
+				set_variable = { name = auto_expand_rgo value = yes }
+				# Remove the province-level variable to indicate that there is at least one location with auto expand RGO on
+				province = { remove_variable = lsq_auto_expand_rgo_off_in_all_locations }
+			}
 		}
 	}
 
