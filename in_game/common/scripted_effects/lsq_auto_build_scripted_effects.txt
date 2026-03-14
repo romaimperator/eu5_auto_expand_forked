@@ -127,11 +127,11 @@ lsq_auto_build_init_variables = {
 # Root is the country
 lsq_auto_build_init_locations_lists = {
   save_scope_as = country
-  # Make list of all directly controlled locations
-  # Also, add to the beginning of the all including subjects list, the sorted list of directly controlled locations
+  # Make list of all directly owned locations
+  # Also, add to the beginning of the all including subjects list, the sorted list of directly owned locations
   clear_variable_list = lsq_all_controlled_locations_list
   clear_variable_list = lsq_all_locations_including_subjects_list
-  ordered_controlled_location = {
+  ordered_owned_location = {
     order_by = max_control
     save_scope_as = location
     max = lsq_max_guess_at_number_of_locations
@@ -144,7 +144,7 @@ lsq_auto_build_init_locations_lists = {
   # Make unsorted list of locations of all subjects and below
   clear_variable_list = lsq_all_locations_including_subjects_list_temp
   every_subject_or_below = {
-    every_controlled_location = {
+    every_owned_location = {
       save_scope_as = location
       scope:country = { add_to_variable_list = { name = lsq_all_locations_including_subjects_list_temp target = scope:location } }
     }
