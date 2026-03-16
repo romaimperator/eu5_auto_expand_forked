@@ -124,6 +124,19 @@
                                 }
                                 lsq_tooltip_row = {
                                   using = lsq_tooltip_row_is_odd
+                                  blockoverride "vertical_line_size" { size = { 3 41 } }
+                                  blockoverride "yes_visible" {
+                                    visible = "[GetScriptedGui('lsq_auto_build_check_meets_minimum_control').IsShown(GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+                                  }
+                                  blockoverride "no_visible" {
+                                    visible = "[Not(GetScriptedGui('lsq_auto_build_check_meets_minimum_control').IsShown(GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+                                  }
+                                  blockoverride "row_text" {
+                                    raw_text = "Location meets minimum control threshold (min: [GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_control_for_auto_build')|%0] vs current: [Location.GetControl|%0])"
+                                  }
+                                }
+                                lsq_tooltip_row = {
+                                  blockoverride "vertical_line_size" { size = { 3 41 } }
                                   blockoverride "yes_visible" {
                                     visible = "[GetScriptedGui('lsq_auto_build_check_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
                                   }
@@ -135,6 +148,7 @@
                                   }
                                 }
                                 lsq_tooltip_row = {
+                                  using = lsq_tooltip_row_is_odd
                                   blockoverride "yes_visible" {
                                     visible = "[GetScriptedGui('lsq_auto_build_check_can_afford').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
                                   }
@@ -146,7 +160,6 @@
                                   }
                                 }
                                 lsq_tooltip_row = {
-                                  using = lsq_tooltip_row_is_odd
                                   visible = "[GetScriptedGui('lsq_auto_build_show_rgo_level_tooltip_row').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
                                   blockoverride "vertical_line_size" { size = { 3 41 } }
                                   blockoverride "yes_visible" {
@@ -161,7 +174,6 @@
                                 }
                                 lsq_tooltip_row = {
                                   visible = "[InDebugMode]"
-                                	blockoverride "vertical_line_size" { size = { 3 31 } }
                                   background = {
                                     using = bg_tooltip_debug
                                   }

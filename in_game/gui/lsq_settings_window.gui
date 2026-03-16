@@ -46,8 +46,8 @@
 
 	blockoverride "content" {
 		vbox = {
-			maximumsize = { 600 -1 }
-			minimumsize = { 600 -1 }
+			maximumsize = { 700 -1 }
+			minimumsize = { 700 -1 }
 			margin = { 20 20 }
 			spacing = 10
 
@@ -430,7 +430,7 @@
 				}
 				vbox = {
 					# layoutpolicy_horizontal = fixed
-					min_width = 300
+					min_width = 280
 					spacing = 5
 					hbox = {
 						layoutpolicy_horizontal = expanding
@@ -522,10 +522,12 @@
 				}
 				vbox = {
 					layoutpolicy_horizontal = expanding
+					margin = { 5 0 }
 					spacing = 5
 
 					hbox = {
 						layoutpolicy_horizontal = expanding
+						expand = {}
 						text_single = {
 							margin_left = 5
 							raw_text = "Subjects?"
@@ -537,7 +539,7 @@
 						hbox = {
 							datacontext = "[Scope.GetBuildingType]"
 							layoutpolicy_horizontal = expanding
-							spacing = 8
+							expand = {}
 							checkbox_square_alt = {
 								size = { 24 24 }
 								checked = "[GetScriptedGui('lsq_is_auto_build_building_type_in_subjects_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
@@ -576,13 +578,80 @@
 				}
 				vbox = {
 					layoutpolicy_horizontal = expanding
+					margin = { 5 0 }
+					spacing = 5
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						expand = {}
+						text_single = {
+							margin_left = 5
+							raw_text = "Min Control:"
+						}
+						expand = {}
+					}
+					datamodel = "[GetPlayer.MakeScope.GetList('lsq_auto_build_building_types_list')]"
+					item = {
+						lsq_numeric_setting = {
+							datacontext = "[Scope.GetBuildingType]"
+							blockoverride "left_button_left_click_default" {
+								action_tooltip = {
+									using = lsq_left_click_default
+									title = "Change Minimum Control by #R -5%#!"
+									on_action = "[GetScriptedGui('lsq_decrease_minimum_control_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "left_button_left_click_shift" {
+								action_tooltip = {
+									using = lsq_left_click_shift
+									title = "Change Minimum Control by #R -10%#!"
+									on_action = "[GetScriptedGui('lsq_decrease_minimum_control_for_auto_build_10').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "left_button_left_click_ctrl" {
+								action_tooltip = {
+									using = lsq_left_click_ctrl
+									title = "Change Minimum Control to #R 0%#!"
+									on_action = "[GetScriptedGui('lsq_decrease_minimum_control_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "current_value" {
+								raw_text = "[GuiScope.AddScope('country', GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_get_minimum_control_for_auto_build')|%0]"
+							}
+							blockoverride "right_button_left_click_default" {
+								action_tooltip = {
+									using = lsq_left_click_default
+									title = "Change Minimum Control by #G +5%#!"
+									on_action = "[GetScriptedGui('lsq_increase_minimum_control_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "right_button_left_click_shift" {
+								action_tooltip = {
+									using = lsq_left_click_shift
+									title = "Change Minimum Control by #G +10%#!"
+									on_action = "[GetScriptedGui('lsq_increase_minimum_control_for_auto_build_10').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "right_button_left_click_ctrl" {
+								action_tooltip = {
+									using = lsq_left_click_ctrl
+									title = "Change Minimum Control to #G 100%#!"
+									on_action = "[GetScriptedGui('lsq_increase_minimum_control_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+						}
+					}
+				}
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					margin = { 5 0 }
 					spacing = 5
 
 					hbox = {
 						layoutpolicy_horizontal = expanding
+						expand = {}
 						text_single = {
 							margin_left = 5
-							raw_text = " "
+							raw_text = "Min RGOs:"
 						}
 						expand = {}
 					}
