@@ -121,16 +121,19 @@ lsq_auto_build_init_variables = {
   if = { limit = { NOT = { has_variable = lsq_required_rgo_levels_before_local_smelters } }
     set_variable = { name = lsq_required_rgo_levels_before_local_smelters value = 5 }
   }
-  every_in_list = {
-    variable = lsq_auto_build_building_types_list
-    save_scope_as = building_type
-    scope:country = {
-      if = { limit = { OR = { NOT = { has_variable_map = lsq_minimum_control_for_auto_build } NOT = { is_key_in_variable_map = { name = lsq_minimum_control_for_auto_build target = scope:building_type } } } }
-        # Default to 0 for temple and minting office as they increase control so best to build them everywhere regardless of control
-        if = { limit = { OR = { scope:building_type = building_type:temple scope:building_type = building_type:minting_office } }
-          add_to_variable_map = { name = lsq_minimum_control_for_auto_build key = scope:building_type value = 0 }
-        } else = {
-          add_to_variable_map = { name = lsq_minimum_control_for_auto_build key = scope:building_type value = 0.5 }
+
+  if = { limit = { NOT = { has_variable_map = lsq_minimum_control_for_auto_build } }
+    every_in_list = {
+      variable = lsq_auto_build_building_types_list
+      save_scope_as = building_type
+      scope:country = {
+        if = { limit = { OR = { NOT = { has_variable_map = lsq_minimum_control_for_auto_build } NOT = { is_key_in_variable_map = { name = lsq_minimum_control_for_auto_build target = scope:building_type } } } }
+          # Default to 0 for temple and minting office as they increase control so best to build them everywhere regardless of control
+          if = { limit = { OR = { scope:building_type = building_type:temple scope:building_type = building_type:minting_office } }
+            add_to_variable_map = { name = lsq_minimum_control_for_auto_build key = scope:building_type value = 0 }
+          } else = {
+            add_to_variable_map = { name = lsq_minimum_control_for_auto_build key = scope:building_type value = 0.5 }
+          }
         }
       }
     }
