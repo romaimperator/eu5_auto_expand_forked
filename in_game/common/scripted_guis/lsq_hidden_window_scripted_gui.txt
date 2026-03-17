@@ -12,13 +12,6 @@ lsq_hidden_window_init = {
 		if = { limit = { AND = { NOT = { exists = global_var:lsq_hidden_window_initialized } is_human = yes } }
 			set_global_variable = { name = lsq_hidden_window_initialized value = yes }
 			debug_log = "LSQ: Initializing hidden window"
-			every_province = {
-				if = { limit = { any_location_in_province = { count=all NOT = { exists = var:auto_expand_rgo } } }
-					set_variable = { name = lsq_auto_expand_rgo_off_in_all_locations value = yes }
-				} else = {
-					remove_variable = lsq_auto_expand_rgo_off_in_all_locations
-				}
-			}
 			set_variable = { name = every_building_type_count value = 0 }
 			every_building_type = {
 				# debug_log = "LSQ: Adding building type [THIS.GetBuildingType.GetNameWithNoTooltip] to every_building_type_list"
