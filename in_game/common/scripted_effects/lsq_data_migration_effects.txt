@@ -6,9 +6,21 @@
   if = { limit = { lsq_is_version = { major = 1 minor = 7 patch = 0 } }
     lsq_migrate_from_1_7_0_to_1_7_1 = {}
   }
-  # if = { limit = { lsq_is_version = { major = 1 minor = 7 patch = 1 } }
-  #   lsq_migrate_from_1_7_1_to_1_7_2 = {}
-  # }
+  if = { limit = { lsq_is_version = { major = 1 minor = 7 patch = 1 } }
+    lsq_migrate_from_1_7_1_to_1_7_2 = {}
+  }
+}
+
+lsq_migrate_from_1_7_1_to_1_7_2 = {
+  debug_log = "LSQ: Migrating from 1.7.1 to 1.7.2"
+
+  # Remove the old variable used to store the list of building types
+  scope:country = {
+    remove_variable_list = every_building_type_list
+    remove_variable = every_building_type_count
+  }
+
+  lsq_set_mod_version_to = { major = 1 minor = 7 patch = 2 }
 }
 
 lsq_migrate_from_1_7_0_to_1_7_1 = {
