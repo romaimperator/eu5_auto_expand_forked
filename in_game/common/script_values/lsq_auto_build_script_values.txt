@@ -392,7 +392,9 @@ lsq_auto_build_number_of_locations_including_subjects_will_auto_build = {
 }
 
 lsq_get_minimum_control_for_auto_build = {
-  if = { limit = { AND = { scope:country.has_variable_map = lsq_minimum_control_for_auto_build scope:country.is_key_in_variable_map = { name = lsq_minimum_control_for_auto_build target = scope:building_type } } }
-    value = "scope:country.variable_map(lsq_minimum_control_for_auto_build|scope:building_type)"
-  } else = { value = -1 }
+  scope:country = {
+    if = { limit = { AND = { has_variable_map = lsq_minimum_control_for_auto_build is_key_in_variable_map = { name = lsq_minimum_control_for_auto_build target = scope:building_type } } }
+      value = "variable_map(lsq_minimum_control_for_auto_build|scope:building_type)"
+    } else = { value = -1 }
+  }
 }
