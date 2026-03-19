@@ -24,6 +24,52 @@ class BuildingPopMapping
   end
 end
 
+class BuildingTypeMetadata
+  attr_reader :building_type, :pop_type, :construction_demand, :max_levels
+
+  def initialize(building_type:, pop_type:, construction_demand:, max_levels:, produces_goods:, fort:)
+    @building_type = building_type
+    @pop_type = pop_type
+    @construction_demand = construction_demand
+    @max_levels = max_levels
+    @produces_goods = produces_goods
+    @fort = fort
+  end
+
+  def produces_goods?
+    if @building_type == "ablaq_palace"
+      return true
+    else
+      @produces_goods
+    end
+  end
+
+  def fort?
+    @fort
+  end
+
+  def is_multi_level?
+    # !max_levels.nil? && max_levels != "1"
+    if @building_type == "city_of_victory"
+      false
+    else
+      max_levels != "1"
+    end
+  end
+
+  def one_per_location?
+    !is_multi_level?
+  end
+
+  def non_production_multi_level?
+    !produces_goods? && is_multi_level?
+  end
+
+  def production_building?
+    produces_goods? && is_multi_level?
+  end
+end
+
 module TemplateHelpers
   module_function
 
@@ -33,6 +79,12 @@ module TemplateHelpers
         building_type: building_type,
         pop_type: building_to_pop_type[building_type]
       )
+    end
+  end
+
+  def sorted_building_type_metadata(building_type_metadata)
+    building_type_metadata.keys.sort.map do |building_type|
+      building_type_metadata[building_type]
     end
   end
 
@@ -54,18 +106,23 @@ end
 class TemplateContext
   include TemplateHelpers
 
-  attr_reader :game_root, :building_to_pop_type, :building_ids, :resolved_building_goods, :rgo_type_to_good
+  attr_reader :game_root, :building_to_pop_type, :building_ids, :resolved_building_goods, :rgo_type_to_good, :building_type_metadata
 
-  def initialize(game_root:, building_to_pop_type:, building_ids:, resolved_building_goods:, rgo_type_to_good:)
+  def initialize(game_root:, building_to_pop_type:, building_ids:, resolved_building_goods:, rgo_type_to_good:, building_type_metadata:)
     @game_root = game_root
     @building_to_pop_type = building_to_pop_type
     @building_ids = building_ids
     @resolved_building_goods = resolved_building_goods
     @rgo_type_to_good = rgo_type_to_good
+    @building_type_metadata = building_type_metadata
   end
 
   def building_pop_mappings
     sorted_building_pop_mappings(building_to_pop_type)
+  end
+
+  def building_metadata
+    sorted_building_type_metadata(building_type_metadata)
   end
 
   def empty?
@@ -153,6 +210,101 @@ def normalize_pop_type(raw_pop_type)
   raw_pop_type.sub(/\Apop_type:/, "")
 end
 
+def block_has_assignment_anywhere?(block_text, wanted_key)
+  block_text.each_line.any? do |raw_line|
+    line = strip_comments(raw_line).strip
+    next false if line.empty?
+
+    /\A#{Regexp.escape(wanted_key)}\s*=\s*[^\{\}\r\n]+/.match?(line)
+  end
+end
+
+def extract_assignment_in_named_block(block_text, block_name, wanted_key)
+  sanitized_lines = block_text.each_line.map { |line| strip_comments(line) }
+  depth = 0
+  in_block = false
+  block_depth = nil
+
+  sanitized_lines.each do |raw_line|
+    line = raw_line.strip
+    next if line.empty?
+
+    if !in_block && depth.zero? && /\A#{Regexp.escape(block_name)}\s*=\s*\{\s*\z/.match?(line)
+      in_block = true
+      block_depth = depth + 1
+    elsif in_block && depth == block_depth
+      if (m = /\A(#{IDENTIFIER_RE.source})\s*=\s*([^\{\}\r\n]+?)\s*\z/.match(line)) && m[1] == wanted_key
+        return m[2].strip
+      end
+    end
+
+    depth += line.count("{")
+    depth -= line.count("}")
+
+    if in_block && depth < block_depth
+      in_block = false
+      block_depth = nil
+    end
+  end
+
+  nil
+end
+
+def extract_root_assignment_rhs(block_text, wanted_key)
+  sanitized_lines = block_text.each_line.map { |line| strip_comments(line).strip }
+  depth = 0
+
+  i = 0
+  while i < sanitized_lines.length
+    line = sanitized_lines[i]
+    i += 1
+    next if line.empty?
+
+    if depth.zero? && (m = /\A(#{IDENTIFIER_RE.source})\s*=\s*(.+)\z/.match(line)) && m[1] == wanted_key
+      rhs = m[2].strip
+      return rhs unless rhs.start_with?("{")
+
+      # Multi-line RHS like:
+      # max_levels = { ... }
+      # We parse until braces are balanced.
+      brace_balance = rhs.count("{") - rhs.count("}")
+      rhs_acc = rhs
+      while brace_balance.positive? && i < sanitized_lines.length
+        nxt = sanitized_lines[i]
+        i += 1
+        rhs_acc += "\n#{nxt}"
+        brace_balance += nxt.count("{") - nxt.count("}")
+      end
+
+      return rhs_acc
+    end
+
+    depth += line.count("{")
+    depth -= line.count("}")
+  end
+
+  nil
+end
+
+def max_levels_token_from_rhs(max_levels_rhs)
+  return nil if max_levels_rhs.nil? || max_levels_rhs.strip.empty?
+
+  # Take first "value = ..." assignment inside the max_levels block.
+  # In the vanilla data this is usually the baseline max level.
+  first_value_token = max_levels_rhs.scan(/\bvalue\s*=\s*([^\{\}\r\n]+?)(?=\s*(?:$|\n|if|add|desc|\}))/).flatten.first
+  first_value_token = max_levels_rhs.scan(/\bvalue\s*=\s*([^\{\}\r\n]+?)/).flatten.first if first_value_token.nil?
+
+  add_increase = max_levels_rhs.scan(/add\s*=\s*\{[\s\S]*?\bvalue\s*=\s*(-?\d+)\b/i).flatten
+  add_increase_any = add_increase.any? { |v| v.to_i > 0 }
+
+  return nil if first_value_token.nil?
+
+  token = first_value_token.strip
+  # If baseline is 1 but the max_levels block increases it (add value > 0),
+  # treat it as multi-level so it won't be misclassified as one_per_location.
+  token == "1" && add_increase_any ? "2" : token
+end
+
 def parse_building_to_pop_type(game_root)
   result = {}
   dir = game_root.join("in_game/common/building_types")
@@ -195,6 +347,40 @@ def parse_root_assignments(block_text)
   end
 
   assignments
+end
+
+def parse_building_type_metadata(game_root)
+  result = {}
+  dir = game_root.join("in_game/common/building_types")
+
+  Dir.glob(dir.join("*.txt").to_s).sort.each do |path|
+    next if File.basename(path).downcase == "readme.txt"
+
+    blocks = parse_top_level_blocks(read_text(path))
+    blocks.each do |building_type, body|
+      attrs = parse_root_assignments(body)
+      pop_type = normalize_pop_type(attrs["pop_type"])
+      if pop_type.nil?
+        warn "Building '#{building_type}' has no top-level pop_type in #{path}"
+        next
+      end
+
+      fort_level = extract_assignment_in_named_block(body, "raw_modifier", "fort_level")
+      max_levels_rhs = extract_root_assignment_rhs(body, "max_levels")
+      max_levels_token = max_levels_token_from_rhs(max_levels_rhs) || attrs["max_levels"]
+
+      result[building_type] = BuildingTypeMetadata.new(
+        building_type: building_type,
+        pop_type: pop_type,
+        construction_demand: attrs["construction_demand"],
+        max_levels: max_levels_token,
+        produces_goods: block_has_assignment_anywhere?(body, "produced"),
+        fort: !fort_level.nil?
+      )
+    end
+  end
+
+  result
 end
 
 def parse_building_type_profiles(game_root)
@@ -291,7 +477,8 @@ def dest_path_for_template_file(template_file)
 end
 
 def generate_all(game_root:, auto_build_triggers_path:, template_root:)
-  building_to_pop_type = parse_building_to_pop_type(game_root)
+  building_type_metadata = parse_building_type_metadata(game_root)
+  building_to_pop_type = building_type_metadata.transform_values(&:pop_type)
   available_pop_checks = parse_available_pop_checks(read_text(auto_build_triggers_path))
 
   used_pop_types = building_to_pop_type.values.to_set
@@ -315,7 +502,8 @@ def generate_all(game_root:, auto_build_triggers_path:, template_root:)
     building_to_pop_type: building_to_pop_type,
     building_ids: building_ids,
     resolved_building_goods: resolved_building_goods,
-    rgo_type_to_good: rgo_type_to_good
+    rgo_type_to_good: rgo_type_to_good,
+    building_type_metadata: building_type_metadata
   )
   generated_count = 0
 

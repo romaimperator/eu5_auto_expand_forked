@@ -13,95 +13,95 @@ lsq_hidden_window_repeated_init = {
 	}
 }
 
-# Root is the player
-lsq_should_building_type_section_show = {
-	is_shown = {
-		OR = {
-			NOT = { has_global_variable_map = lsq_building_type_processed }
-			AND = {
-				has_global_variable_map = lsq_building_type_processed
-				global_variable_map_size = { name = lsq_building_type_processed value < global_var:every_building_type_count }
-			}
-		}
-	}
-}
+# # Root is the player
+# lsq_should_building_type_section_show = {
+# 	is_shown = {
+# 		OR = {
+# 			NOT = { has_global_variable_map = lsq_building_type_processed }
+# 			AND = {
+# 				has_global_variable_map = lsq_building_type_processed
+# 				global_variable_map_size = { name = lsq_building_type_processed value < global_var:every_building_type_count }
+# 			}
+# 		}
+# 	}
+# }
 
-# Root is the country
-lsq_building_type_section_buildings_init = {
-	saved_scopes = { building_type is_producing is_multiple_levels is_fort }
-	effect = {
-			debug_log = "LSQ: Initializing buildings [TopScope.sBuildingType('building_type').GetNameWithNoTooltip]"
+# # Root is the country
+# lsq_building_type_section_buildings_init = {
+# 	saved_scopes = { building_type is_producing is_multiple_levels is_fort }
+# 	effect = {
+# 			debug_log = "LSQ: Initializing buildings [TopScope.sBuildingType('building_type').GetNameWithNoTooltip]"
 
-			# remove_from_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type }
-			# remove_from_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type }
-			# remove_from_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type }
-			# remove_from_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type }
-			# Set the which type of building this should be treated as
-			# if = { limit = { scope:is_producing = yes }
-			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
-			# } else = {
-			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 0 }
-			# }
-			# if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = yes } }
-			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 1 }
-			# } else = {
-			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
-			# }
-			# if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = no } }
-			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
-			# } else = {
-			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
-			# }
-			# Set the which type of building this should be treated as
-			if = { limit = { AND = { scope:is_producing = yes scope:is_multiple_levels = yes } }
-				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
-				if = { limit = { scope:is_fort = yes }
-					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: yes"
-				} else = {
-					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: no"
-				}
-			} else = {
-				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 0 }
-			}
-			if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = yes } }
-				add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 1 }
-				if = { limit = { scope:is_fort = yes }
-					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: yes"
-				} else = {
-					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: no"
-				}
-			} else = {
-				add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
-			}
-			if = { limit = { scope:is_multiple_levels = no }
-				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
-				if = { limit = { scope:is_fort = yes }
-					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: yes"
-				} else = {
-					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: no"
-				}
-			} else = {
-				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
-			}
+# 			# remove_from_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type }
+# 			# remove_from_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type }
+# 			# remove_from_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type }
+# 			# remove_from_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type }
+# 			# Set the which type of building this should be treated as
+# 			# if = { limit = { scope:is_producing = yes }
+# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
+# 			# } else = {
+# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 0 }
+# 			# }
+# 			# if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = yes } }
+# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 1 }
+# 			# } else = {
+# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
+# 			# }
+# 			# if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = no } }
+# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
+# 			# } else = {
+# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
+# 			# }
+# 			# Set the which type of building this should be treated as
+# 			if = { limit = { AND = { scope:is_producing = yes scope:is_multiple_levels = yes } }
+# 				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
+# 				if = { limit = { scope:is_fort = yes }
+# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: yes"
+# 				} else = {
+# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: no"
+# 				}
+# 			} else = {
+# 				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 0 }
+# 			}
+# 			if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = yes } }
+# 				add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 1 }
+# 				if = { limit = { scope:is_fort = yes }
+# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: yes"
+# 				} else = {
+# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: no"
+# 				}
+# 			} else = {
+# 				add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
+# 			}
+# 			if = { limit = { scope:is_multiple_levels = no }
+# 				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
+# 				if = { limit = { scope:is_fort = yes }
+# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: yes"
+# 				} else = {
+# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: no"
+# 				}
+# 			} else = {
+# 				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
+# 			}
 
-			# Set if this building type is a fort for discount purposes
-			if = { limit = { scope:is_fort = yes }
-				add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 1 }
-			} else = {
-				add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 0 }
-			}
+# 			# Set if this building type is a fort for discount purposes
+# 			if = { limit = { scope:is_fort = yes }
+# 				add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 1 }
+# 			} else = {
+# 				add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 0 }
+# 			}
 
-			# Set that this building type has been processed
-			add_to_global_variable_map = { name = lsq_building_type_processed key = scope:building_type value = 1 }
-	}
-}
+# 			# Set that this building type has been processed
+# 			add_to_global_variable_map = { name = lsq_building_type_processed key = scope:building_type value = 1 }
+# 	}
+# }
 
-# Root is the building type
-lsq_is_building_type_processed = {
-	is_shown = {
-		AND = {
-			has_global_variable_map = lsq_building_type_processed
-			is_key_in_global_variable_map = { name = lsq_building_type_processed target = this }
-		}
-	}
-}
+# # Root is the building type
+# lsq_is_building_type_processed = {
+# 	is_shown = {
+# 		AND = {
+# 			has_global_variable_map = lsq_building_type_processed
+# 			is_key_in_global_variable_map = { name = lsq_building_type_processed target = this }
+# 		}
+# 	}
+# }

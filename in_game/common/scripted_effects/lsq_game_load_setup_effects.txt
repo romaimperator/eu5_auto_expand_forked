@@ -1,9 +1,14 @@
 ﻿# Expects scopes: country
 lsq_check_that_country_variables_are_set = {
   scope:country = {
-    # Setup/Refresh the list of all building types
-    if = { limit = { NOT = { has_global_variable_list = every_building_type_list } }
-      lsq_setup_every_building_type_list = {}
+    # # Setup/Refresh the list of all building types
+    # if = { limit = { NOT = { has_global_variable_list = every_building_type_list } }
+    #   lsq_setup_every_building_type_list = {}
+    # }
+
+    # Setup the building type type maps
+    if = { limit = { OR = { NOT = { has_global_variable_map = lsq_building_type_to_is_production_building } NOT = { has_global_variable_map = lsq_building_type_to_is_non_production_multi_level_building } NOT = { has_global_variable_map = lsq_building_type_to_is_one_per_location_building } NOT = { has_global_variable_map = lsq_building_type_to_is_fort } } }
+      lsq_populate_building_type_type_maps = {}
     }
 
     # Reset the location lists every time we load the game
@@ -91,13 +96,13 @@ lsq_reset_locations_lists = {
   }
 }
 
-lsq_setup_every_building_type_list = {
-  clear_global_variable_list = every_building_type_list
-  set_global_variable = { name = every_building_type_count value = 0 }
-  every_building_type = {
-    save_scope_as = building_type
-    # debug_log = "LSQ: Adding building type [THIS.GetBuildingType.GetNameWithNoTooltip] to every_building_type_list"
-    add_to_global_variable_list = { name = every_building_type_list target = scope:building_type }
-    change_global_variable = { name = every_building_type_count add = 1 }
-  }
-}
+# lsq_setup_every_building_type_list = {
+#   clear_global_variable_list = every_building_type_list
+#   set_global_variable = { name = every_building_type_count value = 0 }
+#   every_building_type = {
+#     save_scope_as = building_type
+#     # debug_log = "LSQ: Adding building type [THIS.GetBuildingType.GetNameWithNoTooltip] to every_building_type_list"
+#     add_to_global_variable_list = { name = every_building_type_list target = scope:building_type }
+#     change_global_variable = { name = every_building_type_count add = 1 }
+#   }
+# }
