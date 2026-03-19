@@ -22,30 +22,44 @@
 
 			overlappingitembox = {
 				state = {
-					name = lsq_hidden_window_init
+					name = lsq_hidden_window_repeated_init
 					trigger_on_create = yes
-					on_finish = "[GetScriptedGui('lsq_hidden_window_init').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-					on_finish = "[PdxGuiWidget.AccessParent.FindChild('building_type_section').TriggerAnimation('lsq_building_type_section_init')]"
-					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_check_init_again')]"
-				}
-				state = {
-					name = lsq_hidden_window_check_init_again
-					duration = 1
-					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_init')]"
+					on_start = "[GetScriptedGui('lsq_hidden_window_repeated_init').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+					duration = 2
+					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_repeated_init')]"
 				}
 			}
+
+			# overlappingitembox = {
+			# 	state = {
+			# 		name = lsq_hidden_window_init
+			# 		trigger_on_create = yes
+			# 		on_start = "[PdxGuiWidget.AccessParent.FindChild('building_type_section').TriggerAnimation('lsq_building_type_section_init')]"
+			# 		duration = 2
+			# 		# on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_check_init_again')]"
+			# 		on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_init')]"
+			# 	}
+			# 	# state = {
+			# 	# 	name = lsq_hidden_window_check_init_again
+			# 	# 	duration = 2
+			# 	# 	on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_init')]"
+			# 	# }
+			# }
 
 			vbox = {
 				name = building_type_section
 				state = {
 					name = lsq_building_type_section_init
-					on_finish = "[PdxGuiTriggerAllAnimations('lsq_building_type_section_buildings_init_state')]"
+					trigger_on_create = yes
+					on_start = "[PdxGuiTriggerAllAnimations('lsq_building_type_section_buildings_init_state')]"
+					duration = 2
+					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_building_type_section_init')]"
 				}
 				visible = "[GetScriptedGui('lsq_should_building_type_section_show').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-				# text_single = {
-				# 	raw_text = "Building type section"
-				# }
-				datamodel = "[GetPlayer.MakeScope.GetList('every_building_type_list')]"
+				text_single = {
+					raw_text = "Building type section"
+				}
+				datamodel = "[GetGlobalList('every_building_type_list')]"
 				item = {
 					hbox = {
 						datacontext = "[Scope.GetBuildingType]"
