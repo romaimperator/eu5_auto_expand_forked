@@ -334,6 +334,76 @@
 					}
 				}
 			}
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				spacing = 5
+				tooltipwidget = {
+					ContextualTooltipType = {
+						blockoverride "title_text" {
+							raw_text = "Allowed building overbuild levels"
+						}
+						blockoverride "tooltip_content" {
+							TooltipTextBlock = {
+								blockoverride "text" {
+									raw_text = "How many total building levels a location may exceed its Supported Building Levels cap by before auto-expand and auto-build stop queueing new construction there. At zero, it won't allow any overbuilding."
+								}
+							}
+						}
+					}
+				}
+				text_single = {
+					autoresize = yes
+					raw_text = "Allowed overbuild levels (max 100):"
+				}
+				expand = {}
+				lsq_numeric_setting = {
+					blockoverride "left_button_left_click_default" {
+						action_tooltip = {
+							using = lsq_left_click_default
+							title = "Decrease allowed overbuild by #R 1#!"
+							on_action = "[GetScriptedGui('lsq_decrease_allowed_building_overbuild_levels').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+					blockoverride "left_button_left_click_shift" {
+						action_tooltip = {
+							using = lsq_left_click_shift
+							title = "Decrease allowed overbuild by #R 5#!"
+							on_action = "[GetScriptedGui('lsq_decrease_allowed_building_overbuild_levels_5').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+					blockoverride "left_button_left_click_ctrl" {
+						action_tooltip = {
+							using = lsq_left_click_ctrl
+							title = "Decrease allowed overbuild by #R 10#!"
+							on_action = "[GetScriptedGui('lsq_decrease_allowed_building_overbuild_levels_10').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+					blockoverride "current_value" {
+						raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_allowed_building_overbuild_levels')|0]"
+					}
+					blockoverride "right_button_left_click_default" {
+						action_tooltip = {
+							using = lsq_left_click_default
+							title = "Increase allowed overbuild by #G 1#!"
+							on_action = "[GetScriptedGui('lsq_increase_allowed_building_overbuild_levels').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+					blockoverride "right_button_left_click_shift" {
+						action_tooltip = {
+							using = lsq_left_click_shift
+							title = "Increase allowed overbuild by #G 5#!"
+							on_action = "[GetScriptedGui('lsq_increase_allowed_building_overbuild_levels_5').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+					blockoverride "right_button_left_click_ctrl" {
+						action_tooltip = {
+							using = lsq_left_click_ctrl
+							title = "Increase allowed overbuild by #G 10#!"
+							on_action = "[GetScriptedGui('lsq_increase_allowed_building_overbuild_levels_10').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+				}
+			}
 			horizontal_separator = {}
 			# Auto-build one-per-location buildings (temple, etc.). Row: checkbox left, building icon, building name.
 			text_single = {
