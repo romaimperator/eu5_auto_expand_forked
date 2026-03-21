@@ -1,11 +1,6 @@
 ﻿lsq_hidden_window_one_time_save_load_init = {
 	effect = {
 		debug_log = "LSQ: One time save load init"
-		clear_global_variable_map = lsq_building_type_processed
-		clear_global_variable_map = lsq_building_type_to_is_production_building
-		clear_global_variable_map = lsq_building_type_to_is_non_production_multi_level_building
-		clear_global_variable_map = lsq_building_type_to_is_one_per_location_building
-		clear_global_variable_map = lsq_building_type_to_is_fort
 	}
 }
 
@@ -33,6 +28,20 @@ lsq_hidden_window_init = {
 
 		# } else = {
 			# debug_log = "LSQ: Hidden window already initialized or country is not human"
+		}
+
+		if = { limit = { NOT = { has_variable_list = every_building_type_list } }
+			set_variable = { name = every_building_type_count value = 0 }
+			every_building_type = {
+				# debug_log = "LSQ: Adding building type [THIS.GetBuildingType.GetNameWithNoTooltip] to every_building_type_list"
+				root = { add_to_variable_list = { name = every_building_type_list target = prev } }
+				root = { change_variable = { name = every_building_type_count add = 1 } }
+			}
+			clear_global_variable_map = lsq_building_type_processed
+			clear_global_variable_map = lsq_building_type_to_is_production_building
+			clear_global_variable_map = lsq_building_type_to_is_non_production_multi_level_building
+			clear_global_variable_map = lsq_building_type_to_is_one_per_location_building
+			clear_global_variable_map = lsq_building_type_to_is_fort
 		}
 
 		if = { limit = { AND = { NOT = { exists = global_var:lsq_migrate_auto_expand_registered_buildings } is_human = yes } }
