@@ -10,13 +10,13 @@
 	}
 
 	type lsq_auto_expand_rgo_widget = widget {
-		visible = "[Location.IsPlayerLocation]"
+		visible = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
 		size = { 23 23 }
 
 		# button with green glow
 		lsq_auto_expand_checkbutton = {
 			size = { 100% 100% }
-			enabled = "[Location.IsPlayerLocation]"
+			enabled = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
 			checked = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 			blockoverride "green_glow_visible" {
 				visible = "[And(GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
