@@ -102,20 +102,36 @@ lsq_move_data_from_old_country_to_new_country = {
     }
 
     # Copy the basic settings
-    set_variable = { name = lsq_settings_window_visible value = scope:old_country.var:lsq_settings_window_visible }
+    if = { limit = { scope:old_country = { has_variable = lsq_settings_window_visible } }
+      set_variable = { name = lsq_settings_window_visible value = scope:old_country.var:lsq_settings_window_visible }
+    }
     if = { limit = { scope:old_country = { has_variable = lsq_pause_auto_expand } }
       set_variable = { name = lsq_pause_auto_expand value = scope:old_country.var:lsq_pause_auto_expand }
     }
     if = { limit = { scope:old_country = { has_variable = lsq_should_not_upgrade_buildings } }
       set_variable = { name = lsq_should_not_upgrade_buildings value = scope:old_country.var:lsq_should_not_upgrade_buildings }
     }
-    set_variable = { name = lsq_minimum_gold_for_buildings value = scope:old_country.var:lsq_minimum_gold_for_buildings }
-    set_variable = { name = lsq_minimum_gold_for_rgos value = scope:old_country.var:lsq_minimum_gold_for_rgos }
-    set_variable = { name = lsq_minimum_gold_for_auto_build value = scope:old_country.var:lsq_minimum_gold_for_auto_build }
-    set_variable = { name = lsq_allowed_building_overbuild_levels value = scope:old_country.var:lsq_allowed_building_overbuild_levels }
-    set_variable = { name = lsq_required_rgo_levels_before_sawmill value = scope:old_country.var:lsq_required_rgo_levels_before_sawmill }
-    set_variable = { name = lsq_required_rgo_levels_before_windmill value = scope:old_country.var:lsq_required_rgo_levels_before_windmill }
-    set_variable = { name = lsq_required_rgo_levels_before_local_smelters value = scope:old_country.var:lsq_required_rgo_levels_before_local_smelters }
+    if = { limit = { scope:old_country = { has_variable = lsq_minimum_gold_for_buildings } }
+      set_variable = { name = lsq_minimum_gold_for_buildings value = scope:old_country.var:lsq_minimum_gold_for_buildings }
+    }
+    if = { limit = { scope:old_country = { has_variable = lsq_minimum_gold_for_rgos } }
+      set_variable = { name = lsq_minimum_gold_for_rgos value = scope:old_country.var:lsq_minimum_gold_for_rgos }
+    }
+    if = { limit = { scope:old_country = { has_variable = lsq_minimum_gold_for_auto_build } }
+      set_variable = { name = lsq_minimum_gold_for_auto_build value = scope:old_country.var:lsq_minimum_gold_for_auto_build }
+    }
+    if = { limit = { scope:old_country = { has_variable = lsq_allowed_building_overbuild_levels } }
+      set_variable = { name = lsq_allowed_building_overbuild_levels value = scope:old_country.var:lsq_allowed_building_overbuild_levels }
+    }
+    if = { limit = { scope:old_country = { has_variable = lsq_required_rgo_levels_before_sawmill } }
+      set_variable = { name = lsq_required_rgo_levels_before_sawmill value = scope:old_country.var:lsq_required_rgo_levels_before_sawmill }
+    }
+    if = { limit = { scope:old_country = { has_variable = lsq_required_rgo_levels_before_windmill } }
+      set_variable = { name = lsq_required_rgo_levels_before_windmill value = scope:old_country.var:lsq_required_rgo_levels_before_windmill }
+    }
+    if = { limit = { scope:old_country = { has_variable = lsq_required_rgo_levels_before_local_smelters } }
+      set_variable = { name = lsq_required_rgo_levels_before_local_smelters value = scope:old_country.var:lsq_required_rgo_levels_before_local_smelters }
+    }
 
     # Copy the minimum control settings
     scope:old_country = {
