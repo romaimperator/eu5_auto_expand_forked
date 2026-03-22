@@ -8,9 +8,25 @@ lsq_hidden_window_one_time_save_load_init = {
 # Expects scopes: country
 lsq_hidden_window_repeated_init = {
 	effect = {
-		debug_log = "LSQ: Repeated init"
-		lsq_check_that_country_variables_are_set = {}
-		lsq_check_if_migration_needed = {}
+		if = { limit = { scope:skip = no }
+			debug_log = "LSQ: Repeated init"
+			lsq_check_that_country_variables_are_set = {}
+			lsq_check_if_migration_needed = {}
+		}
+	}
+}
+
+# Expects scopes: old_country, new_country
+lsq_tag_changed = {
+	effect = {
+		debug_log = "LSQ: Tag changed"
+		debug_log_scopes = yes
+		if = { limit = { AND = { exists = scope:old_country exists = scope:new_country } }
+			# Because we're using animations, check to make sure the countries are different in case this runs again after we update the country name in the GUI
+			if = { limit = { NOT = { scope:old_country = scope:new_country } }
+				lsq_move_data_from_old_country_to_new_country = {}
+			}
+		}
 	}
 }
 
