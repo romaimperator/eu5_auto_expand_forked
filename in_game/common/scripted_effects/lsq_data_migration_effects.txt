@@ -2,13 +2,7 @@
   scope:country = {
     # debug_log = "LSQ: Checking if migration needed"
     if = { limit = { lsq_is_version_set = no }
-      lsq_migrate_from_no_version_to_1_7_0 = {}
-    }
-    if = { limit = { lsq_is_version = { major = 1 minor = 7 patch = 0 } }
-      lsq_migrate_from_1_7_0_to_1_7_1 = {}
-    }
-    if = { limit = { lsq_is_version = { major = 1 minor = 7 patch = 1 } }
-      lsq_migrate_from_1_7_1_to_1_7_2 = {}
+      lsq_migrate_from_no_version_to_1_7_2 = {}
     }
     if = { limit = { lsq_is_version = { major = 1 minor = 7 patch = 2 } }
       lsq_migrate_from_1_7_2_to_1_8_0 = {}
@@ -19,23 +13,17 @@
 lsq_migrate_from_1_7_2_to_1_8_0 = {
   debug_log = "LSQ: Migrating from 1.7.2 to 1.8.0"
 
-  lsq_set_mod_version_to = { major = 1 minor = 8 patch = 0 }
-}
-
-lsq_migrate_from_1_7_1_to_1_7_2 = {
-  debug_log = "LSQ: Migrating from 1.7.1 to 1.7.2"
-
   # Remove the old variable used to store the list of building types
   scope:country = {
     clear_variable_list = every_building_type_list
     remove_variable = every_building_type_count
   }
 
-  lsq_set_mod_version_to = { major = 1 minor = 7 patch = 2 }
+  lsq_set_mod_version_to = { major = 1 minor = 8 patch = 0 }
 }
 
-lsq_migrate_from_1_7_0_to_1_7_1 = {
-  debug_log = "LSQ: Migrating from 1.7.0 to 1.7.1"
+lsq_migrate_from_no_version_to_1_7_2 = {
+  debug_log = "LSQ: Migrating from no version to 1.7.2"
 
   # Migrate from buildings to buildings type in the auto expand registered buildings list
   every_owned_location = {
@@ -74,10 +62,5 @@ lsq_migrate_from_1_7_0_to_1_7_1 = {
   # Remove this variable since we no longer use it
   remove_global_variable = lsq_hidden_window_initialized
 
-  lsq_set_mod_version_to = { major = 1 minor = 7 patch = 1 }
-}
-
-lsq_migrate_from_no_version_to_1_7_0 = {
-  debug_log = "LSQ: Migrating from no version to 1.7.0"
-  lsq_set_mod_version_to = { major = 1 minor = 7 patch = 0 }
+  lsq_set_mod_version_to = { major = 1 minor = 7 patch = 2 }
 }
