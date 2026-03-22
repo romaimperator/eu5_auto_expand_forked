@@ -1,9 +1,9 @@
 ﻿Future Implementation Ideas
 
-- Add a setting for amount of overbuild allowed in a location by percent of extra cost (maybe just how many extra levels over cap)
 - Add a setting to set minimum building discount before auto-expanding
 - Add check to make sure there's enough goods to auto-expand an RGO
 - Add button to enable/disable auto-expand for every building in a location
+- Add automatic closing of buildings using construction goods to reduce demand and lower price
 - Add additional buildings to the auto-build list based on country/religion/culture
 - Use on_location_changed_owner to remove auto-expand variables when a location changes hands
   #root= location, scope:loser = previous owner, scope:winner = new owner
@@ -19,3 +19,4 @@
 Completed Ideas:
 - Add option to toggle auto-expand in the buildings filtered view so it's easy to do mass auto-expand in large countries
 - Add a setting for minimum control before auto-build occurs
+- Add a setting for amount of overbuild allowed in a location by percent of extra cost (maybe just how many extra levels over cap)
