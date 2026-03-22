@@ -46,8 +46,8 @@
 
 	blockoverride "content" {
 		vbox = {
-			maximumsize = { 600 -1 }
-			minimumsize = { 600 -1 }
+			maximumsize = { 700 -1 }
+			minimumsize = { 700 -1 }
 			margin = { 20 20 }
 			spacing = 10
 
@@ -62,7 +62,7 @@
 			# 	}
 			# 	layoutpolicy_vertical = expanding
 			# 	spacing = 10
-			# 	datamodel = "[GetPlayer.MakeScope.GetList('every_building_type_list')]"
+			# 	datamodel = "[GetGlobalList('every_building_type_list')]"
 			# 	item = {
 			# 		hbox = {
 			# 			datacontext = "[Scope.GetBuildingType]"
@@ -146,70 +146,51 @@
 					raw_text = "Gold to save before auto-expanding buildings:"
 				}
 				expand = {}
-				button_default = {
-					size = { 24 24 }
-					text_single = {
-						parentanchor = center
-						raw_text = "-"
+				lsq_numeric_setting = {
+					blockoverride "left_button_left_click_default" {
+						action_tooltip = {
+							using = lsq_left_click_default
+							title = "Change Minimum Gold by #R -10#!"
+							on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_buildings').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					tooltipwidget = { BasicFunctionalTooltip = {} }
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = default
-						title = "Change Minimum Gold by #R -10#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_buildings').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "left_button_left_click_shift" {
+						action_tooltip = {
+							using = lsq_left_click_shift
+							title = "Change Minimum Gold by #R -100#!"
+							on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_buildings_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = shift
-						title = "Change Minimum Gold by #R -100#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_buildings_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "left_button_left_click_ctrl" {
+						action_tooltip = {
+							using = lsq_left_click_ctrl
+							title = "Change Minimum Gold by #R -1000#!"
+							on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_buildings_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = ctrl
-						title = "Change Minimum Gold by #R -1000#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_buildings_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-					}
-				}
-				widget = {
-					min_width = 60
-					text_single = {
-						parentanchor = center
-						autoresize = yes
+					blockoverride "current_value" {
 						raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_gold_for_auto_expand')|0]@gold!"
 					}
-				}
-				button_default = {
-					size = { 24 24 }
-					text_single = {
-						parentanchor = center
-						raw_text = "+"
+					blockoverride "right_button_left_click_default" {
+						action_tooltip = {
+							using = lsq_left_click_default
+							title = "Change Minimum Gold by #G +10#!"
+							on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_buildings').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					tooltipwidget = { BasicFunctionalTooltip = { } }
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = default
-						title = "Change Minimum Gold by #G +10#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_buildings').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "right_button_left_click_shift" {
+						action_tooltip = {
+							using = lsq_left_click_shift
+							title = "Change Minimum Gold by #G +100#!"
+							on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_buildings_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = shift
-						title = "Change Minimum Gold by #G +100#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_buildings_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = ctrl
-						title = "Change Minimum Gold by #G +1000#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_buildings_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "right_button_left_click_ctrl" {
+						action_tooltip = {
+							using = lsq_left_click_ctrl
+							title = "Change Minimum Gold by #G +1000#!"
+							on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_buildings_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
 				}
 			}
@@ -235,70 +216,51 @@
 					raw_text = "Gold to save before auto-expanding RGOs:"
 				}
 				expand = {}
-				button_default = {
-					size = { 24 24 }
-					text_single = {
-						parentanchor = center
-						raw_text = "-"
+				lsq_numeric_setting = {
+					blockoverride "left_button_left_click_default" {
+						action_tooltip = {
+							using = lsq_left_click_default
+							title = "Change Minimum Gold by #R -10#!"
+							on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_rgos').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					tooltipwidget = { BasicFunctionalTooltip = {} }
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = default
-						title = "Change Minimum Gold by #R -10#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_rgos').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "left_button_left_click_shift" {
+						action_tooltip = {
+							using = lsq_left_click_shift
+							title = "Change Minimum Gold by #R -100#!"
+							on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_rgos_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = shift
-						title = "Change Minimum Gold by #R -100#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_rgos_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "left_button_left_click_ctrl" {
+						action_tooltip = {
+							using = lsq_left_click_ctrl
+							title = "Change Minimum Gold by #R -1000#!"
+							on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_rgos_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = ctrl
-						title = "Change Minimum Gold by #R -1000#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_rgos_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-					}
-				}
-				widget = {
-					min_width = 60
-					text_single = {
-						parentanchor = center
-						autoresize = yes
+					blockoverride "current_value" {
 						raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_gold_for_rgos')|0]@gold!"
 					}
-				}
-				button_default = {
-					size = { 24 24 }
-					text_single = {
-						parentanchor = center
-						raw_text = "+"
+					blockoverride "right_button_left_click_default" {
+						action_tooltip = {
+							using = lsq_left_click_default
+							title = "Change Minimum Gold by #G +10#!"
+							on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_rgos').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					tooltipwidget = { BasicFunctionalTooltip = { } }
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = default
-						title = "Change Minimum Gold by #G +10#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_rgos').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "right_button_left_click_shift" {
+						action_tooltip = {
+							using = lsq_left_click_shift
+							title = "Change Minimum Gold by #G +100#!"
+							on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_rgos_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = shift
-						title = "Change Minimum Gold by #G +100#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_rgos_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = ctrl
-						title = "Change Minimum Gold by #G +1000#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_rgos_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "right_button_left_click_ctrl" {
+						action_tooltip = {
+							using = lsq_left_click_ctrl
+							title = "Change Minimum Gold by #G +1000#!"
+							on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_rgos_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
 				}
 			}
@@ -324,70 +286,121 @@
 					raw_text = "Gold to save before auto-building:"
 				}
 				expand = {}
-				button_default = {
-					size = { 24 24 }
-					text_single = {
-						parentanchor = center
-						raw_text = "-"
+				lsq_numeric_setting = {
+					blockoverride "left_button_left_click_default" {
+						action_tooltip = {
+							using = lsq_left_click_default
+							title = "Change Minimum Gold by #R -10#!"
+							on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					tooltipwidget = { BasicFunctionalTooltip = {} }
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = default
-						title = "Change Minimum Gold by #R -10#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "left_button_left_click_shift" {
+						action_tooltip = {
+							using = lsq_left_click_shift
+							title = "Change Minimum Gold by #R -100#!"
+							on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = shift
-						title = "Change Minimum Gold by #R -100#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "left_button_left_click_ctrl" {
+						action_tooltip = {
+							using = lsq_left_click_ctrl
+							title = "Change Minimum Gold by #R -1000#!"
+							on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_auto_build_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = ctrl
-						title = "Change Minimum Gold by #R -1000#!"
-						on_action = "[GetScriptedGui('lsq_decrease_minimum_gold_for_auto_build_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-					}
-				}
-				widget = {
-					min_width = 60
-					text_single = {
-						parentanchor = center
-						autoresize = yes
+					blockoverride "current_value" {
 						raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_gold_for_auto_build')|0]@gold!"
 					}
+					blockoverride "right_button_left_click_default" {
+						action_tooltip = {
+							using = lsq_left_click_default
+							title = "Change Minimum Gold by #G +10#!"
+							on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+					blockoverride "right_button_left_click_shift" {
+						action_tooltip = {
+							using = lsq_left_click_shift
+							title = "Change Minimum Gold by #G +100#!"
+							on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+					blockoverride "right_button_left_click_ctrl" {
+						action_tooltip = {
+							using = lsq_left_click_ctrl
+							title = "Change Minimum Gold by #G +1000#!"
+							on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_auto_build_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
 				}
-				button_default = {
-					size = { 24 24 }
-					text_single = {
-						parentanchor = center
-						raw_text = "+"
+			}
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				spacing = 5
+				tooltipwidget = {
+					ContextualTooltipType = {
+						blockoverride "title_text" {
+							raw_text = "Allowed building overbuild levels"
+						}
+						blockoverride "tooltip_content" {
+							TooltipTextBlock = {
+								blockoverride "text" {
+									raw_text = "How many total building levels a location may exceed its Supported Building Levels cap by before auto-expand and auto-build stop queueing new construction there. At zero, it won't allow any overbuilding."
+								}
+							}
+						}
 					}
-					tooltipwidget = { BasicFunctionalTooltip = { } }
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = default
-						title = "Change Minimum Gold by #G +10#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				}
+				text_single = {
+					autoresize = yes
+					raw_text = "Allowed overbuild levels (max 100):"
+				}
+				expand = {}
+				lsq_numeric_setting = {
+					blockoverride "left_button_left_click_default" {
+						action_tooltip = {
+							using = lsq_left_click_default
+							title = "Decrease allowed overbuild by #R 1#!"
+							on_action = "[GetScriptedGui('lsq_decrease_allowed_building_overbuild_levels').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = shift
-						title = "Change Minimum Gold by #G +100#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "left_button_left_click_shift" {
+						action_tooltip = {
+							using = lsq_left_click_shift
+							title = "Decrease allowed overbuild by #R 5#!"
+							on_action = "[GetScriptedGui('lsq_decrease_allowed_building_overbuild_levels_5').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
-					action_tooltip = {
-						click_type = left
-						click_mode = single
-						click_modifier = ctrl
-						title = "Change Minimum Gold by #G +1000#!"
-						on_action = "[GetScriptedGui('lsq_increase_minimum_gold_for_auto_build_1000').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "left_button_left_click_ctrl" {
+						action_tooltip = {
+							using = lsq_left_click_ctrl
+							title = "Decrease allowed overbuild by #R 10#!"
+							on_action = "[GetScriptedGui('lsq_decrease_allowed_building_overbuild_levels_10').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+					blockoverride "current_value" {
+						raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_get_allowed_building_overbuild_levels')|0]"
+					}
+					blockoverride "right_button_left_click_default" {
+						action_tooltip = {
+							using = lsq_left_click_default
+							title = "Increase allowed overbuild by #G 1#!"
+							on_action = "[GetScriptedGui('lsq_increase_allowed_building_overbuild_levels').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+					blockoverride "right_button_left_click_shift" {
+						action_tooltip = {
+							using = lsq_left_click_shift
+							title = "Increase allowed overbuild by #G 5#!"
+							on_action = "[GetScriptedGui('lsq_increase_allowed_building_overbuild_levels_5').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+					blockoverride "right_button_left_click_ctrl" {
+						action_tooltip = {
+							using = lsq_left_click_ctrl
+							title = "Increase allowed overbuild by #G 10#!"
+							on_action = "[GetScriptedGui('lsq_increase_allowed_building_overbuild_levels_10').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
 					}
 				}
 			}
@@ -487,7 +500,7 @@
 				}
 				vbox = {
 					# layoutpolicy_horizontal = fixed
-					min_width = 300
+					min_width = 280
 					spacing = 5
 					hbox = {
 						layoutpolicy_horizontal = expanding
@@ -579,10 +592,12 @@
 				}
 				vbox = {
 					layoutpolicy_horizontal = expanding
+					margin = { 5 0 }
 					spacing = 5
 
 					hbox = {
 						layoutpolicy_horizontal = expanding
+						expand = {}
 						text_single = {
 							margin_left = 5
 							raw_text = "Subjects?"
@@ -594,7 +609,7 @@
 						hbox = {
 							datacontext = "[Scope.GetBuildingType]"
 							layoutpolicy_horizontal = expanding
-							spacing = 8
+							expand = {}
 							checkbox_square_alt = {
 								size = { 24 24 }
 								checked = "[GetScriptedGui('lsq_is_auto_build_building_type_in_subjects_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
@@ -633,13 +648,80 @@
 				}
 				vbox = {
 					layoutpolicy_horizontal = expanding
+					margin = { 5 0 }
+					spacing = 5
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						expand = {}
+						text_single = {
+							margin_left = 5
+							raw_text = "Min Control:"
+						}
+						expand = {}
+					}
+					datamodel = "[GetPlayer.MakeScope.GetList('lsq_auto_build_building_types_list')]"
+					item = {
+						lsq_numeric_setting = {
+							datacontext = "[Scope.GetBuildingType]"
+							blockoverride "left_button_left_click_default" {
+								action_tooltip = {
+									using = lsq_left_click_default
+									title = "Change Minimum Control by #R -5%#!"
+									on_action = "[GetScriptedGui('lsq_decrease_minimum_control_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "left_button_left_click_shift" {
+								action_tooltip = {
+									using = lsq_left_click_shift
+									title = "Change Minimum Control by #R -10%#!"
+									on_action = "[GetScriptedGui('lsq_decrease_minimum_control_for_auto_build_10').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "left_button_left_click_ctrl" {
+								action_tooltip = {
+									using = lsq_left_click_ctrl
+									title = "Change Minimum Control to #R 0%#!"
+									on_action = "[GetScriptedGui('lsq_decrease_minimum_control_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "current_value" {
+								raw_text = "[GuiScope.AddScope('country', GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_get_minimum_control_for_auto_build')|%0]"
+							}
+							blockoverride "right_button_left_click_default" {
+								action_tooltip = {
+									using = lsq_left_click_default
+									title = "Change Minimum Control by #G +5%#!"
+									on_action = "[GetScriptedGui('lsq_increase_minimum_control_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "right_button_left_click_shift" {
+								action_tooltip = {
+									using = lsq_left_click_shift
+									title = "Change Minimum Control by #G +10%#!"
+									on_action = "[GetScriptedGui('lsq_increase_minimum_control_for_auto_build_10').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "right_button_left_click_ctrl" {
+								action_tooltip = {
+									using = lsq_left_click_ctrl
+									title = "Change Minimum Control to #G 100%#!"
+									on_action = "[GetScriptedGui('lsq_increase_minimum_control_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+						}
+					}
+				}
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					margin = { 5 0 }
 					spacing = 5
 
 					hbox = {
 						layoutpolicy_horizontal = expanding
+						expand = {}
 						text_single = {
 							margin_left = 5
-							raw_text = " "
+							raw_text = "Min RGOs:"
 						}
 						expand = {}
 					}
@@ -670,42 +752,25 @@
 											}
 										}
 									}
-									button_default = {
-										size = { 24 24 }
-										text_single = {
-											parentanchor = center
-											raw_text = "-"
+									lsq_numeric_setting = {
+										spacing = 5
+										blockoverride "left_button_left_click_default" {
+											action_tooltip = {
+												using = lsq_left_click_default
+												title = "Change required RGO [Select_CString(GetScriptedGui('lsq_is_sawmill_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).End), 'or lumbermill ', '')]levels by #R -1#!"
+												on_action = "[GetScriptedGui('lsq_decrease_required_rgo_levels_before_improvement_building').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+											}
 										}
-										tooltipwidget = { BasicFunctionalTooltip = {} }
-										action_tooltip = {
-											click_type = left
-											click_mode = single
-											click_modifier = default
-											title = "Change required RGO [Select_CString(GetScriptedGui('lsq_is_sawmill_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).End), 'or lumbermill ', '')]levels by #R -1#!"
-											on_action = "[GetScriptedGui('lsq_decrease_required_rgo_levels_before_improvement_building').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
-										}
-									}
-									widget = {
-										min_width = 24
-										text_single = {
-											parentanchor = center
-											autoresize = yes
+										blockoverride "current_value_min_width" { min_width = 24 }
+										blockoverride "current_value" {
 											raw_text = "[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_get_required_rgo_levels_before_improvement_building')|0]"
 										}
-									}
-									button_default = {
-										size = { 24 24 }
-										text_single = {
-											parentanchor = center
-											raw_text = "+"
-										}
-										tooltipwidget = { BasicFunctionalTooltip = { } }
-										action_tooltip = {
-											click_type = left
-											click_mode = single
-											click_modifier = default
-											title = "Change required RGO [Select_CString(GetScriptedGui('lsq_is_sawmill_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).End), 'or lumbermill ', '')]levels by #G +1#!"
-											on_action = "[GetScriptedGui('lsq_increase_required_rgo_levels_before_improvement_building').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+										blockoverride "right_button_left_click_default" {
+											action_tooltip = {
+												using = lsq_left_click_default
+												title = "Change required RGO [Select_CString(GetScriptedGui('lsq_is_sawmill_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).End), 'or lumbermill ', '')]levels by #G +1#!"
+												on_action = "[GetScriptedGui('lsq_increase_required_rgo_levels_before_improvement_building').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+											}
 										}
 									}
 								}

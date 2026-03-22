@@ -1,0 +1,66 @@
+﻿lsq_check_if_migration_needed = {
+  scope:country = {
+    # debug_log = "LSQ: Checking if migration needed"
+    if = { limit = { lsq_is_version_set = no }
+      lsq_migrate_from_no_version_to_1_7_2 = {}
+    }
+    if = { limit = { lsq_is_version = { major = 1 minor = 7 patch = 2 } }
+      lsq_migrate_from_1_7_2_to_1_8_0 = {}
+    }
+  }
+}
+
+lsq_migrate_from_1_7_2_to_1_8_0 = {
+  debug_log = "LSQ: Migrating from 1.7.2 to 1.8.0"
+
+  # Remove the old variable used to store the list of building types
+  scope:country = {
+    clear_variable_list = every_building_type_list
+    remove_variable = every_building_type_count
+  }
+
+  lsq_set_mod_version_to = { major = 1 minor = 8 patch = 0 }
+}
+
+lsq_migrate_from_no_version_to_1_7_2 = {
+  debug_log = "LSQ: Migrating from no version to 1.7.2"
+
+  # Migrate from buildings to buildings type in the auto expand registered buildings list
+  every_owned_location = {
+    limit = { has_variable_list = auto_expand_registered_buildings }
+    save_scope_as = location
+    # debug_log = "LSQ: Migrating auto expand registered buildings for location [THIS.GetLocation.GetNameWithNoTooltip]"
+    every_in_list = {
+      variable = auto_expand_registered_buildings
+      save_scope_as = building
+      # debug_log = "LSQ: Migrating auto expand registered buildings for building [THIS.GetBuilding.GetNameWithNoTooltip]"
+      if = { limit = { AND = { scope_type = building exists = building_type } }
+        scope:location = {
+          add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building.building_type }
+        }
+      } else_if = { limit = { scope_type = building_type }
+        scope:location = {
+          add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building }
+        }
+      }
+    }
+  }
+
+  # Remove the old variable used to trigger rgo expansion
+  every_owned_location = { remove_variable = lsq_run_auto_expand_rgo }
+
+  # Remove the old variable used to trim list of provinces we would show in the hidden window to ones that had at least one location with auto expand RGO on
+  every_province = { remove_variable = lsq_auto_expand_rgo_off_in_all_locations }
+
+  # Clear the variable maps so they can be updated
+  clear_global_variable_map = lsq_building_type_processed
+  clear_global_variable_map = lsq_building_type_to_is_production_building
+  clear_global_variable_map = lsq_building_type_to_is_non_production_multi_level_building
+  clear_global_variable_map = lsq_building_type_to_is_one_per_location_building
+  clear_global_variable_map = lsq_building_type_to_is_fort
+
+  # Remove this variable since we no longer use it
+  remove_global_variable = lsq_hidden_window_initialized
+
+  lsq_set_mod_version_to = { major = 1 minor = 7 patch = 2 }
+}
