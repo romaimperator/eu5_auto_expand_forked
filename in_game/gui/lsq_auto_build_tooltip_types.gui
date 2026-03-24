@@ -48,15 +48,67 @@
           }
         }
         TooltipListBase = {
+          max_width = 440
+          visible = "[GetScriptedGui('lsq_auto_build_check_any_location_allowed_to_build').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+          TooltipListColumnContent = {
+            TooltipTableField = {
+              max_width = 300
+              blockoverride "field_background" {
+                background = {
+                  using = tile_background_squared_texture
+                  frame_grid = { 1 2 }
+                  spriteborder_bottom = 0
+                  alpha = 0.4
+                  modify_texture = {
+                    using = color_turquoise_texture
+                  }
+                }
+              }
+
+              blockoverride "field_content" {
+                text_single = {
+                  using = Font_Type_Headers
+                  text = "[location|e]"
+                }
+
+                expand = {}
+              }
+            }
+            TooltipTableField = {
+              max_width = 140
+              blockoverride "field_background" {
+                background = {
+                  using = tile_background_squared_texture
+                  frame_grid = { 1 2 }
+                  spriteborder_bottom = 0
+                  alpha = 0.4
+                  modify_texture = {
+                    using = color_turquoise_texture
+                  }
+                }
+              }
+
+              blockoverride "field_content" {
+                expand = {}
+                text_single = {
+                  using = Font_Type_Headers
+                  text = "[max_control|e]"
+                }
+              }
+            }
+          }
           TooltipScrolledContentSection = {
-            visible = "[GetScriptedGui('lsq_auto_build_check_any_location_allowed_to_build').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
             blockoverride "section_content" {
               TooltipListColumnContent = {
-                TooltipTableColumn = {
+                LSQTooltipTableColumn = {
                   layoutpolicy_vertical = expanding
-                  blockoverride "column_title" {}
-                  blockoverride "column_title_text" { text = "[location|e]" }
-                  blockoverride "column_title_right" { expand = {} }
+                  blockoverride "fixedgridbox_size" {
+                    addcolumn = 300
+                    addrow = 30
+                  }
+                  # blockoverride "column_title" {}
+                  # blockoverride "column_title_text" { text = "[location|e]" }
+                  # blockoverride "column_title_right" { expand = {} }
 
                   blockoverride "field_left" {
                     datacontext = "[Scope.GetLocation]"
@@ -132,7 +184,7 @@
                                     visible = "[Not(GetScriptedGui('lsq_auto_build_check_meets_minimum_control').IsShown(GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
                                   }
                                   blockoverride "row_text" {
-                                    raw_text = "Location meets minimum control threshold (min: #color_pure_white [GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_control_for_auto_build')|%0]#! vs current: #color_pure_white [Location.GetMaxControl]#!)"
+                                    raw_text = "Location meets minimum control threshold (min: #color_pure_white [GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_control_for_auto_build')|%0]#! vs current: #color_pure_white [Location.GetMaxControl]#!)"
                                   }
                                 }
                                 lsq_tooltip_row = {
@@ -279,11 +331,15 @@
                   blockoverride "field_right" { expand = {} }
                 }
 
-                TooltipTableColumn = {
+                LSQTooltipTableColumn = {
+                  blockoverride "fixedgridbox_size" {
+                    addcolumn = 140
+                    addrow = 30
+                  }
                   layoutpolicy_vertical = expanding
-                  blockoverride "column_title" {}
-                  blockoverride "column_title_left" { expand = {} }
-                  blockoverride "column_title_text" { text = "[max_control|e]" }
+                  # blockoverride "column_title" {}
+                  # blockoverride "column_title_left" { expand = {} }
+                  # blockoverride "column_title_text" { text = "[max_control|e]" }
 
                   blockoverride "field_left" {
                     expand = {}
@@ -301,6 +357,96 @@
               }
             }
           }
+        }
+      }
+    }
+  }
+
+  type LSQTooltipTableColumn = fixedgridbox {
+		layoutpolicy_horizontal = expanding
+    block "fixedgridbox_size" {
+      addcolumn = 330
+      addrow = 30
+    }
+
+		block "column_datamodel" {}
+
+		TooltipTableField = {
+      # blockoverride "row_size" {
+      #   size = { 220 30 }
+      #   minimumsize = { 220 30 }
+      #   maximumsize = { 220 30 }
+      # }
+			block "column_title" {
+				visible = no
+			}
+
+			blockoverride "field_background" {
+				background = {
+					using = tile_background_squared_texture
+					frame_grid = { 1 2 }
+					spriteborder_bottom = 0
+					alpha = 0.4
+					modify_texture = {
+						using = color_turquoise_texture
+					}
+				}
+			}
+
+			blockoverride "field_content" {
+				block "column_title_left" {}
+
+				text_single = {
+					using = Font_Type_Headers
+					block "column_title_text" {}
+				}
+
+				block "column_title_right" {}
+			}
+		}
+
+		item = {
+			# block "tablefield_item" {
+				TooltipTableField = {
+					blockoverride "field_content" {
+						block "table_field_margin" {
+							margin = { 10 0 }
+						}
+						spacing = 5
+
+						block "field_left" {}
+
+						block "tooltip_table_text_single" {
+							text_single = {
+								block "field_text_visibility" {}
+								block "field_text" {}
+							}
+						}
+
+						block "field_right" {}
+					}
+				}
+			# }
+		}
+	}
+
+  type lsq_auto_build_building_type_text_and_tooltip = hbox {
+    icon = {
+      size = { 24 24 }
+      texture = "[GetBuildingIcon(BuildingType.Self)]"
+    }
+    text_single = {
+      alpha = "[Select_CFixedPoint(GetScriptedGui('lsq_auto_build_check_building_researched').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End), '(CFixedPoint)1', '(CFixedPoint)0.4')]"
+      margin_left = 5
+      datacontext = "[BuildingType.MakeScope]"
+      block "building_label" {
+        # raw_text = "[BuildingType.GetNameWithNoTooltip] ([GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_including_subjects_will_auto_build')|0]/[GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_auto_build_number_of_locations_including_subjects_allowed_to_build')|0])"
+      }
+    }
+    block "tooltip" {
+      tooltipwidget = {
+        lsq_auto_build_building_type_tooltip = {
+          # blockoverride "column_datamodel"  { datamodel = "[GetPlayer.MakeScope.GetList('lsq_all_locations_including_subjects_list_allowed_to_build_0')]" }
         }
       }
     }

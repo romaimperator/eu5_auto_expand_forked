@@ -162,10 +162,7 @@ lsq_location_allowed_to_build = {
 # Expects scopes: country, location
 # Expects param: target => building_type
 lsq_auto_build_check_meets_minimum_control = {
-	trigger_if = { limit = { NOT = { exists = scope:building_type } }
-		$target$ = { save_temporary_scope_as = building_type }
-	}
-	scope:location.max_control >= lsq_get_minimum_control_for_auto_build
+	scope:location.max_control >= $target$.lsq_get_minimum_control_for_auto_build
 }
 
 # Root is the location. Expects the building type as a target, also expects the scope country

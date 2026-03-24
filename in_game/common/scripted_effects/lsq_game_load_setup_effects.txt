@@ -205,6 +205,76 @@ lsq_reset_locations_lists = {
       scope:country = { add_to_variable_list = { name = lsq_all_locations_including_subjects_list target = scope:location } }
     }
     clear_variable_list = lsq_all_locations_including_subjects_list_temp
+
+    # Setup building-specific lists
+    lsq_process_building_specific_list = { building_type_text = temple } # buiding_type_index = 0 }
+    lsq_process_building_specific_list = { building_type_text = library } # buiding_type_index = 1 }
+    lsq_process_building_specific_list = { building_type_text = settlement_building } # buiding_type_index = 2 }
+    lsq_process_building_specific_list = { building_type_text = bridge_infrastructure } # buiding_type_index = 3 }
+    lsq_process_building_specific_list = { building_type_text = pound_lock_canal_infrastructure } # buiding_type_index = 4 }
+    lsq_process_building_specific_list = { building_type_text = university } # buiding_type_index = 5 }
+    lsq_process_building_specific_list = { building_type_text = hospital } # buiding_type_index = 6 }
+    lsq_process_building_specific_list = { building_type_text = minting_office } # buiding_type_index = 7 }
+    lsq_process_building_specific_list = { building_type_text = counting_house } # buiding_type_index = 8 }
+    lsq_process_building_specific_list = { building_type_text = wharf } # buiding_type_index = 9 }
+    lsq_process_building_specific_list = { building_type_text = market_village } # buiding_type_index = 10 }
+    lsq_process_building_specific_list = { building_type_text = sawmill } # buiding_type_index = 11 }
+    lsq_process_building_specific_list = { building_type_text = windmill } # buiding_type_index = 12 }
+    lsq_process_building_specific_list = { building_type_text = local_smelters } # buiding_type_index = 13 }
+    lsq_process_building_specific_list = { building_type_text = protected_harbor } # buiding_type_index = 14 }
+  }
+}
+
+# Expects scopes: country
+lsq_process_building_specific_list = {
+  debug_log = "LSQ: Processing building specific list for  $building_type_text$"
+  scope:country = {
+    clear_variable_list = lsq_all_controlled_locations_list_allowed_to_build_$building_type_text$
+    set_variable = { name = lsq_all_controlled_locations_size_will_auto_build_$building_type_text$ value = 0 }
+    every_in_list = {
+      variable = lsq_all_controlled_locations_list
+      save_scope_as = location
+      if = { limit = { scope:location = { lsq_location_allowed_to_build_$building_type_text$ = yes } }
+        scope:country = { add_to_variable_list = { name = lsq_all_controlled_locations_list_allowed_to_build_$building_type_text$ target = scope:location } }
+        if = { limit = { scope:location = { lsq_location_will_auto_build_$building_type_text$ = yes } }
+          # debug_log = "LSQ: Adding location will auto build [THIS.GetLocation.GetNameWithNoTooltip]"
+          scope:country = { change_variable = { name = lsq_all_controlled_locations_size_will_auto_build_$building_type_text$ add = 1 } }
+        }
+      }
+    }
+    clear_variable_list = lsq_all_locations_including_subjects_list_allowed_to_build_$building_type_text$
+    set_variable = { name = lsq_all_locations_including_subjects_size_will_auto_build_$building_type_text$ value = 0 }
+    every_in_list = {
+      variable = lsq_all_locations_including_subjects_list
+      save_scope_as = location
+      if = { limit = { scope:location = { lsq_location_allowed_to_build_$building_type_text$ = yes } }
+        scope:country = { add_to_variable_list = { name = lsq_all_locations_including_subjects_list_allowed_to_build_$building_type_text$ target = scope:location } }
+        if = { limit = { scope:location = { lsq_location_will_auto_build_$building_type_text$ = yes } }
+          scope:country = { change_variable = { name = lsq_all_locations_including_subjects_size_will_auto_build_$building_type_text$ add = 1 } }
+        }
+      }
+    }
+  }
+}
+
+# Expects scopes: building_type
+lsq_effect_from_building_type = {
+  switch = { trigger = scope:building_type
+    building_type:temple = { $effect_to_run$ = { building_type_text = temple } }
+    building_type:library = { $effect_to_run$ = { building_type_text = library } }
+    building_type:settlement_building = { $effect_to_run$ = { building_type_text = settlement_building } }
+    building_type:bridge_infrastructure = { $effect_to_run$ = { building_type_text = bridge_infrastructure } }
+    building_type:pound_lock_canal_infrastructure = { $effect_to_run$ = { building_type_text = pound_lock_canal_infrastructure } }
+    building_type:university = { $effect_to_run$ = { building_type_text = university } }
+    building_type:hospital = { $effect_to_run$ = { building_type_text = hospital } }
+    building_type:minting_office = { $effect_to_run$ = { building_type_text = minting_office } }
+    building_type:counting_house = { $effect_to_run$ = { building_type_text = counting_house } }
+    building_type:wharf = { $effect_to_run$ = { building_type_text = wharf } }
+    building_type:market_village = { $effect_to_run$ = { building_type_text = market_village } }
+    building_type:sawmill = { $effect_to_run$ = { building_type_text = sawmill } }
+    building_type:windmill = { $effect_to_run$ = { building_type_text = windmill } }
+    building_type:local_smelters = { $effect_to_run$ = { building_type_text = local_smelters } }
+    building_type:protected_harbor = { $effect_to_run$ = { building_type_text = protected_harbor } }
   }
 }
 

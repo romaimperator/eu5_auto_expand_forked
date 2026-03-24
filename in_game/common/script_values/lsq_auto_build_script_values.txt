@@ -164,6 +164,41 @@ lsq_auto_build_number_of_locations_will_auto_build = {
   }
 }
 
+# Root is the country. Also expects the scope building_type and country.
+lsq_auto_build_number_of_locations_will_auto_build_cached = {
+  if = { limit = { scope:building_type = building_type:temple }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_temple
+  } else_if = { limit = { scope:building_type = building_type:library }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_library
+  } else_if = { limit = { scope:building_type = building_type:settlement_building }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_settlement_building
+  } else_if = { limit = { scope:building_type = building_type:bridge_infrastructure }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_bridge_infrastructure
+  } else_if = { limit = { scope:building_type = building_type:pound_lock_canal_infrastructure }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_pound_lock_canal_infrastructure
+  } else_if = { limit = { scope:building_type = building_type:university }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_university
+  } else_if = { limit = { scope:building_type = building_type:hospital }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_hospital
+  } else_if = { limit = { scope:building_type = building_type:minting_office }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_minting_office
+  } else_if = { limit = { scope:building_type = building_type:counting_house }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_counting_house
+  } else_if = { limit = { scope:building_type = building_type:wharf }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_wharf
+  } else_if = { limit = { scope:building_type = building_type:market_village }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_market_village
+  } else_if = { limit = { scope:building_type = building_type:sawmill }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_sawmill
+  } else_if = { limit = { scope:building_type = building_type:windmill }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_windmill
+  } else_if = { limit = { scope:building_type = building_type:local_smelters }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_local_smelters
+  } else_if = { limit = { scope:building_type = building_type:protected_harbor }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_protected_harbor
+  }
+}
+
 
 #####################
 # Includes subjects #
@@ -391,10 +426,47 @@ lsq_auto_build_number_of_locations_including_subjects_will_auto_build = {
   }
 }
 
+# Root is the country. Also expects the scope building_type and country.
+lsq_auto_build_number_of_locations_including_subjects_will_auto_build_cached = {
+  if = { limit = { scope:building_type = building_type:temple }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_temple
+  } else_if = { limit = { scope:building_type = building_type:library }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_library
+  } else_if = { limit = { scope:building_type = building_type:settlement_building }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_settlement_building
+  } else_if = { limit = { scope:building_type = building_type:bridge_infrastructure }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_bridge_infrastructure
+  } else_if = { limit = { scope:building_type = building_type:pound_lock_canal_infrastructure }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_pound_lock_canal_infrastructure
+  } else_if = { limit = { scope:building_type = building_type:university }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_university
+  } else_if = { limit = { scope:building_type = building_type:hospital }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_hospital
+  } else_if = { limit = { scope:building_type = building_type:minting_office }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_minting_office
+  } else_if = { limit = { scope:building_type = building_type:counting_house }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_counting_house
+  } else_if = { limit = { scope:building_type = building_type:wharf }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_wharf
+  } else_if = { limit = { scope:building_type = building_type:market_village }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_market_village
+  } else_if = { limit = { scope:building_type = building_type:sawmill }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_sawmill
+  } else_if = { limit = { scope:building_type = building_type:windmill }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_windmill
+  } else_if = { limit = { scope:building_type = building_type:local_smelters }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_local_smelters
+  } else_if = { limit = { scope:building_type = building_type:protected_harbor }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_protected_harbor
+  }
+}
+
+# Root is the building type
+# Expects scopes: country
 lsq_get_minimum_control_for_auto_build = {
   scope:country = {
-    if = { limit = { AND = { has_variable_map = lsq_minimum_control_for_auto_build is_key_in_variable_map = { name = lsq_minimum_control_for_auto_build target = scope:building_type } } }
-      value = "variable_map(lsq_minimum_control_for_auto_build|scope:building_type)"
+    if = { limit = { AND = { has_variable_map = lsq_minimum_control_for_auto_build is_key_in_variable_map = { name = lsq_minimum_control_for_auto_build target = prev } } }
+      value = "variable_map(lsq_minimum_control_for_auto_build|prev)"
     } else = { value = -1 }
   }
 }
