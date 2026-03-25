@@ -47,8 +47,8 @@ lsq_check_that_country_variables_are_set = {
         save_scope_as = building_type
         scope:country = {
           if = { limit = { OR = { NOT = { has_variable_map = lsq_minimum_control_for_auto_build } NOT = { is_key_in_variable_map = { name = lsq_minimum_control_for_auto_build target = scope:building_type } } } }
-            # Default to 0 for temple and minting office as they increase control so best to build them everywhere regardless of control
-            if = { limit = { OR = { scope:building_type = building_type:temple scope:building_type = building_type:minting_office } }
+            # Default to 0 for temple and minting office as they increase control so best to build them everywhere regardless of control, and settlements as we want to build them everywhere for the population growth
+            if = { limit = { OR = { scope:building_type = building_type:temple scope:building_type = building_type:minting_office scope:building_type = building_type:settlement_building } }
               add_to_variable_map = { name = lsq_minimum_control_for_auto_build key = scope:building_type value = 0 }
             } else = {
               add_to_variable_map = { name = lsq_minimum_control_for_auto_build key = scope:building_type value = 0.5 }
