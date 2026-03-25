@@ -9,10 +9,18 @@ lsq_location_can_auto_build_library = {
 # Root is the location, also expects the scope country
 lsq_location_allowed_to_build_library = {
 	AND = {
-		lsq_auto_build_check_building_researched_library = yes
-		lsq_auto_build_check_no_building_type = { target = building_type:library }
-		lsq_auto_build_check_town_or_city = yes
+		scope:country = { has_advance = library_advance }
+		NOT = { has_building = building_type:library }
+		OR = {
+			location_rank = location_rank:town
+			location_rank = location_rank:city
+		}
 	}
+	# AND = {
+	# 	lsq_auto_build_check_building_researched_library = yes
+	# 	lsq_auto_build_check_no_building_type = { target = building_type:library }
+	# 	lsq_auto_build_check_town_or_city = yes
+	# }
 }
 
 # Root is the location, also expects the scope country

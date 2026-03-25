@@ -9,15 +9,25 @@ lsq_location_can_auto_build_windmill = {
 # Root is the location, also expects the scope country
 lsq_location_allowed_to_build_windmill = {
 	AND = {
-		lsq_auto_build_check_building_researched_windmill = yes
-		lsq_auto_build_check_no_building_type = { target = building_type:windmill }
-		lsq_auto_build_check_rural = yes
+		scope:country = { has_advance = windmills_advance }
+		NOT = { has_building = building_type:windmill }
+		location_rank = location_rank:rural_settlement
 		OR = {
-			raw_material = goods:wheat
-			raw_material = goods:rice
-			raw_material = goods:millet
+			raw_material = goods:wheat # 953
+			raw_material = goods:millet # 763
+			raw_material = goods:rice # 538
 		}
 	}
+	# AND = {
+	# 	lsq_auto_build_check_building_researched_windmill = yes
+	# 	lsq_auto_build_check_no_building_type = { target = building_type:windmill }
+	# 	lsq_auto_build_check_rural = yes
+	# 	OR = {
+	# 		raw_material = goods:wheat
+	# 		raw_material = goods:rice
+	# 		raw_material = goods:millet
+	# 	}
+	# }
 }
 
 # Root is the location, also expects the scope country

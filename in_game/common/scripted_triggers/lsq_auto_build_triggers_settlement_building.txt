@@ -9,11 +9,17 @@ lsq_location_can_auto_build_settlement_building = {
 # Root is the location
 lsq_location_allowed_to_build_settlement_building = {
 	AND = {
-		lsq_auto_build_check_building_researched_settlement_building = yes
-		lsq_auto_build_check_no_building_type = { target = building_type:settlement_building }
-		lsq_auto_build_check_has_less_than_5_percent_of_population_capacity = yes
-		lsq_auto_build_check_rural = yes
+		always = yes # not locked behind a tech
+		NOT = { has_building = building_type:settlement_building }
+		location_population_percentage < 0.05
+		location_rank = location_rank:rural_settlement
 	}
+	# AND = {
+	# 	lsq_auto_build_check_building_researched_settlement_building = yes
+	# 	lsq_auto_build_check_no_building_type = { target = building_type:settlement_building }
+	# 	lsq_auto_build_check_has_less_than_5_percent_of_population_capacity = yes
+	# 	lsq_auto_build_check_rural = yes
+	# }
 }
 
 # Root is the location

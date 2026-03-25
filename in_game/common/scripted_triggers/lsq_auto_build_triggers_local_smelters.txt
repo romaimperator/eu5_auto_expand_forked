@@ -9,16 +9,27 @@ lsq_location_can_auto_build_local_smelters = {
 # Root is the location, also expects the scope country
 lsq_location_allowed_to_build_local_smelters = {
 	AND = {
-		lsq_auto_build_check_building_researched_local_smelters = yes
-		lsq_auto_build_check_no_building_type = { target = building_type:local_smelters }
-		lsq_auto_build_check_rural = yes
+		scope:country = { has_advance = local_smelters_advance }
+		NOT = { has_building = building_type:local_smelters }
+		location_rank = location_rank:rural_settlement
 		OR = {
-			raw_material = goods:iron
-			raw_material = goods:copper
-			raw_material = goods:tin
-			raw_material = goods:lead
+			raw_material = goods:iron # 425
+			raw_material = goods:copper # 223
+			raw_material = goods:lead # 104
+			raw_material = goods:tin # 91
 		}
 	}
+	# AND = {
+	# 	lsq_auto_build_check_building_researched_local_smelters = yes
+	# 	lsq_auto_build_check_no_building_type = { target = building_type:local_smelters }
+	# 	lsq_auto_build_check_rural = yes
+	# 	OR = {
+	# 		raw_material = goods:iron
+	# 		raw_material = goods:copper
+	# 		raw_material = goods:tin
+	# 		raw_material = goods:lead
+	# 	}
+	# }
 }
 
 # Root is the location, also expects the scope country

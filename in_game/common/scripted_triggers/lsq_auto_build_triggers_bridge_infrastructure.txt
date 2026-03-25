@@ -9,11 +9,17 @@ lsq_location_can_auto_build_bridge_infrastructure = {
 # Root is the location, also expects the scope country
 lsq_location_allowed_to_build_bridge_infrastructure = {
 	AND = {
-		lsq_auto_build_check_building_researched_bridge_infrastructure = yes
-		lsq_auto_build_check_no_building_type = { target = building_type:bridge_infrastructure }
-		lsq_auto_build_check_has_a_river = yes
-		lsq_auto_build_check_has_at_least_one_road = yes
+		always = yes # not locked behind a tech
+		NOT = { has_building = building_type:bridge_infrastructure }
+		has_river = yes
+		num_roads > 0
 	}
+	# AND = {
+	# 	lsq_auto_build_check_building_researched_bridge_infrastructure = yes
+	# 	lsq_auto_build_check_no_building_type = { target = building_type:bridge_infrastructure }
+	# 	lsq_auto_build_check_has_a_river = yes
+	# 	lsq_auto_build_check_has_at_least_one_road = yes
+	# }
 }
 
 # Root is the location, also expects the scope country
