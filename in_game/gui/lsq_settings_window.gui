@@ -1076,6 +1076,87 @@
 					layoutpolicy_horizontal = expanding
 					margin = { 5 0 }
 					spacing = 5
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						expand = {}
+						text_single = {
+							margin_left = 5
+							raw_text = "Min Discount:"
+						}
+						expand = {}
+					}
+					datamodel = "[GetPlayer.MakeScope.GetList('lsq_auto_build_building_types_list')]"
+					item = {
+						lsq_numeric_setting = {
+							datacontext = "[Scope.GetBuildingType]"
+							blockoverride "left_button_left_click_default" {
+								action_tooltip = {
+									using = lsq_left_click_default
+									title = "Change Minimum Market Price Impact Discount by #R -1%#!"
+									on_action = "[GetScriptedGui('lsq_decrease_minimum_market_price_impact_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "left_button_left_click_shift" {
+								action_tooltip = {
+									using = lsq_left_click_shift
+									title = "Change Minimum Market Price Impact Discount by #R -5%#!"
+									on_action = "[GetScriptedGui('lsq_decrease_minimum_market_price_impact_for_auto_build_5').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "left_button_left_click_ctrl" {
+								action_tooltip = {
+									using = lsq_left_click_ctrl
+									title = "Change Minimum Market Price Impact Discount to #R -33%#!"
+									on_action = "[GetScriptedGui('lsq_decrease_minimum_market_price_impact_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "current_value" {
+								raw_text = "[GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_market_price_impact_for_auto_build')|%0-=]"
+							}
+							blockoverride "tooltip" {
+								tooltipwidget = {
+									SimpleContextualTooltipType = {
+										blockoverride "title_text" {
+											raw_text = "Minimum Market Price Impact"
+										}
+										blockoverride "tooltip_content" {
+											TooltipTextBlock = {
+												blockoverride "text" {
+													raw_text = "This setting is the minimum market price impact that must be met before the mod will auto-build [BuildingType.GetName] in a location. You can find the market price impact by hovering over the expand button of a building and then hovering over the building cost number. You can also find it for a location by hovering over one of the auto-build buildings and then hovering over a specific location and checking the tooltip."
+												}
+											}
+										}
+									}
+								}
+							}
+							blockoverride "right_button_left_click_default" {
+								action_tooltip = {
+									using = lsq_left_click_default
+									title = "Change Minimum Market Price Impact Discount by #G +1%#!"
+									on_action = "[GetScriptedGui('lsq_increase_minimum_market_price_impact_for_auto_build').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "right_button_left_click_shift" {
+								action_tooltip = {
+									using = lsq_left_click_shift
+									title = "Change Minimum Market Price Impact Discount by #G +5%#!"
+									on_action = "[GetScriptedGui('lsq_increase_minimum_market_price_impact_for_auto_build_5').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+							blockoverride "right_button_left_click_ctrl" {
+								action_tooltip = {
+									using = lsq_left_click_ctrl
+									title = "Change Minimum Market Price Impact Discount to #G 33%#!"
+									on_action = "[GetScriptedGui('lsq_increase_minimum_market_price_impact_for_auto_build_100').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+								}
+							}
+						}
+					}
+				}
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					margin = { 5 0 }
+					spacing = 5
 
 					hbox = {
 						layoutpolicy_horizontal = expanding

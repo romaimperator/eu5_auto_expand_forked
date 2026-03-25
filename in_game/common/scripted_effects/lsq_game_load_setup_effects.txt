@@ -57,6 +57,19 @@ lsq_check_that_country_variables_are_set = {
         }
       }
     }
+
+    if = { limit = { NOT = { has_variable_map = lsq_minimum_market_price_impact_for_auto_build } }
+      every_in_list = {
+        variable = lsq_auto_build_building_types_list
+        save_scope_as = building_type
+        scope:country = {
+          if = { limit = { OR = { NOT = { has_variable_map = lsq_minimum_market_price_impact_for_auto_build } NOT = { is_key_in_variable_map = { name = lsq_minimum_market_price_impact_for_auto_build target = scope:building_type } } } }
+            # Default to -0.33 for all building types so by default we will build only with the max discount
+            add_to_variable_map = { name = lsq_minimum_market_price_impact_for_auto_build key = scope:building_type value = -0.33 }
+          }
+        }
+      }
+    }
   }
 }
 
@@ -146,6 +159,19 @@ lsq_move_data_from_old_country_to_new_country = {
         }
       }
     }
+
+    # Copy the minimum market_price_impact settings
+    scope:old_country = {
+      every_key_in_variable_map = {
+        variable = lsq_minimum_market_price_impact_for_auto_build
+        save_scope_as = building_type_key
+        set_local_variable = { name = min_market_price_impact value = "scope:old_country.variable_map(lsq_minimum_market_price_impact_for_auto_build|scope:building_type_key)" }
+        debug_log = "LSQ: Copying minimum market_price_impact for auto build for building type [TopScope.sBuildingType('building_type_key').GetNameWithNoTooltip] to [TopScope.GetLocalVariable('min_market_price_impact').GetValue]"
+        scope:new_country = {
+          add_to_variable_map = { name = lsq_minimum_market_price_impact_for_auto_build key = scope:building_type_key value = local_var:min_market_price_impact }
+        }
+      }
+    }
   }
 
   # Clear the old country variables
@@ -166,6 +192,7 @@ lsq_move_data_from_old_country_to_new_country = {
     remove_variable = lsq_required_rgo_levels_before_windmill
     remove_variable = lsq_required_rgo_levels_before_local_smelters
     clear_variable_map = lsq_minimum_control_for_auto_build
+    clear_variable_map = lsq_minimum_market_price_impact_for_auto_build
   }
 }
 

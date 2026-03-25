@@ -200,6 +200,19 @@
                                   }
                                 }
                                 lsq_tooltip_row = {
+                                  using = lsq_tooltip_row_is_odd
+                                  blockoverride "vertical_line_size" { size = { 3 51 } }
+                                  blockoverride "yes_visible" {
+                                    visible = "[GetScriptedGui('lsq_auto_build_check_meets_minimum_market_price_impact').IsShown(GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+                                  }
+                                  blockoverride "no_visible" {
+                                    visible = "[Not(GetScriptedGui('lsq_auto_build_check_meets_minimum_market_price_impact').IsShown(GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+                                  }
+                                  blockoverride "row_text" {
+                                    raw_text = "Location meets minimum market price impact (min: [GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_get_minimum_market_price_impact_for_auto_build')|%-=] vs current: [GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('lsq_get_construction_cost_adjustment_for_building_type')|%-=])"
+                                  }
+                                }
+                                lsq_tooltip_row = {
                                   blockoverride "vertical_line_size" { size = { 3 41 } }
                                   blockoverride "yes_visible" {
                                     visible = "[GetScriptedGui('lsq_auto_build_check_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"

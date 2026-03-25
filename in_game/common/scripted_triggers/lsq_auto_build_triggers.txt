@@ -170,6 +170,15 @@ lsq_auto_build_check_meets_minimum_control = {
 	scope:location.max_control >= $target$.lsq_get_minimum_control_for_auto_build
 }
 
+# Expects scopes: country, location
+# Expects param: target => building_type
+lsq_auto_build_check_meets_minimum_market_price_impact = {
+	$target$ = { lsq_get_construction_cost_adjustment_for_building_type <= lsq_get_minimum_market_price_impact_for_auto_build }
+}
+lsq_auto_build_check_meets_minimum_market_price_impact_with_key = {
+	building_type:$key$ = { lsq_get_construction_cost_adjustment_for_$key$ <= lsq_get_minimum_market_price_impact_for_auto_build }
+}
+
 # Root is the location. Expects the building type as a target, also expects the scope country
 lsq_auto_build_check_pops_available = {
 	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = auto_build_check_pops_available }
