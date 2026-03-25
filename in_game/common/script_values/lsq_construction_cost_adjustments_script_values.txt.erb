@@ -5,13 +5,14 @@
 # - <%= game_root.join("in_game/common/goods_demand/building_construction_costs.txt") %>
 # - <%= game_root.join("in_game/common/goods_demand/special_construction_demands.txt") %>
 
-# Expects scopes: building_type, location
+# Root is the building_type
+# Expects scopes: location
 lsq_get_construction_cost_adjustment_for_building_type = {
 <% if building_ids.empty? -%>
 	value = 0
 <% else -%>
 <% building_ids.each_with_index do |building_type, index| -%>
-	<%= index.zero? ? "if" : "else_if" %> = { limit = { scope:building_type = building_type:<%= building_type %> }
+	<%= index.zero? ? "if" : "else_if" %> = { limit = { this = building_type:<%= building_type %> }
 		value = lsq_get_construction_cost_adjustment_for_<%= building_type %>
 	}
 <% end -%>
