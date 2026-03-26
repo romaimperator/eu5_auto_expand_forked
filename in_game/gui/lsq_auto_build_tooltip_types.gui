@@ -48,7 +48,7 @@
           }
         }
         TooltipListBase = {
-          max_width = 440
+          max_width = 605
           visible = "[GetScriptedGui('lsq_auto_build_check_any_location_allowed_to_build').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
           TooltipListColumnContent = {
             TooltipTableField = {
@@ -93,6 +93,42 @@
                 text_single = {
                   using = Font_Type_Headers
                   text = "[max_control|e]"
+                }
+              }
+            }
+            TooltipTableField = {
+              max_width = 165
+              blockoverride "field_background" {
+                background = {
+                  using = tile_background_squared_texture
+                  frame_grid = { 1 2 }
+                  spriteborder_bottom = 0
+                  alpha = 0.4
+                  modify_texture = {
+                    using = color_turquoise_texture
+                  }
+                }
+              }
+
+              blockoverride "field_content" {
+                expand = {}
+                text_single = {
+                  using = Font_Type_Headers
+                  raw_text = "Market Price Impact"
+                  tooltipwidget = {
+                    ContextualTooltipType = {
+                      blockoverride "title_text" {
+                        raw_text = "Market Price Impact"
+                      }
+                      blockoverride "tooltip_content" {
+                        TooltipTextBlock = {
+                          blockoverride "text" {
+                            raw_text = "This is the percentage change in price from the cost of construction goods in the market of the location. A negative value means there is a discount on the cost of the building. A positive value means there's a penalty."
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -372,6 +408,22 @@
                   }
                   blockoverride "field_text" {
                     text = "[Location.GetMaxControl]"
+                  }
+                }
+
+                LSQTooltipTableColumn = {
+                  blockoverride "fixedgridbox_size" {
+                    addcolumn = 165
+                    addrow = 30
+                  }
+                  layoutpolicy_vertical = expanding
+
+                  blockoverride "field_left" {
+                    expand = {}
+                    datacontext = "[Scope.GetLocation]"
+                  }
+                  blockoverride "field_text" {
+                    raw_text = "[GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('lsq_get_construction_cost_adjustment_for_building_type')|%-=]"
                   }
                 }
 
