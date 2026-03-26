@@ -1,5 +1,7 @@
 ﻿Future Implementation Ideas
 
+- Handle buildings that aren't in the default base game the old way
+- Make compatible with Glorp UI
 - Add check to make sure there's enough goods to auto-expand an RGO
 - Add button to enable/disable auto-expand for every building in a location
 - See if we can add a filter so you can filter irrigation and farming villages by RGO in the location
@@ -22,3 +24,4 @@ Completed Ideas:
 - Add a setting for minimum control before auto-build occurs
 - Add a setting for amount of overbuild allowed in a location by percent of extra cost (maybe just how many extra levels over cap)
 - Add a setting to set minimum building discount before auto-expanding
+- Increase max minimum gold to save for late game
