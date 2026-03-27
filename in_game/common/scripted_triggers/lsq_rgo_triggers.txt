@@ -2,9 +2,11 @@
 lsq_is_able_to_auto_expand_rgo = {
 	AND = {
 		owner = { lsq_should_pause_auto_expand = no }
+		lsq_is_rgo_advance_researched = yes
 		lsq_is_rgo_not_max_level_already = yes
 		lsq_is_rgo_fully_employed = yes
 		# lsq_has_enough_raw_materials_for_rgo = yes
+		lsq_is_rgo_under_construction = no
 	}
 }
 
@@ -14,6 +16,7 @@ lsq_should_rgo_auto_expand = {
 	scope:location = {
 		AND = {
 			scope:country = { lsq_should_pause_auto_expand = no }
+			lsq_is_rgo_advance_researched = yes
 			lsq_is_rgo_not_max_level_already = yes
 			lsq_is_rgo_fully_employed = yes
 			# lsq_has_enough_raw_materials_for_rgo = yes
@@ -38,6 +41,28 @@ lsq_is_rgo_under_construction = {
 # Expects scopes: country, location
 lsq_is_there_enough_gold_available = {
 	scope:country.gold > lsq_expected_gold_available_for_rgo_auto_expand
+}
+
+# Root is location
+# Expects scopes: country
+lsq_is_rgo_advance_researched = {
+	trigger_if = { limit = { OR = { raw_material = goods:iron raw_material = goods:coal } }
+		scope:country = { has_advance = iron_working }
+	} trigger_else_if = { limit = { OR = { raw_material = goods:copper raw_material = goods:tin raw_material = goods:lead } }
+		scope:country = { has_advance = bronze_working }
+	} trigger_else_if = { limit = { OR = { raw_material = goods:goods_gold raw_material = goods:silver raw_material = goods:mercury } }
+		scope:country = { has_advance = fine_metals_mining }
+	} trigger_else_if = { limit = { OR = { raw_material = goods:wheat raw_material = goods:maize raw_material = goods:potato raw_material = goods:rice raw_material = goods:millet raw_material = goods:legumes } }
+		scope:country = { has_advance = agriculture_advance }
+	} trigger_else_if = { limit = { raw_material = goods:horses }
+		scope:country = { has_advance = ranching }
+	} trigger_else_if = { limit = { OR = { raw_material = goods:stone raw_material = goods:marble } }
+		scope:country = { has_advance = mining_advance }
+	} trigger_else_if = { limit = { OR = { raw_material = goods:saltpeter raw_material = goods:alum } }
+		scope:country = { has_advance = advanced_mining }
+	} trigger_else = {
+		always = yes
+	}
 }
 
 # Root = location. Checks if the market has enough construction goods for an RGO upgrade.
