@@ -5,7 +5,7 @@ lsq_is_able_to_auto_expand_rgo = {
 		lsq_is_rgo_advance_researched = yes
 		lsq_is_rgo_not_max_level_already = yes
 		lsq_is_rgo_fully_employed = yes
-		# lsq_has_enough_raw_materials_for_rgo = yes
+		lsq_has_enough_raw_materials_for_rgo = yes
 		# lsq_is_rgo_under_construction = no # don't check if it's under construction when we're deciding if the button should be green or red
 	}
 }
@@ -19,7 +19,7 @@ lsq_should_rgo_auto_expand = {
 			lsq_is_rgo_advance_researched = yes
 			lsq_is_rgo_not_max_level_already = yes
 			lsq_is_rgo_fully_employed = yes
-			# lsq_has_enough_raw_materials_for_rgo = yes
+			lsq_has_enough_raw_materials_for_rgo = yes
 			lsq_is_rgo_under_construction = no
 			lsq_is_there_enough_gold_available = yes
 		}
@@ -66,22 +66,22 @@ lsq_is_rgo_advance_researched = {
 }
 
 # Root = location. Checks if the market has enough construction goods for an RGO upgrade.
-# lsq_has_enough_raw_materials_for_rgo = {
-#     OR = {
-#         AND = {
-#             OR = {
-#                 raw_material ?= { goods_method = mining }
-#                 raw_material ?= { goods_method = farming }
-#                 raw_material ?= { goods_method = gathering }
-#             }
-#             market ?= { "stockpile_in_market(goods:lumber)" >= 0.1 }
-#         }
-#         AND = {
-#             OR = {
-#                 raw_material ?= { goods_method = hunting }
-#                 raw_material ?= { goods_method = forestry }
-#             }
-#             market ?= { "stockpile_in_market(goods:tools)" >= 0.1 }
-#         }
-#     }
-# }
+lsq_has_enough_raw_materials_for_rgo = {
+	OR = {
+		AND = {
+			OR = {
+				raw_material ?= { goods_method = mining }
+				raw_material ?= { goods_method = farming }
+				raw_material ?= { goods_method = gathering }
+				raw_material ?= { goods_method = hunting }
+			}
+			goods:lumber = { save_temporary_scope_as = good }
+			lsq_get_max_required_construction_demand_to_still_allow_building >= 0.1
+		}
+		AND = {
+			raw_material ?= { goods_method = forestry }
+			goods:masonry = { save_temporary_scope_as = good }
+			lsq_get_max_required_construction_demand_to_still_allow_building >= 0.1
+		}
+	}
+}
