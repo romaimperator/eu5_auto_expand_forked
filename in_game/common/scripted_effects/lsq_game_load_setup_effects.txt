@@ -11,6 +11,15 @@ lsq_check_that_country_variables_are_set = {
       lsq_populate_building_type_type_maps = {}
     }
 
+    if = { limit = { NOT = { has_variable = every_non_standard_building_type_count } }
+      set_variable = { name = every_non_standard_building_type_count value = 0 }
+      every_building_type = {
+        limit = { NOT = { is_key_in_global_variable_map = { name = lsq_building_type_to_is_production_building target = this } } }
+        scope:country = { add_to_variable_list = { name = every_non_standard_building_type target = prev } }
+        scope:country = { change_variable = { name = every_non_standard_building_type_count add = 1 } }
+      }
+    }
+
     # Reset the location lists every time we load the game
     if = { limit = { OR = { NOT = { has_variable_list = lsq_all_controlled_locations_list } NOT = { has_variable_list = lsq_all_locations_including_subjects_list } } }
       lsq_reset_locations_lists = {}

@@ -21,7 +21,7 @@
 			# 	state = {
 			# 		name = lsq_hidden_window_one_time_save_load_init
 			# 		trigger_on_create = yes
-			# 		on_finish = "[GetScriptedGui('lsq_hidden_window_one_time_save_load_init').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			# 		# on_finish = "[GetScriptedGui('lsq_hidden_window_one_time_save_load_init').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			# 	}
 			# }
 
@@ -66,36 +66,65 @@
 			# 	# }
 			# }
 
+			vbox = {
+				name = building_type_section
+				state = {
+					name = lsq_building_type_section_init
+					trigger_on_create = yes
+					on_start = "[PdxGuiTriggerAllAnimations('lsq_building_type_section_buildings_init_state')]"
+					duration = 2
+					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_building_type_section_init')]"
+				}
+				visible = "[GetScriptedGui('lsq_should_building_type_section_show').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+				text_single = {
+					raw_text = "Building type section"
+				}
+				datamodel = "[GetPlayer.MakeScope.GetList('every_non_standard_building_type')]"
+				item = {
+					hbox = {
+						datacontext = "[Scope.GetBuildingType]"
+						visible = "[Or(Not(GetPlayer.MakeScope.VariableMapExists('lsq_non_standard_building_type_processed')), And(GetPlayer.MakeScope.VariableMapExists('lsq_non_standard_building_type_processed'), Not(GetScriptedGui('lsq_is_non_standard_building_type_processed').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))))]"
+						state = {
+							name = lsq_building_type_section_buildings_init_state
+							duration = 0.1
+							on_finish = "[GetScriptedGui('lsq_building_type_section_buildings_init').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('is_producing', MakeScopeBool(BuildingType.IsProducing)).AddScope('is_multiple_levels', MakeScopeBool(BuildingType.IsMultipleLevels)).AddScope('is_fort', MakeScopeBool(BuildingType.IsFort)).AddScope('pop_type', BuildingType.GetPopType.MakeScope).End)]"
+						}
+						# text_single = {
+						# 	raw_text = "[BuildingType.GetName] [GuiScope.AddScope('location', GetPlayer.GetCapital.GetLocation.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_get_construction_cost_modifier_for_building_type')|%-=]  cat: [BuildingType.GetConstructionDemand.GetName]"
+						# }
+						vbox = {
+							margin = { 5 0 }
+							visible = "[GreaterThan_int32(GetDataModelSize(BuildingType.GetConstructionDemand.GetEntries), '(int32)0')]"
+							datamodel = "[BuildingType.GetConstructionDemand.GetEntries]"
+							item = {
+								overlappingitembox = {
+									state = {
+										name = lsq_building_type_section_buildings_init_state
+										duration = 0.1
+										on_finish = "[GetScriptedGui('lsq_non_standard_building_type_construction_demand').Execute(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('good', GoodsDemandEntry.GetGoods.MakeScope).AddScope('amount', MakeScopeValue(GoodsDemandEntry.GetValue)).End)]"
+									}
+									# text_single = {
+									# 	raw_text = "[GoodsDemandEntry.GetGoods.GetNameWithNoTooltip] [GoodsDemandEntry.GetValue]"
+									# }
+								}
+							}
+						}
+					}
+				}
+			}
+
 			# vbox = {
-			# 	name = building_type_section
-			# 	state = {
-			# 		name = lsq_building_type_section_init
-			# 		trigger_on_create = yes
-			# 		on_start = "[PdxGuiTriggerAllAnimations('lsq_building_type_section_buildings_init_state')]"
-			# 		duration = 2
-			# 		on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_building_type_section_init')]"
-			# 	}
-			# 	visible = "[GetScriptedGui('lsq_should_building_type_section_show').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			# 	# visible = "[GetScriptedGui('lsq_should_building_type_section_show').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			# 	text_single = {
 			# 		raw_text = "Building type section"
 			# 	}
-			# 	datamodel = "[GetGlobalList('every_building_type_list')]"
+			# 	datamodel = "[GetPlayer.MakeScope.GetList('every_non_standard_building_type')]"
 			# 	item = {
 			# 		hbox = {
 			# 			datacontext = "[Scope.GetBuildingType]"
-			# 			visible = "[Or(Not(GlobalVariableMapExists('lsq_building_type_processed')), And(GlobalVariableMapExists('lsq_building_type_processed'), Not(GetScriptedGui('lsq_is_building_type_processed').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).End))))]"
-			# 			state = {
-			# 				name = _show
-			# 				next = lsq_building_type_section_buildings_init_state
-			# 				on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_building_type_section_buildings_init_state')]"
-			# 			}
-			# 			state = {
-			# 				name = lsq_building_type_section_buildings_init_state
-			# 				duration = 0.1
-			# 				on_finish = "[GetScriptedGui('lsq_building_type_section_buildings_init').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('is_producing', MakeScopeBool(BuildingType.IsProducing)).AddScope('is_multiple_levels', MakeScopeBool(BuildingType.IsMultipleLevels)).AddScope('is_fort', MakeScopeBool(BuildingType.IsFort)).End)]"
-			# 			}
+			# 			# visible = "[Or(Not(GetPlayer.MakeScope.VariableMapExists('lsq_non_standard_building_type_processed')), And(GetPlayer.MakeScope.VariableMapExists('lsq_non_standard_building_type_processed'), Not(GetScriptedGui('lsq_is_non_standard_building_type_processed').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))))]"
 			# 			text_single = {
-			# 				raw_text = "[BuildingType.GetNameWithNoTooltip]"
+			# 				raw_text = "[BuildingType.GetName] [GuiScope.AddScope('location', GetPlayer.GetCapital.GetLocation.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_get_construction_cost_modifier_for_building_type')|%-=]  cat: [BuildingType.GetConstructionDemand.GetName]"
 			# 			}
 			# 		}
 			# 	}

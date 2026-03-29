@@ -9,7 +9,19 @@ lsq_location_has_enough_pops_available = {
 <% building_pop_mappings.each do |mapping| -%>
 		building_type:<%= mapping.building_type %> = { lsq_auto_build_check_<%= mapping.pop_type %>_available_or_will_be = yes }
 <% end -%>
-		fallback = { always = no }
+		fallback = {
+			switch = { trigger = "global_variable_map(lsq_building_type_to_pop_type|scope:building_type)"
+				pop_type:nobles = { lsq_auto_build_check_nobles_available_or_will_be = yes }
+				pop_type:clergy = { lsq_auto_build_check_clergy_available_or_will_be = yes }
+				pop_type:burghers = { lsq_auto_build_check_burghers_available_or_will_be = yes }
+				pop_type:laborers = { lsq_auto_build_check_laborers_available_or_will_be = yes }
+				pop_type:soldiers = { lsq_auto_build_check_soldiers_available_or_will_be = yes }
+				pop_type:peasants = { lsq_auto_build_check_peasants_available_or_will_be = yes }
+				pop_type:slaves = { lsq_auto_build_check_slaves_available_or_will_be = yes }
+				pop_type:tribesmen = { lsq_auto_build_check_tribesmen_available_or_will_be = yes }
+				fallback = { always = no }
+			}
+		}
 	}
 <% end -%>
 }
