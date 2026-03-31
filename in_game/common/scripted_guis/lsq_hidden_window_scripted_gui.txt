@@ -47,7 +47,7 @@ lsq_should_building_type_section_show = {
 
 # # Root is the country
 lsq_building_type_section_buildings_init = {
-	saved_scopes = { building_type is_producing is_multiple_levels is_fort pop_type }
+	saved_scopes = { building_type is_producing is_multiple_levels is_fort pop_type upgrade_type }
 	effect = {
 		# debug_log = "LSQ: Initializing buildings [TopScope.sBuildingType('building_type').GetNameWithNoTooltip]"
 
@@ -92,6 +92,11 @@ lsq_building_type_section_buildings_init = {
 		# Set the pop type employed by this building type
 		add_to_global_variable_map = { name = lsq_building_type_to_pop_type key = scope:building_type value = scope:pop_type }
 
+		# Set the buiding type that this building upgrades into if there is one
+		if = { limit = { exists = scope:upgrade_type }
+			add_to_global_variable_map = { name = lsq_building_type_to_upgrade_type key = scope:building_type value = scope:upgrade_type }
+	  }
+
 		# Set that this building type has been processed
 		add_to_variable_map = { name = lsq_non_standard_building_type_processed key = scope:building_type value = 1 }
 	}
@@ -100,48 +105,120 @@ lsq_building_type_section_buildings_init = {
 lsq_non_standard_building_type_construction_demand = {
 	saved_scopes = { building_type good amount }
 	effect = {
+		# debug_log = "LSQ: Non-standard building type construction demand: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] [TopScope.sGoods('good').GetNameWithNoTooltip]"
 		switch = { trigger = scope:good
-			goods:books = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_books key = scope:building_type value = scope:amount } }
-			goods:clay = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_clay key = scope:building_type value = scope:amount } }
-			goods:cloth = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_cloth key = scope:building_type value = scope:amount } }
-			goods:copper = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_copper key = scope:building_type value = scope:amount } }
-			goods:fine_cloth = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_fine_cloth key = scope:building_type value = scope:amount } }
-			goods:firearms = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_firearms key = scope:building_type value = scope:amount } }
-			goods:glass = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_glass key = scope:building_type value = scope:amount } }
-			goods:goods_gold = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_goods_gold key = scope:building_type value = scope:amount } }
-			goods:horses = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_horses key = scope:building_type value = scope:amount } }
-			goods:jewelry = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_jewelry key = scope:building_type value = scope:amount } }
-			goods:leather = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_leather key = scope:building_type value = scope:amount } }
-			goods:liquor = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_liquor key = scope:building_type value = scope:amount } }
-			goods:livestock = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_livestock key = scope:building_type value = scope:amount } }
-      goods:lumber = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_lumber key = scope:building_type value = scope:amount } }
-      goods:marble = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_marble key = scope:building_type value = scope:amount } }
-			goods:masonry = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_masonry key = scope:building_type value = scope:amount } }
-      goods:naval_supplies = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_naval_supplies key = scope:building_type value = scope:amount } }
-      goods:paper = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_paper key = scope:building_type value = scope:amount } }
-      goods:salt = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_salt key = scope:building_type value = scope:amount } }
-      goods:sand = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_sand key = scope:building_type value = scope:amount } }
-      goods:silver = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_silver key = scope:building_type value = scope:amount } }
-      goods:steel = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_steel key = scope:building_type value = scope:amount } }
-      goods:stone = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_stone key = scope:building_type value = scope:amount } }
-      goods:tin = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tin key = scope:building_type value = scope:amount } }
-      goods:tools = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tools key = scope:building_type value = scope:amount } }
-      goods:weaponry = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_weaponry key = scope:building_type value = scope:amount } }
-      goods:wheat = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wheat key = scope:building_type value = scope:amount } }
-      goods:wool = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wool key = scope:building_type value = scope:amount } }
-		}
-		if = { limit = { AND = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_total is_key_in_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total target = scope:building_type } } }
-			set_local_variable = { name = new_value value = { value = "global_variable_map(lsq_non_standard_building_type_construction_demand_total|scope:building_type)" add = scope:amount } }
-			remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total key = scope:building_type }
-			add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total key = scope:building_type value = local_var:new_value }
-			remove_local_variable = new_value
-			set_local_variable = { name = new_value value = { value = "global_variable_map(lsq_non_standard_building_type_construction_demand_total_count|scope:building_type)" add = 1 } }
-			remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total_count key = scope:building_type }
-			add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total_count key = scope:building_type value = local_var:new_value }
-			remove_local_variable = new_value
-		} else = {
-			add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total key = scope:building_type value = scope:amount }
-			add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total_count key = scope:building_type value = 1 }
+			goods:books = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_books key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_books key = scope:building_type value = scope:amount }
+			}
+			goods:clay = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_clay key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_clay key = scope:building_type value = scope:amount }
+			}
+			goods:cloth = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_cloth key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_cloth key = scope:building_type value = scope:amount }
+			}
+			goods:copper = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_copper key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_copper key = scope:building_type value = scope:amount }
+			}
+			goods:fine_cloth = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_fine_cloth key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_fine_cloth key = scope:building_type value = scope:amount }
+			}
+			goods:firearms = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_firearms key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_firearms key = scope:building_type value = scope:amount }
+			}
+			goods:glass = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_glass key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_glass key = scope:building_type value = scope:amount }
+			}
+			goods:goods_gold = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_goods_gold key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_goods_gold key = scope:building_type value = scope:amount }
+			}
+			goods:horses = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_horses key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_horses key = scope:building_type value = scope:amount }
+			}
+			goods:jewelry = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_jewelry key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_jewelry key = scope:building_type value = scope:amount }
+			}
+			goods:leather = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_leather key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_leather key = scope:building_type value = scope:amount }
+			}
+			goods:liquor = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_liquor key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_liquor key = scope:building_type value = scope:amount }
+			}
+			goods:livestock = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_livestock key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_livestock key = scope:building_type value = scope:amount }
+			}
+      goods:lumber = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_lumber key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_lumber key = scope:building_type value = scope:amount }
+			}
+      goods:marble = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_marble key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_marble key = scope:building_type value = scope:amount }
+			}
+			goods:masonry = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_masonry key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_masonry key = scope:building_type value = scope:amount }
+			}
+      goods:naval_supplies = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_naval_supplies key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_naval_supplies key = scope:building_type value = scope:amount }
+			}
+      goods:paper = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_paper key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_paper key = scope:building_type value = scope:amount }
+			}
+      goods:salt = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_salt key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_salt key = scope:building_type value = scope:amount }
+			}
+      goods:sand = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_sand key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_sand key = scope:building_type value = scope:amount }
+			}
+      goods:silver = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_silver key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_silver key = scope:building_type value = scope:amount }
+			}
+      goods:steel = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_steel key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_steel key = scope:building_type value = scope:amount }
+			}
+      goods:stone = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_stone key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_stone key = scope:building_type value = scope:amount }
+			}
+      goods:tin = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tin key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tin key = scope:building_type value = scope:amount }
+			}
+      goods:tools = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tools key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tools key = scope:building_type value = scope:amount }
+			}
+      goods:weaponry = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_weaponry key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_weaponry key = scope:building_type value = scope:amount }
+			}
+      goods:wheat = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wheat key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wheat key = scope:building_type value = scope:amount }
+			}
+      goods:wool = {
+				remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wool key = scope:building_type }
+				add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wool key = scope:building_type value = scope:amount }
+			}
 		}
 	}
 }

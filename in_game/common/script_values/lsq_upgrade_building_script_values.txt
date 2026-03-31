@@ -84,6 +84,9 @@ lsq_get_upgrade_building_cost = {
   else_if = { limit = { this = building_type:weapon_manufactory } building_type:weapon_factory = { value = building_base_cost_in_gold } }
   else_if = { limit = { this = building_type:weapon_workshop } building_type:weapon_manufactory = { value = building_base_cost_in_gold } }
   else_if = { limit = { this = building_type:winery } building_type:winery_manufactory = { value = building_base_cost_in_gold } }
+  else_if = { limit = { is_key_in_global_variable_map = { name = lsq_building_type_to_upgrade_type target = this } }
+    "global_variable_map(lsq_building_type_to_upgrade_type|this)" = { value = building_base_cost_in_gold }
+  }
 }
 
 lsq_adjusted_upgrade_cost = {
@@ -164,7 +167,12 @@ lsq_adjusted_upgrade_cost = {
   else_if = { limit = { scope:building_type = building_type:weapon_manufactory } building_type:weapon_factory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
   else_if = { limit = { scope:building_type = building_type:weapon_workshop } building_type:weapon_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
   else_if = { limit = { scope:building_type = building_type:winery } building_type:winery_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjusted_building_type_cost }
+  else_if = { limit = { is_key_in_global_variable_map = { name = lsq_building_type_to_upgrade_type target = scope:building_type } }
+    "global_variable_map(lsq_building_type_to_upgrade_type|scope:building_type)" = { save_temporary_scope_as = upgrade_building_type }
+    value = lsq_adjusted_building_type_cost
+  }
 }
+
 lsq_get_adjustment_to_base_building_cost_for_upgrade = {
   if = { limit = { scope:building_type = building_type:armory } building_type:barracks = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
   else_if = { limit = { scope:building_type = building_type:art_school } building_type:arts_academy = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
@@ -243,4 +251,8 @@ lsq_get_adjustment_to_base_building_cost_for_upgrade = {
   else_if = { limit = { scope:building_type = building_type:weapon_manufactory } building_type:weapon_factory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
   else_if = { limit = { scope:building_type = building_type:weapon_workshop } building_type:weapon_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
   else_if = { limit = { scope:building_type = building_type:winery } building_type:winery_manufactory = { save_temporary_scope_as = upgrade_building_type } value = lsq_adjustment_to_base_building_cost }
+  else_if = { limit = { is_key_in_global_variable_map = { name = lsq_building_type_to_upgrade_type target = scope:building_type } }
+    "global_variable_map(lsq_building_type_to_upgrade_type|scope:building_type)" = { save_temporary_scope_as = upgrade_building_type }
+    value = lsq_adjustment_to_base_building_cost
+  }
 }

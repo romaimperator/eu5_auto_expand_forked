@@ -85,6 +85,12 @@ lsq_find_upgrade_building_type = {
     building_type:weapon_manufactory = { building_type:weapon_factory = { save_scope_as = return_scope } }
     building_type:weapon_workshop = { building_type:weapon_manufactory = { save_scope_as = return_scope } }
     building_type:winery = { building_type:winery_manufactory = { save_scope_as = return_scope } }
-    fallback = { debug_log = "No upgrade building type found" }
+    fallback = {
+      if = { limit = { is_key_in_global_variable_map = { name = lsq_building_type_to_upgrade_type target = this } }
+        "global_variable_map(lsq_building_type_to_upgrade_type|this)" = { save_scope_as = return_scope }
+      } else = {
+        if = { limit = { debug_only = yes } debug_log = "No upgrade building type found" }
+      }
+    }
   }
 }
