@@ -69,14 +69,14 @@ lsq_update_rgo_information_monthly_tick = {
 		lsq_update_rgo_information_daily_tick
 	}
 	effect = {
-		debug_log = "LSQ: running monthly tick"
+		if = { limit = { debug_only = yes } debug_log = "LSQ: running monthly tick" }
 	}
 }
 
 lsq_update_rgo_information_daily_tick = {
 	effect = {
 		save_scope_as = country
-		debug_log = "LSQ: running daily tick"
+		if = { limit = { debug_only = yes } debug_log = "LSQ: running daily tick" }
 		if = { limit = { lsq_should_pause_auto_expand = no }
 			# We are doing this split, first process locations that might need to expand the RGO and then check which ones should be checked next
 			# tick, because the day an RGO construction finishes, the rgo level hasn't updated yet but also it doesn't have a building under construction

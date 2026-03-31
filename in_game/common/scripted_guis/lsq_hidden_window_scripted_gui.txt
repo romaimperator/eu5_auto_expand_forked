@@ -19,8 +19,10 @@ lsq_hidden_window_repeated_init = {
 # Expects scopes: old_country, new_country
 lsq_tag_changed = {
 	effect = {
-		debug_log = "LSQ: Tag changed"
-		debug_log_scopes = yes
+		if = { limit = { debug_only = yes }
+			debug_log = "LSQ: Tag changed"
+			debug_log_scopes = yes
+		}
 		if = { limit = { AND = { exists = scope:old_country exists = scope:new_country } }
 			# Because we're using animations, check to make sure the countries are different in case this runs again after we update the country name in the GUI
 			if = { limit = { NOT = { scope:old_country = scope:new_country } }
@@ -53,9 +55,9 @@ lsq_building_type_section_buildings_init = {
 		if = { limit = { AND = { scope:is_producing = yes scope:is_multiple_levels = yes } }
 			add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
 			if = { limit = { scope:is_fort = yes }
-				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: yes"
+				# debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: yes"
 			} else = {
-				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: no"
+				# debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: no"
 			}
 		} else = {
 			add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 0 }
@@ -63,9 +65,9 @@ lsq_building_type_section_buildings_init = {
 		if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = yes } }
 			add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 1 }
 			if = { limit = { scope:is_fort = yes }
-				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: yes"
+				# debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: yes"
 			} else = {
-				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: no"
+				# debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: no"
 			}
 		} else = {
 			add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
@@ -73,9 +75,9 @@ lsq_building_type_section_buildings_init = {
 		if = { limit = { scope:is_multiple_levels = no }
 			add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
 			if = { limit = { scope:is_fort = yes }
-				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: yes"
+				# debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: yes"
 			} else = {
-				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: no"
+				# debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: no"
 			}
 		} else = {
 			add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
