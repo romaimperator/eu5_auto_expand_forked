@@ -1,0 +1,38 @@
+﻿location_food_rgo_food_value = {
+	scope = location
+	tag = raw_goods|building
+	range = {
+    min = 0
+    max = 10
+		step = 1
+		format = search_filter_location_food_rgo_food_value_format
+	}
+	trigger = {
+		raw_material = { food_value >= scope:min_value }
+		raw_material = { food_value <= scope:max_value }
+	}
+}
+
+# Root is the location being checked for filter
+# Also has scope:target which is the country of the player
+location_has_auto_expand_rgo = {
+	scope = location
+	tag = raw_goods
+  group = 4
+  exclusive_group = yes
+	trigger = {
+    exists = var:auto_expand_rgo
+	}
+}
+
+# Root is the location being checked for filter
+# Also has scope:target which is the country of the player
+location_not_has_auto_expand_rgo = {
+	scope = location
+	tag = raw_goods
+  group = 4
+  exclusive_group = yes
+	trigger = {
+    NOT = { exists = var:auto_expand_rgo }
+	}
+}
