@@ -1,0 +1,135 @@
+﻿# Root scope: country.
+lsq_register_cmf_mod = {
+	# Construction (construction) Tab
+	## Settings (settings) Group
+	cmm_register_bool_setting = {
+		mod_id = lsq
+		setting_id = pause_auto_expand
+		tab_id = construction
+		group_id = settings
+		default_value = 0
+	}
+	cmm_sync_bool_alias = {
+		setting = lsq__pause_auto_expand
+		alias = lsq_pause_auto_expand
+	}
+
+	cmm_register_global_bool_setting = {
+		mod_id = lsq
+		setting_id = should_not_upgrade_buildings
+		tab_id = construction
+		group_id = settings
+		default_value = 1
+	}
+	cmm_sync_bool_alias_inverted = {
+		setting = lsq__should_not_upgrade_buildings
+		alias = lsq_should_not_upgrade_buildings
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = minimum_gold_for_buildings
+		tab_id = construction
+		group_id = settings
+		default_value = 50
+		min_value = 0
+		max_value = 10000
+		step_value = 10
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__minimum_gold_for_buildings
+		alias = lsq_minimum_gold_for_buildings
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = minimum_gold_for_rgos
+		tab_id = construction
+		group_id = settings
+		default_value = 90
+		min_value = 0
+		max_value = 10000
+		step_value = 10
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__minimum_gold_for_rgos
+		alias = lsq_minimum_gold_for_rgos
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = minimum_gold_for_auto_build
+		tab_id = construction
+		group_id = settings
+		default_value = 50
+		min_value = 0
+		max_value = 10000
+		step_value = 10
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__minimum_gold_for_auto_build
+		alias = lsq_minimum_gold_for_auto_build
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = allowed_building_overbuild_levels
+		tab_id = construction
+		group_id = settings
+		default_value = 0
+		min_value = 0
+		max_value = 100
+		step_value = 1
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__allowed_building_overbuild_levels
+		alias = lsq_allowed_building_overbuild_levels
+	}
+}
+
+# Callback handler for cmf_on_callback.
+# var:cmf_callback is the flag of the setting, alert, or action bar element that was interacted with.
+# Scope: country
+lsq_handle_cmf_callback = {
+	switch = {
+		trigger = var:cmf_callback
+		# Construction (construction) Tab
+		## Settings (settings) Group
+		flag:lsq__pause_auto_expand = {
+			cmm_sync_bool_alias = {
+				setting = lsq__pause_auto_expand
+				alias = lsq_pause_auto_expand
+			}
+		}
+		flag:lsq__should_not_upgrade_buildings = {
+			cmm_sync_bool_alias_inverted = {
+				setting = lsq__should_not_upgrade_buildings
+				alias = lsq_should_not_upgrade_buildings
+			}
+		}
+		flag:lsq__minimum_gold_for_buildings = {
+			cmm_sync_setting_alias = {
+				setting = lsq__minimum_gold_for_buildings
+				alias = lsq_minimum_gold_for_buildings
+			}
+		}
+		flag:lsq__minimum_gold_for_rgos = {
+			cmm_sync_setting_alias = {
+				setting = lsq__minimum_gold_for_rgos
+				alias = lsq_minimum_gold_for_rgos
+			}
+		}
+		flag:lsq__minimum_gold_for_auto_build = {
+			cmm_sync_setting_alias = {
+				setting = lsq__minimum_gold_for_auto_build
+				alias = lsq_minimum_gold_for_auto_build
+			}
+		}
+		flag:lsq__allowed_building_overbuild_levels = {
+			cmm_sync_setting_alias = {
+				setting = lsq__allowed_building_overbuild_levels
+				alias = lsq_allowed_building_overbuild_levels
+			}
+		}
+	}
+}
