@@ -85,6 +85,173 @@ lsq_register_cmf_mod = {
 		setting = lsq__allowed_building_overbuild_levels
 		alias = lsq_allowed_building_overbuild_levels
 	}
+
+	# Auto-Build (construction tab — list settings render at tab level, no group)
+	cmm_register_settings_list = {
+		mod_id = lsq
+		setting_id = auto_build_list
+		tab_id = construction
+		item_count = 15
+		is_ordered = 1
+	}
+
+	# Field 1 (slot 1): Enabled
+	cmm_register_list_bool_field = {
+		mod_id = lsq
+		setting_id = auto_build_list
+		field_id = enabled
+		default_value = 0
+	}
+
+	# Field 2 (slot 2): Build in subjects
+	cmm_register_list_bool_field = {
+		mod_id = lsq
+		setting_id = auto_build_list
+		field_id = in_subjects
+		default_value = 0
+	}
+
+	# Field 3 (slot 3): Min control (0-100 integer, legacy stores 0-1)
+	cmm_register_list_numeric_field = {
+		mod_id = lsq
+		setting_id = auto_build_list
+		field_id = min_control
+		default_value = 50
+		min_value = 0
+		max_value = 100
+		step_value = 5
+	}
+
+	# Field 4 (slot 4): Min market price impact discount (-33 to 33, legacy stores -0.33 to 0.33)
+	cmm_register_list_numeric_field = {
+		mod_id = lsq
+		setting_id = auto_build_list
+		field_id = min_discount
+		default_value = -33
+		min_value = -33
+		max_value = 33
+		step_value = 1
+	}
+
+	# Field 5 (slot 5): Min RGO levels (only for improvement buildings)
+	cmm_register_list_numeric_field = {
+		mod_id = lsq
+		setting_id = auto_build_list
+		field_id = min_rgos
+		default_value = 5
+		min_value = 0
+		max_value = 20
+		step_value = 1
+	}
+
+	# Store building type scopes as item values for backend lookup
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 1 value = building_type:temple }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 2 value = building_type:minting_office }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 3 value = building_type:settlement_building }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 4 value = building_type:library }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 5 value = building_type:bridge_infrastructure }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 6 value = building_type:pound_lock_canal_infrastructure }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 7 value = building_type:wharf }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 8 value = building_type:university }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 9 value = building_type:market_village }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 10 value = building_type:counting_house }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 11 value = building_type:hospital }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 12 value = building_type:sawmill }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 13 value = building_type:windmill }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 14 value = building_type:local_smelters }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_build_list item = 15 value = building_type:protected_harbor }
+
+	# Disable min_rgos for non-improvement buildings (only sawmill=12, windmill=13, local_smelters=14 use it)
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 1 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 2 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 3 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 4 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 5 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 6 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 7 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 8 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 9 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 10 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 11 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = auto_build_list field_id = min_rgos item = 15 }
+
+	# Override min_control defaults: temple(1), minting_office(2), settlement_building(3) should start at 0
+	# (they increase control / population growth, so best to build everywhere regardless of control)
+	if = {
+		limit = { NOT = { has_variable = lsq_cmm_auto_build_list_initialized } }
+		set_variable = { name = lsq_cmm_auto_build_list_initialized value = 1 }
+		add_to_variable_map = { name = cmm key = flag:lsq__auto_build_list_i1_f3 value = 0 }
+		add_to_variable_map = { name = cmm key = flag:lsq__auto_build_list_i2_f3 value = 0 }
+		add_to_variable_map = { name = cmm key = flag:lsq__auto_build_list_i3_f3 value = 0 }
+	}
+
+	# Initial sync from CMM to legacy variables
+	lsq_sync_auto_build_list_to_legacy = yes
+}
+
+# Sync all auto-build list values from CMM to legacy variables.
+# Scope: country
+lsq_sync_auto_build_list_to_legacy = {
+	clear_variable_list = lsq_auto_build_building_types_list
+	clear_variable_list = lsq_auto_build_building_types_enabled
+	clear_variable_list = lsq_auto_build_building_types_in_subjects_enabled
+	cmm_for_each_list_item = {
+		setting = lsq__auto_build_list
+		effect = lsq_sync_auto_build_list_item
+	}
+}
+
+# Called by cmm_for_each_list_item to sync one item to legacy variables.
+# Iterates in display order so lsq_auto_build_building_types_list reflects the CMM ordering.
+# Scope: country
+# Args: setting (key), i (number)
+# scope:cmm_list_current_item_value: building_type scope for this item
+lsq_sync_auto_build_list_item = {
+	# Add to ordered list (iteration order = display order)
+	add_to_variable_list = { name = lsq_auto_build_building_types_list target = scope:cmm_list_current_item_value }
+
+	# Build flag keys for field access (can't use $i$ inside "..." quoted expressions)
+	set_local_variable = { name = lsq_key_f1 value = flag:$setting$_i$i$_f1 }
+	set_local_variable = { name = lsq_key_f2 value = flag:$setting$_i$i$_f2 }
+	set_local_variable = { name = lsq_key_f3 value = flag:$setting$_i$i$_f3 }
+	set_local_variable = { name = lsq_key_f4 value = flag:$setting$_i$i$_f4 }
+	set_local_variable = { name = lsq_key_f5 value = flag:$setting$_i$i$_f5 }
+
+	# Sync enabled
+	if = {
+		limit = { "variable_map(cmm|local_var:lsq_key_f1)" >= 1 }
+		add_to_variable_list = { name = lsq_auto_build_building_types_enabled target = scope:cmm_list_current_item_value }
+	}
+
+	# Sync in_subjects
+	if = {
+		limit = { "variable_map(cmm|local_var:lsq_key_f2)" >= 1 }
+		add_to_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:cmm_list_current_item_value }
+	}
+
+	# Sync min_control (CMM: 0-100 → legacy: 0-1)
+	set_variable = { name = lsq_tmp value = "variable_map(cmm|local_var:lsq_key_f3)" }
+	change_variable = { name = lsq_tmp multiply = 0.01 }
+	add_to_variable_map = { name = lsq_minimum_control_for_auto_build key = scope:cmm_list_current_item_value value = var:lsq_tmp }
+
+	# Sync min_discount (CMM: -33..33 → legacy: -0.33..0.33)
+	set_variable = { name = lsq_tmp value = "variable_map(cmm|local_var:lsq_key_f4)" }
+	change_variable = { name = lsq_tmp multiply = 0.01 }
+	add_to_variable_map = { name = lsq_minimum_market_price_impact_for_auto_build key = scope:cmm_list_current_item_value value = var:lsq_tmp }
+
+	# Sync min_rgos (only for improvement buildings)
+	if = {
+		limit = { scope:cmm_list_current_item_value = building_type:sawmill }
+		set_variable = { name = lsq_required_rgo_levels_before_sawmill value = "variable_map(cmm|local_var:lsq_key_f5)" }
+	}
+	if = {
+		limit = { scope:cmm_list_current_item_value = building_type:windmill }
+		set_variable = { name = lsq_required_rgo_levels_before_windmill value = "variable_map(cmm|local_var:lsq_key_f5)" }
+	}
+	if = {
+		limit = { scope:cmm_list_current_item_value = building_type:local_smelters }
+		set_variable = { name = lsq_required_rgo_levels_before_local_smelters value = "variable_map(cmm|local_var:lsq_key_f5)" }
+	}
 }
 
 # Callback handler for cmf_on_callback.
@@ -130,6 +297,10 @@ lsq_handle_cmf_callback = {
 				setting = lsq__allowed_building_overbuild_levels
 				alias = lsq_allowed_building_overbuild_levels
 			}
+		}
+		## Auto-Build (auto_build) Group
+		flag:lsq__auto_build_list = {
+			lsq_sync_auto_build_list_to_legacy = yes
 		}
 	}
 }
