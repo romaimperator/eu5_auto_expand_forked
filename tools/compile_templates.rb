@@ -101,6 +101,10 @@ module TemplateHelpers
   def decimal_to_s(value)
     value.to_s("F")
   end
+
+  def construction_goods
+    ["books", "clay", "cloth", "copper", "fine_cloth", "firearms", "glass", "goods_gold", "horses", "jewelry", "leather", "liquor", "livestock", "lumber", "marble", "masonry", "naval_supplies", "paper", "salt", "sand", "silver", "steel", "stone", "tin", "tools", "weaponry", "wheat", "wool"]
+  end
 end
 
 class TemplateContext

@@ -31,94 +31,128 @@ lsq_tag_changed = {
 }
 
 # # Root is the player
-# lsq_should_building_type_section_show = {
-# 	is_shown = {
-# 		OR = {
-# 			NOT = { has_global_variable_map = lsq_building_type_processed }
-# 			AND = {
-# 				has_global_variable_map = lsq_building_type_processed
-# 				global_variable_map_size = { name = lsq_building_type_processed value < global_var:every_building_type_count }
-# 			}
-# 		}
-# 	}
-# }
+lsq_should_building_type_section_show = {
+	is_shown = {
+		OR = {
+			NOT = { has_variable_map = lsq_non_standard_building_type_processed }
+			AND = {
+				has_variable_map = lsq_non_standard_building_type_processed
+				variable_map_size = { name = lsq_non_standard_building_type_processed value < scope:country.var:every_non_standard_building_type_count }
+			}
+		}
+	}
+}
 
 # # Root is the country
-# lsq_building_type_section_buildings_init = {
-# 	saved_scopes = { building_type is_producing is_multiple_levels is_fort }
-# 	effect = {
-# 			debug_log = "LSQ: Initializing buildings [TopScope.sBuildingType('building_type').GetNameWithNoTooltip]"
+lsq_building_type_section_buildings_init = {
+	saved_scopes = { building_type is_producing is_multiple_levels is_fort pop_type }
+	effect = {
+		# debug_log = "LSQ: Initializing buildings [TopScope.sBuildingType('building_type').GetNameWithNoTooltip]"
 
-# 			# remove_from_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type }
-# 			# remove_from_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type }
-# 			# remove_from_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type }
-# 			# remove_from_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type }
-# 			# Set the which type of building this should be treated as
-# 			# if = { limit = { scope:is_producing = yes }
-# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
-# 			# } else = {
-# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 0 }
-# 			# }
-# 			# if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = yes } }
-# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 1 }
-# 			# } else = {
-# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
-# 			# }
-# 			# if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = no } }
-# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
-# 			# } else = {
-# 			# 	add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
-# 			# }
-# 			# Set the which type of building this should be treated as
-# 			if = { limit = { AND = { scope:is_producing = yes scope:is_multiple_levels = yes } }
-# 				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
-# 				if = { limit = { scope:is_fort = yes }
-# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: yes"
-# 				} else = {
-# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: no"
-# 				}
-# 			} else = {
-# 				add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 0 }
-# 			}
-# 			if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = yes } }
-# 				add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 1 }
-# 				if = { limit = { scope:is_fort = yes }
-# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: yes"
-# 				} else = {
-# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: no"
-# 				}
-# 			} else = {
-# 				add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
-# 			}
-# 			if = { limit = { scope:is_multiple_levels = no }
-# 				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
-# 				if = { limit = { scope:is_fort = yes }
-# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: yes"
-# 				} else = {
-# 					debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: no"
-# 				}
-# 			} else = {
-# 				add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
-# 			}
+		# Set the which type of building this should be treated as
+		if = { limit = { AND = { scope:is_producing = yes scope:is_multiple_levels = yes } }
+			add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 1 }
+			if = { limit = { scope:is_fort = yes }
+				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: yes"
+			} else = {
+				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: no"
+			}
+		} else = {
+			add_to_global_variable_map = { name = lsq_building_type_to_is_production_building key = scope:building_type value = 0 }
+		}
+		if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = yes } }
+			add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 1 }
+			if = { limit = { scope:is_fort = yes }
+				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: yes"
+			} else = {
+				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: no"
+			}
+		} else = {
+			add_to_global_variable_map = { name = lsq_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
+		}
+		if = { limit = { scope:is_multiple_levels = no }
+			add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
+			if = { limit = { scope:is_fort = yes }
+				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: yes"
+			} else = {
+				debug_log = "LSQ: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_one_per_location_building: yes is_fort: no"
+			}
+		} else = {
+			add_to_global_variable_map = { name = lsq_building_type_to_is_one_per_location_building key = scope:building_type value = 0 }
+		}
 
-# 			# Set if this building type is a fort for discount purposes
-# 			if = { limit = { scope:is_fort = yes }
-# 				add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 1 }
-# 			} else = {
-# 				add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 0 }
-# 			}
+		# Set if this building type is a fort for discount purposes
+		if = { limit = { scope:is_fort = yes }
+			add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 1 }
+		} else = {
+			add_to_global_variable_map = { name = lsq_building_type_to_is_fort key = scope:building_type value = 0 }
+		}
+		# Set the pop type employed by this building type
+		add_to_global_variable_map = { name = lsq_building_type_to_pop_type key = scope:building_type value = scope:pop_type }
 
-# 			# Set that this building type has been processed
-# 			add_to_global_variable_map = { name = lsq_building_type_processed key = scope:building_type value = 1 }
-# 	}
-# }
+		# Set that this building type has been processed
+		add_to_variable_map = { name = lsq_non_standard_building_type_processed key = scope:building_type value = 1 }
+	}
+}
+
+lsq_non_standard_building_type_construction_demand = {
+	saved_scopes = { building_type good amount }
+	effect = {
+		switch = { trigger = scope:good
+			goods:books = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_books key = scope:building_type value = scope:amount } }
+			goods:clay = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_clay key = scope:building_type value = scope:amount } }
+			goods:cloth = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_cloth key = scope:building_type value = scope:amount } }
+			goods:copper = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_copper key = scope:building_type value = scope:amount } }
+			goods:fine_cloth = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_fine_cloth key = scope:building_type value = scope:amount } }
+			goods:firearms = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_firearms key = scope:building_type value = scope:amount } }
+			goods:glass = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_glass key = scope:building_type value = scope:amount } }
+			goods:goods_gold = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_goods_gold key = scope:building_type value = scope:amount } }
+			goods:horses = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_horses key = scope:building_type value = scope:amount } }
+			goods:jewelry = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_jewelry key = scope:building_type value = scope:amount } }
+			goods:leather = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_leather key = scope:building_type value = scope:amount } }
+			goods:liquor = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_liquor key = scope:building_type value = scope:amount } }
+			goods:livestock = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_livestock key = scope:building_type value = scope:amount } }
+      goods:lumber = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_lumber key = scope:building_type value = scope:amount } }
+      goods:marble = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_marble key = scope:building_type value = scope:amount } }
+			goods:masonry = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_masonry key = scope:building_type value = scope:amount } }
+      goods:naval_supplies = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_naval_supplies key = scope:building_type value = scope:amount } }
+      goods:paper = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_paper key = scope:building_type value = scope:amount } }
+      goods:salt = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_salt key = scope:building_type value = scope:amount } }
+      goods:sand = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_sand key = scope:building_type value = scope:amount } }
+      goods:silver = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_silver key = scope:building_type value = scope:amount } }
+      goods:steel = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_steel key = scope:building_type value = scope:amount } }
+      goods:stone = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_stone key = scope:building_type value = scope:amount } }
+      goods:tin = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tin key = scope:building_type value = scope:amount } }
+      goods:tools = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tools key = scope:building_type value = scope:amount } }
+      goods:weaponry = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_weaponry key = scope:building_type value = scope:amount } }
+      goods:wheat = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wheat key = scope:building_type value = scope:amount } }
+      goods:wool = { add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wool key = scope:building_type value = scope:amount } }
+		}
+		if = { limit = { AND = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_total is_key_in_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total target = scope:building_type } } }
+			set_local_variable = { name = new_value value = { value = "global_variable_map(lsq_non_standard_building_type_construction_demand_total|scope:building_type)" add = scope:amount } }
+			remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total key = scope:building_type }
+			add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total key = scope:building_type value = local_var:new_value }
+			remove_local_variable = new_value
+			set_local_variable = { name = new_value value = { value = "global_variable_map(lsq_non_standard_building_type_construction_demand_total_count|scope:building_type)" add = 1 } }
+			remove_from_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total_count key = scope:building_type }
+			add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total_count key = scope:building_type value = local_var:new_value }
+			remove_local_variable = new_value
+		} else = {
+			add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total key = scope:building_type value = scope:amount }
+			add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total_count key = scope:building_type value = 1 }
+		}
+	}
+}
 
 # # Root is the building type
-# lsq_is_building_type_processed = {
-# 	is_shown = {
-# 		AND = {
-# 			has_global_variable_map = lsq_building_type_processed
-# 			is_key_in_global_variable_map = { name = lsq_building_type_processed target = this }
-# 		}
-# 	}
-# }
+lsq_is_non_standard_building_type_processed = {
+	is_shown = {
+		save_temporary_scope_as = building_type
+		scope:country = {
+			AND = {
+				has_variable_map = lsq_non_standard_building_type_processed
+				is_key_in_variable_map = { name = lsq_non_standard_building_type_processed target = scope:building_type }
+			}
+		}
+	}
+}

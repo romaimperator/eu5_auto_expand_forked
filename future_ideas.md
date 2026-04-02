@@ -1,6 +1,5 @@
 ﻿Future Implementation Ideas
 
-- Handle buildings that aren't in the default base game the old way
 - Make compatible with Glorp UI
 - Add button to enable/disable auto-expand for every building in a location
 - Modify the auto-expand button for buildings so holding control and clicking will toggle every building of that type in the province. Useful when you know you want to say auto-expand masons in a province that produces stone
@@ -25,6 +24,7 @@ Completed Ideas:
 - Add a setting to set minimum building discount before auto-expanding
 - Increase max minimum gold to save for late game
 - Add check to make sure there's enough goods to auto-expand an RGO
+- Handle buildings that aren't in the default base game the old way
 
 
 

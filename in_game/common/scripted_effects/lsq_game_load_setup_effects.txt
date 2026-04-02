@@ -11,6 +11,15 @@ lsq_check_that_country_variables_are_set = {
       lsq_populate_building_type_type_maps = {}
     }
 
+    if = { limit = { NOT = { has_variable = every_non_standard_building_type_count } }
+      set_variable = { name = every_non_standard_building_type_count value = 0 }
+      every_building_type = {
+        limit = { NOT = { is_key_in_global_variable_map = { name = lsq_building_type_to_is_production_building target = this } } }
+        scope:country = { add_to_variable_list = { name = every_non_standard_building_type target = prev } }
+        scope:country = { change_variable = { name = every_non_standard_building_type_count add = 1 } }
+      }
+    }
+
     # Reset the location lists every time we load the game
     if = { limit = { OR = { NOT = { has_variable_list = lsq_all_controlled_locations_list } NOT = { has_variable_list = lsq_all_locations_including_subjects_list } } }
       lsq_reset_locations_lists = {}
@@ -70,8 +79,44 @@ lsq_check_that_country_variables_are_set = {
         }
       }
     }
+
+    # Don't think this is needed but just in case, keeping to make it easy to add
+    # lsq_check_that_country_variables_are_set_for_non_standard_building_types = {}
   }
 }
+
+# lsq_check_that_country_variables_are_set_for_non_standard_building_types = {
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_books } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_books key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_clay } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_clay key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_cloth } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_cloth key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_copper } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_copper key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_fine_cloth } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_fine_cloth key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_firearms } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_firearms key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_glass } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_glass key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_goods_gold } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_goods_gold key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_horses } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_horses key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_jewelry } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_jewelry key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_leather } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_leather key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_liquor } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_liquor key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_livestock } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_livestock key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_lumber } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_lumber key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_marble } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_marble key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_masonry } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_masonry key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_naval_supplies } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_naval_supplies key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_paper } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_paper key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_salt } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_salt key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_sand } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_sand key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_silver } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_silver key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_steel } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_steel key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_stone } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_stone key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_tin } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tin key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_tools } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tools key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_weaponry } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_weaponry key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_wheat } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wheat key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_wool } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wool key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_total } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total key = flag:lsq_init value = 0 } }
+#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_total_count } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total_count key = flag:lsq_init value = 0 } }
+# }
 
 # Expects scopes: old_country, new_country
 lsq_move_data_from_old_country_to_new_country = {
