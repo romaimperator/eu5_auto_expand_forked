@@ -134,12 +134,19 @@ lsq_non_standard_building_type_construction_demand = {
 # # Root is the building type
 lsq_is_non_standard_building_type_processed = {
 	is_shown = {
-		save_temporary_scope_as = building_type
-		scope:country = {
-			AND = {
-				has_variable_map = lsq_non_standard_building_type_processed
-				is_key_in_variable_map = { name = lsq_non_standard_building_type_processed target = scope:building_type }
+		trigger_if = {
+			limit = { exists = this }
+			save_temporary_scope_as = building_type
+			scope:country = {
+				AND = {
+					has_variable_map = lsq_non_standard_building_type_processed
+					is_key_in_variable_map = { name = lsq_non_standard_building_type_processed target = scope:building_type }
+				}
 			}
+		}
+		trigger_else = {
+			# Invalid building type scope — treat as already processed so the GUI hides this item
+			always = yes
 		}
 	}
 }
