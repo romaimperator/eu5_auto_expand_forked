@@ -22,6 +22,13 @@ lsq_cmm_post_registration = {
 # Called on registration and on every setting change.
 # Scope: country
 lsq_rebuild_auto_build_lookups = {
+	# Guard: skip if CMM list data doesn't exist yet (first registration may not have completed)
+	if = {
+		limit = { NOT = { has_variable_list = cmm_list_items_lsq__auto_build_list } }
+		# List not initialized yet — lookups will be built on next registration cycle
+	}
+	else = {
+
 	# Ordered building types list (for monthly pulse iteration in priority order)
 	cmm_build_list_ordered_values = { setting = lsq__auto_build_list list_name = lsq_auto_build_building_types_list }
 
@@ -39,6 +46,8 @@ lsq_rebuild_auto_build_lookups = {
 
 	# Min RGOs by building type (numeric field slot 5, direct values)
 	cmm_build_list_field_map = { setting = lsq__auto_build_list field_slot = 5 map_name = lsq_min_rgos_by_building_type multiply = 1 }
+
+	} # end guard
 }
 
 # Benign warning suppression for variables/flags set or used at runtime
