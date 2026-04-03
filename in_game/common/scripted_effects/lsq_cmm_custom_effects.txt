@@ -1,0 +1,105 @@
+﻿# Custom CMM integration code not managed by the visual editor.
+# Called after lsq_register_cmf_mod (visual-editor-managed) completes.
+
+# Post-registration: override default values and run initial sync.
+# Scope: country
+lsq_cmm_post_registration = {
+	# Override min_control defaults: temple(1), minting_office(2), settlement_building(3) should start at 0
+	# (they increase control / population growth, so best to build everywhere regardless of control)
+	if = {
+		limit = { NOT = { has_variable = lsq_cmm_auto_build_list_initialized } }
+		set_variable = { name = lsq_cmm_auto_build_list_initialized value = 1 }
+		add_to_variable_map = { name = cmm key = flag:lsq__auto_build_list_i1_f3 value = 0 }
+		add_to_variable_map = { name = cmm key = flag:lsq__auto_build_list_i2_f3 value = 0 }
+		add_to_variable_map = { name = cmm key = flag:lsq__auto_build_list_i3_f3 value = 0 }
+	}
+
+	# Initial sync from CMM to legacy variables
+	lsq_sync_auto_build_list_to_legacy = yes
+}
+
+# Sync all auto-build list values from CMM to legacy variables.
+# Scope: country
+lsq_sync_auto_build_list_to_legacy = {
+	clear_variable_list = lsq_auto_build_building_types_list
+	clear_variable_list = lsq_auto_build_building_types_enabled
+	clear_variable_list = lsq_auto_build_building_types_in_subjects_enabled
+	cmm_for_each_list_item = {
+		setting = lsq__auto_build_list
+		effect = lsq_sync_auto_build_list_item
+	}
+}
+
+# Called by cmm_for_each_list_item to sync one item to legacy variables.
+# Iterates in display order so lsq_auto_build_building_types_list reflects the CMM ordering.
+# Scope: country
+# Args: setting (key), i (number)
+# scope:cmm_list_current_item_value: building_type scope for this item
+lsq_sync_auto_build_list_item = {
+	add_to_variable_list = { name = lsq_auto_build_building_types_list target = scope:cmm_list_current_item_value }
+
+	set_local_variable = { name = lsq_key_f1 value = flag:$setting$_i$i$_f1 }
+	set_local_variable = { name = lsq_key_f2 value = flag:$setting$_i$i$_f2 }
+	set_local_variable = { name = lsq_key_f3 value = flag:$setting$_i$i$_f3 }
+	set_local_variable = { name = lsq_key_f4 value = flag:$setting$_i$i$_f4 }
+	set_local_variable = { name = lsq_key_f5 value = flag:$setting$_i$i$_f5 }
+
+	if = {
+		limit = { "variable_map(cmm|local_var:lsq_key_f1)" >= 1 }
+		add_to_variable_list = { name = lsq_auto_build_building_types_enabled target = scope:cmm_list_current_item_value }
+	}
+
+	if = {
+		limit = { "variable_map(cmm|local_var:lsq_key_f2)" >= 1 }
+		add_to_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:cmm_list_current_item_value }
+	}
+
+	set_variable = { name = lsq_tmp value = "variable_map(cmm|local_var:lsq_key_f3)" }
+	change_variable = { name = lsq_tmp multiply = 0.01 }
+	add_to_variable_map = { name = lsq_minimum_control_for_auto_build key = scope:cmm_list_current_item_value value = var:lsq_tmp }
+
+	set_variable = { name = lsq_tmp value = "variable_map(cmm|local_var:lsq_key_f4)" }
+	change_variable = { name = lsq_tmp multiply = 0.01 }
+	add_to_variable_map = { name = lsq_minimum_market_price_impact_for_auto_build key = scope:cmm_list_current_item_value value = var:lsq_tmp }
+
+	if = {
+		limit = { scope:cmm_list_current_item_value = building_type:sawmill }
+		set_variable = { name = lsq_required_rgo_levels_before_sawmill value = "variable_map(cmm|local_var:lsq_key_f5)" }
+	}
+	if = {
+		limit = { scope:cmm_list_current_item_value = building_type:windmill }
+		set_variable = { name = lsq_required_rgo_levels_before_windmill value = "variable_map(cmm|local_var:lsq_key_f5)" }
+	}
+	if = {
+		limit = { scope:cmm_list_current_item_value = building_type:local_smelters }
+		set_variable = { name = lsq_required_rgo_levels_before_local_smelters value = "variable_map(cmm|local_var:lsq_key_f5)" }
+	}
+
+	# Benign warning suppression
+	if = {
+		limit = { always = no }
+		cmf_suppress = { v = lsq_key_f1 }
+		cmf_suppress = { v = lsq_key_f2 }
+		cmf_suppress = { v = lsq_key_f3 }
+		cmf_suppress = { v = lsq_key_f4 }
+		cmf_suppress = { v = lsq_key_f5 }
+	}
+}
+
+# Benign warning suppression for variables/flags set or used at runtime
+# via GUI scripted effects, AddScope, variable maps, or on_actions.
+_lsq_suppress_warnings = {
+	if = {
+		limit = { always = no }
+		cmf_suppress = { v = lsq_building_type_processed }
+		cmf_suppress = { v = auto_expand_registered_buildings }
+		cmf_suppress = { v = lsq_run_auto_expand_rgo }
+		cmf_suppress = { v = every_building_type_list }
+		cmf_suppress = { v = every_building_type_count }
+		cmf_suppress = { v = lsq_hidden_window_initialized }
+		cmf_suppress = { v = lsq_auto_expand_rgo_off_in_all_locations }
+		cmf_suppress = { v = every_non_standard_building_type }
+		cmf_suppress = { v = skip }
+		cmf_suppress = { v = set_off }
+	}
+}
