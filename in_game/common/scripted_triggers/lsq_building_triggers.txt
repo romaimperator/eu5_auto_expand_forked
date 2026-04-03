@@ -129,13 +129,23 @@ lsq_is_building_profitable = {
 	}
 }
 
+# Root is the building. Checks that building profit meets the minimum threshold set by the player.
+# If lsq_minimum_profit_for_buildings is 0 or not set, the check always passes.
+lsq_building_meets_minimum_profit = {
+	OR = {
+		NOT = { owner = { exists = var:lsq_minimum_profit_for_buildings } }
+		owner.var:lsq_minimum_profit_for_buildings = 0
+		building_profit >= owner.var:lsq_minimum_profit_for_buildings
+	}
+}
+
 # Root is the building
 lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 	location = { save_temporary_scope_as = location }
 	building_type = { save_temporary_scope_as = building_type }
 	AND = {
 		OR = {
-			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_is_building_profitable = yes }
+			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_is_building_profitable = yes lsq_building_meets_minimum_profit = yes }
 			building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
 		}
 		lsq_is_building_open = yes
