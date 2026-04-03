@@ -2,12 +2,8 @@
 
 # Root is country. Expects scope building_type. Returns required RGO/lumber levels before auto-building this improvement (sawmill/windmill/local_smelters).
 lsq_get_required_rgo_levels_before_improvement_building = {
-	if = { limit = { scope:building_type = building_type:sawmill }
-		value = var:lsq_required_rgo_levels_before_sawmill
-	} else_if = { limit = { scope:building_type = building_type:windmill }
-		value = var:lsq_required_rgo_levels_before_windmill
-	} else_if = { limit = { scope:building_type = building_type:local_smelters }
-		value = var:lsq_required_rgo_levels_before_local_smelters
+	if = { limit = { has_variable_map = lsq_min_rgos_by_building_type is_key_in_variable_map = { name = lsq_min_rgos_by_building_type target = scope:building_type } }
+		value = "variable_map(lsq_min_rgos_by_building_type|scope:building_type)"
 	} else = { value = 0 }
 }
 

@@ -13,9 +13,6 @@
 		vbox = {
 			visible = "[GetPlayer.Exists]"
 
-			text_single = {
-				raw_text = "[GetVariableSystem.Exists('country_name')], [GetVariableSystem.Get('country_name')] vs [GetPlayer.GetTag] vs [GetPlayer.GetDebugTag] [Localize('LSQ_PLAYER_DEBUG_TAG')]" # [Not(EqualTo_string(GetPlayer.GetDebugTag, GetVariableSystem.Get('country_name')))]"
-			}
 
 			# overlappingitembox = {
 			# 	state = {
@@ -30,25 +27,11 @@
 					name = lsq_hidden_window_repeated_init
 					trigger_on_create = yes
 					duration = 2
-					on_finish = "[GetScriptedGui('lsq_hidden_window_repeated_init').Execute(GuiScope.AddScope('country', GetPlayer.MakeScope).AddScope('skip', MakeScopeBool(And(GetVariableSystem.Exists('country_name'), Not(EqualTo_string(Localize('LSQ_PLAYER_DEBUG_TAG'), GetVariableSystem.Get('country_name')))))).End)]"
+					on_finish = "[GetScriptedGui('lsq_hidden_window_repeated_init').Execute(GuiScope.AddScope('country', GetPlayer.MakeScope).AddScope('skip', MakeScopeBool(No)).End)]"
 					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_repeated_init')]"
-					on_finish = "[GetVariableSystem.SetIf('country_name', Localize('LSQ_PLAYER_DEBUG_TAG'), Not(GetVariableSystem.Exists('country_name')))]"
 				}
 			}
 
-			hbox = {
-				visible = "[And(GetVariableSystem.Exists('country_name'), Not(EqualTo_string(Localize('LSQ_PLAYER_DEBUG_TAG'), GetVariableSystem.Get('country_name'))))]"
-				# text_single = {
-				# 	raw_text = "Tag changed"
-				# }
-				state = {
-					name = lsq_check_for_tag_change
-					trigger_on_create = yes
-					on_finish = "[GetScriptedGui('lsq_tag_changed').Execute(GuiScope.AddScope('new_country', GetPlayer.MakeScope).AddScope('old_country', GetCountry(GetVariableSystem.Get('country_name')).MakeScope).End)]"
-					on_finish = "[GetVariableSystem.Set('country_name', Localize('LSQ_PLAYER_DEBUG_TAG'))]"
-					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_check_for_tag_change')]"
-				}
-			}
 
 			# overlappingitembox = {
 			# 	state = {

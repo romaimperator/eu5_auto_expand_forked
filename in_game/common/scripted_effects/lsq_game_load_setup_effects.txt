@@ -25,9 +25,7 @@ lsq_check_that_country_variables_are_set = {
       lsq_reset_locations_lists = {}
     }
 
-    if = { limit = { NOT = { has_variable_list = lsq_auto_build_building_types_list } }
-      lsq_reset_auto_build_priorities_to_default_effect = {}
-    }
+    # Simple settings (CMM aliases — initialized by CMM registration, defaults here for non-CMF fallback)
     if = { limit = { NOT = { has_variable = lsq_minimum_gold_for_buildings } }
       set_variable = { name = lsq_minimum_gold_for_buildings value = 50 }
     }
@@ -39,45 +37,6 @@ lsq_check_that_country_variables_are_set = {
     }
     if = { limit = { NOT = { has_variable = lsq_allowed_building_overbuild_levels } }
       set_variable = { name = lsq_allowed_building_overbuild_levels value = 0 }
-    }
-    if = { limit = { NOT = { has_variable = lsq_required_rgo_levels_before_sawmill } }
-      set_variable = { name = lsq_required_rgo_levels_before_sawmill value = 5 }
-    }
-    if = { limit = { NOT = { has_variable = lsq_required_rgo_levels_before_windmill } }
-      set_variable = { name = lsq_required_rgo_levels_before_windmill value = 5 }
-    }
-    if = { limit = { NOT = { has_variable = lsq_required_rgo_levels_before_local_smelters } }
-      set_variable = { name = lsq_required_rgo_levels_before_local_smelters value = 5 }
-    }
-
-    if = { limit = { NOT = { has_variable_map = lsq_minimum_control_for_auto_build } }
-      every_in_list = {
-        variable = lsq_auto_build_building_types_list
-        save_scope_as = building_type
-        scope:country = {
-          if = { limit = { OR = { NOT = { has_variable_map = lsq_minimum_control_for_auto_build } NOT = { is_key_in_variable_map = { name = lsq_minimum_control_for_auto_build target = scope:building_type } } } }
-            # Default to 0 for temple and minting office as they increase control so best to build them everywhere regardless of control, and settlements as we want to build them everywhere for the population growth
-            if = { limit = { OR = { scope:building_type = building_type:temple scope:building_type = building_type:minting_office scope:building_type = building_type:settlement_building } }
-              add_to_variable_map = { name = lsq_minimum_control_for_auto_build key = scope:building_type value = 0 }
-            } else = {
-              add_to_variable_map = { name = lsq_minimum_control_for_auto_build key = scope:building_type value = 0.5 }
-            }
-          }
-        }
-      }
-    }
-
-    if = { limit = { NOT = { has_variable_map = lsq_minimum_market_price_impact_for_auto_build } }
-      every_in_list = {
-        variable = lsq_auto_build_building_types_list
-        save_scope_as = building_type
-        scope:country = {
-          if = { limit = { OR = { NOT = { has_variable_map = lsq_minimum_market_price_impact_for_auto_build } NOT = { is_key_in_variable_map = { name = lsq_minimum_market_price_impact_for_auto_build target = scope:building_type } } } }
-            # Default to -0.33 for all building types so by default we will build only with the max discount
-            add_to_variable_map = { name = lsq_minimum_market_price_impact_for_auto_build key = scope:building_type value = -0.33 }
-          }
-        }
-      }
     }
 
     # Don't think this is needed but just in case, keeping to make it easy to add
@@ -119,125 +78,14 @@ lsq_check_that_country_variables_are_set = {
 # }
 
 # Expects scopes: old_country, new_country
+# Note: CMM setting values and derived lookup tables are now handled by CMF's
+# automatic country transfer. This only handles LSQ-specific non-CMM data.
 lsq_move_data_from_old_country_to_new_country = {
-  # FYI, we can't remove what buildings and RGOs were enabled for auto-expansion without breaking the game when someone uses the world map to change countries since it counts as a tag switch.
   debug_log = "LSQ: Moving data from old country to new country"
 
   scope:new_country = {
     # Copy the mod version
     lsq_copy_mod_version_from_old_country_to_new_country = {}
-
-    save_temporary_scope_as = country
-    # Don't bother copying but reset them to get the new locations for the new country
-    lsq_reset_locations_lists = {}
-
-    scope:old_country = {
-      # Copy the order of auto-build building types
-      every_in_list = {
-        variable = lsq_auto_build_building_types_list
-        save_scope_as = building_type
-        scope:new_country = {
-          add_to_variable_list = { name = lsq_auto_build_building_types_list target = scope:building_type }
-        }
-      }
-
-      # Copy the enabled auto-build building types
-      every_in_list = {
-        variable = lsq_auto_build_building_types_enabled
-        save_scope_as = building_type
-        scope:new_country = {
-          add_to_variable_list = { name = lsq_auto_build_building_types_enabled target = scope:building_type }
-        }
-      }
-
-      # Copy the in subjects auto-build building types
-      every_in_list = {
-        variable = lsq_auto_build_building_types_in_subjects_enabled
-        save_scope_as = building_type
-        scope:new_country = {
-          add_to_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type }
-        }
-      }
-    }
-
-    # Copy the basic settings
-    if = { limit = { scope:old_country = { has_variable = lsq_settings_window_visible } }
-      set_variable = { name = lsq_settings_window_visible value = scope:old_country.var:lsq_settings_window_visible }
-    }
-    if = { limit = { scope:old_country = { has_variable = lsq_pause_auto_expand } }
-      set_variable = { name = lsq_pause_auto_expand value = scope:old_country.var:lsq_pause_auto_expand }
-    }
-    if = { limit = { scope:old_country = { has_variable = lsq_should_not_upgrade_buildings } }
-      set_variable = { name = lsq_should_not_upgrade_buildings value = scope:old_country.var:lsq_should_not_upgrade_buildings }
-    }
-    if = { limit = { scope:old_country = { has_variable = lsq_minimum_gold_for_buildings } }
-      set_variable = { name = lsq_minimum_gold_for_buildings value = scope:old_country.var:lsq_minimum_gold_for_buildings }
-    }
-    if = { limit = { scope:old_country = { has_variable = lsq_minimum_gold_for_rgos } }
-      set_variable = { name = lsq_minimum_gold_for_rgos value = scope:old_country.var:lsq_minimum_gold_for_rgos }
-    }
-    if = { limit = { scope:old_country = { has_variable = lsq_minimum_gold_for_auto_build } }
-      set_variable = { name = lsq_minimum_gold_for_auto_build value = scope:old_country.var:lsq_minimum_gold_for_auto_build }
-    }
-    if = { limit = { scope:old_country = { has_variable = lsq_allowed_building_overbuild_levels } }
-      set_variable = { name = lsq_allowed_building_overbuild_levels value = scope:old_country.var:lsq_allowed_building_overbuild_levels }
-    }
-    if = { limit = { scope:old_country = { has_variable = lsq_required_rgo_levels_before_sawmill } }
-      set_variable = { name = lsq_required_rgo_levels_before_sawmill value = scope:old_country.var:lsq_required_rgo_levels_before_sawmill }
-    }
-    if = { limit = { scope:old_country = { has_variable = lsq_required_rgo_levels_before_windmill } }
-      set_variable = { name = lsq_required_rgo_levels_before_windmill value = scope:old_country.var:lsq_required_rgo_levels_before_windmill }
-    }
-    if = { limit = { scope:old_country = { has_variable = lsq_required_rgo_levels_before_local_smelters } }
-      set_variable = { name = lsq_required_rgo_levels_before_local_smelters value = scope:old_country.var:lsq_required_rgo_levels_before_local_smelters }
-    }
-
-    # Copy the minimum control settings
-    scope:old_country = {
-      every_key_in_variable_map = {
-        variable = lsq_minimum_control_for_auto_build
-        save_scope_as = building_type_key
-        set_local_variable = { name = min_control value = "scope:old_country.variable_map(lsq_minimum_control_for_auto_build|scope:building_type_key)" }
-        debug_log = "LSQ: Copying minimum control for auto build for building type [TopScope.sBuildingType('building_type_key').GetNameWithNoTooltip] to [TopScope.GetLocalVariable('min_control').GetValue]"
-        scope:new_country = {
-          add_to_variable_map = { name = lsq_minimum_control_for_auto_build key = scope:building_type_key value = local_var:min_control }
-        }
-      }
-    }
-
-    # Copy the minimum market_price_impact settings
-    scope:old_country = {
-      every_key_in_variable_map = {
-        variable = lsq_minimum_market_price_impact_for_auto_build
-        save_scope_as = building_type_key
-        set_local_variable = { name = min_market_price_impact value = "scope:old_country.variable_map(lsq_minimum_market_price_impact_for_auto_build|scope:building_type_key)" }
-        debug_log = "LSQ: Copying minimum market_price_impact for auto build for building type [TopScope.sBuildingType('building_type_key').GetNameWithNoTooltip] to [TopScope.GetLocalVariable('min_market_price_impact').GetValue]"
-        scope:new_country = {
-          add_to_variable_map = { name = lsq_minimum_market_price_impact_for_auto_build key = scope:building_type_key value = local_var:min_market_price_impact }
-        }
-      }
-    }
-  }
-
-  # Clear the old country variables
-  scope:old_country = {
-    clear_variable_list = lsq_all_controlled_locations_list
-    clear_variable_list = lsq_all_locations_including_subjects_list
-    clear_variable_list = lsq_auto_build_building_types_list
-    clear_variable_list = lsq_auto_build_building_types_enabled
-    clear_variable_list = lsq_auto_build_building_types_in_subjects_enabled
-    remove_variable = lsq_settings_window_visible
-    remove_variable = lsq_pause_auto_expand
-    remove_variable = lsq_should_not_upgrade_buildings
-    remove_variable = lsq_minimum_gold_for_buildings
-    remove_variable = lsq_minimum_gold_for_rgos
-    remove_variable = lsq_minimum_gold_for_auto_build
-    remove_variable = lsq_allowed_building_overbuild_levels
-    remove_variable = lsq_required_rgo_levels_before_sawmill
-    remove_variable = lsq_required_rgo_levels_before_windmill
-    remove_variable = lsq_required_rgo_levels_before_local_smelters
-    clear_variable_map = lsq_minimum_control_for_auto_build
-    clear_variable_map = lsq_minimum_market_price_impact_for_auto_build
   }
 }
 
