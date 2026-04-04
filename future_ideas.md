@@ -1,5 +1,7 @@
 ﻿Future Implementation Ideas
 
+- Fix bug that allows stud farms to be auto-expanded in locations that don't have the appropriate climate
+- Related to the stud farm bug, there are also other buildings that can be auto-expanded even when they don't meet the actual in game conditions such as the Trade Office so add in more reliable checks for whether you can actually build a building or not for the auto-expand from zero levels button.
 - Make compatible with Glorp UI
 - Add button to enable/disable auto-expand for every building in a location
 - Modify the auto-expand button for buildings so holding control and clicking will toggle every building of that type in the province. Useful when you know you want to say auto-expand masons in a province that produces stone
