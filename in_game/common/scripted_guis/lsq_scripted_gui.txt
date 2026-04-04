@@ -51,14 +51,20 @@ lsq_check_for_auto_expand_when_upgrading_building = {
 lsq_gui_construct_upgrade = {
 	is_valid = {
 		is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:old_building_type }
-		scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
+		OR = {
+			scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
+			scope:country = { lsq_should_upgrade_all_buildings = yes }
+		}
+		lsq_auto_expand_check_minimum_gold_reserve = yes
 	}
 	effect = {
 		construct_building = { building_type = scope:new_building_type }
-		# Swap auto-expand tracking from old to new
-		remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type }
-		if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type } } }
-			add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type }
+		# Swap auto-expand tracking from old to new (only if old type was registered)
+		if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type } }
+			remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type }
+			if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type } } }
+				add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type }
+			}
 		}
 		# Clear from pending list
 		remove_list_variable = { name = lsq_gui_upgrade_building_types target = scope:old_building_type }
