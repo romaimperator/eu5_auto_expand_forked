@@ -17,7 +17,7 @@ lsq_can_afford_switch_based_on_building_type = {
 		fallback = {
 			AND = {
 <% construction_goods.each do |good| -%>
-        trigger_if = { limit = { is_key_in_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_<%= good %> target = scope:building_type } }
+        trigger_if = { limit = { AND = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_<%= good %> is_key_in_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_<%= good %> target = scope:building_type } } }
 					AND = {
 						goods:<%= good %> = { save_temporary_scope_as = good }
 						lsq_get_max_required_construction_demand_to_still_allow_building >= "global_variable_map(lsq_non_standard_building_type_construction_demand_<%= good %>|scope:building_type)"

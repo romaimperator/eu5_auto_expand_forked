@@ -110,15 +110,27 @@ end
 class TemplateContext
   include TemplateHelpers
 
-  attr_reader :game_root, :building_to_pop_type, :building_ids, :resolved_building_goods, :rgo_type_to_good, :building_type_metadata
+  attr_reader :game_root, :building_to_pop_type, :building_ids, :resolved_building_goods, :rgo_type_to_good, :building_type_metadata, :obsolete_to_upgrade, :building_increase_per_level_cost
 
-  def initialize(game_root:, building_to_pop_type:, building_ids:, resolved_building_goods:, rgo_type_to_good:, building_type_metadata:)
+  def initialize(game_root:, building_to_pop_type:, building_ids:, resolved_building_goods:, rgo_type_to_good:, building_type_metadata:, obsolete_to_upgrade:, building_increase_per_level_cost:)
     @game_root = game_root
     @building_to_pop_type = building_to_pop_type
     @building_ids = building_ids
     @resolved_building_goods = resolved_building_goods
     @rgo_type_to_good = rgo_type_to_good
     @building_type_metadata = building_type_metadata
+    @obsolete_to_upgrade = obsolete_to_upgrade
+    @building_increase_per_level_cost = building_increase_per_level_cost
+  end
+
+  # Returns the building_type that obsoletes +building_type+ (i.e. newer building whose obsolete = building_type), or nil.
+  def get_upgrade_building_type(building_type)
+    @obsolete_to_upgrade[building_type]
+  end
+
+  # Returns increase_per_level_cost token for building_type, or 0 when not defined.
+  def get_increase_per_level_cost(building_type)
+    @building_increase_per_level_cost.fetch(building_type, "0")
   end
 
   def building_pop_mappings
@@ -353,6 +365,27 @@ def parse_root_assignments(block_text)
   assignments
 end
 
+# Top-level assignments that may repeat (e.g. multiple obsolete = ... in one building block).
+def extract_root_assignments_for_key(block_text, wanted_key)
+  values = []
+  depth = 0
+
+  block_text.each_line do |raw_line|
+    line = strip_comments(raw_line).strip
+    next if line.empty?
+
+    if depth.zero? && (m = /\A(#{IDENTIFIER_RE.source})\s*=\s*([^\{\}\r\n]+?)\s*\z/.match(line)) && m[1] == wanted_key
+      rhs = m[2].strip
+      values << rhs unless rhs.empty?
+    end
+
+    depth += line.count("{")
+    depth -= line.count("}")
+  end
+
+  values
+end
+
 def parse_building_type_metadata(game_root)
   result = {}
   dir = game_root.join("in_game/common/building_types")
@@ -381,6 +414,48 @@ def parse_building_type_metadata(game_root)
         produces_goods: block_has_assignment_anywhere?(body, "produced"),
         fort: !fort_level.nil?
       )
+    end
+  end
+
+  result
+end
+
+# For each building block, each obsolete = X line maps X to this building (the upgrade that replaces X).
+def parse_obsolete_to_upgrade_map(game_root)
+  result = {}
+  dir = game_root.join("in_game/common/building_types")
+
+  Dir.glob(dir.join("*.txt").to_s).sort.each do |path|
+    next if File.basename(path).downcase == "readme.txt"
+
+    blocks = parse_top_level_blocks(read_text(path))
+    blocks.each do |building_type, body|
+      extract_root_assignments_for_key(body, "obsolete").each do |obsolete|
+        if result.key?(obsolete) && result[obsolete] != building_type
+          warn "Multiple buildings obsolete '#{obsolete}': keeping '#{building_type}', was '#{result[obsolete]}' (#{path})"
+        end
+        result[obsolete] = building_type
+      end
+    end
+  end
+
+  result
+end
+
+def parse_building_increase_per_level_cost(game_root)
+  result = {}
+  dir = game_root.join("in_game/common/building_types")
+
+  Dir.glob(dir.join("*.txt").to_s).sort.each do |path|
+    next if File.basename(path).downcase == "readme.txt"
+
+    blocks = parse_top_level_blocks(read_text(path))
+    blocks.each do |building_type, body|
+      attrs = parse_root_assignments(body)
+      increase_per_level_cost = attrs["increase_per_level_cost"]
+      next if increase_per_level_cost.nil? || increase_per_level_cost.empty?
+
+      result[building_type] = increase_per_level_cost
     end
   end
 
@@ -481,6 +556,8 @@ def dest_path_for_template_file(template_file)
 end
 
 def generate_all(game_root:, auto_build_triggers_path:, template_root:)
+  obsolete_to_upgrade = parse_obsolete_to_upgrade_map(game_root)
+  building_increase_per_level_cost = parse_building_increase_per_level_cost(game_root)
   building_type_metadata = parse_building_type_metadata(game_root)
   building_to_pop_type = building_type_metadata.transform_values(&:pop_type)
   available_pop_checks = parse_available_pop_checks(read_text(auto_build_triggers_path))
@@ -507,7 +584,9 @@ def generate_all(game_root:, auto_build_triggers_path:, template_root:)
     building_ids: building_ids,
     resolved_building_goods: resolved_building_goods,
     rgo_type_to_good: rgo_type_to_good,
-    building_type_metadata: building_type_metadata
+    building_type_metadata: building_type_metadata,
+    obsolete_to_upgrade: obsolete_to_upgrade,
+    building_increase_per_level_cost: building_increase_per_level_cost
   )
   generated_count = 0
 

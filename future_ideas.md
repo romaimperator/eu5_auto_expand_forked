@@ -1,9 +1,10 @@
 ﻿Future Implementation Ideas
 
+- Fix bug that allows stud farms to be auto-expanded in locations that don't have the appropriate climate
+- Related to the stud farm bug, there are also other buildings that can be auto-expanded even when they don't meet the actual in game conditions such as the Trade Office so add in more reliable checks for whether you can actually build a building or not for the auto-expand from zero levels button.
 - Make compatible with Glorp UI
 - Add button to enable/disable auto-expand for every building in a location
 - Modify the auto-expand button for buildings so holding control and clicking will toggle every building of that type in the province. Useful when you know you want to say auto-expand masons in a province that produces stone
-- See if we can add a filter so you can filter irrigation and farming villages by RGO in the location
 - Add automatic closing of buildings using construction goods to reduce demand and lower price
 - Find fix for not being able to remove enabled auto-expands and RGOs when tag switching via the world map so we can cleanup variables when you change tags in-game
 - Add additional buildings to the auto-build list based on country/religion/culture
@@ -12,9 +13,9 @@
   on_location_changed_owner
 - Pull together the disparate auto stuff into a single monthly check or daily check rather than having 3 separate on actions
 - Fix conservative check for enough construction goods with some testing around when construction stalls and when if it slows down when it's not stalled but there's a negative balance of a good
-- Add ability to sort by buildings and locations that have auto-expand enabled
 - Fix auto-build so we skip locations that the player owns that are currently occupied by the enemy in a war (not bug since game will prevent the building from making progress but a waste of money since it won't build)
 - Add notification for when you don't have a cheap enough price in a market for max discount
+- Add ability to sort by buildings and locations that have auto-expand enabled (wasn't able to figure out how to do add a sort action)
 
 
 Completed Ideas:
@@ -25,6 +26,7 @@ Completed Ideas:
 - Increase max minimum gold to save for late game
 - Add check to make sure there's enough goods to auto-expand an RGO
 - Handle buildings that aren't in the default base game the old way
+- See if we can add a filter so you can filter irrigation and farming villages by RGO in the location (ending up implementing as a filter by a specific food value)
 
 
 
