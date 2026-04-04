@@ -147,6 +147,25 @@ lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 	}
 }
 
+# Root is the building. Same as lsq_building_can_auto_expand_other_than_checking_for_upgrades but without
+# the can_build_building check, which fails for obsolete building types. The upgrade path already validates
+# upgradeability via building_can_be_upgraded_by.
+lsq_building_can_auto_expand_for_upgrade = {
+	location = { save_temporary_scope_as = location }
+	building_type = { save_temporary_scope_as = building_type }
+	AND = {
+		OR = {
+			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_is_building_profitable = yes lsq_building_meets_minimum_profit = yes }
+			building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
+		}
+		lsq_is_building_open = yes
+		lsq_is_building_fully_employed = yes
+		lsq_is_building_lacking_goods = no
+		location = { lsq_location_has_enough_pops_available = yes }
+		location = { lsq_is_location_under_building_limit = yes }
+	}
+}
+
 # Expects scopes: building type, country, and location
 lsq_location_can_auto_expand_from_zero_levels = {
 	AND = {
@@ -167,6 +186,29 @@ lsq_location_will_auto_expand_from_zero_levels = {
 		lsq_can_afford_switch_based_on_building_type = { target = scope:building_type }
 		lsq_is_location_under_building_limit = yes
 		can_build_building = scope:building_type
+	}
+}
+
+# Expects scopes: building type, country, and location. Same as lsq_location_can_auto_expand_from_zero_levels
+# but without the can_build_building check, which fails for obsolete building types.
+lsq_location_can_auto_expand_from_zero_levels_for_upgrade = {
+	AND = {
+		scope:location = { lsq_location_will_auto_expand_from_zero_levels_for_upgrade = yes }
+		lsq_auto_expand_check_owner_gold_available = yes
+	}
+}
+
+# Root is the location, also expects scope:building_type and scope:country
+lsq_location_will_auto_expand_from_zero_levels_for_upgrade = {
+	AND = {
+		scope:country = { lsq_should_pause_auto_expand = no }
+		OR = {
+			scope:building_type = { lsq_is_building_type_production_building = yes }
+			scope:building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
+		}
+		lsq_location_has_enough_pops_available = yes
+		lsq_can_afford_switch_based_on_building_type = { target = scope:building_type }
+		lsq_is_location_under_building_limit = yes
 	}
 }
 
