@@ -375,6 +375,18 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						visible = "[GetScriptedGui('lsq_is_building_type_producing').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End)]"
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_building_meets_minimum_profit').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_building_meets_minimum_profit').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Building meets minimum profit"
+						}
+					}
+					lsq_tooltip_row = {
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_open').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
