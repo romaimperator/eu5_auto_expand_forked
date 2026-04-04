@@ -13,6 +13,8 @@ lsq_auto_expand_buildings = {
 		if = { limit = { lsq_should_pause_auto_expand = no }
 			# debug_log = "Auto expanding buildings"
 			save_scope_as = country
+			# Clear the GUI upgrade locations list so it's rebuilt fresh each tick
+			clear_variable_list = lsq_gui_upgrade_locations
 			ordered_owned_location = {
 				order_by = max_control
 				max = lsq_max_guess_at_number_of_locations
@@ -49,17 +51,19 @@ lsq_auto_expand_buildings = {
 							if = { limit = {
 									scope:building = {
 										lsq_building_can_auto_expand_for_upgrade = yes
-										lsq_is_not_under_construction_and_gold_is_available = yes
+										lsq_is_not_under_construction = yes
+									}
+									lsq_auto_expand_check_minimum_gold_reserve = yes
+								}
+								# Flag for GUI upgrade processing (GetNextReplaced resolves the target)
+								scope:location = {
+									if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }
+										add_to_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type }
 									}
 								}
-								# scope:building_type = { debug_log = "Building passes checks for upgrading [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-								scope:building_type = { lsq_find_upgrade_building_type = yes }
-								if = { limit = { exists = scope:return_scope }
-									# scope:return_scope = { debug_log = "Found upgrade building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-									scope:location = {
-										construct_building = { building_type = scope:return_scope }
-										remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
-										add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:return_scope }
+								scope:country = {
+									if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_locations target = scope:location } } }
+										add_to_variable_list = { name = lsq_gui_upgrade_locations target = scope:location }
 									}
 								}
 							}
@@ -73,18 +77,19 @@ lsq_auto_expand_buildings = {
 								# scope:building_type = { debug_log = "Building passes first checks [THIS.GetBuildingType.GetNameWithNoTooltip]" }
 								scope:location = { construct_building = { building_type = scope:building_type } }
 							}
-						# Building type is obsolete so check if if can be upgraded
+						# Building type is obsolete so check if it can be upgraded
 						} else_if = { limit = { scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes } scope:country = { lsq_should_auto_expand_upgrade_buildings = yes } }
 							# scope:building_type = { debug_log = "Building is obsolete and upgradable [THIS.GetBuildingType.GetNameWithNoTooltip]" }
 							if = { limit = { lsq_location_can_auto_expand_from_zero_levels_for_upgrade = yes }
-								# scope:building_type = { debug_log = "Building passes checks for upgrading [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-								scope:building_type = { lsq_find_upgrade_building_type = yes }
-								if = { limit = { exists = scope:return_scope }
-									# scope:return_scope = { debug_log = "Found upgrade building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-									scope:location = {
-										construct_building = { building_type = scope:return_scope }
-										remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
-										add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:return_scope }
+								# Flag for GUI upgrade processing (GetNextReplaced resolves the target)
+								scope:location = {
+									if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }
+										add_to_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type }
+									}
+								}
+								scope:country = {
+									if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_locations target = scope:location } } }
+										add_to_variable_list = { name = lsq_gui_upgrade_locations target = scope:location }
 									}
 								}
 							}

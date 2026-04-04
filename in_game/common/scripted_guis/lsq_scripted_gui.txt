@@ -46,6 +46,24 @@ lsq_check_for_auto_expand_when_upgrading_building = {
 		}
 	}
 }
+# Called from the hidden window GUI to perform a building upgrade.
+# Root = location, scope:old_building_type = obsolete type, scope:new_building_type = upgrade target (from GetNextReplaced), scope:country = player
+lsq_gui_construct_upgrade = {
+	is_valid = {
+		is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:old_building_type }
+		scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
+	}
+	effect = {
+		construct_building = { building_type = scope:new_building_type }
+		# Swap auto-expand tracking from old to new
+		remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type }
+		if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type } } }
+			add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type }
+		}
+		# Clear from pending list
+		remove_list_variable = { name = lsq_gui_upgrade_building_types target = scope:old_building_type }
+	}
+}
 lsq_check_for_auto_expand_when_removing_building = {
 	effect = {
 		save_scope_as = the_building

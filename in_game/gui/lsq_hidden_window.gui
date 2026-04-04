@@ -96,22 +96,34 @@
 				}
 			}
 
-			# vbox = {
-			# 	# visible = "[GetScriptedGui('lsq_should_building_type_section_show').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-			# 	text_single = {
-			# 		raw_text = "Building type section"
-			# 	}
-			# 	datamodel = "[GetPlayer.MakeScope.GetList('every_non_standard_building_type')]"
-			# 	item = {
-			# 		hbox = {
-			# 			datacontext = "[Scope.GetBuildingType]"
-			# 			# visible = "[Or(Not(GetPlayer.MakeScope.VariableMapExists('lsq_non_standard_building_type_processed')), And(GetPlayer.MakeScope.VariableMapExists('lsq_non_standard_building_type_processed'), Not(GetScriptedGui('lsq_is_non_standard_building_type_processed').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))))]"
-			# 			text_single = {
-			# 				raw_text = "[BuildingType.GetName] [GuiScope.AddScope('location', GetPlayer.GetCapital.GetLocation.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('lsq_get_construction_cost_modifier_for_building_type')|%-=]  cat: [BuildingType.GetConstructionDemand.GetName]"
-			# 			}
-			# 		}
-			# 	}
-			# }
+			# Upgrade processing: iterates locations/building types flagged by the monthly script tick.
+			# The scripted GUI resolves the upgrade target via lsq_find_upgrade_building_type.
+			vbox = {
+				state = {
+					name = lsq_upgrade_loop
+					trigger_on_create = yes
+					duration = 2
+					on_start = "[PdxGuiTriggerAllAnimations('lsq_do_upgrade')]"
+					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_upgrade_loop')]"
+				}
+
+				datamodel = "[GetPlayer.MakeScope.GetList('lsq_gui_upgrade_locations')]"
+				item = {
+					vbox = {
+						datacontext = "[Scope.GetLocation]"
+						datamodel = "[Location.MakeScope.GetList('lsq_gui_upgrade_building_types')]"
+						item = {
+							hbox = {
+								datacontext = "[Scope.GetBuildingType]"
+								state = {
+									name = lsq_do_upgrade
+									on_finish = "[GetScriptedGui('lsq_gui_construct_upgrade').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('old_building_type', BuildingType.MakeScope).AddScope('new_building_type', BuildingType.GetNextReplaced(Player.Self).MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }
