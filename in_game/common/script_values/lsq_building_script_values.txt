@@ -64,23 +64,16 @@ lsq_adjusted_building_type_cost = {
 }
 
 # Expects scopes: building_type, country, and location
+# For obsolete types, the GUI handles upgrade cost via GetNextReplaced. This is only called for non-obsolete types now.
 lsq_adjusted_building_type_cost_accounting_for_upgrades = {
 	scope:location = {
-		if = { limit = { scope:building_type = { lsq_is_building_type_obsolete = no } }
-			value = lsq_adjusted_building_type_cost
-		} else_if = { limit = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
-			value = lsq_adjusted_upgrade_cost
-		} else = { value = -1 } # should never happen
+		value = lsq_adjusted_building_type_cost
 	}
 }
 
 # Root is the building type, also expects scope:country
 lsq_double_building_type_cost = {
-	if = { limit = { lsq_is_building_type_obsolete = no }
-		value = building_base_cost_in_gold
-	} else_if = { limit = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
-		value = lsq_get_upgrade_building_cost
-	} else = { value = 100 } # should never happen
+	value = building_base_cost_in_gold
 	multiply = 2
 }
 
@@ -173,9 +166,6 @@ lsq_get_construction_good_adjustment = {
 		value = 0
 	}
 }
-
-
-
 lsq_p_building_age_1_traditions_cost_modifier = {
 	value = modifier:p_building_age_1_traditions_cost_modifier
 }

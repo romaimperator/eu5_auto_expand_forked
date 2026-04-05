@@ -185,7 +185,7 @@
 			textbox = {
 				using = tooltip_text_block_template
 				visible = "[GetScriptedGui('lsq_is_building_type_obsolete').IsShown(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End)]"
-				raw_text = "Buildings cost modifier of upgrade: [GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('lsq_get_adjustment_to_base_building_cost_for_upgrade')|%-=]"
+				raw_text = "Buildings cost modifier of upgrade: [GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).AddScope('upgrade_building_type', BuildingType.GetNextReplaced(Player.Self).MakeScope).ScriptValue('lsq_adjustment_to_base_building_cost')|%-=]"
 			}
 			textbox = {
 				using = tooltip_text_block_template
@@ -193,7 +193,13 @@
 			}
 			textbox = {
 				using = tooltip_text_block_template
-				raw_text = "Final cost of [GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('lsq_adjusted_building_type_cost_accounting_for_upgrades')|2L]@gold!"
+				visible = "[Not(GetScriptedGui('lsq_is_building_type_obsolete').IsShown(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End))]"
+				raw_text = "Final cost: [GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('lsq_adjusted_building_type_cost')|2L]@gold!"
+			}
+			textbox = {
+				using = tooltip_text_block_template
+				visible = "[GetScriptedGui('lsq_is_building_type_obsolete').IsShown(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End)]"
+				raw_text = "Final cost of upgrade: [GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('upgrade_building_type', BuildingType.GetNextReplaced(Player.Self).MakeScope).AddScope('country', Player.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('lsq_adjusted_building_type_cost')|2L]@gold!"
 			}
 		}
 	}

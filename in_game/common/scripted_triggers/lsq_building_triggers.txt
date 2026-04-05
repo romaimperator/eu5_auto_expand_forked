@@ -226,6 +226,15 @@ lsq_location_will_auto_expand_from_zero_levels_for_upgrade = {
 	}
 }
 
+# Expects scope:country. Checks that the player has gold above their minimum reserve setting.
+# Used for upgrade branches where the exact upgrade cost is resolved by the GUI.
+lsq_auto_expand_check_minimum_gold_reserve = {
+	OR = {
+		NOT = { scope:country = { exists = var:lsq_minimum_gold_for_buildings } }
+		scope:country.gold > scope:country.var:lsq_minimum_gold_for_buildings
+	}
+}
+
 # Root is the building
 lsq_is_not_under_construction = {
 	building_levels_under_construction = 0
@@ -242,6 +251,11 @@ lsq_is_not_under_construction_and_gold_is_available = {
 # Root is the country
 lsq_should_auto_expand_upgrade_buildings = {
 	NOT = { exists = var:lsq_should_not_upgrade_buildings }
+}
+
+# Root is the country
+lsq_should_upgrade_all_buildings = {
+	exists = var:lsq_upgrade_all_buildings
 }
 
 # Root is the country
