@@ -572,6 +572,34 @@ template lsq_Building_Autoexpand_Tooltip {
 							}
 						}
 					}
+					lsq_tooltip_row = {
+						visible = "[InDebugMode]"
+						background = { using = bg_tooltip_debug }
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Can build building"
+						}
+					}
+					lsq_tooltip_row = {
+						visible = "[InDebugMode]"
+						background = { using = bg_tooltip_debug }
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_can_build_building').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_can_build_building').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Can build building country check"
+						}
+					}
 				}
 			}
 
@@ -724,6 +752,32 @@ template lsq_Building_Type_Autoexpand_Tooltip {
 									raw_text = "requires [GoodsDemandEntry.GetValue] [Goods.GetName] while we have [GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_max_required_construction_demand_to_still_allow_building')] available with a construction discount of [GuiScope.AddScope('location', Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_construction_good_adjustment')|%-=]"
 								}
 							}
+						}
+					}
+					lsq_tooltip_row = {
+						visible = "[InDebugMode]"
+						background = { using = bg_tooltip_debug }
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Can build building"
+						}
+					}
+					lsq_tooltip_row = {
+						visible = "[InDebugMode]"
+						background = { using = bg_tooltip_debug }
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_can_build_building').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_can_build_building').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Can build building country check"
 						}
 					}
 				}
