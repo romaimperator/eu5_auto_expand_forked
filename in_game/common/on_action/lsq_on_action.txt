@@ -10,9 +10,9 @@ lsq_auto_expand_buildings = {
 	}
 
 	effect = {
+		save_scope_as = country
 		if = { limit = { lsq_should_pause_auto_expand = no }
 			# debug_log = "Auto expanding buildings"
-			save_scope_as = country
 			# Clear the GUI upgrade locations list so it's rebuilt fresh each tick
 			clear_variable_list = lsq_gui_upgrade_locations
 			ordered_owned_location = {
@@ -133,5 +133,20 @@ lsq_auto_expand_buildings = {
 				}
 			}
 		} # end if should auto expand enabled
+
+		# --- Mass Upgrade Town to City pass ---
+		# Independent of auto-expand pause — controlled by its own toggle.
+		if = { limit = { lsq_should_mass_upgrade_town_to_city = yes }
+			ordered_owned_location = {
+				order_by = max_control
+				max = lsq_max_guess_at_number_of_locations
+				check_range_bounds = no
+				save_scope_as = location
+				limit = { lsq_location_can_mass_upgrade_to_city = yes }
+				if = { limit = { scope:country.gold > lsq_mass_upgrade_town_to_city_gold_needed }
+					scope:location = { construct_building = { building_type = building_type:lsq_upgrade_town_to_city } }
+				}
+			}
+		}
 	} # end effect
 } # end lsq_auto_expand_buildings

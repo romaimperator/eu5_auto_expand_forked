@@ -1,0 +1,92 @@
+﻿lsq_upgrade_town_to_city = {
+	is_foreign = no
+	pop_type = laborers
+	max_levels = 1
+
+	category = infrastructure_category
+	employment_size = rural_peasant_produce_employment
+
+	town = yes
+	city = yes
+	price = lsq_city_upgrade_price
+
+	forbidden_for_estates = yes
+
+	country_potential = {
+		is_ai = no
+	}
+	build_time = 730
+	construction_demand = build_city_demand
+	allow = {
+		location_rank = location_rank:town
+		population >= 30
+	}
+	location_potential = {
+		modifier:cannot_upgrade_location = no
+	}
+
+	modifier = {
+	}
+
+	on_built = {
+		location = {
+			if = {
+				limit = {
+					location_rank = location_rank:town
+				}
+				change_location_rank = location_rank:city
+			}
+			trigger_event_silently = {
+				id = lsq_location_upgrade.1
+				days = 1
+			}
+		}
+	}
+}
+
+lsq_upgrade_rural_to_town = {
+	is_foreign = no
+	pop_type = laborers
+	max_levels = 1
+
+	category = infrastructure_category
+	employment_size = rural_peasant_produce_employment
+
+	rural_settlement = yes
+	town = yes
+	city = yes
+	price = lsq_town_upgrade_price
+
+	forbidden_for_estates = yes
+	country_potential = {
+		is_ai = no
+	}
+	build_time = 365
+	construction_demand = build_town_demand
+	allow = {
+		population >= 5
+		location_rank = location_rank:rural_settlement
+	}
+
+	location_potential = {
+		modifier:cannot_upgrade_location = no
+	}
+
+	modifier = {
+	}
+
+	on_built = {
+		location = {
+			if = {
+				limit = {
+					location_rank = location_rank:rural_settlement
+				}
+				change_location_rank = location_rank:town
+			}
+			trigger_event_silently = {
+				id = lsq_location_upgrade.1
+				days = 1
+			}
+		}
+	}
+}
