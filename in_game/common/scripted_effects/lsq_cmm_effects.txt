@@ -403,6 +403,72 @@ lsq_register_cmf_mod = {
 		field_id = min_rgos
 		item = 15
 	}
+	# Auto-Food (auto_food) Tab
+	## Settings (auto_food_settings) Group
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = minimum_gold_for_food_auto_build
+		tab_id = auto_food
+		group_id = auto_food_settings
+		default_value = 50
+		min_value = 0
+		max_value = 10000
+		step_value = 10
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__minimum_gold_for_food_auto_build
+		alias = lsq_minimum_gold_for_food_auto_build
+	}
+
+	cmm_register_bool_setting = {
+		mod_id = lsq
+		setting_id = food_auto_build_in_subjects
+		tab_id = auto_food
+		group_id = auto_food_settings
+		default_value = 0
+	}
+	cmm_sync_bool_alias = {
+		setting = lsq__food_auto_build_in_subjects
+		alias = lsq_food_auto_build_in_subjects
+	}
+
+	## Auto-Food RGO Types (auto_food_list) Group
+	cmm_register_settings_list = {
+		mod_id = lsq
+		setting_id = auto_food_list
+		tab_id = auto_food
+		item_count = 14
+		is_ordered = 1
+	}
+
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 1 value = goods:rice }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 2 value = goods:wheat }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 3 value = goods:maize }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 4 value = goods:potato }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 5 value = goods:livestock }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 6 value = goods:millet }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 7 value = goods:legumes }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 8 value = goods:wool }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 9 value = goods:fish }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 10 value = goods:olives }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 11 value = goods:fruit }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 12 value = goods:wild_game }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 13 value = goods:beeswax }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_food_list item = 14 value = goods:fur }
+
+	cmm_register_list_bool_field = {
+		mod_id = lsq
+		setting_id = auto_food_list
+		field_id = enabled
+		default_value = 0
+	}
+
+	cmm_register_list_bool_field = {
+		mod_id = lsq
+		setting_id = auto_food_list
+		field_id = river_only
+		default_value = 0
+	}
 }
 
 # Auto-Build (auto_build) Tab
@@ -507,6 +573,19 @@ lsq_handle_cmf_callback = {
 			cmm_sync_setting_alias = {
 				setting = lsq__mass_upgrade_town_to_city_min_gold
 				alias = lsq_mass_upgrade_town_to_city_min_gold
+			}
+		}
+		# Auto-Food (auto_food) Tab
+		flag:lsq__minimum_gold_for_food_auto_build = {
+			cmm_sync_setting_alias = {
+				setting = lsq__minimum_gold_for_food_auto_build
+				alias = lsq_minimum_gold_for_food_auto_build
+			}
+		}
+		flag:lsq__food_auto_build_in_subjects = {
+			cmm_sync_bool_alias = {
+				setting = lsq__food_auto_build_in_subjects
+				alias = lsq_food_auto_build_in_subjects
 			}
 		}
 	}

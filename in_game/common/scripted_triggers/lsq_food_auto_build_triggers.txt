@@ -1,0 +1,174 @@
+﻿# Food auto-build triggers — eligibility, affordability, pop, and cap checks.
+# Gold threshold checks are done in the effects file (per-building script values).
+
+# ─── Location matching ───
+
+# Root is the location. Expects scope:food_good (the goods scope from the CMM list).
+# True if this location's RGO produces the specified food good.
+lsq_food_location_matches_rgo_type = {
+	raw_material = scope:food_good
+}
+
+# Root is the location. Expects scope:food_good and scope:country.
+# True if location passes the river_only filter for this food good.
+lsq_food_location_meets_river_filter = {
+	trigger_if = { limit = { scope:country = { is_target_in_variable_list = { name = lsq_auto_food_rgo_types_river_only target = scope:food_good } } }
+		OR = { has_river = yes is_adjacent_to_lake = yes }
+	} trigger_else = {
+		always = yes
+	}
+}
+
+# ─── Combined pool pop check ───
+
+# Root is the location. Expects scope:country.
+# True when ANY pop type in the location is scarce — existing buildings/RGO haven't filled their
+# workers yet and promotion isn't fast enough. When true, the food system should NOT build anything
+# new — let pops promote and fill existing positions first. This treats all pop types as a combined
+# pool: peasants promote to laborers, so building a peasant-consuming building (farming village)
+# when laborers are scarce diverts peasants from promoting to fill the RGO.
+lsq_food_location_pops_still_filling = {
+	OR = {
+		NOT = { lsq_auto_build_check_laborers_available_or_will_be = yes }
+		NOT = { lsq_auto_build_check_peasants_available_or_will_be = yes }
+	}
+}
+
+# ─── Can-build checks per option ───
+# Each checks: requirements met, not at cap, construction goods available, pops available.
+# Gold threshold is checked separately in the effects file.
+# Root is the location. Expects scopes: country, location.
+
+# Option 1: +1 RGO level
+lsq_food_can_build_rgo = {
+	AND = {
+		lsq_is_rgo_not_max_level_already = yes
+		lsq_is_rgo_under_construction = no
+		lsq_has_enough_raw_materials_for_rgo = yes
+		lsq_auto_build_check_laborers_available_or_will_be = yes
+	}
+}
+
+# Option 2: +1 Farming Village level
+# Requires: farming RGO, rural settlement, below cap
+lsq_food_can_build_farming_village = {
+	AND = {
+		location_rank = location_rank:rural_settlement
+		OR = {
+			raw_material = goods:wheat
+			raw_material = goods:maize
+			raw_material = goods:rice
+			raw_material = goods:millet
+			raw_material = goods:legumes
+			raw_material = goods:potato
+			raw_material = goods:livestock
+			raw_material = goods:olives
+			raw_material = goods:fruit
+			raw_material = goods:wool
+		}
+		trigger_if = { limit = { has_building = building_type:farming_village }
+			lsq_food_farming_village_level < lsq_food_rural_building_cap
+		} trigger_else = { always = yes }
+		lsq_can_afford_farming_village = yes
+		lsq_auto_build_check_peasants_available_or_will_be = yes
+	}
+}
+
+# Option 3: Windmill (1 level max)
+# Requires: wheat/rice/millet RGO, rural, no windmill yet
+lsq_food_can_build_windmill = {
+	AND = {
+		location_rank = location_rank:rural_settlement
+		OR = {
+			raw_material = goods:wheat
+			raw_material = goods:rice
+			raw_material = goods:millet
+		}
+		NOT = { has_building = building_type:windmill }
+		scope:country = { has_advance = windmills_advance }
+		lsq_can_afford_windmill = yes
+		lsq_auto_build_check_laborers_available_or_will_be = yes
+	}
+}
+
+# Option 4: +1 Irrigation level
+# Requires: river OR adjacent to lake, below irrigant_cap
+lsq_food_can_build_irrigation = {
+	AND = {
+		OR = { has_river = yes is_adjacent_to_lake = yes }
+		trigger_if = { limit = { has_building = building_type:irrigation_systems }
+			lsq_food_irrigation_level < lsq_food_irrigant_cap
+		} trigger_else = { always = yes }
+		lsq_can_afford_irrigation_systems = yes
+		lsq_auto_build_check_laborers_available_or_will_be = yes
+	}
+}
+
+# Option 5: +1 Fishing Village level
+# Requires: coastal, rural, below cap
+lsq_food_can_build_fishing_village = {
+	AND = {
+		is_coastal = yes
+		location_rank = location_rank:rural_settlement
+		trigger_if = { limit = { has_building = building_type:fishing_village }
+			lsq_food_fishing_village_level < lsq_food_rural_building_cap
+		} trigger_else = { always = yes }
+		lsq_can_afford_fishing_village = yes
+		lsq_auto_build_check_peasants_available_or_will_be = yes
+	}
+}
+
+# Option 6: +1 Sheep Farms level
+# Requires: sparse/farmland/grasslands vegetation, rural, below cap
+lsq_food_can_build_sheep_farms = {
+	AND = {
+		location_rank = location_rank:rural_settlement
+		OR = {
+			vegetation = sparse
+			vegetation = farmland
+			vegetation = grasslands
+		}
+		trigger_if = { limit = { has_building = building_type:sheep_farms }
+			lsq_food_sheep_farms_level < lsq_food_rural_building_cap
+		} trigger_else = { always = yes }
+		lsq_can_afford_sheep_farms = yes
+		lsq_auto_build_check_peasants_available_or_will_be = yes
+	}
+}
+
+# Option 7: +1 Fruit Orchard level
+# Requires: grasslands/farmland/woods/jungle vegetation, below cap
+lsq_food_can_build_fruit_orchard = {
+	AND = {
+		OR = {
+			vegetation = grasslands
+			vegetation = farmland
+			vegetation = woods
+			vegetation = jungle
+		}
+		trigger_if = { limit = { has_building = building_type:fruit_orchard }
+			lsq_food_fruit_orchard_level < lsq_food_rural_building_cap
+		} trigger_else = { always = yes }
+		lsq_can_afford_fruit_orchard = yes
+		lsq_auto_build_check_peasants_available_or_will_be = yes
+	}
+}
+
+# Option 8: +1 Forest Village level
+# Requires: wild_game RGO OR forest/woods/jungle vegetation, rural, below cap
+lsq_food_can_build_forest_village = {
+	AND = {
+		location_rank = location_rank:rural_settlement
+		OR = {
+			raw_material = goods:wild_game
+			vegetation = forest
+			vegetation = woods
+			vegetation = jungle
+		}
+		trigger_if = { limit = { has_building = building_type:forest_village }
+			lsq_food_forest_village_level < lsq_food_rural_building_cap
+		} trigger_else = { always = yes }
+		lsq_can_afford_forest_village = yes
+		lsq_auto_build_check_laborers_available_or_will_be = yes
+	}
+}

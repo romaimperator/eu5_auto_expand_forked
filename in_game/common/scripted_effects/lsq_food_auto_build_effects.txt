@@ -1,0 +1,161 @@
+﻿# Food auto-build effects — marginal comparison and construction dispatch.
+
+# Main per-location effect. Computes marginal food for each buildable option, picks the highest, and builds it.
+# Root is the location. Expects scopes: country, location, food_good.
+lsq_food_auto_build_in_location = {
+	# Preconditions: pause, build queue, market access
+	if = { limit = { scope:country = { lsq_should_pause_auto_expand = no } }
+	if = { limit = { lsq_get_open_build_queue_slots > 0 }
+	if = { limit = { market_access > 0 }
+
+	# Combined pool: if any pop type is scarce (existing buildings/RGO haven't filled workers), skip
+	if = { limit = { NOT = { lsq_food_location_pops_still_filling = yes } }
+
+		# Track best marginal and action (0=none, 1=rgo, 2=farming_village, 3=windmill, 4=irrigation, 5=fishing_village, 6=sheep_farms, 7=fruit_orchard, 8=forest_village)
+		set_local_variable = { name = lsq_food_best value = 0 }
+		set_local_variable = { name = lsq_food_action value = 0 }
+
+		# ─── Option 1: RGO expand ───
+		if = { limit = { lsq_food_can_build_rgo = yes scope:country.gold > lsq_food_expected_gold_for_rgo }
+			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_rgo }
+			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
+				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
+				set_local_variable = { name = lsq_food_action value = 1 }
+			}
+		}
+
+		# ─── Option 2: Farming Village ───
+		if = { limit = { lsq_food_can_build_farming_village = yes scope:country.gold > lsq_food_expected_gold_for_farming_village }
+			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_farming_village }
+			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
+				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
+				set_local_variable = { name = lsq_food_action value = 2 }
+			}
+		}
+
+		# ─── Option 3: Windmill ───
+		if = { limit = { lsq_food_can_build_windmill = yes scope:country.gold > lsq_food_expected_gold_for_windmill }
+			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_windmill }
+			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
+				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
+				set_local_variable = { name = lsq_food_action value = 3 }
+			}
+		}
+
+		# ─── Option 4: Irrigation ───
+		if = { limit = { lsq_food_can_build_irrigation = yes scope:country.gold > lsq_food_expected_gold_for_irrigation_systems }
+			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_irrigation }
+			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
+				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
+				set_local_variable = { name = lsq_food_action value = 4 }
+			}
+		}
+
+		# ─── Option 5: Fishing Village ───
+		if = { limit = { lsq_food_can_build_fishing_village = yes scope:country.gold > lsq_food_expected_gold_for_fishing_village }
+			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_fishing_village }
+			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
+				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
+				set_local_variable = { name = lsq_food_action value = 5 }
+			}
+		}
+
+		# ─── Option 6: Sheep Farms ───
+		if = { limit = { lsq_food_can_build_sheep_farms = yes scope:country.gold > lsq_food_expected_gold_for_sheep_farms }
+			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_sheep_farms }
+			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
+				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
+				set_local_variable = { name = lsq_food_action value = 6 }
+			}
+		}
+
+		# ─── Option 7: Fruit Orchard ───
+		if = { limit = { lsq_food_can_build_fruit_orchard = yes scope:country.gold > lsq_food_expected_gold_for_fruit_orchard }
+			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_fruit_orchard }
+			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
+				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
+				set_local_variable = { name = lsq_food_action value = 7 }
+			}
+		}
+
+		# ─── Option 8: Forest Village ───
+		if = { limit = { lsq_food_can_build_forest_village = yes scope:country.gold > lsq_food_expected_gold_for_forest_village }
+			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_forest_village }
+			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
+				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
+				set_local_variable = { name = lsq_food_action value = 8 }
+			}
+		}
+
+		# ─── Execute best action ───
+		if = { limit = { local_var:lsq_food_action = 1 }
+			if = { limit = { debug_only = yes } debug_log = "LSQ Food: RGO expand in [THIS.GetLocation.GetNameWithNoTooltip] (marginal=[GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_food_marginal_rgo')])" }
+			construct_rgo_upgrade = {}
+		} else_if = { limit = { local_var:lsq_food_action = 2 }
+			if = { limit = { debug_only = yes } debug_log = "LSQ Food: farming_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
+			construct_building = { building_type = building_type:farming_village }
+		} else_if = { limit = { local_var:lsq_food_action = 3 }
+			if = { limit = { debug_only = yes } debug_log = "LSQ Food: windmill in [THIS.GetLocation.GetNameWithNoTooltip]" }
+			construct_building = { building_type = building_type:windmill }
+		} else_if = { limit = { local_var:lsq_food_action = 4 }
+			if = { limit = { debug_only = yes } debug_log = "LSQ Food: irrigation in [THIS.GetLocation.GetNameWithNoTooltip]" }
+			construct_building = { building_type = building_type:irrigation_systems }
+		} else_if = { limit = { local_var:lsq_food_action = 5 }
+			if = { limit = { debug_only = yes } debug_log = "LSQ Food: fishing_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
+			construct_building = { building_type = building_type:fishing_village }
+		} else_if = { limit = { local_var:lsq_food_action = 6 }
+			if = { limit = { debug_only = yes } debug_log = "LSQ Food: sheep_farms in [THIS.GetLocation.GetNameWithNoTooltip]" }
+			construct_building = { building_type = building_type:sheep_farms }
+		} else_if = { limit = { local_var:lsq_food_action = 7 }
+			if = { limit = { debug_only = yes } debug_log = "LSQ Food: fruit_orchard in [THIS.GetLocation.GetNameWithNoTooltip]" }
+			construct_building = { building_type = building_type:fruit_orchard }
+		} else_if = { limit = { local_var:lsq_food_action = 8 }
+			if = { limit = { debug_only = yes } debug_log = "LSQ Food: forest_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
+			construct_building = { building_type = building_type:forest_village }
+		}
+
+	} # end combined pool check
+	} # end market_access
+	} # end build queue
+	} # end pause
+}
+
+# Iterate locations for a specific food RGO type and build optimally.
+# Root is the country. Expects scope:food_good (the goods scope for this food type).
+lsq_food_auto_build_for_rgo_type = {
+	save_scope_as = country
+
+	# Process owned locations matching this food good
+	ordered_owned_location = {
+		order_by = max_control
+		max = lsq_max_guess_at_number_of_locations
+		check_range_bounds = no
+		limit = {
+			lsq_food_location_matches_rgo_type = yes
+			lsq_food_location_meets_river_filter = yes
+		}
+		save_scope_as = location
+		lsq_food_auto_build_in_location = yes
+	}
+
+	# Also process subject locations if enabled
+	if = { limit = { exists = var:lsq_food_auto_build_in_subjects var:lsq_food_auto_build_in_subjects = 1 }
+		every_subject_or_below = {
+			ordered_owned_location = {
+				order_by = max_control
+				max = lsq_max_guess_at_number_of_locations
+				check_range_bounds = no
+				limit = {
+					lsq_food_location_matches_rgo_type = yes
+					lsq_food_location_meets_river_filter = yes
+				}
+				save_scope_as = location
+				scope:country = {
+					scope:location = {
+						lsq_food_auto_build_in_location = yes
+					}
+				}
+			}
+		}
+	}
+}

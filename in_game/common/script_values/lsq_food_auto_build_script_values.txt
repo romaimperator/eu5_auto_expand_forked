@@ -1,0 +1,309 @@
+﻿# Food auto-build script values — marginal food calculations and building cost helpers.
+# All values are location-scoped unless noted otherwise.
+
+# ─── Food value per RGO good ───
+# Returns the food_value constant for the location's raw_material.
+lsq_food_value_of_rgo = {
+	value = 0
+	if = { limit = { raw_material = goods:rice } value = 10 }
+	else_if = { limit = { raw_material = goods:wheat } value = 8 }
+	else_if = { limit = { raw_material = goods:maize } value = 8 }
+	else_if = { limit = { raw_material = goods:potato } value = 8 }
+	else_if = { limit = { raw_material = goods:livestock } value = 8 }
+	else_if = { limit = { raw_material = goods:millet } value = 5 }
+	else_if = { limit = { raw_material = goods:legumes } value = 5 }
+	else_if = { limit = { raw_material = goods:wool } value = 5 }
+	else_if = { limit = { raw_material = goods:fish } value = 5 }
+	else_if = { limit = { raw_material = goods:olives } value = 4 }
+	else_if = { limit = { raw_material = goods:fruit } value = 4 }
+	else_if = { limit = { raw_material = goods:wild_game } value = 3.5 }
+	else_if = { limit = { raw_material = goods:beeswax } value = 2.5 }
+	else_if = { limit = { raw_material = goods:fur } value = 2 }
+}
+
+# ─── Building level helpers ───
+# Returns the building level (0 if not present).
+lsq_food_farming_village_level = {
+	if = { limit = { has_building = building_type:farming_village }
+		"building(building_type:farming_village|owner)" = { value = building_level }
+	} else = { value = 0 }
+}
+
+lsq_food_fishing_village_level = {
+	if = { limit = { has_building = building_type:fishing_village }
+		"building(building_type:fishing_village|owner)" = { value = building_level }
+	} else = { value = 0 }
+}
+
+lsq_food_sheep_farms_level = {
+	if = { limit = { has_building = building_type:sheep_farms }
+		"building(building_type:sheep_farms|owner)" = { value = building_level }
+	} else = { value = 0 }
+}
+
+lsq_food_fruit_orchard_level = {
+	if = { limit = { has_building = building_type:fruit_orchard }
+		"building(building_type:fruit_orchard|owner)" = { value = building_level }
+	} else = { value = 0 }
+}
+
+lsq_food_forest_village_level = {
+	if = { limit = { has_building = building_type:forest_village }
+		"building(building_type:forest_village|owner)" = { value = building_level }
+	} else = { value = 0 }
+}
+
+lsq_food_irrigation_level = {
+	if = { limit = { has_building = building_type:irrigation_systems }
+		"building(building_type:irrigation_systems|owner)" = { value = building_level }
+	} else = { value = 0 }
+}
+
+lsq_food_has_windmill = {
+	if = { limit = { has_building = building_type:windmill }
+		value = 1
+	} else = { value = 0 }
+}
+
+# ─── RGO output modifier from windmill ───
+# Returns 0.1 if windmill exists AND the RGO good benefits from it, else 0.
+lsq_food_rgo_output_mod = {
+	value = 0
+	if = { limit = { has_building = building_type:windmill OR = { raw_material = goods:wheat raw_material = goods:rice raw_material = goods:millet } }
+		value = 0.1
+	}
+}
+
+# ─── Base food calculation ───
+# base_food = N × food_value × (1 + rgo_output_mod) + Σ(building_goods_food × levels)
+# Building goods food constants:
+#   farming_village  = 0.5 × 8 (livestock)          = 4.0
+#   fishing_village  = 0.5 × 5 (fish)               = 2.5
+#   sheep_farms      = 0.5 × 5 (wool)               = 2.5
+#   fruit_orchard    = 0.3 × 4 (fruit)              = 1.2
+#   forest_village   = 0.2 × 3.5 (wild_game) + 1.0  = 1.7
+lsq_food_base_food = {
+	# RGO contribution: N × food_value × (1 + rgo_output_mod)
+	value = lsq_modifier_rgo_level
+	multiply = lsq_food_value_of_rgo
+	multiply = {
+		value = 1
+		add = lsq_food_rgo_output_mod
+	}
+	# Farming village goods food: 4.0 per level
+	add = {
+		value = lsq_food_farming_village_level
+		multiply = 4.0
+	}
+	# Fishing village goods food: 2.5 per level
+	add = {
+		value = lsq_food_fishing_village_level
+		multiply = 2.5
+	}
+	# Sheep farms goods food: 2.5 per level
+	add = {
+		value = lsq_food_sheep_farms_level
+		multiply = 2.5
+	}
+	# Fruit orchard goods food: 1.2 per level
+	add = {
+		value = lsq_food_fruit_orchard_level
+		multiply = 1.2
+	}
+	# Forest village goods food: 1.7 per level
+	add = {
+		value = lsq_food_forest_village_level
+		multiply = 1.7
+	}
+}
+
+# ─── Total food modifier ───
+# Reads the current total food modifier from the engine (includes terrain + building modifiers).
+lsq_food_total_food_mod = {
+	value = modifier:local_monthly_food_modifier
+}
+
+# ─── One plus total food mod (convenience) ───
+lsq_food_one_plus_total_food_mod = {
+	value = 1
+	add = lsq_food_total_food_mod
+}
+
+# ─── Marginal food calculations ───
+
+# +1 RGO level: food_value × (1 + rgo_output_mod) × (1 + total_food_mod)
+lsq_food_marginal_rgo = {
+	value = lsq_food_value_of_rgo
+	multiply = {
+		value = 1
+		add = lsq_food_rgo_output_mod
+	}
+	multiply = lsq_food_one_plus_total_food_mod
+}
+
+# +1 Farming Village: 4.0 × (1 + total_food_mod) + 0.04 × base_food
+lsq_food_marginal_farming_village = {
+	value = 4.0
+	multiply = lsq_food_one_plus_total_food_mod
+	add = {
+		value = lsq_food_base_food
+		multiply = 0.04
+	}
+}
+
+# +1 Windmill: 0.1 × N × food_value × (1 + total_food_mod)
+lsq_food_marginal_windmill = {
+	value = 0.1
+	multiply = lsq_modifier_rgo_level
+	multiply = lsq_food_value_of_rgo
+	multiply = lsq_food_one_plus_total_food_mod
+}
+
+# +1 Irrigation: 0.05 × base_food
+lsq_food_marginal_irrigation = {
+	value = lsq_food_base_food
+	multiply = 0.05
+}
+
+# +1 Fishing Village: 2.5 × (1 + total_food_mod)
+lsq_food_marginal_fishing_village = {
+	value = 2.5
+	multiply = lsq_food_one_plus_total_food_mod
+}
+
+# +1 Sheep Farms: 2.5 × (1 + total_food_mod)
+lsq_food_marginal_sheep_farms = {
+	value = 2.5
+	multiply = lsq_food_one_plus_total_food_mod
+}
+
+# +1 Fruit Orchard: 1.2 × (1 + total_food_mod)
+lsq_food_marginal_fruit_orchard = {
+	value = 1.2
+	multiply = lsq_food_one_plus_total_food_mod
+}
+
+# +1 Forest Village: 1.7 × (1 + total_food_mod)
+lsq_food_marginal_forest_village = {
+	value = 1.7
+	multiply = lsq_food_one_plus_total_food_mod
+}
+
+# ─── Building cap calculations ───
+# rural_building_cap: base 1 + 0.1×dev + 0.5×max_rgo_workers + (1 if river)
+lsq_food_rural_building_cap = {
+	value = 1
+	add = {
+		value = development
+		multiply = 0.1
+	}
+	add = {
+		value = max_rgo_workers
+		multiply = 0.5
+	}
+	if = { limit = { has_river = yes }
+		add = 1
+	}
+	floor = yes
+}
+
+# irrigant_cap: base 2 + 0.2×dev + (2 if river)
+lsq_food_irrigant_cap = {
+	value = 2
+	add = {
+		value = development
+		multiply = 0.2
+	}
+	if = { limit = { has_river = yes }
+		add = 2
+	}
+	floor = yes
+}
+
+# ─── Building cost helpers ───
+# Gold threshold for food auto-build.
+# Scope: country
+lsq_food_get_minimum_gold = {
+	if = { limit = { exists = var:lsq_minimum_gold_for_food_auto_build }
+		value = var:lsq_minimum_gold_for_food_auto_build
+	} else = { value = 50 }
+}
+
+# Expected gold needed for RGO expansion (food system).
+# Expects scopes: country, location
+lsq_food_expected_gold_for_rgo = {
+	value = lsq_get_adjusted_construction_cost_for_rgo
+	scope:country = { add = lsq_food_get_minimum_gold }
+}
+
+# ─── Per-building gold threshold script values ───
+# Each computes: base_cost × (1 + build_modifiers) × (1 + construction_cost_adj) × (1 + inflation) + gold_reserve.
+# Root is the location. Expects scope:country.
+
+lsq_food_expected_gold_for_farming_village = {
+	building_type:farming_village = { value = building_base_cost_in_gold }
+	multiply = { value = 1 add = lsq_food_build_cost_modifier }
+	multiply = { value = 1 add = lsq_get_construction_cost_adjustment_for_farming_village }
+	multiply = { value = 1 add = scope:country.inflation }
+	scope:country = { add = lsq_food_get_minimum_gold }
+}
+
+lsq_food_expected_gold_for_windmill = {
+	building_type:windmill = { value = building_base_cost_in_gold }
+	multiply = { value = 1 add = lsq_food_build_cost_modifier }
+	multiply = { value = 1 add = lsq_get_construction_cost_adjustment_for_windmill }
+	multiply = { value = 1 add = scope:country.inflation }
+	scope:country = { add = lsq_food_get_minimum_gold }
+}
+
+lsq_food_expected_gold_for_irrigation_systems = {
+	building_type:irrigation_systems = { value = building_base_cost_in_gold }
+	multiply = { value = 1 add = lsq_food_build_cost_modifier }
+	multiply = { value = 1 add = lsq_get_construction_cost_adjustment_for_irrigation_systems }
+	multiply = { value = 1 add = scope:country.inflation }
+	scope:country = { add = lsq_food_get_minimum_gold }
+}
+
+lsq_food_expected_gold_for_fishing_village = {
+	building_type:fishing_village = { value = building_base_cost_in_gold }
+	multiply = { value = 1 add = lsq_food_build_cost_modifier }
+	multiply = { value = 1 add = lsq_get_construction_cost_adjustment_for_fishing_village }
+	multiply = { value = 1 add = scope:country.inflation }
+	scope:country = { add = lsq_food_get_minimum_gold }
+}
+
+lsq_food_expected_gold_for_sheep_farms = {
+	building_type:sheep_farms = { value = building_base_cost_in_gold }
+	multiply = { value = 1 add = lsq_food_build_cost_modifier }
+	multiply = { value = 1 add = lsq_get_construction_cost_adjustment_for_sheep_farms }
+	multiply = { value = 1 add = scope:country.inflation }
+	scope:country = { add = lsq_food_get_minimum_gold }
+}
+
+lsq_food_expected_gold_for_fruit_orchard = {
+	building_type:fruit_orchard = { value = building_base_cost_in_gold }
+	multiply = { value = 1 add = lsq_food_build_cost_modifier }
+	multiply = { value = 1 add = lsq_get_construction_cost_adjustment_for_fruit_orchard }
+	multiply = { value = 1 add = scope:country.inflation }
+	scope:country = { add = lsq_food_get_minimum_gold }
+}
+
+lsq_food_expected_gold_for_forest_village = {
+	building_type:forest_village = { value = building_base_cost_in_gold }
+	multiply = { value = 1 add = lsq_food_build_cost_modifier }
+	multiply = { value = 1 add = lsq_get_construction_cost_adjustment_for_forest_village }
+	multiply = { value = 1 add = scope:country.inflation }
+	scope:country = { add = lsq_food_get_minimum_gold }
+}
+
+# Build cost modifier (global + local). Root is the location, expects scope:country.
+lsq_food_build_cost_modifier = {
+	scope:country = { value = modifier:global_build_buildings_cost }
+	if = { limit = { location_rank = location_rank:rural_settlement }
+		scope:country = { add = modifier:global_rural_build_buildings_cost }
+	} else = {
+		scope:country = { add = modifier:global_urban_build_buildings_cost }
+	}
+	add = modifier:local_build_buildings_cost
+	add = modifier:local_build_new_buildings_cost
+}
