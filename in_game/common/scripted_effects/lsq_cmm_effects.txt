@@ -1,11 +1,11 @@
 ﻿# Root scope: country.
 lsq_register_cmf_mod = {
-	# Construction (construction) Tab
+	# Settings (settings) Tab
 	## Settings (settings) Group
 	cmm_register_bool_setting = {
 		mod_id = lsq
 		setting_id = pause_auto_expand
-		tab_id = general
+		tab_id = settings
 		group_id = settings
 		default_value = 0
 	}
@@ -17,7 +17,7 @@ lsq_register_cmf_mod = {
 	cmm_register_bool_setting = {
 		mod_id = lsq
 		setting_id = should_not_upgrade_buildings
-		tab_id = general
+		tab_id = settings
 		group_id = settings
 		default_value = 1
 	}
@@ -29,7 +29,7 @@ lsq_register_cmf_mod = {
 	cmm_register_slider_setting = {
 		mod_id = lsq
 		setting_id = minimum_gold_for_buildings
-		tab_id = general
+		tab_id = settings
 		group_id = settings
 		default_value = 50
 		min_value = 0
@@ -44,7 +44,7 @@ lsq_register_cmf_mod = {
 	cmm_register_slider_setting = {
 		mod_id = lsq
 		setting_id = minimum_gold_for_rgos
-		tab_id = general
+		tab_id = settings
 		group_id = settings
 		default_value = 90
 		min_value = 0
@@ -59,7 +59,7 @@ lsq_register_cmf_mod = {
 	cmm_register_slider_setting = {
 		mod_id = lsq
 		setting_id = minimum_gold_for_auto_build
-		tab_id = general
+		tab_id = settings
 		group_id = settings
 		default_value = 50
 		min_value = 0
@@ -74,7 +74,7 @@ lsq_register_cmf_mod = {
 	cmm_register_slider_setting = {
 		mod_id = lsq
 		setting_id = allowed_building_overbuild_levels
-		tab_id = general
+		tab_id = settings
 		group_id = settings
 		default_value = 0
 		min_value = 0
@@ -89,7 +89,7 @@ lsq_register_cmf_mod = {
 	cmm_register_slider_setting = {
 		mod_id = lsq
 		setting_id = minimum_profit_for_buildings
-		tab_id = general
+		tab_id = settings
 		group_id = settings
 		default_value = 0
 		min_value = 0
@@ -99,6 +99,21 @@ lsq_register_cmf_mod = {
 	cmm_sync_setting_alias = {
 		setting = lsq__minimum_profit_for_buildings
 		alias = lsq_minimum_profit_for_buildings
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = minimum_gold_for_food_auto_build
+		tab_id = settings
+		group_id = settings
+		default_value = 50
+		min_value = 0
+		max_value = 10000
+		step_value = 10
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__minimum_gold_for_food_auto_build
+		alias = lsq_minimum_gold_for_food_auto_build
 	}
 
 	# Mass Upgrade (mass_upgrade) Tab
@@ -404,34 +419,6 @@ lsq_register_cmf_mod = {
 		item = 15
 	}
 	# Auto-Food (auto_food) Tab
-	## Settings (auto_food_settings) Group
-	cmm_register_slider_setting = {
-		mod_id = lsq
-		setting_id = minimum_gold_for_food_auto_build
-		tab_id = auto_food
-		group_id = auto_food_settings
-		default_value = 50
-		min_value = 0
-		max_value = 10000
-		step_value = 10
-	}
-	cmm_sync_setting_alias = {
-		setting = lsq__minimum_gold_for_food_auto_build
-		alias = lsq_minimum_gold_for_food_auto_build
-	}
-
-	cmm_register_bool_setting = {
-		mod_id = lsq
-		setting_id = food_auto_build_in_subjects
-		tab_id = auto_food
-		group_id = auto_food_settings
-		default_value = 0
-	}
-	cmm_sync_bool_alias = {
-		setting = lsq__food_auto_build_in_subjects
-		alias = lsq_food_auto_build_in_subjects
-	}
-
 	## Auto-Food RGO Types (auto_food_list) Group
 	cmm_register_settings_list = {
 		mod_id = lsq
@@ -469,6 +456,13 @@ lsq_register_cmf_mod = {
 		field_id = river_only
 		default_value = 0
 	}
+
+	cmm_register_list_bool_field = {
+		mod_id = lsq
+		setting_id = auto_food_list
+		field_id = in_subjects
+		default_value = 0
+	}
 }
 
 # Auto-Build (auto_build) Tab
@@ -501,7 +495,7 @@ lsq_register_cmf_mod = {
 lsq_handle_cmf_callback = {
 	switch = {
 		trigger = var:cmf_callback
-		# Construction (construction) Tab
+		# Settings (settings) Tab
 		## Settings (settings) Group
 		flag:lsq__pause_auto_expand = {
 			cmm_sync_bool_alias = {
@@ -551,6 +545,12 @@ lsq_handle_cmf_callback = {
 				alias = lsq_minimum_profit_for_buildings
 			}
 		}
+		flag:lsq__minimum_gold_for_food_auto_build = {
+			cmm_sync_setting_alias = {
+				setting = lsq__minimum_gold_for_food_auto_build
+				alias = lsq_minimum_gold_for_food_auto_build
+			}
+		}
 		flag:lsq__mass_upgrade_town_to_city = {
 			cmm_sync_bool_alias = {
 				setting = lsq__mass_upgrade_town_to_city
@@ -573,19 +573,6 @@ lsq_handle_cmf_callback = {
 			cmm_sync_setting_alias = {
 				setting = lsq__mass_upgrade_town_to_city_min_gold
 				alias = lsq_mass_upgrade_town_to_city_min_gold
-			}
-		}
-		# Auto-Food (auto_food) Tab
-		flag:lsq__minimum_gold_for_food_auto_build = {
-			cmm_sync_setting_alias = {
-				setting = lsq__minimum_gold_for_food_auto_build
-				alias = lsq_minimum_gold_for_food_auto_build
-			}
-		}
-		flag:lsq__food_auto_build_in_subjects = {
-			cmm_sync_bool_alias = {
-				setting = lsq__food_auto_build_in_subjects
-				alias = lsq_food_auto_build_in_subjects
 			}
 		}
 	}

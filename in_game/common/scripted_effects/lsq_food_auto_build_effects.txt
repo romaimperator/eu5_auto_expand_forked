@@ -139,8 +139,8 @@ lsq_food_auto_build_for_rgo_type = {
 		lsq_food_auto_build_in_location = yes
 	}
 
-	# Also process subject locations if enabled
-	if = { limit = { exists = var:lsq_food_auto_build_in_subjects var:lsq_food_auto_build_in_subjects = 1 }
+	# Also process subject locations if enabled for this RGO type
+	if = { limit = { is_target_in_variable_list = { name = lsq_auto_food_rgo_types_in_subjects_enabled target = scope:food_good } }
 		every_subject_or_below = {
 			ordered_owned_location = {
 				order_by = max_control
