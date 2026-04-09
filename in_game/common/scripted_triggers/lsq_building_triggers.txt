@@ -139,6 +139,16 @@ lsq_building_meets_minimum_profit = {
 	}
 }
 
+# Root is the building. Checks construction cost adjustment against the min discount threshold.
+lsq_building_meets_minimum_discount_for_auto_expand = {
+	OR = {
+		NOT = { owner = { exists = var:lsq_minimum_discount_for_auto_expand } }
+		scope:building_type = {
+			lsq_get_construction_cost_adjustment_for_building_type <= owner.lsq_get_minimum_market_price_impact_for_auto_expand
+		}
+	}
+}
+
 # Root is the building
 lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 	location = { save_temporary_scope_as = location }
@@ -151,6 +161,7 @@ lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 		lsq_is_building_open = yes
 		lsq_is_building_fully_employed = yes
 		lsq_is_building_lacking_goods = no
+		lsq_building_meets_minimum_discount_for_auto_expand = yes
 		location = { lsq_location_has_enough_pops_available = yes }
 		location = { lsq_is_location_under_building_limit = yes }
 		location.owner = { save_temporary_scope_as = actor }
@@ -173,6 +184,7 @@ lsq_building_can_auto_expand_for_upgrade = {
 		lsq_is_building_open = yes
 		lsq_is_building_fully_employed = yes
 		lsq_is_building_lacking_goods = no
+		lsq_building_meets_minimum_discount_for_auto_expand = yes
 		location = { lsq_location_has_enough_pops_available = yes }
 		location = { lsq_is_location_under_building_limit = yes }
 	}
@@ -250,7 +262,7 @@ lsq_is_not_under_construction_and_gold_is_available = {
 
 # Root is the country
 lsq_should_auto_expand_upgrade_buildings = {
-	NOT = { exists = var:lsq_should_not_upgrade_buildings }
+	always = yes
 }
 
 # Root is the country

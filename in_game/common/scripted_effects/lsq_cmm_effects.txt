@@ -1,7 +1,7 @@
 ﻿# Root scope: country.
 lsq_register_cmf_mod = {
 	# Settings (settings) Tab
-	## Settings (settings) Group
+	## Global Control (settings) Group
 	cmm_register_bool_setting = {
 		mod_id = lsq
 		setting_id = pause_auto_expand
@@ -14,79 +14,7 @@ lsq_register_cmf_mod = {
 		alias = lsq_pause_auto_expand
 	}
 
-	cmm_register_bool_setting = {
-		mod_id = lsq
-		setting_id = should_not_upgrade_buildings
-		tab_id = settings
-		group_id = settings
-		default_value = 1
-	}
-	cmm_sync_bool_alias_inverted = {
-		setting = lsq__should_not_upgrade_buildings
-		alias = lsq_should_not_upgrade_buildings
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = lsq
-		setting_id = minimum_gold
-		tab_id = settings
-		group_id = settings
-		default_value = 50
-		min_value = 0
-		max_value = 10000
-		step_value = 10
-	}
-	cmm_sync_setting_alias = {
-		setting = lsq__minimum_gold
-		alias = lsq_minimum_gold
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = lsq
-		setting_id = allowed_building_overbuild_levels
-		tab_id = settings
-		group_id = settings
-		default_value = 0
-		min_value = 0
-		max_value = 100
-		step_value = 1
-	}
-	cmm_sync_setting_alias = {
-		setting = lsq__allowed_building_overbuild_levels
-		alias = lsq_allowed_building_overbuild_levels
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = lsq
-		setting_id = minimum_profit_for_buildings
-		tab_id = settings
-		group_id = settings
-		default_value = 0
-		min_value = 0
-		max_value = 15
-		step_value = 0.1
-	}
-	cmm_sync_setting_alias = {
-		setting = lsq__minimum_profit_for_buildings
-		alias = lsq_minimum_profit_for_buildings
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = lsq
-		setting_id = minimum_discount_for_food_auto_build
-		tab_id = settings
-		group_id = settings
-		default_value = -33
-		min_value = -33
-		max_value = 33
-		step_value = 1
-	}
-	cmm_sync_setting_alias = {
-		setting = lsq__minimum_discount_for_food_auto_build
-		alias = lsq_minimum_discount_for_food_auto_build
-	}
-
-	## Priority List Group
+	## Construction Automation (priority_list) Group
 	cmm_register_settings_list = {
 		mod_id = lsq
 		setting_id = priority_list
@@ -107,6 +35,81 @@ lsq_register_cmf_mod = {
 		setting_id = priority_list
 		field_id = enabled
 		default_value = 0
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = minimum_gold
+		tab_id = settings
+		group_id = priority_list
+		default_value = 50
+		min_value = 0
+		max_value = 10000
+		step_value = 10
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__minimum_gold
+		alias = lsq_minimum_gold
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = allowed_building_overbuild_levels
+		tab_id = settings
+		group_id = priority_list
+		default_value = 0
+		min_value = 0
+		max_value = 100
+		step_value = 1
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__allowed_building_overbuild_levels
+		alias = lsq_allowed_building_overbuild_levels
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = minimum_profit_for_buildings
+		tab_id = settings
+		group_id = priority_list
+		default_value = 0
+		min_value = 0
+		max_value = 15
+		step_value = 0.1
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__minimum_profit_for_buildings
+		alias = lsq_minimum_profit_for_buildings
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = minimum_discount_for_auto_expand
+		tab_id = settings
+		group_id = priority_list
+		default_value = -33
+		min_value = -33
+		max_value = 33
+		step_value = 1
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__minimum_discount_for_auto_expand
+		alias = lsq_minimum_discount_for_auto_expand
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = minimum_discount_for_food_auto_build
+		tab_id = settings
+		group_id = priority_list
+		default_value = -33
+		min_value = -33
+		max_value = 33
+		step_value = 1
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__minimum_discount_for_food_auto_build
+		alias = lsq_minimum_discount_for_food_auto_build
 	}
 
 	# Mass Upgrade (mass_upgrade) Tab
@@ -478,12 +481,6 @@ lsq_handle_cmf_callback = {
 				alias = lsq_pause_auto_expand
 			}
 		}
-		flag:lsq__should_not_upgrade_buildings = {
-			cmm_sync_bool_alias_inverted = {
-				setting = lsq__should_not_upgrade_buildings
-				alias = lsq_should_not_upgrade_buildings
-			}
-		}
 		flag:lsq__minimum_gold = {
 			cmm_sync_setting_alias = {
 				setting = lsq__minimum_gold
@@ -500,6 +497,12 @@ lsq_handle_cmf_callback = {
 			cmm_sync_setting_alias = {
 				setting = lsq__minimum_profit_for_buildings
 				alias = lsq_minimum_profit_for_buildings
+			}
+		}
+		flag:lsq__minimum_discount_for_auto_expand = {
+			cmm_sync_setting_alias = {
+				setting = lsq__minimum_discount_for_auto_expand
+				alias = lsq_minimum_discount_for_auto_expand
 			}
 		}
 		flag:lsq__minimum_discount_for_food_auto_build = {
