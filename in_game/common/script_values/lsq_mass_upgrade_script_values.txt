@@ -1,32 +1,17 @@
-﻿# Root is the location, expects scope:country
-lsq_mass_upgrade_town_to_city_min_control_scaled = {
-	scope:country = {
-		if = { limit = { exists = var:lsq_mass_upgrade_town_to_city_min_control }
-			value = var:lsq_mass_upgrade_town_to_city_min_control
-			multiply = 0.01
-		} else = { value = 0.5 }
-	}
-}
-
-# Root expects scope:country
+﻿# Root expects scope:country
 lsq_mass_upgrade_town_to_city_min_discount_scaled = {
 	scope:country = {
-		if = { limit = { exists = var:lsq_mass_upgrade_town_to_city_min_discount }
-			value = var:lsq_mass_upgrade_town_to_city_min_discount
-			multiply = 0.01
+		if = { limit = { has_variable_map = lsq_priority_min_discount }
+			value = "variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_upgrade_towns_to_cities)"
 		} else = { value = -0.33 }
 	}
 }
 
 # Root expects scope:country. Returns the minimum gold the country must have before queueing a city upgrade.
-# Equal to the base upgrade cost (2000) plus the player's configured gold reserve.
+# Equal to the base upgrade cost (2000) plus the shared gold reserve setting.
 lsq_mass_upgrade_town_to_city_gold_needed = {
 	value = 2000
-	if = { limit = { scope:country = { exists = var:lsq_mass_upgrade_town_to_city_min_gold } }
-		add = scope:country.var:lsq_mass_upgrade_town_to_city_min_gold
-	} else = {
-		add = 2000
-	}
+	scope:country = { add = lsq_get_minimum_gold }
 }
 
 # Expects scopes: location

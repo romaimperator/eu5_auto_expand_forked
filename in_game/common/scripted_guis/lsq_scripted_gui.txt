@@ -66,6 +66,10 @@ lsq_gui_construct_upgrade = {
 				add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type }
 			}
 		}
+		# Track that this building type has an upgrade queued so the monthly script won't re-flag it
+		if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:old_building_type } } }
+			add_to_variable_list = { name = lsq_upgrade_in_progress target = scope:old_building_type }
+		}
 		# Clear from pending list
 		remove_list_variable = { name = lsq_gui_upgrade_building_types target = scope:old_building_type }
 	}

@@ -93,3 +93,14 @@ lsq_get_open_build_queue_slots = {
 lsq_modifier_rgo_level = {
   value = modifier:lsq_rgo_level
 }
+
+# Root is the location. Estimates gold profit per RGO level.
+# Uses total raw material output / current levels × market price as a proxy.
+lsq_rgo_estimated_profit_per_level = {
+	raw_material = { save_temporary_scope_as = rgo_good }
+	value = raw_material_output
+	if = { limit = { lsq_modifier_rgo_level >= 1 }
+		divide = lsq_modifier_rgo_level
+	}
+	multiply = "market.market_price(scope:rgo_good)"
+}

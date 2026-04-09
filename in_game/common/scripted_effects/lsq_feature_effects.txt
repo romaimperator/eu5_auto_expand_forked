@@ -41,6 +41,7 @@ lsq_run_auto_expand_buildings = {
 								lsq_is_not_under_construction = yes
 							}
 							lsq_auto_expand_check_minimum_gold_reserve = yes
+							NOT = { scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } } }
 						}
 						# Flag for GUI upgrade processing (GetNextReplaced resolves the target)
 						scope:location = {
@@ -57,13 +58,20 @@ lsq_run_auto_expand_buildings = {
 				}
 			} else = {
 				# Building has no levels — not yet queued for construction
+				# Clean up in-progress upgrade tracking if the old building type is gone (upgrade completed)
+				if = { limit = { scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } } }
+					scope:location = { remove_list_variable = { name = lsq_upgrade_in_progress target = scope:building_type } }
+				}
 				if = { limit = { lsq_is_building_type_obsolete = no }
 					if = { limit = { lsq_location_can_auto_expand_from_zero_levels = yes }
 						scope:location = { construct_building = { building_type = scope:building_type } }
 					}
 				# Building type is obsolete so check if it can be upgraded
 				} else_if = { limit = { scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes } scope:country = { lsq_should_auto_expand_upgrade_buildings = yes } }
-					if = { limit = { lsq_location_can_auto_expand_from_zero_levels_for_upgrade = yes }
+					if = { limit = {
+							lsq_location_can_auto_expand_from_zero_levels_for_upgrade = yes
+							NOT = { scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } } }
+						}
 						# Flag for GUI upgrade processing (GetNextReplaced resolves the target)
 						scope:location = {
 							if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }
@@ -117,6 +125,8 @@ lsq_run_upgrade_all_buildings = {
 					location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
 					lsq_is_not_under_construction = yes
 					lsq_auto_expand_check_minimum_gold_reserve = yes
+					lsq_upgrade_all_meets_minimum_discount = yes
+					NOT = { scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } } }
 				}
 				scope:location = {
 					if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }

@@ -11,7 +11,7 @@ lsq_food_auto_build_in_location = {
 	# Combined pool: if any pop type is scarce (existing buildings/RGO haven't filled workers), skip
 	if = { limit = { NOT = { lsq_food_location_pops_still_filling = yes } }
 
-		# Track best marginal and action (0=none, 1=rgo, 2=farming_village, 3=windmill, 4=irrigation, 5=fishing_village, 6=sheep_farms, 7=fruit_orchard, 8=forest_village)
+		# Track best marginal and action (0=none, 1=rgo, 2=farming_village, 3=windmill, 4=irrigation, 5=fishing_village, 6=sheep_farms, 7=forest_village)
 		set_local_variable = { name = lsq_food_best value = 0 }
 		set_local_variable = { name = lsq_food_action value = 0 }
 
@@ -69,21 +69,12 @@ lsq_food_auto_build_in_location = {
 			}
 		}
 
-		# ─── Option 7: Fruit Orchard ───
-		if = { limit = { lsq_food_can_build_fruit_orchard = yes scope:country.gold > lsq_food_expected_gold_for_fruit_orchard }
-			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_fruit_orchard }
-			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
-				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
-				set_local_variable = { name = lsq_food_action value = 7 }
-			}
-		}
-
-		# ─── Option 8: Forest Village ───
+		# ─── Option 7: Forest Village ───
 		if = { limit = { lsq_food_can_build_forest_village = yes scope:country.gold > lsq_food_expected_gold_for_forest_village }
 			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_forest_village }
 			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
 				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
-				set_local_variable = { name = lsq_food_action value = 8 }
+				set_local_variable = { name = lsq_food_action value = 7 }
 			}
 		}
 
@@ -107,9 +98,6 @@ lsq_food_auto_build_in_location = {
 			if = { limit = { debug_only = yes } debug_log = "LSQ Food: sheep_farms in [THIS.GetLocation.GetNameWithNoTooltip]" }
 			construct_building = { building_type = building_type:sheep_farms }
 		} else_if = { limit = { local_var:lsq_food_action = 7 }
-			if = { limit = { debug_only = yes } debug_log = "LSQ Food: fruit_orchard in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			construct_building = { building_type = building_type:fruit_orchard }
-		} else_if = { limit = { local_var:lsq_food_action = 8 }
 			if = { limit = { debug_only = yes } debug_log = "LSQ Food: forest_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
 			construct_building = { building_type = building_type:forest_village }
 		}

@@ -30,6 +30,33 @@ lsq_register_cmf_mod = {
 	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 5 value = flag:lsq_feature_auto_food }
 	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 6 value = flag:lsq_feature_auto_upgrade_towns_to_cities }
 
+	cmm_register_list_numeric_field = {
+		mod_id = lsq
+		setting_id = priority_list
+		field_id = min_profit
+		default_value = 0
+		min_value = 0
+		max_value = 15
+		step_value = 0.1
+	}
+	cmm_set_list_field_format = { mod_id = lsq setting_id = priority_list field_id = min_profit }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = priority_list field_id = min_profit item = 3 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = priority_list field_id = min_profit item = 4 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = priority_list field_id = min_profit item = 5 }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = priority_list field_id = min_profit item = 6 }
+
+	cmm_register_list_numeric_field = {
+		mod_id = lsq
+		setting_id = priority_list
+		field_id = min_discount
+		default_value = -33
+		min_value = -33
+		max_value = 33
+		step_value = 1
+	}
+	cmm_set_list_field_conditional_format = { mod_id = lsq setting_id = priority_list field_id = min_discount }
+	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = priority_list field_id = min_discount item = 4 }
+
 	cmm_register_list_bool_field = {
 		mod_id = lsq
 		setting_id = priority_list
@@ -65,98 +92,6 @@ lsq_register_cmf_mod = {
 	cmm_sync_setting_alias = {
 		setting = lsq__allowed_building_overbuild_levels
 		alias = lsq_allowed_building_overbuild_levels
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = lsq
-		setting_id = minimum_profit_for_buildings
-		tab_id = settings
-		group_id = priority_list
-		default_value = 0
-		min_value = 0
-		max_value = 15
-		step_value = 0.1
-	}
-	cmm_sync_setting_alias = {
-		setting = lsq__minimum_profit_for_buildings
-		alias = lsq_minimum_profit_for_buildings
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = lsq
-		setting_id = minimum_discount_for_auto_expand
-		tab_id = settings
-		group_id = priority_list
-		default_value = -33
-		min_value = -33
-		max_value = 33
-		step_value = 1
-	}
-	cmm_sync_setting_alias = {
-		setting = lsq__minimum_discount_for_auto_expand
-		alias = lsq_minimum_discount_for_auto_expand
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = lsq
-		setting_id = minimum_discount_for_food_auto_build
-		tab_id = settings
-		group_id = priority_list
-		default_value = -33
-		min_value = -33
-		max_value = 33
-		step_value = 1
-	}
-	cmm_sync_setting_alias = {
-		setting = lsq__minimum_discount_for_food_auto_build
-		alias = lsq_minimum_discount_for_food_auto_build
-	}
-
-	# Mass Upgrade (mass_upgrade) Tab
-	## Town to City (town_to_city) Group
-	cmm_register_slider_setting = {
-		mod_id = lsq
-		setting_id = mass_upgrade_town_to_city_min_control
-		tab_id = mass_upgrade
-		group_id = town_to_city
-		default_value = 50
-		min_value = 0
-		max_value = 100
-		step_value = 5
-	}
-	cmm_sync_setting_alias = {
-		setting = lsq__mass_upgrade_town_to_city_min_control
-		alias = lsq_mass_upgrade_town_to_city_min_control
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = lsq
-		setting_id = mass_upgrade_town_to_city_min_discount
-		tab_id = mass_upgrade
-		group_id = town_to_city
-		default_value = -33
-		min_value = -33
-		max_value = 33
-		step_value = 1
-	}
-	cmm_sync_setting_alias = {
-		setting = lsq__mass_upgrade_town_to_city_min_discount
-		alias = lsq_mass_upgrade_town_to_city_min_discount
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = lsq
-		setting_id = mass_upgrade_town_to_city_min_gold
-		tab_id = mass_upgrade
-		group_id = town_to_city
-		default_value = 2000
-		min_value = 0
-		max_value = 10000
-		step_value = 10
-	}
-	cmm_sync_setting_alias = {
-		setting = lsq__mass_upgrade_town_to_city_min_gold
-		alias = lsq_mass_upgrade_town_to_city_min_gold
 	}
 
 	# Auto-Build (auto_build) Tab
@@ -297,6 +232,7 @@ lsq_register_cmf_mod = {
 		max_value = 100
 		step_value = 5
 	}
+	cmm_set_list_field_format = { mod_id = lsq setting_id = auto_build_list field_id = min_control }
 
 	cmm_register_list_numeric_field = {
 		mod_id = lsq
@@ -307,6 +243,7 @@ lsq_register_cmf_mod = {
 		max_value = 33
 		step_value = 1
 	}
+	cmm_set_list_field_conditional_format = { mod_id = lsq setting_id = auto_build_list field_id = min_discount }
 
 	cmm_register_list_numeric_field = {
 		mod_id = lsq
@@ -420,6 +357,7 @@ lsq_register_cmf_mod = {
 		field_id = food_amount
 		default_value = 0
 	}
+	cmm_set_list_field_format = { mod_id = lsq setting_id = auto_food_list field_id = food_amount }
 
 	cmm_register_list_bool_field = {
 		mod_id = lsq
@@ -491,42 +429,6 @@ lsq_handle_cmf_callback = {
 			cmm_sync_setting_alias = {
 				setting = lsq__allowed_building_overbuild_levels
 				alias = lsq_allowed_building_overbuild_levels
-			}
-		}
-		flag:lsq__minimum_profit_for_buildings = {
-			cmm_sync_setting_alias = {
-				setting = lsq__minimum_profit_for_buildings
-				alias = lsq_minimum_profit_for_buildings
-			}
-		}
-		flag:lsq__minimum_discount_for_auto_expand = {
-			cmm_sync_setting_alias = {
-				setting = lsq__minimum_discount_for_auto_expand
-				alias = lsq_minimum_discount_for_auto_expand
-			}
-		}
-		flag:lsq__minimum_discount_for_food_auto_build = {
-			cmm_sync_setting_alias = {
-				setting = lsq__minimum_discount_for_food_auto_build
-				alias = lsq_minimum_discount_for_food_auto_build
-			}
-		}
-		flag:lsq__mass_upgrade_town_to_city_min_control = {
-			cmm_sync_setting_alias = {
-				setting = lsq__mass_upgrade_town_to_city_min_control
-				alias = lsq_mass_upgrade_town_to_city_min_control
-			}
-		}
-		flag:lsq__mass_upgrade_town_to_city_min_discount = {
-			cmm_sync_setting_alias = {
-				setting = lsq__mass_upgrade_town_to_city_min_discount
-				alias = lsq_mass_upgrade_town_to_city_min_discount
-			}
-		}
-		flag:lsq__mass_upgrade_town_to_city_min_gold = {
-			cmm_sync_setting_alias = {
-				setting = lsq__mass_upgrade_town_to_city_min_gold
-				alias = lsq_mass_upgrade_town_to_city_min_gold
 			}
 		}
 	}

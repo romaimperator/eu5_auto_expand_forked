@@ -51,7 +51,7 @@ lsq_food_can_build_rgo = {
 }
 
 # Option 2: +1 Farming Village level
-# Requires: farming RGO, rural settlement, below cap
+# Requires: farming RGO, rural settlement
 lsq_food_can_build_farming_village = {
 	AND = {
 		location_rank = location_rank:rural_settlement
@@ -67,9 +67,6 @@ lsq_food_can_build_farming_village = {
 			raw_material = goods:fruit
 			raw_material = goods:wool
 		}
-		trigger_if = { limit = { has_building = building_type:farming_village }
-			lsq_food_farming_village_level < lsq_food_rural_building_cap
-		} trigger_else = { always = yes }
 		lsq_get_construction_cost_adjustment_for_farming_village <= lsq_food_get_minimum_market_price_impact
 		lsq_can_afford_farming_village = yes
 		lsq_auto_build_check_peasants_available_or_will_be = yes
@@ -95,13 +92,10 @@ lsq_food_can_build_windmill = {
 }
 
 # Option 4: +1 Irrigation level
-# Requires: river OR adjacent to lake, below irrigant_cap
+# Requires: river OR adjacent to lake
 lsq_food_can_build_irrigation = {
 	AND = {
 		OR = { has_river = yes is_adjacent_to_lake = yes }
-		trigger_if = { limit = { has_building = building_type:irrigation_systems }
-			lsq_food_irrigation_level < lsq_food_irrigant_cap
-		} trigger_else = { always = yes }
 		lsq_get_construction_cost_adjustment_for_irrigation_systems <= lsq_food_get_minimum_market_price_impact
 		lsq_can_afford_irrigation_systems = yes
 		lsq_auto_build_check_laborers_available_or_will_be = yes
@@ -109,14 +103,11 @@ lsq_food_can_build_irrigation = {
 }
 
 # Option 5: +1 Fishing Village level
-# Requires: coastal, rural, below cap
+# Requires: coastal, rural
 lsq_food_can_build_fishing_village = {
 	AND = {
 		is_coastal = yes
 		location_rank = location_rank:rural_settlement
-		trigger_if = { limit = { has_building = building_type:fishing_village }
-			lsq_food_fishing_village_level < lsq_food_rural_building_cap
-		} trigger_else = { always = yes }
 		lsq_get_construction_cost_adjustment_for_fishing_village <= lsq_food_get_minimum_market_price_impact
 		lsq_can_afford_fishing_village = yes
 		lsq_auto_build_check_peasants_available_or_will_be = yes
@@ -124,7 +115,7 @@ lsq_food_can_build_fishing_village = {
 }
 
 # Option 6: +1 Sheep Farms level
-# Requires: sparse/farmland/grasslands vegetation, rural, below cap
+# Requires: sparse/farmland/grasslands vegetation, rural
 lsq_food_can_build_sheep_farms = {
 	AND = {
 		location_rank = location_rank:rural_settlement
@@ -133,36 +124,14 @@ lsq_food_can_build_sheep_farms = {
 			vegetation = farmland
 			vegetation = grasslands
 		}
-		trigger_if = { limit = { has_building = building_type:sheep_farms }
-			lsq_food_sheep_farms_level < lsq_food_rural_building_cap
-		} trigger_else = { always = yes }
 		lsq_get_construction_cost_adjustment_for_sheep_farms <= lsq_food_get_minimum_market_price_impact
 		lsq_can_afford_sheep_farms = yes
 		lsq_auto_build_check_peasants_available_or_will_be = yes
 	}
 }
 
-# Option 7: +1 Fruit Orchard level
-# Requires: grasslands/farmland/woods/jungle vegetation, below cap
-lsq_food_can_build_fruit_orchard = {
-	AND = {
-		OR = {
-			vegetation = grasslands
-			vegetation = farmland
-			vegetation = woods
-			vegetation = jungle
-		}
-		trigger_if = { limit = { has_building = building_type:fruit_orchard }
-			lsq_food_fruit_orchard_level < lsq_food_rural_building_cap
-		} trigger_else = { always = yes }
-		lsq_get_construction_cost_adjustment_for_fruit_orchard <= lsq_food_get_minimum_market_price_impact
-		lsq_can_afford_fruit_orchard = yes
-		lsq_auto_build_check_peasants_available_or_will_be = yes
-	}
-}
-
-# Option 8: +1 Forest Village level
-# Requires: wild_game RGO OR forest/woods/jungle vegetation, rural, below cap
+# Option 7: +1 Forest Village level
+# Requires: wild_game RGO OR forest/woods/jungle vegetation, rural
 lsq_food_can_build_forest_village = {
 	AND = {
 		location_rank = location_rank:rural_settlement
@@ -172,9 +141,6 @@ lsq_food_can_build_forest_village = {
 			vegetation = woods
 			vegetation = jungle
 		}
-		trigger_if = { limit = { has_building = building_type:forest_village }
-			lsq_food_forest_village_level < lsq_food_rural_building_cap
-		} trigger_else = { always = yes }
 		lsq_get_construction_cost_adjustment_for_forest_village <= lsq_food_get_minimum_market_price_impact
 		lsq_can_afford_forest_village = yes
 		lsq_auto_build_check_laborers_available_or_will_be = yes

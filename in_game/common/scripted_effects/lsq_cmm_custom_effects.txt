@@ -18,8 +18,8 @@ lsq_cmm_post_registration = {
 	if = {
 		limit = { NOT = { has_variable = lsq_cmm_priority_list_initialized } }
 		set_variable = { name = lsq_cmm_priority_list_initialized value = 1 }
-		add_to_variable_map = { name = cmm key = flag:lsq__priority_list_i1_f1 value = 1 }
-		add_to_variable_map = { name = cmm key = flag:lsq__priority_list_i2_f1 value = 1 }
+		add_to_variable_map = { name = cmm key = flag:lsq__priority_list_i1_f3 value = 1 }
+		add_to_variable_map = { name = cmm key = flag:lsq__priority_list_i2_f3 value = 1 }
 	}
 
 	# Build lookup tables from CMM list fields
@@ -40,8 +40,14 @@ lsq_rebuild_priority_lookups = {
 	# Ordered features list (for monthly pulse iteration in priority order)
 	cmm_build_list_ordered_values = { setting = lsq__priority_list list_name = lsq_priority_features_list }
 
-	# Enabled features (bool field slot 1)
-	cmm_build_list_bool_list = { setting = lsq__priority_list field_slot = 1 list_name = lsq_priority_features_enabled }
+	# Min profit by feature (numeric field slot 1, direct gold values)
+	cmm_build_list_field_map = { setting = lsq__priority_list field_slot = 1 map_name = lsq_priority_min_profit multiply = 1 }
+
+	# Min discount by feature (numeric field slot 2, CMM -33..33 → -0.33..0.33)
+	cmm_build_list_field_map = { setting = lsq__priority_list field_slot = 2 map_name = lsq_priority_min_discount multiply = 0.01 }
+
+	# Enabled features (bool field slot 3)
+	cmm_build_list_bool_list = { setting = lsq__priority_list field_slot = 3 list_name = lsq_priority_features_enabled }
 
 	} # end guard
 }
@@ -128,16 +134,14 @@ _lsq_suppress_warnings = {
 		# GUI-driven upgrade processing lists (set by script, consumed by hidden window GUI)
 		cmf_suppress = { v = lsq_gui_upgrade_building_types }
 		cmf_suppress = { v = lsq_gui_upgrade_locations }
+		cmf_suppress = { v = lsq_upgrade_in_progress }
 		# Priority list lookup tables
 		cmf_suppress = { v = lsq_priority_features_list }
 		cmf_suppress = { v = lsq_priority_features_enabled }
+		cmf_suppress = { v = lsq_priority_min_profit }
+		cmf_suppress = { v = lsq_priority_min_discount }
 		cmf_suppress = { v = lsq_cmm_priority_list_initialized }
-		# Mass upgrade town to city (CMM-synced aliases for sub-settings)
-		cmf_suppress = { v = lsq_mass_upgrade_town_to_city_min_control }
-		cmf_suppress = { v = lsq_mass_upgrade_town_to_city_min_discount }
-		cmf_suppress = { v = lsq_mass_upgrade_town_to_city_min_gold }
-		# Food auto-build (CMM-synced aliases and lookup lists)
-		cmf_suppress = { v = lsq_minimum_discount_for_food_auto_build }
+		# Food auto-build (lookup lists)
 		cmf_suppress = { v = lsq_auto_food_rgo_types_list }
 		cmf_suppress = { v = lsq_auto_food_rgo_types_enabled }
 		cmf_suppress = { v = lsq_auto_food_rgo_types_river_only }

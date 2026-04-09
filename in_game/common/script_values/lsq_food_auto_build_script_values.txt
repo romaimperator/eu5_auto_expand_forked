@@ -184,47 +184,10 @@ lsq_food_marginal_sheep_farms = {
 	multiply = lsq_food_one_plus_total_food_mod
 }
 
-# +1 Fruit Orchard: 1.2 × (1 + total_food_mod)
-lsq_food_marginal_fruit_orchard = {
-	value = 1.2
-	multiply = lsq_food_one_plus_total_food_mod
-}
-
 # +1 Forest Village: 1.7 × (1 + total_food_mod)
 lsq_food_marginal_forest_village = {
 	value = 1.7
 	multiply = lsq_food_one_plus_total_food_mod
-}
-
-# ─── Building cap calculations ───
-# rural_building_cap: base 1 + 0.1×dev + 0.5×max_rgo_workers + (1 if river)
-lsq_food_rural_building_cap = {
-	value = 1
-	add = {
-		value = development
-		multiply = 0.1
-	}
-	add = {
-		value = max_rgo_workers
-		multiply = 0.5
-	}
-	if = { limit = { has_river = yes }
-		add = 1
-	}
-	floor = yes
-}
-
-# irrigant_cap: base 2 + 0.2×dev + (2 if river)
-lsq_food_irrigant_cap = {
-	value = 2
-	add = {
-		value = development
-		multiply = 0.2
-	}
-	if = { limit = { has_river = yes }
-		add = 2
-	}
-	floor = yes
 }
 
 # ─── Building cost helpers ───
@@ -287,14 +250,6 @@ lsq_food_expected_gold_for_sheep_farms = {
 	scope:country = { add = lsq_food_get_minimum_gold }
 }
 
-lsq_food_expected_gold_for_fruit_orchard = {
-	building_type:fruit_orchard = { value = building_base_cost_in_gold }
-	multiply = { value = 1 add = lsq_food_build_cost_modifier }
-	multiply = { value = 1 add = lsq_get_construction_cost_adjustment_for_fruit_orchard }
-	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = lsq_food_get_minimum_gold }
-}
-
 lsq_food_expected_gold_for_forest_village = {
 	building_type:forest_village = { value = building_base_cost_in_gold }
 	multiply = { value = 1 add = lsq_food_build_cost_modifier }
@@ -315,13 +270,12 @@ lsq_food_build_cost_modifier = {
 	add = modifier:local_build_new_buildings_cost
 }
 
-# Min market price impact for food auto-build. Reads the global slider and scales to -0.33..0.33.
+# Min market price impact for food auto-build. Reads from the priority list min_discount map (pre-scaled).
 # Expects scope:country.
 lsq_food_get_minimum_market_price_impact = {
 	scope:country = {
-		if = { limit = { exists = var:lsq_minimum_discount_for_food_auto_build }
-			value = var:lsq_minimum_discount_for_food_auto_build
-			multiply = 0.01
+		if = { limit = { has_variable_map = lsq_priority_min_discount }
+			value = "variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_food)"
 		} else = { value = -0.33 }
 	}
 }

@@ -129,22 +129,23 @@ lsq_is_building_profitable = {
 	}
 }
 
-# Root is the building. Checks that building potential profit (adjusted for control) meets the minimum threshold.
-# If lsq_minimum_profit_for_buildings is 0 or not set, the check always passes.
+# Root is the building. Checks that building potential profit (adjusted for control) meets the min profit
+# threshold from the priority list (field slot 2, mapped to lsq_priority_min_profit).
 lsq_building_meets_minimum_profit = {
 	OR = {
-		NOT = { owner = { exists = var:lsq_minimum_profit_for_buildings } }
-		owner.var:lsq_minimum_profit_for_buildings = 0
-		lsq_building_potential_profit_after_control >= owner.var:lsq_minimum_profit_for_buildings
+		NOT = { owner = { has_variable_map = lsq_priority_min_profit } }
+		"owner.variable_map(lsq_priority_min_profit|flag:lsq_feature_auto_expand_buildings)" = 0
+		lsq_building_potential_profit_after_control >= "owner.variable_map(lsq_priority_min_profit|flag:lsq_feature_auto_expand_buildings)"
 	}
 }
 
-# Root is the building. Checks construction cost adjustment against the min discount threshold.
+# Root is the building. Checks construction cost adjustment against the min discount threshold
+# from the priority list (field slot 3, mapped to lsq_priority_min_discount, pre-scaled ×0.01).
 lsq_building_meets_minimum_discount_for_auto_expand = {
 	OR = {
-		NOT = { owner = { exists = var:lsq_minimum_discount_for_auto_expand } }
+		NOT = { owner = { has_variable_map = lsq_priority_min_discount } }
 		scope:building_type = {
-			lsq_get_construction_cost_adjustment_for_building_type <= owner.lsq_get_minimum_market_price_impact_for_auto_expand
+			lsq_get_construction_cost_adjustment_for_building_type <= "owner.variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_expand_buildings)"
 		}
 	}
 }
@@ -257,6 +258,17 @@ lsq_is_not_under_construction_and_gold_is_available = {
 	AND = {
 		lsq_is_not_under_construction = yes
 		lsq_auto_expand_check_owner_gold_available = yes
+	}
+}
+
+# Root is the building. Checks construction cost adjustment against the min discount threshold
+# for the upgrade-all feature (priority list item 3).
+lsq_upgrade_all_meets_minimum_discount = {
+	OR = {
+		NOT = { owner = { has_variable_map = lsq_priority_min_discount } }
+		scope:building_type = {
+			lsq_get_construction_cost_adjustment_for_building_type <= "owner.variable_map(lsq_priority_min_discount|flag:lsq_feature_upgrade_all_buildings)"
+		}
 	}
 }
 
