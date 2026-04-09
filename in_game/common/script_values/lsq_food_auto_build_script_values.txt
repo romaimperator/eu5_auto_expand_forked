@@ -307,3 +307,14 @@ lsq_food_build_cost_modifier = {
 	add = modifier:local_build_buildings_cost
 	add = modifier:local_build_new_buildings_cost
 }
+
+# Min market price impact for food auto-build. Reads the global slider and scales to -0.33..0.33.
+# Expects scope:country.
+lsq_food_get_minimum_market_price_impact = {
+	scope:country = {
+		if = { limit = { exists = var:lsq_minimum_discount_for_food_auto_build }
+			value = var:lsq_minimum_discount_for_food_auto_build
+			multiply = 0.01
+		} else = { value = -0.33 }
+	}
+}
