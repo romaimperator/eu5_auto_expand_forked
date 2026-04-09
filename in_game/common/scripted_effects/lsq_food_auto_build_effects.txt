@@ -161,3 +161,108 @@ lsq_food_auto_build_for_rgo_type = {
 		}
 	}
 }
+
+# Update food data columns: sums total food per RGO type across all owned rural locations.
+# Root is the country.
+lsq_update_food_data_columns = {
+	save_scope_as = country
+	# Initialize per-type accumulators (item order matches registration in lsq_cmm_effects)
+	set_variable = { name = lsq_food_col_1 value = 0 }
+	set_variable = { name = lsq_food_col_2 value = 0 }
+	set_variable = { name = lsq_food_col_3 value = 0 }
+	set_variable = { name = lsq_food_col_4 value = 0 }
+	set_variable = { name = lsq_food_col_5 value = 0 }
+	set_variable = { name = lsq_food_col_6 value = 0 }
+	set_variable = { name = lsq_food_col_7 value = 0 }
+	set_variable = { name = lsq_food_col_8 value = 0 }
+	set_variable = { name = lsq_food_col_9 value = 0 }
+	set_variable = { name = lsq_food_col_10 value = 0 }
+	set_variable = { name = lsq_food_col_11 value = 0 }
+	set_variable = { name = lsq_food_col_12 value = 0 }
+	set_variable = { name = lsq_food_col_13 value = 0 }
+	set_variable = { name = lsq_food_col_14 value = 0 }
+
+	# Single pass: accumulate food by RGO type
+	every_owned_location = {
+		limit = { location_rank = location_rank:rural_settlement }
+		save_scope_as = food_loc
+		scope:country = {
+			if = { limit = { scope:food_loc = { raw_material = goods:rice } }
+				change_variable = { name = lsq_food_col_1 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:wheat } }
+				change_variable = { name = lsq_food_col_2 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:maize } }
+				change_variable = { name = lsq_food_col_3 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:potato } }
+				change_variable = { name = lsq_food_col_4 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:livestock } }
+				change_variable = { name = lsq_food_col_5 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:millet } }
+				change_variable = { name = lsq_food_col_6 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:legumes } }
+				change_variable = { name = lsq_food_col_7 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:wool } }
+				change_variable = { name = lsq_food_col_8 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:fish } }
+				change_variable = { name = lsq_food_col_9 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:olives } }
+				change_variable = { name = lsq_food_col_10 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:fruit } }
+				change_variable = { name = lsq_food_col_11 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:wild_game } }
+				change_variable = { name = lsq_food_col_12 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:beeswax } }
+				change_variable = { name = lsq_food_col_13 add = scope:food_loc.lsq_food_location_total }
+			}
+			else_if = { limit = { scope:food_loc = { raw_material = goods:fur } }
+				change_variable = { name = lsq_food_col_14 add = scope:food_loc.lsq_food_location_total }
+			}
+		}
+	}
+
+	# Write totals to CMM data columns
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 1 value = var:lsq_food_col_1 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 2 value = var:lsq_food_col_2 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 3 value = var:lsq_food_col_3 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 4 value = var:lsq_food_col_4 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 5 value = var:lsq_food_col_5 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 6 value = var:lsq_food_col_6 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 7 value = var:lsq_food_col_7 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 8 value = var:lsq_food_col_8 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 9 value = var:lsq_food_col_9 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 10 value = var:lsq_food_col_10 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 11 value = var:lsq_food_col_11 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 12 value = var:lsq_food_col_12 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 13 value = var:lsq_food_col_13 }
+	cmm_set_list_data_value = { mod_id = lsq setting_id = auto_food_list field_id = food_amount item = 14 value = var:lsq_food_col_14 }
+
+	# Suppress "set but never used" warnings for accumulators (referenced via text substitution)
+	if = { limit = { always = no }
+		cmf_suppress = { v = lsq_food_col_1 }
+		cmf_suppress = { v = lsq_food_col_2 }
+		cmf_suppress = { v = lsq_food_col_3 }
+		cmf_suppress = { v = lsq_food_col_4 }
+		cmf_suppress = { v = lsq_food_col_5 }
+		cmf_suppress = { v = lsq_food_col_6 }
+		cmf_suppress = { v = lsq_food_col_7 }
+		cmf_suppress = { v = lsq_food_col_8 }
+		cmf_suppress = { v = lsq_food_col_9 }
+		cmf_suppress = { v = lsq_food_col_10 }
+		cmf_suppress = { v = lsq_food_col_11 }
+		cmf_suppress = { v = lsq_food_col_12 }
+		cmf_suppress = { v = lsq_food_col_13 }
+		cmf_suppress = { v = lsq_food_col_14 }
+	}
+}
