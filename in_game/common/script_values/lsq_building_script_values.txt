@@ -81,8 +81,8 @@ lsq_double_building_type_cost = {
 lsq_expected_gold_available_for_building_type_for_auto_expand = {
 	scope:location = { value = lsq_adjusted_building_type_cost_accounting_for_upgrades }
 	scope:country = {
-		if = { limit = { exists = var:lsq_minimum_gold_for_buildings }
-			add = lsq_get_minimum_gold_for_auto_expand
+		if = { limit = { exists = var:lsq_minimum_gold }
+			add = var:lsq_minimum_gold
 		}
 	}
 }
@@ -91,20 +91,17 @@ lsq_expected_gold_available_for_building_type_for_auto_expand = {
 lsq_expected_gold_available_for_building_type_for_auto_build = {
 	value = lsq_adjusted_building_type_cost
 	scope:country = {
-		if = { limit = { exists = var:lsq_minimum_gold_for_auto_build }
-			add = var:lsq_minimum_gold_for_auto_build
+		if = { limit = { exists = var:lsq_minimum_gold }
+			add = var:lsq_minimum_gold
 		}
 	}
 }
 
-lsq_get_minimum_gold_for_auto_build = {
-	if = { limit = { exists = var:lsq_minimum_gold_for_auto_build }
-		value = var:lsq_minimum_gold_for_auto_build
-	} else = { value = -1 } # should never happen
-}
-
-lsq_get_minimum_gold_for_auto_expand = {
-	value = var:lsq_minimum_gold_for_buildings
+# Country-scoped. Returns the unified gold reserve setting.
+lsq_get_minimum_gold = {
+	if = { limit = { exists = var:lsq_minimum_gold }
+		value = var:lsq_minimum_gold
+	} else = { value = 50 }
 }
 
 # Root is the building. Potential profit adjusted for location control.
