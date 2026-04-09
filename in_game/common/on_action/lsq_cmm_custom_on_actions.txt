@@ -12,6 +12,26 @@ lsq_on_post_registration = {
 	}
 }
 
+# Calculate food data columns on game start and load so the UI is
+# populated immediately instead of waiting for the first monthly tick.
+on_game_start_after_lobby_human_country = {
+	on_actions = {
+		lsq_on_init_food_data
+	}
+}
+
+on_game_load_after_lobby_human_country = {
+	on_actions = {
+		lsq_on_init_food_data
+	}
+}
+
+lsq_on_init_food_data = {
+	effect = {
+		lsq_update_food_data_columns = yes
+	}
+}
+
 # Country transfer hook. CMF has already copied CMM setting values.
 # Copy LSQ-specific non-CMM data (location lists, etc.).
 cmf_on_country_transfer = {
@@ -39,5 +59,8 @@ lsq_on_country_transfer = {
 		if = { limit = { scope:old_country = { has_variable = lsq_allowed_building_overbuild_levels } }
 			set_variable = { name = lsq_allowed_building_overbuild_levels value = scope:old_country.var:lsq_allowed_building_overbuild_levels }
 		}
+
+		# Rebuild priority lookup tables for new country
+		lsq_rebuild_priority_lookups = yes
 	}
 }

@@ -1,148 +1,32 @@
 ﻿cmf_monthly_human_country_pulse = {
 	on_actions = {
-		lsq_auto_expand_buildings
+		lsq_unified_auto_expand
 	}
 }
 
-lsq_auto_expand_buildings = {
+# Unified dispatcher: iterates the priority list in order and calls each
+# enabled feature's effect. Gated by the master pause toggle.
+lsq_unified_auto_expand = {
 	effect = {
 		save_scope_as = country
 		if = { limit = { lsq_should_pause_auto_expand = no }
-			# debug_log = "Auto expanding buildings"
-			# Clear the GUI upgrade locations list so it's rebuilt fresh each tick
-			clear_variable_list = lsq_gui_upgrade_locations
-			ordered_owned_location = {
-				order_by = max_control
-				max = lsq_max_guess_at_number_of_locations
-				check_range_bounds = no
-				limit = { has_variable_list = lsq_auto_expand_registered_building_types }
-				save_scope_as = location
-				# debug_log = "Auto expanding buildings in [THIS.GetLocation.GetNameWithNoTooltip]"
+			if = { limit = { has_variable_list = lsq_priority_features_list }
 				every_in_list = {
-					variable = lsq_auto_expand_registered_building_types
-					save_scope_as = building_type
-					# scope:building_type = { debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-					# set_local_variable = { name = double_building_cost value = lsq_expected_gold_available_for_building_type_for_auto_expand }
-					if = { limit = { scope:location = { has_building = scope:building_type } }
-						scope:location = { "building(scope:building_type|scope:country)" = { save_scope_as = building } }
-						# scope:building = { debug_log = "Checking building [THIS.GetBuilding.GetType.GetNameWithNoTooltip]" }
-						if = { limit = { lsq_is_building_type_obsolete = no }
-							# scope:building_type = { debug_log = "Building not obsolete [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-							if = { limit = {
-									scope:building = {
-										lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
-										lsq_is_building_at_max_level = no
-										lsq_is_not_under_construction_and_gold_is_available = yes
-									}
-								}
-								# scope:building_type = { debug_log = "Building passes checks [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-								scope:location = { construct_building = { building_type = scope:building_type } }
-							}
-						# Building type is obsolete so check if it can be upgraded
-						} else_if = { limit = {
-								scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
-								scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
-							}
-							# scope:building_type = { debug_log = "Building is obsolete and upgradable [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-							if = { limit = {
-									scope:building = {
-										lsq_building_can_auto_expand_for_upgrade = yes
-										lsq_is_not_under_construction = yes
-									}
-									lsq_auto_expand_check_minimum_gold_reserve = yes
-								}
-								# Flag for GUI upgrade processing (GetNextReplaced resolves the target)
-								scope:location = {
-									if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }
-										add_to_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type }
-									}
-								}
-								scope:country = {
-									if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_locations target = scope:location } } }
-										add_to_variable_list = { name = lsq_gui_upgrade_locations target = scope:location }
-									}
-								}
-							}
-						}
-					} else = {
-						# If we're here, the building has no levels and isn't yet queued for construction so we only have a building type to check stuff with
-						# scope:building_type = { debug_log = "Checking building type [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-						if = { limit = { lsq_is_building_type_obsolete = no }
-							# scope:building_type = { debug_log = "Building not obsolete [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-							if = { limit = { lsq_location_can_auto_expand_from_zero_levels = yes }
-								# scope:building_type = { debug_log = "Building passes first checks [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-								scope:location = { construct_building = { building_type = scope:building_type } }
-							}
-						# Building type is obsolete so check if it can be upgraded
-						} else_if = { limit = { scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes } scope:country = { lsq_should_auto_expand_upgrade_buildings = yes } }
-							# scope:building_type = { debug_log = "Building is obsolete and upgradable [THIS.GetBuildingType.GetNameWithNoTooltip]" }
-							if = { limit = { lsq_location_can_auto_expand_from_zero_levels_for_upgrade = yes }
-								# Flag for GUI upgrade processing (GetNextReplaced resolves the target)
-								scope:location = {
-									if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }
-										add_to_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type }
-									}
-								}
-								scope:country = {
-									if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_locations target = scope:location } } }
-										add_to_variable_list = { name = lsq_gui_upgrade_locations target = scope:location }
-									}
-								}
-							}
+					variable = lsq_priority_features_list
+					save_scope_as = feature
+					if = { limit = { scope:country = { is_target_in_variable_list = { name = lsq_priority_features_enabled target = scope:feature } } }
+						switch = {
+							trigger = scope:feature
+							flag:lsq_feature_auto_expand_buildings = { lsq_run_auto_expand_buildings = yes }
+							flag:lsq_feature_auto_expand_rgos = { lsq_run_auto_expand_rgos = yes }
+							flag:lsq_feature_upgrade_all_buildings = { lsq_run_upgrade_all_buildings = yes }
+							flag:lsq_feature_auto_build = { lsq_run_auto_build = yes }
+							flag:lsq_feature_auto_food = { lsq_run_auto_food = yes }
+							flag:lsq_feature_auto_upgrade_towns_to_cities = { lsq_run_auto_upgrade_towns_to_cities = yes }
 						}
 					}
-				}
-			}
-
-			# --- Upgrade All Buildings pass ---
-			# Upgrades every obsolete building in all owned locations, regardless of auto-expand state.
-			if = { limit = { lsq_should_upgrade_all_buildings = yes }
-				ordered_owned_location = {
-					order_by = max_control
-					max = lsq_max_guess_at_number_of_locations
-					check_range_bounds = no
-					save_scope_as = location
-					ordered_buildings_in_location = {
-						order_by = building_index
-						max = 100
-						check_range_bounds = no
-						save_scope_as = building
-						building_type = { save_scope_as = building_type }
-						if = { limit = {
-								lsq_is_building_obsolete = yes
-								location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
-								lsq_is_not_under_construction = yes
-								lsq_auto_expand_check_minimum_gold_reserve = yes
-							}
-							scope:location = {
-								if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }
-									add_to_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type }
-								}
-							}
-							scope:country = {
-								if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_locations target = scope:location } } }
-									add_to_variable_list = { name = lsq_gui_upgrade_locations target = scope:location }
-								}
-							}
-						}
-					}
-				}
-			}
-		} # end if should auto expand enabled
-
-		# --- Mass Upgrade Town to City pass ---
-		# Independent of auto-expand pause — controlled by its own toggle.
-		if = { limit = { lsq_should_mass_upgrade_town_to_city = yes }
-			ordered_owned_location = {
-				order_by = max_control
-				max = lsq_max_guess_at_number_of_locations
-				check_range_bounds = no
-				save_scope_as = location
-				limit = { lsq_location_can_mass_upgrade_to_city = yes }
-				if = { limit = { scope:country.gold > lsq_mass_upgrade_town_to_city_gold_needed }
-					scope:location = { construct_building = { building_type = building_type:lsq_upgrade_town_to_city } }
 				}
 			}
 		}
-	} # end effect
-} # end lsq_auto_expand_buildings
+	}
+}

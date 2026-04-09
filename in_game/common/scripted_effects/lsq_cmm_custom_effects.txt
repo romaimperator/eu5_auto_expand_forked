@@ -14,9 +14,36 @@ lsq_cmm_post_registration = {
 		add_to_variable_map = { name = cmm key = flag:lsq__auto_build_list_i3_f3 value = 0 }
 	}
 
+	# Override priority list defaults: enable buildings (item 1) and RGOs (item 2) by default
+	if = {
+		limit = { NOT = { has_variable = lsq_cmm_priority_list_initialized } }
+		set_variable = { name = lsq_cmm_priority_list_initialized value = 1 }
+		add_to_variable_map = { name = cmm key = flag:lsq__priority_list_i1_f1 value = 1 }
+		add_to_variable_map = { name = cmm key = flag:lsq__priority_list_i2_f1 value = 1 }
+	}
+
 	# Build lookup tables from CMM list fields
+	lsq_rebuild_priority_lookups = yes
 	lsq_rebuild_auto_build_lookups = yes
 	lsq_rebuild_auto_food_lookups = yes
+}
+
+# Rebuild priority feature lookup tables from CMM list field data.
+# Called on registration and on every setting change.
+# Scope: country
+lsq_rebuild_priority_lookups = {
+	if = {
+		limit = { NOT = { has_variable_list = cmm_list_items_lsq__priority_list } }
+	}
+	else = {
+
+	# Ordered features list (for monthly pulse iteration in priority order)
+	cmm_build_list_ordered_values = { setting = lsq__priority_list list_name = lsq_priority_features_list }
+
+	# Enabled features (bool field slot 1)
+	cmm_build_list_bool_list = { setting = lsq__priority_list field_slot = 1 list_name = lsq_priority_features_enabled }
+
+	} # end guard
 }
 
 # Rebuild all lookup tables from CMM list field data.
@@ -101,10 +128,11 @@ _lsq_suppress_warnings = {
 		# GUI-driven upgrade processing lists (set by script, consumed by hidden window GUI)
 		cmf_suppress = { v = lsq_gui_upgrade_building_types }
 		cmf_suppress = { v = lsq_gui_upgrade_locations }
-		# Upgrade all buildings toggle (CMM-synced alias)
-		cmf_suppress = { v = lsq_upgrade_all_buildings }
-		# Mass upgrade town to city (CMM-synced aliases)
-		cmf_suppress = { v = lsq_mass_upgrade_town_to_city }
+		# Priority list lookup tables
+		cmf_suppress = { v = lsq_priority_features_list }
+		cmf_suppress = { v = lsq_priority_features_enabled }
+		cmf_suppress = { v = lsq_cmm_priority_list_initialized }
+		# Mass upgrade town to city (CMM-synced aliases for sub-settings)
 		cmf_suppress = { v = lsq_mass_upgrade_town_to_city_min_control }
 		cmf_suppress = { v = lsq_mass_upgrade_town_to_city_min_discount }
 		cmf_suppress = { v = lsq_mass_upgrade_town_to_city_min_gold }
