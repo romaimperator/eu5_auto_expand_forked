@@ -9,12 +9,12 @@ lsq_location_can_mass_upgrade_to_city = {
 		location_rank = location_rank:town
 		population >= 30
 		modifier:cannot_upgrade_location = no
-		NOT = { has_building = building_type:lsq_upgrade_town_to_city }
-		NOT = { integration_level = unintegrated }
+		NOT = { has_building = building_type:lsq_upgrade_town_to_city_building }
+		NOT = { integration_level = conquered }
 		lsq_mass_upgrade_town_to_city_discount_check = yes
 		scope:country = { save_temporary_scope_as = actor }
-		can_build_building = building_type:lsq_upgrade_town_to_city
-		scope:country = { can_build_building = building_type:lsq_upgrade_town_to_city }
+		can_build_building = building_type:lsq_upgrade_town_to_city_building
+		scope:country = { can_build_building = building_type:lsq_upgrade_town_to_city_building }
 	}
 }
 
@@ -22,7 +22,7 @@ lsq_location_can_mass_upgrade_to_city = {
 # Checks that the market price impact of city upgrade construction demand is within the player's threshold.
 lsq_mass_upgrade_town_to_city_discount_check = {
 	save_temporary_scope_as = location
-	building_type:lsq_upgrade_town_to_city = {
+	building_type:lsq_upgrade_town_to_city_building = {
 		lsq_get_construction_cost_adjustment_for_lsq_upgrade_town_to_city <= lsq_mass_upgrade_town_to_city_min_discount_scaled
 	}
 }
