@@ -1,33 +1,24 @@
-﻿namespace = lsq_location_upgrade
-lsq_location_upgrade.1 = {
-	type = location_event
-	title = lsq_location_upgrade.1.title
-
-	trigger = {
-		OR = {
-			has_building = building_type:lsq_upgrade_town_to_city_building
-			has_building = building_type:lsq_upgrade_rural_to_town_building
-		}
-	}
-
-	hidden = yes
-
-	immediate = {
+lsq_upgrade_location_rank_on_action = {
+	effect = {
 		if = {
 			limit = {
 				has_building = building_type:lsq_upgrade_town_to_city_building
 			}
 			change_building_level_in_location = { building = building_type:lsq_upgrade_town_to_city_building value = -1 }
+			if = {
+				limit = { location_rank = location_rank:town }
+				change_location_rank = location_rank:city
+			}
 		}
 		if = {
 			limit = {
 				has_building = building_type:lsq_upgrade_rural_to_town_building
 			}
 			change_building_level_in_location = { building = building_type:lsq_upgrade_rural_to_town_building value = -1 }
+			if = {
+				limit = { location_rank = location_rank:rural_settlement }
+				change_location_rank = location_rank:town
+			}
 		}
-	}
-
-	option = {
-		name = lsq_location_upgrade.1.a
 	}
 }
