@@ -1,0 +1,68 @@
+﻿# Root is the location, also expects the scope country
+lsq_location_can_auto_build_confucian_school = {
+	AND = {
+		lsq_location_will_auto_build_confucian_school = yes
+		lsq_auto_build_check_owner_gold_available = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_allowed_to_build_confucian_school = {
+	AND = {
+		scope:country = { has_advance = confucian_school_advance }
+		scope:country = {
+			OR = {
+				culture = { has_culture_group = culture_group:confucian_group }
+				religion = religion:sanjiao
+				any_international_organizations_member_of = {
+					international_organization_type = international_organization_type:sect
+					international_organization_has_policy = policy:confucianism_policy
+				}
+				has_variable = has_neo_confucianism
+				is_member_of_international_organization = international_organization:middle_kingdom
+			}
+		}
+		NOT = { has_building = building_type:confucian_school }
+		lsq_auto_build_check_town_or_city = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_will_auto_build_confucian_school = {
+	AND = {
+		scope:country = { lsq_should_pause_auto_expand = no }
+		lsq_location_allowed_to_build_confucian_school = yes
+		lsq_auto_build_check_meets_minimum_control_confucian_school = yes
+		lsq_auto_build_check_meets_minimum_market_price_impact_confucian_school = yes
+		lsq_auto_build_check_pops_available_confucian_school = yes
+		lsq_auto_build_check_can_afford_confucian_school = yes
+		lsq_auto_build_check_location_has_more_than_zero_market_access = yes
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_meets_minimum_control_confucian_school = {
+	save_temporary_scope_as = location
+	lsq_auto_build_check_meets_minimum_control = { target = building_type:confucian_school }
+}
+
+# Root is the location
+lsq_auto_build_check_meets_minimum_market_price_impact_confucian_school = {
+	save_temporary_scope_as = location
+	lsq_auto_build_check_meets_minimum_market_price_impact_with_key = { key = confucian_school }
+}
+
+# Root is the location
+lsq_auto_build_check_pops_available_confucian_school = {
+	lsq_auto_build_check_nobles_available_or_will_be = yes
+}
+
+# Root is the location
+lsq_auto_build_check_can_afford_confucian_school = {
+	lsq_can_afford_confucian_school = yes
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_building_researched_confucian_school = {
+	scope:country = { has_advance = confucian_school_advance }
+}
