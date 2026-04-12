@@ -11,15 +11,14 @@ lsq_hidden_window_repeated_init = {
 		if = { limit = { AND = { scope:skip = no exists = scope:country } }
 			# debug_log = "LSQ: Repeated init"
 			lsq_check_that_country_variables_are_set = {}
-			lsq_check_if_migration_needed = {}
 
 			# Unset processing flag when all buildings are classified
 			if = { limit = { AND = {
-				scope:country = { has_variable = lsq_process_buildings }
-				has_variable_map = lsq_building_type_processed
-				variable_map_size = { name = lsq_building_type_processed value >= scope:country.var:lsq_building_types_to_process_count }
+				has_global_variable = lsq_process_buildings
+				has_global_variable_map = lsq_building_type_processed
+				global_variable_map_size = { name = lsq_building_type_processed value >= global_var:lsq_building_types_to_process_count }
 			} }
-				scope:country = { remove_variable = lsq_process_buildings }
+				remove_global_variable = lsq_process_buildings
 			}
 		}
 	}
@@ -29,12 +28,12 @@ lsq_hidden_window_repeated_init = {
 # # Root is the player
 lsq_should_building_type_section_show = {
 	is_shown = {
-		scope:country = { has_variable = lsq_process_buildings }
+		has_global_variable = lsq_process_buildings
 		OR = {
-			NOT = { has_variable_map = lsq_building_type_processed }
+			NOT = { has_global_variable_map = lsq_building_type_processed }
 			AND = {
-				has_variable_map = lsq_building_type_processed
-				variable_map_size = { name = lsq_building_type_processed value < scope:country.var:lsq_building_types_to_process_count }
+				has_global_variable_map = lsq_building_type_processed
+				global_variable_map_size = { name = lsq_building_type_processed value < global_var:lsq_building_types_to_process_count }
 			}
 		}
 	}
@@ -93,7 +92,7 @@ lsq_building_type_section_buildings_init = {
 	  }
 
 		# Set that this building type has been processed
-		add_to_variable_map = { name = lsq_building_type_processed key = scope:building_type value = 1 }
+		add_to_global_variable_map = { name = lsq_building_type_processed key = scope:building_type value = 1 }
 	}
 }
 
@@ -224,11 +223,9 @@ lsq_is_building_type_processed = {
 		trigger_if = {
 			limit = { exists = this }
 			save_temporary_scope_as = building_type
-			scope:country = {
-				AND = {
-					has_variable_map = lsq_building_type_processed
-					is_key_in_variable_map = { name = lsq_building_type_processed target = scope:building_type }
-				}
+			AND = {
+				has_global_variable_map = lsq_building_type_processed
+				is_key_in_global_variable_map = { name = lsq_building_type_processed target = scope:building_type }
 			}
 		}
 		trigger_else = {

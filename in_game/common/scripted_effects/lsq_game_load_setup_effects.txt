@@ -1,26 +1,21 @@
-﻿# Expects scopes: country
+﻿# Populates the global list of building types for classification by the hidden window GUI.
+# Called from on_game_start_after_lobby and on_game_load_after_lobby (once per lobby, not per player).
+# Stateless: always rebuilds from scratch so no version tracking or migration is needed.
+lsq_populate_building_types_to_process = {
+  clear_global_variable_list = lsq_building_types_to_process
+  set_global_variable = { name = lsq_building_types_to_process_count value = 0 }
+  clear_global_variable_map = lsq_building_type_processed
+  every_building_type = {
+    add_to_global_variable_list = { name = lsq_building_types_to_process target = this }
+    change_global_variable = { name = lsq_building_types_to_process_count add = 1 }
+  }
+  # Trigger building classification in the hidden window GUI
+  set_global_variable = { name = lsq_process_buildings value = yes }
+}
+
+# Expects scopes: country
 lsq_check_that_country_variables_are_set = {
   scope:country = {
-    # # Setup/Refresh the list of all building types
-    # if = { limit = { NOT = { has_global_variable_list = every_building_type_list } }
-    #   lsq_setup_every_building_type_list = {}
-    # }
-
-    # Populate the building type classification maps via the hidden window GUI.
-    # All building types flow through the hidden window which classifies them using
-    # GUI data bindings (BuildingType.IsProducing, IsMultipleLevels, IsFort, etc.)
-    # and stores results in global variable maps.
-    if = { limit = { NOT = { has_variable = lsq_building_types_to_process_count } }
-      set_variable = { name = lsq_building_types_to_process_count value = 0 }
-      every_building_type = {
-        limit = { NOT = { scope:country = { AND = { has_variable_map = lsq_building_type_processed is_key_in_variable_map = { name = lsq_building_type_processed target = prev } } } } }
-        scope:country = { add_to_variable_list = { name = lsq_building_types_to_process target = prev } }
-        scope:country = { change_variable = { name = lsq_building_types_to_process_count add = 1 } }
-      }
-      # Trigger building classification in the hidden window GUI
-      set_variable = { name = lsq_process_buildings value = yes }
-    }
-
     # Reset the location lists every time we load the game
     if = { limit = { OR = { NOT = { has_variable_list = lsq_all_controlled_locations_list } NOT = { has_variable_list = lsq_all_locations_including_subjects_list } } }
       lsq_reset_locations_lists = {}
@@ -77,11 +72,6 @@ lsq_check_that_country_variables_are_set = {
 # automatic country transfer. This only handles LSQ-specific non-CMM data.
 lsq_move_data_from_old_country_to_new_country = {
   debug_log = "LSQ: Moving data from old country to new country"
-
-  scope:new_country = {
-    # Copy the mod version
-    lsq_copy_mod_version_from_old_country_to_new_country = {}
-  }
 }
 
 # Expects scopes: country
