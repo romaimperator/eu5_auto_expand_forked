@@ -1,0 +1,62 @@
+﻿# Root is the location, also expects the scope country
+lsq_location_can_auto_build_zhixian = {
+	AND = {
+		lsq_location_will_auto_build_zhixian = yes
+		lsq_auto_build_check_owner_gold_available = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_allowed_to_build_zhixian = {
+	AND = {
+		scope:country = {
+			exists = international_organization:middle_kingdom
+			is_leader_of_international_organization = international_organization:middle_kingdom
+		}
+		NOT = { has_building = building_type:zhixian }
+		lsq_auto_build_check_town_or_city = yes
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_location_will_auto_build_zhixian = {
+	AND = {
+		scope:country = { lsq_should_pause_auto_expand = no }
+		lsq_location_allowed_to_build_zhixian = yes
+		lsq_auto_build_check_meets_minimum_control_zhixian = yes
+		lsq_auto_build_check_meets_minimum_market_price_impact_zhixian = yes
+		lsq_auto_build_check_pops_available_zhixian = yes
+		lsq_auto_build_check_can_afford_zhixian = yes
+		lsq_auto_build_check_location_has_more_than_zero_market_access = yes
+	}
+}
+
+# Root is the location
+lsq_auto_build_check_meets_minimum_control_zhixian = {
+	save_temporary_scope_as = location
+	lsq_auto_build_check_meets_minimum_control = { target = building_type:zhixian }
+}
+
+# Root is the location
+lsq_auto_build_check_meets_minimum_market_price_impact_zhixian = {
+	save_temporary_scope_as = location
+	lsq_auto_build_check_meets_minimum_market_price_impact_with_key = { key = zhixian }
+}
+
+# Root is the location
+lsq_auto_build_check_pops_available_zhixian = {
+	lsq_auto_build_check_nobles_available_or_will_be = yes
+}
+
+# Root is the location
+lsq_auto_build_check_can_afford_zhixian = {
+	lsq_can_afford_zhixian = yes
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_building_researched_zhixian = {
+	scope:country = {
+		exists = international_organization:middle_kingdom
+		is_leader_of_international_organization = international_organization:middle_kingdom
+	}
+}
