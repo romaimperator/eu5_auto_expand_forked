@@ -100,6 +100,11 @@ lsq_auto_build_number_of_locations_allowed_to_build = {
       limit = { lsq_location_allowed_to_build_zhixian = yes }
       add = 1
     }
+  } else_if = { limit = { scope:building_type = building_type:tambo }
+    every_owned_location = {
+      limit = { lsq_location_allowed_to_build_tambo = yes }
+      add = 1
+    }
   }
 }
 
@@ -201,6 +206,11 @@ lsq_auto_build_number_of_locations_will_auto_build = {
       limit = { lsq_location_will_auto_build_zhixian = yes }
       add = 1
     }
+  } else_if = { limit = { scope:building_type = building_type:tambo }
+    every_owned_location = {
+      limit = { lsq_location_will_auto_build_tambo = yes }
+      add = 1
+    }
   }
 }
 
@@ -244,6 +254,8 @@ lsq_auto_build_number_of_locations_will_auto_build_cached = {
     value = var:lsq_all_controlled_locations_size_will_auto_build_confucian_school
   } else_if = { limit = { scope:building_type = building_type:zhixian }
     value = var:lsq_all_controlled_locations_size_will_auto_build_zhixian
+  } else_if = { limit = { scope:building_type = building_type:tambo }
+    value = var:lsq_all_controlled_locations_size_will_auto_build_tambo
   }
 }
 
@@ -388,6 +400,13 @@ lsq_auto_build_number_of_locations_including_subjects_allowed_to_build = {
         add = 1
       }
     }
+  } else_if = { limit = { scope:building_type = building_type:tambo }
+    every_subject_or_below = {
+      every_owned_location = {
+        limit = { lsq_location_allowed_to_build_tambo = yes }
+        add = 1
+      }
+    }
   }
 }
 
@@ -527,6 +546,13 @@ lsq_auto_build_number_of_locations_including_subjects_will_auto_build = {
         add = 1
       }
     }
+  } else_if = { limit = { scope:building_type = building_type:tambo }
+    every_subject_or_below = {
+      every_owned_location = {
+        limit = { lsq_location_will_auto_build_tambo = yes }
+        add = 1
+      }
+    }
   }
 }
 
@@ -570,6 +596,8 @@ lsq_auto_build_number_of_locations_including_subjects_will_auto_build_cached = {
     value = var:lsq_all_locations_including_subjects_size_will_auto_build_confucian_school
   } else_if = { limit = { scope:building_type = building_type:zhixian }
     value = var:lsq_all_locations_including_subjects_size_will_auto_build_zhixian
+  } else_if = { limit = { scope:building_type = building_type:tambo }
+    value = var:lsq_all_locations_including_subjects_size_will_auto_build_tambo
   }
 }
 
