@@ -193,3 +193,20 @@ lsq_auto_build_check_can_afford = {
 lsq_auto_build_check_building_researched = {
 	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = auto_build_check_building_researched }
 }
+
+# Root is the country. Checks if the building type's required advance has been researched.
+# Used by the list visibility update to hide unresearched buildings in the settings UI.
+lsq_is_building_type_advance_researched = {
+	switch = { trigger = $target$
+		building_type:minting_office = { has_advance = mint_advance }
+		building_type:library = { has_advance = library_advance }
+		building_type:pound_lock_canal_infrastructure = { has_advance = pound_lock_canals_advance }
+		building_type:university = { has_advance = university_advance }
+		building_type:counting_house = { has_advance = counting_house_advance }
+		building_type:hospital = { has_advance = hospital_advance }
+		building_type:local_smelters = { has_advance = local_smelters_advance }
+		building_type:protected_harbor = { has_advance = protected_harbor_advance }
+		building_type:windmill = { has_advance = windmills_advance }
+		fallback = { always = yes }
+	}
+}

@@ -26,6 +26,9 @@ lsq_cmm_post_registration = {
 	lsq_rebuild_priority_lookups = yes
 	lsq_rebuild_auto_build_lookups = yes
 	lsq_rebuild_auto_food_lookups = yes
+
+	# Hide buildings whose advance hasn't been researched yet
+	lsq_update_auto_build_list_visibility = yes
 }
 
 # Rebuild priority feature lookup tables from CMM list field data.
@@ -108,6 +111,37 @@ lsq_rebuild_auto_food_lookups = {
 	} # end guard
 }
 
+# Hide/show auto-build list rows based on whether the building's advance is researched.
+# Scope: country
+lsq_update_auto_build_list_visibility = {
+	if = {
+		limit = { has_variable_list = cmm_list_items_lsq__auto_build_list }
+		cmm_for_each_list_item = {
+			setting = lsq__auto_build_list
+			effect = lsq_auto_build_list_update_visibility_item
+		}
+	}
+}
+
+# Callback for cmm_for_each_list_item. Shows or hides item $i$ based on advance status.
+# $i$ = item position in the list. $setting$ = composite key. scope:cmm_list_current_item_value = building_type.
+# Root: country
+lsq_auto_build_list_update_visibility_item = {
+	if = {
+		limit = { lsq_is_building_type_advance_researched = { target = scope:cmm_list_current_item_value } }
+		cmm_show_list_item = { mod_id = lsq setting_id = auto_build_list item = $i$ }
+	}
+	else = {
+		cmm_hide_list_item = { mod_id = lsq setting_id = auto_build_list item = $i$ }
+	}
+
+	# Accept $setting$ param from cmm_for_each_list_item (unused here)
+	if = {
+		limit = { always = no }
+		cmf_suppress = { v = $setting$_$i$ }
+	}
+}
+
 # Benign warning suppression for variables/flags set or used at runtime
 # via GUI scripted effects, AddScope, variable maps, or on_actions.
 _lsq_suppress_warnings = {
@@ -141,6 +175,7 @@ _lsq_suppress_warnings = {
 		cmf_suppress = { v = lsq_priority_min_profit }
 		cmf_suppress = { v = lsq_priority_min_discount }
 		cmf_suppress = { v = lsq_cmm_priority_list_initialized }
+		cmf_suppress = { v = cmm_list_item_hidden }
 		# Food auto-build (lookup lists)
 		cmf_suppress = { v = lsq_auto_food_rgo_types_list }
 		cmf_suppress = { v = lsq_auto_food_rgo_types_enabled }
