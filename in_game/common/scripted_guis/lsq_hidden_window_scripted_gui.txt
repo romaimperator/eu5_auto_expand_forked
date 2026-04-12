@@ -21,10 +21,10 @@ lsq_hidden_window_repeated_init = {
 lsq_should_building_type_section_show = {
 	is_shown = {
 		OR = {
-			NOT = { has_variable_map = lsq_non_standard_building_type_processed }
+			NOT = { has_variable_map = lsq_building_type_processed }
 			AND = {
-				has_variable_map = lsq_non_standard_building_type_processed
-				variable_map_size = { name = lsq_non_standard_building_type_processed value < scope:country.var:every_non_standard_building_type_count }
+				has_variable_map = lsq_building_type_processed
+				variable_map_size = { name = lsq_building_type_processed value < scope:country.var:lsq_building_types_to_process_count }
 			}
 		}
 	}
@@ -83,7 +83,7 @@ lsq_building_type_section_buildings_init = {
 	  }
 
 		# Set that this building type has been processed
-		add_to_variable_map = { name = lsq_non_standard_building_type_processed key = scope:building_type value = 1 }
+		add_to_variable_map = { name = lsq_building_type_processed key = scope:building_type value = 1 }
 	}
 }
 
@@ -209,15 +209,15 @@ lsq_non_standard_building_type_construction_demand = {
 }
 
 # # Root is the building type
-lsq_is_non_standard_building_type_processed = {
+lsq_is_building_type_processed = {
 	is_shown = {
 		trigger_if = {
 			limit = { exists = this }
 			save_temporary_scope_as = building_type
 			scope:country = {
 				AND = {
-					has_variable_map = lsq_non_standard_building_type_processed
-					is_key_in_variable_map = { name = lsq_non_standard_building_type_processed target = scope:building_type }
+					has_variable_map = lsq_building_type_processed
+					is_key_in_variable_map = { name = lsq_building_type_processed target = scope:building_type }
 				}
 			}
 		}

@@ -16,7 +16,32 @@
     if = { limit = { lsq_is_version = { major = 1 minor = 10 patch = 0 } }
       lsq_migrate_from_1_10_0_to_1_10_1 = {}
     }
+    if = { limit = { lsq_is_version = { major = 1 minor = 10 patch = 1 } }
+      lsq_migrate_from_1_10_1_to_2_0_0 = {}
+    }
   }
+}
+
+lsq_migrate_from_1_10_1_to_2_0_0 = {
+  debug_log = "LSQ: Migrating from 1.10.1 to 2.0.0"
+
+  # Clear old variable names from pre-2.0 (generated code removal overhaul)
+  scope:country = {
+    clear_variable_list = every_non_standard_building_type
+    remove_variable = every_non_standard_building_type_count
+    clear_variable_map = lsq_non_standard_building_type_processed
+  }
+
+  # Clear global variable maps so the hidden window repopulates them for all building types
+  clear_global_variable_map = lsq_building_type_to_is_production_building
+  clear_global_variable_map = lsq_building_type_to_is_non_production_multi_level_building
+  clear_global_variable_map = lsq_building_type_to_is_one_per_location_building
+  clear_global_variable_map = lsq_building_type_to_is_fort
+  clear_global_variable_map = lsq_building_type_to_pop_type
+  clear_global_variable_map = lsq_building_type_to_upgrade_type
+  clear_global_variable_map = lsq_building_type_processed
+
+  lsq_set_mod_version_to = { major = 2 minor = 0 patch = 0 }
 }
 
 lsq_migrate_from_1_10_0_to_1_10_1 = {

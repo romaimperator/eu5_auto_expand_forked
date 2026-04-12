@@ -6,17 +6,16 @@ lsq_check_that_country_variables_are_set = {
     #   lsq_setup_every_building_type_list = {}
     # }
 
-    # Setup the building type type maps
-    if = { limit = { OR = { NOT = { has_global_variable_map = lsq_building_type_to_is_production_building } NOT = { has_global_variable_map = lsq_building_type_to_is_non_production_multi_level_building } NOT = { has_global_variable_map = lsq_building_type_to_is_one_per_location_building } NOT = { has_global_variable_map = lsq_building_type_to_is_fort } } }
-      lsq_populate_building_type_type_maps = {}
-    }
-
-    if = { limit = { NOT = { has_variable = every_non_standard_building_type_count } }
-      set_variable = { name = every_non_standard_building_type_count value = 0 }
+    # Populate the building type classification maps via the hidden window GUI.
+    # All building types flow through the hidden window which classifies them using
+    # GUI data bindings (BuildingType.IsProducing, IsMultipleLevels, IsFort, etc.)
+    # and stores results in global variable maps.
+    if = { limit = { NOT = { has_variable = lsq_building_types_to_process_count } }
+      set_variable = { name = lsq_building_types_to_process_count value = 0 }
       every_building_type = {
-        limit = { NOT = { is_key_in_global_variable_map = { name = lsq_building_type_to_is_production_building target = this } } }
-        scope:country = { add_to_variable_list = { name = every_non_standard_building_type target = prev } }
-        scope:country = { change_variable = { name = every_non_standard_building_type_count add = 1 } }
+        limit = { NOT = { scope:country = { is_key_in_variable_map = { name = lsq_building_type_processed target = prev } } } }
+        scope:country = { add_to_variable_list = { name = lsq_building_types_to_process target = prev } }
+        scope:country = { change_variable = { name = lsq_building_types_to_process_count add = 1 } }
       }
     }
 

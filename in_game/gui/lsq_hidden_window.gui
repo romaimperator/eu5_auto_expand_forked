@@ -63,11 +63,11 @@
 				text_single = {
 					raw_text = "Building type section"
 				}
-				datamodel = "[GetPlayer.MakeScope.GetList('every_non_standard_building_type')]"
+				datamodel = "[GetPlayer.MakeScope.GetList('lsq_building_types_to_process')]"
 				item = {
 					hbox = {
 						datacontext = "[Scope.GetBuildingType]"
-						# visible = "[Or(Not(GetPlayer.MakeScope.VariableMapExists('lsq_non_standard_building_type_processed')), And(GetPlayer.MakeScope.VariableMapExists('lsq_non_standard_building_type_processed'), Not(GetScriptedGui('lsq_is_non_standard_building_type_processed').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))))]"
+						# visible = "[Or(Not(GetPlayer.MakeScope.VariableMapExists('lsq_building_type_processed')), And(GetPlayer.MakeScope.VariableMapExists('lsq_building_type_processed'), Not(GetScriptedGui('lsq_is_building_type_processed').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))))]"
 						state = {
 							name = lsq_building_type_section_buildings_init_state
 							on_finish = "[GetScriptedGui('lsq_building_type_section_buildings_init').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('is_producing', MakeScopeBool(BuildingType.IsProducing)).AddScope('is_multiple_levels', MakeScopeBool(BuildingType.IsMultipleLevels)).AddScope('is_fort', MakeScopeBool(BuildingType.IsFort)).AddScope('pop_type', BuildingType.GetPopType.MakeScope).AddScope('upgrade_type', BuildingType.GetNextReplaced(Player.Self).MakeScope).End)]"
