@@ -1,15 +1,77 @@
-﻿# on_game_start = {
-#   on_actions = {
-#     lsq_on_game_start
-#   }
-# }
+﻿# Populate the global building type list and trigger classification on game start/load.
+# Uses the non-country variant so it runs once per lobby, not per player.
+on_game_start_after_lobby = {
+	on_actions = {
+		lsq_on_init_building_classification
+	}
+}
 
-# lsq_on_game_start = {
-#   effect = {
-#     debug_log = "LSQ: on_game_start fired"
-#     # Set the version of the mod that was used to start the game to the global variables
-#     if = { limit = { lsq_is_version_set = no }
-#       lsq_set_mod_version_to_current = {}
-#     }
-#   }
-# }
+on_game_load_after_lobby = {
+	on_actions = {
+		lsq_on_init_building_classification
+	}
+}
+
+lsq_on_init_building_classification = {
+	effect = {
+		lsq_populate_building_types_to_process = {}
+	}
+}
+
+# Calculate food data columns and auto-build visibility on game start/load
+# so the UI is populated immediately instead of waiting for the first monthly tick.
+on_game_start_after_lobby_human_country = {
+	on_actions = {
+		lsq_on_init_food_data
+		lsq_on_init_auto_build_visibility
+	}
+}
+
+on_game_load_after_lobby_human_country = {
+	on_actions = {
+		lsq_on_init_food_data
+		lsq_on_init_auto_build_visibility
+	}
+}
+
+lsq_on_init_food_data = {
+	effect = {
+		lsq_update_food_data_columns = yes
+	}
+}
+
+lsq_on_init_auto_build_visibility = {
+	effect = {
+		lsq_update_auto_build_list_visibility = yes
+	}
+}
+
+# Country transfer hook. CMF has already copied CMM setting values.
+# Copy LSQ-specific non-CMM data (location lists, etc.).
+cmf_on_country_transfer = {
+	on_actions = {
+		lsq_on_country_transfer
+	}
+}
+
+lsq_on_country_transfer = {
+	effect = {
+		# Rebuild location lists for the new country
+		save_temporary_scope_as = country
+		lsq_reset_locations_lists = {}
+
+		# Copy simple setting aliases from old country
+		if = { limit = { scope:old_country = { has_variable = lsq_pause_auto_expand } }
+			set_variable = { name = lsq_pause_auto_expand value = scope:old_country.var:lsq_pause_auto_expand }
+		}
+		if = { limit = { scope:old_country = { has_variable = lsq_minimum_gold } }
+			set_variable = { name = lsq_minimum_gold value = scope:old_country.var:lsq_minimum_gold }
+		}
+		if = { limit = { scope:old_country = { has_variable = lsq_allowed_building_overbuild_levels } }
+			set_variable = { name = lsq_allowed_building_overbuild_levels value = scope:old_country.var:lsq_allowed_building_overbuild_levels }
+		}
+
+		# Rebuild priority lookup tables for new country
+		lsq_rebuild_priority_lookups = yes
+	}
+}

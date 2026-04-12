@@ -1,25 +1,21 @@
-﻿# Expects scopes: country
+﻿# Populates the global list of building types for classification by the hidden window GUI.
+# Called from on_game_start_after_lobby and on_game_load_after_lobby (once per lobby, not per player).
+# Stateless: always rebuilds from scratch so no version tracking or migration is needed.
+lsq_populate_building_types_to_process = {
+  clear_global_variable_list = lsq_building_types_to_process
+  set_global_variable = { name = lsq_building_types_to_process_count value = 0 }
+  clear_global_variable_map = lsq_building_type_processed
+  every_building_type = {
+    add_to_global_variable_list = { name = lsq_building_types_to_process target = this }
+    change_global_variable = { name = lsq_building_types_to_process_count add = 1 }
+  }
+  # Trigger building classification in the hidden window GUI
+  set_global_variable = { name = lsq_process_buildings value = yes }
+}
+
+# Expects scopes: country
 lsq_check_that_country_variables_are_set = {
   scope:country = {
-    # # Setup/Refresh the list of all building types
-    # if = { limit = { NOT = { has_global_variable_list = every_building_type_list } }
-    #   lsq_setup_every_building_type_list = {}
-    # }
-
-    # Setup the building type type maps
-    if = { limit = { OR = { NOT = { has_global_variable_map = lsq_building_type_to_is_production_building } NOT = { has_global_variable_map = lsq_building_type_to_is_non_production_multi_level_building } NOT = { has_global_variable_map = lsq_building_type_to_is_one_per_location_building } NOT = { has_global_variable_map = lsq_building_type_to_is_fort } } }
-      lsq_populate_building_type_type_maps = {}
-    }
-
-    if = { limit = { NOT = { has_variable = every_non_standard_building_type_count } }
-      set_variable = { name = every_non_standard_building_type_count value = 0 }
-      every_building_type = {
-        limit = { NOT = { is_key_in_global_variable_map = { name = lsq_building_type_to_is_production_building target = this } } }
-        scope:country = { add_to_variable_list = { name = every_non_standard_building_type target = prev } }
-        scope:country = { change_variable = { name = every_non_standard_building_type_count add = 1 } }
-      }
-    }
-
     # Reset the location lists every time we load the game
     if = { limit = { OR = { NOT = { has_variable_list = lsq_all_controlled_locations_list } NOT = { has_variable_list = lsq_all_locations_including_subjects_list } } }
       lsq_reset_locations_lists = {}
@@ -33,54 +29,14 @@ lsq_check_that_country_variables_are_set = {
       set_variable = { name = lsq_allowed_building_overbuild_levels value = 0 }
     }
 
-    # Don't think this is needed but just in case, keeping to make it easy to add
-    # lsq_check_that_country_variables_are_set_for_non_standard_building_types = {}
   }
 }
-
-# lsq_check_that_country_variables_are_set_for_non_standard_building_types = {
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_books } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_books key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_clay } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_clay key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_cloth } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_cloth key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_copper } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_copper key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_fine_cloth } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_fine_cloth key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_firearms } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_firearms key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_glass } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_glass key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_goods_gold } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_goods_gold key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_horses } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_horses key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_jewelry } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_jewelry key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_leather } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_leather key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_liquor } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_liquor key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_livestock } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_livestock key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_lumber } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_lumber key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_marble } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_marble key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_masonry } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_masonry key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_naval_supplies } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_naval_supplies key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_paper } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_paper key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_salt } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_salt key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_sand } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_sand key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_silver } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_silver key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_steel } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_steel key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_stone } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_stone key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_tin } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tin key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_tools } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_tools key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_weaponry } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_weaponry key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_wheat } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wheat key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_wool } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_wool key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_total } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total key = flag:lsq_init value = 0 } }
-#   if = { limit = { NOT = { has_global_variable_map = lsq_non_standard_building_type_construction_demand_total_count } } add_to_global_variable_map = { name = lsq_non_standard_building_type_construction_demand_total_count key = flag:lsq_init value = 0 } }
-# }
 
 # Expects scopes: old_country, new_country
 # Note: CMM setting values and derived lookup tables are now handled by CMF's
 # automatic country transfer. This only handles LSQ-specific non-CMM data.
 lsq_move_data_from_old_country_to_new_country = {
   debug_log = "LSQ: Moving data from old country to new country"
-
-  scope:new_country = {
-    # Copy the mod version
-    lsq_copy_mod_version_from_old_country_to_new_country = {}
-  }
 }
 
 # Expects scopes: country
@@ -121,26 +77,26 @@ lsq_reset_locations_lists = {
     clear_variable_list = lsq_all_locations_including_subjects_list_temp
 
     # Setup building-specific lists
-    lsq_process_building_specific_list = { building_type_text = temple } # buiding_type_index = 0 }
-    lsq_process_building_specific_list = { building_type_text = library } # buiding_type_index = 1 }
-    lsq_process_building_specific_list = { building_type_text = settlement_building } # buiding_type_index = 2 }
-    lsq_process_building_specific_list = { building_type_text = bridge_infrastructure } # buiding_type_index = 3 }
-    lsq_process_building_specific_list = { building_type_text = pound_lock_canal_infrastructure } # buiding_type_index = 4 }
-    lsq_process_building_specific_list = { building_type_text = university } # buiding_type_index = 5 }
-    lsq_process_building_specific_list = { building_type_text = hospital } # buiding_type_index = 6 }
-    lsq_process_building_specific_list = { building_type_text = minting_office } # buiding_type_index = 7 }
-    lsq_process_building_specific_list = { building_type_text = counting_house } # buiding_type_index = 8 }
-    lsq_process_building_specific_list = { building_type_text = wharf } # buiding_type_index = 9 }
-    lsq_process_building_specific_list = { building_type_text = market_village } # buiding_type_index = 10 }
-    lsq_process_building_specific_list = { building_type_text = sawmill } # buiding_type_index = 11 }
-    lsq_process_building_specific_list = { building_type_text = windmill } # buiding_type_index = 12 }
-    lsq_process_building_specific_list = { building_type_text = local_smelters } # buiding_type_index = 13 }
-    lsq_process_building_specific_list = { building_type_text = protected_harbor } # buiding_type_index = 14 }
-    lsq_process_building_specific_list = { building_type_text = fortress_granary } # buiding_type_index = 15 }
-    lsq_process_building_specific_list = { building_type_text = confucian_academy } # buiding_type_index = 16 }
-    lsq_process_building_specific_list = { building_type_text = confucian_school } # buiding_type_index = 17 }
-    lsq_process_building_specific_list = { building_type_text = zhixian } # buiding_type_index = 18 }
-    lsq_process_building_specific_list = { building_type_text = tambo } # buiding_type_index = 19 }
+    lsq_process_building_specific_list = { building_type_text = temple } # i = 0
+    lsq_process_building_specific_list = { building_type_text = library } # i = 1
+    lsq_process_building_specific_list = { building_type_text = settlement_building } # i = 2
+    lsq_process_building_specific_list = { building_type_text = bridge_infrastructure } # i = 3
+    lsq_process_building_specific_list = { building_type_text = pound_lock_canal_infrastructure } # i = 4
+    lsq_process_building_specific_list = { building_type_text = university } # i = 5
+    lsq_process_building_specific_list = { building_type_text = hospital } # i = 6
+    lsq_process_building_specific_list = { building_type_text = minting_office } # i = 7
+    lsq_process_building_specific_list = { building_type_text = counting_house } # i = 8
+    lsq_process_building_specific_list = { building_type_text = wharf } # i = 9
+    lsq_process_building_specific_list = { building_type_text = market_village } # i = 10
+    lsq_process_building_specific_list = { building_type_text = sawmill } # i = 11
+    lsq_process_building_specific_list = { building_type_text = windmill } # i = 12
+    lsq_process_building_specific_list = { building_type_text = local_smelters } # i = 13
+    lsq_process_building_specific_list = { building_type_text = protected_harbor } # i = 14
+    lsq_process_building_specific_list = { building_type_text = fortress_granary } # i = 15
+    lsq_process_building_specific_list = { building_type_text = confucian_academy } # i = 16
+    lsq_process_building_specific_list = { building_type_text = confucian_school } # i = 17
+    lsq_process_building_specific_list = { building_type_text = zhixian } # i = 18
+    lsq_process_building_specific_list = { building_type_text = tambo } # i = 19
   }
 }
 
@@ -201,14 +157,3 @@ lsq_effect_from_building_type = {
     building_type:tambo = { $effect_to_run$ = { building_type_text = tambo } }
   }
 }
-
-# lsq_setup_every_building_type_list = {
-#   clear_global_variable_list = every_building_type_list
-#   set_global_variable = { name = every_building_type_count value = 0 }
-#   every_building_type = {
-#     save_scope_as = building_type
-#     # debug_log = "LSQ: Adding building type [THIS.GetBuildingType.GetNameWithNoTooltip] to every_building_type_list"
-#     add_to_global_variable_list = { name = every_building_type_list target = scope:building_type }
-#     change_global_variable = { name = every_building_type_count add = 1 }
-#   }
-# }
