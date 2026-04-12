@@ -12,6 +12,15 @@ lsq_hidden_window_repeated_init = {
 			# debug_log = "LSQ: Repeated init"
 			lsq_check_that_country_variables_are_set = {}
 			lsq_check_if_migration_needed = {}
+
+			# Unset processing flag when all buildings are classified
+			if = { limit = { AND = {
+				scope:country = { has_variable = lsq_process_buildings }
+				has_variable_map = lsq_building_type_processed
+				variable_map_size = { name = lsq_building_type_processed value >= scope:country.var:lsq_building_types_to_process_count }
+			} }
+				scope:country = { remove_variable = lsq_process_buildings }
+			}
 		}
 	}
 }
@@ -20,6 +29,7 @@ lsq_hidden_window_repeated_init = {
 # # Root is the player
 lsq_should_building_type_section_show = {
 	is_shown = {
+		scope:country = { has_variable = lsq_process_buildings }
 		OR = {
 			NOT = { has_variable_map = lsq_building_type_processed }
 			AND = {
