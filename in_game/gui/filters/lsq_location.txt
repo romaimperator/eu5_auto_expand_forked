@@ -18,10 +18,16 @@
 location_has_auto_expand_rgo = {
 	scope = location
 	tag = raw_goods
-  group = 4
-  exclusive_group = yes
+	group = 4
+	exclusive_group = yes
 	trigger = {
-    exists = var:auto_expand_rgo
+		OR = {
+			exists = var:auto_expand_rgo
+			AND = {
+				owner = { exists = var:lsq_mass_auto_expand_rgo }
+				NOT = { exists = var:auto_expand_rgo_excluded }
+			}
+		}
 	}
 }
 
@@ -30,9 +36,15 @@ location_has_auto_expand_rgo = {
 location_not_has_auto_expand_rgo = {
 	scope = location
 	tag = raw_goods
-  group = 4
-  exclusive_group = yes
+	group = 4
+	exclusive_group = yes
 	trigger = {
-    NOT = { exists = var:auto_expand_rgo }
+		NOR = {
+			exists = var:auto_expand_rgo
+			AND = {
+				owner = { exists = var:lsq_mass_auto_expand_rgo }
+				NOT = { exists = var:auto_expand_rgo_excluded }
+			}
+		}
 	}
 }

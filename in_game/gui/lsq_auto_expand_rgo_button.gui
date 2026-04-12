@@ -55,59 +55,13 @@
 	}
 
 	type lsq_mass_auto_expand_rgo_button = hbox {
-		name = "lsq_parent_of_auto_expand_active_rgo_locations"
-		vbox = {
-			size = { 0 0 }
-			scissor = yes
-			ignore_layout = yes
-			ignoreinvisible = yes
-			name = "lsq_auto_expand_active_rgo_locations"
-			datamodel = "[ExpandRawGoodsLateralView.GetRawGoodLocationItems]"
-			item = {
-				overlappingitembox = {
-					datacontext = "[RawGoodLocationItem.GetLocation]"
-					size = { 0 0 }
-					scissor = yes
-					ignore_layout = yes
-					visible = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-					# text_single = { raw_text = "bye" }
-				}
-			}
-		}
-
-		vbox = {
-			size = { 0 0 }
-			scissor = yes
-			ignore_layout = yes
-			ignoreinvisible = yes
-			name = "lsq_auto_expand_possible_rgo_locations"
-			datamodel = "[ExpandRawGoodsLateralView.GetRawGoodLocationItems]"
-			item = {
-				overlappingitembox = {
-					datacontext = "[RawGoodLocationItem.GetLocation]"
-					size = { 0 0 }
-					scissor = yes
-					ignore_layout = yes
-					visible = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
-					state = {
-						name = "lsq_mass_auto_expand_rgo_click"
-						on_finish = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('set_off', MakeScopeBool(GreaterThanOrEqualTo_int32(PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_rgo_locations').FindChild('lsq_auto_expand_active_rgo_locations').CountVisibleChildren, PdxGuiWidget.AccessParent.CountVisibleChildren))).End)]"
-					}
-					# text_single = { raw_text = "hi" }
-				}
-			}
-		}
-
 		lsq_auto_expand_checkbutton = {
 			tooltipwidget = { using = lsq_Mass_Autoexpand_RGO_Tooltip }
-			checked = "[EqualTo_int32(PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_rgo_locations').FindChild('lsq_auto_expand_possible_rgo_locations').CountVisibleChildren, PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_rgo_locations').FindChild('lsq_auto_expand_active_rgo_locations').CountVisibleChildren)]"
+			checked = "[GetScriptedGui('lsq_toggle_mass_auto_expand_rgo').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			blockoverride "green_glow_visible" {
-				visible = "[EqualTo_int32(PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_rgo_locations').FindChild('lsq_auto_expand_possible_rgo_locations').CountVisibleChildren, PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_rgo_locations').FindChild('lsq_auto_expand_active_rgo_locations').CountVisibleChildren)]"
+				visible = "[GetScriptedGui('lsq_toggle_mass_auto_expand_rgo').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
-			# blockoverride "red_glow_visible" {
-				# visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]"
-			# }
-			onclick = "[PdxGuiTriggerAllAnimations('lsq_mass_auto_expand_rgo_click')]"
+			onclick = "[GetScriptedGui('lsq_toggle_mass_auto_expand_rgo').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			onrightclick = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 			onrightclick = "[GetVariableSystem.Set('cmm_selected_mod', 'lsq')]"
 			onrightclick = "[GetVariableSystem.Set('cmm_selected_tab', 'lsq__settings')]"
@@ -503,48 +457,11 @@ template lsq_RGO_Autoexpand_Tooltip {
 
 template lsq_Mass_Autoexpand_RGO_Tooltip {
 	ContextualTooltipType = {
-		name = "lsq_mass_auto_expand_rgo_tooltip"
-		vbox = {
-			size = { 0 0 }
-			scissor = yes
-			ignore_layout = yes
-			ignoreinvisible = yes
-			name = "lsq_auto_expand_active_rgo_locations"
-			datamodel = "[ExpandRawGoodsLateralView.GetRawGoodLocationItems]"
-			item = {
-				overlappingitembox = {
-					size = { 0 0 }
-					scissor = yes
-					ignore_layout = yes
-					datacontext = "[RawGoodLocationItem.GetLocation]"
-					visible = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-					# text_single = { raw_text = "bye" }
-				}
-			}
-		}
-		vbox = {
-			size = { 0 0 }
-			scissor = yes
-			ignore_layout = yes
-			ignoreinvisible = yes
-			name = "lsq_auto_expand_possible_rgo_locations"
-			datamodel = "[ExpandRawGoodsLateralView.GetRawGoodLocationItems]"
-			item = {
-				overlappingitembox = {
-					size = { 0 0 }
-					scissor = yes
-					ignore_layout = yes
-					datacontext = "[RawGoodLocationItem.GetLocation]"
-					visible = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
-					# text_single = { raw_text = "bye" }
-				}
-			}
-		}
 		blockoverride "title_icon" {
 			lsq_auto_expand_checkbutton = {
 				using = tooltip_title_icon_size
 				tooltip_enabled = no
-				checked = "[EqualTo_int32(PdxGuiWidget.FindParent('lsq_mass_auto_expand_rgo_tooltip').FindChild('lsq_auto_expand_possible_rgo_locations').CountVisibleChildren, PdxGuiWidget.FindParent('lsq_mass_auto_expand_rgo_tooltip').FindChild('lsq_auto_expand_active_rgo_locations').CountVisibleChildren)]"
+				checked = "[GetScriptedGui('lsq_toggle_mass_auto_expand_rgo').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 				enabled = yes
 			}
 		}
@@ -560,21 +477,7 @@ template lsq_Mass_Autoexpand_RGO_Tooltip {
 		blockoverride "tooltip_content" {
 			TooltipListBase = {
 				blockoverride "block_title" {
-					raw_text = "Click to toggle auto-expand for all locations shown below. Add or remove filters to change which locations will be affected."
-				}
-			}
-
-			TooltipListBase = {
-				margin = { 5 10 }
-				vbox = {
-					textbox = {
-						using = tooltip_text_block_template
-						raw_text = "Locations which can have auto-expand enabled: [PdxGuiWidget.FindParent('lsq_mass_auto_expand_rgo_tooltip').FindChild('lsq_auto_expand_possible_rgo_locations').CountVisibleChildren]"
-					}
-					textbox = {
-						using = tooltip_text_block_template
-						raw_text = "Locations with auto-expand enabled: [PdxGuiWidget.FindParent('lsq_mass_auto_expand_rgo_tooltip').FindChild('lsq_auto_expand_active_rgo_locations').CountVisibleChildren]"
-					}
+					raw_text = "When enabled, all RGO locations will automatically expand. Disable individual locations by toggling them off. New locations will be included automatically."
 				}
 			}
 		}

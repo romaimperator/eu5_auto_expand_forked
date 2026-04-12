@@ -3,19 +3,37 @@
 		save_scope_as = the_building
 		building_type = { save_scope_as = building_type }
 		location = {
-			if = { limit = { NOT = { exists = scope:set_off } }
-				if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
-					remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+			if = { limit = { owner = { exists = var:lsq_mass_auto_expand_buildings } }
+				# Mass mode: operate on exclusion list (inverted logic)
+				if = { limit = { NOT = { exists = scope:set_off } }
+					if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type } }
+						remove_list_variable = { name = lsq_auto_expand_excluded_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type }
+					}
 				} else = {
-					add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					if = { limit = { scope:set_off = yes }
+						if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type } } }
+							add_to_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type }
+						}
+					} else = {
+						remove_list_variable = { name = lsq_auto_expand_excluded_building_types target = scope:building_type }
+					}
 				}
 			} else = {
-				if = { limit = { scope:set_off = yes }
-					# debug_log = "LSQ: scope:set_off is yes"
-					remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				# Normal mode: operate on registration list
+				if = { limit = { NOT = { exists = scope:set_off } }
+					if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
+						remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					}
 				} else = {
-					# debug_log = "LSQ: scope:set_off is no"
-					add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					if = { limit = { scope:set_off = yes }
+						remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					}
 				}
 			}
 		}
@@ -28,17 +46,37 @@ lsq_check_for_auto_expand_when_upgrading_building = {
 		save_scope_as = the_building
 		scope:the_building = { building_type = { save_temporary_scope_as = old_building_type } }
 		location = {
-			if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type } }
-				remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type }
-				ordered_buildings_in_location = { # ordered_x always returns first scope in ordering, therefore we get the most recently built building
-					order_by = building_index
-					save_scope_as = the_new_building
-					scope:the_new_building = {
-						building_type = { save_temporary_scope_as = new_building_type }
+			if = { limit = { owner = { exists = var:lsq_mass_auto_expand_buildings } }
+				# Mass mode: if old type was excluded, swap exclusion to new type
+				if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:old_building_type } }
+					remove_list_variable = { name = lsq_auto_expand_excluded_building_types target = scope:old_building_type }
+					ordered_buildings_in_location = {
+						order_by = building_index
+						save_scope_as = the_new_building
+						scope:the_new_building = {
+							building_type = { save_temporary_scope_as = new_building_type }
+						}
+						location = {
+							if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:new_building_type } } }
+								add_to_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:new_building_type }
+							}
+						}
 					}
-					location = {
-						if = { limit = { NOT = { is_target_in_variable_list =  { name = lsq_auto_expand_registered_building_types target = scope:new_building_type } } }
-							add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type }
+				}
+			} else = {
+				# Normal mode: swap registration from old to new
+				if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type } }
+					remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type }
+					ordered_buildings_in_location = {
+						order_by = building_index
+						save_scope_as = the_new_building
+						scope:the_new_building = {
+							building_type = { save_temporary_scope_as = new_building_type }
+						}
+						location = {
+							if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type } } }
+								add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type }
+							}
 						}
 					}
 				}
@@ -59,11 +97,22 @@ lsq_gui_construct_upgrade = {
 	}
 	effect = {
 		construct_building = { building_type = scope:new_building_type }
-		# Swap auto-expand tracking from old to new (only if old type was registered)
-		if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type } }
-			remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type }
-			if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type } } }
-				add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type }
+		# Swap auto-expand tracking from old to new
+		if = { limit = { owner = { exists = var:lsq_mass_auto_expand_buildings } }
+			# Mass mode: swap exclusion entries (if old type was excluded, exclude new type too)
+			if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:old_building_type } }
+				remove_list_variable = { name = lsq_auto_expand_excluded_building_types target = scope:old_building_type }
+				if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:new_building_type } } }
+					add_to_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:new_building_type }
+				}
+			}
+		} else = {
+			# Normal mode: swap registration entries (only if old type was registered)
+			if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type } }
+				remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:old_building_type }
+				if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type } } }
+					add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:new_building_type }
+				}
 			}
 		}
 		# Track that this building type has an upgrade queued so the monthly script won't re-flag it
@@ -79,8 +128,14 @@ lsq_check_for_auto_expand_when_removing_building = {
 		save_scope_as = the_building
 		scope:the_building = { building_type = { save_temporary_scope_as = building_type } }
 		location = {
-			if = { limit = { AND = { scope:the_building = { building_level < 2 } is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } } }
-				remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+			if = { limit = { scope:the_building = { building_level < 2 } }
+				# Clean up both lists — only the relevant one will have an entry
+				if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
+					remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				}
+				if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type } }
+					remove_list_variable = { name = lsq_auto_expand_excluded_building_types target = scope:building_type }
+				}
 			}
 		}
 	}
@@ -99,7 +154,13 @@ lsq_is_auto_expand_active_for_building = {
 	is_shown = {
 		save_temporary_scope_as = the_building
 		scope:the_building = { building_type = { save_temporary_scope_as = building_type } }
-		location = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
+		OR = {
+			location = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
+			AND = {
+				owner = { exists = var:lsq_mass_auto_expand_buildings }
+				NOT = { location = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type } } }
+			}
+		}
 	}
 }
 
@@ -107,19 +168,37 @@ lsq_set_auto_expand_for_building_type = {
 	effect = {
 		save_scope_as = building_type
 		scope:location = {
-			if = { limit = { NOT = { exists = scope:set_off } }
-				if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
-					remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+			if = { limit = { owner = { exists = var:lsq_mass_auto_expand_buildings } }
+				# Mass mode: operate on exclusion list (inverted logic)
+				if = { limit = { NOT = { exists = scope:set_off } }
+					if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type } }
+						remove_list_variable = { name = lsq_auto_expand_excluded_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type }
+					}
 				} else = {
-					add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					if = { limit = { scope:set_off = yes }
+						if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type } } }
+							add_to_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type }
+						}
+					} else = {
+						remove_list_variable = { name = lsq_auto_expand_excluded_building_types target = scope:building_type }
+					}
 				}
 			} else = {
-				if = { limit = { scope:set_off = yes }
-					# debug_log = "LSQ: scope:set_off is yes"
-					remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+				# Normal mode: operate on registration list
+				if = { limit = { NOT = { exists = scope:set_off } }
+					if = { limit = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
+						remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					}
 				} else = {
-					# debug_log = "LSQ: scope:set_off is no"
-					add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					if = { limit = { scope:set_off = yes }
+						remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+					}
 				}
 			}
 		}
@@ -129,7 +208,13 @@ lsq_set_auto_expand_for_building_type = {
 lsq_is_auto_expand_active_for_building_type = {
 	is_shown = {
 		save_temporary_scope_as = building_type
-		scope:location = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
+		OR = {
+			scope:location = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = scope:building_type } }
+			AND = {
+				scope:location = { owner = { exists = var:lsq_mass_auto_expand_buildings } }
+				NOT = { scope:location = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type } } }
+			}
+		}
 	}
 }
 
@@ -367,6 +452,39 @@ lsq_pause_auto_expand = {
 
 	is_shown = {
 		lsq_should_pause_auto_expand = yes
+	}
+}
+
+# Root is the country. Toggles "expand all buildings" mode.
+# When ON: all eligible buildings at all locations auto-expand (exclusion-based).
+# When OFF: clean slate (nothing auto-expands).
+lsq_toggle_mass_auto_expand_buildings = {
+	scope = country
+	effect = {
+		if = { limit = { exists = var:lsq_mass_auto_expand_buildings }
+			# Turning OFF — clear flag and all exclusion lists
+			remove_variable = lsq_mass_auto_expand_buildings
+			ordered_owned_location = {
+				order_by = max_control
+				max = lsq_max_guess_at_number_of_locations
+				check_range_bounds = no
+				limit = { has_variable_list = lsq_auto_expand_excluded_building_types }
+				clear_variable_list = lsq_auto_expand_excluded_building_types
+			}
+		} else = {
+			# Turning ON — set flag, clear all per-location registration lists
+			set_variable = { name = lsq_mass_auto_expand_buildings value = yes }
+			ordered_owned_location = {
+				order_by = max_control
+				max = lsq_max_guess_at_number_of_locations
+				check_range_bounds = no
+				limit = { has_variable_list = lsq_auto_expand_registered_building_types }
+				clear_variable_list = lsq_auto_expand_registered_building_types
+			}
+		}
+	}
+	is_shown = {
+		exists = var:lsq_mass_auto_expand_buildings
 	}
 }
 

@@ -9,78 +9,136 @@
 lsq_run_auto_expand_buildings = {
 	# Clear the GUI upgrade locations list so it's rebuilt fresh each tick
 	clear_variable_list = lsq_gui_upgrade_locations
-	ordered_owned_location = {
-		order_by = max_control
-		max = lsq_max_guess_at_number_of_locations
-		check_range_bounds = no
-		limit = { has_variable_list = lsq_auto_expand_registered_building_types }
-		save_scope_as = location
-		every_in_list = {
-			variable = lsq_auto_expand_registered_building_types
-			save_scope_as = building_type
-			if = { limit = { scope:location = { has_building = scope:building_type } }
-				scope:location = { "building(scope:building_type|scope:country)" = { save_scope_as = building } }
-				if = { limit = { lsq_is_building_type_obsolete = no }
-					if = { limit = {
-							scope:building = {
-								lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
-								lsq_is_building_at_max_level = no
-								lsq_is_not_under_construction_and_gold_is_available = yes
-							}
+	if = { limit = { exists = var:lsq_mass_auto_expand_buildings }
+		# ── Mass mode: iterate all existing buildings at all owned locations ──
+		ordered_owned_location = {
+			order_by = max_control
+			max = lsq_max_guess_at_number_of_locations
+			check_range_bounds = no
+			save_scope_as = location
+			ordered_buildings_in_location = {
+				order_by = building_index
+				max = 100
+				check_range_bounds = no
+				save_scope_as = building
+				building_type = { save_scope_as = building_type }
+				if = { limit = {
+						# Only eligible building types (production or non-production multi-level)
+						OR = {
+							scope:building_type = { lsq_is_building_type_production_building = yes }
+							scope:building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
 						}
-						scope:location = { construct_building = { building_type = scope:building_type } }
+						# Not excluded by the player
+						NOT = { scope:location = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = scope:building_type } } }
 					}
-				# Building type is obsolete so check if it can be upgraded
-				} else_if = { limit = {
-						scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
-						scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
-					}
-					if = { limit = {
-							scope:building = {
-								lsq_building_can_auto_expand_for_upgrade = yes
-								lsq_is_not_under_construction = yes
+					if = { limit = { lsq_is_building_type_obsolete = no }
+						if = { limit = {
+								scope:building = {
+									lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
+									lsq_is_building_at_max_level = no
+									lsq_is_not_under_construction_and_gold_is_available = yes
+								}
 							}
-							lsq_auto_expand_check_minimum_gold_reserve = yes
-							NOT = { scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } } }
+							scope:location = { construct_building = { building_type = scope:building_type } }
 						}
-						# Flag for GUI upgrade processing (GetNextReplaced resolves the target)
-						scope:location = {
-							if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }
-								add_to_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type }
+					} else_if = { limit = {
+							scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
+							scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
+						}
+						if = { limit = {
+								scope:building = {
+									lsq_building_can_auto_expand_for_upgrade = yes
+									lsq_is_not_under_construction = yes
+								}
+								lsq_auto_expand_check_minimum_gold_reserve = yes
+								NOT = { scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } } }
 							}
-						}
-						scope:country = {
-							if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_locations target = scope:location } } }
-								add_to_variable_list = { name = lsq_gui_upgrade_locations target = scope:location }
+							scope:location = {
+								if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }
+									add_to_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type }
+								}
+							}
+							scope:country = {
+								if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_locations target = scope:location } } }
+									add_to_variable_list = { name = lsq_gui_upgrade_locations target = scope:location }
+								}
 							}
 						}
 					}
 				}
-			} else = {
-				# Building has no levels — not yet queued for construction
-				# Clean up in-progress upgrade tracking if the old building type is gone (upgrade completed)
-				if = { limit = { scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } } }
-					scope:location = { remove_list_variable = { name = lsq_upgrade_in_progress target = scope:building_type } }
-				}
-				if = { limit = { lsq_is_building_type_obsolete = no }
-					if = { limit = { lsq_location_can_auto_expand_from_zero_levels = yes }
-						scope:location = { construct_building = { building_type = scope:building_type } }
-					}
-				# Building type is obsolete so check if it can be upgraded
-				} else_if = { limit = { scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes } scope:country = { lsq_should_auto_expand_upgrade_buildings = yes } }
-					if = { limit = {
-							lsq_location_can_auto_expand_from_zero_levels_for_upgrade = yes
-							NOT = { scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } } }
+			}
+		}
+	} else = {
+		# ── Normal mode: iterate registered building types per location ──
+		ordered_owned_location = {
+			order_by = max_control
+			max = lsq_max_guess_at_number_of_locations
+			check_range_bounds = no
+			limit = { has_variable_list = lsq_auto_expand_registered_building_types }
+			save_scope_as = location
+			every_in_list = {
+				variable = lsq_auto_expand_registered_building_types
+				save_scope_as = building_type
+				if = { limit = { scope:location = { has_building = scope:building_type } }
+					scope:location = { "building(scope:building_type|scope:country)" = { save_scope_as = building } }
+					if = { limit = { lsq_is_building_type_obsolete = no }
+						if = { limit = {
+								scope:building = {
+									lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
+									lsq_is_building_at_max_level = no
+									lsq_is_not_under_construction_and_gold_is_available = yes
+								}
+							}
+							scope:location = { construct_building = { building_type = scope:building_type } }
 						}
-						# Flag for GUI upgrade processing (GetNextReplaced resolves the target)
-						scope:location = {
-							if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }
-								add_to_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type }
+					} else_if = { limit = {
+							scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
+							scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
+						}
+						if = { limit = {
+								scope:building = {
+									lsq_building_can_auto_expand_for_upgrade = yes
+									lsq_is_not_under_construction = yes
+								}
+								lsq_auto_expand_check_minimum_gold_reserve = yes
+								NOT = { scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } } }
+							}
+							scope:location = {
+								if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }
+									add_to_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type }
+								}
+							}
+							scope:country = {
+								if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_locations target = scope:location } } }
+									add_to_variable_list = { name = lsq_gui_upgrade_locations target = scope:location }
+								}
 							}
 						}
-						scope:country = {
-							if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_locations target = scope:location } } }
-								add_to_variable_list = { name = lsq_gui_upgrade_locations target = scope:location }
+					}
+				} else = {
+					# Building has no levels — not yet queued for construction
+					# Clean up in-progress upgrade tracking if the old building type is gone (upgrade completed)
+					if = { limit = { scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } } }
+						scope:location = { remove_list_variable = { name = lsq_upgrade_in_progress target = scope:building_type } }
+					}
+					if = { limit = { lsq_is_building_type_obsolete = no }
+						if = { limit = { lsq_location_can_auto_expand_from_zero_levels = yes }
+							scope:location = { construct_building = { building_type = scope:building_type } }
+						}
+					} else_if = { limit = { scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes } scope:country = { lsq_should_auto_expand_upgrade_buildings = yes } }
+						if = { limit = {
+								lsq_location_can_auto_expand_from_zero_levels_for_upgrade = yes
+								NOT = { scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } } }
+							}
+							scope:location = {
+								if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type } } }
+									add_to_variable_list = { name = lsq_gui_upgrade_building_types target = scope:building_type }
+								}
+							}
+							scope:country = {
+								if = { limit = { NOT = { is_target_in_variable_list = { name = lsq_gui_upgrade_locations target = scope:location } } }
+									add_to_variable_list = { name = lsq_gui_upgrade_locations target = scope:location }
+								}
 							}
 						}
 					}
@@ -94,14 +152,29 @@ lsq_run_auto_expand_buildings = {
 # Expands RGO levels in locations with auto_expand_rgo enabled.
 # Single monthly pass (no daily spread).
 lsq_run_auto_expand_rgos = {
-	ordered_owned_location = {
-		order_by = max_control
-		max = lsq_max_guess_at_number_of_locations
-		check_range_bounds = no
-		limit = { exists = var:auto_expand_rgo }
-		save_scope_as = location
-		if = { limit = { lsq_should_rgo_auto_expand = yes }
-			construct_rgo_upgrade = {}
+	if = { limit = { exists = var:lsq_mass_auto_expand_rgo }
+		# Mass mode: expand all non-excluded locations
+		ordered_owned_location = {
+			order_by = max_control
+			max = lsq_max_guess_at_number_of_locations
+			check_range_bounds = no
+			limit = { NOT = { exists = var:auto_expand_rgo_excluded } }
+			save_scope_as = location
+			if = { limit = { lsq_should_rgo_auto_expand = yes }
+				construct_rgo_upgrade = {}
+			}
+		}
+	} else = {
+		# Normal mode: expand only locations with auto_expand_rgo enabled
+		ordered_owned_location = {
+			order_by = max_control
+			max = lsq_max_guess_at_number_of_locations
+			check_range_bounds = no
+			limit = { exists = var:auto_expand_rgo }
+			save_scope_as = location
+			if = { limit = { lsq_should_rgo_auto_expand = yes }
+				construct_rgo_upgrade = {}
+			}
 		}
 	}
 }

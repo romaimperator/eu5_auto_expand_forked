@@ -1,23 +1,79 @@
 ﻿lsq_set_auto_expand_for_rgo = {
 	effect = {
-		# market = { add_goods_supply = { goods = goods:lumber amount = -1 } }
-		if = { limit = { NOT = { exists = scope:set_off } }
-			if = { limit = { exists = var:auto_expand_rgo }
-				remove_variable = auto_expand_rgo
+		if = { limit = { owner = { exists = var:lsq_mass_auto_expand_rgo } }
+			# Mass mode: operate on exclusion variable (inverted logic)
+			if = { limit = { NOT = { exists = scope:set_off } }
+				if = { limit = { exists = var:auto_expand_rgo_excluded }
+					remove_variable = auto_expand_rgo_excluded
+				} else = {
+					set_variable = { name = auto_expand_rgo_excluded value = yes }
+				}
 			} else = {
-				set_variable = { name = auto_expand_rgo value = yes }
+				if = { limit = { scope:set_off = yes }
+					if = { limit = { NOT = { exists = var:auto_expand_rgo_excluded } }
+						set_variable = { name = auto_expand_rgo_excluded value = yes }
+					}
+				} else = {
+					remove_variable = auto_expand_rgo_excluded
+				}
 			}
 		} else = {
-			if = { limit = { scope:set_off = yes }
-				remove_variable = auto_expand_rgo
+			# Normal mode: operate on enable variable
+			if = { limit = { NOT = { exists = scope:set_off } }
+				if = { limit = { exists = var:auto_expand_rgo }
+					remove_variable = auto_expand_rgo
+				} else = {
+					set_variable = { name = auto_expand_rgo value = yes }
+				}
 			} else = {
-				set_variable = { name = auto_expand_rgo value = yes }
+				if = { limit = { scope:set_off = yes }
+					remove_variable = auto_expand_rgo
+				} else = {
+					set_variable = { name = auto_expand_rgo value = yes }
+				}
 			}
 		}
 	}
 
 	is_shown = {
-		exists = var:auto_expand_rgo
+		OR = {
+			exists = var:auto_expand_rgo
+			AND = {
+				owner = { exists = var:lsq_mass_auto_expand_rgo }
+				NOT = { exists = var:auto_expand_rgo_excluded }
+			}
+		}
+	}
+}
+
+# Root is the country. Toggles "expand all RGOs" mode.
+lsq_toggle_mass_auto_expand_rgo = {
+	scope = country
+	effect = {
+		if = { limit = { exists = var:lsq_mass_auto_expand_rgo }
+			# Turning OFF — clear flag and all exclusion variables
+			remove_variable = lsq_mass_auto_expand_rgo
+			ordered_owned_location = {
+				order_by = max_control
+				max = lsq_max_guess_at_number_of_locations
+				check_range_bounds = no
+				limit = { exists = var:auto_expand_rgo_excluded }
+				remove_variable = auto_expand_rgo_excluded
+			}
+		} else = {
+			# Turning ON — set flag, clear all per-location enable variables
+			set_variable = { name = lsq_mass_auto_expand_rgo value = yes }
+			ordered_owned_location = {
+				order_by = max_control
+				max = lsq_max_guess_at_number_of_locations
+				check_range_bounds = no
+				limit = { exists = var:auto_expand_rgo }
+				remove_variable = auto_expand_rgo
+			}
+		}
+	}
+	is_shown = {
+		exists = var:lsq_mass_auto_expand_rgo
 	}
 }
 

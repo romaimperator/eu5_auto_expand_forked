@@ -4,7 +4,19 @@
 	group = 9
 	exclusive_group = yes
 	trigger = {
-    location = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = prev.building_type } }
+		OR = {
+			location = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = prev.building_type } }
+			AND = {
+				owner = { exists = var:lsq_mass_auto_expand_buildings }
+				NOT = { location = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = prev.building_type } } }
+				building_type = {
+					OR = {
+						lsq_is_building_type_production_building = yes
+						lsq_is_building_type_non_production_multi_level_building = yes
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -14,6 +26,18 @@ building_only_not_auto_expand = {
 	group = 9
 	exclusive_group = yes
 	trigger = {
-		location = { NOT = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = prev.building_type } } }
+		NOR = {
+			location = { is_target_in_variable_list = { name = lsq_auto_expand_registered_building_types target = prev.building_type } }
+			AND = {
+				owner = { exists = var:lsq_mass_auto_expand_buildings }
+				NOT = { location = { is_target_in_variable_list = { name = lsq_auto_expand_excluded_building_types target = prev.building_type } } }
+				building_type = {
+					OR = {
+						lsq_is_building_type_production_building = yes
+						lsq_is_building_type_non_production_multi_level_building = yes
+					}
+				}
+			}
+		}
 	}
 }

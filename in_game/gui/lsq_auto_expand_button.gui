@@ -206,51 +206,14 @@
 
 	type lsq_mass_auto_expand_button_bll = hbox {
 		visible = "[GetScriptedGui('lsq_is_auto_expand_visible_for_building_type').IsShown(GuiScope.SetRoot(BuildInLocationLateralView.GetBuildingType.MakeScope).End)]"
-		name = "lsq_parent_of_auto_expand_active_locations"
-		vbox = {
-			size = { 0 0 }
-			scissor = yes
-			ignore_layout = yes
-			name = "lsq_auto_expand_active_locations"
-			datamodel = "[BuildInLocationLateralView.GetItems]"
-			item = {
-				overlappingitembox = {
-					ignore_layout = yes
-					visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(LocationToBuildItem.GetBuildingType.MakeScope).AddScope('location', LocationToBuildItem.GetLocation.MakeScope).End)]"
-					# text_single = { raw_text = "bye" }
-				}
-			}
-		}
-
-		vbox = {
-			size = { 0 0 }
-			scissor = yes
-			ignore_layout = yes
-			name = "lsq_auto_expand_possible_locations"
-			datamodel = "[BuildInLocationLateralView.GetItems]"
-			item = {
-				overlappingitembox = {
-					ignore_layout = yes
-					visible = "[ObjectsEqual(LocationToBuildItem.GetLocation.GetOwner, GetPlayer)]"
-					state = {
-						name = "lsq_auto_expand_production_buildings_checkbuttons_click"
-						on_finish = "[GetScriptedGui('lsq_set_auto_expand_for_building_type').Execute(GuiScope.SetRoot(LocationToBuildItem.GetBuildingType.MakeScope).AddScope('location', LocationToBuildItem.GetLocation.MakeScope).AddScope('set_off', MakeScopeBool(GreaterThanOrEqualTo_int32(PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_locations').FindChild('lsq_auto_expand_active_locations').CountVisibleChildren, PdxGuiWidget.AccessParent.CountVisibleChildren))).End)]"
-					}
-					# text_single = { raw_text = "hi" }
-				}
-			}
-		}
 
 		lsq_auto_expand_checkbutton = {
 			tooltipwidget = { using = lsq_Mass_Autoexpand_Tooltip }
-			checked = "[And(GreaterThan_int32(PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_locations').FindChild('lsq_auto_expand_possible_locations').CountVisibleChildren, '(int32)0'), EqualTo_int32(PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_locations').FindChild('lsq_auto_expand_possible_locations').CountVisibleChildren, PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_locations').FindChild('lsq_auto_expand_active_locations').CountVisibleChildren))]"
+			checked = "[GetScriptedGui('lsq_toggle_mass_auto_expand_buildings').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			blockoverride "green_glow_visible" {
-				visible = "[And(GreaterThan_int32(PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_locations').FindChild('lsq_auto_expand_possible_locations').CountVisibleChildren, '(int32)0'), EqualTo_int32(PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_locations').FindChild('lsq_auto_expand_possible_locations').CountVisibleChildren, PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_locations').FindChild('lsq_auto_expand_active_locations').CountVisibleChildren))]"
+				visible = "[GetScriptedGui('lsq_toggle_mass_auto_expand_buildings').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
-			# blockoverride "red_glow_visible" {
-				# visible = "[And(GetScriptedGui('lsq_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('lsq_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]"
-			# }
-			onclick = "[PdxGuiTriggerAllAnimations('lsq_auto_expand_production_buildings_checkbuttons_click')]"
+			onclick = "[GetScriptedGui('lsq_toggle_mass_auto_expand_buildings').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			onrightclick = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 			onrightclick = "[GetVariableSystem.Set('cmm_selected_mod', 'lsq')]"
 			onrightclick = "[GetVariableSystem.Set('cmm_selected_tab', 'lsq__settings')]"
@@ -846,32 +809,11 @@ template lsq_Building_Type_Autoexpand_Tooltip {
 
 template lsq_Mass_Autoexpand_Tooltip {
 	ContextualTooltipType = {
-		name = "lsq_mass_auto_expand_tooltip"
-		vbox = {
-			name = "lsq_auto_expand_active_locations"
-			datamodel = "[BuildInLocationLateralView.GetItems]"
-			item = {
-				overlappingitembox = {
-					visible = "[GetScriptedGui('lsq_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(LocationToBuildItem.GetBuildingType.MakeScope).AddScope('location', LocationToBuildItem.GetLocation.MakeScope).End)]"
-					# text_single = { raw_text = "bye" }
-				}
-			}
-		}
-		vbox = {
-			name = "lsq_auto_expand_possible_locations"
-			datamodel = "[BuildInLocationLateralView.GetItems]"
-			item = {
-				overlappingitembox = {
-					visible = "[ObjectsEqual(LocationToBuildItem.GetLocation.GetOwner, GetPlayer)]"
-					# text_single = { raw_text = "bye" }
-				}
-			}
-		}
 		blockoverride "title_icon" {
 			lsq_auto_expand_checkbutton = {
 				using = tooltip_title_icon_size
 				tooltip_enabled = no
-				checked = "[EqualTo_int32(PdxGuiWidget.FindParent('lsq_mass_auto_expand_tooltip').FindChild('lsq_auto_expand_possible_locations').CountVisibleChildren, PdxGuiWidget.FindParent('lsq_mass_auto_expand_tooltip').FindChild('lsq_auto_expand_active_locations').CountVisibleChildren)]"
+				checked = "[GetScriptedGui('lsq_toggle_mass_auto_expand_buildings').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 				enabled = yes
 			}
 		}
@@ -887,21 +829,7 @@ template lsq_Mass_Autoexpand_Tooltip {
 		blockoverride "tooltip_content" {
 			TooltipListBase = {
 				blockoverride "block_title" {
-					raw_text = "Click to toggle auto-expand for all locations shown below. Add or remove filters to change which locations will be affected."
-				}
-			}
-
-			TooltipListBase = {
-				margin = { 5 10 }
-				vbox = {
-					textbox = {
-						using = tooltip_text_block_template
-						raw_text = "Locations which can have auto-expand enabled: [PdxGuiWidget.FindParent('lsq_mass_auto_expand_tooltip').FindChild('lsq_auto_expand_possible_locations').CountVisibleChildren]"
-					}
-					textbox = {
-						using = tooltip_text_block_template
-						raw_text = "Locations with auto-expand enabled: [PdxGuiWidget.FindParent('lsq_mass_auto_expand_tooltip').FindChild('lsq_auto_expand_active_locations').CountVisibleChildren]"
-					}
+					raw_text = "When enabled, all multi-level buildings across all locations will automatically expand. Disable individual buildings by toggling them off. New buildings will be included automatically."
 				}
 			}
 		}
