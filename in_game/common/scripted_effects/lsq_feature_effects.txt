@@ -15,6 +15,7 @@ lsq_run_auto_expand_buildings = {
 			order_by = max_control
 			max = lsq_max_guess_at_number_of_locations
 			check_range_bounds = no
+			limit = { NOT = { integration_level = conquered } }
 			save_scope_as = location
 			ordered_buildings_in_location = {
 				order_by = building_index
@@ -74,7 +75,7 @@ lsq_run_auto_expand_buildings = {
 			order_by = max_control
 			max = lsq_max_guess_at_number_of_locations
 			check_range_bounds = no
-			limit = { has_variable_list = lsq_auto_expand_registered_building_types }
+			limit = { NOT = { integration_level = conquered } has_variable_list = lsq_auto_expand_registered_building_types }
 			save_scope_as = location
 			every_in_list = {
 				variable = lsq_auto_expand_registered_building_types
@@ -158,7 +159,7 @@ lsq_run_auto_expand_rgos = {
 			order_by = max_control
 			max = lsq_max_guess_at_number_of_locations
 			check_range_bounds = no
-			limit = { NOT = { exists = var:auto_expand_rgo_excluded } }
+			limit = { NOT = { exists = var:auto_expand_rgo_excluded } NOT = { integration_level = conquered } }
 			save_scope_as = location
 			if = { limit = { lsq_should_rgo_auto_expand = yes }
 				construct_rgo_upgrade = {}
@@ -170,7 +171,7 @@ lsq_run_auto_expand_rgos = {
 			order_by = max_control
 			max = lsq_max_guess_at_number_of_locations
 			check_range_bounds = no
-			limit = { exists = var:auto_expand_rgo }
+			limit = { exists = var:auto_expand_rgo NOT = { integration_level = conquered } }
 			save_scope_as = location
 			if = { limit = { lsq_should_rgo_auto_expand = yes }
 				construct_rgo_upgrade = {}
@@ -186,6 +187,7 @@ lsq_run_upgrade_all_buildings = {
 		order_by = max_control
 		max = lsq_max_guess_at_number_of_locations
 		check_range_bounds = no
+		limit = { NOT = { integration_level = conquered } }
 		save_scope_as = location
 		ordered_buildings_in_location = {
 			order_by = building_index
@@ -230,6 +232,7 @@ lsq_run_auto_build = {
 						order_by = max_control
 						max = lsq_max_guess_at_number_of_locations
 						check_range_bounds = no
+						limit = { NOT = { integration_level = conquered } }
 						save_scope_as = location
 						if = { limit = { AND = { lsq_get_open_build_queue_slots > 0 lsq_location_can_auto_build = yes } }
 							construct_building = { building_type = scope:building_type }
@@ -239,7 +242,7 @@ lsq_run_auto_build = {
 					every_in_list = {
 						variable = lsq_all_locations_including_subjects_list
 						save_scope_as = location
-						if = { limit = { AND = { lsq_get_open_build_queue_slots > 0 lsq_location_can_auto_build = yes } }
+						if = { limit = { AND = { NOT = { integration_level = conquered } lsq_get_open_build_queue_slots > 0 lsq_location_can_auto_build = yes } }
 							if = { limit = { owner = scope:country }
 								construct_building = { building_type = scope:building_type }
 							} else = {
@@ -284,7 +287,7 @@ lsq_run_auto_upgrade_towns_to_cities = {
 		max = lsq_max_guess_at_number_of_locations
 		check_range_bounds = no
 		save_scope_as = location
-		limit = { lsq_location_can_mass_upgrade_to_city = yes }
+		limit = { NOT = { integration_level = conquered } lsq_location_can_mass_upgrade_to_city = yes }
 		if = { limit = { scope:country.gold > lsq_mass_upgrade_town_to_city_gold_needed }
 			scope:location = { construct_building = { building_type = building_type:lsq_upgrade_town_to_city_building } }
 		}
