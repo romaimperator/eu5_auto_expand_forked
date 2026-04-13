@@ -268,17 +268,11 @@ lsq_is_not_under_construction_and_gold_is_available = {
 	}
 }
 
-# Root is the building. Checks construction cost adjustment against the min discount threshold
-# for the upgrade-all feature (priority list item 3).
+# Root is the building. Thin wrapper: saves scopes and delegates to the shared trigger.
 lsq_upgrade_all_meets_minimum_discount = {
-	owner = { save_temporary_scope_as = building_owner }
-	OR = {
-		NOT = { scope:building_owner = { has_variable_map = lsq_priority_min_discount } }
-		lsq_get_non_standard_building_type_construction_demand_total_count = 0
-		scope:building_type = {
-			lsq_get_construction_cost_adjustment_for_building_type <= "scope:building_owner.variable_map(lsq_priority_min_discount|flag:lsq_feature_upgrade_all_buildings)"
-		}
-	}
+	owner = { save_temporary_scope_as = country }
+	building_type = { save_temporary_scope_as = building_type }
+	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_upgrade_all_buildings }
 }
 
 # Root is the country
