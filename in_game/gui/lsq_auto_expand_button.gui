@@ -209,11 +209,11 @@
 
 		lsq_auto_expand_checkbutton = {
 			tooltipwidget = { using = lsq_Mass_Autoexpand_Tooltip }
-			checked = "[GetScriptedGui('lsq_toggle_mass_auto_expand_buildings').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			checked = "[GetScriptedGui('lsq_toggle_mass_auto_expand_for_building_type').IsShown(GuiScope.SetRoot(BuildInLocationLateralView.GetBuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
 			blockoverride "green_glow_visible" {
-				visible = "[GetScriptedGui('lsq_toggle_mass_auto_expand_buildings').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				visible = "[GetScriptedGui('lsq_toggle_mass_auto_expand_for_building_type').IsShown(GuiScope.SetRoot(BuildInLocationLateralView.GetBuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
 			}
-			onclick = "[GetScriptedGui('lsq_toggle_mass_auto_expand_buildings').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			onclick = "[GetScriptedGui('lsq_toggle_mass_auto_expand_for_building_type').Execute(GuiScope.SetRoot(BuildInLocationLateralView.GetBuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
 			onrightclick = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 			onrightclick = "[GetVariableSystem.Set('cmm_selected_mod', 'lsq')]"
 			onrightclick = "[GetVariableSystem.Set('cmm_selected_tab', 'lsq__settings')]"
@@ -813,7 +813,7 @@ template lsq_Mass_Autoexpand_Tooltip {
 			lsq_auto_expand_checkbutton = {
 				using = tooltip_title_icon_size
 				tooltip_enabled = no
-				checked = "[GetScriptedGui('lsq_toggle_mass_auto_expand_buildings').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				checked = "[GetScriptedGui('lsq_toggle_mass_auto_expand_for_building_type').IsShown(GuiScope.SetRoot(BuildInLocationLateralView.GetBuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
 				enabled = yes
 			}
 		}
@@ -829,7 +829,7 @@ template lsq_Mass_Autoexpand_Tooltip {
 		blockoverride "tooltip_content" {
 			TooltipListBase = {
 				blockoverride "block_title" {
-					raw_text = "When enabled, all multi-level buildings across all locations will automatically expand. Disable individual buildings by toggling them off. New buildings will be included automatically."
+					raw_text = "When enabled for a building type, that type will automatically expand across all locations. Disable at individual locations by toggling them off."
 				}
 			}
 		}
