@@ -1,47 +1,6 @@
-﻿# Root expects scope:country
-lsq_mass_upgrade_town_to_city_min_discount_scaled = {
-	scope:country = {
-		if = { limit = { has_variable_map = lsq_priority_min_discount }
-			value = "variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_upgrade_towns_to_cities)"
-		} else = { value = -0.33 }
-	}
-}
-
-# Root expects scope:country. Returns the minimum gold the country must have before queueing a city upgrade.
+﻿# Root expects scope:country. Returns the minimum gold the country must have before queueing a city upgrade.
 # Equal to the base upgrade cost (2000) plus the shared gold reserve setting.
 lsq_mass_upgrade_town_to_city_gold_needed = {
 	value = 2000
 	scope:country = { add = lsq_get_minimum_gold }
-}
-
-# Expects scopes: location
-# Construction cost adjustment for the lsq_upgrade_town_to_city building.
-# build_city_demand: glass = 2, masonry = 4, lumber = 2 (total = 8)
-lsq_get_construction_cost_adjustment_for_lsq_upgrade_town_to_city = {
-	value = 0
-	add = {
-		goods:glass = { save_temporary_scope_as = good }
-		value = lsq_get_construction_good_adjustment
-		multiply = 2
-		divide = 8
-		min = -0.33
-		max = 0.33
-	}
-	add = {
-		goods:masonry = { save_temporary_scope_as = good }
-		value = lsq_get_construction_good_adjustment
-		multiply = 4
-		divide = 8
-		min = -0.33
-		max = 0.33
-	}
-	add = {
-		goods:lumber = { save_temporary_scope_as = good }
-		value = lsq_get_construction_good_adjustment
-		multiply = 2
-		divide = 8
-		min = -0.33
-		max = 0.33
-	}
-	divide = 3
 }
