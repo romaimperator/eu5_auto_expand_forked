@@ -132,9 +132,12 @@ lsq_is_building_profitable = {
 # Root is the building. Checks that building potential profit (adjusted for control) meets the min profit
 # threshold from the priority list (field slot 2, mapped to lsq_priority_min_profit).
 # Non-production buildings (marketplaces, granaries, etc.) always pass — they have no profit to check.
+# Buildings with no construction goods demands (e.g. mason, lumber_mill) also bypass — they produce
+# base goods with no input costs, so the min profit threshold is not meaningful.
 lsq_building_meets_minimum_profit = {
 	OR = {
 		building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
+		lsq_get_non_standard_building_type_construction_demand_total_count = 0
 		NOT = { owner = { has_variable_map = lsq_priority_min_profit } }
 		"owner.variable_map(lsq_priority_min_profit|flag:lsq_feature_auto_expand_buildings)" = 0
 		lsq_building_potential_profit_after_control >= "owner.variable_map(lsq_priority_min_profit|flag:lsq_feature_auto_expand_buildings)"
