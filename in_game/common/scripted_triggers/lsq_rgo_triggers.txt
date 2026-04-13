@@ -25,7 +25,7 @@ lsq_should_rgo_auto_expand = {
 			lsq_is_rgo_under_construction = no
 			lsq_is_there_enough_gold_available = yes
 			lsq_rgo_meets_minimum_profit = yes
-			lsq_rgo_meets_minimum_discount_for_auto_expand = yes
+			lsq_rgo_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_rgos }
 		}
 	}
 }
@@ -41,13 +41,12 @@ lsq_rgo_meets_minimum_profit = {
 	}
 }
 
-# Root is the location. Expects scopes: country
-# Checks construction cost adjustment against the min discount threshold
-# from the priority list (field slot 3, mapped to lsq_priority_min_discount, pre-scaled ×0.01).
-lsq_rgo_meets_minimum_discount_for_auto_expand = {
+# Root is the location. Expects scopes: country.
+# $threshold$ = the full variable_map lookup expression for the discount threshold.
+lsq_rgo_meets_minimum_discount = {
 	OR = {
 		NOT = { scope:country = { has_variable_map = lsq_priority_min_discount } }
-		lsq_get_construction_cost_adjustment_for_rgo <= "scope:country.variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_expand_rgos)"
+		lsq_get_construction_cost_adjustment_for_rgo <= $threshold$
 	}
 }
 

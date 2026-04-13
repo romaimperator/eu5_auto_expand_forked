@@ -7,3 +7,9 @@ lsq_get_construction_cost_adjustment_for_building_type = {
 	if = { limit = { NOT = { exists = scope:building_type } } save_temporary_scope_as = building_type }
 	value = lsq_get_construction_cost_modifier_for_building_type
 }
+
+# Per-feature min discount thresholds. Read from the lsq_priority_min_discount variable map.
+# Expects scope: country.
+lsq_get_min_discount_for_auto_expand_buildings = { value = "scope:country.variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_expand_buildings)" }
+lsq_get_min_discount_for_auto_expand_rgos = { value = "scope:country.variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_expand_rgos)" }
+lsq_get_min_discount_for_auto_food = { value = "scope:country.variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_food)" }

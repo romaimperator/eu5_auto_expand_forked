@@ -141,15 +141,16 @@ lsq_building_meets_minimum_profit = {
 	}
 }
 
-# Root is the building. Checks construction cost adjustment against the min discount threshold
-# from the priority list (field slot 3, mapped to lsq_priority_min_discount, pre-scaled ×0.01).
-lsq_building_meets_minimum_discount_for_auto_expand = {
-	owner = { save_temporary_scope_as = building_owner }
+# Checks construction cost adjustment against the min discount threshold
+# from the priority list (field slot 2, mapped to lsq_priority_min_discount, pre-scaled ×0.01).
+# Expects scopes: country, building_type.
+# $threshold$ = the full variable_map lookup expression for the discount threshold.
+lsq_building_meets_minimum_discount = {
 	OR = {
-		NOT = { scope:building_owner = { has_variable_map = lsq_priority_min_discount } }
+		NOT = { scope:country = { has_variable_map = lsq_priority_min_discount } }
 		lsq_get_non_standard_building_type_construction_demand_total_count = 0
 		scope:building_type = {
-			lsq_get_construction_cost_adjustment_for_building_type <= "scope:building_owner.variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_expand_buildings)"
+			lsq_get_construction_cost_adjustment_for_building_type <= $threshold$
 		}
 	}
 }
@@ -158,6 +159,7 @@ lsq_building_meets_minimum_discount_for_auto_expand = {
 lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 	location = { save_temporary_scope_as = location }
 	building_type = { save_temporary_scope_as = building_type }
+	owner = { save_temporary_scope_as = country }
 	AND = {
 		OR = {
 			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_is_building_profitable = yes lsq_building_meets_minimum_profit = yes }
@@ -166,7 +168,7 @@ lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 		lsq_is_building_open = yes
 		lsq_is_building_fully_employed = yes
 		lsq_is_building_lacking_goods = no
-		lsq_building_meets_minimum_discount_for_auto_expand = yes
+		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
 		location = { lsq_location_has_enough_pops_available = yes }
 		location = { lsq_is_location_under_building_limit = yes }
 		location.owner = { save_temporary_scope_as = actor }
@@ -181,6 +183,7 @@ lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 lsq_building_can_auto_expand_for_upgrade = {
 	location = { save_temporary_scope_as = location }
 	building_type = { save_temporary_scope_as = building_type }
+	owner = { save_temporary_scope_as = country }
 	AND = {
 		OR = {
 			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_is_building_profitable = yes lsq_building_meets_minimum_profit = yes }
@@ -189,7 +192,7 @@ lsq_building_can_auto_expand_for_upgrade = {
 		lsq_is_building_open = yes
 		lsq_is_building_fully_employed = yes
 		lsq_is_building_lacking_goods = no
-		lsq_building_meets_minimum_discount_for_auto_expand = yes
+		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
 		location = { lsq_location_has_enough_pops_available = yes }
 		location = { lsq_is_location_under_building_limit = yes }
 	}
