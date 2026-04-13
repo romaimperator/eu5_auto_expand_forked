@@ -1,4 +1,11 @@
-﻿# Cost modifier calculation using per-good construction demand maps.
+﻿# Root is the building_type. Expects scopes: location.
+# Wrapper that ensures scope:building_type is set, then delegates to the full calculation.
+lsq_get_construction_cost_adjustment_for_building_type = {
+	if = { limit = { NOT = { exists = scope:building_type } } save_temporary_scope_as = building_type }
+	value = lsq_get_construction_cost_modifier_for_building_type
+}
+
+# Cost modifier calculation using per-good construction demand maps.
 # These maps are populated by the hidden window GUI for all building types.
 # The 28 construction goods below are a stable game constant.
 #
