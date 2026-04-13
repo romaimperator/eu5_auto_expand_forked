@@ -1,17 +1,292 @@
-﻿# Root is the building_type
-# Expects scopes: location
-# Construction cost adjustments based on goods availability at the location.
-# Reads per-good construction demand amounts from global variable maps
-# populated by the hidden window GUI.
-lsq_get_construction_cost_adjustment_for_building_type = {
-	if = { limit = { NOT = { exists = scope:building_type } } save_temporary_scope_as = building_type }
-	value = lsq_get_construction_cost_modifier_for_building_type
+﻿# Cost modifier calculation using per-good construction demand maps.
+# These maps are populated by the hidden window GUI for all building types.
+# The 28 construction goods below are a stable game constant.
+#
+# Algorithm: for each construction good, clamp the raw price adjustment to [-0.33, 0.33],
+# then weight by demand share (demand_for_good / total_demand). Since weights sum to 1.0,
+# the result naturally stays in [-0.33, 0.33] without further normalization.
+#
+# Expects scopes: location, building_type
+lsq_get_construction_cost_modifier_for_building_type = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_books is_key_in_global_variable_map = { name = lsq_construction_demand_books target = scope:building_type } } }
+    add = {
+      goods:books = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_books|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_clay is_key_in_global_variable_map = { name = lsq_construction_demand_clay target = scope:building_type } } }
+    add = {
+      goods:clay = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_clay|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_cloth is_key_in_global_variable_map = { name = lsq_construction_demand_cloth target = scope:building_type } } }
+    add = {
+      goods:cloth = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_cloth|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_copper is_key_in_global_variable_map = { name = lsq_construction_demand_copper target = scope:building_type } } }
+    add = {
+      goods:copper = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_copper|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_fine_cloth is_key_in_global_variable_map = { name = lsq_construction_demand_fine_cloth target = scope:building_type } } }
+    add = {
+      goods:fine_cloth = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_fine_cloth|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_firearms is_key_in_global_variable_map = { name = lsq_construction_demand_firearms target = scope:building_type } } }
+    add = {
+      goods:firearms = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_firearms|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_glass is_key_in_global_variable_map = { name = lsq_construction_demand_glass target = scope:building_type } } }
+    add = {
+      goods:glass = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_glass|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_goods_gold is_key_in_global_variable_map = { name = lsq_construction_demand_goods_gold target = scope:building_type } } }
+    add = {
+      goods:goods_gold = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_goods_gold|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_horses is_key_in_global_variable_map = { name = lsq_construction_demand_horses target = scope:building_type } } }
+    add = {
+      goods:horses = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_horses|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_jewelry is_key_in_global_variable_map = { name = lsq_construction_demand_jewelry target = scope:building_type } } }
+    add = {
+      goods:jewelry = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_jewelry|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_leather is_key_in_global_variable_map = { name = lsq_construction_demand_leather target = scope:building_type } } }
+    add = {
+      goods:leather = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_leather|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_liquor is_key_in_global_variable_map = { name = lsq_construction_demand_liquor target = scope:building_type } } }
+    add = {
+      goods:liquor = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_liquor|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_livestock is_key_in_global_variable_map = { name = lsq_construction_demand_livestock target = scope:building_type } } }
+    add = {
+      goods:livestock = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_livestock|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_lumber is_key_in_global_variable_map = { name = lsq_construction_demand_lumber target = scope:building_type } } }
+    add = {
+      goods:lumber = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_lumber|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_marble is_key_in_global_variable_map = { name = lsq_construction_demand_marble target = scope:building_type } } }
+    add = {
+      goods:marble = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_marble|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_masonry is_key_in_global_variable_map = { name = lsq_construction_demand_masonry target = scope:building_type } } }
+    add = {
+      goods:masonry = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_masonry|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_naval_supplies is_key_in_global_variable_map = { name = lsq_construction_demand_naval_supplies target = scope:building_type } } }
+    add = {
+      goods:naval_supplies = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_naval_supplies|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_paper is_key_in_global_variable_map = { name = lsq_construction_demand_paper target = scope:building_type } } }
+    add = {
+      goods:paper = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_paper|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_salt is_key_in_global_variable_map = { name = lsq_construction_demand_salt target = scope:building_type } } }
+    add = {
+      goods:salt = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_salt|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_sand is_key_in_global_variable_map = { name = lsq_construction_demand_sand target = scope:building_type } } }
+    add = {
+      goods:sand = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_sand|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_silver is_key_in_global_variable_map = { name = lsq_construction_demand_silver target = scope:building_type } } }
+    add = {
+      goods:silver = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_silver|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_steel is_key_in_global_variable_map = { name = lsq_construction_demand_steel target = scope:building_type } } }
+    add = {
+      goods:steel = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_steel|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_stone is_key_in_global_variable_map = { name = lsq_construction_demand_stone target = scope:building_type } } }
+    add = {
+      goods:stone = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_stone|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_tin is_key_in_global_variable_map = { name = lsq_construction_demand_tin target = scope:building_type } } }
+    add = {
+      goods:tin = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_tin|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_tools is_key_in_global_variable_map = { name = lsq_construction_demand_tools target = scope:building_type } } }
+    add = {
+      goods:tools = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_tools|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_weaponry is_key_in_global_variable_map = { name = lsq_construction_demand_weaponry target = scope:building_type } } }
+    add = {
+      goods:weaponry = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_weaponry|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_wheat is_key_in_global_variable_map = { name = lsq_construction_demand_wheat target = scope:building_type } } }
+    add = {
+      goods:wheat = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_wheat|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_wool is_key_in_global_variable_map = { name = lsq_construction_demand_wool target = scope:building_type } } }
+    add = {
+      goods:wool = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_wool|scope:building_type)"
+      divide = lsq_get_construction_demand_total
+    }
+  }
 }
-
-# Per-feature min discount thresholds. Read from the lsq_priority_min_discount variable map.
-# Expects scope: country.
-lsq_get_min_discount_for_auto_expand_buildings = { value = "scope:country.variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_expand_buildings)" }
-lsq_get_min_discount_for_auto_expand_rgos = { value = "scope:country.variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_expand_rgos)" }
-lsq_get_min_discount_for_auto_food = { value = "scope:country.variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_food)" }
-lsq_get_min_discount_for_upgrade_all_buildings = { value = "scope:country.variable_map(lsq_priority_min_discount|flag:lsq_feature_upgrade_all_buildings)" }
-lsq_get_min_discount_for_upgrade_towns_to_cities = { value = "scope:country.variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_upgrade_towns_to_cities)" }
