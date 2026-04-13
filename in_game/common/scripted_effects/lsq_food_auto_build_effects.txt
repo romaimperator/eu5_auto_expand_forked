@@ -78,26 +78,26 @@ lsq_food_auto_build_in_location = {
 			}
 		}
 
-		# ─── Execute best action ───
-		if = { limit = { local_var:lsq_food_action = 1 }
+		# ─── Execute best action (discount-gated: if the winner fails min discount, build nothing) ───
+		if = { limit = { local_var:lsq_food_action = 1 lsq_rgo_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "LSQ Food: RGO expand in [THIS.GetLocation.GetNameWithNoTooltip] (marginal=[GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('lsq_food_marginal_rgo')])" }
 			construct_rgo_upgrade = {}
-		} else_if = { limit = { local_var:lsq_food_action = 2 }
+		} else_if = { limit = { local_var:lsq_food_action = 2 building_type:farming_village = { save_temporary_scope_as = building_type } lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "LSQ Food: farming_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
 			construct_building = { building_type = building_type:farming_village }
-		} else_if = { limit = { local_var:lsq_food_action = 3 }
+		} else_if = { limit = { local_var:lsq_food_action = 3 building_type:windmill = { save_temporary_scope_as = building_type } lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "LSQ Food: windmill in [THIS.GetLocation.GetNameWithNoTooltip]" }
 			construct_building = { building_type = building_type:windmill }
-		} else_if = { limit = { local_var:lsq_food_action = 4 }
+		} else_if = { limit = { local_var:lsq_food_action = 4 building_type:irrigation_systems = { save_temporary_scope_as = building_type } lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "LSQ Food: irrigation in [THIS.GetLocation.GetNameWithNoTooltip]" }
 			construct_building = { building_type = building_type:irrigation_systems }
-		} else_if = { limit = { local_var:lsq_food_action = 5 }
+		} else_if = { limit = { local_var:lsq_food_action = 5 building_type:fishing_village = { save_temporary_scope_as = building_type } lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "LSQ Food: fishing_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
 			construct_building = { building_type = building_type:fishing_village }
-		} else_if = { limit = { local_var:lsq_food_action = 6 }
+		} else_if = { limit = { local_var:lsq_food_action = 6 building_type:sheep_farms = { save_temporary_scope_as = building_type } lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "LSQ Food: sheep_farms in [THIS.GetLocation.GetNameWithNoTooltip]" }
 			construct_building = { building_type = building_type:sheep_farms }
-		} else_if = { limit = { local_var:lsq_food_action = 7 }
+		} else_if = { limit = { local_var:lsq_food_action = 7 building_type:forest_village = { save_temporary_scope_as = building_type } lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "LSQ Food: forest_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
 			construct_building = { building_type = building_type:forest_village }
 		}
