@@ -121,14 +121,6 @@ lsq_is_building_open = {
 	is_opened = yes
 }
 
-# Root is the building
-lsq_is_building_profitable = {
-	OR = {
-		is_profitable = yes
-		building_level = 0
-	}
-}
-
 # Root is the building. Checks that building potential profit (adjusted for control) meets the min profit
 # threshold from the priority list (field slot 2, mapped to lsq_priority_min_profit).
 # Non-production buildings (marketplaces, granaries, etc.) always pass — they have no profit to check.
@@ -165,7 +157,7 @@ lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 	owner = { save_temporary_scope_as = country }
 	AND = {
 		OR = {
-			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_is_building_profitable = yes lsq_building_meets_minimum_profit = yes }
+			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_building_meets_minimum_profit = yes }
 			building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
 		}
 		lsq_is_building_open = yes
@@ -189,7 +181,7 @@ lsq_building_can_auto_expand_for_upgrade = {
 	owner = { save_temporary_scope_as = country }
 	AND = {
 		OR = {
-			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_is_building_profitable = yes lsq_building_meets_minimum_profit = yes }
+			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_building_meets_minimum_profit = yes }
 			building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
 		}
 		lsq_is_building_open = yes
@@ -203,16 +195,14 @@ lsq_building_can_auto_expand_for_upgrade = {
 
 # Expects scopes: building type, country, and location
 lsq_location_can_auto_expand_from_zero_levels = {
-	AND = {
-		scope:location = { lsq_location_will_auto_expand_from_zero_levels = yes }
-		lsq_auto_expand_check_owner_gold_available = yes
-	}
+	scope:location = { lsq_location_will_auto_expand_from_zero_levels = yes }
 }
 
 # Root is the location, also expects scope:building_type and scope:country
 lsq_location_will_auto_expand_from_zero_levels = {
 	AND = {
 		scope:country = { lsq_should_pause_auto_expand = no }
+		NOT = { integration_level = conquered }
 		OR = {
 			scope:building_type = { lsq_is_building_type_production_building = yes }
 			scope:building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
@@ -220,25 +210,26 @@ lsq_location_will_auto_expand_from_zero_levels = {
 		lsq_location_has_enough_pops_available = yes
 		lsq_can_afford_switch_based_on_building_type = yes
 		lsq_is_location_under_building_limit = yes
+		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
 		scope:country = { save_temporary_scope_as = actor }
 		can_build_building = scope:building_type
 		scope:country = { can_build_building = scope:building_type }
+		save_temporary_scope_as = location
+		lsq_auto_expand_check_owner_gold_available = yes
 	}
 }
 
 # Expects scopes: building type, country, and location. Same as lsq_location_can_auto_expand_from_zero_levels
 # but without the can_build_building check, which fails for obsolete building types.
 lsq_location_can_auto_expand_from_zero_levels_for_upgrade = {
-	AND = {
-		scope:location = { lsq_location_will_auto_expand_from_zero_levels_for_upgrade = yes }
-		lsq_auto_expand_check_owner_gold_available = yes
-	}
+	scope:location = { lsq_location_will_auto_expand_from_zero_levels_for_upgrade = yes }
 }
 
 # Root is the location, also expects scope:building_type and scope:country
 lsq_location_will_auto_expand_from_zero_levels_for_upgrade = {
 	AND = {
 		scope:country = { lsq_should_pause_auto_expand = no }
+		NOT = { integration_level = conquered }
 		OR = {
 			scope:building_type = { lsq_is_building_type_production_building = yes }
 			scope:building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
@@ -246,6 +237,9 @@ lsq_location_will_auto_expand_from_zero_levels_for_upgrade = {
 		lsq_location_has_enough_pops_available = yes
 		lsq_can_afford_switch_based_on_building_type = yes
 		lsq_is_location_under_building_limit = yes
+		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
+		save_temporary_scope_as = location
+		lsq_auto_expand_check_owner_gold_available = yes
 	}
 }
 

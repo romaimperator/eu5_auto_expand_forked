@@ -331,16 +331,15 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						visible = "[GetScriptedGui('lsq_is_building_type_producing').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End)]"
 						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('lsq_is_building_profitable').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+							visible = "[GetScriptedGui('lsq_is_location_not_conquered').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('lsq_is_building_profitable').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+							visible = "[Not(GetScriptedGui('lsq_is_location_not_conquered').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "Building is profitable"
+							raw_text = "Location is not conquered territory"
 						}
 					}
 					lsq_tooltip_row = {
@@ -392,6 +391,17 @@ template lsq_Building_Autoexpand_Tooltip {
 					lsq_tooltip_row = {
 						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_building_not_under_construction').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_building_not_under_construction').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Building is not already under construction"
+						}
+					}
+					lsq_tooltip_row = {
+						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_location_has_enough_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End)]"
 						}
 						blockoverride "no_visible" {
@@ -439,6 +449,17 @@ template lsq_Building_Autoexpand_Tooltip {
 					}
 					lsq_tooltip_row = {
 						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_has_enough_gold_for_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_has_enough_gold_for_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Enough gold available"
+						}
+					}
+					lsq_tooltip_row = {
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
 						}
@@ -668,6 +689,17 @@ template lsq_Building_Type_Autoexpand_Tooltip {
 					lsq_tooltip_row = {
 						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_location_not_conquered').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_location_not_conquered').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Location is not conquered territory"
+						}
+					}
+					lsq_tooltip_row = {
+						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_location_has_enough_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
 						}
 						blockoverride "no_visible" {
@@ -700,6 +732,29 @@ template lsq_Building_Type_Autoexpand_Tooltip {
 						}
 						blockoverride "row_text" {
 							raw_text = "Enough construction goods are available"
+						}
+					}
+					lsq_tooltip_row = {
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_building_type_meets_minimum_discount_for_auto_expand').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_building_type_meets_minimum_discount_for_auto_expand').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Building meets minimum construction discount"
+						}
+					}
+					lsq_tooltip_row = {
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_has_enough_gold_for_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_has_enough_gold_for_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Enough gold available"
 						}
 					}
 					vbox = {

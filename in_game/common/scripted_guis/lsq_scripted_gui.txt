@@ -252,7 +252,10 @@ lsq_location_will_auto_expand_from_zero_levels = {
 lsq_is_building_able_to_auto_expand = {
 	is_shown = {
 		owner = { lsq_should_pause_auto_expand = no }
+		location = { NOT = { integration_level = conquered } }
 		lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
+		lsq_is_not_under_construction = yes
+		lsq_auto_expand_check_owner_gold_available = yes
 		lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
 	}
 }
@@ -260,12 +263,6 @@ lsq_is_building_able_to_auto_expand = {
 lsq_is_building_not_max_level_already = {
 	is_shown = {
 		lsq_is_building_at_max_level = no
-	}
-}
-
-lsq_is_building_profitable = {
-	is_shown = {
-		lsq_is_building_profitable = yes
 	}
 }
 
@@ -280,6 +277,13 @@ lsq_building_meets_minimum_discount_for_auto_expand = {
 		building_type = { save_temporary_scope_as = building_type }
 		location = { save_temporary_scope_as = location }
 		owner = { save_temporary_scope_as = country }
+		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
+	}
+}
+
+# Root is the building type, also expects scope:country
+lsq_building_type_meets_minimum_discount_for_auto_expand = {
+	is_shown = {
 		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
 	}
 }
@@ -319,6 +323,38 @@ lsq_location_has_enough_pops_available = {
 lsq_is_location_under_building_limit = {
 	is_shown = {
 		lsq_is_location_under_building_limit = yes
+	}
+}
+
+# Root is the location
+lsq_is_location_not_conquered = {
+	is_shown = {
+		NOT = { integration_level = conquered }
+	}
+}
+
+# Root is the building
+lsq_is_building_not_under_construction = {
+	is_shown = {
+		lsq_is_not_under_construction = yes
+	}
+}
+
+# Root is the building
+lsq_has_enough_gold_for_auto_expand = {
+	is_shown = {
+		building_type = { save_temporary_scope_as = building_type }
+		location = { save_temporary_scope_as = location }
+		owner = { save_temporary_scope_as = country }
+		lsq_auto_expand_check_owner_gold_available = yes
+	}
+}
+
+# Root is the location, expects scope:building_type and scope:country
+lsq_has_enough_gold_for_auto_expand_from_zero_levels = {
+	is_shown = {
+		save_temporary_scope_as = location
+		lsq_auto_expand_check_owner_gold_available = yes
 	}
 }
 
