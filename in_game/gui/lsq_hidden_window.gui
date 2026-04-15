@@ -63,11 +63,16 @@
 							visible = "[BuildingType.IsProducing]"
 							datamodel = "[BuildingType.GetPossibleProductionMethods]"
 							item = {
-								overlappingitembox = {
-									visible = "[ProductionMethod.IsProducing]"
-									state = {
-										name = lsq_building_type_section_produced_good_state
-										on_finish = "[GetScriptedGui('lsq_produced_good').Execute(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('produced_good', ProductionMethod.GetProduced.MakeScope).End)]"
+								vbox = {
+									datamodel = "[PossibleProductionMethods.GetMethods]"
+									item = {
+										widget = {
+											visible = "[ProductionMethod.IsProducing]"
+											state = {
+												name = lsq_building_type_section_produced_good_state
+												on_finish = "[GetScriptedGui('lsq_produced_good').Execute(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('produced_good', ProductionMethod.GetProduced.MakeScope).End)]"
+											}
+										}
 									}
 								}
 							}

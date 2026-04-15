@@ -15,9 +15,9 @@ lsq_adjustment_to_base_building_cost = {
 			scope:country = { add = modifier:global_port_build_buildings_cost }
 			add = modifier:local_port_build_buildings_cost
 		}
-		if = { limit = { lsq_auto_build_check_town_or_city = yes }
+		if = { limit = { OR = { location_rank = location_rank:town location_rank = location_rank:city } }
 			scope:country = { add = modifier:global_urban_build_buildings_cost }
-		} else_if = { limit = { lsq_auto_build_check_rural = yes }
+		} else_if = { limit = { location_rank = location_rank:rural_settlement }
 			scope:country = { add = modifier:global_rural_build_buildings_cost }
 		}
 		add = modifier:local_build_buildings_cost
