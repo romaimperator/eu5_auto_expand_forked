@@ -128,11 +128,22 @@ lsq_is_building_open = {
 # base goods with no input costs, so the min profit threshold is not meaningful.
 lsq_building_meets_minimum_profit = {
 	OR = {
-		building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
+		NOT = { building_type = { lsq_is_building_type_production_building = yes } }
 		lsq_get_construction_demand_total_count = 0
 		NOT = { owner = { has_variable_map = lsq_priority_min_profit } }
 		"owner.variable_map(lsq_priority_min_profit|flag:lsq_feature_auto_expand_buildings)" = 0
 		lsq_building_potential_profit_after_control >= "owner.variable_map(lsq_priority_min_profit|flag:lsq_feature_auto_expand_buildings)"
+	}
+}
+
+# Expects scope:building_type. Checks if the building type produces a good that is also
+# one of its construction demand goods (e.g. horse_breeders produces and requires horses).
+# Precomputed by the hidden window GUI at game start.
+lsq_building_type_produces_own_construction_good = {
+	AND = {
+		has_global_variable_map = lsq_building_type_produces_own_construction_good
+		is_key_in_global_variable_map = { name = lsq_building_type_produces_own_construction_good target = scope:building_type }
+		"global_variable_map(lsq_building_type_produces_own_construction_good|scope:building_type)" = 1
 	}
 }
 
@@ -144,6 +155,7 @@ lsq_building_meets_minimum_discount = {
 	OR = {
 		NOT = { scope:country = { has_variable_map = lsq_priority_min_discount } }
 		lsq_get_construction_demand_total_count = 0
+		lsq_building_type_produces_own_construction_good = yes
 		scope:building_type = {
 			lsq_get_construction_cost_adjustment_for_building_type <= $threshold$
 		}
@@ -156,10 +168,7 @@ lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
 	building_type = { save_temporary_scope_as = building_type }
 	owner = { save_temporary_scope_as = country }
 	AND = {
-		OR = {
-			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_building_meets_minimum_profit = yes }
-			building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
-		}
+		lsq_building_meets_minimum_profit = yes
 		lsq_is_building_open = yes
 		lsq_is_building_fully_employed = yes
 		lsq_is_building_lacking_goods = no
@@ -180,10 +189,7 @@ lsq_building_can_auto_expand_for_upgrade = {
 	building_type = { save_temporary_scope_as = building_type }
 	owner = { save_temporary_scope_as = country }
 	AND = {
-		OR = {
-			AND = { building_type = { lsq_is_building_type_production_building = yes } lsq_building_meets_minimum_profit = yes }
-			building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
-		}
+		lsq_building_meets_minimum_profit = yes
 		lsq_is_building_open = yes
 		lsq_is_building_fully_employed = yes
 		lsq_is_building_lacking_goods = no
@@ -203,10 +209,6 @@ lsq_location_will_auto_expand_from_zero_levels = {
 	AND = {
 		scope:country = { lsq_should_pause_auto_expand = no }
 		NOT = { integration_level = conquered }
-		OR = {
-			scope:building_type = { lsq_is_building_type_production_building = yes }
-			scope:building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
-		}
 		lsq_location_has_enough_pops_available = yes
 		lsq_can_afford_switch_based_on_building_type = yes
 		lsq_is_location_under_building_limit = yes
@@ -230,10 +232,6 @@ lsq_location_will_auto_expand_from_zero_levels_for_upgrade = {
 	AND = {
 		scope:country = { lsq_should_pause_auto_expand = no }
 		NOT = { integration_level = conquered }
-		OR = {
-			scope:building_type = { lsq_is_building_type_production_building = yes }
-			scope:building_type = { lsq_is_building_type_non_production_multi_level_building = yes }
-		}
 		lsq_location_has_enough_pops_available = yes
 		lsq_can_afford_switch_based_on_building_type = yes
 		lsq_is_location_under_building_limit = yes

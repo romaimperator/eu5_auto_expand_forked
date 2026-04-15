@@ -29,6 +29,7 @@
 					name = lsq_building_type_section_init
 					trigger_on_create = yes
 					on_start = "[PdxGuiTriggerAllAnimations('lsq_building_type_section_buildings_construction_demand_state')]"
+					on_start = "[PdxGuiTriggerAllAnimations('lsq_building_type_section_produced_good_state')]"
 					duration = 2
 					on_finish = "[PdxGuiTriggerAllAnimations('lsq_building_type_section_buildings_init_state')]"
 					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_building_type_section_init')]"
@@ -54,6 +55,19 @@
 									state = {
 										name = lsq_building_type_section_buildings_construction_demand_state
 										on_finish = "[GetScriptedGui('lsq_construction_demand').Execute(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('good', GoodsDemandEntry.GetGoods.MakeScope).AddScope('amount', MakeScopeValue(GoodsDemandEntry.GetValue)).End)]"
+									}
+								}
+							}
+						}
+						vbox = {
+							visible = "[BuildingType.IsProducing]"
+							datamodel = "[BuildingType.GetPossibleProductionMethods]"
+							item = {
+								overlappingitembox = {
+									visible = "[ProductionMethod.IsProducing]"
+									state = {
+										name = lsq_building_type_section_produced_good_state
+										on_finish = "[GetScriptedGui('lsq_produced_good').Execute(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('produced_good', ProductionMethod.GetProduced.MakeScope).End)]"
 									}
 								}
 							}

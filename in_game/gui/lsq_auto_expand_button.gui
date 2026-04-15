@@ -33,7 +33,6 @@
 
 	# used for construction menu in location (production_lateralview.gui)
 	type lsq_auto_expand_widget = widget {
-		visible = "[GetScriptedGui('lsq_is_auto_expand_visible_for_building_type').IsShown(GuiScope.SetRoot(Building.GetType.MakeScope).End)]"
 		size = { 25 25 }
 		lsq_auto_expand_production_buildings_checkbuttons = {}
 	}
@@ -48,10 +47,10 @@
 		size = { 25 25 }
 		visible = "[ObjectsEqual(LocationToBuildItem.GetOwner, Player.Self)]"
 		lsq_auto_expand_production_buildings_checkbuttons = {
-			visible = "[And(LocationToBuildItem.HasBuilding, GetScriptedGui('lsq_is_auto_expand_visible_for_building_type').IsShown(GuiScope.SetRoot(Building.GetType.MakeScope).End))]"
+			visible = "[LocationToBuildItem.HasBuilding]"
 		}
 		lsq_auto_expand_production_building_types_checkbuttons = {
-			visible = "[And(Not(LocationToBuildItem.HasBuilding), GetScriptedGui('lsq_is_auto_expand_visible_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End))]"
+			visible = "[Not(LocationToBuildItem.HasBuilding)]"
 		}
 	}
 
@@ -79,7 +78,6 @@
 	# used for construction menu in location (production_lateralview.gui)
 	type lsq_auto_expand_widget_for_building_type = widget {
 		datacontext = "[BuildingItem.GetBuildingType]"
-		visible = "[GetScriptedGui('lsq_is_auto_expand_visible_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End)]"
 		size = { 25 25 }
 		lsq_auto_expand_production_building_types_checkbuttons = {}
 	}
@@ -205,7 +203,6 @@
 	}
 
 	type lsq_mass_auto_expand_button_bll = hbox {
-		visible = "[GetScriptedGui('lsq_is_auto_expand_visible_for_building_type').IsShown(GuiScope.SetRoot(BuildInLocationLateralView.GetBuildingType.MakeScope).End)]"
 
 		lsq_auto_expand_checkbutton = {
 			tooltipwidget = { using = lsq_Mass_Autoexpand_Tooltip }
@@ -774,8 +771,7 @@ template lsq_Building_Type_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						visible = "[InDebugMode]"
-						background = { using = bg_tooltip_debug }
+						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
 						}
@@ -787,8 +783,6 @@ template lsq_Building_Type_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						visible = "[InDebugMode]"
-						background = { using = bg_tooltip_debug }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_can_build_building').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
 						}
