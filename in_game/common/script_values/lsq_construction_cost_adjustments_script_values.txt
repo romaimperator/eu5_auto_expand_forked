@@ -5,6 +5,13 @@ lsq_get_construction_cost_adjustment_for_building_type = {
 	value = lsq_get_construction_cost_modifier_for_building_type
 }
 
+# Standard-goods-only wrapper (lumber, masonry, glass, sand, stone). Used for the min
+# discount threshold so that non-depressible goods (gold, tools, paper, etc.) don't block building.
+lsq_get_standard_construction_cost_adjustment_for_building_type = {
+	if = { limit = { NOT = { exists = scope:building_type } } save_temporary_scope_as = building_type }
+	value = lsq_get_standard_construction_cost_modifier_for_building_type
+}
+
 # Per-feature min discount thresholds. Read from the lsq_priority_min_discount variable map.
 # Expects scope: country.
 lsq_get_min_discount_for_auto_expand_buildings = { value = "scope:country.variable_map(lsq_priority_min_discount|flag:lsq_feature_auto_expand_buildings)" }
@@ -302,6 +309,62 @@ lsq_get_construction_cost_modifier_for_building_type = {
       max = 0.33
       multiply = "global_variable_map(lsq_construction_demand_wool|scope:building_type)"
       divide = lsq_get_construction_demand_total
+    }
+  }
+}
+
+# Standard-goods-only cost modifier (lumber, masonry, glass, sand, stone).
+# Expects scopes: location, building_type
+lsq_get_standard_construction_cost_modifier_for_building_type = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_glass is_key_in_global_variable_map = { name = lsq_construction_demand_glass target = scope:building_type } } }
+    add = {
+      goods:glass = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_glass|scope:building_type)"
+      divide = lsq_get_standard_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_lumber is_key_in_global_variable_map = { name = lsq_construction_demand_lumber target = scope:building_type } } }
+    add = {
+      goods:lumber = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_lumber|scope:building_type)"
+      divide = lsq_get_standard_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_masonry is_key_in_global_variable_map = { name = lsq_construction_demand_masonry target = scope:building_type } } }
+    add = {
+      goods:masonry = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_masonry|scope:building_type)"
+      divide = lsq_get_standard_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_sand is_key_in_global_variable_map = { name = lsq_construction_demand_sand target = scope:building_type } } }
+    add = {
+      goods:sand = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_sand|scope:building_type)"
+      divide = lsq_get_standard_construction_demand_total
+    }
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_stone is_key_in_global_variable_map = { name = lsq_construction_demand_stone target = scope:building_type } } }
+    add = {
+      goods:stone = { save_temporary_scope_as = good }
+      value = lsq_get_construction_good_adjustment
+      min = -0.33
+      max = 0.33
+      multiply = "global_variable_map(lsq_construction_demand_stone|scope:building_type)"
+      divide = lsq_get_standard_construction_demand_total
     }
   }
 }

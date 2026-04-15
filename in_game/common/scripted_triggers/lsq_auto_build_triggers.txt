@@ -178,10 +178,16 @@ lsq_auto_build_check_meets_minimum_control = {
 # Expects scopes: country, location
 # Expects param: target => building_type
 lsq_auto_build_check_meets_minimum_market_price_impact = {
-	$target$ = { lsq_get_construction_cost_adjustment_for_building_type <= lsq_get_minimum_market_price_impact_for_auto_build }
+	OR = {
+		$target$ = { save_temporary_scope_as = building_type lsq_get_standard_construction_demand_total = 0 }
+		$target$ = { lsq_get_standard_construction_cost_adjustment_for_building_type <= lsq_get_minimum_market_price_impact_for_auto_build }
+	}
 }
 lsq_auto_build_check_meets_minimum_market_price_impact_with_key = {
-	building_type:$key$ = { lsq_get_construction_cost_adjustment_for_building_type <= lsq_get_minimum_market_price_impact_for_auto_build }
+	OR = {
+		building_type:$key$ = { save_temporary_scope_as = building_type lsq_get_standard_construction_demand_total = 0 }
+		building_type:$key$ = { lsq_get_standard_construction_cost_adjustment_for_building_type <= lsq_get_minimum_market_price_impact_for_auto_build }
+	}
 }
 
 # Root is the location. Expects the building type as a target, also expects the scope country

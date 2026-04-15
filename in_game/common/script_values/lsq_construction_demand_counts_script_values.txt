@@ -90,6 +90,29 @@ lsq_get_construction_demand_total = {
   }
 }
 
+# Standard construction demand total (lumber, masonry, glass, sand, stone).
+# Non-standard goods (gold, tools, paper, etc.) are excluded because their prices
+# are not depressible by the player and should not gate build decisions.
+# Expects scopes: building_type
+lsq_get_standard_construction_demand_total = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_glass is_key_in_global_variable_map = { name = lsq_construction_demand_glass target = scope:building_type } } }
+    add = "global_variable_map(lsq_construction_demand_glass|scope:building_type)"
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_lumber is_key_in_global_variable_map = { name = lsq_construction_demand_lumber target = scope:building_type } } }
+    add = "global_variable_map(lsq_construction_demand_lumber|scope:building_type)"
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_masonry is_key_in_global_variable_map = { name = lsq_construction_demand_masonry target = scope:building_type } } }
+    add = "global_variable_map(lsq_construction_demand_masonry|scope:building_type)"
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_sand is_key_in_global_variable_map = { name = lsq_construction_demand_sand target = scope:building_type } } }
+    add = "global_variable_map(lsq_construction_demand_sand|scope:building_type)"
+  }
+  if = { limit = { AND = { has_global_variable_map = lsq_construction_demand_stone is_key_in_global_variable_map = { name = lsq_construction_demand_stone target = scope:building_type } } }
+    add = "global_variable_map(lsq_construction_demand_stone|scope:building_type)"
+  }
+}
+
 # Expects scopes: building_type
 lsq_get_construction_demand_total_count = {
   value = 0
