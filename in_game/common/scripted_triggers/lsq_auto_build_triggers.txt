@@ -1,46 +1,8 @@
-﻿# Generic triggers for auto-building
+﻿﻿# Generic triggers for auto-building
 
 # Expects scopes: building_type, country, location
 lsq_auto_build_check_owner_gold_available = {
 	scope:country.gold > lsq_expected_gold_available_for_building_type_for_auto_build
-}
-
-# Root is the location
-lsq_auto_build_check_no_building_type = {
-	NOT = { has_building = $target$ }
-}
-
-# Root is the location
-lsq_auto_build_check_city = {
-	location_rank = location_rank:city
-}
-
-# Root is the location
-lsq_auto_build_check_town_or_city = {
-	OR = {
-		location_rank = location_rank:town
-		location_rank = location_rank:city
-	}
-}
-
-# Root is the location
-lsq_auto_build_check_rural = {
-	location_rank = location_rank:rural_settlement
-}
-
-# Root is the location
-lsq_auto_build_check_has_at_least_one_road = {
-	num_roads > 0
-}
-
-# Root is the location
-lsq_auto_build_check_has_a_river = {
-	has_river = yes
-}
-
-# Root is the location, assuming the core of subject if checking a subject location
-lsq_auto_build_check_is_a_core = {
-	is_core_of = owner
 }
 
 # Root is the location
@@ -89,12 +51,47 @@ lsq_auto_build_check_tribesmen_available_or_will_be = {
 }
 
 # Root is the location. Expects the building type as target and scope country. True when location has enough RGO/lumber levels for this building type (sawmill: RGO or lumber_mill >= required; windmill/local_smelters: RGO >= required).
+# Non-RGO buildings always pass (fallback = yes).
 lsq_auto_build_check_rgo_level_requirement_met = {
 	switch = { trigger = $target$
 		building_type:sawmill = { lsq_auto_build_check_rgo_level_requirement_met_sawmill = yes }
 		building_type:windmill = { lsq_auto_build_check_rgo_level_requirement_met_windmill = yes }
 		building_type:local_smelters = { lsq_auto_build_check_rgo_level_requirement_met_local_smelters = yes }
-		fallback = { always = no }
+		fallback = { always = yes }
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_rgo_level_requirement_met_sawmill = {
+	OR = {
+		AND = { raw_material = goods:lumber lsq_modifier_rgo_level >= "scope:country.variable_map(lsq_min_rgos_by_building_type|building_type:sawmill)" }
+		AND = { has_building = building_type:lumber_mill "building(building_type:lumber_mill|owner)" = { building_level >= "scope:country.variable_map(lsq_min_rgos_by_building_type|building_type:sawmill)" } }
+		"scope:country.variable_map(lsq_min_rgos_by_building_type|building_type:sawmill)" = 0
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_rgo_level_requirement_met_windmill = {
+	AND = {
+		OR = {
+			raw_material = goods:wheat
+			raw_material = goods:millet
+			raw_material = goods:rice
+		}
+		lsq_modifier_rgo_level >= "scope:country.variable_map(lsq_min_rgos_by_building_type|building_type:windmill)"
+	}
+}
+
+# Root is the location, also expects the scope country
+lsq_auto_build_check_rgo_level_requirement_met_local_smelters = {
+	AND = {
+		OR = {
+			raw_material = goods:iron
+			raw_material = goods:copper
+			raw_material = goods:tin
+			raw_material = goods:lead
+		}
+		lsq_modifier_rgo_level >= "scope:country.variable_map(lsq_min_rgos_by_building_type|building_type:local_smelters)"
 	}
 }
 
@@ -127,47 +124,51 @@ lsq_auto_build_check_any_location_allowed_to_build = {
 	}
 }
 
-# Root is the location. Expects the building type as a target and a trigger name, also expects the scope country
-lsq_auto_build_switch_based_on_building_type = {
-	switch = { trigger = $target$
-		building_type:temple = { lsq_$trigger_name$_temple = yes }
-		building_type:library = { lsq_$trigger_name$_library = yes }
-		building_type:settlement_building = { lsq_$trigger_name$_settlement_building = yes }
-		building_type:bridge_infrastructure = { lsq_$trigger_name$_bridge_infrastructure = yes }
-		building_type:pound_lock_canal_infrastructure = { lsq_$trigger_name$_pound_lock_canal_infrastructure = yes }
-		building_type:university = { lsq_$trigger_name$_university = yes }
-		building_type:hospital = { lsq_$trigger_name$_hospital = yes }
-		building_type:minting_office = { lsq_$trigger_name$_minting_office = yes }
-		building_type:counting_house = { lsq_$trigger_name$_counting_house = yes }
-		building_type:wharf = { lsq_$trigger_name$_wharf = yes }
-		building_type:market_village = { lsq_$trigger_name$_market_village = yes }
-		building_type:sawmill = { lsq_$trigger_name$_sawmill = yes }
-		building_type:windmill = { lsq_$trigger_name$_windmill = yes }
-		building_type:local_smelters = { lsq_$trigger_name$_local_smelters = yes }
-		building_type:protected_harbor = { lsq_$trigger_name$_protected_harbor = yes }
-		building_type:fortress_granary = { lsq_$trigger_name$_fortress_granary = yes }
-		building_type:confucian_academy = { lsq_$trigger_name$_confucian_academy = yes }
-		building_type:confucian_school = { lsq_$trigger_name$_confucian_school = yes }
-		building_type:zhixian = { lsq_$trigger_name$_zhixian = yes }
-		building_type:tambo = { lsq_$trigger_name$_tambo = yes }
-		building_type:dock = { lsq_$trigger_name$_dock = yes }
-		fallback = { always = no }
-	}
-}
+# ─── Generic auto-build trigger chain ───
+# These replace the old per-building trigger files. All building-specific
+# logic is resolved dynamically via engine triggers and precomputed maps.
 
-# Expects scopes: building_type, country, location
+# Expects scopes: building_type, country. Root is the location.
 lsq_location_can_auto_build = {
-	lsq_auto_build_switch_based_on_building_type = { target = scope:building_type trigger_name = location_can_auto_build }
+	lsq_auto_build_will_auto_build = { target = scope:building_type }
+	lsq_auto_build_check_owner_gold_available = yes
 }
 
-# Root is the location. Expects the building type as a target, also expects the scope country
+# Root is the location. Expects the building type as a target, also expects the scope country.
 lsq_auto_build_will_auto_build = {
-	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = location_will_auto_build }
+	scope:country = { lsq_should_pause_auto_expand = no }
+	save_temporary_scope_as = location
+	lsq_location_allowed_to_build = { target = $target$ }
+	lsq_auto_build_check_meets_minimum_control = { target = $target$ }
+	lsq_auto_build_check_meets_minimum_market_price_impact = { target = $target$ }
+	lsq_location_has_enough_pops_available = yes
+	lsq_auto_build_check_rgo_level_requirement_met = { target = $target$ }
+	lsq_can_afford_switch_based_on_building_type = yes
+	lsq_auto_build_check_location_has_more_than_zero_market_access = yes
 }
 
-# Root is the location. Expects the building type as a target, also expects the scope country
+# Root is the location. Expects the building type as a target, also expects the scope country.
+# Uses can_build_building to check all placement prerequisites (tech, location rank, terrain, culture, etc.).
 lsq_location_allowed_to_build = {
-	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = location_allowed_to_build }
+	scope:country = { save_temporary_scope_as = actor }
+	can_build_building = $target$
+	scope:country = { can_build_building = $target$ }
+}
+
+# Expects scopes: country, location. Expects param: target => building_type.
+# Pop type is resolved dynamically from the precomputed lsq_building_type_to_pop_type map.
+lsq_auto_build_check_pops_available = {
+	lsq_location_has_enough_pops_available = yes
+}
+
+# Root is the location. Expects scope:building_type.
+lsq_auto_build_check_can_afford = {
+	lsq_can_afford_switch_based_on_building_type = yes
+}
+
+# Root is the country. Expects the building type as a target.
+lsq_auto_build_check_building_researched = {
+	scope:country = { can_build_building = $target$ }
 }
 
 # Expects scopes: country, location
@@ -184,46 +185,4 @@ lsq_auto_build_check_meets_minimum_market_price_impact = {
 		$target$ = { lsq_get_standard_construction_cost_adjustment_for_building_type <= lsq_get_minimum_market_price_impact_for_auto_build }
 	}
 }
-lsq_auto_build_check_meets_minimum_market_price_impact_with_key = {
-	OR = {
-		building_type:$key$ = { save_temporary_scope_as = building_type lsq_get_standard_construction_demand_total = 0 }
-		building_type:$key$ = { lsq_get_standard_construction_cost_adjustment_for_building_type <= lsq_get_minimum_market_price_impact_for_auto_build }
-	}
-}
 
-# Root is the location. Expects the building type as a target, also expects the scope country
-lsq_auto_build_check_pops_available = {
-	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = auto_build_check_pops_available }
-}
-
-# Root is the location. Expects the building type as a target, also expects the scope country
-lsq_auto_build_check_can_afford = {
-	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = auto_build_check_can_afford }
-}
-
-# Root is the location. Expects the building type as a target, also expects the scope country
-lsq_auto_build_check_building_researched = {
-	lsq_auto_build_switch_based_on_building_type = { target = $target$ trigger_name = auto_build_check_building_researched }
-}
-
-# Root is the country. Checks if the building type's required advance has been researched.
-# Used by the list visibility update to hide unresearched buildings in the settings UI.
-lsq_is_building_type_advance_researched = {
-	switch = { trigger = $target$
-		building_type:minting_office = { has_advance = mint_advance }
-		building_type:library = { has_advance = library_advance }
-		building_type:pound_lock_canal_infrastructure = { has_advance = pound_lock_canals_advance }
-		building_type:university = { has_advance = university_advance }
-		building_type:counting_house = { has_advance = counting_house_advance }
-		building_type:hospital = { has_advance = hospital_advance }
-		building_type:local_smelters = { has_advance = local_smelters_advance }
-		building_type:protected_harbor = { has_advance = protected_harbor_advance }
-		building_type:windmill = { has_advance = windmills_advance }
-		building_type:fortress_granary = { culture = { has_culture_group = culture_group:maghrebi_group } }
-		building_type:confucian_academy = { has_advance = confucian_academy_advance }
-		building_type:confucian_school = { has_advance = confucian_school_advance }
-		building_type:zhixian = { is_leader_of_international_organization = international_organization:middle_kingdom }
-		building_type:tambo = { has_advance = tambo_advance }
-		fallback = { always = yes }
-	}
-}

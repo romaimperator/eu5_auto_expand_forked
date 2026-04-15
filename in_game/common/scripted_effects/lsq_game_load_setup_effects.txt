@@ -104,14 +104,15 @@ lsq_reset_locations_lists = {
 lsq_process_building_specific_list = {
   # debug_log = "LSQ: Processing building specific list for  $building_type_text$"
   scope:country = {
+    building_type:$building_type_text$ = { save_scope_as = building_type }
     clear_variable_list = lsq_all_controlled_locations_list_allowed_to_build_$building_type_text$
     set_variable = { name = lsq_all_controlled_locations_size_will_auto_build_$building_type_text$ value = 0 }
     every_in_list = {
       variable = lsq_all_controlled_locations_list
       save_scope_as = location
-      if = { limit = { scope:location = { lsq_location_allowed_to_build_$building_type_text$ = yes } }
+      if = { limit = { scope:location = { lsq_location_allowed_to_build = { target = scope:building_type } } }
         scope:country = { add_to_variable_list = { name = lsq_all_controlled_locations_list_allowed_to_build_$building_type_text$ target = scope:location } }
-        if = { limit = { scope:location = { lsq_location_will_auto_build_$building_type_text$ = yes } }
+        if = { limit = { scope:location = { lsq_auto_build_will_auto_build = { target = scope:building_type } } }
           # debug_log = "LSQ: Adding location will auto build [THIS.GetLocation.GetNameWithNoTooltip]"
           scope:country = { change_variable = { name = lsq_all_controlled_locations_size_will_auto_build_$building_type_text$ add = 1 } }
         }
@@ -122,9 +123,9 @@ lsq_process_building_specific_list = {
     every_in_list = {
       variable = lsq_all_locations_including_subjects_list
       save_scope_as = location
-      if = { limit = { scope:location = { lsq_location_allowed_to_build_$building_type_text$ = yes } }
+      if = { limit = { scope:location = { lsq_location_allowed_to_build = { target = scope:building_type } } }
         scope:country = { add_to_variable_list = { name = lsq_all_locations_including_subjects_list_allowed_to_build_$building_type_text$ target = scope:location } }
-        if = { limit = { scope:location = { lsq_location_will_auto_build_$building_type_text$ = yes } }
+        if = { limit = { scope:location = { lsq_auto_build_will_auto_build = { target = scope:building_type } } }
           scope:country = { change_variable = { name = lsq_all_locations_including_subjects_size_will_auto_build_$building_type_text$ add = 1 } }
         }
       }
