@@ -77,6 +77,29 @@ lsq_auto_build_move_building_type_down_effect = {
   }
 }
 
+# Root is the country. Expects scope:building_type.
+# If scope:building_type is obsolete for this country, walks the upgrade chain
+# and re-saves scope:building_type to the current non-obsolete version.
+# Unrolled to max depth 4 (dock → dry_dock → shipyard → grand_shipyard → naval_base).
+lsq_auto_build_resolve_building_type = {
+	if = { limit = { building_type_is_obsolete = scope:building_type }
+		scope:building_type = { lsq_find_upgrade_building_type = yes }
+		scope:return_scope = { save_scope_as = building_type }
+		if = { limit = { building_type_is_obsolete = scope:building_type }
+			scope:building_type = { lsq_find_upgrade_building_type = yes }
+			scope:return_scope = { save_scope_as = building_type }
+			if = { limit = { building_type_is_obsolete = scope:building_type }
+				scope:building_type = { lsq_find_upgrade_building_type = yes }
+				scope:return_scope = { save_scope_as = building_type }
+				if = { limit = { building_type_is_obsolete = scope:building_type }
+					scope:building_type = { lsq_find_upgrade_building_type = yes }
+					scope:return_scope = { save_scope_as = building_type }
+				}
+			}
+		}
+	}
+}
+
 lsq_reset_auto_build_priorities_to_default_effect = {
   clear_variable_list = lsq_auto_build_building_types_list
   add_to_variable_list = { name = lsq_auto_build_building_types_list target = building_type:temple }

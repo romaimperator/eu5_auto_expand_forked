@@ -301,8 +301,16 @@ lsq_run_auto_build = {
 		scope:country = {
 			if = {
 				limit = { is_target_in_variable_list = { name = lsq_auto_build_building_types_enabled target = scope:building_type } }
+				# Save in_subjects flag before resolution overwrites scope:building_type
+				if = { limit = { is_target_in_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type } }
+					set_local_variable = { name = lsq_auto_build_include_subjects value = 1 }
+				} else = {
+					set_local_variable = { name = lsq_auto_build_include_subjects value = 0 }
+				}
+				# Resolve obsolete building type to current non-obsolete upgrade (e.g. dock → dry_dock)
+				lsq_auto_build_resolve_building_type = yes
 				if = {
-					limit = { NOT = { is_target_in_variable_list = { name = lsq_auto_build_building_types_in_subjects_enabled target = scope:building_type } } }
+					limit = { local_var:lsq_auto_build_include_subjects = 0 }
 					ordered_owned_location = {
 						order_by = max_control
 						max = lsq_max_guess_at_number_of_locations
