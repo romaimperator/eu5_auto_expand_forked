@@ -138,11 +138,9 @@ lsq_location_can_auto_build = {
 lsq_auto_build_will_auto_build = {
 	scope:country = { lsq_should_pause_auto_expand = no }
 	save_temporary_scope_as = location
-	# If the building already exists here, it must not be at max level
-	trigger_if = {
-		limit = { has_building = $target$ }
-		"building(scope:building_type|owner)" = { is_at_max_level = no }
-	}
+	# Auto-build only constructs one level per location. Multi-level upgrades
+	# are handled by the auto-expand-buildings feature.
+	NOT = { has_building = $target$ }
 	lsq_location_allowed_to_build = { target = $target$ }
 	lsq_auto_build_check_meets_minimum_control = { target = $target$ }
 	lsq_auto_build_check_meets_minimum_market_price_impact = { target = $target$ }
