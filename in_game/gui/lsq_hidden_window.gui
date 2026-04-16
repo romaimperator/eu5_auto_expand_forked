@@ -19,6 +19,7 @@
 					trigger_on_create = yes
 					duration = 2
 					on_finish = "[GetScriptedGui('lsq_hidden_window_repeated_init').Execute(GuiScope.AddScope('country', GetPlayer.MakeScope).AddScope('skip', MakeScopeBool('(bool)no')).End)]"
+					on_finish = "[PdxGuiTriggerAllAnimations('lsq_do_upgrade')]"
 					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_hidden_window_repeated_init')]"
 				}
 			}
@@ -83,15 +84,8 @@
 
 			# Upgrade processing: iterates locations/building types flagged by the monthly script tick.
 			# The scripted GUI resolves the upgrade target via lsq_find_upgrade_building_type.
+			# Triggered once per month by the repeated_init loop when lsq_gui_upgrades_pending is set.
 			vbox = {
-				state = {
-					name = lsq_upgrade_loop
-					trigger_on_create = yes
-					duration = 2
-					on_start = "[PdxGuiTriggerAllAnimations('lsq_do_upgrade')]"
-					on_finish = "[PdxGuiWidget.TriggerAnimation('lsq_upgrade_loop')]"
-				}
-
 				datamodel = "[GetPlayer.MakeScope.GetList('lsq_gui_upgrade_locations')]"
 				item = {
 					vbox = {

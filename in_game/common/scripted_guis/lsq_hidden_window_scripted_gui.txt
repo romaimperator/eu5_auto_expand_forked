@@ -1,17 +1,28 @@
 ﻿# Expects scopes: country
+# Polls every 2 seconds from the hidden window GUI. Only does real work
+# when a monthly tick flag is present, keeping inter-month cycles as no-ops.
 lsq_hidden_window_repeated_init = {
 	effect = {
 		if = { limit = { AND = { scope:skip = no exists = scope:country } }
-			# debug_log = "LSQ: Repeated init"
-			lsq_check_that_country_variables_are_set = {}
-
-			# Unset processing flag when all buildings are classified
-			if = { limit = { AND = {
-				has_global_variable = lsq_process_buildings
-				has_global_variable_map = lsq_building_type_processed
-				global_variable_map_size = { name = lsq_building_type_processed value >= global_var:lsq_building_types_to_process_count }
-			} }
-				remove_global_variable = lsq_process_buildings
+			# Phase 1: Monthly tick — do periodic checks and signal upgrades
+			if = { limit = { scope:country = { has_variable = lsq_monthly_gui_tick } }
+				lsq_check_that_country_variables_are_set = {}
+				scope:country = {
+					remove_variable = lsq_monthly_gui_tick
+					set_variable = lsq_gui_upgrades_pending
+				}
+			}
+			# Phase 2: Cleanup — clear upgrade data after the GUI has processed it
+			else_if = { limit = { scope:country = { has_variable = lsq_gui_upgrades_pending } }
+				scope:country = {
+					remove_variable = lsq_gui_upgrades_pending
+					every_in_list = {
+						variable = lsq_gui_upgrade_locations
+						save_scope_as = lsq_upgrade_loc
+						scope:lsq_upgrade_loc = { clear_variable_list = lsq_gui_upgrade_building_types }
+					}
+					clear_variable_list = lsq_gui_upgrade_locations
+				}
 			}
 		}
 	}
@@ -86,6 +97,15 @@ lsq_building_type_section_buildings_init = {
 
 		# Set that this building type has been processed
 		add_to_global_variable_map = { name = lsq_building_type_processed key = scope:building_type value = 1 }
+
+		# Check if all buildings have been classified — unset the processing flag
+		if = { limit = { AND = {
+			has_global_variable = lsq_process_buildings
+			has_global_variable_map = lsq_building_type_processed
+			global_variable_map_size = { name = lsq_building_type_processed value >= global_var:lsq_building_types_to_process_count }
+		} }
+			remove_global_variable = lsq_process_buildings
+		}
 	}
 }
 

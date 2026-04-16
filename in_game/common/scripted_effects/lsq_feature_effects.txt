@@ -262,21 +262,26 @@ lsq_clear_finished_upgrade_in_progress = {
 	if = {
 		limit = {
 			scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } }
-			is_key_in_global_variable_map = { name = lsq_building_type_to_upgrade_type target = scope:building_type }
 		}
-		"global_variable_map(lsq_building_type_to_upgrade_type|scope:building_type)" = { save_scope_as = upgrade_target }
 		if = {
-			limit = {
-				trigger_if = {
-					limit = { scope:location = { has_building = scope:upgrade_target } }
-					# Upgrade target exists but has no levels under construction — construction finished
-					scope:location = { "building(scope:upgrade_target|scope:country)" = { building_levels_under_construction = 0 } }
+			limit = { is_key_in_global_variable_map = { name = lsq_building_type_to_upgrade_type target = scope:building_type } }
+			"global_variable_map(lsq_building_type_to_upgrade_type|scope:building_type)" = { save_temporary_scope_as = lsq_upgrade_target }
+			if = {
+				limit = {
+					trigger_if = {
+						limit = { scope:location = { has_building = scope:lsq_upgrade_target } }
+						# Upgrade target exists but has no levels under construction — construction finished
+						scope:location = { "building(scope:lsq_upgrade_target|scope:country)" = { building_levels_under_construction = 0 } }
+					}
+					trigger_else = {
+						# Upgrade target doesn't exist — construction was cancelled
+						always = yes
+					}
 				}
-				trigger_else = {
-					# Upgrade target doesn't exist — construction was cancelled
-					always = yes
-				}
+				scope:location = { remove_list_variable = { name = lsq_upgrade_in_progress target = scope:building_type } }
 			}
+		} else = {
+			# No upgrade mapping found — stale entry, clean up
 			scope:location = { remove_list_variable = { name = lsq_upgrade_in_progress target = scope:building_type } }
 		}
 	}
