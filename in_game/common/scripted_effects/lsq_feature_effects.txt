@@ -48,6 +48,7 @@ lsq_run_auto_expand_buildings = {
 							scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
 							scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
 						}
+						lsq_clear_finished_upgrade_in_progress = yes
 						if = {
 							limit = {
 								scope:building = {
@@ -99,6 +100,7 @@ lsq_run_auto_expand_buildings = {
 								scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
 								scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
 							}
+							lsq_clear_finished_upgrade_in_progress = yes
 							if = {
 								limit = {
 									lsq_location_can_auto_expand_from_zero_levels_for_upgrade = yes
@@ -154,6 +156,7 @@ lsq_run_auto_expand_buildings = {
 						scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
 						scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
 					}
+					lsq_clear_finished_upgrade_in_progress = yes
 					if = {
 						limit = {
 							scope:building = {
@@ -192,6 +195,7 @@ lsq_run_auto_expand_buildings = {
 					}
 				} else_if = {
 					limit = { scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes } scope:country = { lsq_should_auto_expand_upgrade_buildings = yes } }
+					lsq_clear_finished_upgrade_in_progress = yes
 					if = {
 						limit = {
 							lsq_location_can_auto_expand_from_zero_levels_for_upgrade = yes
@@ -250,6 +254,34 @@ lsq_run_auto_expand_rgos = {
 	}
 }
 
+# Clears lsq_upgrade_in_progress for scope:building_type at scope:location when the
+# previously queued upgrade construction has finished or was cancelled. This allows
+# the next monthly pulse to queue another upgrade for the same building type.
+# Expects: scope:building_type, scope:location, scope:country
+lsq_clear_finished_upgrade_in_progress = {
+	if = {
+		limit = {
+			scope:location = { is_target_in_variable_list = { name = lsq_upgrade_in_progress target = scope:building_type } }
+			is_key_in_global_variable_map = { name = lsq_building_type_to_upgrade_type target = scope:building_type }
+		}
+		"global_variable_map(lsq_building_type_to_upgrade_type|scope:building_type)" = { save_scope_as = upgrade_target }
+		if = {
+			limit = {
+				trigger_if = {
+					limit = { scope:location = { has_building = scope:upgrade_target } }
+					# Upgrade target exists but has no levels under construction — construction finished
+					scope:location = { "building(scope:upgrade_target|scope:country)" = { building_levels_under_construction = 0 } }
+				}
+				trigger_else = {
+					# Upgrade target doesn't exist — construction was cancelled
+					always = yes
+				}
+			}
+			scope:location = { remove_list_variable = { name = lsq_upgrade_in_progress target = scope:building_type } }
+		}
+	}
+}
+
 # ─── Upgrade All Buildings ───
 # Upgrades every obsolete building in all owned locations.
 lsq_run_upgrade_all_buildings = {
@@ -265,6 +297,7 @@ lsq_run_upgrade_all_buildings = {
 			check_range_bounds = no
 			save_scope_as = building
 			building_type = { save_scope_as = building_type }
+			lsq_clear_finished_upgrade_in_progress = yes
 			if = {
 				limit = {
 					lsq_is_building_obsolete = yes
