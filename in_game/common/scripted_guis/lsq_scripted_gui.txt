@@ -271,9 +271,8 @@ lsq_is_building_able_to_auto_expand = {
 		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
 		lsq_auto_expand_check_owner_gold_available = yes
 		lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
-		location.owner = { save_temporary_scope_as = actor }
-		location = { can_build_building = scope:building_type }
 		location.owner = { can_build_building = scope:building_type }
+		# can_build_building - doesn't work from Building-rooted scripted GUI so moved to GUI visibility
 	}
 }
 
@@ -285,6 +284,7 @@ lsq_is_building_not_max_level_already = {
 
 lsq_building_meets_minimum_profit = {
 	is_shown = {
+		building_type = { save_temporary_scope_as = building_type }
 		lsq_building_meets_minimum_profit = yes
 	}
 }
