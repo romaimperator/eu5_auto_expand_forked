@@ -50,7 +50,7 @@ lsq_food_can_build_rgo = {
 }
 
 # Option 2: +1 Farming Village level
-# Requires: farming RGO, rural settlement
+# Requires: farming RGO, rural settlement, not at max level, not already under construction
 lsq_food_can_build_farming_village = {
 	AND = {
 		location_rank = location_rank:rural_settlement
@@ -65,6 +65,13 @@ lsq_food_can_build_farming_village = {
 			raw_material = goods:olives
 			raw_material = goods:fruit
 			raw_material = goods:wool
+		}
+		trigger_if = {
+			limit = { has_building = building_type:farming_village }
+			"building(building_type:farming_village|owner)" = {
+				is_at_max_level = no
+				building_levels_under_construction = 0
+			}
 		}
 		building_type:farming_village = { save_temporary_scope_as = building_type }
 		lsq_can_afford_switch_based_on_building_type = yes
@@ -91,10 +98,17 @@ lsq_food_can_build_windmill = {
 }
 
 # Option 4: +1 Irrigation level
-# Requires: river OR adjacent to lake
+# Requires: river OR adjacent to lake, not at max level, not already under construction
 lsq_food_can_build_irrigation = {
 	AND = {
 		OR = { has_river = yes is_adjacent_to_lake = yes }
+		trigger_if = {
+			limit = { has_building = building_type:irrigation_systems }
+			"building(building_type:irrigation_systems|owner)" = {
+				is_at_max_level = no
+				building_levels_under_construction = 0
+			}
+		}
 		building_type:irrigation_systems = { save_temporary_scope_as = building_type }
 		lsq_can_afford_switch_based_on_building_type = yes
 		lsq_auto_build_check_laborers_available_or_will_be = yes
@@ -102,11 +116,18 @@ lsq_food_can_build_irrigation = {
 }
 
 # Option 5: +1 Fishing Village level
-# Requires: coastal, rural
+# Requires: coastal, rural, not at max level, not already under construction
 lsq_food_can_build_fishing_village = {
 	AND = {
 		is_coastal = yes
 		location_rank = location_rank:rural_settlement
+		trigger_if = {
+			limit = { has_building = building_type:fishing_village }
+			"building(building_type:fishing_village|owner)" = {
+				is_at_max_level = no
+				building_levels_under_construction = 0
+			}
+		}
 		building_type:fishing_village = { save_temporary_scope_as = building_type }
 		lsq_can_afford_switch_based_on_building_type = yes
 		lsq_auto_build_check_peasants_available_or_will_be = yes
@@ -114,7 +135,7 @@ lsq_food_can_build_fishing_village = {
 }
 
 # Option 6: +1 Sheep Farms level
-# Requires: sparse/farmland/grasslands vegetation, rural
+# Requires: sparse/farmland/grasslands vegetation, rural, not at max level, not already under construction
 lsq_food_can_build_sheep_farms = {
 	AND = {
 		location_rank = location_rank:rural_settlement
@@ -123,6 +144,13 @@ lsq_food_can_build_sheep_farms = {
 			vegetation = farmland
 			vegetation = grasslands
 		}
+		trigger_if = {
+			limit = { has_building = building_type:sheep_farms }
+			"building(building_type:sheep_farms|owner)" = {
+				is_at_max_level = no
+				building_levels_under_construction = 0
+			}
+		}
 		building_type:sheep_farms = { save_temporary_scope_as = building_type }
 		lsq_can_afford_switch_based_on_building_type = yes
 		lsq_auto_build_check_peasants_available_or_will_be = yes
@@ -130,7 +158,7 @@ lsq_food_can_build_sheep_farms = {
 }
 
 # Option 7: +1 Forest Village level
-# Requires: wild_game RGO OR forest/woods/jungle vegetation, rural
+# Requires: wild_game RGO OR forest/woods/jungle vegetation, rural, not at max level, not already under construction
 lsq_food_can_build_forest_village = {
 	AND = {
 		location_rank = location_rank:rural_settlement
@@ -139,6 +167,13 @@ lsq_food_can_build_forest_village = {
 			vegetation = forest
 			vegetation = woods
 			vegetation = jungle
+		}
+		trigger_if = {
+			limit = { has_building = building_type:forest_village }
+			"building(building_type:forest_village|owner)" = {
+				is_at_max_level = no
+				building_levels_under_construction = 0
+			}
 		}
 		building_type:forest_village = { save_temporary_scope_as = building_type }
 		lsq_can_afford_switch_based_on_building_type = yes
