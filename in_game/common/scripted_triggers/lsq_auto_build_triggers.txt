@@ -6,12 +6,16 @@ lsq_check_country_gold_above = {
 }
 
 # Root is the location. Expects $target$ = a building_type.
-# True if the building type has no instance here OR the existing instance isn't at its max level.
-# Use for multi-level buildings to avoid queuing construction beyond the cap.
+# True if the building type has no instance here OR the existing instance isn't at its max level
+# AND has no level already under construction. Use for multi-level buildings to avoid queuing
+# construction beyond the cap or double-queueing while a level is still being built.
 lsq_location_building_type_is_not_at_max_level = {
 	$target$ = { save_temporary_scope_as = target_building_type_for_max_check }
 	trigger_if = { limit = { has_building = $target$ }
-		"building(scope:target_building_type_for_max_check|owner)" = { is_at_max_level = no }
+		"building(scope:target_building_type_for_max_check|owner)" = {
+			is_at_max_level = no
+			building_levels_under_construction = 0
+		}
 	}
 }
 

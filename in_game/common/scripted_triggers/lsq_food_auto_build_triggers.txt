@@ -3,7 +3,8 @@
 
 # Root is the location. Expects $target$ = a building_type. Saves target as scope:building_type.
 # Combines the four-check cluster shared by every food option: can-build (engine prerequisites),
-# not-at-max-level, save-scope-for-affordability-macros, and construction-goods affordability.
+# not-at-max-level-and-not-already-under-construction, save-scope-for-affordability-macros,
+# and construction-goods affordability.
 # For 1-level buildings (e.g. windmill), the max-level check also subsumes NOT has_building.
 lsq_food_location_buildable_for_building_type = {
 	lsq_location_allowed_to_build = { target = $target$ }
@@ -61,7 +62,7 @@ lsq_food_can_build_rgo = {
 }
 
 # Option 2: +1 Farming Village level
-# Requires: farming RGO, rural settlement
+# Requires: farming RGO, rural settlement, not at max level, not already under construction
 lsq_food_can_build_farming_village = {
 	AND = {
 		location_rank = location_rank:rural_settlement
@@ -99,7 +100,7 @@ lsq_food_can_build_windmill = {
 }
 
 # Option 4: +1 Irrigation level
-# Requires: river OR adjacent to lake
+# Requires: river OR adjacent to lake, not at max level, not already under construction
 lsq_food_can_build_irrigation = {
 	AND = {
 		OR = { has_river = yes is_adjacent_to_lake = yes }
@@ -109,7 +110,7 @@ lsq_food_can_build_irrigation = {
 }
 
 # Option 5: +1 Fishing Village level
-# Requires: coastal, rural
+# Requires: coastal, rural, not at max level, not already under construction
 lsq_food_can_build_fishing_village = {
 	AND = {
 		is_coastal = yes
@@ -120,7 +121,7 @@ lsq_food_can_build_fishing_village = {
 }
 
 # Option 6: +1 Sheep Farms level
-# Requires: sparse/farmland/grasslands vegetation, rural
+# Requires: sparse/farmland/grasslands vegetation, rural, not at max level, not already under construction
 lsq_food_can_build_sheep_farms = {
 	AND = {
 		location_rank = location_rank:rural_settlement
@@ -135,7 +136,7 @@ lsq_food_can_build_sheep_farms = {
 }
 
 # Option 7: +1 Forest Village level
-# Requires: wild_game RGO OR forest/woods/jungle vegetation, rural
+# Requires: wild_game RGO OR forest/woods/jungle vegetation, rural, not at max level, not already under construction
 lsq_food_can_build_forest_village = {
 	AND = {
 		location_rank = location_rank:rural_settlement
