@@ -1,52 +1,62 @@
 ﻿# Generic triggers for auto-building
 
-# Expects scopes: building_type, country, location
-lsq_auto_build_check_owner_gold_available = {
-	scope:country.gold > lsq_expected_gold_available_for_building_type_for_auto_build
+# Shared gold-threshold check. Expects scope:country. Callers supply the script value to compare against.
+lsq_check_country_gold_above = {
+	scope:country.gold > $threshold$
+}
+
+# Root is the location. Expects $target$ = a building_type.
+# True if the building type has no instance here OR the existing instance isn't at its max level.
+# Use for multi-level buildings to avoid queuing construction beyond the cap.
+lsq_location_building_type_is_not_at_max_level = {
+	$target$ = { save_temporary_scope_as = target_building_type_for_max_check }
+	trigger_if = { limit = { has_building = $target$ }
+		"building(scope:target_building_type_for_max_check|owner)" = { is_at_max_level = no }
+	}
 }
 
 # Root is the location
-lsq_auto_build_check_location_has_more_than_zero_market_access = {
+lsq_check_location_meets_min_market_access = {
 	market_access > 0
 }
 
 # Root is the location
-lsq_auto_build_check_nobles_available_or_will_be = {
+lsq_check_location_has_nobles_available_or_will_be = {
 	0 <= { value = lsq_combined_pop_promotion_speed_for_nobles add = lsq_location_nobles_available }
 }
 
 # Root is the location
-lsq_auto_build_check_clergy_available_or_will_be = {
+lsq_check_location_has_clergy_available_or_will_be = {
 	0 <= { value = lsq_combined_pop_promotion_speed_for_clergy add = lsq_location_clergy_available }
 }
 
 # Root is the location
-lsq_auto_build_check_burghers_available_or_will_be = {
+lsq_check_location_has_burghers_available_or_will_be = {
 	0 <= { value = lsq_combined_pop_promotion_speed_for_burghers add = lsq_location_burghers_available }
 }
 
 # Root is the location
-lsq_auto_build_check_laborers_available_or_will_be = {
+lsq_check_location_has_laborers_available_or_will_be = {
 	0 <= { value = lsq_combined_pop_promotion_speed_for_laborers add = lsq_location_laborers_available }
 }
 
 # Root is the location
-lsq_auto_build_check_soldiers_available_or_will_be = {
+lsq_check_location_has_soldiers_available_or_will_be = {
 	0 <= { value = lsq_combined_pop_promotion_speed_for_soldiers add = lsq_location_soldiers_available }
 }
 
 # Root is the location
-lsq_auto_build_check_peasants_available_or_will_be = {
+lsq_check_location_has_peasants_available_or_will_be = {
 	0 <= { value = lsq_combined_pop_promotion_speed_for_peasants add = lsq_location_peasants_available }
 }
 
 # Root is the location
-lsq_auto_build_check_slaves_available_or_will_be = {
+lsq_check_location_has_slaves_available_or_will_be = {
 	0 <= { value = lsq_location_slaves_available } # these don't get promoted in the same way
 }
 
 # Root is the location
-lsq_auto_build_check_tribesmen_available_or_will_be = {
+lsq_check_location_has_tribesmen_available_or_will_be = {
 	0 <= { value = lsq_location_tribesmen_available } # these don't get promoted in the same way
 }
 
@@ -131,7 +141,7 @@ lsq_auto_build_check_any_location_allowed_to_build = {
 # Expects scopes: building_type, country. Root is the location.
 lsq_location_can_auto_build = {
 	lsq_auto_build_will_auto_build = { target = scope:building_type }
-	lsq_auto_build_check_owner_gold_available = yes
+	lsq_check_country_gold_above = { threshold = lsq_expected_gold_available_for_building_type_for_auto_build }
 }
 
 # Root is the location. Expects the building type as a target, also expects the scope country.
@@ -147,7 +157,7 @@ lsq_auto_build_will_auto_build = {
 	lsq_location_has_enough_pops_available = yes
 	lsq_auto_build_check_rgo_level_requirement_met = { target = $target$ }
 	lsq_can_afford_switch_based_on_building_type = yes
-	lsq_auto_build_check_location_has_more_than_zero_market_access = yes
+	lsq_check_location_meets_min_market_access = yes
 }
 
 # Root is the location. Expects the building type as a target, also expects the scope country.
@@ -155,22 +165,6 @@ lsq_auto_build_will_auto_build = {
 lsq_location_allowed_to_build = {
 	scope:country = { save_temporary_scope_as = actor }
 	can_build_building = $target$
-	scope:country = { can_build_building = $target$ }
-}
-
-# Expects scopes: country, location. Expects param: target => building_type.
-# Pop type is resolved dynamically from the precomputed lsq_building_type_to_pop_type map.
-lsq_auto_build_check_pops_available = {
-	lsq_location_has_enough_pops_available = yes
-}
-
-# Root is the location. Expects scope:building_type.
-lsq_auto_build_check_can_afford = {
-	lsq_can_afford_switch_based_on_building_type = yes
-}
-
-# Root is the country. Expects the building type as a target.
-lsq_auto_build_check_building_researched = {
 	scope:country = { can_build_building = $target$ }
 }
 

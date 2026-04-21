@@ -1,9 +1,4 @@
-﻿# Expects scopes: building type, country, and location
-lsq_auto_expand_check_owner_gold_available = {
-	scope:country.gold > lsq_expected_gold_available_for_building_type_for_auto_expand
-}
-
-# Expects scopes: building type
+﻿# Expects scopes: building type
 lsq_does_building_type_count_for_port_building_cost_modifier = {
 	OR = {
 		scope:building_type = building_type:dock
@@ -37,15 +32,7 @@ lsq_is_building_type_obsolete = {
 lsq_is_building_upgradeable = {
 	building_type = { is_upgradeable = yes }
 }
-# Root is the building type
-lsq_is_building_type_upgradeable = {
-	is_upgradeable = yes
-}
 
-# Root is the building
-lsq_building_can_be_upgraded_by_owner = {
-	building_can_be_upgraded_by = owner
-}
 # Root is the location, also expects scope:building_type and scope:country
 lsq_building_type_can_be_upgraded_by_owner = {
 	"building(scope:building_type|scope:country)" = { building_can_be_upgraded_by = scope:country }
@@ -55,22 +42,14 @@ lsq_building_type_can_be_upgraded_by_owner = {
 lsq_is_building_upgradeable_and_can_be_upgraded_by_owner = {
 	AND = {
 		lsq_is_building_upgradeable = yes
-		lsq_building_can_be_upgraded_by_owner = yes
+		building_can_be_upgraded_by = owner
 	}
 }
 # Root is the location, also expects scope:building_type and scope:country
 lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = {
 	AND = {
-		scope:building_type = { lsq_is_building_type_upgradeable = yes }
+		scope:building_type = { is_upgradeable = yes }
 		lsq_building_type_can_be_upgraded_by_owner = yes
-	}
-}
-
-# Root is the building
-lsq_is_building_upgradeable_and_can_be_upgraded_by_owner_and_auto_expand_upgrade_is_on = {
-	AND = {
-		lsq_is_building_upgradeable_and_can_be_upgraded_by_owner = yes
-		owner = { lsq_should_auto_expand_upgrade_buildings = yes }
 	}
 }
 
@@ -78,13 +57,8 @@ lsq_is_building_upgradeable_and_can_be_upgraded_by_owner_and_auto_expand_upgrade
 lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = {
 	OR = {
 		lsq_is_building_not_max_level_already_and_not_obsolete = yes
-		lsq_is_building_upgradeable_and_can_be_upgraded_by_owner_and_auto_expand_upgrade_is_on = yes
+		lsq_is_building_upgradeable_and_can_be_upgraded_by_owner = yes
 	}
-}
-
-# Root is the building
-lsq_is_building_lacking_goods = {
-	is_lacking_goods = yes
 }
 
 # Root is the location. Effective cap is free_building_levels plus the owner's lsq_allowed_building_overbuild_levels (default 0).
@@ -93,14 +67,9 @@ lsq_is_location_under_building_limit = {
 }
 
 # Root is the building
-lsq_is_building_at_max_level = {
-	is_at_max_level = yes
-}
-
-# Root is the building
 lsq_is_building_not_max_level_already_and_not_obsolete = {
 	AND = {
-		lsq_is_building_at_max_level = no
+		is_at_max_level = no
 		lsq_is_building_obsolete = no
 	}
 }
@@ -114,11 +83,6 @@ lsq_is_building_fully_employed = {
 			building_level = 0
 		}
 	}
-}
-
-# Root is the building
-lsq_is_building_open = {
-	is_opened = yes
 }
 
 # Root is the building. Checks that building potential profit (adjusted for control) meets the min profit
@@ -163,39 +127,30 @@ lsq_building_meets_minimum_discount = {
 	}
 }
 
-# Root is the building
-lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
-	location = { save_temporary_scope_as = location }
-	building_type = { save_temporary_scope_as = building_type }
-	owner = { save_temporary_scope_as = country }
-	AND = {
-		lsq_building_meets_minimum_profit = yes
-		lsq_is_building_open = yes
-		lsq_is_building_fully_employed = yes
-		lsq_is_building_lacking_goods = no
-		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
-		location = { lsq_location_has_enough_pops_available = yes }
-		location = { lsq_is_location_under_building_limit = yes }
-		location = { owner = { save_temporary_scope_as = actor } can_build_building = scope:building_type }
-		location.owner = { can_build_building = scope:building_type }
-	}
-}
-
-# Root is the building. Same as lsq_building_can_auto_expand_other_than_checking_for_upgrades but without
-# the can_build_building check, which fails for obsolete building types. The upgrade path already validates
-# upgradeability via building_can_be_upgraded_by.
+# Root is the building. Shared core of the two lsq_building_can_auto_expand_* triggers —
+# the checks that apply to both normal-path and upgrade-path expansion.
+# The upgrade path cannot use can_build_building (fails for obsolete building types);
+# the normal path adds it via lsq_building_can_auto_expand_other_than_checking_for_upgrades.
 lsq_building_can_auto_expand_for_upgrade = {
 	location = { save_temporary_scope_as = location }
 	building_type = { save_temporary_scope_as = building_type }
 	owner = { save_temporary_scope_as = country }
 	AND = {
 		lsq_building_meets_minimum_profit = yes
-		lsq_is_building_open = yes
+		is_opened = yes
 		lsq_is_building_fully_employed = yes
-		lsq_is_building_lacking_goods = no
+		is_lacking_goods = no
 		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
 		location = { lsq_location_has_enough_pops_available = yes }
 		location = { lsq_is_location_under_building_limit = yes }
+	}
+}
+
+# Root is the building. Same checks as lsq_building_can_auto_expand_for_upgrade, plus can_build_building.
+lsq_building_can_auto_expand_other_than_checking_for_upgrades = {
+	AND = {
+		lsq_building_can_auto_expand_for_upgrade = yes
+		location = { lsq_location_allowed_to_build = { target = scope:building_type } }
 	}
 }
 
@@ -204,30 +159,10 @@ lsq_location_can_auto_expand_from_zero_levels = {
 	scope:location = { lsq_location_will_auto_expand_from_zero_levels = yes }
 }
 
-# Root is the location, also expects scope:building_type and scope:country
-lsq_location_will_auto_expand_from_zero_levels = {
-	AND = {
-		scope:country = { lsq_should_pause_auto_expand = no }
-		NOT = { integration_level = conquered }
-		lsq_location_has_enough_pops_available = yes
-		lsq_can_afford_switch_based_on_building_type = yes
-		lsq_is_location_under_building_limit = yes
-		save_temporary_scope_as = location
-		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
-		scope:country = { save_temporary_scope_as = actor }
-		can_build_building = scope:building_type
-		scope:country = { can_build_building = scope:building_type }
-		lsq_auto_expand_check_owner_gold_available = yes
-	}
-}
-
-# Expects scopes: building type, country, and location. Same as lsq_location_can_auto_expand_from_zero_levels
-# but without the can_build_building check, which fails for obsolete building types.
-lsq_location_can_auto_expand_from_zero_levels_for_upgrade = {
-	scope:location = { lsq_location_will_auto_expand_from_zero_levels_for_upgrade = yes }
-}
-
-# Root is the location, also expects scope:building_type and scope:country
+# Root is the location, also expects scope:building_type and scope:country.
+# Shared core of the two lsq_location_will_auto_expand_from_zero_levels_* triggers.
+# The upgrade path cannot use can_build_building (fails for obsolete building types);
+# the normal path adds it via lsq_location_will_auto_expand_from_zero_levels.
 lsq_location_will_auto_expand_from_zero_levels_for_upgrade = {
 	AND = {
 		scope:country = { lsq_should_pause_auto_expand = no }
@@ -237,8 +172,23 @@ lsq_location_will_auto_expand_from_zero_levels_for_upgrade = {
 		lsq_is_location_under_building_limit = yes
 		save_temporary_scope_as = location
 		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
-		lsq_auto_expand_check_owner_gold_available = yes
+		lsq_check_country_gold_above = { threshold = lsq_expected_gold_available_for_building_type_for_auto_expand }
 	}
+}
+
+# Root is the location, also expects scope:building_type and scope:country.
+# Same checks as lsq_location_will_auto_expand_from_zero_levels_for_upgrade, plus can_build_building.
+lsq_location_will_auto_expand_from_zero_levels = {
+	AND = {
+		lsq_location_will_auto_expand_from_zero_levels_for_upgrade = yes
+		lsq_location_allowed_to_build = { target = scope:building_type }
+	}
+}
+
+# Expects scopes: building type, country, and location. Same as lsq_location_can_auto_expand_from_zero_levels
+# but without the can_build_building check, which fails for obsolete building types.
+lsq_location_can_auto_expand_from_zero_levels_for_upgrade = {
+	scope:location = { lsq_location_will_auto_expand_from_zero_levels_for_upgrade = yes }
 }
 
 # Expects scope:country. Checks that the player has gold above their minimum reserve setting.
@@ -259,7 +209,7 @@ lsq_is_not_under_construction = {
 lsq_is_not_under_construction_and_gold_is_available = {
 	AND = {
 		lsq_is_not_under_construction = yes
-		lsq_auto_expand_check_owner_gold_available = yes
+		lsq_check_country_gold_above = { threshold = lsq_expected_gold_available_for_building_type_for_auto_expand }
 	}
 }
 
@@ -268,11 +218,6 @@ lsq_upgrade_all_meets_minimum_discount = {
 	owner = { save_temporary_scope_as = country }
 	building_type = { save_temporary_scope_as = building_type }
 	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_upgrade_all_buildings }
-}
-
-# Root is the country
-lsq_should_auto_expand_upgrade_buildings = {
-	always = yes
 }
 
 # Root is the country
@@ -312,7 +257,3 @@ lsq_is_building_type_one_per_location_building = {
 	}
 }
 
-# Root is the location, also expects scope:building_type
-lsq_are_there_enough_construction_goods_available_for_building_type = {
-	lsq_can_afford_switch_based_on_building_type = yes
-}

@@ -95,10 +95,6 @@ lsq_gui_construct_upgrade = {
 	is_valid = {
 		scope:country = { has_variable = lsq_gui_upgrades_pending }
 		is_target_in_variable_list = { name = lsq_gui_upgrade_building_types target = scope:old_building_type }
-		OR = {
-			scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
-			scope:country = { lsq_should_upgrade_all_buildings = yes }
-		}
 		lsq_auto_expand_check_minimum_gold_reserve = yes
 	}
 	effect = {
@@ -244,7 +240,7 @@ lsq_location_will_auto_expand_from_zero_levels = {
 		lsq_is_location_under_building_limit = yes
 		lsq_can_afford_switch_based_on_building_type = yes
 		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
-		lsq_auto_expand_check_owner_gold_available = yes
+		lsq_check_country_gold_above = { threshold = lsq_expected_gold_available_for_building_type_for_auto_expand }
 		scope:country = { save_temporary_scope_as = actor }
 		can_build_building = scope:building_type
 		scope:country = { can_build_building = scope:building_type }
@@ -262,15 +258,15 @@ lsq_is_building_able_to_auto_expand = {
 		owner = { lsq_should_pause_auto_expand = no }
 		location = { NOT = { integration_level = conquered } }
 		lsq_building_meets_minimum_profit = yes
-		lsq_is_building_open = yes
+		is_opened = yes
 		lsq_is_building_fully_employed = yes
-		lsq_is_building_lacking_goods = no
+		is_lacking_goods = no
 		lsq_is_not_under_construction = yes
 		location = { lsq_location_has_enough_pops_available = yes }
 		location = { lsq_is_location_under_building_limit = yes }
 		location = { lsq_can_afford_switch_based_on_building_type = yes }
 		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
-		lsq_auto_expand_check_owner_gold_available = yes
+		lsq_check_country_gold_above = { threshold = lsq_expected_gold_available_for_building_type_for_auto_expand }
 		lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
 		location.owner = { can_build_building = scope:building_type }
 		# can_build_building - doesn't work from Building-rooted scripted GUI so moved to GUI visibility
@@ -279,7 +275,7 @@ lsq_is_building_able_to_auto_expand = {
 
 lsq_is_building_not_max_level_already = {
 	is_shown = {
-		lsq_is_building_at_max_level = no
+		is_at_max_level = no
 	}
 }
 
@@ -309,7 +305,7 @@ lsq_building_type_meets_minimum_discount_for_auto_expand = {
 
 lsq_is_building_open = {
 	is_shown = {
-		lsq_is_building_open = yes
+		is_opened = yes
 	}
 }
 
@@ -321,7 +317,7 @@ lsq_is_building_fully_employed = {
 
 lsq_is_building_not_lacking_goods = {
 	is_shown = {
-		lsq_is_building_lacking_goods = no
+		is_lacking_goods = no
 	}
 }
 
@@ -365,7 +361,7 @@ lsq_has_enough_gold_for_auto_expand = {
 		building_type = { save_temporary_scope_as = building_type }
 		location = { save_temporary_scope_as = location }
 		owner = { save_temporary_scope_as = country }
-		lsq_auto_expand_check_owner_gold_available = yes
+		lsq_check_country_gold_above = { threshold = lsq_expected_gold_available_for_building_type_for_auto_expand }
 	}
 }
 
@@ -373,7 +369,7 @@ lsq_has_enough_gold_for_auto_expand = {
 lsq_has_enough_gold_for_auto_expand_from_zero_levels = {
 	is_shown = {
 		save_temporary_scope_as = location
-		lsq_auto_expand_check_owner_gold_available = yes
+		lsq_check_country_gold_above = { threshold = lsq_expected_gold_available_for_building_type_for_auto_expand }
 	}
 }
 
@@ -490,13 +486,13 @@ lsq_is_building_upgradeable = {
 
 lsq_building_can_be_upgraded_by_owner = {
 	is_shown = {
-		lsq_building_can_be_upgraded_by_owner = yes
+		building_can_be_upgraded_by = owner
 	}
 }
 
 lsq_is_building_upgradeable_and_can_be_upgraded_by_owner_and_auto_expand_upgrade_is_on = {
 	is_shown = {
-		lsq_is_building_upgradeable_and_can_be_upgraded_by_owner_and_auto_expand_upgrade_is_on = yes
+		lsq_is_building_upgradeable_and_can_be_upgraded_by_owner = yes
 	}
 }
 
@@ -571,6 +567,6 @@ lsq_has_enough_goods_for_construction_demand = {
 # Root is the location, also expects scope:building_type
 lsq_are_there_enough_construction_goods_available_for_building_type = {
 	is_shown = {
-		lsq_are_there_enough_construction_goods_available_for_building_type = yes
+		lsq_can_afford_switch_based_on_building_type = yes
 	}
 }

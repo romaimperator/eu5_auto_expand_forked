@@ -1,6 +1,17 @@
 ﻿# Food auto-build triggers — eligibility, affordability, pop, and cap checks.
 # Gold threshold checks are done in the effects file (per-building script values).
 
+# Root is the location. Expects $target$ = a building_type. Saves target as scope:building_type.
+# Combines the four-check cluster shared by every food option: can-build (engine prerequisites),
+# not-at-max-level, save-scope-for-affordability-macros, and construction-goods affordability.
+# For 1-level buildings (e.g. windmill), the max-level check also subsumes NOT has_building.
+lsq_food_location_buildable_for_building_type = {
+	lsq_location_allowed_to_build = { target = $target$ }
+	lsq_location_building_type_is_not_at_max_level = { target = $target$ }
+	$target$ = { save_temporary_scope_as = building_type }
+	lsq_can_afford_switch_based_on_building_type = yes
+}
+
 # ─── Location matching ───
 
 # Root is the location. Expects scope:food_good (the goods scope from the CMM list).
@@ -29,8 +40,8 @@ lsq_food_location_meets_river_filter = {
 # when laborers are scarce diverts peasants from promoting to fill the RGO.
 lsq_food_location_pops_still_filling = {
 	OR = {
-		NOT = { lsq_auto_build_check_laborers_available_or_will_be = yes }
-		NOT = { lsq_auto_build_check_peasants_available_or_will_be = yes }
+		NOT = { lsq_check_location_has_laborers_available_or_will_be = yes }
+		NOT = { lsq_check_location_has_peasants_available_or_will_be = yes }
 	}
 }
 
@@ -45,7 +56,7 @@ lsq_food_can_build_rgo = {
 		lsq_is_rgo_not_max_level_already = yes
 		lsq_is_rgo_under_construction = no
 		lsq_has_enough_raw_materials_for_rgo = yes
-		lsq_auto_build_check_laborers_available_or_will_be = yes
+		lsq_check_location_has_laborers_available_or_will_be = yes
 	}
 }
 
@@ -66,14 +77,13 @@ lsq_food_can_build_farming_village = {
 			raw_material = goods:fruit
 			raw_material = goods:wool
 		}
-		building_type:farming_village = { save_temporary_scope_as = building_type }
-		lsq_can_afford_switch_based_on_building_type = yes
-		lsq_auto_build_check_peasants_available_or_will_be = yes
+		lsq_food_location_buildable_for_building_type = { target = building_type:farming_village }
+		lsq_check_location_has_peasants_available_or_will_be = yes
 	}
 }
 
 # Option 3: Windmill (1 level max)
-# Requires: wheat/rice/millet RGO, rural, no windmill yet
+# Requires: wheat/rice/millet RGO, rural, windmills advance researched
 lsq_food_can_build_windmill = {
 	AND = {
 		location_rank = location_rank:rural_settlement
@@ -82,11 +92,9 @@ lsq_food_can_build_windmill = {
 			raw_material = goods:rice
 			raw_material = goods:millet
 		}
-		NOT = { has_building = building_type:windmill }
 		scope:country = { has_advance = windmills_advance }
-		building_type:windmill = { save_temporary_scope_as = building_type }
-		lsq_can_afford_switch_based_on_building_type = yes
-		lsq_auto_build_check_laborers_available_or_will_be = yes
+		lsq_food_location_buildable_for_building_type = { target = building_type:windmill }
+		lsq_check_location_has_laborers_available_or_will_be = yes
 	}
 }
 
@@ -95,9 +103,8 @@ lsq_food_can_build_windmill = {
 lsq_food_can_build_irrigation = {
 	AND = {
 		OR = { has_river = yes is_adjacent_to_lake = yes }
-		building_type:irrigation_systems = { save_temporary_scope_as = building_type }
-		lsq_can_afford_switch_based_on_building_type = yes
-		lsq_auto_build_check_laborers_available_or_will_be = yes
+		lsq_food_location_buildable_for_building_type = { target = building_type:irrigation_systems }
+		lsq_check_location_has_laborers_available_or_will_be = yes
 	}
 }
 
@@ -107,9 +114,8 @@ lsq_food_can_build_fishing_village = {
 	AND = {
 		is_coastal = yes
 		location_rank = location_rank:rural_settlement
-		building_type:fishing_village = { save_temporary_scope_as = building_type }
-		lsq_can_afford_switch_based_on_building_type = yes
-		lsq_auto_build_check_peasants_available_or_will_be = yes
+		lsq_food_location_buildable_for_building_type = { target = building_type:fishing_village }
+		lsq_check_location_has_peasants_available_or_will_be = yes
 	}
 }
 
@@ -123,9 +129,8 @@ lsq_food_can_build_sheep_farms = {
 			vegetation = farmland
 			vegetation = grasslands
 		}
-		building_type:sheep_farms = { save_temporary_scope_as = building_type }
-		lsq_can_afford_switch_based_on_building_type = yes
-		lsq_auto_build_check_peasants_available_or_will_be = yes
+		lsq_food_location_buildable_for_building_type = { target = building_type:sheep_farms }
+		lsq_check_location_has_peasants_available_or_will_be = yes
 	}
 }
 
@@ -140,8 +145,7 @@ lsq_food_can_build_forest_village = {
 			vegetation = woods
 			vegetation = jungle
 		}
-		building_type:forest_village = { save_temporary_scope_as = building_type }
-		lsq_can_afford_switch_based_on_building_type = yes
-		lsq_auto_build_check_laborers_available_or_will_be = yes
+		lsq_food_location_buildable_for_building_type = { target = building_type:forest_village }
+		lsq_check_location_has_laborers_available_or_will_be = yes
 	}
 }

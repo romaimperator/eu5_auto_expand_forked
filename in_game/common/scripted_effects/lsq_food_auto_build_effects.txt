@@ -6,7 +6,7 @@ lsq_food_auto_build_in_location = {
 	# Preconditions: pause, build queue, market access
 	if = { limit = { scope:country = { lsq_should_pause_auto_expand = no } }
 	if = { limit = { lsq_get_open_build_queue_slots > 0 }
-	if = { limit = { market_access > 0 }
+	if = { limit = { lsq_check_location_meets_min_market_access = yes }
 
 	# Combined pool: if any pop type is scarce (existing buildings/RGO haven't filled workers), skip
 	if = { limit = { NOT = { lsq_food_location_pops_still_filling = yes } }
@@ -16,7 +16,7 @@ lsq_food_auto_build_in_location = {
 		set_local_variable = { name = lsq_food_action value = 0 }
 
 		# ─── Option 1: RGO expand ───
-		if = { limit = { lsq_food_can_build_rgo = yes scope:country.gold > lsq_food_expected_gold_for_rgo }
+		if = { limit = { lsq_food_can_build_rgo = yes lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_rgo } }
 			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_rgo }
 			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
 				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
@@ -25,7 +25,7 @@ lsq_food_auto_build_in_location = {
 		}
 
 		# ─── Option 2: Farming Village ───
-		if = { limit = { lsq_food_can_build_farming_village = yes scope:country.gold > lsq_food_expected_gold_for_farming_village }
+		if = { limit = { lsq_food_can_build_farming_village = yes lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_farming_village } }
 			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_farming_village }
 			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
 				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
@@ -34,7 +34,7 @@ lsq_food_auto_build_in_location = {
 		}
 
 		# ─── Option 3: Windmill ───
-		if = { limit = { lsq_food_can_build_windmill = yes scope:country.gold > lsq_food_expected_gold_for_windmill }
+		if = { limit = { lsq_food_can_build_windmill = yes lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_windmill } }
 			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_windmill }
 			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
 				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
@@ -43,7 +43,7 @@ lsq_food_auto_build_in_location = {
 		}
 
 		# ─── Option 4: Irrigation ───
-		if = { limit = { lsq_food_can_build_irrigation = yes scope:country.gold > lsq_food_expected_gold_for_irrigation_systems }
+		if = { limit = { lsq_food_can_build_irrigation = yes lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_irrigation_systems } }
 			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_irrigation }
 			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
 				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
@@ -52,7 +52,7 @@ lsq_food_auto_build_in_location = {
 		}
 
 		# ─── Option 5: Fishing Village ───
-		if = { limit = { lsq_food_can_build_fishing_village = yes scope:country.gold > lsq_food_expected_gold_for_fishing_village }
+		if = { limit = { lsq_food_can_build_fishing_village = yes lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_fishing_village } }
 			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_fishing_village }
 			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
 				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
@@ -61,7 +61,7 @@ lsq_food_auto_build_in_location = {
 		}
 
 		# ─── Option 6: Sheep Farms ───
-		if = { limit = { lsq_food_can_build_sheep_farms = yes scope:country.gold > lsq_food_expected_gold_for_sheep_farms }
+		if = { limit = { lsq_food_can_build_sheep_farms = yes lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_sheep_farms } }
 			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_sheep_farms }
 			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
 				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }
@@ -70,7 +70,7 @@ lsq_food_auto_build_in_location = {
 		}
 
 		# ─── Option 7: Forest Village ───
-		if = { limit = { lsq_food_can_build_forest_village = yes scope:country.gold > lsq_food_expected_gold_for_forest_village }
+		if = { limit = { lsq_food_can_build_forest_village = yes lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_forest_village } }
 			set_local_variable = { name = lsq_food_m value = lsq_food_marginal_forest_village }
 			if = { limit = { local_var:lsq_food_m > local_var:lsq_food_best }
 				set_local_variable = { name = lsq_food_best value = local_var:lsq_food_m }

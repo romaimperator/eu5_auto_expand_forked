@@ -1,14 +1,22 @@
-﻿# This trigger is used by the GUI to see if the prerequisites for auto expanding RGO are met
+﻿# Root is the location. Core RGO expansion prerequisites shared by the GUI-visibility trigger
+# (lsq_is_able_to_auto_expand_rgo) and the on-action trigger (lsq_should_rgo_auto_expand).
+lsq_rgo_basic_expand_eligibility = {
+	AND = {
+		lsq_is_rgo_advance_researched = yes
+		lsq_is_rgo_not_max_level_already = yes
+		lsq_check_location_has_laborers_available_or_will_be = yes
+		lsq_has_enough_raw_materials_for_rgo = yes
+	}
+}
+
+# This trigger is used by the GUI to see if the prerequisites for auto expanding RGO are met
 lsq_is_able_to_auto_expand_rgo = {
 	AND = {
 		owner = {
 			lsq_should_pause_auto_expand = no
 			is_target_in_variable_list = { name = lsq_priority_features_enabled target = flag:lsq_feature_auto_expand_rgos }
 		}
-		lsq_is_rgo_advance_researched = yes
-		lsq_is_rgo_not_max_level_already = yes
-		lsq_is_rgo_fully_employed = yes
-		lsq_has_enough_raw_materials_for_rgo = yes
+		lsq_rgo_basic_expand_eligibility = yes
 		# lsq_is_rgo_under_construction = no # don't check if it's under construction when we're deciding if the button should be green or red
 	}
 }
@@ -18,12 +26,9 @@ lsq_is_able_to_auto_expand_rgo = {
 lsq_should_rgo_auto_expand = {
 	scope:location = {
 		AND = {
-			lsq_is_rgo_advance_researched = yes
-			lsq_is_rgo_not_max_level_already = yes
-			lsq_is_rgo_fully_employed = yes
-			lsq_has_enough_raw_materials_for_rgo = yes
+			lsq_rgo_basic_expand_eligibility = yes
 			lsq_is_rgo_under_construction = no
-			lsq_is_there_enough_gold_available = yes
+			lsq_check_country_gold_above = { threshold = lsq_expected_gold_available_for_rgo_auto_expand }
 			lsq_rgo_meets_minimum_profit = yes
 			lsq_rgo_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_rgos }
 		}
@@ -54,17 +59,8 @@ lsq_is_rgo_not_max_level_already = {
 	lsq_modifier_rgo_level < lsq_get_max_rgo_workers_floor
 }
 
-lsq_is_rgo_fully_employed = {
-	lsq_auto_build_check_laborers_available_or_will_be = yes
-}
-
 lsq_is_rgo_under_construction = {
 	lsq_get_rgos_under_construction > 0
-}
-
-# Expects scopes: country, location
-lsq_is_there_enough_gold_available = {
-	scope:country.gold > lsq_expected_gold_available_for_rgo_auto_expand
 }
 
 # Root is location

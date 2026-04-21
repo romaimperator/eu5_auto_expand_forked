@@ -37,7 +37,7 @@ lsq_run_auto_expand_buildings = {
 							limit = {
 								scope:building = {
 									lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
-									lsq_is_building_at_max_level = no
+									is_at_max_level = no
 									lsq_is_not_under_construction_and_gold_is_available = yes
 								}
 							}
@@ -46,7 +46,6 @@ lsq_run_auto_expand_buildings = {
 					} else_if = {
 						limit = {
 							scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
-							scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
 						}
 						lsq_clear_finished_upgrade_in_progress = yes
 						if = {
@@ -98,8 +97,7 @@ lsq_run_auto_expand_buildings = {
 						} else_if = {
 							limit = {
 								scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
-								scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
-							}
+								}
 							lsq_clear_finished_upgrade_in_progress = yes
 							if = {
 								limit = {
@@ -145,7 +143,7 @@ lsq_run_auto_expand_buildings = {
 						limit = {
 							scope:building = {
 								lsq_building_can_auto_expand_other_than_checking_for_upgrades = yes
-								lsq_is_building_at_max_level = no
+								is_at_max_level = no
 								lsq_is_not_under_construction_and_gold_is_available = yes
 							}
 						}
@@ -154,7 +152,6 @@ lsq_run_auto_expand_buildings = {
 				} else_if = {
 					limit = {
 						scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
-						scope:country = { lsq_should_auto_expand_upgrade_buildings = yes }
 					}
 					lsq_clear_finished_upgrade_in_progress = yes
 					if = {
@@ -194,7 +191,7 @@ lsq_run_auto_expand_buildings = {
 						scope:location = { construct_building = { building_type = scope:building_type } }
 					}
 				} else_if = {
-					limit = { scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes } scope:country = { lsq_should_auto_expand_upgrade_buildings = yes } }
+					limit = { scope:location = { lsq_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes } }
 					lsq_clear_finished_upgrade_in_progress = yes
 					if = {
 						limit = {
@@ -415,7 +412,7 @@ lsq_run_auto_upgrade_towns_to_cities = {
 		save_scope_as = location
 		limit = { NOT = { integration_level = conquered } lsq_location_can_mass_upgrade_to_city = yes }
 		if = {
-			limit = { scope:country.gold > lsq_mass_upgrade_town_to_city_gold_needed }
+			limit = { lsq_check_country_gold_above = { threshold = lsq_mass_upgrade_town_to_city_gold_needed } }
 			scope:location = { construct_building = { building_type = building_type:lsq_upgrade_town_to_city_building } }
 		}
 	}
