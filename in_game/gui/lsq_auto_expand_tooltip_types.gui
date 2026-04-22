@@ -10,7 +10,11 @@
 				widget = {
 					size = { 10 2 }
 					icon = {
-						block "first_element" { visible = no } # default is this isn't the first element
+						# Rows are shown only when failing, so rows can be filtered out of the
+						# list at any position. Treat every row as "first" — show the root arrow
+						# and suppress the upward vertical connector so a hidden predecessor
+						# doesn't leave a dangling line into the tooltip title.
+						block "first_element" { visible = yes }
 						size = { 100% 100% }
 						parentanchor = right|vcenter
 						using = color_requirementlist_arrow_white_texture
@@ -23,9 +27,8 @@
 					using = color_requirementlist_arrow_white_texture
 
 					icon = {
-						block "not_first_element" { visible = yes } # default is this isn't the first element
-						block "vertical_line_size" { size = { 3 31 } } # if all rows are one line, this works fine. Otherwise, the vertical line will be too short.
-						# use blockoverride "vertical_line_size" { size = { 3 41 } } on the row and the row below that has text that wraps to a second line.
+						block "not_first_element" { visible = no }
+						block "vertical_line_size" { size = { 3 31 } }
 						parentanchor = bottom
 						using = color_requirementlist_arrow_white_texture
 					}
