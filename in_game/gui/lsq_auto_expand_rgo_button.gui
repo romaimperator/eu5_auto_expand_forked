@@ -13,23 +13,43 @@
 		visible = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
 		size = { 23 23 }
 
-		# button with green glow
-		lsq_auto_expand_checkbutton = {
+		button = {
 			size = { 100% 100% }
 			enabled = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
-			checked = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-			blockoverride "green_glow_visible" {
-				visible = "[And(GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+			tooltipwidget = {
+				using = lsq_RGO_Autoexpand_Tooltip
 			}
-			blockoverride "red_glow_visible" {
-				visible = "[And(GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]"
+
+			action_tooltip = {
+				click_type = left
+				click_mode = single
+				click_modifier = default
+				title = "LSQ_AUTO_EXPAND_TOGGLE"
+				on_action = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).End)]"
 			}
-			onclick = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).End)]"
+			action_tooltip = {
+				click_type = left
+				click_mode = single
+				click_modifier = shift
+				title = "LSQ_AUTO_EXPAND_RGO_SHIFT_TOGGLE"
+				description = "LSQ_AUTO_EXPAND_RGO_SHIFT_TOGGLE_DESC"
+				on_action = "[PdxGuiTriggerAllAnimations('lsq_shift_click_mass_toggle_filtered_rgos')]"
+			}
 			onrightclick = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 			onrightclick = "[GetVariableSystem.Set('cmm_selected_mod', 'lsq')]"
 			onrightclick = "[GetVariableSystem.Set('cmm_selected_tab', 'lsq__settings')]"
-			tooltipwidget = {
-				using = lsq_RGO_Autoexpand_Tooltip
+
+			lsq_auto_expand_checkbutton = {
+				size = { 100% 100% }
+				alwaystransparent = yes
+				tooltip_enabled = no
+				checked = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+				blockoverride "green_glow_visible" {
+					visible = "[And(GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+				}
+				blockoverride "red_glow_visible" {
+					visible = "[And(GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]"
+				}
 			}
 		}
 	}
@@ -55,6 +75,48 @@
 	}
 
 	type lsq_mass_auto_expand_rgo_button = hbox {
+		name = "lsq_parent_of_auto_expand_active_rgos"
+
+		# Hidden datamodels drive the shift-click filtered mass toggle on the standard
+		# RGO auto-expand buttons (lsq_auto_expand_rgo_widget). The shift handler calls
+		# PdxGuiTriggerAllAnimations with the state name below; each visible item's
+		# on_finish then flips its own RGO auto-expand. set_off is derived from
+		# comparing active-vs-possible CountVisibleChildren so the toggle turns
+		# everything off when they're all on, otherwise on.
+		vbox = {
+			size = { 0 0 }
+			scissor = yes
+			ignore_layout = yes
+			name = "lsq_auto_expand_active_rgos"
+			datamodel = "[ExpandRawGoodsLateralView.GetRawGoodLocationItems]"
+			item = {
+				overlappingitembox = {
+					datacontext = "[RawGoodLocationItem.GetLocation]"
+					ignore_layout = yes
+					visible = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+				}
+			}
+		}
+
+		vbox = {
+			size = { 0 0 }
+			scissor = yes
+			ignore_layout = yes
+			name = "lsq_auto_expand_possible_rgos"
+			datamodel = "[ExpandRawGoodsLateralView.GetRawGoodLocationItems]"
+			item = {
+				overlappingitembox = {
+					datacontext = "[RawGoodLocationItem.GetLocation]"
+					ignore_layout = yes
+					visible = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
+					state = {
+						name = "lsq_shift_click_mass_toggle_filtered_rgos"
+						on_finish = "[GetScriptedGui('lsq_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('set_off', MakeScopeBool(GreaterThanOrEqualTo_int32(PdxGuiWidget.FindParent('lsq_parent_of_auto_expand_active_rgos').FindChild('lsq_auto_expand_active_rgos').CountVisibleChildren, PdxGuiWidget.AccessParent.CountVisibleChildren))).End)]"
+					}
+				}
+			}
+		}
+
 		lsq_auto_expand_checkbutton = {
 			tooltipwidget = { using = lsq_Mass_Autoexpand_RGO_Tooltip }
 			checked = "[GetScriptedGui('lsq_toggle_mass_auto_expand_rgo').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
@@ -89,12 +151,20 @@ template lsq_RGO_Autoexpand_Tooltip {
 		}
 
 		blockoverride "tooltip_content" {
+			TooltipTextBlock = {
+				visible = "[GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+				blockoverride "text" {
+					text = "LSQ_AUTO_EXPAND_ALL_REQUIREMENTS_MET"
+				}
+			}
 			TooltipListBase = {
+				visible = "[Not(GetScriptedGui('lsq_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
 				blockoverride "block_title" {
-					raw_text = "Automatically constructs new RGO level at end of month, if enough gold is available, when the following conditions are met:"
+					raw_text = "Cannot expand until the following requirements are met:"
 				}
 				TooltipListRowContent = {
 					lsq_tooltip_row = {
+						visible = "[GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						blockoverride "first_element" { visible = yes }
 						blockoverride "not_first_element" { visible = no }
 						blockoverride "yes_visible" {
@@ -108,6 +178,7 @@ template lsq_RGO_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						visible = "[Not(GetScriptedGui('lsq_is_rgo_advance_researched').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
 						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_rgo_advance_researched').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
@@ -120,6 +191,7 @@ template lsq_RGO_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						visible = "[Not(GetScriptedGui('lsq_is_rgo_not_max_level_already').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_rgo_not_max_level_already').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 						}
@@ -131,6 +203,7 @@ template lsq_RGO_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						visible = "[Not(GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
@@ -143,6 +216,7 @@ template lsq_RGO_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						visible = "[Not(GetScriptedGui('lsq_has_enough_raw_materials_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_has_enough_raw_materials_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
 						}
@@ -154,6 +228,7 @@ template lsq_RGO_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						visible = "[Not(GetScriptedGui('lsq_rgo_meets_minimum_discount_for_auto_expand').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
 						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_rgo_meets_minimum_discount_for_auto_expand').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
@@ -166,7 +241,7 @@ template lsq_RGO_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						visible = "[InDebugMode]"
+						visible = "[And(InDebugMode, Not(GetScriptedGui('lsq_is_rgo_under_construction').IsShown(GuiScope.SetRoot(Location.MakeScope).End)))]"
 						background = { using = bg_tooltip_debug }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_rgo_under_construction').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
@@ -179,8 +254,8 @@ template lsq_RGO_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						visible = "[And(InDebugMode, Not(GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]"
 						using = lsq_tooltip_row_is_odd
-						visible = "[InDebugMode]"
 						background = { using = bg_tooltip_debug }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
@@ -445,10 +520,15 @@ template lsq_RGO_Autoexpand_Tooltip {
 			TooltipFunctionalBlock = {
 				using = tooltip_left_right_click_template
 				blockoverride "action_left_text" {
-					raw_text = "Toggle Auto-Expand"
+					text = "[UIAction.GetLeftClickName]"
 				}
 				blockoverride "action_right_text" {
 					raw_text = "Open Settings"
+				}
+			}
+			TooltipTextBlock = {
+				blockoverride "text" {
+					text = "LSQ_AUTO_EXPAND_RGO_SHIFT_HINT"
 				}
 			}
 		}
