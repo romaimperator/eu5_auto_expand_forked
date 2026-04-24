@@ -203,9 +203,10 @@ lsq_food_option_forest_village_viable = {
 	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food }
 }
 
-# True if ANY of the seven food-building options is currently viable at this location.
-# Used by the location auto-food button to decide green vs red glow.
-lsq_food_location_has_buildable_option = {
+# True if ANY of the seven food-building options is currently viable at this location
+# (can-build AND affordable AND meets minimum discount). Used by the location auto-food
+# button to decide green vs red glow.
+lsq_food_location_has_viable_option = {
 	OR = {
 		lsq_food_option_rgo_viable = yes
 		lsq_food_option_farming_village_viable = yes
@@ -214,5 +215,20 @@ lsq_food_location_has_buildable_option = {
 		lsq_food_option_fishing_village_viable = yes
 		lsq_food_option_sheep_farms_viable = yes
 		lsq_food_option_forest_village_viable = yes
+	}
+}
+
+# True if ANY food-building option could physically be built here right now — ignores
+# gold/discount. Lets the tooltip distinguish "nothing can be built" from
+# "something can be built but nothing meets the minimum discount."
+lsq_food_location_has_buildable_option = {
+	OR = {
+		lsq_food_can_build_rgo = yes
+		lsq_food_can_build_farming_village = yes
+		lsq_food_can_build_windmill = yes
+		lsq_food_can_build_irrigation = yes
+		lsq_food_can_build_fishing_village = yes
+		lsq_food_can_build_sheep_farms = yes
+		lsq_food_can_build_forest_village = yes
 	}
 }

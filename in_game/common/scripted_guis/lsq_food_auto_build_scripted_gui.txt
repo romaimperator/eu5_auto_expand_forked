@@ -126,7 +126,18 @@ lsq_food_location_pops_not_still_filling = {
 }
 
 # Root is location. Expects scope:country, scope:food_good.
-# True if at least one of the seven food-building options is viable right now.
+# True if at least one of the seven food-building options is viable right now
+# (can-build AND affordable AND meets minimum discount).
+lsq_food_location_has_viable_option = {
+	is_shown = {
+		lsq_food_location_has_viable_option = yes
+	}
+}
+
+# Root is location. Expects scope:country, scope:food_good.
+# True if at least one food-building option could physically be built here
+# (can-build only; ignores gold/discount). Used to disambiguate the "no option"
+# tooltip row from the "no option meets min discount" tooltip row.
 lsq_food_location_has_buildable_option = {
 	is_shown = {
 		lsq_food_location_has_buildable_option = yes
@@ -144,6 +155,6 @@ lsq_is_able_to_auto_food_location = {
 		}
 		lsq_check_location_meets_min_market_access = yes
 		NOT = { lsq_food_location_pops_still_filling = yes }
-		lsq_food_location_has_buildable_option = yes
+		lsq_food_location_has_viable_option = yes
 	}
 }
