@@ -73,7 +73,10 @@
 				tooltip_enabled = no
 				checked = "[GetScriptedGui('lsq_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End)]"
 				blockoverride "green_glow_visible" {
-					visible = "[GetScriptedGui('lsq_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End)]"
+					visible = "[And(GetScriptedGui('lsq_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End), GetScriptedGui('lsq_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End))]"
+				}
+				blockoverride "red_glow_visible" {
+					visible = "[And(GetScriptedGui('lsq_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End), Not(GetScriptedGui('lsq_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End)))]"
 				}
 			}
 		}
@@ -99,6 +102,97 @@ template lsq_Autofood_Tooltip {
 			TooltipTextBlock = {
 				blockoverride "text" {
 					text = "LSQ_AUTO_FOOD_TOOLTIP_DESC"
+				}
+			}
+
+			TooltipTextBlock = {
+				visible = "[GetScriptedGui('lsq_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End)]"
+				blockoverride "text" {
+					text = "LSQ_AUTO_EXPAND_ALL_REQUIREMENTS_MET"
+				}
+			}
+			TooltipListBase = {
+				visible = "[Not(GetScriptedGui('lsq_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End))]"
+				blockoverride "block_title" {
+					raw_text = "Cannot build food until the following requirements are met:"
+				}
+				TooltipListRowContent = {
+					lsq_tooltip_row = {
+						visible = "[GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						blockoverride "first_element" { visible = yes }
+						blockoverride "not_first_element" { visible = no }
+						blockoverride "yes_visible" {
+							visible = "[Not(GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+						}
+						blockoverride "no_visible" {
+							visible = "[GetScriptedGui('lsq_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Auto-expand is not paused"
+						}
+					}
+					lsq_tooltip_row = {
+						visible = "[Not(GetScriptedGui('lsq_is_auto_food_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_is_auto_food_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_is_auto_food_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Food auto-build feature is enabled in priority list"
+						}
+					}
+					lsq_tooltip_row = {
+						visible = "[Not(GetScriptedGui('lsq_food_location_has_market_access').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_food_location_has_market_access').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_food_location_has_market_access').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Location has market access"
+						}
+					}
+					lsq_tooltip_row = {
+						visible = "[Not(GetScriptedGui('lsq_food_location_pops_not_still_filling').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End))]"
+						using = lsq_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_food_location_pops_not_still_filling').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_food_location_pops_not_still_filling').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "Location has enough [ShowPopTypeName('laborers')] and [ShowPopTypeName('peasants')] available"
+						}
+					}
+					lsq_tooltip_row = {
+						visible = "[Not(GetScriptedGui('lsq_food_location_has_buildable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End))]"
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('lsq_food_location_has_buildable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('lsq_food_location_has_buildable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							raw_text = "At least one food building is available to build here"
+						}
+					}
+				}
+			}
+
+			TooltipTextBlock = {
+				visible = "[And(GetScriptedGui('lsq_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End), Not(GetScriptedGui('lsq_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End)))]"
+				blockoverride "text" {
+					raw_text = "Food will not build; conditions are not met"
+				}
+				blockoverride "textblock_background_tint"  {
+					modify_texture = {
+						using = color_red_texture
+					}
 				}
 			}
 		}

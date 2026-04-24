@@ -95,3 +95,55 @@ lsq_set_auto_food_for_location = {
 		}
 	}
 }
+
+# ─── Glow / tooltip gates ───
+
+# Root is country.
+# True if auto-food is active in the country's priority feature list.
+lsq_is_auto_food_feature_enabled = {
+	is_shown = {
+		is_target_in_variable_list = { name = lsq_priority_features_enabled target = flag:lsq_feature_auto_food }
+	}
+}
+
+# Root is location.
+# Thin wrapper so the tooltip row can call a scripted_gui.
+lsq_food_location_has_market_access = {
+	is_shown = {
+		lsq_check_location_meets_min_market_access = yes
+	}
+}
+
+# Root is location. Expects scope:country.
+# True when neither laborers nor peasants are scarce — i.e., the location isn't still
+# promoting pops to fill existing jobs. Treated as a single combined check because the
+# build logic skips the location whenever either pool is scarce (peasants promote to
+# laborers, so a peasant-consuming build would starve the RGO).
+lsq_food_location_pops_not_still_filling = {
+	is_shown = {
+		NOT = { lsq_food_location_pops_still_filling = yes }
+	}
+}
+
+# Root is location. Expects scope:country, scope:food_good.
+# True if at least one of the seven food-building options is viable right now.
+lsq_food_location_has_buildable_option = {
+	is_shown = {
+		lsq_food_location_has_buildable_option = yes
+	}
+}
+
+# Root is location. Expects scope:country, scope:food_good.
+# Top-level glow gate for the per-location auto-food button. Mirrors the preconditions
+# inside lsq_food_auto_build_in_location, minus transient/queue conditions.
+lsq_is_able_to_auto_food_location = {
+	is_shown = {
+		scope:country = {
+			lsq_should_pause_auto_expand = no
+			is_target_in_variable_list = { name = lsq_priority_features_enabled target = flag:lsq_feature_auto_food }
+		}
+		lsq_check_location_meets_min_market_access = yes
+		NOT = { lsq_food_location_pops_still_filling = yes }
+		lsq_food_location_has_buildable_option = yes
+	}
+}

@@ -150,3 +150,69 @@ lsq_food_can_build_forest_village = {
 		lsq_check_location_has_laborers_available_or_will_be = yes
 	}
 }
+
+# ─── Per-option viability (can-build AND affordable AND meets minimum discount) ───
+# These combine the three gates the effects file applies before constructing each option.
+# Root is the location. Expects scopes: country, location.
+
+lsq_food_option_rgo_viable = {
+	lsq_food_can_build_rgo = yes
+	lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_rgo }
+	lsq_rgo_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food }
+}
+
+lsq_food_option_farming_village_viable = {
+	lsq_food_can_build_farming_village = yes
+	lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_farming_village }
+	building_type:farming_village = { save_temporary_scope_as = building_type }
+	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food }
+}
+
+lsq_food_option_windmill_viable = {
+	lsq_food_can_build_windmill = yes
+	lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_windmill }
+	building_type:windmill = { save_temporary_scope_as = building_type }
+	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food }
+}
+
+lsq_food_option_irrigation_viable = {
+	lsq_food_can_build_irrigation = yes
+	lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_irrigation_systems }
+	building_type:irrigation_systems = { save_temporary_scope_as = building_type }
+	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food }
+}
+
+lsq_food_option_fishing_village_viable = {
+	lsq_food_can_build_fishing_village = yes
+	lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_fishing_village }
+	building_type:fishing_village = { save_temporary_scope_as = building_type }
+	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food }
+}
+
+lsq_food_option_sheep_farms_viable = {
+	lsq_food_can_build_sheep_farms = yes
+	lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_sheep_farms }
+	building_type:sheep_farms = { save_temporary_scope_as = building_type }
+	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food }
+}
+
+lsq_food_option_forest_village_viable = {
+	lsq_food_can_build_forest_village = yes
+	lsq_check_country_gold_above = { threshold = lsq_food_expected_gold_for_forest_village }
+	building_type:forest_village = { save_temporary_scope_as = building_type }
+	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_food }
+}
+
+# True if ANY of the seven food-building options is currently viable at this location.
+# Used by the location auto-food button to decide green vs red glow.
+lsq_food_location_has_buildable_option = {
+	OR = {
+		lsq_food_option_rgo_viable = yes
+		lsq_food_option_farming_village_viable = yes
+		lsq_food_option_windmill_viable = yes
+		lsq_food_option_irrigation_viable = yes
+		lsq_food_option_fishing_village_viable = yes
+		lsq_food_option_sheep_farms_viable = yes
+		lsq_food_option_forest_village_viable = yes
+	}
+}
