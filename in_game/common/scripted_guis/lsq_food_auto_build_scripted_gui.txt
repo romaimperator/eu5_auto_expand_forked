@@ -9,10 +9,13 @@ lsq__auto_food_list_on_changed = {
 	}
 }
 
-# Root is location; returns true if location's raw_material is one of the 14 food goods.
-# Used by the location window widget to gate visibility of the auto-food button.
+# Root is location; returns true if location is a rural settlement with one of the 14 food good RGOs.
+# Used by the location window widget to gate visibility of the auto-food button — towns and cities
+# can't build the food-specific buildings (farming village, fishing village, etc.) so the button is
+# hidden there.
 lsq_is_food_rgo_location = {
 	is_shown = {
+		location_rank = location_rank:rural_settlement
 		OR = {
 			raw_material = goods:rice
 			raw_material = goods:wheat
