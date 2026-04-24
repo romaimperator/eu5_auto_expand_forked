@@ -61,18 +61,24 @@ lsq_set_auto_food_for_location = {
 				}
 			}
 		} else = {
-			# Not covered by mass: toggle the enabled flag
+			# Not covered by mass: toggle the enabled flag.
+			# The enabled flag marks a manual per-location opt-in, so it also locks
+			# the location against rank upgrades via lsq_auto_food_locked_location.
 			if = { limit = { NOT = { exists = scope:set_off } }
 				if = { limit = { exists = var:auto_food_location_enabled }
 					remove_variable = auto_food_location_enabled
+					remove_location_modifier = lsq_auto_food_locked_location
 				} else = {
 					set_variable = { name = auto_food_location_enabled value = yes }
+					add_location_modifier = { modifier = lsq_auto_food_locked_location years = 1000 mode = replace }
 				}
 			} else = {
 				if = { limit = { scope:set_off = yes }
 					remove_variable = auto_food_location_enabled
+					remove_location_modifier = lsq_auto_food_locked_location
 				} else = {
 					set_variable = { name = auto_food_location_enabled value = yes }
+					add_location_modifier = { modifier = lsq_auto_food_locked_location years = 1000 mode = replace }
 				}
 			}
 		}
