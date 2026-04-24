@@ -1,0 +1,114 @@
+﻿types lsq_auto_food {
+	# Food variant of lsq_auto_expand_checkbutton. Points at checkbox_auto_food.dds (a duplicate of
+	# checkbox_auto_expand.dds placed in the same buttons folder) so the food icon can be edited
+	# independently. food.dds (vanilla source) is in the same folder as a reference.
+	type lsq_auto_food_checkbutton = checkbutton {
+		texture = "gfx/interface/buttons/checkbox_auto_food.dds"
+		texture_density = 2
+		frame_grid = { 2 1 }
+		size = { 30 30 }
+
+		background = {
+			texture = "gfx/interface/buttons/checkbox_bg.dds"
+			texture_density = 2
+			using = color_dark_blue
+			glow = {
+				name = "green_glow"
+				glow_radius = 5
+				alpha = 1.0
+				color = {0.0 1.0 0.0 1.0} # green
+				block "green_glow_visible" { visible = no }
+			}
+		}
+		background = {
+			texture = "gfx/interface/buttons/checkbox_bg.dds"
+			texture_density = 2
+			using = color_dark_blue
+			glow = {
+				name = "red_glow"
+				glow_radius = 5
+				alpha = 1.0
+				color = {1.0 0.0 0.0 1.0} # red
+				block "red_glow_visible" { visible = no }
+			}
+		}
+	}
+
+	# Used for location window (location_window.gui): sits above the auto_expand_rgo widget.
+	type lsq_auto_food_widget_location_window = lsq_auto_food_widget {
+		parentanchor = bottom|right
+		position = { 2 -21 }
+	}
+
+	type lsq_auto_food_widget = widget {
+		visible = "[And(ObjectsEqual(Location.GetOwner, GetPlayer), GetScriptedGui('lsq_is_food_rgo_location').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+		size = { 23 23 }
+
+		button = {
+			size = { 100% 100% }
+			enabled = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
+			tooltipwidget = {
+				using = lsq_Autofood_Tooltip
+			}
+
+			action_tooltip = {
+				click_type = left
+				click_mode = single
+				click_modifier = default
+				title = "LSQ_AUTO_FOOD_TOGGLE"
+				on_action = "[GetScriptedGui('lsq_set_auto_food_for_location').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End)]"
+			}
+
+			onrightclick = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
+			onrightclick = "[GetVariableSystem.Set('cmm_selected_mod', 'lsq')]"
+			onrightclick = "[GetVariableSystem.Set('cmm_selected_tab', 'lsq__settings')]"
+
+			lsq_auto_food_checkbutton = {
+				size = { 100% 100% }
+				alwaystransparent = yes
+				tooltip_enabled = no
+				checked = "[GetScriptedGui('lsq_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End)]"
+				blockoverride "green_glow_visible" {
+					visible = "[GetScriptedGui('lsq_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End)]"
+				}
+			}
+		}
+	}
+}
+
+template lsq_Autofood_Tooltip {
+	ContextualTooltipType = {
+		blockoverride "title_icon" {
+			lsq_auto_food_checkbutton = {
+				using = tooltip_title_icon_size
+				tooltip_enabled = no
+				checked = "[GetScriptedGui('lsq_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).End)]"
+				enabled = yes
+			}
+		}
+
+		blockoverride "title_text" {
+			raw_text = "Food Auto-Build"
+		}
+
+		blockoverride "tooltip_content" {
+			TooltipTextBlock = {
+				blockoverride "text" {
+					text = "LSQ_AUTO_FOOD_TOOLTIP_DESC"
+				}
+			}
+		}
+
+		blockoverride "tooltip_ui_action_block" {
+			TooltipFunctionalBlock = {
+				using = tooltip_left_right_click_template
+				blockoverride "action_left_text" {
+					raw_text = "Toggle Auto-Food"
+				}
+				blockoverride "action_right_text" {
+					raw_text = "Open Settings"
+				}
+			}
+		}
+	}
+}

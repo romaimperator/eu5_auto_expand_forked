@@ -385,6 +385,12 @@ lsq_run_auto_build = {
 # ─── Auto Food ───
 # Auto-builds food RGOs and related buildings in priority order.
 # Single monthly pass (no daily spread).
+#
+# Dispatches lsq_food_auto_build_for_rgo_type for every food good in the list (not just the ones
+# enabled in the mass settings), because individual locations may opt in via
+# var:auto_food_location_enabled even when their good's mass setting is off. The per-location
+# eligibility check inside lsq_food_auto_build_for_rgo_type combines mass coverage with the
+# per-location opt-in/opt-out flags.
 lsq_run_auto_food = {
 	lsq_update_food_data_columns = yes
 	if = {
@@ -393,10 +399,7 @@ lsq_run_auto_food = {
 			variable = lsq_auto_food_rgo_types_list
 			save_scope_as = food_good
 			scope:country = {
-				if = {
-					limit = { is_target_in_variable_list = { name = lsq_auto_food_rgo_types_enabled target = scope:food_good } }
-					lsq_food_auto_build_for_rgo_type = yes
-				}
+				lsq_food_auto_build_for_rgo_type = yes
 			}
 		}
 	}

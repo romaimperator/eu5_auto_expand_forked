@@ -110,6 +110,11 @@ lsq_food_auto_build_in_location = {
 
 # Iterate locations for a specific food RGO type and build optimally.
 # Root is the country. Expects scope:food_good (the goods scope for this food type).
+#
+# Eligibility combines mass setting with per-location opt-in/opt-out flags:
+#   - Opt-in (auto_food_location_enabled): location is processed regardless of mass/river status
+#   - Mass-covered: good is enabled in the auto_food_list AND river filter passes AND
+#     location is NOT opted out (auto_food_location_excluded)
 lsq_food_auto_build_for_rgo_type = {
 	save_scope_as = country
 
@@ -122,14 +127,26 @@ lsq_food_auto_build_for_rgo_type = {
 			NOT = { integration_level = conquered }
 			location_rank = location_rank:rural_settlement
 			lsq_food_location_matches_rgo_type = yes
-			lsq_food_location_meets_river_filter = yes
+			OR = {
+				exists = var:auto_food_location_enabled
+				AND = {
+					scope:country = { is_target_in_variable_list = { name = lsq_auto_food_rgo_types_enabled target = scope:food_good } }
+					lsq_food_location_meets_river_filter = yes
+					NOT = { exists = var:auto_food_location_excluded }
+				}
+			}
 		}
 		save_scope_as = location
 		lsq_food_auto_build_in_location = yes
 	}
 
-	# Also process subject locations if enabled for this RGO type
-	if = { limit = { is_target_in_variable_list = { name = lsq_auto_food_rgo_types_in_subjects_enabled target = scope:food_good } }
+	# Also process subject locations if the good is mass-enabled AND in_subjects is enabled.
+	# Per-location opt-in/opt-out flags don't apply here since the player can't toggle the
+	# auto-food button on subject locations.
+	if = { limit = {
+			is_target_in_variable_list = { name = lsq_auto_food_rgo_types_enabled target = scope:food_good }
+			is_target_in_variable_list = { name = lsq_auto_food_rgo_types_in_subjects_enabled target = scope:food_good }
+		}
 		every_subject_or_below = {
 			ordered_owned_location = {
 				order_by = max_control

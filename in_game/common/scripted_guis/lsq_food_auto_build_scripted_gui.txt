@@ -8,3 +8,84 @@ lsq__auto_food_list_on_changed = {
 		lsq_rebuild_auto_food_lookups = yes
 	}
 }
+
+# Root is location; returns true if location's raw_material is one of the 14 food goods.
+# Used by the location window widget to gate visibility of the auto-food button.
+lsq_is_food_rgo_location = {
+	is_shown = {
+		OR = {
+			raw_material = goods:rice
+			raw_material = goods:wheat
+			raw_material = goods:maize
+			raw_material = goods:potato
+			raw_material = goods:livestock
+			raw_material = goods:millet
+			raw_material = goods:legumes
+			raw_material = goods:wool
+			raw_material = goods:fish
+			raw_material = goods:olives
+			raw_material = goods:fruit
+			raw_material = goods:wild_game
+			raw_material = goods:beeswax
+			raw_material = goods:fur
+		}
+	}
+}
+
+# Root is location. Expects scope:food_good, scope:country (owner). Optional scope:set_off (bool).
+# Toggles per-location auto_food state, mirroring lsq_set_auto_expand_for_rgo's dual-flag logic:
+#   - If the location is currently "covered by mass" (good enabled AND river filter passes),
+#     flip auto_food_location_excluded (opt-out).
+#   - Otherwise flip auto_food_location_enabled (opt-in).
+lsq_set_auto_food_for_location = {
+	effect = {
+		if = {
+			limit = {
+				scope:country = { is_target_in_variable_list = { name = lsq_auto_food_rgo_types_enabled target = scope:food_good } }
+				lsq_food_location_meets_river_filter = yes
+			}
+			# Covered by mass: toggle the excluded flag
+			if = { limit = { NOT = { exists = scope:set_off } }
+				if = { limit = { exists = var:auto_food_location_excluded }
+					remove_variable = auto_food_location_excluded
+				} else = {
+					set_variable = { name = auto_food_location_excluded value = yes }
+				}
+			} else = {
+				if = { limit = { scope:set_off = yes }
+					if = { limit = { NOT = { exists = var:auto_food_location_excluded } }
+						set_variable = { name = auto_food_location_excluded value = yes }
+					}
+				} else = {
+					remove_variable = auto_food_location_excluded
+				}
+			}
+		} else = {
+			# Not covered by mass: toggle the enabled flag
+			if = { limit = { NOT = { exists = scope:set_off } }
+				if = { limit = { exists = var:auto_food_location_enabled }
+					remove_variable = auto_food_location_enabled
+				} else = {
+					set_variable = { name = auto_food_location_enabled value = yes }
+				}
+			} else = {
+				if = { limit = { scope:set_off = yes }
+					remove_variable = auto_food_location_enabled
+				} else = {
+					set_variable = { name = auto_food_location_enabled value = yes }
+				}
+			}
+		}
+	}
+
+	is_shown = {
+		OR = {
+			exists = var:auto_food_location_enabled
+			AND = {
+				scope:country = { is_target_in_variable_list = { name = lsq_auto_food_rgo_types_enabled target = scope:food_good } }
+				lsq_food_location_meets_river_filter = yes
+				NOT = { exists = var:auto_food_location_excluded }
+			}
+		}
+	}
+}
