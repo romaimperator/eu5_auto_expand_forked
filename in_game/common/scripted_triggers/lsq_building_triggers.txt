@@ -23,9 +23,9 @@ lsq_is_building_obsolete = {
 	building_type = { save_temporary_scope_as = the_building_type }
 	owner = { building_type_is_obsolete = scope:the_building_type }
 }
-# Root is the building type, also expects scope:country
+# Expects scope:building_type and scope:country. Root scope is unused.
 lsq_is_building_type_obsolete = {
-	scope:country = { building_type_is_obsolete = prev }
+	scope:country = { building_type_is_obsolete = scope:building_type }
 }
 
 # Root is the building
@@ -33,8 +33,10 @@ lsq_is_building_upgradeable = {
 	building_type = { is_upgradeable = yes }
 }
 
-# Root is the location, also expects scope:building_type and scope:country
+# Root is the location, also expects scope:building_type and scope:country.
+# False if the location doesn't have the building (nothing to upgrade).
 lsq_building_type_can_be_upgraded_by_owner = {
+	has_building = scope:building_type
 	"building(scope:building_type|scope:country)" = { building_can_be_upgraded_by = scope:country }
 }
 

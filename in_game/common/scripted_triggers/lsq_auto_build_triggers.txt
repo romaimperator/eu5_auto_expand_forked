@@ -166,8 +166,11 @@ lsq_auto_build_will_auto_build = {
 
 # Root is the location. Expects the building type as a target, also expects the scope country.
 # Uses can_build_building to check all placement prerequisites (tech, location rank, terrain, culture, etc.).
+# Foreign-only building types (is_foreign = yes, e.g. hanseatic_kontor, fondaco) are excluded:
+# can_build_building does not filter them out, but we do not support auto-expanding them in owned locations.
 lsq_location_allowed_to_build = {
 	scope:country = { save_temporary_scope_as = actor }
+	$target$ = { is_foreign = no }
 	can_build_building = $target$
 	scope:country = { can_build_building = $target$ }
 }
