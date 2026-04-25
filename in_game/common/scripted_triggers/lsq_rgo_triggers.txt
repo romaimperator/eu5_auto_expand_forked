@@ -48,10 +48,12 @@ lsq_rgo_meets_minimum_profit = {
 
 # Root is the location. Expects scopes: country.
 # $threshold$ = the full variable_map lookup expression for the discount threshold.
+# The 0.005 added to $threshold$ is a 0.5% tolerance so that a setting of -33%
+# matches a cost adjustment of -32.5% (avoids float-rounding misses at the boundary).
 lsq_rgo_meets_minimum_discount = {
 	OR = {
 		NOT = { scope:country = { has_variable_map = lsq_priority_min_discount } }
-		lsq_get_construction_cost_adjustment_for_rgo <= $threshold$
+		lsq_get_construction_cost_adjustment_for_rgo <= { value = $threshold$ add = 0.005 }
 	}
 }
 

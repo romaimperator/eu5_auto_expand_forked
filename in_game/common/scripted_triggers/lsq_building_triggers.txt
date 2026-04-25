@@ -117,6 +117,8 @@ lsq_building_type_produces_own_construction_good = {
 # from the priority list (field slot 2, mapped to lsq_priority_min_discount, pre-scaled ×0.01).
 # Expects scopes: country, building_type.
 # $threshold$ = the full variable_map lookup expression for the discount threshold.
+# The 0.005 added to $threshold$ is a 0.5% tolerance so that a setting of -33%
+# matches a cost adjustment of -32.5% (avoids float-rounding misses at the boundary).
 lsq_building_meets_minimum_discount = {
 	OR = {
 		NOT = { scope:country = { has_variable_map = lsq_priority_min_discount } }
@@ -124,7 +126,7 @@ lsq_building_meets_minimum_discount = {
 		lsq_building_type_produces_own_construction_good = yes
 		lsq_get_standard_construction_demand_total = 0
 		scope:building_type = {
-			lsq_get_standard_construction_cost_adjustment_for_building_type <= $threshold$
+			lsq_get_standard_construction_cost_adjustment_for_building_type <= { value = $threshold$ add = 0.005 }
 		}
 	}
 }
