@@ -194,13 +194,15 @@ lsq_auto_build_check_meets_minimum_market_price_impact = {
 
 # ─── Auto Build Capital triggers ───
 # Root is the capital location. Expects scope:building_type, scope:country.
-# Mirrors lsq_location_can_auto_build but reads min_discount from the per-feature
-# priority list field (lsq_priority_min_discount keyed on flag:lsq_feature_auto_build_capital)
-# instead of the per-building auto_build_list lookup map.
+# Reads min_discount from the per-feature priority list field
+# (lsq_priority_min_discount keyed on flag:lsq_feature_auto_build_capital).
+# Allows multi-level capital buildings (chancery) to be queued up to their cap:
+# lsq_location_building_type_is_not_at_max_level passes when the building doesn't
+# exist yet OR exists below max with no level currently under construction.
 lsq_capital_location_can_auto_build = {
 	scope:country = { lsq_should_pause_auto_expand = no }
 	save_temporary_scope_as = location
-	NOT = { has_building = scope:building_type }
+	lsq_location_building_type_is_not_at_max_level = { target = scope:building_type }
 	lsq_location_allowed_to_build = { target = scope:building_type }
 	lsq_location_has_enough_pops_available = yes
 	lsq_can_afford_switch_based_on_building_type = yes
