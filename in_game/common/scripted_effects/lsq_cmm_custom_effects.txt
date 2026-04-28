@@ -15,11 +15,14 @@ lsq_cmm_post_registration = {
 	}
 
 	# Override priority list defaults: enable buildings (item 1) and RGOs (item 2) by default
+	# Auto Build Capital Buildings (item 7) starts at +33% min_discount so capital buildings
+	# are constructed immediately regardless of construction material prices.
 	if = {
 		limit = { NOT = { has_variable = lsq_cmm_priority_list_initialized } }
 		set_variable = { name = lsq_cmm_priority_list_initialized value = 1 }
 		add_to_variable_map = { name = cmm key = flag:lsq__priority_list_i1_f3 value = 1 }
 		add_to_variable_map = { name = cmm key = flag:lsq__priority_list_i2_f3 value = 1 }
+		add_to_variable_map = { name = cmm key = flag:lsq__priority_list_i7_f2 value = 33 }
 	}
 
 	# Build lookup tables from CMM list fields
