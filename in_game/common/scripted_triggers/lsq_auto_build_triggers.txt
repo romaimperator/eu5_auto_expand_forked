@@ -192,3 +192,33 @@ lsq_auto_build_check_meets_minimum_market_price_impact = {
 	}
 }
 
+# ─── Auto Build Capital triggers ───
+# Root is the capital location. Expects scope:building_type, scope:country.
+# Mirrors lsq_location_can_auto_build but reads min_discount from the per-feature
+# priority list field (lsq_priority_min_discount keyed on flag:lsq_feature_auto_build_capital)
+# instead of the per-building auto_build_list lookup map.
+lsq_capital_location_can_auto_build = {
+	scope:country = { lsq_should_pause_auto_expand = no }
+	save_temporary_scope_as = location
+	NOT = { has_building = scope:building_type }
+	lsq_location_allowed_to_build = { target = scope:building_type }
+	lsq_location_has_enough_pops_available = yes
+	lsq_can_afford_switch_based_on_building_type = yes
+	lsq_check_location_meets_min_market_access = yes
+	lsq_capital_meets_min_discount = yes
+	lsq_get_open_build_queue_slots > 0
+	lsq_check_country_gold_above = { threshold = lsq_expected_gold_available_for_building_type_for_auto_build }
+}
+
+# Expects scopes: country, location, building_type.
+# Discount setting is read from the priority list's per-feature min_discount field.
+# Demand-only buildings (zero standard construction demand) always pass.
+# 0.005 tolerance matches the auto_build_list discount check so a -33% slider
+# accepts a -32.5% real cost adjustment without float-rounding misses.
+lsq_capital_meets_min_discount = {
+	OR = {
+		scope:building_type = { save_temporary_scope_as = building_type lsq_get_standard_construction_demand_total = 0 }
+		scope:building_type = { lsq_get_standard_construction_cost_adjustment_for_building_type <= { value = lsq_get_min_discount_for_auto_build_capital add = 0.005 } }
+	}
+}
+

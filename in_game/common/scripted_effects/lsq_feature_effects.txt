@@ -420,3 +420,40 @@ lsq_run_auto_upgrade_towns_to_cities = {
 		}
 	}
 }
+
+# ─── Auto Build Capital ───
+# Auto-constructs capital-only buildings in the country's capital location.
+lsq_run_auto_build_capital = {
+	if = {
+		limit = { exists = capital }
+		capital = {
+			save_scope_as = capital_location
+			if = {
+				limit = { NOT = { integration_level = conquered } }
+				lsq_try_construct_capital_building = { building_type_text = royal_court }
+				lsq_try_construct_capital_building = { building_type_text = house_of_parliament }
+				lsq_try_construct_capital_building = { building_type_text = order_headquarters }
+				lsq_try_construct_capital_building = { building_type_text = admiralty }
+				lsq_try_construct_capital_building = { building_type_text = war_college }
+				lsq_try_construct_capital_building = { building_type_text = tax_assessor }
+				lsq_try_construct_capital_building = { building_type_text = supreme_court }
+				lsq_try_construct_capital_building = { building_type_text = chancery }
+				lsq_try_construct_capital_building = { building_type_text = republican_assembly }
+				lsq_try_construct_capital_building = { building_type_text = royal_garden }
+				lsq_try_construct_capital_building = { building_type_text = pirate_stronghold }
+			}
+		}
+	}
+}
+
+# Expects scopes: country, capital_location.
+# Tries to construct a single capital-only building if all conditions pass.
+lsq_try_construct_capital_building = {
+	building_type:$building_type_text$ = { save_scope_as = building_type }
+	if = {
+		limit = {
+			scope:capital_location = { lsq_capital_location_can_auto_build = yes }
+		}
+		scope:capital_location = { construct_building = { building_type = scope:building_type } }
+	}
+}
