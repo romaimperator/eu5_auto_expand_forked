@@ -405,18 +405,36 @@ lsq_run_auto_food = {
 	}
 }
 
-# ─── Auto Upgrade Towns to Cities ───
-# Upgrades qualifying towns to cities.
-lsq_run_auto_upgrade_towns_to_cities = {
-	ordered_owned_location = {
-		order_by = max_control
-		max = lsq_max_guess_at_number_of_locations
-		check_range_bounds = no
-		save_scope_as = location
-		limit = { NOT = { integration_level = conquered } lsq_location_can_mass_upgrade_to_city = yes }
-		if = {
-			limit = { lsq_check_country_gold_above = { threshold = lsq_mass_upgrade_town_to_city_gold_needed } }
-			scope:location = { construct_building = { building_type = building_type:lsq_upgrade_town_to_city_building } }
+# ─── Auto Urbanize ───
+# Promotes location ranks: towns to cities, and rural settlements to towns.
+# Each upgrade type is gated by its own sub-toggle on the Urbanize tab.
+lsq_run_auto_urbanize = {
+	if = {
+		limit = { exists = var:lsq_urbanize_town_to_city }
+		ordered_owned_location = {
+			order_by = max_control
+			max = lsq_max_guess_at_number_of_locations
+			check_range_bounds = no
+			save_scope_as = location
+			limit = { NOT = { integration_level = conquered } lsq_location_can_mass_upgrade_to_city = yes }
+			if = {
+				limit = { lsq_check_country_gold_above = { threshold = lsq_mass_upgrade_town_to_city_gold_needed } }
+				scope:location = { construct_building = { building_type = building_type:lsq_upgrade_town_to_city_building } }
+			}
+		}
+	}
+	if = {
+		limit = { exists = var:lsq_urbanize_rural_to_town }
+		ordered_owned_location = {
+			order_by = max_control
+			max = lsq_max_guess_at_number_of_locations
+			check_range_bounds = no
+			save_scope_as = location
+			limit = { NOT = { integration_level = conquered } lsq_location_can_mass_upgrade_to_town = yes }
+			if = {
+				limit = { lsq_check_country_gold_above = { threshold = lsq_mass_upgrade_rural_to_town_gold_needed } }
+				scope:location = { construct_building = { building_type = building_type:lsq_upgrade_rural_to_town_building } }
+			}
 		}
 	}
 }

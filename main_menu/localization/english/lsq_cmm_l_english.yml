@@ -8,9 +8,9 @@
  ## Global Control (settings) Group
  lsq__settings__settings_name: "Global Control"
  lsq__pause_auto_expand_name: "Pause Automation"
- lsq__pause_auto_expand_desc: "Pauses all automation features: auto-expand buildings, auto-expand RGOs, upgrade all buildings, auto-build, auto-food, and auto-upgrade towns to cities."
+ lsq__pause_auto_expand_desc: "Pauses all automation features: auto-expand buildings, auto-expand RGOs, upgrade all buildings, auto-build, auto-food, and auto-urbanize."
  lsq__minimum_gold_name: "Gold Reserve"
- lsq__minimum_gold_desc: "The minimum gold reserve to keep. Construction will not be queued if it would leave the treasury below this amount. Applies to all automation features except town-to-city upgrades (which have their own gold setting)."
+ lsq__minimum_gold_desc: "The minimum gold reserve to keep. Construction will not be queued if it would leave the treasury below this amount. Applies to all automation features except auto-urbanize upgrades (which have their own gold setting)."
  lsq__minimum_gold_format: "[CMMV('lsq__minimum_gold')]@gold!"
  lsq__allowed_building_overbuild_levels_name: "Overbuild Limit"
  lsq__allowed_building_overbuild_levels_desc: "How many total building levels a location may exceed its Supported Building Levels cap by before auto-expand will stop queueing new construction there. At zero, it won't allow any overbuilding."
@@ -29,8 +29,8 @@
  lsq__priority_list_i4_desc: "Automatically constructs one-per-location buildings (temples, libraries, etc.) in the order and with the settings configured on the Auto-Build tab."
  lsq__priority_list_i5_name: "Auto Food"
  lsq__priority_list_i5_desc: "Automatically builds food-producing RGOs and buildings in rural locations, picking the option with the highest marginal food output. Configured on the Auto-Food tab."
- lsq__priority_list_i6_name: "Auto Upgrade Towns to Cities"
- lsq__priority_list_i6_desc: "Automatically upgrades qualifying towns to cities each month. Towns must meet the minimum population, and must not result in lowering you below your minimum configured gold reserve. It will not upgrade location ranks of unintegrated locations."
+ lsq__priority_list_i6_name: "Auto Urbanize"
+ lsq__priority_list_i6_desc: "Promotes location ranks each month: rural settlements to towns, and towns to cities. Rural-to-town requires 30,000 pops (immediately city-eligible) or within 1,000 of pop cap (otherwise growth would stall at the rural cap). Skips unintegrated locations. Configured on the Auto Urbanize tab."
  lsq__priority_list_i7_name: "Auto Build Capital Buildings"
  lsq__priority_list_i7_desc: "Automatically constructs capital-only buildings (royal court, supreme court, war college, etc.) in your capital location when conditions allow."
  lsq__priority_list__enabled_name: "Enabled"
@@ -119,6 +119,19 @@
  lsq__auto_food_list__in_subjects_name: "Subjects"
  lsq__auto_food_list__in_subjects_desc: "Also auto-build in subject nations' locations."
 
+ # Auto Urbanize (auto_urbanize) Tab
+ lsq__auto_urbanize_name: "Auto Urbanize"
+ ## Auto Urbanize Settings (auto_urbanize) Group
+ lsq__auto_urbanize__auto_urbanize_name: "Auto Urbanize Settings"
+ lsq__auto_urbanize__auto_urbanize_desc: "Choose which location rank promotions run each month."
+ lsq__urbanize_town_to_city_name: "Town to City"
+ lsq__urbanize_town_to_city_desc: "Promote qualifying towns to cities each month."
+ lsq__urbanize_rural_to_town_name: "Rural to Town"
+ lsq__urbanize_rural_to_town_desc: "Promote qualifying rural settlements to towns each month. Requires 30,000 pops (immediately city-eligible) or within 1,000 of pop cap (otherwise growth would stall at the rural cap), and an RGO base price below the Min RGO Value to Ignore threshold."
+ lsq__rural_to_town_max_rgo_price_name: "Min RGO Value to Ignore"
+ lsq__rural_to_town_max_rgo_price_desc: "Rural settlements whose RGO has a base price at or above this value are skipped for rural-to-town. Uses the good's base price, not the current market price."
+ lsq__rural_to_town_max_rgo_price_format: "[CMMV('lsq__rural_to_town_max_rgo_price')]@gold!"
+
  # Optional: self-referencing flag keys to suppress IDE warnings (safe to remove if you want)
  lsq: "lsq"
  lsq__settings: "lsq__settings"
@@ -145,3 +158,8 @@
  lsq__auto_food_list__enabled: "lsq__auto_food_list__enabled"
  lsq__auto_food_list__river_only: "lsq__auto_food_list__river_only"
  lsq__auto_food_list__in_subjects: "lsq__auto_food_list__in_subjects"
+ lsq__auto_urbanize: "lsq__auto_urbanize"
+ lsq__auto_urbanize__auto_urbanize: "lsq__auto_urbanize__auto_urbanize"
+ lsq__urbanize_town_to_city: "lsq__urbanize_town_to_city"
+ lsq__urbanize_rural_to_town: "lsq__urbanize_rural_to_town"
+ lsq__rural_to_town_max_rgo_price: "lsq__rural_to_town_max_rgo_price"

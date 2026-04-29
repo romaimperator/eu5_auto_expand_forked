@@ -1,6 +1,10 @@
-﻿# Root is the country
-lsq_should_mass_upgrade_town_to_city = {
-	is_target_in_variable_list = { name = lsq_priority_features_enabled target = flag:lsq_feature_auto_upgrade_towns_to_cities }
+﻿# Root is the location.
+# True when the location's population is at or within 1k of its location cap.
+lsq_location_pop_at_or_near_cap = {
+	location_max_population <= {
+		value = population
+		add = 1
+	}
 }
 
 # Root is the location, expects scope:country
@@ -16,10 +20,42 @@ lsq_location_can_mass_upgrade_to_city = {
 	}
 }
 
+# Root is the location, expects scope:country
+lsq_location_can_mass_upgrade_to_town = {
+	AND = {
+		location_rank = location_rank:rural_settlement
+		OR = {
+			population >= 30
+			lsq_location_pop_at_or_near_cap = yes
+		}
+		lsq_rural_to_town_rgo_below_threshold = yes
+		modifier:cannot_upgrade_location = no
+		NOT = { has_building = building_type:lsq_upgrade_rural_to_town_building }
+		NOT = { integration_level = conquered }
+		lsq_mass_upgrade_rural_to_town_discount_check = yes
+		lsq_location_allowed_to_build = { target = building_type:lsq_upgrade_rural_to_town_building }
+	}
+}
+
+# Root is the location, expects scope:country.
+# True when the base price of the location's RGO good is below the configured threshold.
+lsq_rural_to_town_rgo_below_threshold = {
+	raw_material = { save_temporary_scope_as = lsq_rgo_good }
+	"default_price(scope:lsq_rgo_good)" < lsq_get_rural_to_town_max_rgo_price
+}
+
 # Root is the location, expects scope:country.
 # Checks that the market price impact of city upgrade construction demand is within the player's threshold.
 lsq_mass_upgrade_town_to_city_discount_check = {
 	save_temporary_scope_as = location
 	building_type:lsq_upgrade_town_to_city_building = { save_temporary_scope_as = building_type }
-	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_upgrade_towns_to_cities }
+	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_urbanize }
+}
+
+# Root is the location, expects scope:country.
+# Checks that the market price impact of town upgrade construction demand is within the player's threshold.
+lsq_mass_upgrade_rural_to_town_discount_check = {
+	save_temporary_scope_as = location
+	building_type:lsq_upgrade_rural_to_town_building = { save_temporary_scope_as = building_type }
+	lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_urbanize }
 }

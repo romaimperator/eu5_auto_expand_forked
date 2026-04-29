@@ -28,7 +28,7 @@ lsq_register_cmf_mod = {
 	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 3 value = flag:lsq_feature_upgrade_all_buildings }
 	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 4 value = flag:lsq_feature_auto_build }
 	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 5 value = flag:lsq_feature_auto_food }
-	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 6 value = flag:lsq_feature_auto_upgrade_towns_to_cities }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 6 value = flag:lsq_feature_auto_urbanize }
 	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 7 value = flag:lsq_feature_auto_build_capital }
 
 	cmm_register_list_numeric_field = {
@@ -459,6 +459,47 @@ lsq_register_cmf_mod = {
 		field_id = in_subjects
 		default_value = 0
 	}
+
+	# Auto Urbanize (auto_urbanize) Tab
+	## Auto Urbanize Settings (auto_urbanize) Group
+	cmm_register_bool_setting = {
+		mod_id = lsq
+		setting_id = urbanize_town_to_city
+		tab_id = auto_urbanize
+		group_id = auto_urbanize
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = lsq__urbanize_town_to_city
+		alias = lsq_urbanize_town_to_city
+	}
+
+	cmm_register_bool_setting = {
+		mod_id = lsq
+		setting_id = urbanize_rural_to_town
+		tab_id = auto_urbanize
+		group_id = auto_urbanize
+		default_value = 0
+	}
+	cmm_sync_bool_alias = {
+		setting = lsq__urbanize_rural_to_town
+		alias = lsq_urbanize_rural_to_town
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = lsq
+		setting_id = rural_to_town_max_rgo_price
+		tab_id = auto_urbanize
+		group_id = auto_urbanize
+		default_value = 2
+		min_value = 0
+		max_value = 10
+		step_value = 0.5
+	}
+	cmm_sync_setting_alias = {
+		setting = lsq__rural_to_town_max_rgo_price
+		alias = lsq_rural_to_town_max_rgo_price
+	}
 }
 
 # Auto-Build (auto_build) Tab
@@ -509,6 +550,26 @@ lsq_handle_cmf_callback = {
 			cmm_sync_setting_alias = {
 				setting = lsq__allowed_building_overbuild_levels
 				alias = lsq_allowed_building_overbuild_levels
+			}
+		}
+		# Auto Urbanize (auto_urbanize) Tab
+		## Auto Urbanize Settings (auto_urbanize) Group
+		flag:lsq__urbanize_town_to_city = {
+			cmm_sync_bool_alias = {
+				setting = lsq__urbanize_town_to_city
+				alias = lsq_urbanize_town_to_city
+			}
+		}
+		flag:lsq__urbanize_rural_to_town = {
+			cmm_sync_bool_alias = {
+				setting = lsq__urbanize_rural_to_town
+				alias = lsq_urbanize_rural_to_town
+			}
+		}
+		flag:lsq__rural_to_town_max_rgo_price = {
+			cmm_sync_setting_alias = {
+				setting = lsq__rural_to_town_max_rgo_price
+				alias = lsq_rural_to_town_max_rgo_price
 			}
 		}
 	}
