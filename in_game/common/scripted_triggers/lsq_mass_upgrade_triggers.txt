@@ -28,7 +28,7 @@ lsq_location_can_mass_upgrade_to_town = {
 			population >= 30
 			lsq_location_pop_at_or_near_cap = yes
 		}
-		lsq_rural_to_town_rgo_below_threshold = yes
+		lsq_rural_to_town_rgo_not_ignored = yes
 		modifier:cannot_upgrade_location = no
 		NOT = { has_building = building_type:lsq_upgrade_rural_to_town_building }
 		NOT = { integration_level = conquered }
@@ -38,10 +38,10 @@ lsq_location_can_mass_upgrade_to_town = {
 }
 
 # Root is the location, expects scope:country.
-# True when the base price of the location's RGO good is below the configured threshold.
-lsq_rural_to_town_rgo_below_threshold = {
+# True when the location's RGO good is not in the player-configured ignore list.
+lsq_rural_to_town_rgo_not_ignored = {
 	raw_material = { save_temporary_scope_as = lsq_rgo_good }
-	"default_price(scope:lsq_rgo_good)" < lsq_get_rural_to_town_max_rgo_price
+	NOT = { scope:country = { is_target_in_variable_list = { name = lsq_auto_urbanize_ignored_rgo_goods target = scope:lsq_rgo_good } } }
 }
 
 # Root is the location, expects scope:country.

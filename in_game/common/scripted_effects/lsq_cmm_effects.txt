@@ -486,19 +486,41 @@ lsq_register_cmf_mod = {
 		alias = lsq_urbanize_rural_to_town
 	}
 
-	cmm_register_slider_setting = {
+	## Rural-to-Town Ignored RGOs (ignore_list) Group
+	cmm_register_settings_list = {
 		mod_id = lsq
-		setting_id = rural_to_town_max_rgo_price
+		setting_id = auto_urbanize_ignore_list
 		tab_id = auto_urbanize
-		group_id = auto_urbanize
-		default_value = 2
-		min_value = 0
-		max_value = 10
-		step_value = 0.5
+		item_count = 15
+		is_ordered = 0
 	}
-	cmm_sync_setting_alias = {
-		setting = lsq__rural_to_town_max_rgo_price
-		alias = lsq_rural_to_town_max_rgo_price
+
+	# Mined metals and minerals
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 1 value = goods:goods_gold }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 2 value = goods:silver }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 3 value = goods:gems }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 4 value = goods:iron }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 5 value = goods:copper }
+	# Gathered
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 6 value = goods:amber }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 7 value = goods:salt }
+	# Forestry
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 8 value = goods:lumber }
+	# Spices
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 9 value = goods:cloves }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 10 value = goods:pepper }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 11 value = goods:saffron }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 12 value = goods:chili }
+	# Plantation and luxury crops
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 13 value = goods:silk }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 14 value = goods:cocoa }
+	cmm_set_list_item_value = { mod_id = lsq setting_id = auto_urbanize_ignore_list item = 15 value = goods:tobacco }
+
+	cmm_register_list_bool_field = {
+		mod_id = lsq
+		setting_id = auto_urbanize_ignore_list
+		field_id = ignored
+		default_value = 0
 	}
 }
 
@@ -564,12 +586,6 @@ lsq_handle_cmf_callback = {
 			cmm_sync_bool_alias = {
 				setting = lsq__urbanize_rural_to_town
 				alias = lsq_urbanize_rural_to_town
-			}
-		}
-		flag:lsq__rural_to_town_max_rgo_price = {
-			cmm_sync_setting_alias = {
-				setting = lsq__rural_to_town_max_rgo_price
-				alias = lsq_rural_to_town_max_rgo_price
 			}
 		}
 	}

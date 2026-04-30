@@ -25,10 +25,19 @@ lsq_cmm_post_registration = {
 		add_to_variable_map = { name = cmm key = flag:lsq__priority_list_i7_f2 value = 33 }
 	}
 
+	# Override urbanize ignore list defaults: Gold (item 1) and Silver (item 2) ignored by default.
+	if = {
+		limit = { NOT = { has_variable = lsq_cmm_auto_urbanize_ignore_list_initialized } }
+		set_variable = { name = lsq_cmm_auto_urbanize_ignore_list_initialized value = 1 }
+		add_to_variable_map = { name = cmm key = flag:lsq__auto_urbanize_ignore_list_i1_f1 value = 1 }
+		add_to_variable_map = { name = cmm key = flag:lsq__auto_urbanize_ignore_list_i2_f1 value = 1 }
+	}
+
 	# Build lookup tables from CMM list fields
 	lsq_rebuild_priority_lookups = yes
 	lsq_rebuild_auto_build_lookups = yes
 	lsq_rebuild_auto_food_lookups = yes
+	lsq_rebuild_auto_urbanize_lookups = yes
 
 	# Hide buildings whose advance hasn't been researched yet
 	lsq_update_auto_build_list_visibility = yes
@@ -86,6 +95,21 @@ lsq_rebuild_auto_build_lookups = {
 
 	# Min RGOs by building type (numeric field slot 5, direct values)
 	cmm_build_list_field_map = { setting = lsq__auto_build_list field_slot = 5 map_name = lsq_min_rgos_by_building_type multiply = 1 }
+
+	} # end guard
+}
+
+# Rebuild auto-urbanize ignore list lookup from CMM list field data.
+# Called on registration and on every setting change.
+# Scope: country
+lsq_rebuild_auto_urbanize_lookups = {
+	if = {
+		limit = { NOT = { has_variable_list = cmm_list_items_lsq__auto_urbanize_ignore_list } }
+	}
+	else = {
+
+	# Goods marked ignored (bool field slot 1)
+	cmm_build_list_bool_list = { setting = lsq__auto_urbanize_ignore_list field_slot = 1 list_name = lsq_auto_urbanize_ignored_rgo_goods }
 
 	} # end guard
 }
@@ -169,5 +193,8 @@ _lsq_cmm_suppress_warnings = {
 		cmf_suppress = { v = lsq_auto_food_rgo_types_enabled }
 		cmf_suppress = { v = lsq_auto_food_rgo_types_river_only }
 		cmf_suppress = { v = lsq_auto_food_rgo_types_in_subjects_enabled }
+		# Auto-urbanize ignore list
+		cmf_suppress = { v = lsq_auto_urbanize_ignored_rgo_goods }
+		cmf_suppress = { v = lsq_cmm_auto_urbanize_ignore_list_initialized }
 	}
 }
