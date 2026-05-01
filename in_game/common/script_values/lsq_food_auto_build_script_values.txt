@@ -270,3 +270,17 @@ lsq_food_build_cost_modifier = {
 	add = modifier:local_build_new_buildings_cost
 }
 
+# ─── RGO buildout pop reservation ───
+# Spare pop pool after fully building out the RGO to its max level.
+# Root is the location.
+#   = peasants_available + laborers_available - (max_rgo_level - current_level - levels_under_construction)
+# Negative means the location's combined pool can't fill remaining RGO levels, so any peasant
+# diverted into a peasant-using food building is one less laborer for the RGO.
+lsq_food_pop_pool_after_rgo_buildout = {
+	value = lsq_location_peasants_available
+	add = lsq_location_laborers_available
+	subtract = lsq_get_max_rgo_workers_floor
+	add = lsq_modifier_rgo_level
+	add = lsq_get_rgos_under_construction
+}
+

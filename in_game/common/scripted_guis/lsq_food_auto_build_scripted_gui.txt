@@ -118,10 +118,9 @@ lsq_food_location_has_market_access = {
 }
 
 # Root is location. Expects scope:country.
-# True when neither laborers nor peasants are scarce — i.e., the location isn't still
-# promoting pops to fill existing jobs. Treated as a single combined check because the
-# build logic skips the location whenever either pool is scarce (peasants promote to
-# laborers, so a peasant-consuming build would starve the RGO).
+# True when at least one pop-restricted food option has its pop pool ready: laborers are
+# available for laborer-using options, OR peasants are available AND not reserved for full
+# RGO buildout. False means every pop-restricted option is blocked by pop scarcity.
 lsq_food_location_pops_not_still_filling = {
 	is_shown = {
 		NOT = { lsq_food_location_pops_still_filling = yes }

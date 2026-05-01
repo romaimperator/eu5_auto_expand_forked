@@ -26,18 +26,35 @@ lsq_food_location_meets_river_filter = {
 	}
 }
 
-# ─── Combined pool pop check ───
+# ─── Pool pop checks ───
 
 # Root is the location. Expects scope:country.
-# True when ANY pop type in the location is scarce — existing buildings/RGO haven't filled their
-# workers yet and promotion isn't fast enough. When true, the food system should NOT build anything
-# new — let pops promote and fill existing positions first. This treats all pop types as a combined
-# pool: peasants promote to laborers, so building a peasant-consuming building (farming village)
-# when laborers are scarce diverts peasants from promoting to fill the RGO.
+# True when no pop-restricted food option is buildable: laborers are scarce for laborer-using
+# options AND peasants either are scarce or are reserved for full RGO buildout. When true, the
+# food system should NOT build anything new — let pops promote and fill existing positions first.
+# Peasant buildings remain blocked even when peasants are abundant if the RGO needs every peasant
+# to promote into a laborer (e.g. 10k pops with 11 RGO levels remaining).
 lsq_food_location_pops_still_filling = {
-	OR = {
+	AND = {
 		NOT = { lsq_check_location_has_laborers_available_or_will_be = yes }
-		NOT = { lsq_check_location_has_peasants_available_or_will_be = yes }
+		OR = {
+			NOT = { lsq_check_location_has_peasants_available_or_will_be = yes }
+			NOT = { lsq_food_pop_pool_fits_full_rgo_buildout = yes }
+		}
+	}
+}
+
+# Root is the location.
+# True when the combined peasant + laborer pool is enough to fully build out the RGO to its max
+# level. False means RGO buildout would consume every peasant via promotion, so peasant-using
+# food buildings should not be queued (they would compete with RGO for the same pool and reduce
+# the final RGO level count).
+lsq_food_pop_pool_fits_full_rgo_buildout = {
+	trigger_if = { limit = { lsq_is_rgo_not_max_level_already = no }
+		always = yes
+	}
+	trigger_else = {
+		lsq_food_pop_pool_after_rgo_buildout >= 0
 	}
 }
 
@@ -74,6 +91,7 @@ lsq_food_can_build_farming_village = {
 		}
 		lsq_food_location_buildable_for_building_type = { target = building_type:farming_village }
 		lsq_check_location_has_peasants_available_or_will_be = yes
+		lsq_food_pop_pool_fits_full_rgo_buildout = yes
 	}
 }
 
@@ -111,6 +129,7 @@ lsq_food_can_build_fishing_village = {
 		location_rank = location_rank:rural_settlement
 		lsq_food_location_buildable_for_building_type = { target = building_type:fishing_village }
 		lsq_check_location_has_peasants_available_or_will_be = yes
+		lsq_food_pop_pool_fits_full_rgo_buildout = yes
 	}
 }
 
@@ -126,6 +145,7 @@ lsq_food_can_build_sheep_farms = {
 		}
 		lsq_food_location_buildable_for_building_type = { target = building_type:sheep_farms }
 		lsq_check_location_has_peasants_available_or_will_be = yes
+		lsq_food_pop_pool_fits_full_rgo_buildout = yes
 	}
 }
 

@@ -8,7 +8,10 @@ lsq_food_auto_build_in_location = {
 	if = { limit = { lsq_get_open_build_queue_slots > 0 }
 	if = { limit = { lsq_check_location_meets_min_market_access = yes }
 
-	# Combined pool: if any pop type is scarce (existing buildings/RGO haven't filled workers), skip
+	# Skip the location only when every pop-restricted option is blocked (laborers scarce AND
+	# peasants either scarce or reserved for full RGO buildout). Per-option checks filter the
+	# individual options so peasant-using buildings can still queue while laborer-using options
+	# wait on promotion.
 	if = { limit = { NOT = { lsq_food_location_pops_still_filling = yes } }
 
 		# Track best marginal and action (0=none, 1=rgo, 2=farming_village, 3=windmill, 4=irrigation, 5=fishing_village, 6=sheep_farms, 7=forest_village)
