@@ -110,43 +110,6 @@ lsq_building_potential_profit_after_control = {
 	multiply = location.local_control
 }
 
-# Root is the location, also expects scope:good
-lsq_get_max_required_construction_demand_to_still_allow_building = {
-	# This is the real calculation for whether the button is able to be clicked or not but disabling it to avoid stalling potential
-	# value = "market.goods_supply_in_market(scope:good)"
-	# add = "market.stockpile_in_market(scope:good)"
-	# multiply = 2
-	# subtract = "market.goods_demand_in_market(scope:good)"
-
-	value = lsq_get_max_available_construction_good_to_avoid_stalling
-}
-
-# TODO: Currently a pessimistic calculation to avoid stalling but will improve in a future update.
-# Game doesn't seem to stall a building even when the supply is technically insufficient as long as part of the amount
-# required is available. Using this until we can verify that and see if the game slows down construction when the supply
-# is insufficient.
-# Root is the location, also expects scope:good
-lsq_get_max_available_construction_good_to_avoid_stalling = {
-	save_temporary_value_as = {
-		name = stockpile_minus_supply
-		value = {
-			value = "market.stockpile_in_market(scope:good)"
-			subtract = "market.goods_supply_in_market(scope:good)"
-		}
-	}
-	if = { limit = { scope:stockpile_minus_supply < 0.05 } # assume there's no stockpile if the supply and stockpile are basically equal
-		value = "market.goods_supply_in_market(scope:good)"
-		subtract = "market.goods_demand_in_market(scope:good)"
-	} else = {
-		value = "market.goods_supply_in_market(scope:good)"
-		add = {
-			value = "market.stockpile_in_market(scope:good)"
-			divide = 12 # require 12 times as much stockpile compared to supply to avoid stalling. Real calc would consider how long the demand would be for.
-		}
-		subtract = "market.goods_demand_in_market(scope:good)"
-	}
-}
-
 # Expects scopes: good, location
 lsq_get_construction_good_adjustment = {
 	if = { limit = { "scope:location.market.market_price(scope:good)" > "default_price(scope:good)" }

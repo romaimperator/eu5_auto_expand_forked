@@ -5,7 +5,6 @@ lsq_rgo_basic_expand_eligibility = {
 		lsq_is_rgo_advance_researched = yes
 		lsq_is_rgo_not_max_level_already = yes
 		lsq_check_location_has_laborers_available_or_will_be = yes
-		lsq_has_enough_raw_materials_for_rgo = yes
 	}
 }
 
@@ -84,26 +83,5 @@ lsq_is_rgo_advance_researched = {
 		scope:country = { has_advance = advanced_mining }
 	} trigger_else = {
 		always = yes
-	}
-}
-
-# Root = location. Checks if the market has enough construction goods for an RGO upgrade.
-lsq_has_enough_raw_materials_for_rgo = {
-	OR = {
-		AND = {
-			OR = {
-				raw_material ?= { goods_method = mining }
-				raw_material ?= { goods_method = farming }
-				raw_material ?= { goods_method = gathering }
-				raw_material ?= { goods_method = hunting }
-			}
-			goods:lumber = { save_temporary_scope_as = good }
-			lsq_get_max_required_construction_demand_to_still_allow_building >= 0.1
-		}
-		AND = {
-			raw_material ?= { goods_method = forestry }
-			goods:masonry = { save_temporary_scope_as = good }
-			lsq_get_max_required_construction_demand_to_still_allow_building >= 0.1
-		}
 	}
 }

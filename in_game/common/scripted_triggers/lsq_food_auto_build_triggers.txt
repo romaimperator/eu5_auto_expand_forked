@@ -1,16 +1,11 @@
 ﻿# Food auto-build triggers — eligibility, affordability, pop, and cap checks.
 # Gold threshold checks are done in the effects file (per-building script values).
 
-# Root is the location. Expects $target$ = a building_type. Saves target as scope:building_type.
-# Combines the four-check cluster shared by every food option: can-build (engine prerequisites),
-# not-at-max-level-and-not-already-under-construction, save-scope-for-affordability-macros,
-# and construction-goods affordability.
+# Root is the location. Expects $target$ = a building_type.
 # For 1-level buildings (e.g. windmill), the max-level check also subsumes NOT has_building.
 lsq_food_location_buildable_for_building_type = {
 	lsq_location_allowed_to_build = { target = $target$ }
 	lsq_location_building_type_is_not_at_max_level = { target = $target$ }
-	$target$ = { save_temporary_scope_as = building_type }
-	lsq_can_afford_switch_based_on_building_type = yes
 }
 
 # ─── Location matching ───
@@ -47,7 +42,7 @@ lsq_food_location_pops_still_filling = {
 }
 
 # ─── Can-build checks per option ───
-# Each checks: requirements met, not at cap, construction goods available, pops available.
+# Each checks: requirements met, not at cap, pops available.
 # Gold threshold is checked separately in the effects file.
 # Root is the location. Expects scopes: country, location.
 
@@ -56,7 +51,6 @@ lsq_food_can_build_rgo = {
 	AND = {
 		lsq_is_rgo_not_max_level_already = yes
 		lsq_is_rgo_under_construction = no
-		lsq_has_enough_raw_materials_for_rgo = yes
 		lsq_check_location_has_laborers_available_or_will_be = yes
 	}
 }

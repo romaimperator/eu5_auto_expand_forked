@@ -238,7 +238,6 @@ lsq_location_will_auto_expand_from_zero_levels = {
 		NOT = { integration_level = conquered }
 		lsq_location_has_enough_pops_available = yes
 		lsq_is_location_under_building_limit = yes
-		lsq_can_afford_switch_based_on_building_type = yes
 		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
 		lsq_check_country_gold_above = { threshold = lsq_expected_gold_available_for_building_type_for_auto_expand }
 		scope:country = { save_temporary_scope_as = actor }
@@ -264,7 +263,6 @@ lsq_is_building_able_to_auto_expand = {
 		lsq_is_not_under_construction = yes
 		location = { lsq_location_has_enough_pops_available = yes }
 		location = { lsq_is_location_under_building_limit = yes }
-		location = { lsq_can_afford_switch_based_on_building_type = yes }
 		lsq_building_meets_minimum_discount = { threshold = lsq_get_min_discount_for_auto_expand_buildings }
 		lsq_check_country_gold_above = { threshold = lsq_expected_gold_available_for_building_type_for_auto_expand }
 		lsq_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
@@ -556,17 +554,3 @@ lsq_toggle_mass_auto_expand_for_building_type = {
 	}
 }
 
-# Root is the location, also expects scope:good and scope:required_demand
-lsq_has_enough_goods_for_construction_demand = {
-	saved_scopes = { good required_demand }
-	is_shown = {
-		lsq_get_max_required_construction_demand_to_still_allow_building >= scope:required_demand
-	}
-}
-
-# Root is the location, also expects scope:building_type
-lsq_are_there_enough_construction_goods_available_for_building_type = {
-	is_shown = {
-		lsq_can_afford_switch_based_on_building_type = yes
-	}
-}

@@ -518,20 +518,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						visible = "[Not(GetScriptedGui('lsq_are_there_enough_construction_goods_available_for_building_type').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
-						using = lsq_tooltip_row_is_odd
-						blockoverride "vertical_line_size" { size = { 3 41 } }
-						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('lsq_are_there_enough_construction_goods_available_for_building_type').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
-						}
-						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('lsq_are_there_enough_construction_goods_available_for_building_type').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
-						}
-						blockoverride "row_text" {
-							raw_text = "Enough construction goods are available"
-						}
-					}
-					lsq_tooltip_row = {
 						visible = "[Not(GetScriptedGui('lsq_building_meets_minimum_discount_for_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_building_meets_minimum_discount_for_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
@@ -643,27 +629,6 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 						blockoverride "row_text" {
 							raw_text = "Building can be upgraded by owner"
-						}
-					}
-					vbox = {
-						visible = "[InDebugMode]"
-						background = { using = bg_tooltip_debug }
-						layoutpolicy_horizontal = expanding
-						datamodel = "[Building.GetType.GetConstructionDemand.GetEntries]"
-						item = {
-							lsq_tooltip_row = {
-								datacontext = "[GoodsDemandEntry.GetGoods]"
-								blockoverride "vertical_line_size" { size = { 3 41 } }
-								blockoverride "yes_visible" {
-									visible = "[GetScriptedGui('lsq_has_enough_goods_for_construction_demand').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).AddScope('required_demand', MakeScopeValue(GoodsDemandEntry.GetValue)).End)]"
-								}
-								blockoverride "no_visible" {
-									visible = "[Not(GetScriptedGui('lsq_has_enough_goods_for_construction_demand').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).AddScope('required_demand', MakeScopeValue(GoodsDemandEntry.GetValue)).End))]"
-								}
-								blockoverride "row_text" {
-									raw_text = "requires [GoodsDemandEntry.GetValue] [Goods.GetName] while we have [GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_max_required_construction_demand_to_still_allow_building')] available with a construction discount of [GuiScope.AddScope('location', Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_construction_good_adjustment')|%-=]"
-								}
-							}
 						}
 					}
 					lsq_tooltip_row = {
@@ -839,20 +804,6 @@ template lsq_Building_Type_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
-						visible = "[Not(GetScriptedGui('lsq_are_there_enough_construction_goods_available_for_building_type').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
-						using = lsq_tooltip_row_is_odd
-						blockoverride "vertical_line_size" { size = { 3 41 } }
-						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('lsq_are_there_enough_construction_goods_available_for_building_type').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
-						}
-						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('lsq_are_there_enough_construction_goods_available_for_building_type').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
-						}
-						blockoverride "row_text" {
-							raw_text = "Enough construction goods are available"
-						}
-					}
-					lsq_tooltip_row = {
 						visible = "[Not(GetScriptedGui('lsq_building_type_meets_minimum_discount_for_auto_expand').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('location', Location.MakeScope).End))]"
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_building_type_meets_minimum_discount_for_auto_expand').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('location', Location.MakeScope).End)]"
@@ -875,27 +826,6 @@ template lsq_Building_Type_Autoexpand_Tooltip {
 						}
 						blockoverride "row_text" {
 							raw_text = "Enough gold available"
-						}
-					}
-					vbox = {
-						visible = "[InDebugMode]"
-						background = { using = bg_tooltip_debug }
-						layoutpolicy_horizontal = expanding
-						datamodel = "[BuildingType.GetConstructionDemand.GetEntries]"
-						item = {
-							lsq_tooltip_row = {
-								datacontext = "[GoodsDemandEntry.GetGoods]"
-								blockoverride "vertical_line_size" { size = { 3 41 } }
-								blockoverride "yes_visible" {
-									visible = "[GetScriptedGui('lsq_has_enough_goods_for_construction_demand').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).AddScope('required_demand', MakeScopeValue(GoodsDemandEntry.GetValue)).End)]"
-								}
-								blockoverride "no_visible" {
-									visible = "[Not(GetScriptedGui('lsq_has_enough_goods_for_construction_demand').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).AddScope('required_demand', MakeScopeValue(GoodsDemandEntry.GetValue)).End))]"
-								}
-								blockoverride "row_text" {
-									raw_text = "requires [GoodsDemandEntry.GetValue] [Goods.GetName] while we have [GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_max_required_construction_demand_to_still_allow_building')] available with a construction discount of [GuiScope.AddScope('location', Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_construction_good_adjustment')|%-=]"
-								}
-							}
 						}
 					}
 					lsq_tooltip_row = {
