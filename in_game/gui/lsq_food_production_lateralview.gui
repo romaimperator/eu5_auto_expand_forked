@@ -1,0 +1,325 @@
+﻿types FoodProductionTypes {
+	type food_production_location = widget {
+		visible = "[FoodProductionListItem.IsLocationItem]"
+		size = { 100% 51 }
+		button_building_paper = {
+			datacontext = "[FoodProductionListItem.AccessLocationItem]"
+			parentanchor = center
+			size = { 100% 46 }
+	
+			datacontext = "[FoodLocationItem.GetLocation]"
+
+			action_tooltip = {
+				click_type = left
+				click_mode = single
+				title = "GO_TO_LOCATION"
+				on_action = "[ShowLocation(FoodLocationItem.GetLocation)]"
+			}
+
+			action_tooltip = {
+				click_type = right
+				click_mode = single
+	
+				cursor = "location_menu"
+				title = "CLICK_ACTION_LOCATION_CONTEXT_MENU"
+				on_action = "[PdxGuiWidget.ToggleContextMenu]"
+			}
+			tagtooltip_enabled = yes
+			onmousehierarchyenter = "[PdxGuiWidget.SetHighlightLocation(FoodLocationItem.GetLocation)]"
+			tooltip = "[FoodLocationItem.GetLocation.GetName]"
+			contextmenu_widget = {
+				LocationContextMenu = {}
+			}
+
+			hbox = {
+				margin = { 10 0 }
+				spacing = 5
+				ignoreinvisible = yes
+				icon = {
+					size = { 22 22 }
+					texture = "[Location.GetRankIcon]"
+				}
+
+				widget = {
+					using = layoutpolicy_expanding
+					text_single = {
+						autoresize = no
+						size = { 100% 21 }
+						parentanchor = left|vcenter
+						align = left|nobaseline
+						text = "[FoodLocationItem.GetLocation.GetNameWithNoTooltip]"
+						default_format = "#L"
+								
+					}
+				}
+
+				hbox = {
+					margin_right = 5
+					layoutpolicy_vertical = expanding
+					spacing = 5
+					widget = {
+						layoutpolicy_vertical = expanding
+						size = { 80 -1 }
+						datacontext = "[FoodLocationItem.GetLocation]"
+						tooltipwidget = {
+							using = food_productivity_tooltip
+						}
+						text_single = {
+							parentanchor = center
+							size = { 95% 100% }
+							autoresize = no
+							align = center
+							text = "[FoodLocationItem.GetLocation.GetFoodsOutputModifiers|+=%]"	
+						}
+						using = bg_number_container_bckg
+						blockoverride "number_container_extra" {
+							alpha = 0.4
+							margin = {0 -5}
+						}
+
+						sort_by_small_highlight = {
+							name = "food"
+							size = { 75% 70% }
+						}								
+					}
+
+					widget = {
+						layoutpolicy_vertical = expanding
+						size = { 80 -1 }
+						text_single = {
+							parentanchor = center
+							size = { 95% 100% }
+							autoresize = no
+							align = center
+							raw_text = "[FoodLocationItem.GetLocation.GetFoodsOutputWithLabel]@food!"
+
+									
+						}
+						using = bg_number_container_bckg
+						blockoverride "number_container_extra" {
+							alpha = 0.4
+							margin = {0 -5}
+						}
+					}
+				}
+
+				button_regular_icon = {
+					onclick = "[OpenLateralViewWithFilter('production', 'food_production')]"
+                    onclick = "[ShowLocationProductionView(FoodLocationItem.GetLocation.GetId, '(bool)no')]"
+					enabled = "[FoodLocationItem.CanProduceFoodBuildings]"
+					size = {40 25 }
+
+					icon = {
+						parentanchor = center
+						texture = "[GetConceptTexture('building')]"
+						size = {15 15}
+					}
+					datacontext = "[FoodLocationItem.GetLocation]"
+							
+					action_tooltip = {
+						click_modifier = default
+						enabled = "[FoodLocationItem.CanProduceFoodBuildings]"
+						click_mode = single
+						click_type = left
+						title = "BUILD_FOOD_BUILDINGS_LOCATION"
+						on_action = "[OpenLateralViewWithFilter('production', 'food_production')]"
+                        on_action = "[ShowLocationProductionView(FoodLocationItem.GetLocation.GetId, '(bool)no')]"
+					}
+
+					action_tooltip = {
+						click_modifier = shift
+						click_type = left
+						title = "ALERT_HINT"
+						using = snd_UI_alert_openAndCycle
+						on_action = "[OpenLateralViewWithParams('hints', 'selected_hint = hint_food')]"
+						on_action = "[PdxGuiTriggerAllAnimations('reset_carousel')]"
+					}
+
+					tooltipwidget = {
+						BasicFunctionalTooltip = {}
+						blockoverride "shift_left_extra" {
+							replacement_shift_item = {}
+						}
+					}
+				}
+
+				lsq_auto_food_widget_food_production_lateralview = {}
+
+				widget = {
+					size = { 90 25 }
+					icon = {
+						parentanchor = center
+						visible = "[Not(FoodLocationItem.HasFoodGoods)]"
+						size = {25 25 }
+						texture = "gfx/interface/icons/trade_goods/icon_goods_steel.dds"
+						tooltipwidget = {
+							SimpleContextualTooltipType = {
+								blockoverride "title_icon_texture" {
+									texture = "gfx/interface/icons/trade_goods/icon_goods_steel.dds"
+								}
+										
+								blockoverride "concept_link" {
+									text = [food_raw_material|E]
+								}
+								lowpriotextcontext = "HAS_NO_FOOD_GOODS"
+							}
+						}
+					}
+
+					button_regular = {
+						parentanchor = center
+						size = {90 25 }
+						datacontext = "[FoodLocationItem.GetLocation]"
+						visible = "[FoodLocationItem.HasFoodGoods]"
+						enabled = "[Or(FoodLocationItem.CanUpgradeRGO, FoodLocationItem.CanReduceRGO)]"
+
+						action_tooltip = {
+							click_type = left
+							click_mode = single
+
+							title = "LOCATION_VIEW_EXPAND_RGO_TITLE"
+							visible = "[FoodLocationItem.ShowUpgradeRGO]"
+							enabled = "[FoodLocationItem.CanUpgradeRGO]"
+							description = "[FoodLocationItem.GetUpgradeRGOTooltip]"
+							on_action = "[FoodLocationItem.UpgradeRGO]"
+						}
+						action_tooltip = {
+							click_type = right
+							click_mode = single
+
+							title = "LOCATION_VIEW_UNQUEUE_RGO_TITLE"
+							visible = "[And(FoodLocationItem.ShowReduceRGO, FoodLocationItem.GetLocation.IsMaxRGOWorkersUnderConstruction)]"
+							enabled = "[FoodLocationItem.CanReduceRGO]"
+							description = "[FoodLocationItem.GetReduceRGOTooltip]"
+							on_action = "[FoodLocationItem.ReduceRGO]"
+						}
+
+						action_tooltip = {
+							click_type = right
+							click_mode = confirm
+
+							title = "LOCATION_VIEW_REDUCE_RGO_TITLE"
+							visible = "[And(FoodLocationItem.ShowReduceRGO, Not(FoodLocationItem.GetLocation.IsMaxRGOWorkersUnderConstruction))]"
+							enabled = "[FoodLocationItem.CanReduceRGO]"
+							description = "[FoodLocationItem.GetReduceRGOTooltip]"
+							on_action = "[FoodLocationItem.ReduceRGO]"
+						}
+						action_tooltip = {
+							click_modifier = shift
+							click_type = left
+							title = "ALERT_HINT"
+							using = snd_UI_alert_openAndCycle
+							on_action = "[OpenLateralViewWithParams('hints', 'selected_hint = hint_food')]"
+							on_action = "[PdxGuiTriggerAllAnimations('reset_carousel')]"
+						}
+
+						text_single = {
+							visible = "[Not(GreaterThan_int32(Location.GetMaxRGOWorkersUnderConstruction,'(int32)0'))]"
+							margin_right = 7
+							margin_bottom = 1
+							parentanchor = right|vcenter
+							align = right|nobaseline
+							maximumsize = {50 24}
+							fontsize = 13
+							raw_text = "[Location.GetMaxRGOWorkers|0] / [Location.GetMaximumMaxRGOWorkersValueForUI|0]"
+						}
+
+						text_single = {
+							visible = "[GreaterThan_int32(Location.GetMaxRGOWorkersUnderConstruction,'(int32)0')]"
+							margin_right = 7
+							margin_bottom = 1
+							parentanchor = right|vcenter
+							align = right|nobaseline
+							maximumsize = {50 24}
+							fontsize = 13
+							raw_text = "[Location.GetMaxRGOWorkers|0] [Location.GetMaxRGOWorkersUnderConstruction|+=] / [Location.GetMaximumMaxRGOWorkersValueForUI|0]"
+						}
+								
+
+								
+						datacontext = "[Location]"
+						tooltipwidget = {
+							using = location_rgo_button_tooltip
+							blockoverride "shift_left_extra" {
+								replacement_shift_item = {}
+							}
+							blockoverride "cost_and_time_context"{
+								textcontext = "[FoodLocationItem.GetUpgradeRGOBuildCostAndTime]"
+							}
+							# blockoverride "demand_visibility"{
+							# 	visible = "[FoodLocationItem.HasUpgradeRGOConstructionDemand]"
+							# }
+							# blockoverride "demand_context"{
+							# 	datacontext = "[FoodLocationItem.GetUpgradeRGOConstructionDemand]"
+							# }
+							# blockoverride "upgrade_rgo_visibility"{
+							# 	visible = "[Not(StringIsEmpty(FoodLocationItem.GetUpgradeRGOTooltip))]"
+							# }
+							# blockoverride "upgrade_rgo_context"{
+							# 	text = "[FoodLocationItem.GetUpgradeRGOTooltip]"
+							# }
+							blockoverride "rgo_upgrade_cost_time_breakdown_context"{
+								textcontext = "[FoodLocationItem.GetUpgradeRGOBuildTimeBreakdown]"
+							}
+							blockoverride "goods_demand_text" {
+								raw_text = "[GoodsDemandEntry.GetValue] / [Location.GetMarket.GetStockpile(GoodsDemandEntry.GetGoods)|1] ([Location.GetMarket.GetSurplusLabelWithBreakdown(GoodsDemandEntry.GetGoods)])"
+							}
+						}
+					}
+
+					datacontext = "[Location]"
+					piechart = {
+						visible = "[FoodLocationItem.HasFoodGoods]"
+						position = {3 0}
+						using = bg_circle
+						size = { 25 25 }
+						using = piechart_angles
+						using = bg_circle_piechart
+						parentanchor = left|vcenter
+				
+						pieslice_no_highlight = {
+							filter_mouse = none
+							alwaystransparent = yes
+							texture = "gfx/interface/pie_charts/pie_chart_alpha_80_green.dds"
+							value = "[Divide_CFixedPoint(Location.GetEffectiveRGOWorkers, Location.GetMaxRGOWorkers)]"
+							color = { 1 1 1 1 }
+						}
+				
+						pieslice_no_highlight = {
+							filter_mouse = none
+							alwaystransparent = yes
+							texture = "gfx/interface/pie_charts/pie_chart_alpha_80_red.dds"
+							value = "[Subtract_float('(float)1.0', FixedPointToFloatPercentageCapped(Divide_CFixedPoint(Location.GetEffectiveRGOWorkers, Location.GetMaxRGOWorkers), '(bool)yes'))]"
+							color = { 1 1 1 1 }
+						}
+
+						button = {
+							size = { 65% 65% }
+							parentanchor = center
+							texture = "[GetGoodsIcon(FoodLocationItem.GetGoods)]"
+							datacontext = "[FoodLocationItem.GetGoods]"
+							onmousehierarchyenter = "[PdxGuiWidget.SetHighlightGoods(FoodLocationItem.GetGoods)]"
+
+							datacontext = "[FoodLocationItem.GetLocation]"
+							datacontext = "[Location.GetRawMaterial]"
+							datacontext = "[Location.GetOwner]"
+							datacontext = "[Location.GetMarket]"
+							tooltipwidget = {
+								using = SpecificGoodsMarket_tooltip
+							}
+
+							action_tooltip = {
+								click_type = left
+								click_mode = single
+								title = "OPEN_GOOD_PANEL"
+								on_action = "[ShowGoods(FoodLocationItem.GetGoods)]"
+							}
+						}
+					}
+				}
+
+				expand = {}
+			}
+		}
+	}
+}
