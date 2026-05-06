@@ -1,27 +1,19 @@
 ﻿# Map mode helper triggers.
 
-# Root is the location. True if auto-food currently processes this location for its owner.
+# Root is location. True if auto-food currently processes this location for its owner.
 # Mirrors the eligibility limit in lsq_food_auto_build_for_rgo_type's ordered_owned_location.
 lsq_location_is_auto_food_active = {
 	exists = owner
-	location_rank = location_rank:rural_settlement
-	save_temporary_scope_as = location
-	owner = {
-		save_temporary_scope_as = country
-		has_variable_list = lsq_auto_food_rgo_types_list
-		any_in_list = {
-			variable = lsq_auto_food_rgo_types_list
-			save_temporary_scope_as = food_good
-			scope:location = {
-				lsq_food_location_matches_rgo_type = yes
-				OR = {
-					exists = var:auto_food_location_enabled
-					AND = {
-						scope:country = { is_target_in_variable_list = { name = lsq_auto_food_rgo_types_enabled target = scope:food_good } }
-						lsq_food_location_meets_river_filter = yes
-						NOT = { exists = var:auto_food_location_excluded }
-					}
-				}
+	OR = {
+		exists = var:auto_food_location_enabled
+		AND = {
+			location_rank = location_rank:rural_settlement
+			owner = { is_target_in_variable_list = { name = lsq_auto_food_rgo_types_enabled target = root.raw_material } }
+			NOT = { exists = var:auto_food_location_excluded }
+			OR = {
+				NOT = { owner = { is_target_in_variable_list = { name = lsq_auto_food_rgo_types_river_only target = root.raw_material } } }
+				has_river = yes
+				is_adjacent_to_lake = yes
 			}
 		}
 	}
