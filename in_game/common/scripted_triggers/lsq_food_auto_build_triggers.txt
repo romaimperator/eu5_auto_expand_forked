@@ -29,26 +29,20 @@ lsq_food_location_meets_river_filter = {
 # ─── Pool pop checks ───
 
 # Root is the location. Expects scope:country.
-# True when no pop-restricted food option is buildable: laborers are scarce for laborer-using
-# options AND peasants either are scarce or are reserved for full RGO buildout. When true, the
-# food system should NOT build anything new — let pops promote and fill existing positions first.
-# Peasant buildings remain blocked even when peasants are abundant if the RGO needs every peasant
-# to promote into a laborer (e.g. 10k pops with 11 RGO levels remaining).
+# True when no pop-restricted food option is buildable.
 lsq_food_location_pops_still_filling = {
-	AND = {
-		NOT = { lsq_check_location_has_laborers_available_or_will_be = yes }
-		OR = {
-			NOT = { lsq_check_location_has_peasants_available_or_will_be = yes }
+	OR = {
+		NOT = { lsq_check_location_has_peasants_available_or_will_be = yes }
+		AND = {
+			NOT = { lsq_check_location_has_laborers_available_or_will_be = yes }
 			NOT = { lsq_food_pop_pool_fits_full_rgo_buildout = yes }
 		}
 	}
 }
 
 # Root is the location.
-# True when the combined peasant + laborer pool is enough to fully build out the RGO to its max
-# level. False means RGO buildout would consume every peasant via promotion, so peasant-using
-# food buildings should not be queued (they would compete with RGO for the same pool and reduce
-# the final RGO level count).
+# True when peasants_available + laborers_available can fill the RGO's remaining levels (or
+# the RGO is already at max).
 lsq_food_pop_pool_fits_full_rgo_buildout = {
 	trigger_if = { limit = { lsq_is_rgo_not_max_level_already = no }
 		always = yes
@@ -69,6 +63,7 @@ lsq_food_can_build_rgo = {
 		lsq_is_rgo_not_max_level_already = yes
 		lsq_is_rgo_under_construction = no
 		lsq_check_location_has_laborers_available_or_will_be = yes
+		lsq_check_location_has_peasants_available_or_will_be = yes
 	}
 }
 
@@ -108,6 +103,7 @@ lsq_food_can_build_windmill = {
 		scope:country = { has_advance = windmills_advance }
 		lsq_food_location_buildable_for_building_type = { target = building_type:windmill }
 		lsq_check_location_has_laborers_available_or_will_be = yes
+		lsq_check_location_has_peasants_available_or_will_be = yes
 	}
 }
 
@@ -146,6 +142,7 @@ lsq_food_can_build_sheep_farms = {
 		}
 		lsq_food_location_buildable_for_building_type = { target = building_type:sheep_farms }
 		lsq_check_location_has_laborers_available_or_will_be = yes
+		lsq_check_location_has_peasants_available_or_will_be = yes
 	}
 }
 
@@ -233,9 +230,7 @@ lsq_food_location_has_viable_option = {
 	}
 }
 
-# True if ANY food-building option could physically be built here right now — ignores
-# gold/discount. Lets the tooltip distinguish "nothing can be built" from
-# "something can be built but nothing meets the minimum discount."
+# True if ANY food-building option could physically be built here right now (ignores gold/discount).
 lsq_food_location_has_buildable_option = {
 	OR = {
 		lsq_food_can_build_rgo = yes
