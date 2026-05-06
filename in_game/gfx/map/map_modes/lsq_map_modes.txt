@@ -1,0 +1,126 @@
+﻿@zoom_step_flatmap_far = 	21
+@zoom_step_flatmap = 		12
+@zoom_step_far = 			11
+@zoom_step_mid = 			4
+@zoom_step_near = 			2
+
+@flatmap_far_gradient_width = 			0.0375
+@flatmap_far_gradient_color_mult = 		0.9
+@flatmap_far_edge_sharpness = 			0.01
+@flatmap_far_before_lighting_blend = 	0.5
+@flatmap_far_after_lighting_blend = 	0.5
+
+@data_gradient_alpha_inside = 			1
+@data_gradient_alpha_outside = 			1
+@data_gradient_width = 					@flatmap_far_gradient_width
+@data_gradient_color_mult = 			@flatmap_far_gradient_color_mult
+@data_edge_width = 						0
+@data_edge_sharpness = 					@flatmap_far_edge_sharpness
+@data_edge_alpha = 						0
+@data_edge_color_mult = 				0
+@data_before_lighting_blend = 			@flatmap_far_before_lighting_blend
+@data_after_lighting_blend = 			@flatmap_far_after_lighting_blend
+
+lsq_breadbasket = {
+	map_color = {
+		if = { limit = { is_land = no }
+			value = define:NMapColors|WATER_MAP_COLOR
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				lsq_location_is_auto_food_active = yes
+			}
+			value = define:NMapColors|MAP_COLOR_HIGH
+		}
+		else_if = { limit = { owner ?= scope:actor }
+			value = rgb { 220 220 200 }
+		}
+		else_if = { limit = { exists = owner }
+			value = rgb { 110 100 90 }
+		}
+		else = {
+			value = rgb { 90 90 90 }
+		}
+	}
+
+	legend_key = {
+		desc = "lsq_breadbasket_enabled_legend_key"
+		color = define:NMapColors|MAP_COLOR_HIGH
+	}
+
+	legend_key = {
+		desc = "lsq_breadbasket_owned_legend_key"
+		color = rgb { 220 220 200 }
+	}
+
+	legend_key = {
+		desc = "lsq_breadbasket_foreign_legend_key"
+		color = rgb { 110 100 90 }
+	}
+
+	legend_key = {
+		desc = "lsq_breadbasket_uncolonized_legend_key"
+		color = rgb { 90 90 90 }
+	}
+
+	tooltip_key = {
+		if = { limit = { is_land = no }
+			value = MAPMODE_LSQ_BREADBASKET_TT_WATER
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				lsq_location_is_auto_food_active = yes
+			}
+			value = MAPMODE_LSQ_BREADBASKET_TT_ENABLED
+		}
+		else_if = { limit = { owner ?= scope:actor }
+			value = MAPMODE_LSQ_BREADBASKET_TT_OWNED
+		}
+		else_if = { limit = { exists = owner }
+			value = MAPMODE_LSQ_BREADBASKET_TT_FOREIGN
+		}
+		else = {
+			value = MAPMODE_LSQ_BREADBASKET_TT_UNCOLONIZED
+		}
+	}
+
+	small_map_names = location
+	medium_map_names = country
+	large_map_names = country
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	flatmap_behaviour = Always
+	use_fow = no
+
+	category = economy
+	index = 0
+
+	map_markers = {
+		all = no
+	}
+
+	gradient_parameters = {
+		zoom_step = @zoom_step_near
+
+		gradient_alpha_inside = 	@data_gradient_alpha_inside
+		gradient_alpha_outside = 	@data_gradient_alpha_outside
+		gradient_width = 			@data_gradient_width
+		gradient_color_mult =		@data_gradient_color_mult
+		edge_width = 				@data_edge_width
+		edge_sharpness = 			@data_edge_sharpness
+		edge_alpha = 				@data_edge_alpha
+		edge_color_mult = 			@data_edge_color_mult
+		before_lighting_blend =		@data_before_lighting_blend
+		after_lighting_blend =		@data_after_lighting_blend
+	}
+
+	refresh_colors_on_selection_change = yes
+	color_refresh_counters = { Day }
+	color_and_names_refresh_counters = { LocationOwnerChanged }
+}
