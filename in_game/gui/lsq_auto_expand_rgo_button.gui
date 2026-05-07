@@ -109,6 +109,34 @@
 			onrightclick = "[GetScriptedGui('lsq_show_settings_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 	}
+
+	type lsq_rgo_building_cost_breakdown_tooltip = TooltipListBase {
+		margin = { 5 10 }
+		vbox = {
+			textbox = {
+				using = tooltip_text_block_template
+				raw_text = "Base cost: [GuiScope.ScriptValue('lsq_get_defined_base_cost_for_rgo')|2L]@gold!"
+			}
+			textbox = {
+				using = tooltip_text_block_template
+				raw_text = "RGO base cost modifier: [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('lsq_get_adjustment_to_base_cost_for_rgo')|%-=]"
+			}
+			textbox = {
+				using = tooltip_text_block_template
+				raw_text = "Market price impact: [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('lsq_get_construction_cost_adjustment_for_rgo')|%-=]"
+			}
+			textbox = {
+				visible = "[Not(InDebugMode)]"
+				using = tooltip_text_block_template
+				raw_text = "Final cost of [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('lsq_get_adjusted_construction_cost_for_rgo')|2L]@gold!"
+			}
+			textbox = {
+				visible = "[InDebugMode]"
+				using = tooltip_text_block_template
+				raw_text = "Final cost of [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('lsq_get_adjusted_construction_cost_for_rgo')|5L]@gold!"
+			}
+		}
+	}
 }
 
 template lsq_RGO_Autoexpand_Tooltip {
@@ -278,6 +306,8 @@ template lsq_RGO_Autoexpand_Tooltip {
 					}
 				}
 			}
+
+			lsq_rgo_building_cost_breakdown_tooltip = {}
 
 			vbox = {
 				visible = "[InDebugMode]"
