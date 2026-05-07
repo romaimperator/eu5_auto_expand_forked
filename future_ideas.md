@@ -1,5 +1,6 @@
 ﻿Future Implementation Ideas
 
+- Make it so plantations will auto-expand if we have up to 1 level of plantation worth of slaves missing since it will draw the slaves needed to run it
 - Fix bug that allows stud farms to be auto-expanded in locations that don't have the appropriate climate
 - Related to the stud farm bug, there are also other buildings that can be auto-expanded even when they don't meet the actual in game conditions such as the Trade Office so add in more reliable checks for whether you can actually build a building or not for the auto-expand from zero levels button.
 - Make compatible with Glorp UI
