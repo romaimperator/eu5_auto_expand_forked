@@ -1,0 +1,501 @@
+	type building_type_header = hbox {
+		layoutpolicy_horizontal = expanding
+		layoutpolicy_vertical = expanding
+		ignoreinvisible = yes
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+			ignoreinvisible = yes
+			margin_right = 15
+
+			hbox = {
+				margin = {2 1}
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				using = bg_building_card_colors
+				blockoverride "header_pattern_texture_density" {texture_density = 2.5}
+
+				widget = {
+					size = { -1 43 }
+					layoutpolicy_horizontal = expanding
+					onmousehierarchyenter = "[ProductionView.RebuildBuildRankingItems(BuildingItem.GetBuildingType)]"
+
+					card_header_button_buildings = {
+						size = { 100% 40 }
+						parentanchor = center
+
+						datacontext = "[BuildingItem.GetBuildingItemUIAction]"
+						visible = "[Or(ProductionView.IsLocationFilterEnabled, Not(ProductionView.HasBestBuildLocation))]"
+
+						onmousehierarchyenter = "[BuildingItem.OnMouseEnter(PdxGuiWidget.AccessSelf)]"
+						using = button_action_provider
+
+						datacontext = "[BuildingItem.GetBuildingType]"
+
+						tooltipwidget = {
+							using = BuildingType_tooltip
+							blockoverride "building_type_tooltip_missing_input" {
+								visible = "[BuildingItem.HasBuildingsLackingInput]"
+								textcontext = "[BuildingItem.GetBuildingsInputGoodsInformation]"
+							}
+						}
+
+						action_tooltip = {
+							click_type = left
+							click_mode = single
+							visible = "[And(Not(ProductionView.IsLocationFilterEnabled), BuildingItem.CanBuildAnyBuilding)]"
+							title = "BUILD_BUILDING_HEADER"
+							on_action = "[SelectLocationToBuildDefault(BuildingItem.GetBuildingType)]"
+							on_action = "[PlayAudioEffect('UI_action_building_build')]"
+						}
+
+						action_tooltip = {
+							click_type = left
+							click_mode = single
+							visible = "[And(Not(ProductionView.IsLocationFilterEnabled), Not(BuildingItem.CanBuildAnyBuilding))]"
+							title = "CAN_NOT_BUILD_ANY_BUILDING"
+							on_action = "[SelectLocationToBuildDefault(BuildingItem.GetBuildingType)]"
+						}
+
+						action_tooltip = {
+							click_type = left
+							click_mode = single
+							visible = "[ProductionView.IsLocationFilterEnabled]"
+							title = "BUILD_BUILDING_HEADER"
+							on_action = "[SelectLocationToBuildDefault(BuildingItem.GetBuildingType)]"
+							on_action = "[SelectLocationToBuildWithLocation(BuildingItem.GetBuildingType, ProductionView.GetSelectedLocation.GetId, '(bool)no')]"
+							on_action = "[PlayAudioEffect('UI_action_building_build')]"
+						}
+					}
+
+					card_header_button_buildings = {
+						size = { 100% 40 }
+
+						parentanchor = center
+
+						datacontext = "[BuildingItem.GetBuildingItemUIAction]"
+						visible = "[And(Not(ProductionView.IsLocationFilterEnabled), ProductionView.HasBestBuildLocation)]"
+
+						onmousehierarchyenter = "[BuildingItem.OnMouseEnter(PdxGuiWidget.AccessSelf)]"
+						using = button_action_provider
+
+						datacontext = "[BuildingItem.GetBuildingType]"
+						datacontext = "[ProductionView.GetBuildRankingItems]"
+						datacontext = "[ProductionView.GetBestBuildLocation]"
+
+						tooltipwidget = {
+							using = BuildingType_production_tooltip
+						}
+
+						action_tooltip = {
+							click_type = left
+							click_mode = single
+							visible = "[And(Not(ProductionView.IsLocationFilterEnabled), BuildingItem.CanBuildAnyBuilding)]"
+							title = "BUILD_BUILDING_HEADER"
+							on_action = "[SelectLocationToBuildDefault(BuildingItem.GetBuildingType)]"
+							on_action = "[PlayAudioEffect('UI_action_building_build')]"
+						}
+
+						action_tooltip = {
+							click_type = left
+							click_mode = single
+							visible = "[And(Not(ProductionView.IsLocationFilterEnabled), Not(BuildingItem.CanBuildAnyBuilding))]"
+							title = "CAN_NOT_BUILD_ANY_BUILDING"
+							on_action = "[SelectLocationToBuildDefault(BuildingItem.GetBuildingType)]"
+						}
+
+						action_tooltip = {
+							click_type = left
+							click_mode = single
+							visible = "[ProductionView.IsLocationFilterEnabled]"
+							title = "BUILD_BUILDING_HEADER"
+							on_action = "[SelectLocationToBuildDefault(BuildingItem.GetBuildingType)]"
+							on_action = "[SelectLocationToBuildWithLocation(BuildingItem.GetBuildingType, ProductionView.GetSelectedLocation.GetId, '(bool)no')]"
+							on_action = "[PlayAudioEffect('UI_action_building_build')]"
+						}
+
+						action_tooltip = {
+							click_type = right
+							click_mode = single
+							title = "BUILDING_IN_LOCATION_ACTION"
+							cost = "BUILDING_IN_LOCATION_ACTION_COST"
+							description = "[CanBuildOrExpandBuildingInfo(BuildingType.Self, ProductionView.GetBestBuildLocation)]"
+							on_action = "[BuildOrExpandBuildingDefault(BuildingType.Self, ProductionView.GetBestBuildLocation)]"
+							enabled = "[CanBuildOrExpandBuilding(BuildingType.Self, ProductionView.GetBestBuildLocation)]"
+						}
+					}
+
+					# BUILDING ICON
+					widget = {
+						position = { 5 0 }
+						size = {42 100%}
+						parentanchor = left|vcenter
+
+						widget = {
+							size = {36 36}
+							using = bg_circle_outline
+							blockoverride "inside_color" {
+								modify_texture = {
+									using = color_dark_brown_texture
+									blend_mode = multiply
+								}
+							}
+							blockoverride "frame_size" {
+								texture = "gfx/interface/component_tiles/hud_corners/circle_frame_alt_thin.dds"
+								texture_density = 2
+								margin = {1 1}
+							}
+
+
+							parentanchor = left|vcenter
+							icon = {
+								size = {31 31}
+								parentanchor = center
+								texture = "[GetBuildingIcon(BuildingItem.GetBuildingType.Self)]"
+
+								datacontext = "[BuildingItem.GetBuildingType]"
+								tooltipwidget = {
+									using = BuildingType_production_tooltip
+								}
+								glow = {
+									name = "drop_shadow"
+									glow_radius = 3
+									color = {0.0 0.0 0.0 1.0}
+									alpha = 0.3
+								}
+							}
+							icon = {
+								size = { 100% 100% }
+								visible = "[BuildingItem.GetBuildingType.IsSpecialBuilding]"
+								texture = "gfx/interface/component_tiles/specialbuildings_frame_gold.dds"
+							}
+						}
+
+						# MISSING GOODS
+						icon = {
+							size = { 10 10 }
+							visible = "[BuildingItem.HasBuildingsLackingInput]"
+							position = { 6 6 }
+							parentanchor = top|left
+							using = warning_icon_texture
+							texture_density = 2
+							using = bg_circle
+
+							block "navigational_bg" {}
+						}
+					}
+					# CARD INFO
+					widget = {
+						position = { 5 0 }
+						size = { 100% 40 }
+						parentanchor = top
+						hbox = {
+							spacing = 5
+							margin = { 35 0 }
+							margin_right = 10
+							datacontext = "[BuildingItem.GetBuildingType]"
+
+							widget = {
+								size = { 16 16}
+								icon = {
+									parentanchor = center
+									position = {0 2}
+									size = { 16 16 }
+									texture = "[GetGraphicalCultureTextureForPopType(BuildingType.GetPopType)]"
+									texture_density = 2
+									glow = {
+										name = "drop_shadow"
+										glow_radius = 3
+										color = {0.0 0.0 0.0 1.0}
+										alpha = 0.3
+									}
+								}
+							}
+
+							text_single = {
+								size = {129 30}
+								autoresize = no
+								align = left|nobaseline
+								default_format = "#yellow_titles"
+								text = "[BuildingItem.GetBuildingType.GetNameWithNoTooltip]"
+
+								sort_by_highlight = {
+									name = "name"
+								}
+							}
+
+							widget = {
+								size = {55 25}
+								hbox = {
+									# # LSQ mass auto-expand button
+									# lsq_mass_auto_expand_button_pl = {}
+
+									button_square_checkbox = {
+										visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing)]"
+										size = { 20 20 }
+										enabled = "[CanSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
+										tooltipwidget = {
+											using = Building_All_Subsidized_Tooltip
+										}
+										background = {
+											texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+											texture_density = 2
+
+											modify_texture = {
+												using = color_market_grey_texture
+												blend_mode = add
+												alpha = 0.5
+											}
+										}
+
+										blockoverride "check_texture" {
+											texture = "gfx/interface/icons/flat_icons/building_panel/subsidized.dds"
+										}
+										blockoverride "checked_visible" {
+											visible = "[AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc)]"
+										}
+										blockoverride "unchecked_visible" {
+											visible = "[Not(AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc))]"
+										}
+
+										action_tooltip = {
+											on_action = "[ToggleSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
+											on_action = "[PlayAudioEffect(Concatenate('UI_action_building_subsidize', GetToggleSuffix(AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc))))]"
+											enabled = "[CanSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
+											title = "[SelectLocalization( AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc), 'TOGGLE_SUBSIDIZE_ALL_ON', 'TOGGLE_SUBSIDIZE_ALL_OFF' )]"
+										}
+									}
+
+									expand = {}
+
+									button_square_checkbox = {
+										size = { 20 20 }
+										visible = "[And(BuildingItem.HasBuildings, BuildingItem.ShowCloseAll)]"
+										enabled = "[CanToggleBuildings(BuildingItem.GetBuildingsFunc)]"
+										tooltipwidget = {
+											using = Building_All_Open_Tooltip
+										}
+
+										background = {
+											texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+											texture_density = 2
+
+											modify_texture = {
+												using = color_market_grey_texture
+												blend_mode = add
+												alpha = 0.5
+											}
+										}
+
+										blockoverride "check_texture" {
+											texture = "gfx/interface/icons/achievements/padlock.dds"
+										}
+										blockoverride "checked_visible" {
+											visible = "[AreBuildingsClosed(BuildingItem.GetBuildingsFunc)]"
+										}
+										blockoverride "unchecked_visible" {
+											visible = "[Not(AreBuildingsClosed(BuildingItem.GetBuildingsFunc))]"
+										}
+
+										action_tooltip = {
+											enabled = "[CanToggleBuildings(BuildingItem.GetBuildingsFunc)]"
+											on_action = "[ToggleBuildings(BuildingItem.GetBuildingsFunc)]"
+											title = "[SelectLocalization( AreBuildingsClosed(BuildingItem.GetBuildingsFunc), 'TOGGLE_CLOSE_ALL_OFF', 'TOGGLE_CLOSE_ALL_ON' )]"
+										}
+									}
+
+								}
+							}
+
+							# PROFIT
+							widget = {
+								size = {120 40}
+								hbox = {
+									visible = "[And(BuildingItem.GetBuildingType.IsProducing, BuildingItem.HasPossibleBuildings)]"
+									spacing = 3
+
+									expand = {}
+
+									text_single = {
+										visible = "[BuildingItem.HasMinIncome]"
+										maximumsize = { 50 -1 }
+										align = center|nobaseline
+										raw_text = "[BuildingItem.GetMinIncome|+=2]"
+										datacontext = "[BuildingItem.GetBuildingType]"
+
+										tooltipwidget = {
+											SimpleContextualStringPairTooltipType = {
+												blockoverride "title_icon_texture" {
+													texture = "gfx/interface/icons/resources/gold.dds"
+												}
+												lowpriotextcontext =  "BUILDINGS_MINIMUM_INCOME"
+											}
+										}
+
+										fontsize = 16
+
+										sort_by_highlight = {
+											name = "income"
+										}
+									}
+
+									text_single = {
+										visible = "[BuildingItem.HasMinIncome]"
+										autoresize = yes
+										align = center|nobaseline
+										raw_text = "–"
+										fontsize = 16
+									}
+
+									text_single = {
+										align = center|nobaseline
+										raw_text = "[BuildingItem.GetMaxIncome|+=2]"
+										datacontext = "[BuildingItem.GetBuildingType]"
+										maximumsize = { 50 -1 }
+
+										tooltipwidget = {
+											SimpleContextualStringPairTooltipType = {
+												blockoverride "title_icon_texture" {
+													texture = "gfx/interface/icons/resources/gold.dds"
+												}
+												lowpriotextcontext =  "BUILDINGS_MAXIMUM_INCOME_POSSIBLE"
+											}
+										}
+										fontsize = 16
+
+										sort_by_highlight = {
+											name = "income"
+										}
+									}
+
+									icon = {
+										size = { 16 16 }
+										texture = "[GetConceptTexture('income')]"
+										glow = {
+											name = "drop_shadow"
+											glow_radius = 1
+											color = {0.0 0.0 0.0 1.0}
+											alpha = 0.1
+										}
+									}
+								}
+							}
+
+							# LEVELS
+							widget = {
+								size = { 75 40 }
+								hbox = {
+									expand = {}
+									spacing = 5
+
+									sort_by_highlight = {
+										name = "level"
+									}
+
+									text_single = {
+										align = right|nobaseline
+										maximumsize = {45 -1}
+										visible = "[And(Not(BuildingItem.AreBuildingsUnderConstruction), BuildingItem.HasBuildings)]"
+										text = "[BuildingItem.GetTotalLevel|0Y]"
+										fontsize = 15
+
+										tooltipwidget = {
+											SimpleContextualStringPairTooltipType = {
+												blockoverride "title_icon_texture" {
+													texture = "[GetBuildingIcon(BuildingItem.GetBuildingType.Self)]"
+												}
+
+												lowpriotextcontext =  "NUMBER_BUILDING"
+											}
+										}
+									}
+
+									text_single = {
+										align = right|nobaseline
+										maximumsize = {45 -1}
+										visible = "[And(BuildingItem.AreBuildingsUnderConstruction, BuildingItem.HasBuildings)]"
+										raw_text = "[BuildingItem.GetTotalLevel|0Y] ([BuildingItem.GetTotalLevelsUnderConstruction|0+=])"
+										fontsize = 15
+
+										tooltipwidget = {
+											SimpleContextualStringPairTooltipType = {
+												blockoverride "title_icon_texture" {
+													texture = "[GetBuildingIcon(BuildingItem.GetBuildingType.Self)]"
+												}
+												lowpriotextcontext =  "NUMBER_BUILDING"
+											}
+										}
+									}
+
+									icon = {
+										visible = "[And3(BuildingItem.CanBuildAnyBuilding, BuildingItem.GetBuildingType.BuildOnlyInCapital, Not(Player.CanUpgradeBuildingType(BuildingItem.GetBuildingType)))]"
+										texture = "gfx/interface/icons/flat_icons/building_panel/build_capital.dds"
+										size = { 24 24 }
+									}
+
+									icon = {
+										visible = "[And(BuildingItem.CanBuildAnyBuilding, Player.CanUpgradeBuildingType(BuildingItem.GetBuildingType))]"
+										texture = "gfx/interface/buttons/flats/upgrade_button2.dds"
+										modify_texture = {
+											using = color_gold_texture
+										}
+										modify_texture = {
+											using = overlay_window_texture
+											blend_mode = overlay
+											alpha = 0.9
+										}
+										size = { 24 24 }
+									}
+
+									icon = {
+										visible = "[And3(BuildingItem.CanBuildAnyBuilding, Not(BuildingItem.GetBuildingType.BuildOnlyInCapital), Not(Player.CanUpgradeBuildingType(BuildingItem.GetBuildingType)))]"
+										texture = "gfx/interface/icons/flat_icons/building_panel/build.dds"
+										size = { 24 24 }
+									}
+
+									icon = {
+										visible = "[And(Not(BuildingItem.CanBuildAnyBuilding), BuildingItem.GetBuildingType.BuildOnlyInCapital)]"
+										texture = "gfx/interface/icons/flat_icons/building_panel/not_build_capital.dds"
+										size = { 24 24 }
+
+										modify_texture = {
+											using = overlay_window_texture
+											blend_mode = overlay
+											alpha = 0.7
+										}
+
+										modify_texture = {
+											texture = "gfx/interface/buttons/buttons_texture.dds"
+											texture_density = 2
+											blend_mode = overlay
+											alpha = 0.6
+										}
+									}
+
+									icon = {
+										visible = "[And(Not(BuildingItem.CanBuildAnyBuilding), Not(BuildingItem.GetBuildingType.BuildOnlyInCapital))]"
+										texture = "gfx/interface/icons/flat_icons/building_panel/not_build.dds"
+										size = { 24 24 }
+
+										modify_texture = {
+											using = overlay_window_texture
+											blend_mode = overlay
+											alpha = 0.7
+										}
+
+										modify_texture = {
+											texture = "gfx/interface/buttons/buttons_texture.dds"
+											texture_density = 2
+											blend_mode = overlay
+											alpha = 0.6
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
