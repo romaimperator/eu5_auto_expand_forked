@@ -218,7 +218,28 @@ template lsq_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('lsq_is_there_enough_gold_available').IsShown(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "Country has [GetPlayer.GetCurrencyValue('gold')]@gold! vs required [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_expected_gold_available_for_rgo_auto_expand')]@gold!"
+							raw_text = "Country has [GetPlayer.GetCurrencyValue('gold')]@gold! vs required [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_expected_gold_available_for_rgo_auto_expand')]@gold! vs base cost [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('lsq_get_adjusted_construction_cost_for_rgo')]@gold!"
+						}
+					}
+					vbox = {
+						visible = "[InDebugMode]"
+						background = { using = bg_tooltip_debug }
+						layoutpolicy_horizontal = expanding
+						datamodel = "[Location.GetUpgradeRGOConstructionDemand.GetEntries]"
+						item = {
+							lsq_tooltip_row = {
+								datacontext = "[GoodsDemandEntry.GetGoods]"
+								blockoverride "vertical_line_size" { size = { 3 41 } }
+								blockoverride "yes_visible" {
+									visible = "[GetScriptedGui('lsq_has_enough_goods_for_construction_demand').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).AddScope('required_demand', MakeScopeValue(GoodsDemandEntry.GetValue)).End)]"
+								}
+								blockoverride "no_visible" {
+									visible = "[Not(GetScriptedGui('lsq_has_enough_goods_for_construction_demand').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).AddScope('required_demand', MakeScopeValue(GoodsDemandEntry.GetValue)).End))]"
+								}
+								blockoverride "row_text" {
+									raw_text = "requires [GoodsDemandEntry.GetValue] [Goods.GetName] while we have [GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_max_required_construction_demand_to_still_allow_building')] available with a construction discount of [GuiScope.AddScope('location', Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_construction_good_adjustment')|%-=]. Current market price is [Location.GetMarket.GetPrice(GoodsDemandEntry.GetGoods)]@gold! Current Price Impact info |[GoodsDemandEntry.GetPriceImpactInfo(Location.GetMarket)]|"
+								}
+							}
 						}
 					}
 				}
