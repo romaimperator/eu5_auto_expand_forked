@@ -10,6 +10,13 @@ lsq_expected_gold_available_for_rgo_auto_expand = {
 lsq_get_adjusted_construction_cost_for_rgo = {
 	value = 50 # 50 gold is the base cost of all types of RGO defined in in_game/common/prices/00_hardcoded.txt
 	multiply = {
+		# this multiplier accounts for the new (as of patch 1.2) variation in base cost for adding a new level of RGO based on the goods it produces. More expensive goods like gold cost more to build than before, cheap goods like fish cost less than before.
+		value = "default_price(scope:location.raw_material)"
+		subtract = 2
+		divide = 4
+		add = 1
+	}
+	multiply = {
 		value = 1
 		add = lsq_get_construction_cost_adjustment_for_rgo
 	}
