@@ -159,10 +159,15 @@ lsq_get_construction_good_adjustment = {
 		subtract = 1
 		divide = 2 # double check this is the correct value
 	} else_if = { limit = { "scope:location.market.market_price(scope:good)" < "default_price(scope:good)" }
-		value = "default_price(scope:good)"
-		divide = "scope:location.market.market_price(scope:good)"
+		value = "scope:location.market.market_price(scope:good)"
+		divide = "default_price(scope:good)"
 		subtract = 1
-		multiply = -0.7825 # known incorrect value, working on fixing
+		multiply = {
+			# this multiplier equates to multiplying by 1.1111111 repeating. That combined with swapping the prices (numerator to denominator and vice versa) seems to give nearly perfect calculation results
+			value = 1
+			divide = 9
+			add = 1
+		}
 	} else = {
 		value = 0
 	}
