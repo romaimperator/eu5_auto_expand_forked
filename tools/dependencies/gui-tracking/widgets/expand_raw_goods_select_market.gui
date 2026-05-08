@@ -1,0 +1,78 @@
+# vanilla: in_game/gui/expand_raw_goods_lateralview.gui
+# mod: in_game/gui/expand_raw_goods_lateralview.gui
+
+select_menu_left = {
+	datacontext = "[GetQuickVisibleMarkets(Player.Self)]"
+	blockoverride "menu_setup" {
+		name = "expand_raw_goods_select_market"
+	}
+
+	blockoverride "close_button" {
+		onclick = "[ExpandRawGoodsSelectMarket.OnClose]"
+	}
+
+	blockoverride "select_content" {
+		select_menu_header = {
+			blockoverride "select_menu_header_extra" {
+				button_checkbox_visibility = {
+					size = { 32 32 }
+					tooltipwidget = {
+						LeftClickButtonTooltip = {
+							blockoverride "onclick_text" { text = "TOGGLE_INRANGE_MARKETS" }
+						}
+					}
+					checked = "[ExpandRawGoodsSelectMarket.Parent.Vars.Exists( 'inrange_markets')]"
+					onclick = "[ExpandRawGoodsSelectMarket.Parent.Vars.Toggle( 'inrange_markets')]"
+				}
+
+				text_single = {
+					using = Font_Type_Headers
+					using = Font_Size_Small
+					align = nobaseline
+					text = "INRANGE_MARKETS"
+				}
+			}
+		}
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			spacing = 10
+
+			datamodel = "[QuickVisibleMarkets.GetVisibleMarkets]"
+			item = {
+				widget = {
+					size = { 485 70 }
+					visible = "[Or3(GreaterThan_CFixedPoint(Market.GetCountryPopulation(Player.Self),'(CFixedPoint)0'), GreaterThan_CFixedPoint(Market.GetTotalMerchantCapacity(Player.Self),'(CFixedPoint)0'), And(ExpandRawGoodsSelectMarket.Parent.Vars.Exists( 'inrange_markets'), IsMarketInRange(Market.Self)))]"
+
+					hbox = {
+						using = bg_market_card
+						using = bg_cabinet_card_frame
+
+						market_card = {
+							blockoverride "market_card_title_action" {
+								action_tooltip = {
+									click_type = left
+									click_mode = single
+									title = "TOGGLE_MARKET_SELECTION"
+									on_action = "[ExpandRawGoodsSelectMarket.Parent.FilterByMarket(Market.Self)]"
+								}
+
+								action_tooltip = {
+									click_type = right
+									click_mode = single
+
+									cursor = "market_menu"
+									title = "CLICK_ACTION_MARKET_CONTEXT_MENU"
+									on_action = "[PdxGuiWidget.ToggleContextMenu]"
+								}
+
+								onmousehierarchyenter = "[PdxGuiWidget.SetHighlightMarket(Market.Self)]"
+								ondoubleclick = "[PanToLocation(Market.GetCenterLocation)]"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
