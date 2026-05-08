@@ -49,6 +49,31 @@
 					raw_text = "available: [GuiScope.SetRoot(Location.MakeScope).ScriptValue(Concatenate3('lsq_location_', PopType.GetKey, '_available'))]"
 				}
 			}
+			# LSQTooltipTextBox = {
+			# 	blockoverride "text" {
+			# 		raw_text = "local pop growth: [GuiScope.SetRoot(Location.MakeScope).ScriptValue(Concatenate3('lsq_local_', PopType.GetKey, '_pop_growth'))]"
+			# 	}
+			# }
+			# LSQTooltipTextBox = {
+			# 	blockoverride "text" {
+			# 		raw_text = "global pop growth: [GuiScope.SetRoot(Player.MakeScope).ScriptValue(Concatenate3('lsq_global_', PopType.GetKey, '_pop_growth'))]"
+			# 	}
+			# }
+			LSQTooltipTextBox = {
+				blockoverride "text" {
+					raw_text = "pop growth rate: [GuiScope.SetRoot(Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue(Concatenate3('lsq_location_', PopType.GetKey, '_pop_growth_rate'))]"
+				}
+			}
+			LSQTooltipTextBox = {
+				blockoverride "text" {
+					raw_text = "expected new pop: [GuiScope.SetRoot(Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue(Concatenate('lsq_location_expected_new_', PopType.GetKey))]"
+				}
+			}
+			LSQTooltipTextBox = {
+				blockoverride "text" {
+					raw_text = "new pops from promotion speed: [GuiScope.SetRoot(Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue(Concatenate('lsq_combined_pop_promotion_speed_for_', PopType.GetKey))]"
+				}
+			}
 		}
 	}
 
@@ -200,6 +225,7 @@ template lsq_RGO_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						blockoverride "vertical_line_size" { size = { 3 41 } }
 						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
@@ -208,10 +234,11 @@ template lsq_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('lsq_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "Location has enough [ShowPopTypeName('laborers')] and/or [ShowPopTypeName('slaves')]"
+							raw_text = "Location has enough [ShowPopTypeName('laborers')] and/or [ShowPopTypeName('slaves')] (available: [Multiply_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_location_laborers_or_slaves_available'), '(CFixedPoint)1000')|0+=], monthly change: [Multiply_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_combined_monthly_new_pops_of_type_laborers_or_slaves'), '(CFixedPoint)1000')|0+=])"
 						}
 					}
 					lsq_tooltip_row = {
+						blockoverride "vertical_line_size" { size = { 3 41 } }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_has_enough_raw_materials_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
 						}
@@ -397,6 +424,16 @@ template lsq_RGO_Autoexpand_Tooltip {
 				# TooltipTextBlock = {
 				# 	blockoverride "text" {
 				# 		raw_text = "lsq_global_laborers_city_desired_pop_scaled: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('lsq_global_laborers_city_desired_pop_scaled')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "local_population_growth: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('lsq_local_population_growth')]"
+				# 	}
+				# }
+				# TooltipTextBlock = {
+				# 	blockoverride "text" {
+				# 		raw_text = "global_population_growth: [GuiScope.SetRoot(Player.MakeScope).ScriptValue('lsq_global_population_growth')]"
 				# 	}
 				# }
 				lsq_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('nobles')]" }
