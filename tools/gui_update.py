@@ -9,13 +9,19 @@ Uses two git refs to track vanilla state:
   per-file three-way merges so the merge result does not depend on git's
   parent-link auto-detection.
 
+Requires ``tools/dependencies/gui-tracking/** -text`` in .gitattributes so
+blobs from script writes and from merge-tool resolution share one
+encoding. Without it, the repo's eol=crlf rule normalizes script-written
+files to LF in the blob while editor-resolved files stay CRLF, and any
+cross-boundary diff renders as a whole-file replacement in git GUIs.
+
 Merging is per-file via ``git merge-file`` with the explicit base from
 ``gui/vanilla-merged``. When a file conflicts the script also populates
 the git index with stages 1/2/3 and writes ``.git/MERGE_HEAD`` so any
 git GUI sees a real merge in progress and offers a 3-way merge editor.
-Once the user resolves and commits, the resulting merge commit is
-flattened into a single-parent commit on the next run so git history
-tools render normal linear commits.
+Once the user resolves and commits the resulting merge commit, the
+next ``apply`` (or ``merge``) run advances ``gui/vanilla-merged`` to
+match ``gui/vanilla`` so the merge is recognized as absorbed.
 
 Commands:
     init      Set up tracking for this mod
@@ -407,8 +413,15 @@ def _ensure_no_merge():
 
 
 def _read_from_branch(branch, path):
-    """Read a file from *branch* without switching.  Returns content or ``None``."""
-    return run_git(["show", f"{branch}:{path}"], check=False)
+    """Read a file from *branch* without switching.  Returns content or ``None``.
+
+    Strips a leading UTF-8 BOM if present so callers compare textual
+    content without the BOM byte affecting hashes or merge inputs.
+    """
+    content = run_git(["show", f"{branch}:{path}"], check=False)
+    if content is not None and content.startswith("﻿"):
+        content = content[1:]
+    return content
 
 
 def _push_refs(refs, force=False):
@@ -681,17 +694,22 @@ def _body_hash(content):
 
 
 def _write_tracking_file(rel_path, content):
-    """Write a tracking file under ROOT_DIR.
+    """Write a tracking file under ROOT_DIR with UTF-8 BOM + CRLF.
 
-    Writes CRLF to match the ``eol=crlf`` .gitattributes rule on
-    tracking files, and skips the write when on-disk bytes already
-    match so refreshes that produce no real change don't churn mtime
-    or flip line endings.
+    BOM matches what editors produce when users save resolved
+    merges, so all tracking blobs share one encoding. Without it,
+    BOM-less script blobs and BOM-prefixed editor blobs differ on
+    every byte for textually-identical content, making any diff
+    that crosses the boundary render as a whole-file replacement
+    in git GUIs. Skips the write when on-disk bytes already match.
     """
     abs_path = os.path.join(ROOT_DIR, rel_path.replace("/", os.sep))
     os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+    if content.startswith("﻿"):
+        content = content[1:]
     normalized = content.replace("\r\n", "\n").replace("\r", "\n")
-    new_bytes = normalized.replace("\n", "\r\n").encode("utf-8")
+    new_bytes = (b"\xef\xbb\xbf"
+                 + normalized.replace("\n", "\r\n").encode("utf-8"))
     if os.path.exists(abs_path):
         with open(abs_path, "rb") as f:
             if f.read() == new_bytes:
@@ -770,7 +788,7 @@ def _scan_unresolved_conflicts():
         for fname in filenames:
             full = os.path.join(dirpath, fname)
             try:
-                with open(full, "r", encoding="utf-8") as f:
+                with open(full, "r", encoding="utf-8-sig") as f:
                     content = f.read()
             except (OSError, UnicodeDecodeError):
                 continue
@@ -780,30 +798,40 @@ def _scan_unresolved_conflicts():
     return bad
 
 
-def _head_is_vanilla_merge(vanilla_sha):
-    """Return True if HEAD is a merge commit with ``vanilla_sha`` as a parent."""
-    parents_line = run_git(
-        ["rev-list", "--parents", "-n", "1", "HEAD"], check=False)
-    if not parents_line:
-        return False
-    parts = parents_line.split()
-    # parts = [HEAD, parent1, parent2, ...]; merge commits have len >= 3
-    if len(parts) < 3:
-        return False
-    return vanilla_sha in parts[1:]
+def _advance_merged_ref_if_absorbed():
+    """Advance ``gui/vanilla-merged`` to ``gui/vanilla`` when HEAD has
+    already absorbed the merge.
 
-
-def _flatten_head_merge_commit():
-    """Rewrite HEAD merge commit as a regular single-parent commit.
-
-    Soft-resets to first parent (preserving index + working tree), then
-    re-commits with the same message and tree. Net result: identical
-    content, but history shows a normal linear commit instead of a
-    2-parent merge so diff tools render it as a normal commit.
+    Detects the post-resolve state (the user committed the merge but
+    the bookmark hasn't moved yet) and fixes it. Called from both
+    ``cmd_merge`` and ``cmd_apply`` so users don't need to invoke
+    merge a second time after resolving conflicts. Exits with status
+    1 if tracking files still contain conflict markers. Returns
+    True when the bookmark was advanced, False otherwise.
     """
-    msg = run_git(["log", "-1", "--pretty=%B", "HEAD"]) or "Update vanilla GUI definitions"
-    run_git(["reset", "--soft", "HEAD^1"])
-    run_git(["commit", "-m", msg])
+    if not _vanilla_branch_exists() or not _vanilla_merged_ref_exists():
+        return False
+    vanilla_sha = run_git(["rev-parse", VANILLA_BRANCH])
+    merged_sha = run_git(["rev-parse", MERGED_BRANCH])
+    if vanilla_sha == merged_sha:
+        return False
+    if run_git(["merge-base", "--is-ancestor", vanilla_sha, "HEAD"],
+               check=False) is None:
+        return False
+    bad = _scan_unresolved_conflicts()
+    if bad:
+        print("Error: tracking files contain conflict markers:")
+        for f in bad:
+            print(f"  {f}")
+        print("\nFix the markers, re-stage, and amend the commit, "
+              "then re-run.")
+        sys.exit(1)
+    print("Advancing gui/vanilla-merged bookmark "
+          "(gui/vanilla already in HEAD's ancestry)...")
+    run_git(["update-ref",
+             f"refs/heads/{MERGED_BRANCH}", vanilla_sha])
+    _push_refs([MERGED_BRANCH])
+    return True
 
 
 def _setup_merge_state(merge_head_sha, merge_msg):
@@ -1046,7 +1074,7 @@ def cmd_check(args):
         if pending_merge:
             print("\nPrevious merge is unfinished "
                   f"({VANILLA_BRANCH} is ahead of {MERGED_BRANCH}).")
-            print("Run 'gui_update.py merge' to resume.")
+            print("Run 'gui_update.py apply' to finalize.")
         else:
             print("\nAll tracked definitions are up to date with vanilla.")
         return 0
@@ -1081,110 +1109,80 @@ def cmd_merge(args):
     _ensure_no_merge()
     _ensure_vanilla_merged_ref()
 
-    # If gui/vanilla is already in HEAD's ancestry (the user has
-    # committed a merge that absorbed it, possibly with later commits on
-    # top), advance the bookmark and skip re-merging. If HEAD itself is
-    # the merge commit, also flatten it for cleaner history.
+    just_advanced = _advance_merged_ref_if_absorbed()
     vanilla_sha = run_git(["rev-parse", VANILLA_BRANCH])
     merged_sha = run_git(["rev-parse", MERGED_BRANCH])
-    head_already_merged = vanilla_sha != merged_sha and (
-        run_git(["merge-base", "--is-ancestor", vanilla_sha, "HEAD"],
-                check=False) is not None)
-    if vanilla_sha != merged_sha and _head_is_vanilla_merge(vanilla_sha):
-        bad = _scan_unresolved_conflicts()
-        if bad:
-            print("Error: tracking files contain conflict markers:")
-            for f in bad:
-                print(f"  {f}")
-            print("\nFix the markers, re-stage, and amend the commit, "
-                  "then re-run merge.")
-            return 1
-        print("Flattening previous merge commit into single-parent...")
-        _flatten_head_merge_commit()
-        run_git(["update-ref",
-                 f"refs/heads/{MERGED_BRANCH}", vanilla_sha])
-        _push_refs([MERGED_BRANCH])
-        # Force-push the working branch since flatten rewrote its history;
-        # without this, GitHub Desktop sync produces phantom merge conflicts.
-        current_branch = run_git(
-            ["branch", "--show-current"], check=False)
-        if current_branch:
-            _push_refs([current_branch], force=True)
-        merged_sha = vanilla_sha
-    elif head_already_merged:
-        # HEAD has gui/vanilla in its ancestry but isn't itself the merge
-        # commit (extra commits like apply output landed on top). The
-        # resolution is already in HEAD's tree, so just advance the bookmark.
-        print("Advancing gui/vanilla-merged bookmark "
-              "(gui/vanilla already in HEAD's ancestry)...")
-        run_git(["update-ref",
-                 f"refs/heads/{MERGED_BRANCH}", vanilla_sha])
-        _push_refs([MERGED_BRANCH])
-        merged_sha = vanilla_sha
 
     # Sync tracking from current mod state so OURS in the merge reflects
-    # edits/deletions made since the last refresh.
-    print("Syncing tracking files from current mod content...")
-    mod_defs = _scan_definitions(ROOT_DIR, GUI_SOURCES)
-    mod_map = {}
-    mod_consts = {}
-    for d in mod_defs:
-        if d.kind == "constant":
-            mod_consts.setdefault((d.source_file, d.name), d)
-        else:
-            mod_map.setdefault(_tracking_key(d.kind, d.name), d)
-
-    synced = 0
-    removed_keys = []
-    new_definitions = {}
-    for key, entry in manifest["definitions"].items():
-        if key.startswith("constant:"):
-            md = mod_consts.get((entry["mod_file"], entry["name"]))
-        else:
-            md = mod_map.get(key)
-        if md is not None:
-            if (not key.startswith("constant:")
-                    and entry["mod_file"] != md.source_file):
-                entry["mod_file"] = md.source_file
-            new_definitions[key] = entry
-            tp = entry["tracking_path"]
-            header = _make_tracking_header(
-                entry["vanilla_file"], entry["mod_file"])
-            new_text = header + md.text + "\n"
-            abs_tp = os.path.join(ROOT_DIR, tp.replace("/", os.sep))
-            old_text = None
-            if os.path.isfile(abs_tp):
-                with open(abs_tp, "r", encoding="utf-8") as f:
-                    old_text = f.read()
-            if old_text != new_text:
-                _write_tracking_file(tp, new_text)
-                synced += 1
-        else:
-            removed_keys.append(key)
-            abs_tp = os.path.join(
-                ROOT_DIR, entry["tracking_path"].replace("/", os.sep))
-            if os.path.isfile(abs_tp):
-                os.remove(abs_tp)
-
-    if synced or removed_keys:
-        manifest["definitions"] = new_definitions
-        _save_manifest(manifest)
-        run_git(["add", "-A", TRACKING_DIR_NAME + "/"])
-        parts = []
-        if synced:
-            parts.append(f"{synced} updated")
-        if removed_keys:
-            parts.append(f"{len(removed_keys)} removed")
-        run_git(["commit", "-m",
-                 "Sync tracking from mod state: " + ", ".join(parts)])
-        if synced:
-            print(f"  {synced} tracking file(s) updated.")
-        if removed_keys:
-            print(f"  {len(removed_keys)} stale entry(ies) removed:")
-            for k in removed_keys:
-                print(f"    - {k}")
+    # edits/deletions made since the last refresh. Skip after advancing
+    # past an absorbed merge: the resolution is in tracking and mod
+    # files may still be pre-apply, so re-deriving from mod would
+    # revert the resolution.
+    if just_advanced:
+        print("Skipping mod-state sync (tracking is authoritative "
+              "after merge absorption).")
     else:
-        print("  Tracking already in sync with mod.")
+        print("Syncing tracking files from current mod content...")
+        mod_defs = _scan_definitions(ROOT_DIR, GUI_SOURCES)
+        mod_map = {}
+        mod_consts = {}
+        for d in mod_defs:
+            if d.kind == "constant":
+                mod_consts.setdefault((d.source_file, d.name), d)
+            else:
+                mod_map.setdefault(_tracking_key(d.kind, d.name), d)
+
+        synced = 0
+        removed_keys = []
+        new_definitions = {}
+        for key, entry in manifest["definitions"].items():
+            if key.startswith("constant:"):
+                md = mod_consts.get((entry["mod_file"], entry["name"]))
+            else:
+                md = mod_map.get(key)
+            if md is not None:
+                if (not key.startswith("constant:")
+                        and entry["mod_file"] != md.source_file):
+                    entry["mod_file"] = md.source_file
+                new_definitions[key] = entry
+                tp = entry["tracking_path"]
+                header = _make_tracking_header(
+                    entry["vanilla_file"], entry["mod_file"])
+                new_text = header + md.text + "\n"
+                abs_tp = os.path.join(ROOT_DIR, tp.replace("/", os.sep))
+                old_text = None
+                if os.path.isfile(abs_tp):
+                    with open(abs_tp, "r", encoding="utf-8-sig") as f:
+                        old_text = f.read()
+                if old_text != new_text:
+                    _write_tracking_file(tp, new_text)
+                    synced += 1
+            else:
+                removed_keys.append(key)
+                abs_tp = os.path.join(
+                    ROOT_DIR, entry["tracking_path"].replace("/", os.sep))
+                if os.path.isfile(abs_tp):
+                    os.remove(abs_tp)
+
+        if synced or removed_keys:
+            manifest["definitions"] = new_definitions
+            _save_manifest(manifest)
+            run_git(["add", "-A", TRACKING_DIR_NAME + "/"])
+            parts = []
+            if synced:
+                parts.append(f"{synced} updated")
+            if removed_keys:
+                parts.append(f"{len(removed_keys)} removed")
+            run_git(["commit", "-m",
+                     "Sync tracking from mod state: " + ", ".join(parts)])
+            if synced:
+                print(f"  {synced} tracking file(s) updated.")
+            if removed_keys:
+                print(f"  {len(removed_keys)} stale entry(ies) removed:")
+                for k in removed_keys:
+                    print(f"    - {k}")
+        else:
+            print("  Tracking already in sync with mod.")
 
     # Build the new vanilla snapshot from current game files.
     print("Scanning current vanilla GUI files...")
@@ -1236,9 +1234,9 @@ def cmd_merge(args):
 
     # Per-file three-way merge with explicit base ``gui/vanilla-merged``
     # and theirs ``gui/vanilla``. Doing this manually (rather than via
-    # ``git merge``) allows flattening the final commit to a single
-    # parent without breaking base detection on the next run, since the
-    # next base comes from the bookmark ref and not from git ancestry.
+    # ``git merge``) keeps base detection on the bookmark ref instead
+    # of git ancestry, so the merge result doesn't depend on history
+    # manipulation between runs.
     print("Running three-way merge...")
     conflicts = []
     clean_paths = []
@@ -1251,7 +1249,7 @@ def cmd_merge(args):
         theirs = _read_from_branch(VANILLA_BRANCH, tp)
         ours = None
         if os.path.isfile(abs_tp):
-            with open(abs_tp, "r", encoding="utf-8") as f:
+            with open(abs_tp, "r", encoding="utf-8-sig") as f:
                 ours = f.read()
 
         if base is not None:
@@ -1302,8 +1300,8 @@ def cmd_merge(args):
         for tp, base, ours, theirs in conflicts:
             _stage_merge_entries(tp, base, ours, theirs)
         # Set MERGE_HEAD/MERGE_MSG so ``git status`` shows a merge in
-        # progress; ``git commit`` will produce a merge commit, which
-        # this script flattens into single-parent on the next run.
+        # progress; ``git commit`` produces a 2-parent merge commit,
+        # and the next merge run advances the bookmark to recognize it.
         affected = len(conflicts) + len(clean_paths)
         msg = f"Merge vanilla GUI updates ({affected} definition(s))"
         _setup_merge_state(new_vanilla_sha, msg)
@@ -1311,10 +1309,8 @@ def cmd_merge(args):
         print(f"\nConflicts in {len(conflicts)} file(s):")
         for tp, _, _, _ in conflicts:
             print(f"  {tp}")
-        print("\nResolve the conflicts in your merge tool of choice, then:")
-        print(f"  git add {TRACKING_DIR_NAME}/")
-        print("  git commit")
-        print("  python tools/gui_update.py merge   # flattens + finalizes")
+        print("\nResolve the conflicts in your merge tool of choice, then run:")
+        print("  python tools/gui_update.py apply")
         return 1
 
     # No conflicts: stage and commit as a regular single-parent commit.
@@ -1349,6 +1345,8 @@ def cmd_apply(args):
         print("Error: Merge in progress. Resolve conflicts and commit first.")
         return 1
 
+    _advance_merged_ref_if_absorbed()
+
     applied = 0
     errors = 0
 
@@ -1366,7 +1364,7 @@ def cmd_apply(args):
             print(f"  Warning: Tracking file missing: {tp}")
             continue
 
-        with open(abs_tp, "r", encoding="utf-8") as f:
+        with open(abs_tp, "r", encoding="utf-8-sig") as f:
             new_text = _strip_tracking_header(f.read()).rstrip("\n")
 
         if key.startswith("constant:"):
