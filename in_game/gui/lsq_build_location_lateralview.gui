@@ -11,7 +11,7 @@
 
 			filtered_sorted_list = {
 				margin_top = 10
-				datacontext = "[BuildInLocationLateralView.GetItemsSortSearch]"
+				datacontext = "[BuildInLocationLateralView.GetItemsSortSearch.WithFilterTags('building')]"
 				name = "build_location_filtered_list"
 
 				blockoverride "subheader_upper_divider" {
@@ -277,7 +277,7 @@
 								datacontext = "[LocationToBuildItem.GetLocation]"
 								datacontext = "[BuildInLocationLateralView.GetBuildingType]"
 
-								visible = "[Or(Not(LocationToBuildItem.HasBuilding), Not(LocationToBuildItem.GetBuilding.CanPlayerUpgrade))]"
+								visible = "[Not(BuildInLocationLateralView.IsMassUpgradeMode)]"
 
 								blockoverride "icon_overlay" {}
 								blockoverride "icon_texture" {
@@ -356,9 +356,9 @@
 								datacontext = "[BuildInLocationLateralView.GetBestBuildLocationItem]"
 								datacontext = "[BuildInLocationLateralView.GetBuildRankingItems]"
 								datacontext = "[LocationToBuildItem.GetLocation]"
-								datacontext = "[LocationToBuildItem.GetBuilding.GetType.GetNextReplaced(Player.Self)]"
+								datacontext = "[BuildInLocationLateralView.GetBuildingType.GetNextReplacementBuilding(Player.Self)]"
 
-								visible = "[And(LocationToBuildItem.HasBuilding, LocationToBuildItem.GetBuilding.CanPlayerUpgrade)]"
+								visible = "[BuildInLocationLateralView.IsMassUpgradeMode]"
 
 								blockoverride "icon_overlay" {}
 								blockoverride "icon_texture" {
@@ -501,7 +501,7 @@
 
 								enabled = no
 								datacontext = "[BuildInLocationLateralView.GetBuildRankingItems]"
-								datacontext = "[BuildInLocationLateralView.GetBuildingType.GetNextReplaced(Player.Self)]"
+								datacontext = "[BuildInLocationLateralView.GetBuildingType.GetNextReplacementBuilding(Player.Self)]"
 
 								blockoverride "icon_overlay" {}
 								blockoverride "icon_texture" {
@@ -1065,9 +1065,14 @@
 					}
 
 					sort_by_key_button = {
+						name = "employment"
+						layoutpolicy_vertical = expanding
+						size = { 88 -1 }
+					}
+					sort_by_key_button = {
 						name = "population"
 						layoutpolicy_vertical = expanding
-						size = { 180 -1 }
+						size = { 88 -1 }
 					}
 
 					sort_by_key_button = {
@@ -1350,7 +1355,7 @@ template build_location_entry {
 													text = "[Location.GetExpectedUnEmployed(PopType.Self)]"
 													sort_by_highlight = {
 														size = { 105% 200% }
-														name = "population"
+														name = "employment"
 													}
 												}
 
@@ -1377,6 +1382,10 @@ template build_location_entry {
 												fontsize = 13
 												autoresize = yes
 												text = "[GetUnEmployedPeasantsFromLocation(LocationToBuildItem.GetLocation)]"
+												sort_by_highlight = {
+													size = { 105% 200% }
+													name = "population"
+												}
 											}
 											icon = {
 												size = { 15 15 }
@@ -1686,6 +1695,20 @@ template build_location_entry {
                                     }
                                 }
 
+								hbox = { #upkeep
+									expand = {}
+									visible = "[And3(LocationToBuildItem.HasBuilding, Not(LocationToBuildItem.GetBuilding.IsUnderConstruction), Not(LocationToBuildItem.GetBuildingType.IsProducing))]"
+
+									text_single = {
+										maximumsize = { 60 18 }
+										fontsize = 14
+										raw_text = "#R [Building.GetUpkeep|2]#!@expense!"
+										tooltipwidget = {
+											using = Building_upkeep_tooltip
+										}
+									}
+								}
+
                                 hbox = { #unbuilt
                                     visible = "[And(LocationToBuildItem.ShowProfit, Not(LocationToBuildItem.HasConstructedBuildingLevels))]"
                                     expand = {}
@@ -1828,12 +1851,39 @@ template build_location_entry {
 										action_tooltip = {
 											click_type = left
 											click_mode = confirm
+											click_modifier = default
 
 											title = "DESTROY_BUILDING_ACTION"
 											description = "[LocationToBuildItem.CanDestroyDesc]"
 											# LSQ check if auto-expand is on when destroying a building level
 											on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
-											on_action = "[LocationToBuildItem.Destroy]"
+											on_action = "[LocationToBuildItem.DestroyDefault]"
+											enabled = "[LocationToBuildItem.CanDestroy]"
+											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
+											visible = "[Not(LocationToBuildItem.CanDequeue)]"
+										}
+
+										action_tooltip = {
+											click_type = left
+											click_mode = confirm
+											click_modifier = ctrl
+
+											title = "DESTROY_BUILDING_ACTION_CTRL"
+											description = "[LocationToBuildItem.CanDestroyDescCtrl]"
+											on_action = "[LocationToBuildItem.DestroyCtrl]"
+											enabled = "[LocationToBuildItem.CanDestroy]"
+											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
+											visible = "[Not(LocationToBuildItem.CanDequeue)]"
+										}
+
+										action_tooltip = {
+											click_type = left
+											click_mode = confirm
+											click_modifier = shift
+
+											title = "DESTROY_BUILDING_ACTION_SHIFT"
+											description = "[LocationToBuildItem.CanDestroyDescShift]"
+											on_action = "[LocationToBuildItem.DestroyShift]"
 											enabled = "[LocationToBuildItem.CanDestroy]"
 											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
 											visible = "[Not(LocationToBuildItem.CanDequeue)]"
@@ -1948,6 +1998,7 @@ template build_location_entry {
 											click_type = left
 											click_mode = single
 											click_modifier = ctrl
+											click_modifier_description = "BUILDING_IN_LOCATION_ACTION_CTRL_MOD_DESC"
 
 											title = "BUILDING_IN_LOCATION_ACTION_CTRL"
 											cost = "[LocationToBuildItem.GetCost]"
@@ -1960,6 +2011,7 @@ template build_location_entry {
 											click_type = left
 											click_mode = single
 											click_modifier = shift
+											click_modifier_description = "BUILDING_IN_LOCATION_ACTION_SHIFT_MOD_DESC"
 
 											title = "BUILDING_IN_LOCATION_ACTION_SHIFT"
 											cost = "[LocationToBuildItem.GetCost]"
@@ -2056,12 +2108,39 @@ template build_location_entry {
 										action_tooltip = {
 											click_type = left
 											click_mode = confirm
+											click_modifier = default
 
 											title = "DESTROY_BUILDING_ACTION"
 											description = "[LocationToBuildItem.CanDestroyDesc]"
 											# LSQ check if auto-expand is on when destroying a building level
 											on_action = "[GetScriptedGui('lsq_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
-											on_action = "[LocationToBuildItem.Destroy]"
+											on_action = "[LocationToBuildItem.DestroyDefault]"
+											enabled = "[LocationToBuildItem.CanDestroy]"
+											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
+											visible = "[Not(LocationToBuildItem.CanDequeue)]"
+										}
+
+										action_tooltip = {
+											click_type = left
+											click_mode = confirm
+											click_modifier = ctrl
+
+											title = "DESTROY_BUILDING_ACTION_CTRL"
+											description = "[LocationToBuildItem.CanDestroyDescCtrl]"
+											on_action = "[LocationToBuildItem.DestroyCtrl]"
+											enabled = "[LocationToBuildItem.CanDestroy]"
+											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
+											visible = "[Not(LocationToBuildItem.CanDequeue)]"
+										}
+
+										action_tooltip = {
+											click_type = left
+											click_mode = confirm
+											click_modifier = shift
+
+											title = "DESTROY_BUILDING_ACTION_SHIFT"
+											description = "[LocationToBuildItem.CanDestroyDescShift]"
+											on_action = "[LocationToBuildItem.DestroyShift]"
 											enabled = "[LocationToBuildItem.CanDestroy]"
 											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
 											visible = "[Not(LocationToBuildItem.CanDequeue)]"
@@ -2159,13 +2238,13 @@ template build_location_entry {
 									widget = {
 										layoutpolicy_vertical = expanding
 										size = {22 -1}
-										datacontext = "[LocationToBuildItem.GetBuilding.GetType.GetNextReplaced(Player.Self)]"
+										datacontext = "[LocationToBuildItem.GetBuilding.GetType.GetNextReplacementBuilding(Player.Self)]"
 										tooltipwidget = {
 											SimpleContextualTooltipType = {
 												blockoverride "title_icon" {
 													icon = {
 														using = tooltip_title_icon_size
-														texture = "[GetBuildingIcon(BuildInLocationLateralView.GetBuildingType.GetNextReplaced(Player.Self))]"
+														texture = "[GetBuildingIcon(BuildInLocationLateralView.GetBuildingType.GetNextReplacementBuilding(Player.Self))]"
 													}
 												}
 												lowpriotextcontext =  UPGRADE_LOCATION_NUMBER
@@ -2184,7 +2263,7 @@ template build_location_entry {
 									# UPGRADE
 									button_square_plus = {
 										visible = "[And(LocationToBuildItem.HasBuilding, LocationToBuildItem.GetBuilding.CanPlayerUpgrade)]"
-										datacontext = "[LocationToBuildItem.GetBuilding.GetType.GetNextReplaced(Player.Self)]"
+										datacontext = "[LocationToBuildItem.GetBuilding.GetType.GetNextReplacementBuilding(Player.Self)]"
 										size = { 17 17 } # LSQ reduce to make space for auto-expand button
 										blockoverride "plusminus_icon" {
 											texture = "gfx/interface/buttons/flats/upgrade_button2.dds"
