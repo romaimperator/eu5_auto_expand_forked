@@ -523,19 +523,37 @@ template build_rgo_entry {
 							}
 							widget = {
 								size = { 70 30 }
+								datacontext = "[Location.GetMarket]"
+								datacontext = "[Location.GetMarket.GetMarketEntry(Location.GetRawMaterial)]"
+								tooltipwidget = {
+									using = goods_market_price_tooltip
+								}
 								hbox = {
 									layoutpolicy_horizontal = expanding
 
 									expand = {}
 									text_single = {
-										datacontext = "[Location.GetMarket]"
-										datacontext = "[Location.GetMarket.GetMarketEntry(Location.GetRawMaterial)]"
-										maximumsize = { 70 18 }
+										maximumsize = { 50 18 }
 										align = nobaseline|right
 										fontsize = 14
-										raw_text = "[Location.GetMarket.GetPrice(Location.GetRawMaterial)|2]@[Location.GetRawMaterial.GetPriceDifferenceIconName(Location.GetMarket.GetPrice(Location.GetRawMaterial))]!"
-										tooltipwidget = {
-											using = goods_market_price_tooltip
+										raw_text = "[Location.GetMarket.GetPrice(Location.GetRawMaterial)|2]"
+
+										sort_by_highlight = {
+											size = { 105% 100% }
+											name = "market_price"
+										}
+									}
+
+									text_single = {
+
+										maximumsize = { 20 18 }
+										align = nobaseline|center
+										fontsize = 14
+										raw_text = "@[Location.GetRawMaterial.GetPriceDifferenceIconName(Location.GetMarket.GetPrice(Location.GetRawMaterial))]!"
+
+										sort_by_highlight = {
+											size = { 105% 100% }
+											name = "market_price_diff"
 										}
 									}
 								}
