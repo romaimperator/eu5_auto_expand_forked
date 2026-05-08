@@ -260,15 +260,19 @@
 									spacing = 5
 
 									hbox = {
-										margin_right = 3
 										spacing = 5
 										layoutpolicy_horizontal = expanding
 
-											widget = { # profit/income
+										hbox = {
+											margin_right = 3
+											spacing = 6
+											layoutpolicy_horizontal = expanding
+
+											widget = { # profit/income/upkeep
 												size = { 60 36 }
-												hbox = { #built
+												hbox = { #profit/income
 													expand = {}
-													visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing)]"
+													visible = "[BuildingItem.GetBuildingType.IsProducing]"
 							
 													vbox = {#profitable
 														visible = "[GreaterThan_CFixedPoint(Building.GetProfit, '(CFixedPoint)0')]"
@@ -335,6 +339,25 @@
 														}
 													}
 												}
+
+												hbox = { #upkeep
+													expand = {}
+													visible = "[Not(BuildingItem.GetBuildingType.IsProducing)]"
+							
+													text_single = {
+														maximumsize = { 60 18 }
+														fontsize = 14
+														raw_text = "#R [Building.GetUpkeep|2]#!@expense!"
+														tooltipwidget = {
+															using = Building_upkeep_tooltip
+														}
+										
+														# sort_by_highlight = {
+														# 	size = { 105% 200% }
+														# 	name = "income"
+														# }
+													}
+												}
 											}
 	
 											widget = { #efficiency
@@ -365,6 +388,11 @@
 												}
 											}
 										}
+
+									}
+
+									widget = {
+										size = { 20 41 }
 
 										vbox = { # buttons
 											spacing = 1
@@ -420,6 +448,8 @@
 												}
 											}
 										}
+									}
+
 
 									widget = { #builder
 										layoutpolicy_vertical = expanding
@@ -491,6 +521,10 @@
 													align = center
 													default_format = "#overview_text"
 
+													tooltipwidget = {
+														using = BuildingMaxLevel_Tooltip
+													}
+
 													sort_by_highlight = {
 														name = "level"
 													}
@@ -504,6 +538,10 @@
 													align = center
 													default_format = "#overview_text"
 
+													tooltipwidget = {
+														using = BuildingMaxLevel_Tooltip
+													}
+
 													sort_by_highlight = {
 														name = "level"
 													}
@@ -516,6 +554,10 @@
 													raw_text = "[BuildingCandidate.GetBuilding.GetLevel|0Y] ([BuildingCandidate.GetBuilding.GetLevelsUnderConstruction|0+=]) / [BuildingCandidate.GetMaxLevel|0Y]"
 													align = center
 													default_format = "#overview_text"
+
+													tooltipwidget = {
+														using = BuildingMaxLevel_Tooltip
+													}
 
 													sort_by_highlight = {
 														name = "level"
@@ -573,7 +615,7 @@
 													blockoverride "plusminus_icon" {
 														texture = "gfx/interface/buttons/flats/upgrade_button2.dds"
 													}
-													datacontext = "[BuildingItem.GetBuildingType.GetNextReplaced(Player.Self)]"
+													datacontext = "[BuildingItem.GetBuildingType.GetNextReplacementBuilding(Player.Self)]"
 													enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 													action_tooltip = {
 														click_mode = single
