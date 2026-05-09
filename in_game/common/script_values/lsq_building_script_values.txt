@@ -116,12 +116,16 @@ lsq_get_construction_good_adjustment = {
 		value = "scope:location.market.market_price(scope:good)"
 		divide = "default_price(scope:good)"
 		subtract = 1
-		divide = 3
+		divide = 2
 	} else_if = { limit = { "scope:location.market.market_price(scope:good)" < "default_price(scope:good)" }
-		value = "default_price(scope:good)"
-		divide = "scope:location.market.market_price(scope:good)"
+		value = "scope:location.market.market_price(scope:good)"
+		divide = "default_price(scope:good)"
 		subtract = 1
-		multiply = -10
+		multiply = {
+			value = 1
+			divide = 9
+			add = 1
+		}
 	} else = {
 		value = 0
 	}

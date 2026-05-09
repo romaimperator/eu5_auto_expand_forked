@@ -98,6 +98,182 @@ lsq_combined_pop_promotion_speed_for_peasants = {
   multiply = 0.5
 }
 
+# Population growth modifier wrappers. Pop growth rate percentages are yearly.
+# Root is the location
+lsq_local_population_growth = { value = modifier:local_population_growth }
+lsq_local_nobles_pop_growth = { value = modifier:local_nobles_pop_growth }
+lsq_local_clergy_pop_growth = { value = modifier:local_clergy_pop_growth }
+lsq_local_burghers_pop_growth = { value = modifier:local_burghers_pop_growth }
+lsq_local_laborers_pop_growth = { value = modifier:local_laborers_pop_growth }
+lsq_local_soldiers_pop_growth = { value = modifier:local_soldiers_pop_growth }
+lsq_local_peasants_pop_growth = { value = modifier:local_peasants_pop_growth }
+lsq_local_slaves_pop_growth = { value = modifier:local_slaves_pop_growth }
+lsq_local_tribesmen_pop_growth = { value = modifier:local_tribesmen_pop_growth }
+
+# Root is country
+lsq_global_population_growth = { value = modifier:global_population_growth }
+lsq_global_nobles_pop_growth = { value = modifier:global_nobles_pop_growth }
+lsq_global_clergy_pop_growth = { value = modifier:global_clergy_pop_growth }
+lsq_global_burghers_pop_growth = { value = modifier:global_burghers_pop_growth }
+lsq_global_laborers_pop_growth = { value = modifier:global_laborers_pop_growth }
+lsq_global_soldiers_pop_growth = { value = modifier:global_soldiers_pop_growth }
+lsq_global_peasants_pop_growth = { value = modifier:global_peasants_pop_growth }
+lsq_global_slaves_pop_growth = { value = modifier:global_slaves_pop_growth }
+lsq_global_tribesmen_pop_growth = { value = modifier:global_tribesmen_pop_growth }
+
+# Root is the location
+lsq_base_location_pop_growth_rate = {
+  value = modifier:local_population_growth
+  owner = { add = modifier:global_population_growth }
+}
+
+# Per-pop-type yearly growth rate. Root is the location.
+lsq_location_nobles_pop_growth_rate = {
+  value = lsq_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_nobles_pop_growth
+    owner = { add = modifier:global_nobles_pop_growth }
+  }
+}
+lsq_location_clergy_pop_growth_rate = {
+  value = lsq_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_clergy_pop_growth
+    owner = { add = modifier:global_clergy_pop_growth }
+  }
+}
+lsq_location_burghers_pop_growth_rate = {
+  value = lsq_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_burghers_pop_growth
+    owner = { add = modifier:global_burghers_pop_growth }
+  }
+}
+lsq_location_laborers_pop_growth_rate = {
+  value = lsq_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_laborers_pop_growth
+    owner = { add = modifier:global_laborers_pop_growth }
+  }
+}
+lsq_location_soldiers_pop_growth_rate = {
+  value = lsq_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_soldiers_pop_growth
+    owner = { add = modifier:global_soldiers_pop_growth }
+  }
+}
+lsq_location_peasants_pop_growth_rate = {
+  value = lsq_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_peasants_pop_growth
+    owner = { add = modifier:global_peasants_pop_growth }
+  }
+}
+lsq_location_slaves_pop_growth_rate = {
+  value = lsq_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_slaves_pop_growth
+    owner = { add = modifier:global_slaves_pop_growth }
+  }
+}
+lsq_location_tribesmen_pop_growth_rate = {
+  value = lsq_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_tribesmen_pop_growth
+    owner = { add = modifier:global_tribesmen_pop_growth }
+  }
+}
+
+# Per-pop-type expected new pops next month. Yearly growth rate divided by 12.
+# Root is the location.
+lsq_location_expected_new_nobles = {
+  value = num_pop_type:nobles
+  multiply = lsq_location_nobles_pop_growth_rate
+  divide = 12
+}
+lsq_location_expected_new_clergy = {
+  value = num_pop_type:clergy
+  multiply = lsq_location_clergy_pop_growth_rate
+  divide = 12
+}
+lsq_location_expected_new_burghers = {
+  value = num_pop_type:burghers
+  multiply = lsq_location_burghers_pop_growth_rate
+  divide = 12
+}
+lsq_location_expected_new_laborers = {
+  value = num_pop_type:laborers
+  multiply = lsq_location_laborers_pop_growth_rate
+  divide = 12
+}
+lsq_location_expected_new_soldiers = {
+  value = num_pop_type:soldiers
+  multiply = lsq_location_soldiers_pop_growth_rate
+  divide = 12
+}
+lsq_location_expected_new_peasants = {
+  value = num_pop_type:peasants
+  multiply = lsq_location_peasants_pop_growth_rate
+  divide = 12
+}
+lsq_location_expected_new_slaves = {
+  value = num_pop_type:slaves
+  multiply = lsq_location_slaves_pop_growth_rate
+  divide = 12
+}
+lsq_location_expected_new_tribesmen = {
+  value = num_pop_type:tribesmen
+  multiply = lsq_location_tribesmen_pop_growth_rate
+  divide = 12
+}
+
+# Combined monthly pop additions: promotion speed plus new pop growth.
+# Slaves and tribesmen aren't promoted, so only growth contributes.
+# Root is the location.
+lsq_combined_monthly_new_pops_of_type_nobles = {
+  value = lsq_combined_pop_promotion_speed_for_nobles
+  add = lsq_location_expected_new_nobles
+}
+lsq_combined_monthly_new_pops_of_type_clergy = {
+  value = lsq_combined_pop_promotion_speed_for_clergy
+  add = lsq_location_expected_new_clergy
+}
+lsq_combined_monthly_new_pops_of_type_burghers = {
+  value = lsq_combined_pop_promotion_speed_for_burghers
+  add = lsq_location_expected_new_burghers
+}
+lsq_combined_monthly_new_pops_of_type_laborers = {
+  value = lsq_combined_pop_promotion_speed_for_laborers
+  add = lsq_location_expected_new_laborers
+}
+lsq_combined_monthly_new_pops_of_type_soldiers = {
+  value = lsq_combined_pop_promotion_speed_for_soldiers
+  add = lsq_location_expected_new_soldiers
+}
+lsq_combined_monthly_new_pops_of_type_peasants = {
+  value = lsq_combined_pop_promotion_speed_for_peasants
+  add = lsq_location_expected_new_peasants
+}
+lsq_combined_monthly_new_pops_of_type_slaves = {
+  value = lsq_location_expected_new_slaves
+}
+lsq_combined_monthly_new_pops_of_type_tribesmen = {
+  value = lsq_location_expected_new_tribesmen
+}
+lsq_combined_monthly_new_pops_of_type_laborers_or_slaves = {
+  value = lsq_combined_monthly_new_pops_of_type_laborers
+  add = lsq_combined_monthly_new_pops_of_type_slaves
+}
+
 lsq_local_laborers_desired_pop = {
   value = modifier:local_laborers_desired_pop
 }
@@ -247,6 +423,16 @@ lsq_location_slaves_needed_for_buildings = {
 lsq_location_slaves_available = {
   value = num_pop_type:slaves
   subtract = lsq_location_slaves_needed_for_buildings
+}
+
+# Root is the location. Combined laborer+slave pool minus the jobs either pop type can fill.
+lsq_location_laborers_or_slaves_available = {
+  value = num_pop_type:laborers
+  add = num_pop_type:slaves
+  subtract = lsq_location_laborers_needed_for_buildings
+  subtract = lsq_location_slaves_needed_for_buildings
+  subtract = lsq_modifier_rgo_level
+  subtract = lsq_get_rgos_under_construction
 }
 
 # Root is the location

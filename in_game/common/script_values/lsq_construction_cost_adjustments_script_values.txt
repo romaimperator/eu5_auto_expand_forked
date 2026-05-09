@@ -25,9 +25,9 @@ lsq_get_min_discount_for_auto_build_capital = { value = "scope:country.variable_
 # These maps are populated by the hidden window GUI for all building types.
 # The 28 construction goods below are a stable game constant.
 #
-# Algorithm: for each construction good, clamp the raw price adjustment to [-0.33, 0.33],
-# then weight by demand share (demand_for_good / total_demand). Since weights sum to 1.0,
-# the result naturally stays in [-0.33, 0.33] without further normalization.
+# Algorithm: for each construction good, clamp the raw price adjustment to the engine's
+# [MIN_PRICE_IMPACT, MAX_PRICE_IMPACT] = [-0.33, 1.5] range, then weight by demand share
+# (demand_for_good / total_demand). Weights sum to 1.0, so the result stays in [-0.33, 1.5].
 #
 # Expects scopes: location, building_type
 lsq_get_construction_cost_modifier_for_building_type = {
@@ -37,7 +37,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:books = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_books|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -47,7 +47,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:clay = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_clay|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -57,7 +57,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:cloth = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_cloth|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -67,7 +67,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:copper = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_copper|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -77,7 +77,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:fine_cloth = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_fine_cloth|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -87,7 +87,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:firearms = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_firearms|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -97,7 +97,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:glass = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_glass|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -107,7 +107,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:goods_gold = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_goods_gold|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -117,7 +117,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:horses = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_horses|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -127,7 +127,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:jewelry = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_jewelry|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -137,7 +137,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:leather = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_leather|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -147,7 +147,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:liquor = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_liquor|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -157,7 +157,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:livestock = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_livestock|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -167,7 +167,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:lumber = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_lumber|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -177,7 +177,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:marble = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_marble|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -187,7 +187,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:masonry = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_masonry|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -197,7 +197,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:naval_supplies = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_naval_supplies|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -207,7 +207,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:paper = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_paper|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -217,7 +217,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:salt = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_salt|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -227,7 +227,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:sand = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_sand|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -237,7 +237,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:silver = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_silver|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -247,7 +247,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:steel = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_steel|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -257,7 +257,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:stone = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_stone|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -267,7 +267,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:tin = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_tin|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -277,7 +277,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:tools = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_tools|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -287,7 +287,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:weaponry = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_weaponry|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -297,7 +297,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:wheat = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_wheat|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -307,7 +307,7 @@ lsq_get_construction_cost_modifier_for_building_type = {
       goods:wool = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_wool|scope:building_type)"
       divide = lsq_get_construction_demand_total
     }
@@ -323,7 +323,7 @@ lsq_get_standard_construction_cost_modifier_for_building_type = {
       goods:glass = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_glass|scope:building_type)"
       divide = lsq_get_standard_construction_demand_total
     }
@@ -333,7 +333,7 @@ lsq_get_standard_construction_cost_modifier_for_building_type = {
       goods:lumber = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_lumber|scope:building_type)"
       divide = lsq_get_standard_construction_demand_total
     }
@@ -343,7 +343,7 @@ lsq_get_standard_construction_cost_modifier_for_building_type = {
       goods:masonry = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_masonry|scope:building_type)"
       divide = lsq_get_standard_construction_demand_total
     }
@@ -353,7 +353,7 @@ lsq_get_standard_construction_cost_modifier_for_building_type = {
       goods:sand = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_sand|scope:building_type)"
       divide = lsq_get_standard_construction_demand_total
     }
@@ -363,7 +363,7 @@ lsq_get_standard_construction_cost_modifier_for_building_type = {
       goods:stone = { save_temporary_scope_as = good }
       value = lsq_get_construction_good_adjustment
       min = -0.33
-      max = 0.33
+      max = 1.5
       multiply = "global_variable_map(lsq_construction_demand_stone|scope:building_type)"
       divide = lsq_get_standard_construction_demand_total
     }

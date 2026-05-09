@@ -1,4 +1,7 @@
-﻿# Expects scopes: country, location
+﻿# 50 gold is the base cost of all types of RGO defined in in_game/common/prices/00_hardcoded.txt
+lsq_get_defined_base_cost_for_rgo = 50
+
+# Expects scopes: country, location
 lsq_expected_gold_available_for_rgo_auto_expand = {
 	value = lsq_get_adjusted_construction_cost_for_rgo
 	if = { limit = { exists = scope:country.var:lsq_minimum_gold }
@@ -6,47 +9,43 @@ lsq_expected_gold_available_for_rgo_auto_expand = {
 	}
 }
 
+# Expects scopes: country, location. Sum of all multiplicative-style adjustments to the base RGO cost.
+lsq_get_adjustment_to_base_cost_for_rgo = {
+	value = 0
+	add = {
+		# Per-good base cost adjustment: build cost scales with the good's default price; expensive goods cost more, cheap goods less.
+		value = "default_price(scope:location.raw_material)"
+		subtract = 2
+		divide = 4
+	}
+	if = { limit = { scope:location.raw_material = { goods_method = mining } }
+		add = scope:country.modifier:expand_rgo_mining_cost_modifier
+	}
+	if = { limit = { scope:location.raw_material = { goods_method = farming } }
+		add = scope:country.modifier:expand_rgo_farming_cost_modifier
+	}
+	if = { limit = { scope:location.raw_material = { goods_method = hunting } }
+		add = scope:country.modifier:expand_rgo_hunting_cost_modifier
+	}
+	if = { limit = { scope:location.raw_material = { goods_method = gathering } }
+		add = scope:country.modifier:expand_rgo_gathering_cost_modifier
+	}
+	if = { limit = { scope:location.raw_material = { goods_method = forestry } }
+		add = scope:country.modifier:expand_rgo_forestry_cost_modifier
+	}
+	add = scope:country.inflation
+}
+
 # Expects scopes: country, location
 lsq_get_adjusted_construction_cost_for_rgo = {
-	value = 50 # 50 gold is the base cost of all types of RGO defined in in_game/common/prices/00_hardcoded.txt
+	value = lsq_get_defined_base_cost_for_rgo
+	multiply = {
+		value = 1
+		add = lsq_get_adjustment_to_base_cost_for_rgo
+	}
 	multiply = {
 		value = 1
 		add = lsq_get_construction_cost_adjustment_for_rgo
-	}
-	if = { limit = { scope:location.raw_material = { goods_method = mining } }
-	# debug_log = "LSQ: expand_rgo_mining_cost_modifier: [TopScope.sCountry('country').GetModifier('expand_rgo_mining_cost_modifier')]"
-		multiply = {
-			value = 1
-			add = scope:country.modifier:expand_rgo_mining_cost_modifier
-		}
-	}
-	if = { limit = { scope:location.raw_material = { goods_method = farming } }
-		multiply = {
-			value = 1
-			add = scope:country.modifier:expand_rgo_farming_cost_modifier
-		}
-	}
-	if = { limit = { scope:location.raw_material = { goods_method = hunting } }
-		multiply = {
-			value = 1
-			add = scope:country.modifier:expand_rgo_hunting_cost_modifier
-		}
-	}
-	if = { limit = { scope:location.raw_material = { goods_method = gathering } }
-		multiply = {
-			value = 1
-			add = scope:country.modifier:expand_rgo_gathering_cost_modifier
-		}
-	}
-	if = { limit = { scope:location.raw_material = { goods_method = forestry } }
-		multiply = {
-			value = 1
-			add = scope:country.modifier:expand_rgo_forestry_cost_modifier
-		}
-	}
-	multiply = {
-		value = 1
-		add = scope:country.inflation
 	}
 }
 
