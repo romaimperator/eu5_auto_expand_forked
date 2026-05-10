@@ -117,76 +117,98 @@ lsq_food_base_food = {
 	}
 }
 
-# ─── Total food modifier ───
-# Reads the current total food modifier from the engine (includes terrain + building modifiers).
+# ─── Engine modifier helpers ───
+# Engine model: total_food = base_food * R * F, where
+#   R = 1 + local_raw_material_output (RGO output multiplier)
+#   F = 1 + local_monthly_food_modifier (food output multiplier)
+
+# Food output multiplier F.
 lsq_food_total_food_mod = {
 	value = modifier:local_monthly_food_modifier
 }
 
-# ─── One plus total food mod (convenience) ───
 lsq_food_one_plus_total_food_mod = {
 	value = 1
 	add = lsq_food_total_food_mod
 }
 
+# Raw material output multiplier R.
+lsq_food_raw_material_output_mod = {
+	value = 1
+	add = modifier:local_raw_material_output
+}
+
 # ─── Total food at location ───
-# Location-scoped. Returns base_food × (1 + total_food_mod).
+# Returns base_food * R * F.
 lsq_food_location_total = {
 	value = lsq_food_base_food
+	multiply = lsq_food_raw_material_output_mod
 	multiply = lsq_food_one_plus_total_food_mod
 }
 
-# ─── Marginal food per 1000 workers ───
+# ─── Marginal food per added unit (1 building level, or 1 RGO expansion) ───
+# delta = food_new - food_old. Each option's effect on B, R, or F is captured below.
 
-# RGO level: food_value × (1 + rgo_output_mod) × (1 + total_food_mod)
+# RGO expansion: delta B = food_value * (1 + per_good_output_mod). delta food = delta B * R * F.
 lsq_food_marginal_rgo = {
 	value = lsq_food_value_of_rgo
 	multiply = {
 		value = 1
 		add = lsq_food_rgo_output_mod
 	}
+	multiply = lsq_food_raw_material_output_mod
 	multiply = lsq_food_one_plus_total_food_mod
 }
 
-# Farming Village: 4.0 × (1 + total_food_mod) + 0.04 × base_food
+# Farming Village: delta B = +4.0 (livestock), delta R = +0.025 (local_raw_material_output), delta F = 0.
+# delta food = (B + 4) * (R + 0.025) * F - B * R * F.
 lsq_food_marginal_farming_village = {
-	value = 4.0
-	multiply = lsq_food_one_plus_total_food_mod
-	add = {
-		value = lsq_food_base_food
-		multiply = 0.04
+	value = lsq_food_base_food
+	add = 4.0
+	multiply = {
+		value = lsq_food_raw_material_output_mod
+		add = 0.025
 	}
+	multiply = lsq_food_one_plus_total_food_mod
+	subtract = lsq_food_location_total
 }
 
-# Windmill: (0.1 × N × food_value × (1 + total_food_mod)) × 4
+# Windmill: delta(per_good_output_mod) = +0.1 on the location's RGO good (wheat/rice/millet).
+# delta food = N * food_value * 0.1 * R * F.
 lsq_food_marginal_windmill = {
-	value = 0.4
+	value = 0.1
 	multiply = lsq_modifier_rgo_level
 	multiply = lsq_food_value_of_rgo
+	multiply = lsq_food_raw_material_output_mod
 	multiply = lsq_food_one_plus_total_food_mod
 }
 
-# Irrigation: (0.05 × base_food) × 4
+# Irrigation: delta F = +0.05 (local_monthly_food_modifier).
+# delta food = B * R * 0.05.
 lsq_food_marginal_irrigation = {
 	value = lsq_food_base_food
-	multiply = 0.20
+	multiply = lsq_food_raw_material_output_mod
+	multiply = 0.05
 }
 
-# Fishing Village: 2.5 × (1 + total_food_mod)
+# Fishing Village: delta B = +2.5 (0.5 fish * 5 food). delta food = 2.5 * R * F.
 lsq_food_marginal_fishing_village = {
 	value = 2.5
+	multiply = lsq_food_raw_material_output_mod
 	multiply = lsq_food_one_plus_total_food_mod
 }
 
-# Sheep Farms: 2.5 × (1 + total_food_mod)
+# Sheep Farms: delta B = +2.5 (0.5 wool * 5 food). delta food = 2.5 * R * F.
 lsq_food_marginal_sheep_farms = {
 	value = 2.5
+	multiply = lsq_food_raw_material_output_mod
 	multiply = lsq_food_one_plus_total_food_mod
 }
 
-# Forest Village: 1.7 × (1 + total_food_mod)
+# Forest Village: delta B = +1.7 (0.2 wild_game * 3.5 food + 1.0 local_monthly_food). delta food = 1.7 * R * F.
 lsq_food_marginal_forest_village = {
 	value = 1.7
+	multiply = lsq_food_raw_material_output_mod
 	multiply = lsq_food_one_plus_total_food_mod
 }
 
