@@ -38,9 +38,12 @@ lsq_cmm_post_registration = {
 	lsq_rebuild_auto_build_lookups = yes
 	lsq_rebuild_auto_food_lookups = yes
 	lsq_rebuild_auto_urbanize_lookups = yes
+	lsq_rebuild_auto_town_rights_lookups = yes
 
 	# Hide buildings whose advance hasn't been researched yet
 	lsq_update_auto_build_list_visibility = yes
+	# Hide town rights whose potential doesn't pass for this country
+	lsq_update_auto_town_rights_list_visibility = yes
 }
 
 # Rebuild priority feature lookup tables from CMM list field data.
@@ -114,6 +117,24 @@ lsq_rebuild_auto_urbanize_lookups = {
 	} # end guard
 }
 
+# Rebuild auto town rights lookup tables from CMM list field data.
+# Called on registration and on every setting change.
+# Scope: country
+lsq_rebuild_auto_town_rights_lookups = {
+	if = {
+		limit = { NOT = { has_variable_list = cmm_list_items_lsq__auto_town_rights_list } }
+	}
+	else = {
+
+	# Ordered town rights list (for monthly pulse iteration in priority order)
+	cmm_build_list_ordered_values = { setting = lsq__auto_town_rights_list list_name = lsq_auto_town_rights_list }
+
+	# Enabled town rights (bool field slot 1)
+	cmm_build_list_bool_list = { setting = lsq__auto_town_rights_list field_slot = 1 list_name = lsq_auto_town_rights_enabled }
+
+	} # end guard
+}
+
 # Rebuild all food auto-build lookup tables from CMM list field data.
 # Called on registration and on every setting change.
 # Scope: country
@@ -169,6 +190,41 @@ lsq_auto_build_list_update_visibility_item = {
 	}
 }
 
+# Hide/show auto town rights list rows based on whether the country can currently
+# grant the right (basic advance researched, plus the right's potential block passes).
+# Scope: country
+lsq_update_auto_town_rights_list_visibility = {
+	if = {
+		limit = { has_variable_list = cmm_list_items_lsq__auto_town_rights_list }
+		cmm_for_each_list_item = {
+			setting = lsq__auto_town_rights_list
+			effect = lsq_auto_town_rights_list_update_visibility_item
+		}
+	}
+}
+
+# Callback for cmm_for_each_list_item. Shows or hides item $i$ based on the right's
+# country-level prerequisites.
+# Root: country
+lsq_auto_town_rights_list_update_visibility_item = {
+	if = {
+		limit = {
+			modifier:can_grant_town_rights = yes
+			lsq_auto_town_rights_potential_passes = yes
+		}
+		cmm_show_list_item = { mod_id = lsq setting_id = auto_town_rights_list item = $i$ }
+	}
+	else = {
+		cmm_hide_list_item = { mod_id = lsq setting_id = auto_town_rights_list item = $i$ }
+	}
+
+	# Accept $setting$ param from cmm_for_each_list_item (unused here)
+	if = {
+		limit = { always = no }
+		cmf_suppress = { v = $setting$_$i$ }
+	}
+}
+
 # CMM-specific warning suppression for lookup tables built from CMM list fields.
 _lsq_cmm_suppress_warnings = {
 	if = {
@@ -196,5 +252,8 @@ _lsq_cmm_suppress_warnings = {
 		# Auto-urbanize ignore list
 		cmf_suppress = { v = lsq_auto_urbanize_ignored_rgo_goods }
 		cmf_suppress = { v = lsq_cmm_auto_urbanize_ignore_list_initialized }
+		# Auto town rights (lookup lists)
+		cmf_suppress = { v = lsq_auto_town_rights_list }
+		cmf_suppress = { v = lsq_auto_town_rights_enabled }
 	}
 }

@@ -473,3 +473,43 @@ lsq_try_construct_capital_building = {
 		scope:capital_location = { construct_building = { building_type = scope:building_type } }
 	}
 }
+
+# ─── Auto Town Rights ───
+# Grants enabled town rights to eligible city/megalopolis locations in priority order.
+# Granting costs 5 government_power per use (modified by grant_town_rights_cost_modifier).
+lsq_run_auto_town_rights = {
+	if = {
+		limit = {
+			has_variable_list = lsq_auto_town_rights_list
+			modifier:can_grant_town_rights = yes
+		}
+		every_in_list = {
+			variable = lsq_auto_town_rights_list
+			save_scope_as = town_right
+			scope:country = {
+				if = {
+					limit = {
+						is_target_in_variable_list = { name = lsq_auto_town_rights_enabled target = scope:town_right }
+						government_power >= 5
+					}
+					ordered_owned_location = {
+						order_by = max_control
+						max = lsq_max_guess_at_number_of_locations
+						check_range_bounds = no
+						limit = {
+							NOT = { integration_level = conquered }
+							has_max_town_rights = no
+							NOT = { has_town_rights = scope:town_right }
+							OR = {
+								location_rank = location_rank:city
+								location_rank = location_rank:megalopolis
+							}
+							scope:country = { government_power >= 5 }
+						}
+						grant_town_rights = scope:town_right
+					}
+				}
+			}
+		}
+	}
+}

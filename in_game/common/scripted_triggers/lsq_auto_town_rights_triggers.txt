@@ -1,0 +1,159 @@
+﻿# Country trigger. Returns yes when the country can currently grant the town right
+# in scope:cmm_list_current_item_value (matches the per-right `potential` block).
+# Rights without a potential block default to yes.
+lsq_auto_town_rights_potential_passes = {
+	trigger_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:royal_free_cities_town_rights }
+		tag = HUN
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:bohemian_royal_cities_town_rights }
+		culture = { has_culture_group = culture_group:bohemian_group }
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:swedish_city_rights }
+		tag = SWE
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:norwegian_city_rights }
+		tag = NOR
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:ville_franche_town_rights }
+		culture = { has_culture_group = culture_group:french_group }
+		has_estate_privilege = estate_privilege:villes_franches
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:borgo_franco_town_rights }
+		culture = { has_culture_group = culture_group:italian_group }
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:magdeburg_rights_town_rights }
+		capital ?= { region = region:north_german_region }
+		has_estate_privilege = estate_privilege:magdeburg_rights
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:lubeck_town_rights }
+		culture = { has_culture_group = culture_group:german_group }
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:nuremberg_rights_town_rights }
+		capital ?= { region = region:south_german_region }
+		has_estate_privilege = estate_privilege:magdeburg_rights
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:upper_bergregal }
+		has_policy = german_mining_law
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:lower_bergregal }
+		has_policy = german_mining_law
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:stapelrecht_town_rights }
+		international_organization:hre = {
+			country_has_special_status = {
+				type = special_status:free_city
+				country = root
+			}
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:kulm_town_rights }
+		has_estate_privilege = estate_privilege:kulm_law
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:novi_fori_town_rights }
+		has_estate_privilege = estate_privilege:novi_fori
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:borough_customals }
+		culture = { has_culture_group = culture_group:british_group }
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:manorial_customals }
+		culture = { has_culture_group = culture_group:british_group }
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:foros_extensos_town_rights }
+		OR = {
+			has_or_had_tag = POR
+			culture = culture:portuguese
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:fuero_juzgo_town_rights }
+		OR = {
+			has_or_had_tag = LON
+			has_or_had_tag = CAS
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:fuero_real_town_rights }
+		has_or_had_tag = CAS
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:fuero_general_town_rights }
+		OR = {
+			has_or_had_tag = NAV
+			culture = culture:basque
+		}
+		culture = { has_culture_group = culture_group:iberian_group }
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:fuero_de_aragon_town_rights }
+		OR = {
+			has_or_had_tag = ARA
+			culture = culture:aragonese
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:usatges_de_barcelona_town_rights }
+		OR = {
+			has_or_had_tag = ARA
+			culture = culture:catalan
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:furs_de_valencia_town_rights }
+		OR = {
+			has_or_had_tag = ARA
+			culture = culture:catalan
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:imperial_breadbasket_rights }
+		OR = {
+			has_or_had_tag = BYZ
+			has_or_had_tag = ROM
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:constantinopolitan_silk_monopoly_rights }
+		OR = {
+			has_or_had_tag = BYZ
+			has_or_had_tag = ROM
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:scholai_literacy_rights }
+		OR = {
+			culture = { has_culture_group = culture_group:greek_group }
+			culture_group_percentage_in_country = {
+				culture_group = culture_group:greek_group
+				value > 0.25
+			}
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:municipia_privilegia }
+		has_dlc = "d008_fate_of_the_phoenix"
+		OR = {
+			has_or_had_tag = BYZ
+			has_or_had_tag = ROM
+		}
+	}
+	trigger_else = {
+		always = yes
+	}
+}
