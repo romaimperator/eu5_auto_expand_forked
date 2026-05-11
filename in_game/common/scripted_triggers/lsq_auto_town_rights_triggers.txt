@@ -1,8 +1,25 @@
-﻿# Country trigger. Returns yes when the country can currently grant the town right
-# in scope:cmm_list_current_item_value (matches the per-right `potential` block).
-# Rights without a potential block default to yes.
+﻿# Country trigger. Returns yes when the country currently meets the per-right
+# prerequisites for the town right in scope:cmm_list_current_item_value: the
+# unlocking advance (if any) plus the right's `potential` block (if any).
+# The basic city_building_advance gate is checked separately at the call site
+# via modifier:can_grant_town_rights = yes.
+# Rights with no tech and no potential default to yes.
 lsq_auto_town_rights_potential_passes = {
+	# Tech-unlocked rights (advance must be researched).
 	trigger_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:scandinavian_fishing_privileges }
+		has_advance = scandinavian_fishing_privileges_advance
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:scandinavian_bergslag_privileges }
+		has_advance = scandinavian_bergslag_privileges_advance
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:scandinavian_thing_rights }
+		has_advance = scandinavian_thing_rights_advance
+	}
+	# Potential-gated rights (tag / culture / estate privilege / policy / HRE / DLC).
+	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:royal_free_cities_town_rights }
 		tag = HUN
 	}
@@ -123,13 +140,6 @@ lsq_auto_town_rights_potential_passes = {
 	}
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:imperial_breadbasket_rights }
-		OR = {
-			has_or_had_tag = BYZ
-			has_or_had_tag = ROM
-		}
-	}
-	trigger_else_if = {
-		limit = { scope:cmm_list_current_item_value = town_rights_type:constantinopolitan_silk_monopoly_rights }
 		OR = {
 			has_or_had_tag = BYZ
 			has_or_had_tag = ROM
