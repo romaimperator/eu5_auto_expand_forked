@@ -29,3 +29,41 @@ building_only_not_auto_expand = {
 		}
 	}
 }
+
+lsq_building_production_efficiency = {
+	scope = building
+	tag = building
+	range = {
+		min = 0
+		max = 2
+		step = 0.01
+		format = search_filter_lsq_building_production_efficiency_format
+	}
+	trigger = {
+		location = {
+			building_efficiency = {
+				building_type = prev.building_type
+				value >= scope:min_value
+			}
+			building_efficiency = {
+				building_type = prev.building_type
+				value <= scope:max_value
+			}
+		}
+	}
+}
+
+lsq_building_level = {
+	scope = building
+	tag = building
+	range = {
+		min = 0
+		max = 100
+		step = 1
+		format = search_filter_lsq_building_level_format
+	}
+	trigger = {
+		building_level >= scope:min_value
+		building_level <= scope:max_value
+	}
+}

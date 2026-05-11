@@ -48,3 +48,103 @@ location_not_has_auto_expand_rgo = {
 		}
 	}
 }
+
+lsq_location_good_migration_candidate = {
+	scope = location
+	tag = building|town_rights
+	trigger = {
+		population < 30
+		lsq_location_rgo_value < 3
+		modifier:cannot_upgrade_location = no
+	}
+}
+
+lsq_location_wealth = {
+	scope = location
+	tag = building|town_rights
+	range = {
+		min = 0
+		max = 100
+		step = 1
+		format = search_filter_lsq_location_wealth_format
+	}
+	trigger = {
+		location_tax_base >= scope:min_value
+		location_tax_base <= scope:max_value
+	}
+}
+
+lsq_location_raw_wealth = {
+	scope = location
+	tag = building|town_rights
+	range = {
+		min = 0
+		max = 100
+		step = 1
+		format = search_filter_lsq_location_raw_wealth_format
+	}
+	trigger = {
+		lsq_location_raw_wealth >= scope:min_value
+		lsq_location_raw_wealth <= scope:max_value
+	}
+}
+
+lsq_location_total_building_levels = {
+	scope = location
+	tag = building|town_rights
+	range = {
+		min = 0
+		max = 2
+		step = 0.01
+		format = search_filter_lsq_location_total_building_levels_format
+	}
+	trigger = {
+		lsq_location_total_building_levels >= scope:min_value
+		lsq_location_total_building_levels <= scope:max_value
+	}
+}
+
+lsq_location_food_potential = {
+	scope = location
+	tag = raw_goods|building|town_rights
+	range = {
+		min = 0
+		max = 50
+		step = 1
+		format = search_filter_lsq_location_food_potential_format
+	}
+	trigger = {
+		lsq_location_food_potential >= scope:min_value
+		lsq_location_food_potential <= scope:max_value
+	}
+}
+
+lsq_location_rgo_value = {
+	scope = location
+	tag = raw_goods|building|town_rights
+	range = {
+		min = 0
+		max = 10
+		step = 0.5
+		format = search_filter_lsq_location_rgo_value_format
+	}
+	trigger = {
+		lsq_location_rgo_value >= scope:min_value
+		lsq_location_rgo_value <= scope:max_value
+	}
+}
+
+lsq_location_attacker_penalty = {
+	scope = location
+	tag = building|town_rights
+	range = {
+		min = 0
+		max = 3
+		step = 1
+		format = search_filter_lsq_location_attacker_penalty_format
+	}
+	trigger = {
+		lsq_location_attacker_penalty >= scope:min_value
+		lsq_location_attacker_penalty <= scope:max_value
+	}
+}

@@ -1,0 +1,169 @@
+﻿lsq_location_raw_wealth = {
+	value = location_tax_base
+	divide = {
+		value = local_control
+		min = 0.01
+	}
+}
+
+lsq_location_total_building_levels = {
+	value = total_building_levels
+	divide = {
+		value = modifier:free_building_levels
+		min = 0.01
+	}
+}
+
+lsq_location_rgo_value = {
+	raw_material = { save_temporary_scope_as = lsq_rgo_good }
+	value = "default_price(scope:lsq_rgo_good)"
+}
+
+lsq_location_attacker_penalty = {
+	value = 0
+	if = {
+		limit = { topography = mountains }
+		add = 2
+	}
+	else_if = {
+		limit = {
+			OR = {
+				topography = hills
+				topography = plateau
+				topography = wetlands
+				topography = narrows
+			}
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			OR = {
+				vegetation = woods
+				vegetation = forest
+				vegetation = jungle
+			}
+		}
+		add = 1
+	}
+}
+
+# Mirrors vanilla Food Productivity: local_monthly_food_modifier holds general bonuses,
+# local_<good>_output_modifier holds rgo-specific ones.
+# Subtracting dev to get base food potential.
+# Windmill/irrigation: subtract effective contribution, add assumed-max.
+# farming_village has no food modifier; raw_material_output and livestock handled in
+# lsq_location_food_potential.
+# Other situational food buildings (bund, polders, terraces) keep current contribution.
+lsq_location_food_potential_food_multiplier = {
+	value = 1
+	add = modifier:local_monthly_food_modifier
+	if = { limit = { raw_material ?= goods:wheat } add = modifier:local_wheat_output_modifier }
+	else_if = { limit = { raw_material ?= goods:rice } add = modifier:local_rice_output_modifier }
+	else_if = { limit = { raw_material ?= goods:millet } add = modifier:local_millet_output_modifier }
+	else_if = { limit = { raw_material ?= goods:maize } add = modifier:local_maize_output_modifier }
+	else_if = { limit = { raw_material ?= goods:legumes } add = modifier:local_legumes_output_modifier }
+	else_if = { limit = { raw_material ?= goods:potato } add = modifier:local_potato_output_modifier }
+	else_if = { limit = { raw_material ?= goods:livestock } add = modifier:local_livestock_output_modifier }
+	else_if = { limit = { raw_material ?= goods:olives } add = modifier:local_olives_output_modifier }
+	else_if = { limit = { raw_material ?= goods:fruit } add = modifier:local_fruit_output_modifier }
+	else_if = { limit = { raw_material ?= goods:wool } add = modifier:local_wool_output_modifier }
+	else_if = { limit = { raw_material ?= goods:fish } add = modifier:local_fish_output_modifier }
+	else_if = { limit = { raw_material ?= goods:wild_game } add = modifier:local_wild_game_output_modifier }
+	else_if = { limit = { raw_material ?= goods:fur } add = modifier:local_fur_output_modifier }
+	else_if = { limit = { raw_material ?= goods:beeswax } add = modifier:local_beeswax_output_modifier }
+	subtract = {
+		value = development
+		multiply = 0.01  # vanilla 1%/dev
+	}
+	subtract = {
+		value = "location_building_level(building_type:windmill)"
+		multiply = "building_efficiency(building_type:windmill)"
+		multiply = 0.10  # windmill 10%/level
+	}
+	subtract = {
+		value = "location_building_level(building_type:irrigation_systems)"
+		multiply = "building_efficiency(building_type:irrigation_systems)"
+		multiply = 0.05  # irrigation 5%/level
+	}
+	if = {
+		limit = {
+			OR = {
+				raw_material ?= goods:wheat
+				raw_material ?= goods:rice
+				raw_material ?= goods:millet
+			}
+		}
+		add = 0.10  # 1 windmill * 0.10 (max_levels = 1)
+	}
+	if = {
+		limit = {
+			OR = {
+				has_river = yes
+				is_adjacent_to_lake = yes
+			}
+		}
+		add = 0.80  # 16 irrigation * 0.05
+	}
+	min = 0
+}
+
+# Reads modifier:local_raw_material_output (captures devastation, static modifiers, and the
+# employed portion of built farming_villages) then swaps farming_village's current effective
+# contribution for the assumed-max bonus.
+lsq_location_food_potential_raw_output_multiplier = {
+	value = 1
+	add = modifier:local_raw_material_output
+	subtract = {
+		value = "location_building_level(building_type:farming_village)"
+		multiply = "building_efficiency(building_type:farming_village)"
+		multiply = 0.025  # FV 2.5%/level
+	}
+	if = {
+		limit = {
+			OR = {
+				raw_material ?= goods:wheat
+				raw_material ?= goods:maize
+				raw_material ?= goods:rice
+				raw_material ?= goods:millet
+				raw_material ?= goods:legumes
+				raw_material ?= goods:potato
+				raw_material ?= goods:livestock
+				raw_material ?= goods:olives
+				raw_material ?= goods:fruit
+				raw_material ?= goods:wool
+			}
+		}
+		add = 0.40  # 16 FV * 0.025
+	}
+}
+
+# Final score: (rgo food_value * raw_output_multiplier + farming_village livestock side
+# production) * food_multiplier. exists guard keeps locations without an rgo from erroring
+# on raw_material.food_value.
+lsq_location_food_potential = {
+	value = 0
+	if = {
+		limit = { exists = raw_material }
+		add = raw_material.food_value
+	}
+	multiply = lsq_location_food_potential_raw_output_multiplier
+	if = {
+		limit = {
+			OR = {
+				raw_material ?= goods:wheat
+				raw_material ?= goods:maize
+				raw_material ?= goods:rice
+				raw_material ?= goods:millet
+				raw_material ?= goods:legumes
+				raw_material ?= goods:potato
+				raw_material ?= goods:livestock
+				raw_material ?= goods:olives
+				raw_material ?= goods:fruit
+				raw_material ?= goods:wool
+			}
+		}
+		add = 3.45  # 0.5 livestock * 8 food * 0.75 ratio * 1.15 econ-scale (16 FV)
+	}
+	multiply = lsq_location_food_potential_food_multiplier
+}

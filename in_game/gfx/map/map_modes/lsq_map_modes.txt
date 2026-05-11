@@ -123,3 +123,178 @@ lsq_breadbasket = {
 	refresh_colors_on_selection_change = yes
 	color_and_names_refresh_counters = { LocationOwnerChanged }
 }
+
+lsq_location_food_potential = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			# 45 = (food_value * raw_out_mult + livestock_addback) * food_mult
+			# food_value = rice = 10
+			# raw_out_mult = 1 + (16 FV_levels * 0.025 FV_raw_mat_out) = 1.40
+			# livestock_addback = 0.5 livestock_per_FV * 8 livestock_food_val * 0.75 FV/RGO_ratio * 1.15 econ_of_scale = 3.45
+			# food_mult = 1 + 0.33 farmland + 0.10 rural_rank + 0.25 river_5 + 0.10 windmill + 0.80 irrigation = 2.58
+			limit = { lsq_location_food_potential >= 45 }
+			value = rgb { 0 255 0 }
+		}
+		else_if = {
+			limit = { lsq_location_food_potential >= 27.5 }  # 45 * 22/36
+			lerp = {
+				max_color = rgb { 0 255 0 }
+				min_color = rgb { 0 180 0 }
+				factor = {
+					value = lsq_location_food_potential
+					subtract = 27.5
+					divide = 17.5  # 45 - 27.5
+				}
+			}
+		}
+		else_if = {
+			limit = { lsq_location_food_potential >= 20 }  # 45 * 16/36
+			lerp = {
+				max_color = rgb { 0 180 0 }
+				min_color = rgb { 255 255 0 }
+				factor = {
+					value = lsq_location_food_potential
+					subtract = 20
+					divide = 7.5  # 27.5 - 20
+				}
+			}
+		}
+		else_if = {
+			limit = { lsq_location_food_potential >= 12.5 }  # 45 * 10/36
+			lerp = {
+				max_color = rgb { 255 255 0 }
+				min_color = rgb { 255 128 0 }
+				factor = {
+					value = lsq_location_food_potential
+					subtract = 12.5
+					divide = 7.5  # 20 - 12.5
+				}
+			}
+		}
+		else_if = {
+			limit = { lsq_location_food_potential >= 3.75 }  # 45 * 3/36
+			lerp = {
+				max_color = rgb { 255 128 0 }
+				min_color = rgb { 255 0 0 }
+				factor = {
+					value = lsq_location_food_potential
+					subtract = 3.75
+					divide = 8.75  # 12.5 - 3.75
+				}
+			}
+		}
+		else = {
+			lerp = {
+				max_color = rgb { 255 0 0 }
+				min_color = rgb { 0 0 0 }
+				factor = {
+					value = lsq_location_food_potential
+					divide = 3.75  # 3.75 - 0
+				}
+			}
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				NOT = { is_owned_or_owned_by_subjects_or_below_of = scope:actor }
+			}
+			value = rgb { 100 100 100 }
+		}
+	}
+
+	legend_key = {
+		desc = "lsq_location_food_potential_bright_green_legend_key"
+		color = rgb { 0 255 0 }
+	}
+	legend_key = {
+		desc = "lsq_location_food_potential_green_legend_key"
+		color = rgb { 0 180 0 }
+	}
+	legend_key = {
+		desc = "lsq_location_food_potential_yellow_legend_key"
+		color = rgb { 255 255 0 }
+	}
+	legend_key = {
+		desc = "lsq_location_food_potential_orange_legend_key"
+		color = rgb { 255 128 0 }
+	}
+	legend_key = {
+		desc = "lsq_location_food_potential_red_legend_key"
+		color = rgb { 255 0 0 }
+	}
+	legend_key = {
+		desc = "lsq_location_food_potential_black_legend_key"
+		color = rgb { 0 0 0 }
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = yes }
+			value = MAPMODE_LSQ_LOCATION_FOOD_POTENTIAL_TT_LAND
+		}
+		else = {
+			value = MAPMODE_LSQ_LOCATION_FOOD_POTENTIAL_TT_WATER
+		}
+	}
+
+	# map_lines_mode = RiverDirection
+	#noinspection ParadoxScriptUnresolvedExpression
+	shader_id = 2 # Adds rivers
+
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = market
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = market
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+
+	category = economy
+	index = 1
+	enable_rivers = yes
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = yes
+	color_refresh_counters = { Year }
+	color_and_names_refresh_counters = { Year }
+}
