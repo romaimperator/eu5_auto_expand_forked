@@ -2,23 +2,14 @@
 # All values are location-scoped unless noted otherwise.
 
 # ─── Food value per RGO good ───
-# Returns the food_value constant for the location's raw_material.
+# Reads food_value directly from the location's raw_material. Non-food RGOs return 0.
 lsq_food_value_of_rgo = {
 	value = 0
-	if = { limit = { raw_material = goods:rice } value = 10 }
-	else_if = { limit = { raw_material = goods:wheat } value = 8 }
-	else_if = { limit = { raw_material = goods:maize } value = 8 }
-	else_if = { limit = { raw_material = goods:potato } value = 8 }
-	else_if = { limit = { raw_material = goods:livestock } value = 8 }
-	else_if = { limit = { raw_material = goods:millet } value = 5 }
-	else_if = { limit = { raw_material = goods:legumes } value = 5 }
-	else_if = { limit = { raw_material = goods:wool } value = 3 }
-	else_if = { limit = { raw_material = goods:fish } value = 5 }
-	else_if = { limit = { raw_material = goods:olives } value = 4 }
-	else_if = { limit = { raw_material = goods:fruit } value = 4 }
-	else_if = { limit = { raw_material = goods:wild_game } value = 3.5 }
-	else_if = { limit = { raw_material = goods:beeswax } value = 2.5 }
-	else_if = { limit = { raw_material = goods:fur } value = 2 }
+	raw_material = {
+		if = { limit = { is_food = yes }
+			value = food_value
+		}
+	}
 }
 
 # ─── Building level helpers ───
@@ -75,45 +66,53 @@ lsq_food_rgo_output_mod = {
 }
 
 # ─── Base food calculation ───
-# base_food = N × food_value × (1 + rgo_output_mod) + Σ(building_goods_food × levels)
-# Building goods food constants:
-#   farming_village  = 0.5 × 8 (livestock)          = 4.0
-#   fishing_village  = 0.5 × 5 (fish)               = 2.5
-#   sheep_farms      = 0.5 × 3 (wool)               = 1.5
-#   fruit_orchard    = 0.3 × 4 (fruit)              = 1.2
-#   forest_village   = 0.2 × 3.5 (wild_game) + 1.0  = 1.7
+# base_food = N * food_value + sum(building_levels * output_rate * food_value) + forest_village_levels * 1.0.
+# Output rates are hardcoded production_method values; food values read dynamically from each goods.
+#   farming_village    0.5 livestock per level
+#   fishing_village    0.5 fish per level
+#   sheep_farms        0.5 wool per level
+#   fruit_orchard      0.3 fruit per level
+#   forest_village     0.2 wild_game per level + 1.0 local_monthly_food per level
 lsq_food_base_food = {
-	# RGO contribution: N × food_value × (1 + rgo_output_mod)
+	# RGO contribution: N * food_value * (1 + rgo_output_mod)
 	value = lsq_modifier_rgo_level
 	multiply = lsq_food_value_of_rgo
 	multiply = {
 		value = 1
 		add = lsq_food_rgo_output_mod
 	}
-	# Farming village goods food: 4.0 per level
+	# Farming village: 0.5 livestock per level
 	add = {
 		value = lsq_food_farming_village_level
-		multiply = 4.0
+		multiply = 0.5
+		goods:livestock = { multiply = food_value }
 	}
-	# Fishing village goods food: 2.5 per level
+	# Fishing village: 0.5 fish per level
 	add = {
 		value = lsq_food_fishing_village_level
-		multiply = 2.5
+		multiply = 0.5
+		goods:fish = { multiply = food_value }
 	}
-	# Sheep farms goods food: 1.5 per level
+	# Sheep farms: 0.5 wool per level
 	add = {
 		value = lsq_food_sheep_farms_level
-		multiply = 1.5
+		multiply = 0.5
+		goods:wool = { multiply = food_value }
 	}
-	# Fruit orchard goods food: 1.2 per level
+	# Fruit orchard: 0.3 fruit per level
 	add = {
 		value = lsq_food_fruit_orchard_level
-		multiply = 1.2
+		multiply = 0.3
+		goods:fruit = { multiply = food_value }
 	}
-	# Forest village goods food: 1.7 per level
+	# Forest village: 0.2 wild_game + 1.0 local_monthly_food per level
 	add = {
 		value = lsq_food_forest_village_level
-		multiply = 1.7
+		multiply = {
+			value = 0.2
+			goods:wild_game = { multiply = food_value }
+			add = 1.0
+		}
 	}
 }
 
@@ -160,11 +159,14 @@ lsq_food_marginal_rgo = {
 	multiply = lsq_food_one_plus_total_food_mod
 }
 
-# Farming Village: delta B = +4.0 (livestock), delta R = +0.025 (local_raw_material_output), delta F = 0.
-# delta food = (B + 4) * (R + 0.025) * F - B * R * F.
+# Farming Village: delta B = +0.5 * livestock.food_value, delta R = +0.025 (local_raw_material_output), delta F = 0.
+# delta food = (B + delta_B) * (R + 0.025) * F - B * R * F.
 lsq_food_marginal_farming_village = {
 	value = lsq_food_base_food
-	add = 4.0
+	add = {
+		value = 0.5
+		goods:livestock = { multiply = food_value }
+	}
 	multiply = {
 		value = lsq_food_raw_material_output_mod
 		add = 0.025
@@ -191,23 +193,27 @@ lsq_food_marginal_irrigation = {
 	multiply = 0.05
 }
 
-# Fishing Village: delta B = +2.5 (0.5 fish * 5 food). delta food = 2.5 * R * F.
+# Fishing Village: delta B = +0.5 * fish.food_value. delta food = delta_B * R * F.
 lsq_food_marginal_fishing_village = {
-	value = 2.5
+	value = 0.5
+	goods:fish = { multiply = food_value }
 	multiply = lsq_food_raw_material_output_mod
 	multiply = lsq_food_one_plus_total_food_mod
 }
 
-# Sheep Farms: delta B = +1.5 (0.5 wool * 3 food). delta food = 1.5 * R * F.
+# Sheep Farms: delta B = +0.5 * wool.food_value. delta food = delta_B * R * F.
 lsq_food_marginal_sheep_farms = {
-	value = 1.5
+	value = 0.5
+	goods:wool = { multiply = food_value }
 	multiply = lsq_food_raw_material_output_mod
 	multiply = lsq_food_one_plus_total_food_mod
 }
 
-# Forest Village: delta B = +1.7 (0.2 wild_game * 3.5 food + 1.0 local_monthly_food). delta food = 1.7 * R * F.
+# Forest Village: delta B = +0.2 * wild_game.food_value + 1.0 (local_monthly_food). delta food = delta_B * R * F.
 lsq_food_marginal_forest_village = {
-	value = 1.7
+	value = 0.2
+	goods:wild_game = { multiply = food_value }
+	add = 1.0
 	multiply = lsq_food_raw_material_output_mod
 	multiply = lsq_food_one_plus_total_food_mod
 }
