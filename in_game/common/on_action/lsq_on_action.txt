@@ -3,6 +3,7 @@
 		lsq_unified_auto_expand
 		lsq_update_auto_build_visibility
 		lsq_update_auto_town_rights_visibility
+		lsq_monthly_auto_town_rights
 	}
 }
 
@@ -18,6 +19,22 @@ lsq_update_auto_build_visibility = {
 lsq_update_auto_town_rights_visibility = {
 	effect = {
 		lsq_update_auto_town_rights_list_visibility = yes
+	}
+}
+
+# Standalone monthly hook for auto-grant town rights. Lives outside the priority
+# dispatcher because the player toggles it on its own tab, not in the priority list.
+# Still respects the master pause toggle.
+lsq_monthly_auto_town_rights = {
+	effect = {
+		save_scope_as = country
+		if = {
+			limit = {
+				lsq_should_pause_auto_expand = no
+				exists = var:lsq_auto_grant_town_rights
+			}
+			lsq_run_auto_town_rights = yes
+		}
 	}
 }
 
@@ -41,7 +58,6 @@ lsq_unified_auto_expand = {
 							flag:lsq_feature_auto_food = { scope:country = { lsq_run_auto_food = yes } }
 							flag:lsq_feature_auto_urbanize = { scope:country = { lsq_run_auto_urbanize = yes } }
 							flag:lsq_feature_auto_build_capital = { scope:country = { lsq_run_auto_build_capital = yes } }
-							flag:lsq_feature_auto_town_rights = { scope:country = { lsq_run_auto_town_rights = yes } }
 						}
 					}
 				}

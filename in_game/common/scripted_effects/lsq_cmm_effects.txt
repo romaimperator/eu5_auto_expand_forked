@@ -19,7 +19,7 @@ lsq_register_cmf_mod = {
 		mod_id = lsq
 		setting_id = priority_list
 		tab_id = settings
-		item_count = 8
+		item_count = 7
 		is_ordered = 1
 	}
 
@@ -30,7 +30,6 @@ lsq_register_cmf_mod = {
 	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 5 value = flag:lsq_feature_auto_food }
 	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 6 value = flag:lsq_feature_auto_urbanize }
 	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 7 value = flag:lsq_feature_auto_build_capital }
-	cmm_set_list_item_value = { mod_id = lsq setting_id = priority_list item = 8 value = flag:lsq_feature_auto_town_rights }
 
 	cmm_register_list_numeric_field = {
 		mod_id = lsq
@@ -47,7 +46,6 @@ lsq_register_cmf_mod = {
 	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = priority_list field_id = min_profit item = 5 }
 	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = priority_list field_id = min_profit item = 6 }
 	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = priority_list field_id = min_profit item = 7 }
-	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = priority_list field_id = min_profit item = 8 }
 
 	cmm_register_list_numeric_field = {
 		mod_id = lsq
@@ -60,7 +58,6 @@ lsq_register_cmf_mod = {
 	}
 	cmm_set_list_field_conditional_format = { mod_id = lsq setting_id = priority_list field_id = min_discount }
 	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = priority_list field_id = min_discount item = 4 }
-	cmm_disable_list_field_for_item = { mod_id = lsq setting_id = priority_list field_id = min_discount item = 8 }
 
 	cmm_register_list_bool_field = {
 		mod_id = lsq
@@ -532,6 +529,19 @@ lsq_register_cmf_mod = {
 	}
 
 	# Auto Town Rights (auto_town_rights) Tab
+	## Auto-Grant Town Rights (auto_town_rights) Group
+	cmm_register_bool_setting = {
+		mod_id = lsq
+		setting_id = auto_grant_town_rights
+		tab_id = auto_town_rights
+		group_id = auto_town_rights
+		default_value = 0
+	}
+	cmm_sync_bool_alias = {
+		setting = lsq__auto_grant_town_rights
+		alias = lsq_auto_grant_town_rights
+	}
+
 	## Town Rights Priority (auto_town_rights_list) Group
 	# Specialized-goods-output rights (royal_*, flemish_cloth, scandinavian_tar,
 	# constantinopolitan_silk) are intentionally omitted: blindly granting them
@@ -654,6 +664,14 @@ lsq_handle_cmf_callback = {
 			cmm_sync_bool_alias = {
 				setting = lsq__urbanize_rural_to_town
 				alias = lsq_urbanize_rural_to_town
+			}
+		}
+		# Auto Town Rights (auto_town_rights) Tab
+		## Auto-Grant Town Rights (auto_town_rights) Group
+		flag:lsq__auto_grant_town_rights = {
+			cmm_sync_bool_alias = {
+				setting = lsq__auto_grant_town_rights
+				alias = lsq_auto_grant_town_rights
 			}
 		}
 	}
