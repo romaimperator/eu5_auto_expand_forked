@@ -147,6 +147,44 @@ lsq_combined_monthly_new_pops_of_type_laborers_or_slaves = {
 }
 
 # Root is the location
+lsq_location_nobles_unemployed_pops = {
+  value = "unemployed_pops_of_pop_type_in_location(pop_type:nobles)"
+}
+# Root is the location
+lsq_location_clergy_unemployed_pops = {
+  value = "unemployed_pops_of_pop_type_in_location(pop_type:clergy)"
+}
+# Root is the location
+lsq_location_burghers_unemployed_pops = {
+  value = "unemployed_pops_of_pop_type_in_location(pop_type:burghers)"
+}
+# Root is the location
+lsq_location_laborers_unemployed_pops = {
+  value = "unemployed_pops_of_pop_type_in_location(pop_type:laborers)"
+}
+# Root is the location
+lsq_location_soldiers_unemployed_pops = {
+  value = "unemployed_pops_of_pop_type_in_location(pop_type:soldiers)"
+}
+# Root is the location
+lsq_location_peasants_unemployed_pops = {
+  value = "unemployed_pops_of_pop_type_in_location(pop_type:peasants)"
+}
+# Root is the location
+lsq_location_slaves_unemployed_pops = {
+  value = "unemployed_pops_of_pop_type_in_location(pop_type:slaves)"
+}
+# Root is the location
+lsq_location_tribesmen_unemployed_pops = {
+  value = "unemployed_pops_of_pop_type_in_location(pop_type:tribesmen)"
+}
+# Root is the location
+lsq_location_laborers_or_slaves_unemployed_pops = {
+  value = lsq_location_laborers_unemployed_pops
+  add = lsq_location_slaves_unemployed_pops
+}
+
+# Root is the location
 lsq_local_laborers_desired_pop = {
   value = modifier:local_laborers_desired_pop
 }
@@ -184,8 +222,7 @@ lsq_location_nobles_needed_for_buildings = {
 
 # Root is the location
 lsq_location_nobles_available = {
-  value = num_pop_type:nobles
-  subtract = lsq_location_nobles_needed_for_buildings
+  value = lsq_location_nobles_unemployed_pops
 }
 
 # Root is the location
@@ -200,8 +237,7 @@ lsq_location_clergy_needed_for_buildings = {
 
 # Root is the location
 lsq_location_clergy_available = {
-  value = num_pop_type:clergy
-  subtract = lsq_location_clergy_needed_for_buildings
+  value = lsq_location_clergy_unemployed_pops
 }
 
 # Root is the location
@@ -216,8 +252,7 @@ lsq_location_burghers_needed_for_buildings = {
 
 # Root is the location
 lsq_location_burghers_available = {
-  value = num_pop_type:burghers
-  subtract = lsq_location_burghers_needed_for_buildings
+  value = lsq_location_burghers_unemployed_pops
 }
 
 # Root is the location
@@ -241,13 +276,7 @@ lsq_location_tribesmen_pop_count = { value = num_pop_type:tribesmen }
 
 # Root is the location
 lsq_location_laborers_available = {
-  value = num_pop_type:laborers
-  subtract = lsq_location_laborers_needed_for_buildings
-  subtract = {
-    value = lsq_modifier_rgo_level
-    add = lsq_get_rgos_under_construction
-    subtract = num_pop_type:slaves
-  }
+  value = lsq_location_laborers_unemployed_pops
 }
 
 # Root is the location
@@ -262,8 +291,7 @@ lsq_location_soldiers_needed_for_buildings = {
 
 # Root is the location
 lsq_location_soldiers_available = {
-  value = num_pop_type:soldiers
-  subtract = lsq_location_soldiers_needed_for_buildings
+  value = nlsq_location_soldiers_unemployed_pops
 }
 
 # Root is the location
@@ -278,8 +306,7 @@ lsq_location_peasants_needed_for_buildings = {
 
 # Root is the location
 lsq_location_peasants_available = {
-  value = num_pop_type:peasants
-  subtract = lsq_location_peasants_needed_for_buildings
+  value = lsq_location_peasants_unemployed_pops
 }
 
 # Root is the location
@@ -294,8 +321,7 @@ lsq_location_slaves_needed_for_buildings = {
 
 # Root is the location
 lsq_location_slaves_available = {
-  value = num_pop_type:slaves
-  subtract = lsq_location_slaves_needed_for_buildings
+  value = lsq_location_slaves_unemployed_pops
 }
 
 # Root is the location
@@ -316,8 +342,7 @@ lsq_location_tribesmen_needed_for_buildings = {
 
 # Root is the location
 lsq_location_tribesmen_available = {
-  value = num_pop_type:tribesmen
-  subtract = lsq_location_tribesmen_needed_for_buildings
+  value = lsq_location_tribesmen_unemployed_pops
 }
 
 # Includes potential employment from levels under construction and from buildings that are subsidized but not fully employed
