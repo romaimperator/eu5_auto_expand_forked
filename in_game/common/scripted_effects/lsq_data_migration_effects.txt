@@ -25,7 +25,32 @@
     if = { limit = { lsq_is_version = { major = 1 minor = 11 patch = 1 } }
       lsq_migrate_from_1_11_1_to_1_11_2 = {}
     }
+    if = { limit = { lsq_is_version = { major = 1 minor = 11 patch = 2 } }
+      lsq_migrate_from_1_11_2_to_1_11_3 = {}
+    }
   }
+}
+
+lsq_migrate_from_1_11_2_to_1_11_3 = {
+  debug_log = "LSQ: Migrating from 1.11.2 to 1.11.3"
+
+  # Disable auto-expand for any buildings that can no longer be constructed in a location, mainly from changing the location rank.
+  # 1.11.2 should clean up these buildings for future location rank changes but this cleans up any players' existing saves.
+  every_owned_location = {
+    limit = { has_variable_list = lsq_auto_expand_registered_building_types }
+    save_scope_as = location
+    every_in_list = {
+      variable = lsq_auto_expand_registered_building_types
+      save_scope_as = building_type
+      scope:location = {
+        if = { limit = { NOT = { can_build_building = scope:building_type } }
+          remove_list_variable = { name = lsq_auto_expand_registered_building_types target = scope:building_type }
+        }
+      }
+    }
+  }
+
+  lsq_set_mod_version_to = { major = 1 minor = 11 patch = 3 }
 }
 
 lsq_migrate_from_1_11_1_to_1_11_2 = {
