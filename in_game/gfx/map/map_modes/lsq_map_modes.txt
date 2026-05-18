@@ -310,3 +310,185 @@ lsq_location_food_potential = {
 	color_refresh_counters = { Year }
 	color_and_names_refresh_counters = { Year }
 }
+
+# Hidden duplicate of lsq_location_food_potential. Briefly activated to force a color refresh.
+lsq_location_food_potential_hidden = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			limit = { lsq_location_food_potential >= 45 }
+			value = rgb { 0 255 0 }
+		}
+		else_if = {
+			limit = { lsq_location_food_potential >= 27.5 }
+			lerp = {
+				max_color = rgb { 0 255 0 }
+				min_color = rgb { 0 180 0 }
+				factor = {
+					value = lsq_location_food_potential
+					subtract = 27.5
+					divide = 17.5
+				}
+			}
+		}
+		else_if = {
+			limit = { lsq_location_food_potential >= 20 }
+			lerp = {
+				max_color = rgb { 0 180 0 }
+				min_color = rgb { 255 255 0 }
+				factor = {
+					value = lsq_location_food_potential
+					subtract = 20
+					divide = 7.5
+				}
+			}
+		}
+		else_if = {
+			limit = { lsq_location_food_potential >= 12.5 }
+			lerp = {
+				max_color = rgb { 255 255 0 }
+				min_color = rgb { 255 128 0 }
+				factor = {
+					value = lsq_location_food_potential
+					subtract = 12.5
+					divide = 7.5
+				}
+			}
+		}
+		else_if = {
+			limit = { lsq_location_food_potential >= 3.75 }
+			lerp = {
+				max_color = rgb { 255 128 0 }
+				min_color = rgb { 255 0 0 }
+				factor = {
+					value = lsq_location_food_potential
+					subtract = 3.75
+					divide = 8.75
+				}
+			}
+		}
+		else = {
+			lerp = {
+				max_color = rgb { 255 0 0 }
+				min_color = rgb { 0 0 0 }
+				factor = {
+					value = lsq_location_food_potential
+					divide = 3.75
+				}
+			}
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				owner ?= scope:actor
+				lsq_location_is_auto_food_active = yes
+			}
+			value = rgb { 50 150 255 }
+		}
+		else_if = {
+			limit = {
+				exists = scope:actor
+				is_land = yes
+				NOT = { is_owned_or_owned_by_subjects_or_below_of = scope:actor }
+			}
+			value = rgb { 100 100 100 }
+		}
+	}
+
+	legend_key = {
+		desc = "lsq_location_food_potential_auto_food_legend_key"
+		color = rgb { 50 150 255 }
+	}
+	legend_key = {
+		desc = "lsq_location_food_potential_bright_green_legend_key"
+		color = rgb { 0 255 0 }
+	}
+	legend_key = {
+		desc = "lsq_location_food_potential_green_legend_key"
+		color = rgb { 0 180 0 }
+	}
+	legend_key = {
+		desc = "lsq_location_food_potential_yellow_legend_key"
+		color = rgb { 255 255 0 }
+	}
+	legend_key = {
+		desc = "lsq_location_food_potential_orange_legend_key"
+		color = rgb { 255 128 0 }
+	}
+	legend_key = {
+		desc = "lsq_location_food_potential_red_legend_key"
+		color = rgb { 255 0 0 }
+	}
+	legend_key = {
+		desc = "lsq_location_food_potential_black_legend_key"
+		color = rgb { 0 0 0 }
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = yes }
+			value = MAPMODE_LSQ_LOCATION_FOOD_POTENTIAL_TT_LAND
+		}
+		else = {
+			value = MAPMODE_LSQ_LOCATION_FOOD_POTENTIAL_TT_WATER
+		}
+	}
+
+	#noinspection ParadoxScriptUnresolvedExpression
+	shader_id = 2 # Adds rivers
+
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = market
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = market
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+
+	category = hidden
+	allow_allocate_hotkey = no
+	enable_rivers = yes
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = yes
+	color_refresh_counters = { Year }
+	color_and_names_refresh_counters = { Year }
+}
