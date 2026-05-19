@@ -1,11 +1,9 @@
 ﻿Future Implementation Ideas
 
 - fix bug that prevents mass auto-expand from working with Trade Offices (likely is also broken with any other building that has special requirements)
-- add auto-build support for the Local Council building and its upgrades
 - Make it so plantations will auto-expand if we have up to 1 level of plantation worth of slaves missing since it will draw the slaves needed to run it
 - Fix bug that allows stud farms to be auto-expanded in locations that don't have the appropriate climate
 - Related to the stud farm bug, there are also other buildings that can be auto-expanded even when they don't meet the actual in game conditions such as the Trade Office so add in more reliable checks for whether you can actually build a building or not for the auto-expand from zero levels button.
-- Make compatible with Glorp UI
 - Add button to enable/disable auto-expand for every building in a location
 - Modify the auto-expand button for buildings so holding control and clicking will toggle every building of that type in the province. Useful when you know you want to say auto-expand masons in a province that produces stone
 - Add automatic closing of buildings using construction goods to reduce demand and lower price
@@ -30,6 +28,8 @@ Completed Ideas:
 - Add check to make sure there's enough goods to auto-expand an RGO
 - Handle buildings that aren't in the default base game the old way
 - See if we can add a filter so you can filter irrigation and farming villages by RGO in the location (ending up implementing as a filter by a specific food value)
+- add auto-build support for the Local Council building and its upgrades
+- Make compatible with Glorp UI
 
 
 
