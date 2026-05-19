@@ -1,0 +1,69 @@
+﻿building_only_auto_expand = {
+	scope = building
+	tag = building
+	group = 9
+	exclusive_group = yes
+	trigger = {
+		OR = {
+			location = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = prev.building_type } }
+			AND = {
+				owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = prev.building_type } }
+				NOT = { location = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = prev.building_type } } }
+			}
+		}
+	}
+}
+
+building_only_not_auto_expand = {
+	scope = building
+	tag = building
+	group = 9
+	exclusive_group = yes
+	trigger = {
+		NOR = {
+			location = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = prev.building_type } }
+			AND = {
+				owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = prev.building_type } }
+				NOT = { location = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = prev.building_type } } }
+			}
+		}
+	}
+}
+
+cm_building_production_efficiency = {
+	scope = building
+	tag = building
+	range = {
+		min = 0
+		max = 2
+		step = 0.01
+		format = search_filter_cm_building_production_efficiency_format
+	}
+	trigger = {
+		location = {
+			building_efficiency = {
+				building_type = prev.building_type
+				value >= scope:min_value
+			}
+			building_efficiency = {
+				building_type = prev.building_type
+				value <= scope:max_value
+			}
+		}
+	}
+}
+
+cm_building_level = {
+	scope = building
+	tag = building
+	range = {
+		min = 0
+		max = 100
+		step = 1
+		format = search_filter_cm_building_level_format
+	}
+	trigger = {
+		building_level >= scope:min_value
+		building_level <= scope:max_value
+	}
+}

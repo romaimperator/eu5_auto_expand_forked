@@ -1,0 +1,101 @@
+﻿# Populate the global building type list and trigger classification on game start/load.
+# Uses the non-country variant so it runs once per lobby, not per player.
+on_game_start_after_lobby = {
+	on_actions = {
+		cm_on_init_building_classification
+		cm_on_init_goods_globals
+	}
+}
+
+on_game_load_after_lobby = {
+	on_actions = {
+		cm_on_init_building_classification
+		cm_on_init_goods_globals
+	}
+}
+
+cm_on_init_building_classification = {
+	effect = {
+		cm_populate_building_types_to_process = {}
+	}
+}
+
+cm_on_init_goods_globals = {
+	effect = {
+		cm_initialize_goods_globals = {}
+	}
+}
+
+# Calculate food data columns and auto-build visibility on game start/load
+# so the UI is populated immediately instead of waiting for the first monthly tick.
+on_game_start_after_lobby_human_country = {
+	on_actions = {
+		cm_on_init_food_data
+		cm_on_init_auto_build_visibility
+		cm_on_init_auto_town_rights_visibility
+		cm_on_init_monthly_gui_tick
+	}
+}
+
+on_game_load_after_lobby_human_country = {
+	on_actions = {
+		cm_on_init_food_data
+		cm_on_init_auto_build_visibility
+		cm_on_init_auto_town_rights_visibility
+		cm_on_init_monthly_gui_tick
+	}
+}
+
+cm_on_init_food_data = {
+	effect = {
+		cm_update_food_data_columns = yes
+	}
+}
+
+cm_on_init_auto_build_visibility = {
+	effect = {
+		cm_update_auto_build_list_visibility = yes
+	}
+}
+
+cm_on_init_auto_town_rights_visibility = {
+	effect = {
+		cm_update_auto_town_rights_list_visibility = yes
+	}
+}
+
+cm_on_init_monthly_gui_tick = {
+	effect = {
+		set_variable = cm_monthly_gui_tick
+	}
+}
+
+# Country transfer hook. CMF has already copied CMM setting values.
+# Copy CM-specific non-CMM data (location lists, etc.).
+cmf_on_country_transfer = {
+	on_actions = {
+		cm_on_country_transfer
+	}
+}
+
+cm_on_country_transfer = {
+	effect = {
+		# Rebuild location lists for the new country
+		save_temporary_scope_as = country
+		cm_reset_locations_lists = {}
+
+		# Copy simple setting aliases from old country
+		if = { limit = { scope:old_country = { has_variable = cm_pause_auto_expand } }
+			set_variable = { name = cm_pause_auto_expand value = scope:old_country.var:cm_pause_auto_expand }
+		}
+		if = { limit = { scope:old_country = { has_variable = cm_minimum_gold } }
+			set_variable = { name = cm_minimum_gold value = scope:old_country.var:cm_minimum_gold }
+		}
+		if = { limit = { scope:old_country = { has_variable = cm_allowed_building_overbuild_levels } }
+			set_variable = { name = cm_allowed_building_overbuild_levels value = scope:old_country.var:cm_allowed_building_overbuild_levels }
+		}
+
+		# Rebuild priority lookup tables for new country
+		cm_rebuild_priority_lookups = yes
+	}
+}

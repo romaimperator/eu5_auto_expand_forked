@@ -1,0 +1,141 @@
+﻿cm_set_auto_expand_for_rgo = {
+	effect = {
+		if = { limit = { owner = { exists = var:cm_mass_auto_expand_rgo } }
+			# Mass mode: operate on exclusion variable (inverted logic)
+			if = { limit = { NOT = { exists = scope:set_off } }
+				if = { limit = { exists = var:auto_expand_rgo_excluded }
+					remove_variable = auto_expand_rgo_excluded
+				} else = {
+					set_variable = { name = auto_expand_rgo_excluded value = yes }
+				}
+			} else = {
+				if = { limit = { scope:set_off = yes }
+					if = { limit = { NOT = { exists = var:auto_expand_rgo_excluded } }
+						set_variable = { name = auto_expand_rgo_excluded value = yes }
+					}
+				} else = {
+					remove_variable = auto_expand_rgo_excluded
+				}
+			}
+		} else = {
+			# Normal mode: operate on enable variable
+			if = { limit = { NOT = { exists = scope:set_off } }
+				if = { limit = { exists = var:auto_expand_rgo }
+					remove_variable = auto_expand_rgo
+				} else = {
+					set_variable = { name = auto_expand_rgo value = yes }
+				}
+			} else = {
+				if = { limit = { scope:set_off = yes }
+					remove_variable = auto_expand_rgo
+				} else = {
+					set_variable = { name = auto_expand_rgo value = yes }
+				}
+			}
+		}
+	}
+
+	is_shown = {
+		OR = {
+			exists = var:auto_expand_rgo
+			AND = {
+				owner = { exists = var:cm_mass_auto_expand_rgo }
+				NOT = { exists = var:auto_expand_rgo_excluded }
+			}
+		}
+	}
+}
+
+# Root is the country. Toggles "expand all RGOs" mode.
+cm_toggle_mass_auto_expand_rgo = {
+	scope = country
+	effect = {
+		if = { limit = { exists = var:cm_mass_auto_expand_rgo }
+			# Turning OFF — clear flag and all exclusion variables
+			remove_variable = cm_mass_auto_expand_rgo
+			ordered_owned_location = {
+				order_by = max_control
+				max = cm_max_guess_at_number_of_locations
+				check_range_bounds = no
+				limit = { exists = var:auto_expand_rgo_excluded }
+				remove_variable = auto_expand_rgo_excluded
+			}
+		} else = {
+			# Turning ON — set flag, clear all per-location enable variables
+			set_variable = { name = cm_mass_auto_expand_rgo value = yes }
+			ordered_owned_location = {
+				order_by = max_control
+				max = cm_max_guess_at_number_of_locations
+				check_range_bounds = no
+				limit = { exists = var:auto_expand_rgo }
+				remove_variable = auto_expand_rgo
+			}
+		}
+	}
+	is_shown = {
+		exists = var:cm_mass_auto_expand_rgo
+	}
+}
+
+# Root is location
+# Expects scopes: country
+cm_is_able_to_auto_expand_rgo = {
+	is_shown = {
+		cm_is_able_to_auto_expand_rgo = yes
+	}
+}
+
+# Root is the country.
+# True when the RGO auto-expand feature is enabled in the country's priority list.
+cm_is_auto_expand_rgos_feature_enabled = {
+	is_shown = {
+		is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_expand_rgos }
+	}
+}
+
+# Root is location
+# Expects scopes: country
+cm_is_rgo_advance_researched = {
+	is_shown = {
+		cm_is_rgo_advance_researched = yes
+	}
+}
+
+cm_is_rgo_not_max_level_already = {
+	is_shown = {
+		# Root scope is a location (passed from GUI). Use the location trigger for RGO max expansion.
+		cm_is_rgo_not_max_level_already = yes
+	}
+}
+
+cm_is_rgo_fully_employed = {
+	is_shown = {
+		# Root scope is a location (passed from GUI).
+		# True if the location is not in a negative labourer deficit (i.e. can be filled, including imminent promotion).
+		cm_check_location_has_laborers_available_or_will_be = yes
+	}
+}
+
+cm_is_rgo_under_construction = {
+	is_shown = {
+		# Root scope is a location (passed from GUI).
+		cm_is_rgo_under_construction = no
+	}
+}
+
+# Expects scopes: country, location
+cm_is_there_enough_gold_available = {
+	is_shown = {
+		cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_rgo_auto_expand }
+	}
+}
+
+# Root is location
+# Expects scopes: country
+cm_rgo_meets_minimum_discount_for_auto_expand = {
+	is_shown = {
+		save_temporary_scope_as = location
+		cm_rgo_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_rgos }
+	}
+}
+
