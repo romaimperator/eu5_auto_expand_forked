@@ -43,6 +43,7 @@ on_game_load_after_lobby_human_country = {
 		cm_on_init_auto_build_visibility
 		cm_on_init_auto_town_rights_visibility
 		cm_on_init_monthly_gui_tick
+		cm_on_migrate_building_registrations
 	}
 }
 
@@ -67,6 +68,25 @@ cm_on_init_auto_town_rights_visibility = {
 cm_on_init_monthly_gui_tick = {
 	effect = {
 		set_variable = cm_monthly_gui_tick
+	}
+}
+
+# Transfers per-location building auto-expand selections from the lsq_-prefixed list
+# into the cm_-prefixed list and clears the old list
+cm_on_migrate_building_registrations = {
+	effect = {
+		every_owned_location = {
+			limit = { has_variable_list = lsq_auto_expand_registered_building_types }
+			save_scope_as = location
+			every_in_list = {
+				variable = lsq_auto_expand_registered_building_types
+				save_scope_as = building_type
+				scope:location = {
+					add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+				}
+			}
+			clear_variable_list = lsq_auto_expand_registered_building_types
+		}
 	}
 }
 
