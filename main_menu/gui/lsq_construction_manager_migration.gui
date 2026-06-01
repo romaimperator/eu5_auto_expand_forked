@@ -1,0 +1,317 @@
+﻿### Construction Manager migration prompt.
+### Offers to enable Construction Manager (Workshop 3736668860), or opens the
+### Workshop to find it, then disables this mod once Construction Manager is active.
+types lsq_construction_manager_migration
+{
+	type FrontEndNews = widget {
+		size = { 100% 100% }
+
+		### News feed carousels
+		flowcontainer = {
+			parentanchor = bottom|right
+			widgetanchor = bottom|right
+			position = { -110 -20 }
+			spacing = 10
+
+			alwaystransparent = yes
+			ignoreinvisible = yes
+			visible = yes
+			scissor = yes
+
+			newsfeed_carousel = {
+				name = "newsfeed_slot_main"
+				size = { 451 230 }
+				align = left
+				datacontext = "[FrontEndMainView.AccessMarketingContainer.AccessSlotByName('main')]"
+				tooltip_enabled = no
+			}
+
+			newsfeed_carousel = {
+				name = "newsfeed_slot_secondary_1"
+				size = { 245 230 }
+				align = left
+				datacontext = "[FrontEndMainView.AccessMarketingContainer.AccessSlotByName('secondary-1')]"
+				tooltip_enabled = no
+
+				blockoverride "offset_x" {
+					position_x = -245
+				}
+				blockoverride "current_button_pos" {
+					size = { 245 230 }
+				}
+				blockoverride "next_button_pos" {
+					size = { 245 230 }
+					position = { 245 0 }
+				}
+			}
+
+			newsfeed_carousel = {
+				name = "newsfeed_slot_secondary_2"
+				size = { 245 230 }
+				align = left
+				datacontext = "[FrontEndMainView.AccessMarketingContainer.AccessSlotByName('secondary-2')]"
+				tooltip_enabled = no
+
+				blockoverride "offset_x" {
+					position_x = -245
+				}
+				blockoverride "current_button_pos" {
+					size = { 245 230 }
+				}
+				blockoverride "next_button_pos" {
+					size = { 245 230 }
+					position = { 245 0 }
+				}
+			}
+		}
+
+		### Migration prompt
+		widget = {
+			size = { 100% 100% }
+			parentanchor = center
+			alwaystransparent = no
+
+			visible = "[And( Not( GetVariableSystem.Exists( 'lsq_migrate_new_active' ) ), Not( GetVariableSystem.Exists( 'lsq_migrate_dismiss' ) ) )]"
+
+			window = {
+				parentanchor = center
+				widgetanchor = center
+				size = { 530 200 }
+				using = bg_window_default_alt
+				movable = no
+				resizable = no
+				alwaystransparent = no
+
+				vbox = {
+					margin = { 15 10 }
+					spacing = 10
+
+					text_single = {
+						raw_text = "[SelectLocalization(HasLanguage('french'), '#T Nouvelle version disponible#!', SelectLocalization(HasLanguage('german'), '#T Neue Version verfügbar#!', SelectLocalization(HasLanguage('spanish'), '#T Nueva versión disponible#!', SelectLocalization(HasLanguage('braz_por'), '#T Nova versão disponível#!', SelectLocalization(HasLanguage('russian'), '#T Доступна новая версия#!', SelectLocalization(HasLanguage('polish'), '#T Dostępna nowa wersja#!', SelectLocalization(HasLanguage('korean'), '#T 새 버전 사용 가능#!', SelectLocalization(HasLanguage('japanese'), '#T 新しいバージョンが利用可能#!', SelectLocalization(HasLanguage('simp_chinese'), '#T 有新版本可用#!', SelectLocalization(HasLanguage('turkish'), '#T Yeni sürüm mevcut#!', '#T New Version Available#!'))))))))))]"
+						align = center
+					}
+
+					text_multi = {
+						layoutpolicy_horizontal = expanding
+						raw_text = "[SelectLocalization(HasLanguage('french'), 'Ce mod est désormais #bold Construction Manager#!. Son activation désactivera ce mod.', SelectLocalization(HasLanguage('german'), 'Dieser Mod ist jetzt #bold Construction Manager#!. Durch Aktivieren wird dieser Mod deaktiviert.', SelectLocalization(HasLanguage('spanish'), 'Este mod ahora es #bold Construction Manager#!. Activarlo desactivará este mod.', SelectLocalization(HasLanguage('braz_por'), 'Este mod agora é #bold Construction Manager#!. Ativá-lo desativará este mod.', SelectLocalization(HasLanguage('russian'), 'Этот мод теперь #bold Construction Manager#!. Его включение отключит этот мод.', SelectLocalization(HasLanguage('polish'), 'Ten mod to teraz #bold Construction Manager#!. Jego włączenie wyłączy ten mod.', SelectLocalization(HasLanguage('korean'), '이 모드는 이제 #bold Construction Manager#!입니다. 활성화하면 이 모드가 비활성화됩니다.', SelectLocalization(HasLanguage('japanese'), 'このMODは#bold Construction Manager#!になりました。有効にするとこのMODは無効になります。', SelectLocalization(HasLanguage('simp_chinese'), '此模组现已更名为#bold Construction Manager#!。启用它将禁用此模组。', SelectLocalization(HasLanguage('turkish'), 'Bu mod artık #bold Construction Manager#!. Etkinleştirmek bu modu devre dışı bırakır.', 'This mod is now #bold Construction Manager#!. Enabling it disables this mod.'))))))))))]"
+						align = center
+						autoresize = yes
+						max_width = 400
+					}
+
+					expand = {}
+
+					hbox = {
+						spacing = 10
+						ignoreinvisible = yes
+
+						button_regular = {
+							size = { 150 40 }
+							raw_text = "[SelectLocalization(HasLanguage('french'), 'Ouvrir le Workshop', SelectLocalization(HasLanguage('german'), 'Workshop öffnen', SelectLocalization(HasLanguage('spanish'), 'Abrir taller', SelectLocalization(HasLanguage('braz_por'), 'Abrir oficina', SelectLocalization(HasLanguage('russian'), 'Открыть мастерскую', SelectLocalization(HasLanguage('polish'), 'Otwórz warsztat', SelectLocalization(HasLanguage('korean'), '창작마당 열기', SelectLocalization(HasLanguage('japanese'), 'ワークショップを開く', SelectLocalization(HasLanguage('simp_chinese'), '打开创意工坊', SelectLocalization(HasLanguage('turkish'), 'Atölyeyi aç', 'Open Workshop'))))))))))]"
+							visible = "[Not( GetVariableSystem.Exists( 'lsq_migrate_installed' ) )]"
+							onclick = "[GetVariableSystem.Set( 'lsq_migrate_open_workshop', 'yes' )]"
+							onclick = "[GetVariableSystem.Set( 'lsq_migrate_enable', 'yes' )]"
+							onclick = "[GetVariableSystem.Set( 'lsq_migrate_dismiss', 'yes' )]"
+							tooltip_enabled = no
+						}
+
+						button_regular = {
+							size = { 150 40 }
+							raw_text = "[SelectLocalization(HasLanguage('french'), 'Activer', SelectLocalization(HasLanguage('german'), 'Aktivieren', SelectLocalization(HasLanguage('spanish'), 'Activar', SelectLocalization(HasLanguage('braz_por'), 'Ativar', SelectLocalization(HasLanguage('russian'), 'Включить', SelectLocalization(HasLanguage('polish'), 'Włącz', SelectLocalization(HasLanguage('korean'), '활성화', SelectLocalization(HasLanguage('japanese'), '有効にする', SelectLocalization(HasLanguage('simp_chinese'), '启用', SelectLocalization(HasLanguage('turkish'), 'Etkinleştir', 'Enable'))))))))))]"
+							visible = "[GetVariableSystem.Exists( 'lsq_migrate_installed' )]"
+							onclick = "[GetVariableSystem.Set( 'lsq_migrate_enable', 'yes' )]"
+							onclick = "[GetVariableSystem.Set( 'lsq_migrate_open_mods', 'yes' )]"
+							onclick = "[GetVariableSystem.Set( 'lsq_migrate_dismiss', 'yes' )]"
+							tooltip_enabled = no
+						}
+
+						button_regular = {
+							size = { 150 40 }
+							raw_text = "[SelectLocalization(HasLanguage('french'), 'Ignorer', SelectLocalization(HasLanguage('german'), 'Ignorieren', SelectLocalization(HasLanguage('spanish'), 'Ignorar', SelectLocalization(HasLanguage('braz_por'), 'Ignorar', SelectLocalization(HasLanguage('russian'), 'Игнорировать', SelectLocalization(HasLanguage('polish'), 'Ignoruj', SelectLocalization(HasLanguage('korean'), '무시', SelectLocalization(HasLanguage('japanese'), '無視する', SelectLocalization(HasLanguage('simp_chinese'), '忽略', SelectLocalization(HasLanguage('turkish'), 'Yoksay', 'Ignore'))))))))))]"
+							onclick = "[GetVariableSystem.Set( 'lsq_migrate_dismiss', 'yes' )]"
+							tooltip_enabled = no
+						}
+					}
+				}
+			}
+		}
+
+		### Open the mods panel so playset_create_button instantiates and detection runs.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[And3( Not( GetVariableSystem.Exists( 'lsq_migrate_new_active' ) ), Not( GetVariableSystem.Exists( 'lsq_migrate_dismiss' ) ), Not( FrontEndMainView.IsModsOpen ) )]"
+
+			state = {
+				name = _show
+				on_start = "[FrontEndMainView.ToggleOpenMods]"
+			}
+		}
+
+		### Open the mods panel when a button requests it.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[And( Or( GetVariableSystem.Exists( 'lsq_migrate_open_mods' ), GetVariableSystem.Exists( 'lsq_migrate_open_workshop' ) ), Not( FrontEndMainView.IsModsOpen ) )]"
+
+			state = {
+				name = _show
+				on_start = "[FrontEndMainView.ToggleOpenMods]"
+				on_start = "[GetVariableSystem.Clear( 'lsq_migrate_open_mods' )]"
+			}
+		}
+	}
+}
+
+### Detection and playset actions. Lives in playset_create_button so it only
+### instantiates while the mods panel is open.
+types lsq_construction_manager_auto_enable
+{
+	type playset_create_button = vbox {
+		layoutpolicy_horizontal = expanding
+
+		### Create-playset row
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			spacing = 5
+			margin = {10 0}
+
+			editbox_single = {
+				name = "create_playset_editbox"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = fixed
+				tooltipwidget = {
+					LeftClickButtonTooltip = {
+						blockoverride "onclick_text" {
+							text = "MODS_GUI_PLAYSET_LABEL_TOOLTIP"
+						}
+					}
+				}
+
+				blockoverride "editbox_label" {
+					text = "MODS_GUI_PLAYSET_LABEL"
+				}
+			}
+
+			button_regular = {
+				text = "MODS_GUI_CREATE_PLAYSET"
+				tooltipwidget = {BasicFunctionalTooltip = {}}
+
+				action_tooltip = {
+					click_type = left
+					click_mode = single
+					title = "[ModsGui.CreatePlaysetTooltip(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+					on_action = "[ModsGui.CreatePlayset(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+					on_action = "[PdxClearEditBoxText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox'))]"
+					enabled = "[ModsGui.CanCreatePlayset(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+				}
+				enabled = "[ModsGui.CanCreatePlayset(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+				align = center|nobaseline
+				using = button_resize_to_fit_text
+			}
+		}
+
+		### Construction Manager subscribed
+		vbox = {
+			datamodel = "[ModsGui.LocalMods]"
+
+			item = {
+				widget = {
+					size = { 0 0 }
+					visible_at_creation = no
+					visible = "[StringContains( LocalMod.Path, '3736668860' )]"
+
+					state = {
+						name = _show
+						on_start = "[GetVariableSystem.Set( 'lsq_migrate_installed', 'yes' )]"
+					}
+				}
+			}
+		}
+
+		### Construction Manager enabled
+		vbox = {
+			datamodel = "[ModsGui.LocalMods]"
+
+			item = {
+				widget = {
+					size = { 0 0 }
+					visible_at_creation = no
+					visible = "[And( StringContains( LocalMod.Path, '3736668860' ), ModsGui.ActivePlayset.ContainsMod( LocalMod.Id ) )]"
+
+					state = {
+						name = _show
+						on_start = "[GetVariableSystem.Set( 'lsq_migrate_new_active', 'yes' )]"
+					}
+				}
+			}
+		}
+
+		### Enable Construction Manager
+		vbox = {
+			datamodel = "[ModsGui.LocalMods]"
+
+			item = {
+				widget = {
+					size = { 0 0 }
+					visible_at_creation = no
+					visible = "[And3( GetVariableSystem.Exists( 'lsq_migrate_enable' ), StringContains( LocalMod.Path, '3736668860' ), Not( ModsGui.ActivePlayset.ContainsMod( LocalMod.Id ) ) )]"
+
+					state = {
+						name = _show
+						on_start = "[ModsGui.ActivePlayset.AddMod( LocalMod.Id )]"
+						on_start = "[GetVariableSystem.Set( 'lsq_migrate_new_added', 'yes' )]"
+						on_start = "[GetVariableSystem.Clear( 'lsq_migrate_enable' )]"
+					}
+				}
+			}
+		}
+
+		### Disable this mod once Construction Manager is active.
+		vbox = {
+			datamodel = "[ModsGui.LocalMods]"
+
+			item = {
+				widget = {
+					size = { 0 0 }
+					visible_at_creation = no
+					visible = "[And3( Or( GetVariableSystem.Exists( 'lsq_migrate_new_active' ), GetVariableSystem.Exists( 'lsq_migrate_new_added' ) ), Or( StringContains( LocalMod.Path, '3659626562' ), StringContains( LocalMod.Path, 'eu5_auto_expand_forked' ) ), ModsGui.ActivePlayset.ContainsMod( LocalMod.Id ) )]"
+
+					state = {
+						name = _show
+						on_start = "[ModsGui.ActivePlayset.RemoveMod( LocalMod.Id )]"
+						on_start = "[GetVariableSystem.Set( 'lsq_migrate_apply', 'yes' )]"
+					}
+				}
+			}
+		}
+
+		### Apply playset changes after the add and remove settle.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[GetVariableSystem.Exists( 'lsq_migrate_apply' )]"
+
+			state = {
+				name = _show
+				duration = 0.5
+				on_finish = "[ModsGui.DownloadAndApplyChanges]"
+				on_finish = "[GetVariableSystem.Clear( 'lsq_migrate_apply' )]"
+				on_finish = "[GetVariableSystem.Clear( 'lsq_migrate_new_added' )]"
+			}
+		}
+
+		### Open the Workshop.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[GetVariableSystem.Exists( 'lsq_migrate_open_workshop' )]"
+
+			state = {
+				name = _show
+				on_start = "[ModsGui.OpenExternalInterface()]"
+				on_start = "[GetVariableSystem.Clear( 'lsq_migrate_open_workshop' )]"
+			}
+		}
+	}
+}
