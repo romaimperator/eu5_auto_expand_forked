@@ -1,0 +1,482 @@
+﻿cm_max_guess_at_number_of_locations = 1000000
+
+# Root is country. Expects scope building_type. Returns required RGO/lumber levels before auto-building this improvement (sawmill/windmill/local_smelters).
+cm_get_required_rgo_levels_before_improvement_building = {
+	if = { limit = { has_variable_map = cm_min_rgos_by_building_type is_key_in_variable_map = { name = cm_min_rgos_by_building_type target = scope:building_type } }
+		value = "variable_map(cm_min_rgos_by_building_type|scope:building_type)"
+	} else = { value = 0 }
+}
+
+# Root is the country
+cm_get_allowed_building_overbuild_levels = {
+	if = { limit = { exists = var:cm_allowed_building_overbuild_levels }
+		value = var:cm_allowed_building_overbuild_levels
+	} else = { value = 0 }
+}
+
+# Root is the location.
+cm_get_remaining_free_building_levels_allowed = {
+	value = modifier:free_building_levels
+  owner = { add = cm_get_allowed_building_overbuild_levels }
+	subtract = total_building_levels
+}
+
+# Root is the location
+cm_get_available_building_levels = {
+  value = modifier:free_building_levels
+  subtract = total_building_levels
+}
+
+cm_local_pop_promotion_speed = {
+  value = modifier:local_pop_promotion_speed
+}
+
+cm_local_pop_promotion_speed_modifier = {
+  value = modifier:local_pop_promotion_speed_modifier
+}
+
+cm_local_pop_promotion_speed_scaled = {
+  value = modifier:local_pop_promotion_speed_scaled
+}
+
+cm_global_pop_promotion_speed = {
+  value = modifier:global_pop_promotion_speed
+}
+
+cm_global_pop_promotion_speed_modifier = {
+  value = modifier:global_pop_promotion_speed_modifier
+}
+
+# Root is the location
+cm_combined_pop_promotion_speed = {
+  value = modifier:local_pop_promotion_speed
+  owner = { add = modifier:global_pop_promotion_speed }
+  add = {
+    value = modifier:local_pop_promotion_speed_scaled
+    multiply = population
+  }
+  multiply = {
+    value = 1
+    owner = { add = modifier:global_pop_promotion_speed_modifier }
+    add = modifier:local_pop_promotion_speed_modifier
+  }
+}
+
+# Root is the location
+cm_combined_pop_promotion_speed_for_nobles = {
+  value = cm_combined_pop_promotion_speed
+  multiply = 0.1
+}
+
+# Root is the location
+cm_combined_pop_promotion_speed_for_clergy = {
+  value = cm_combined_pop_promotion_speed
+  multiply = 0.1
+}
+
+# Root is the location
+cm_combined_pop_promotion_speed_for_burghers = {
+  value = cm_combined_pop_promotion_speed
+  multiply = 0.5
+}
+
+# Root is the location
+cm_combined_pop_promotion_speed_for_laborers = {
+  value = cm_combined_pop_promotion_speed
+  multiply = 1.5
+}
+
+# Root is the location
+cm_combined_pop_promotion_speed_for_soldiers = {
+  value = cm_combined_pop_promotion_speed
+  multiply = 1.0
+}
+
+# Root is the location
+cm_combined_pop_promotion_speed_for_peasants = {
+  value = cm_combined_pop_promotion_speed
+  multiply = 0.5
+}
+
+# Population growth modifier wrappers. Pop growth rate percentages are yearly.
+# Root is the location
+cm_local_population_growth = { value = modifier:local_population_growth }
+cm_local_nobles_pop_growth = { value = modifier:local_nobles_pop_growth }
+cm_local_clergy_pop_growth = { value = modifier:local_clergy_pop_growth }
+cm_local_burghers_pop_growth = { value = modifier:local_burghers_pop_growth }
+cm_local_laborers_pop_growth = { value = modifier:local_laborers_pop_growth }
+cm_local_soldiers_pop_growth = { value = modifier:local_soldiers_pop_growth }
+cm_local_peasants_pop_growth = { value = modifier:local_peasants_pop_growth }
+cm_local_slaves_pop_growth = { value = modifier:local_slaves_pop_growth }
+cm_local_tribesmen_pop_growth = { value = modifier:local_tribesmen_pop_growth }
+
+# Root is country
+cm_global_population_growth = { value = modifier:global_population_growth }
+cm_global_nobles_pop_growth = { value = modifier:global_nobles_pop_growth }
+cm_global_clergy_pop_growth = { value = modifier:global_clergy_pop_growth }
+cm_global_burghers_pop_growth = { value = modifier:global_burghers_pop_growth }
+cm_global_laborers_pop_growth = { value = modifier:global_laborers_pop_growth }
+cm_global_soldiers_pop_growth = { value = modifier:global_soldiers_pop_growth }
+cm_global_peasants_pop_growth = { value = modifier:global_peasants_pop_growth }
+cm_global_slaves_pop_growth = { value = modifier:global_slaves_pop_growth }
+cm_global_tribesmen_pop_growth = { value = modifier:global_tribesmen_pop_growth }
+
+# Root is the location
+cm_base_location_pop_growth_rate = {
+  value = modifier:local_population_growth
+  owner = { add = modifier:global_population_growth }
+}
+
+# Per-pop-type yearly growth rate. Root is the location.
+cm_location_nobles_pop_growth_rate = {
+  value = cm_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_nobles_pop_growth
+    owner = { add = modifier:global_nobles_pop_growth }
+  }
+}
+cm_location_clergy_pop_growth_rate = {
+  value = cm_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_clergy_pop_growth
+    owner = { add = modifier:global_clergy_pop_growth }
+  }
+}
+cm_location_burghers_pop_growth_rate = {
+  value = cm_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_burghers_pop_growth
+    owner = { add = modifier:global_burghers_pop_growth }
+  }
+}
+cm_location_laborers_pop_growth_rate = {
+  value = cm_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_laborers_pop_growth
+    owner = { add = modifier:global_laborers_pop_growth }
+  }
+}
+cm_location_soldiers_pop_growth_rate = {
+  value = cm_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_soldiers_pop_growth
+    owner = { add = modifier:global_soldiers_pop_growth }
+  }
+}
+cm_location_peasants_pop_growth_rate = {
+  value = cm_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_peasants_pop_growth
+    owner = { add = modifier:global_peasants_pop_growth }
+  }
+}
+cm_location_slaves_pop_growth_rate = {
+  value = cm_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_slaves_pop_growth
+    owner = { add = modifier:global_slaves_pop_growth }
+  }
+}
+cm_location_tribesmen_pop_growth_rate = {
+  value = cm_base_location_pop_growth_rate
+  multiply = {
+    value = 1
+    add = modifier:local_tribesmen_pop_growth
+    owner = { add = modifier:global_tribesmen_pop_growth }
+  }
+}
+
+# Per-pop-type expected new pops next month. Yearly growth rate divided by 12.
+# Root is the location.
+cm_location_expected_new_nobles = {
+  value = num_pop_type:nobles
+  multiply = cm_location_nobles_pop_growth_rate
+  divide = 12
+}
+cm_location_expected_new_clergy = {
+  value = num_pop_type:clergy
+  multiply = cm_location_clergy_pop_growth_rate
+  divide = 12
+}
+cm_location_expected_new_burghers = {
+  value = num_pop_type:burghers
+  multiply = cm_location_burghers_pop_growth_rate
+  divide = 12
+}
+cm_location_expected_new_laborers = {
+  value = num_pop_type:laborers
+  multiply = cm_location_laborers_pop_growth_rate
+  divide = 12
+}
+cm_location_expected_new_soldiers = {
+  value = num_pop_type:soldiers
+  multiply = cm_location_soldiers_pop_growth_rate
+  divide = 12
+}
+cm_location_expected_new_peasants = {
+  value = num_pop_type:peasants
+  multiply = cm_location_peasants_pop_growth_rate
+  divide = 12
+}
+cm_location_expected_new_slaves = {
+  value = num_pop_type:slaves
+  multiply = cm_location_slaves_pop_growth_rate
+  divide = 12
+}
+cm_location_expected_new_tribesmen = {
+  value = num_pop_type:tribesmen
+  multiply = cm_location_tribesmen_pop_growth_rate
+  divide = 12
+}
+
+# Combined monthly pop additions: promotion speed plus new pop growth.
+# Slaves and tribesmen aren't promoted, so only growth contributes.
+# Root is the location.
+cm_combined_monthly_new_pops_of_type_nobles = {
+  value = cm_combined_pop_promotion_speed_for_nobles
+  add = cm_location_expected_new_nobles
+}
+cm_combined_monthly_new_pops_of_type_clergy = {
+  value = cm_combined_pop_promotion_speed_for_clergy
+  add = cm_location_expected_new_clergy
+}
+cm_combined_monthly_new_pops_of_type_burghers = {
+  value = cm_combined_pop_promotion_speed_for_burghers
+  add = cm_location_expected_new_burghers
+}
+cm_combined_monthly_new_pops_of_type_laborers = {
+  value = cm_combined_pop_promotion_speed_for_laborers
+  add = cm_location_expected_new_laborers
+}
+cm_combined_monthly_new_pops_of_type_soldiers = {
+  value = cm_combined_pop_promotion_speed_for_soldiers
+  add = cm_location_expected_new_soldiers
+}
+cm_combined_monthly_new_pops_of_type_peasants = {
+  value = cm_combined_pop_promotion_speed_for_peasants
+  add = cm_location_expected_new_peasants
+}
+cm_combined_monthly_new_pops_of_type_slaves = {
+  value = cm_location_expected_new_slaves
+}
+cm_combined_monthly_new_pops_of_type_tribesmen = {
+  value = cm_location_expected_new_tribesmen
+}
+cm_combined_monthly_new_pops_of_type_laborers_or_slaves = {
+  value = cm_combined_monthly_new_pops_of_type_laborers
+  add = cm_combined_monthly_new_pops_of_type_slaves
+}
+
+cm_local_laborers_desired_pop = {
+  value = modifier:local_laborers_desired_pop
+}
+cm_local_laborers_desired_pop_scaled = {
+  value = modifier:local_laborers_desired_pop_scaled
+}
+cm_global_laborers_desired_pop = {
+  value = modifier:global_laborers_desired_pop
+}
+cm_global_laborers_desired_pop_scaled = {
+  value = modifier:global_laborers_desired_pop_scaled
+}
+cm_global_laborers_rural_desired_pop = {
+  value = modifier:global_laborers_rural_desired_pop
+}
+cm_global_laborers_rural_desired_pop_scaled = {
+  value = modifier:global_laborers_rural_desired_pop_scaled
+}
+cm_global_laborers_city_desired_pop = {
+  value = modifier:global_laborers_city_desired_pop
+}
+cm_global_laborers_city_desired_pop_scaled = {
+  value = modifier:global_laborers_city_desired_pop_scaled
+}
+
+# Root is the location
+cm_location_nobles_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = nobles }
+    save_temporary_scope_as = building
+    add = cm_building_employment_required
+  }
+}
+
+# Root is the location
+cm_location_nobles_available = {
+  value = num_pop_type:nobles
+  subtract = cm_location_nobles_needed_for_buildings
+}
+
+# Root is the location
+cm_location_clergy_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = clergy }
+    save_temporary_scope_as = building
+    add = cm_building_employment_required
+  }
+}
+
+# Root is the location
+cm_location_clergy_available = {
+  value = num_pop_type:clergy
+  subtract = cm_location_clergy_needed_for_buildings
+}
+
+# Root is the location
+cm_location_burghers_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = burghers }
+    save_temporary_scope_as = building
+    add = cm_building_employment_required
+  }
+}
+
+# Root is the location
+cm_location_burghers_available = {
+  value = num_pop_type:burghers
+  subtract = cm_location_burghers_needed_for_buildings
+}
+
+# Root is the location
+cm_location_laborers_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = laborers }
+    save_temporary_scope_as = building
+    add = cm_building_employment_required
+  }
+}
+
+cm_location_nobles_pop_count = { value = num_pop_type:nobles }
+cm_location_clergy_pop_count = { value = num_pop_type:clergy }
+cm_location_burghers_pop_count = { value = num_pop_type:burghers }
+cm_location_laborers_pop_count = { value = num_pop_type:laborers }
+cm_location_soldiers_pop_count = { value = num_pop_type:soldiers }
+cm_location_peasants_pop_count = { value = num_pop_type:peasants }
+cm_location_slaves_pop_count = { value = num_pop_type:slaves }
+cm_location_tribesmen_pop_count = { value = num_pop_type:tribesmen }
+
+# Root is the location
+cm_location_laborers_available = {
+  value = num_pop_type:laborers
+  subtract = cm_location_laborers_needed_for_buildings
+  subtract = {
+    value = cm_modifier_rgo_level
+    add = cm_get_rgos_under_construction
+    subtract = num_pop_type:slaves
+  }
+}
+
+# Root is the location
+cm_location_soldiers_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = soldiers }
+    save_temporary_scope_as = building
+    add = cm_building_employment_required
+  }
+}
+
+# Root is the location
+cm_location_soldiers_available = {
+  value = num_pop_type:soldiers
+  subtract = cm_location_soldiers_needed_for_buildings
+}
+
+# Root is the location
+cm_location_peasants_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = peasants }
+    save_temporary_scope_as = building
+    add = cm_building_employment_required
+  }
+}
+
+# Root is the location
+cm_location_peasants_available = {
+  value = num_pop_type:peasants
+  subtract = cm_location_peasants_needed_for_buildings
+}
+
+# Root is the location
+cm_location_slaves_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = slaves }
+    save_temporary_scope_as = building
+    add = cm_building_employment_required
+  }
+}
+
+# Root is the location
+cm_location_slaves_available = {
+  value = num_pop_type:slaves
+  subtract = cm_location_slaves_needed_for_buildings
+}
+
+# Root is the location. Combined laborer+slave pool minus the jobs either pop type can fill.
+cm_location_laborers_or_slaves_available = {
+  value = num_pop_type:laborers
+  add = num_pop_type:slaves
+  subtract = cm_location_laborers_needed_for_buildings
+  subtract = cm_location_slaves_needed_for_buildings
+  subtract = cm_modifier_rgo_level
+  subtract = cm_get_rgos_under_construction
+}
+
+# Root is the location
+cm_location_tribesmen_needed_for_buildings = {
+  value = 0
+  every_buildings_in_location = {
+    limit = { building_pop_type = tribesmen }
+    save_temporary_scope_as = building
+    add = cm_building_employment_required
+  }
+}
+
+# Root is the location
+cm_location_tribesmen_available = {
+  value = num_pop_type:tribesmen
+  subtract = cm_location_tribesmen_needed_for_buildings
+}
+
+# Includes potential employment from levels under construction and from buildings that are subsidized but not fully employed
+# Expects scope: building
+cm_building_employment_required = {
+  value = 0
+  scope:building = {
+    if = { limit = { is_opened = yes }
+      if = { limit = { AND = { building_type = { cm_is_building_type_production_building = yes } is_subsidized = yes } }
+        add = {
+          value = building_level
+          multiply = building_type.employment_size
+        }
+      } else = {
+        add = building_employment_size_amount
+      }
+      add = {
+        value = building_levels_under_construction
+        multiply = building_type.employment_size
+      }
+    }
+  }
+}
+
+cm_location_lumber_mill_level = {
+  if = { limit = { has_building = building_type:lumber_mill }
+    "building(building_type:lumber_mill|owner)" = { value = building_level }
+  } else = {
+    value = -1
+  }
+}

@@ -1,0 +1,262 @@
+﻿# Expects scopes: building type
+cm_does_building_type_count_for_port_building_cost_modifier = {
+	OR = {
+		scope:building_type = building_type:dock
+		scope:building_type = building_type:dry_dock
+		scope:building_type = building_type:shipyard
+		scope:building_type = building_type:grand_shipyard
+		scope:building_type = building_type:naval_base
+	}
+}
+
+# Expects scopes: building type
+cm_does_building_type_count_for_fort_building_cost_modifier = {
+	AND = {
+		has_global_variable_map = cm_building_type_to_is_fort
+		is_key_in_global_variable_map = { name = cm_building_type_to_is_fort target = scope:building_type }
+		"global_variable_map(cm_building_type_to_is_fort|scope:building_type)" = 1
+	}
+}
+
+# Root is the building
+cm_is_building_obsolete = {
+	building_type = { save_temporary_scope_as = the_building_type }
+	owner = { building_type_is_obsolete = scope:the_building_type }
+}
+# Expects scope:building_type and scope:country. Root scope is unused.
+cm_is_building_type_obsolete = {
+	scope:country = { building_type_is_obsolete = scope:building_type }
+}
+
+# Root is the building
+cm_is_building_upgradeable = {
+	building_type = { is_upgradeable = yes }
+}
+
+# Root is the location, also expects scope:building_type and scope:country.
+# False if the location doesn't have the building (nothing to upgrade).
+cm_building_type_can_be_upgraded_by_owner = {
+	has_building = scope:building_type
+	"building(scope:building_type|scope:country)" = { building_can_be_upgraded_by = scope:country }
+}
+
+# Root is the building
+cm_is_building_upgradeable_and_can_be_upgraded_by_owner = {
+	AND = {
+		cm_is_building_upgradeable = yes
+		building_can_be_upgraded_by = owner
+	}
+}
+# Root is the location, also expects scope:building_type and scope:country
+cm_is_building_type_upgradeable_and_can_be_upgraded_by_owner = {
+	AND = {
+		scope:building_type = { is_upgradeable = yes }
+		cm_building_type_can_be_upgraded_by_owner = yes
+	}
+}
+
+# Root is the building
+cm_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = {
+	OR = {
+		cm_is_building_not_max_level_already_and_not_obsolete = yes
+		cm_is_building_upgradeable_and_can_be_upgraded_by_owner = yes
+	}
+}
+
+# Root is the location. Effective cap is free_building_levels plus the owner's cm_allowed_building_overbuild_levels (default 0).
+cm_is_location_under_building_limit = {
+	0 < { value = cm_get_remaining_free_building_levels_allowed ceiling = yes }
+}
+
+# Root is the building
+cm_is_building_not_max_level_already_and_not_obsolete = {
+	AND = {
+		is_at_max_level = no
+		cm_is_building_obsolete = no
+	}
+}
+
+# Root is the building
+cm_is_building_fully_employed = {
+	AND = {
+		building_potential_profit = building_profit
+		OR = {
+			is_full_capacity = yes
+			building_level = 0
+		}
+	}
+}
+
+# Root is the building. Checks that building potential profit (adjusted for control) meets the min profit
+# threshold from the priority list (field slot 2, mapped to cm_priority_min_profit).
+# Non-production buildings (marketplaces, granaries, etc.) always pass — they have no profit to check.
+# Buildings with no construction goods demands (e.g. mason, lumber_mill) also bypass — they produce
+# base goods with no input costs, so the min profit threshold is not meaningful.
+cm_building_meets_minimum_profit = {
+	OR = {
+		NOT = { building_type = { cm_is_building_type_production_building = yes } }
+		cm_get_construction_demand_total_count = 0
+		NOT = { owner = { has_variable_map = cm_priority_min_profit } }
+		"owner.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)" = 0
+		cm_building_potential_profit_after_control >= "owner.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+	}
+}
+
+# Expects scope:building_type. Checks if the building type produces a good that is also
+# one of its construction demand goods (e.g. horse_breeders produces and requires horses).
+# Precomputed by the hidden window GUI at game start.
+cm_building_type_produces_own_construction_good = {
+	AND = {
+		has_global_variable_map = cm_building_type_produces_own_construction_good
+		is_key_in_global_variable_map = { name = cm_building_type_produces_own_construction_good target = scope:building_type }
+		"global_variable_map(cm_building_type_produces_own_construction_good|scope:building_type)" = 1
+	}
+}
+
+# Checks construction cost adjustment against the min discount threshold
+# from the priority list (field slot 2, mapped to cm_priority_min_discount, pre-scaled ×0.01).
+# Expects scopes: country, building_type.
+# $threshold$ = the full variable_map lookup expression for the discount threshold.
+# The 0.005 added to $threshold$ is a 0.5% tolerance so that a setting of -33%
+# matches a cost adjustment of -32.5% (avoids float-rounding misses at the boundary).
+cm_building_meets_minimum_discount = {
+	OR = {
+		NOT = { scope:country = { has_variable_map = cm_priority_min_discount } }
+		cm_get_construction_demand_total_count = 0
+		cm_building_type_produces_own_construction_good = yes
+		cm_get_standard_construction_demand_total = 0
+		scope:building_type = {
+			cm_get_standard_construction_cost_adjustment_for_building_type <= { value = $threshold$ add = 0.005 }
+		}
+	}
+}
+
+# Root is the building. Shared core of the two cm_building_can_auto_expand_* triggers —
+# the checks that apply to both normal-path and upgrade-path expansion.
+# The upgrade path cannot use can_build_building (fails for obsolete building types);
+# the normal path adds it via cm_building_can_auto_expand_other_than_checking_for_upgrades.
+cm_building_can_auto_expand_for_upgrade = {
+	location = { save_temporary_scope_as = location }
+	building_type = { save_temporary_scope_as = building_type }
+	owner = { save_temporary_scope_as = country }
+	AND = {
+		cm_building_meets_minimum_profit = yes
+		is_opened = yes
+		cm_is_building_fully_employed = yes
+		is_lacking_goods = no
+		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
+		location = { cm_location_has_enough_pops_available = yes }
+		location = { cm_is_location_under_building_limit = yes }
+	}
+}
+
+# Root is the building. Same checks as cm_building_can_auto_expand_for_upgrade, plus can_build_building.
+cm_building_can_auto_expand_other_than_checking_for_upgrades = {
+	AND = {
+		cm_building_can_auto_expand_for_upgrade = yes
+		location = { cm_location_allowed_to_build = { target = scope:building_type } }
+	}
+}
+
+# Expects scopes: building type, country, and location
+cm_location_can_auto_expand_from_zero_levels = {
+	scope:location = { cm_location_will_auto_expand_from_zero_levels = yes }
+}
+
+# Root is the location, also expects scope:building_type and scope:country.
+# Shared core of the two cm_location_will_auto_expand_from_zero_levels_* triggers.
+# The upgrade path cannot use can_build_building (fails for obsolete building types);
+# the normal path adds it via cm_location_will_auto_expand_from_zero_levels.
+cm_location_will_auto_expand_from_zero_levels_for_upgrade = {
+	AND = {
+		scope:country = { cm_should_pause_auto_expand = no }
+		NOT = { integration_level = conquered }
+		cm_location_has_enough_pops_available = yes
+		cm_is_location_under_building_limit = yes
+		save_temporary_scope_as = location
+		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
+		cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_building_type_for_auto_expand }
+	}
+}
+
+# Root is the location, also expects scope:building_type and scope:country.
+# Same checks as cm_location_will_auto_expand_from_zero_levels_for_upgrade, plus can_build_building.
+cm_location_will_auto_expand_from_zero_levels = {
+	AND = {
+		cm_location_will_auto_expand_from_zero_levels_for_upgrade = yes
+		cm_location_allowed_to_build = { target = scope:building_type }
+	}
+}
+
+# Expects scopes: building type, country, and location. Same as cm_location_can_auto_expand_from_zero_levels
+# but without the can_build_building check, which fails for obsolete building types.
+cm_location_can_auto_expand_from_zero_levels_for_upgrade = {
+	scope:location = { cm_location_will_auto_expand_from_zero_levels_for_upgrade = yes }
+}
+
+# Expects scope:country. Checks that the player has gold above their minimum reserve setting.
+# Used for upgrade branches where the exact upgrade cost is resolved by the GUI.
+cm_auto_expand_check_minimum_gold_reserve = {
+	OR = {
+		NOT = { scope:country = { exists = var:cm_minimum_gold } }
+		scope:country.gold > scope:country.var:cm_minimum_gold
+	}
+}
+
+# Root is the building
+cm_is_not_under_construction = {
+	building_levels_under_construction = 0
+}
+
+# Expects scopes: building, building type, country, and location
+cm_is_not_under_construction_and_gold_is_available = {
+	AND = {
+		cm_is_not_under_construction = yes
+		cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_building_type_for_auto_expand }
+	}
+}
+
+# Root is the building. Thin wrapper: saves scopes and delegates to the shared trigger.
+cm_upgrade_all_meets_minimum_discount = {
+	owner = { save_temporary_scope_as = country }
+	building_type = { save_temporary_scope_as = building_type }
+	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_upgrade_all_buildings }
+}
+
+# Root is the country
+cm_should_upgrade_all_buildings = {
+	is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_upgrade_all_buildings }
+}
+
+# Root is the country
+cm_should_pause_auto_expand = {
+	exists = var:cm_pause_auto_expand
+}
+
+# Root is the building type
+cm_is_building_type_production_building = {
+	AND = {
+		has_global_variable_map = cm_building_type_to_is_production_building
+		is_key_in_global_variable_map = { name = cm_building_type_to_is_production_building target = this }
+		"global_variable_map(cm_building_type_to_is_production_building|this)" = 1
+	}
+}
+
+# Root is the building type
+cm_is_building_type_non_production_multi_level_building = {
+	AND = {
+		has_global_variable_map = cm_building_type_to_is_non_production_multi_level_building
+		is_key_in_global_variable_map = { name = cm_building_type_to_is_non_production_multi_level_building target = this }
+		"global_variable_map(cm_building_type_to_is_non_production_multi_level_building|this)" = 1
+	}
+}
+
+# Root is the building type
+cm_is_building_type_one_per_location_building = {
+	AND = {
+		has_global_variable_map = cm_building_type_to_is_one_per_location_building
+		is_key_in_global_variable_map = { name = cm_building_type_to_is_one_per_location_building target = this }
+		"global_variable_map(cm_building_type_to_is_one_per_location_building|this)" = 1
+	}
+}
+

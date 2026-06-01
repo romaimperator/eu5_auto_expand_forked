@@ -1,0 +1,89 @@
+﻿cm_upgrade_town_to_city_building = {
+	is_foreign = no
+	pop_type = peasants
+	max_levels = 1
+
+	category = infrastructure_category
+	employment_size = rural_peasant_produce_employment
+
+	town = yes
+	price = cm_city_upgrade_price
+
+	forbidden_for_estates = yes
+
+	country_potential = {
+		is_ai = no
+	}
+	build_time = 730
+	construction_demand = build_city_demand
+	allow = {
+		modifier:cannot_upgrade_location = no
+	}
+	location_potential = {
+		population >= 30
+	}
+
+	unique_production_methods = {
+		cm_upgrade_town_to_city_maintenance = {
+			masonry = 0.01
+			category = building_maintenance
+		}
+	}
+
+	modifier = {
+	}
+
+	on_built = {
+		location = {
+			trigger_event_silently = {
+				on_action = cm_upgrade_location_rank_on_action
+				days = 1
+			}
+		}
+	}
+}
+
+cm_upgrade_rural_to_town_building = {
+	is_foreign = no
+	pop_type = peasants
+	max_levels = 1
+
+	category = infrastructure_category
+	employment_size = rural_peasant_produce_employment
+
+	rural_settlement = yes
+	price = cm_town_upgrade_price
+
+	forbidden_for_estates = yes
+	country_potential = {
+		is_ai = no
+	}
+	build_time = 365
+	construction_demand = build_town_demand
+	allow = {
+		modifier:cannot_upgrade_location = no
+	}
+
+	location_potential = {
+		population >= 5
+	}
+
+	unique_production_methods = {
+		cm_upgrade_rural_to_town_maintenance = {
+			masonry = 0.01
+			category = building_maintenance
+		}
+	}
+
+	modifier = {
+	}
+
+	on_built = {
+		location = {
+			trigger_event_silently = {
+				on_action = cm_upgrade_location_rank_on_action
+				days = 1
+			}
+		}
+	}
+}

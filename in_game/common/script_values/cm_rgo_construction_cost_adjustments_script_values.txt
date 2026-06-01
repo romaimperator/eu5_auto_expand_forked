@@ -1,0 +1,78 @@
+﻿# RGO construction cost adjustments based on primary construction good per RGO type.
+# Only 5 RGO types exist — maintain manually if the game adds more.
+# Expects scopes: country, location
+cm_get_construction_cost_adjustment_for_rgo = {
+	if = { limit = { scope:location.raw_material = { goods_method = mining } }
+		value = cm_get_construction_cost_adjustment_for_rgo_mining
+	}
+	else_if = { limit = { scope:location.raw_material = { goods_method = farming } }
+		value = cm_get_construction_cost_adjustment_for_rgo_farming
+	}
+	else_if = { limit = { scope:location.raw_material = { goods_method = hunting } }
+		value = cm_get_construction_cost_adjustment_for_rgo_hunting
+	}
+	else_if = { limit = { scope:location.raw_material = { goods_method = gathering } }
+		value = cm_get_construction_cost_adjustment_for_rgo_gathering
+	}
+	else_if = { limit = { scope:location.raw_material = { goods_method = forestry } }
+		value = cm_get_construction_cost_adjustment_for_rgo_forestry
+	}
+	else = {
+		value = 0
+	}
+}
+
+# Expects scopes: country, location
+cm_get_construction_cost_adjustment_for_rgo_mining = {
+	value = 0
+	add = {
+		goods:lumber = { save_temporary_scope_as = good }
+		value = cm_get_construction_good_adjustment
+		min = -0.33
+		max = 1.5
+	}
+}
+
+# Expects scopes: country, location
+cm_get_construction_cost_adjustment_for_rgo_farming = {
+	value = 0
+	add = {
+		goods:lumber = { save_temporary_scope_as = good }
+		value = cm_get_construction_good_adjustment
+		min = -0.33
+		max = 1.5
+	}
+}
+
+# Expects scopes: country, location
+cm_get_construction_cost_adjustment_for_rgo_hunting = {
+	value = 0
+	add = {
+		goods:lumber = { save_temporary_scope_as = good }
+		value = cm_get_construction_good_adjustment
+		min = -0.33
+		max = 1.5
+	}
+}
+
+# Expects scopes: country, location
+cm_get_construction_cost_adjustment_for_rgo_gathering = {
+	value = 0
+	add = {
+		goods:lumber = { save_temporary_scope_as = good }
+		value = cm_get_construction_good_adjustment
+		min = -0.33
+		max = 1.5
+	}
+}
+
+# Expects scopes: country, location
+cm_get_construction_cost_adjustment_for_rgo_forestry = {
+	value = 0
+	add = {
+		goods:masonry = { save_temporary_scope_as = good }
+		value = cm_get_construction_good_adjustment
+		min = -0.33
+		max = 1.5
+	}
+}

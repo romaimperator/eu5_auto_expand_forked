@@ -1,0 +1,69 @@
+﻿cmf_monthly_human_country_pulse = {
+	on_actions = {
+		cm_unified_auto_expand
+		cm_update_auto_build_visibility
+		cm_update_auto_town_rights_visibility
+		cm_monthly_auto_town_rights
+	}
+}
+
+# Update auto-build list visibility each month so newly researched buildings appear.
+cm_update_auto_build_visibility = {
+	effect = {
+		cm_update_auto_build_list_visibility = yes
+	}
+}
+
+# Update auto town rights list visibility each month so newly available rights appear
+# (advance researched, estate privilege adopted, tag swap, culture change, etc.).
+cm_update_auto_town_rights_visibility = {
+	effect = {
+		cm_update_auto_town_rights_list_visibility = yes
+	}
+}
+
+# Standalone monthly hook for auto-grant town rights. Lives outside the priority
+# dispatcher because the player toggles it on its own tab, not in the priority list.
+# Still respects the master pause toggle.
+cm_monthly_auto_town_rights = {
+	effect = {
+		save_scope_as = country
+		if = {
+			limit = {
+				cm_should_pause_auto_expand = no
+				exists = var:cm_auto_grant_town_rights
+			}
+			cm_run_auto_town_rights = yes
+		}
+	}
+}
+
+# Unified dispatcher: iterates the priority list in order and calls each
+# enabled feature's effect. Gated by the master pause toggle.
+cm_unified_auto_expand = {
+	effect = {
+		save_scope_as = country
+		if = { limit = { cm_should_pause_auto_expand = no }
+			if = { limit = { has_variable_list = cm_priority_features_list }
+				every_in_list = {
+					variable = cm_priority_features_list
+					save_scope_as = feature
+					if = { limit = { scope:country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = scope:feature } } }
+						switch = {
+							trigger = scope:feature
+							flag:cm_feature_auto_expand_buildings = { scope:country = { cm_run_auto_expand_buildings = yes } }
+							flag:cm_feature_auto_expand_rgos = { scope:country = { cm_run_auto_expand_rgos = yes } }
+							flag:cm_feature_upgrade_all_buildings = { scope:country = { cm_run_upgrade_all_buildings = yes } }
+							flag:cm_feature_auto_build = { scope:country = { cm_run_auto_build = yes } }
+							flag:cm_feature_auto_food = { scope:country = { cm_run_auto_food = yes } }
+							flag:cm_feature_auto_urbanize = { scope:country = { cm_run_auto_urbanize = yes } }
+							flag:cm_feature_auto_build_capital = { scope:country = { cm_run_auto_build_capital = yes } }
+						}
+					}
+				}
+			}
+		}
+		# Signal the hidden window GUI to process upgrades and do periodic checks
+		set_variable = cm_monthly_gui_tick
+	}
+}

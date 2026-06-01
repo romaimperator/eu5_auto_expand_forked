@@ -1,0 +1,487 @@
+﻿cm_set_auto_expand_for_building = {
+	effect = {
+		save_scope_as = the_building
+		building_type = { save_scope_as = building_type }
+		location = {
+			if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } } }
+				# Mass mode: operate on exclusion list (inverted logic)
+				if = { limit = { NOT = { exists = scope:set_off } }
+					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } }
+						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+					}
+				} else = {
+					if = { limit = { scope:set_off = yes }
+						if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } } }
+							add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+						}
+					} else = {
+						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+					}
+				}
+			} else = {
+				# Normal mode: operate on registration list
+				if = { limit = { NOT = { exists = scope:set_off } }
+					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
+						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+					}
+				} else = {
+					if = { limit = { scope:set_off = yes }
+						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+					}
+				}
+			}
+		}
+	}
+}
+
+cm_check_for_auto_expand_when_upgrading_building = {
+	effect = {
+		# given scope is the obsolete version of building that is being upgraded
+		save_scope_as = the_building
+		scope:the_building = { building_type = { save_temporary_scope_as = old_building_type } }
+		location = {
+			if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:old_building_type } } }
+				# Mass mode: add new type to country mass list, swap exclusion entries
+				ordered_buildings_in_location = {
+					order_by = building_index
+					save_scope_as = the_new_building
+					scope:the_new_building = {
+						building_type = { save_temporary_scope_as = new_building_type }
+					}
+					owner = {
+						if = { limit = { NOT = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:new_building_type } } }
+							add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:new_building_type }
+						}
+					}
+					location = {
+						if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:old_building_type } }
+							remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:old_building_type }
+							if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:new_building_type } } }
+								add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:new_building_type }
+							}
+						}
+					}
+				}
+			} else = {
+				# Normal mode: swap registration from old to new
+				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:old_building_type } }
+					remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:old_building_type }
+					ordered_buildings_in_location = {
+						order_by = building_index
+						save_scope_as = the_new_building
+						scope:the_new_building = {
+							building_type = { save_temporary_scope_as = new_building_type }
+						}
+						location = {
+							if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:new_building_type } } }
+								add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:new_building_type }
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+# Called from the hidden window GUI to perform a building upgrade.
+# Root = location, scope:old_building_type = obsolete type, scope:new_building_type = upgrade target (from GetNextReplacementBuilding), scope:country = player
+cm_gui_construct_upgrade = {
+	is_valid = {
+		scope:country = { has_variable = cm_gui_upgrades_pending }
+		is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:old_building_type }
+		cm_auto_expand_check_minimum_gold_reserve = yes
+	}
+	effect = {
+		construct_building = { building_type = scope:new_building_type }
+		# Swap auto-expand tracking from old to new
+		if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:old_building_type } } }
+			# Mass mode: add new type to country mass list and swap exclusion entries
+			owner = {
+				if = { limit = { NOT = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:new_building_type } } }
+					add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:new_building_type }
+				}
+			}
+			if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:old_building_type } }
+				remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:old_building_type }
+				if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:new_building_type } } }
+					add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:new_building_type }
+				}
+			}
+		} else = {
+			# Normal mode: swap registration entries (only if old type was registered)
+			if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:old_building_type } }
+				remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:old_building_type }
+				if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:new_building_type } } }
+					add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:new_building_type }
+				}
+			}
+		}
+		# Track that this building type has an upgrade queued so the monthly script won't re-flag it
+		if = { limit = { NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:old_building_type } } }
+			add_to_variable_list = { name = cm_upgrade_in_progress target = scope:old_building_type }
+		}
+		# Clear from pending list
+		remove_list_variable = { name = cm_gui_upgrade_building_types target = scope:old_building_type }
+	}
+}
+cm_check_for_auto_expand_when_removing_building = {
+	effect = {
+		save_scope_as = the_building
+		scope:the_building = { building_type = { save_temporary_scope_as = building_type } }
+		location = {
+			if = { limit = { scope:the_building = { building_level < 2 } }
+				# Clean up both lists — only the relevant one will have an entry
+				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
+					remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+				}
+				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } }
+					remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+				}
+			}
+		}
+	}
+}
+# Root is the building type
+
+cm_is_auto_expand_active_for_building = {
+	is_shown = {
+		save_temporary_scope_as = the_building
+		scope:the_building = { building_type = { save_temporary_scope_as = building_type } }
+		OR = {
+			location = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
+			AND = {
+				owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } }
+				NOT = { location = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } } }
+			}
+		}
+	}
+}
+
+cm_set_auto_expand_for_building_type = {
+	effect = {
+		save_scope_as = building_type
+		scope:location = {
+			if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } } }
+				# Mass mode: operate on exclusion list (inverted logic)
+				if = { limit = { NOT = { exists = scope:set_off } }
+					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } }
+						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+					}
+				} else = {
+					if = { limit = { scope:set_off = yes }
+						if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } } }
+							add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+						}
+					} else = {
+						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+					}
+				}
+			} else = {
+				# Normal mode: operate on registration list
+				if = { limit = { NOT = { exists = scope:set_off } }
+					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
+						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+					}
+				} else = {
+					if = { limit = { scope:set_off = yes }
+						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+					} else = {
+						add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+					}
+				}
+			}
+		}
+	}
+}
+
+cm_is_auto_expand_active_for_building_type = {
+	is_shown = {
+		save_temporary_scope_as = building_type
+		OR = {
+			scope:location = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
+			AND = {
+				scope:location = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } } }
+				NOT = { scope:location = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } } }
+			}
+		}
+	}
+}
+
+cm_can_build_building = {
+	is_shown = {
+		trigger_if = { limit = { exists = owner }
+			owner = { save_temporary_scope_as = actor }
+		}
+		trigger_else = {
+			save_temporary_scope_as = actor
+		}
+		can_build_building = scope:building_type
+	}
+}
+
+# Root is the location, also expects scope:building_type and scope:country
+cm_location_will_auto_expand_from_zero_levels = {
+	is_shown = {
+		save_temporary_scope_as = location
+		# Same individual checks as the tooltip rows, in the same order
+		scope:country = { cm_should_pause_auto_expand = no }
+		NOT = { integration_level = conquered }
+		cm_location_has_enough_pops_available = yes
+		cm_is_location_under_building_limit = yes
+		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
+		cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_building_type_for_auto_expand }
+		scope:country = { save_temporary_scope_as = actor }
+		can_build_building = scope:building_type
+		scope:country = { can_build_building = scope:building_type }
+	}
+}
+
+# following functions are used for gui/tooltips
+
+cm_is_building_able_to_auto_expand = {
+	is_shown = {
+		building_type = { save_temporary_scope_as = building_type }
+		location = { save_temporary_scope_as = location }
+		owner = { save_temporary_scope_as = country }
+		# Same individual checks as the tooltip rows, in the same order
+		owner = { cm_should_pause_auto_expand = no }
+		location = { NOT = { integration_level = conquered } }
+		cm_building_meets_minimum_profit = yes
+		is_opened = yes
+		cm_is_building_fully_employed = yes
+		is_lacking_goods = no
+		cm_is_not_under_construction = yes
+		location = { cm_location_has_enough_pops_available = yes }
+		location = { cm_is_location_under_building_limit = yes }
+		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
+		cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_building_type_for_auto_expand }
+		cm_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
+		location.owner = { can_build_building = scope:building_type }
+		# can_build_building - doesn't work from Building-rooted scripted GUI so moved to GUI visibility
+	}
+}
+
+cm_is_building_not_max_level_already = {
+	is_shown = {
+		is_at_max_level = no
+	}
+}
+
+cm_building_meets_minimum_profit = {
+	is_shown = {
+		building_type = { save_temporary_scope_as = building_type }
+		cm_building_meets_minimum_profit = yes
+	}
+}
+
+cm_building_meets_minimum_discount_for_auto_expand = {
+	is_shown = {
+		building_type = { save_temporary_scope_as = building_type }
+		location = { save_temporary_scope_as = location }
+		owner = { save_temporary_scope_as = country }
+		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
+	}
+}
+
+# Root is the building type, also expects scope:country and scope:location
+cm_building_type_meets_minimum_discount_for_auto_expand = {
+	is_shown = {
+		save_temporary_scope_as = building_type
+		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
+	}
+}
+
+cm_is_building_open = {
+	is_shown = {
+		is_opened = yes
+	}
+}
+
+cm_is_building_fully_employed = {
+	is_shown = {
+		cm_is_building_fully_employed = yes
+	}
+}
+
+cm_is_building_not_lacking_goods = {
+	is_shown = {
+		is_lacking_goods = no
+	}
+}
+
+cm_is_building_not_max_level_already_and_not_obsolete = {
+	is_shown = {
+		cm_is_building_not_max_level_already_and_not_obsolete = yes
+	}
+}
+
+# Root is location, also expects the scope building type
+cm_location_has_enough_pops_available = {
+	is_shown = {
+		cm_location_has_enough_pops_available = yes
+	}
+}
+
+# Root is the location
+cm_is_location_under_building_limit = {
+	is_shown = {
+		cm_is_location_under_building_limit = yes
+	}
+}
+
+# Root is the location
+cm_is_location_not_conquered = {
+	is_shown = {
+		NOT = { integration_level = conquered }
+	}
+}
+
+# Root is the building
+cm_is_building_not_under_construction = {
+	is_shown = {
+		cm_is_not_under_construction = yes
+	}
+}
+
+# Root is the building
+cm_has_enough_gold_for_auto_expand = {
+	is_shown = {
+		building_type = { save_temporary_scope_as = building_type }
+		location = { save_temporary_scope_as = location }
+		owner = { save_temporary_scope_as = country }
+		cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_building_type_for_auto_expand }
+	}
+}
+
+# Root is the location, expects scope:building_type and scope:country
+cm_has_enough_gold_for_auto_expand_from_zero_levels = {
+	is_shown = {
+		save_temporary_scope_as = location
+		cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_building_type_for_auto_expand }
+	}
+}
+
+cm_is_building_type_producing = {
+	is_shown = {
+		scope:building_type = { cm_is_building_type_production_building = yes }
+	}
+}
+cm_is_building_type_multiple_levels = {
+	is_shown = {
+		scope:building_type = { cm_is_building_type_non_production_multi_level_building = yes }
+	}
+}
+cm_is_building_type_one_per_location = {
+	is_shown = {
+		scope:building_type = { cm_is_building_type_one_per_location_building = yes }
+	}
+}
+cm_is_building_type_more_than_one = {
+	is_shown = {
+		NOR = {
+			"global_variable_map(cm_building_type_to_is_production_building|scope:building_type)" = 0
+			"global_variable_map(cm_building_type_to_is_non_production_multi_level_building|scope:building_type)" = 0
+			"global_variable_map(cm_building_type_to_is_one_per_location_building|scope:building_type)" = 0
+		}
+	}
+}
+
+cm_is_building_obsolete = {
+	is_shown = {
+		cm_is_building_obsolete = yes
+	}
+}
+cm_is_building_type_obsolete = {
+	is_shown = {
+		scope:building_type = { cm_is_building_type_obsolete = yes }
+	}
+}
+
+cm_is_building_upgradeable = {
+	is_shown = {
+		cm_is_building_upgradeable = yes
+	}
+}
+
+cm_building_can_be_upgraded_by_owner = {
+	is_shown = {
+		building_can_be_upgraded_by = owner
+	}
+}
+
+cm_is_building_upgradeable_and_can_be_upgraded_by_owner_and_auto_expand_upgrade_is_on = {
+	is_shown = {
+		cm_is_building_upgradeable_and_can_be_upgraded_by_owner = yes
+	}
+}
+
+cm_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = {
+	is_shown = {
+		cm_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
+	}
+}
+
+# Root is the country
+cm_pause_auto_expand = {
+	effect = {
+		if = { limit = { exists = var:cm_pause_auto_expand }
+			remove_variable = cm_pause_auto_expand
+		} else = {
+			set_variable = { name = cm_pause_auto_expand value = yes }
+		}
+	}
+
+	is_shown = {
+		cm_should_pause_auto_expand = yes
+	}
+}
+
+# Root is the building type. Toggles mass auto-expand for this specific building type.
+# When ON: this building type auto-expands at all owned locations (exclusion-based per location).
+# When OFF: this building type is removed from mass tracking and location exclusion lists are cleaned.
+cm_toggle_mass_auto_expand_for_building_type = {
+	saved_scopes = { country }
+	effect = {
+		save_scope_as = building_type
+		if = { limit = { scope:country = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } } }
+			# Turning OFF — remove from country list and clear exclusion entries for this type
+			scope:country = {
+				remove_list_variable = { name = cm_mass_auto_expand_building_types target = scope:building_type }
+				ordered_owned_location = {
+					order_by = max_control
+					max = cm_max_guess_at_number_of_locations
+					check_range_bounds = no
+					limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } }
+					remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+				}
+			}
+		} else = {
+			# Turning ON — add to country list and clear per-location registrations for this type
+			scope:country = {
+				add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type }
+				ordered_owned_location = {
+					order_by = max_control
+					max = cm_max_guess_at_number_of_locations
+					check_range_bounds = no
+					limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
+					remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+				}
+			}
+		}
+	}
+	is_shown = {
+		save_temporary_scope_as = building_type
+		scope:country = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } }
+	}
+}
+
