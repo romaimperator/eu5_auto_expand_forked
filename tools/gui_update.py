@@ -9,19 +9,9 @@ Uses two git refs to track vanilla state:
   per-file three-way merges so the merge result does not depend on git's
   parent-link auto-detection.
 
-Requires ``tools/dependencies/gui-tracking/** -text`` in .gitattributes so
-blobs from script writes and from merge-tool resolution share one
-encoding. Without it, the repo's eol=crlf rule normalizes script-written
-files to LF in the blob while editor-resolved files stay CRLF, and any
-cross-boundary diff renders as a whole-file replacement in git GUIs.
-
-Merging is per-file via ``git merge-file`` with the explicit base from
-``gui/vanilla-merged``. When a file conflicts the script also populates
-the git index with stages 1/2/3 and writes ``.git/MERGE_HEAD`` so any
-git GUI sees a real merge in progress and offers a 3-way merge editor.
-Once the user resolves and commits the resulting merge commit, the
-next ``apply`` (or ``merge``) run advances ``gui/vanilla-merged`` to
-match ``gui/vanilla`` so the merge is recognized as absorbed.
+Per-file three-way merges run through ``git merge-file`` with
+``gui/vanilla-merged`` as base. Conflicts produce a 2-parent merge
+commit; the next ``apply`` (or ``merge``) run advances the bookmark.
 
 Commands:
     init      Set up tracking for this mod
@@ -82,8 +72,7 @@ STEAM_GAME_PATHS = [
 _TYPES_BLOCK_RE = re.compile(r"types\s+(\w+)\s*(\{)?\s*(?:#.*)?$")
 _TYPE_DEF_RE = re.compile(r"type\s+(\w+)\s*=\s*(\w+)\s*(\{)?\s*(?:#.*)?$")
 _TEMPLATE_RE = re.compile(r"template\s+(\w+)\s*(\{)?\s*(?:#.*)?$")
-# Top-level widget instances: "window = {", "lateralview = {", etc.
-# Only matched on lines with NO leading whitespace (top-level).
+# Match top-level widget instances at column 0 only.
 _WIDGET_INSTANCE_RE = re.compile(r"(\w+)\s*=\s*(\{)?\s*(?:#.*)?$")
 _NAME_PROP_RE = re.compile(r'name\s*=\s*"([^"]+)"')
 _CONSTANT_RE = re.compile(r"@(\w+)\s*=")
@@ -263,9 +252,7 @@ def parse_gui_file(text, source_file):
             i = types_end + 1
             continue
 
-        # ── Top-level widget instance ─────────────────────────────
-        # Only match at column 0 (no leading whitespace) to avoid
-        # picking up nested widget children inside other definitions.
+        # ── Top-level widget instance (column 0 only — skip nested children)
         raw = lines[i]
         if raw and raw[0:1] not in ("", " ", "\t", "\r", "\n", "#", "@"):
             m = _WIDGET_INSTANCE_RE.match(stripped)
@@ -317,6 +304,32 @@ def find_definition_in_file(text, name, kind, namespace=None):
                 continue
             return (d.start_line, d.end_line)
     return None
+
+
+def _assert_unique_top_level_defs(text, path):
+    """Report duplicated top-level definitions in *text*.
+
+    Checks that no ``(kind, namespace, name)`` parsed from *text* is defined
+    more than once. A repeated definition, typically a top-level widget name
+    appearing twice, is the signature of a corrupted ``.gui`` file that EU5
+    fails to load. Prints an error for each duplicate and returns ``False``
+    when any is found, ``True`` when *text* is clean.
+    """
+    seen = {}
+    unique = True
+    for d in parse_gui_file(text, path):
+        sig = (d.kind, d.namespace, d.name)
+        first = seen.get(sig)
+        if first is None:
+            seen[sig] = d
+            continue
+        label = f"{d.kind} '{d.name}'"
+        if d.namespace:
+            label += f" ({d.namespace})"
+        print(f"  Error: Duplicate {label} in {path}: lines "
+              f"{first.start_line + 1} and {d.start_line + 1}.")
+        unique = False
+    return unique
 
 # ─── Git Helpers ──────────────────────────────────────────────────────────────
 
@@ -375,12 +388,7 @@ def _vanilla_merged_ref_exists():
 
 
 def _ensure_vanilla_merged_ref():
-    """Initialize gui/vanilla-merged from gui/vanilla tip if missing.
-
-    When the bookmark is absent, the working tree is already
-    reconciled against gui/vanilla's current tip, so that tip is
-    the correct base for the next three-way merge.
-    """
+    """Initialize gui/vanilla-merged from gui/vanilla tip if missing."""
     if _vanilla_merged_ref_exists():
         return
     if not _vanilla_branch_exists():
@@ -413,11 +421,7 @@ def _ensure_no_merge():
 
 
 def _read_from_branch(branch, path):
-    """Read a file from *branch* without switching.  Returns content or ``None``.
-
-    Strips a leading UTF-8 BOM if present so callers compare textual
-    content without the BOM byte affecting hashes or merge inputs.
-    """
+    """Read a file from *branch* without switching, stripping any leading BOM."""
     content = run_git(["show", f"{branch}:{path}"], check=False)
     if content is not None and content.startswith("﻿"):
         content = content[1:]
@@ -425,13 +429,7 @@ def _read_from_branch(branch, path):
 
 
 def _push_refs(refs, force=False):
-    """Push the given refs to origin if configured.  No-op for local-only repos.
-
-    Failures (offline, auth, non-fast-forward) warn but don't abort.
-    With ``force=True`` uses ``--force-with-lease`` so a fresh orphan from
-    'init --force' replaces the stale remote tip without needing manual
-    deletion. Lease still refuses if the remote moved unexpectedly.
-    """
+    """Push refs to origin (no-op for local-only repos). force=True uses --force-with-lease."""
     refs = [r for r in refs if r]
     if not refs:
         return
@@ -459,14 +457,22 @@ def _push_refs(refs, force=False):
                 print(f"  {line}")
 
 
+def _versioned_message(message, version):
+    """Prefix the commit subject *message* with *version* when it is set."""
+    return f"{version}: {message}" if version else message
+
+
 def _update_vanilla_branch(tracking_files,
                            message="Update vanilla GUI definitions",
+                           version=None,
                            force_push=False):
     """Create or update the ``gui/vanilla`` branch via plumbing (no checkout).
 
     *tracking_files* maps relative paths to content strings.
+    *version* prefixes the commit subject when provided.
     Returns the new commit SHA.
     """
+    message = _versioned_message(message, version)
     tmp_index = os.path.join(ROOT_DIR, ".git", "tmp_gui_index")
     plumbing = {"GIT_INDEX_FILE": tmp_index}
 
@@ -544,8 +550,12 @@ def _constant_tracking_key(mod_file, vanilla_file, name):
 
 # ─── Scanner ─────────────────────────────────────────────────────────────────
 
-def _scan_definitions(base_dir, source_dirs):
-    """Recursively parse all ``.gui`` files and return ``[GuiDefinition, …]``."""
+def _scan_definitions(base_dir, source_dirs, assert_unique=False):
+    """Recursively parse all ``.gui`` files and return ``[GuiDefinition, …]``.
+
+    With *assert_unique*, a file containing a duplicated top-level definition
+    aborts the run before its definitions are collected.
+    """
     all_defs = []
     for source in source_dirs:
         gui_dir = os.path.join(base_dir, source, "gui")
@@ -564,6 +574,11 @@ def _scan_definitions(base_dir, source_dirs):
                 except (OSError, UnicodeDecodeError) as e:
                     print(f"  Warning: Could not read {rel}: {e}")
                     continue
+                if assert_unique and not _assert_unique_top_level_defs(
+                        text, rel):
+                    print("Aborting: refusing to sync tracking from a "
+                          "corrupted mod file.")
+                    sys.exit(1)
                 all_defs.extend(parse_gui_file(text, rel))
     return all_defs
 
@@ -597,14 +612,7 @@ def _find_overrides(mod_defs, vanilla_defs):
 
 
 def _link_constants(mod_defs, vanilla_defs, override_pairs):
-    """Return ``[(mod_const, vanilla_const), …]`` linked by file-scope usage.
-
-    A mod constant is tracked only when an override in the same mod file
-    references it. The vanilla side is the same-named constant in each
-    vanilla file containing such an overridden definition - so a single
-    mod constant can produce N pairs when its file overrides definitions
-    from N distinct vanilla files.
-    """
+    """Return ``[(mod_const, vanilla_const), …]`` linked by file-scope usage. A mod constant pairs with each vanilla file that holds one of its referenced overrides."""
     mod_consts = {}
     for d in mod_defs:
         if d.kind == "constant":
@@ -694,15 +702,7 @@ def _body_hash(content):
 
 
 def _write_tracking_file(rel_path, content):
-    """Write a tracking file under ROOT_DIR with UTF-8 BOM + CRLF.
-
-    BOM matches what editors produce when users save resolved
-    merges, so all tracking blobs share one encoding. Without it,
-    BOM-less script blobs and BOM-prefixed editor blobs differ on
-    every byte for textually-identical content, making any diff
-    that crosses the boundary render as a whole-file replacement
-    in git GUIs. Skips the write when on-disk bytes already match.
-    """
+    """Write a tracking file under ROOT_DIR with UTF-8 BOM + CRLF."""
     abs_path = os.path.join(ROOT_DIR, rel_path.replace("/", os.sep))
     os.makedirs(os.path.dirname(abs_path), exist_ok=True)
     if content.startswith("﻿"):
@@ -799,16 +799,7 @@ def _scan_unresolved_conflicts():
 
 
 def _advance_merged_ref_if_absorbed():
-    """Advance ``gui/vanilla-merged`` to ``gui/vanilla`` when HEAD has
-    already absorbed the merge.
-
-    Detects the post-resolve state (the user committed the merge but
-    the bookmark hasn't moved yet) and fixes it. Called from both
-    ``cmd_merge`` and ``cmd_apply`` so users don't need to invoke
-    merge a second time after resolving conflicts. Exits with status
-    1 if tracking files still contain conflict markers. Returns
-    True when the bookmark was advanced, False otherwise.
-    """
+    """Advance ``gui/vanilla-merged`` to ``gui/vanilla`` if HEAD already has the merge. Returns whether it advanced; exits 1 on stray conflict markers."""
     if not _vanilla_branch_exists() or not _vanilla_merged_ref_exists():
         return False
     vanilla_sha = run_git(["rev-parse", VANILLA_BRANCH])
@@ -826,8 +817,7 @@ def _advance_merged_ref_if_absorbed():
         print("\nFix the markers, re-stage, and amend the commit, "
               "then re-run.")
         sys.exit(1)
-    print("Advancing gui/vanilla-merged bookmark "
-          "(gui/vanilla already in HEAD's ancestry)...")
+    print("Advancing gui/vanilla-merged bookmark...")
     run_git(["update-ref",
              f"refs/heads/{MERGED_BRANCH}", vanilla_sha])
     _push_refs([MERGED_BRANCH])
@@ -835,11 +825,7 @@ def _advance_merged_ref_if_absorbed():
 
 
 def _setup_merge_state(merge_head_sha, merge_msg):
-    """Write ``.git/MERGE_HEAD``, ``.git/MERGE_MSG``, and ``ORIG_HEAD``
-    so git and any git GUI recognize a merge in progress and offer a
-    3-way merge editor. ``ORIG_HEAD`` lets ``git merge --abort`` work
-    to back out of the attempt cleanly.
-    """
+    """Write ``.git/MERGE_HEAD``/``MERGE_MSG``/``ORIG_HEAD`` so git sees a merge in progress."""
     git_dir = os.path.join(ROOT_DIR, ".git")
     head_sha = run_git(["rev-parse", "HEAD"])
     for name, content in (
@@ -853,19 +839,9 @@ def _setup_merge_state(merge_head_sha, merge_msg):
 
 
 def _stage_merge_entries(path, base_content, ours_content, theirs_content):
-    """Populate index stages 1/2/3 for ``path`` so git treats the file
-    as conflicted (which is what merge editors key off).
-
-    ``--force-remove`` clears the existing stage 0 entry regardless of
-    whether the file exists in the working tree; plain ``--remove`` is
-    a no-op when the file is on disk, which leaves stage 0 alongside
-    the unmerged stages and causes git to ignore the additions.
-
-    Input is sent as bytes (not ``text=True``) because Python's text
-    mode translates ``\\n`` to ``\\r\\n`` on Windows, and git's
-    ``--index-info`` parser then treats the trailing ``\\r`` as part of
-    the path and silently ignores the entry.
-    """
+    """Populate index stages 1/2/3 for ``path`` so git treats the file as conflicted."""
+    # --force-remove clears stage 0; plain --remove is a no-op when the file
+    # exists on disk, which would leave stage 0 alongside the unmerged stages.
     run_git(["update-index", "--force-remove", path], check=False)
     lines = []
     if base_content is not None:
@@ -879,12 +855,139 @@ def _stage_merge_entries(path, base_content, ours_content, theirs_content):
         lines.append(f"100644 {sha} 3\t{path}")
     if not lines:
         return
+    # Send bytes; text=True would CRLF the input on Windows and break --index-info parsing.
     subprocess.run(
         ["git", "update-index", "--index-info"],
         cwd=ROOT_DIR,
         input=("\n".join(lines) + "\n").encode("utf-8"),
         check=True,
     )
+
+# ─── Game Version ──────────────────────────────────────────────────────────────
+
+# continue_game.json sits in the EU5 user-data dir, two levels above the mod root.
+CONTINUE_GAME_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(ROOT_DIR)), "continue_game.json")
+
+_VERSION_RE = re.compile(r"v?(\d+(?:\.\d+)*)", re.IGNORECASE)
+
+
+def _version_key(version):
+    """Parse *version* into a tuple of ints for comparison, or None."""
+    if not version:
+        return None
+    m = _VERSION_RE.fullmatch(str(version).strip())
+    if not m:
+        return None
+    return tuple(int(p) for p in m.group(1).split("."))
+
+
+def _normalize_version(version):
+    """Return *version* as ``vMAJOR.MINOR.PATCH`` with a single leading ``v``."""
+    s = str(version).strip()
+    if s[:1] in ("v", "V"):
+        s = s[1:]
+    return "v" + s
+
+
+def _leading_version(text):
+    """Return the normalized version token at the start of *text*, or None."""
+    m = re.match(r"\s*(v?\d+(?:\.\d+)*)", text, re.IGNORECASE)
+    return _normalize_version(m.group(1)) if m else None
+
+
+def _ask(prompt):
+    """input() that exits cleanly when no interactive terminal is attached."""
+    try:
+        return input(prompt)
+    except EOFError:
+        print("\nError: A game version is required but no terminal is "
+              "available to prompt for one.")
+        print("Pass it explicitly, e.g. --gv 1.2.5.")
+        sys.exit(1)
+
+
+def _read_continue_game_version():
+    """Return ``rawGameVersion`` from continue_game.json, normalized, or None."""
+    try:
+        with open(CONTINUE_GAME_PATH, "r", encoding="utf-8-sig") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None
+    raw = data.get("rawGameVersion")
+    return _normalize_version(raw) if _version_key(raw) else None
+
+
+def _last_vanilla_commit_version():
+    """Return the version from the latest gui/vanilla commit subject, or None."""
+    if not _vanilla_branch_exists():
+        return None
+    subject = run_git(["log", "-1", "--format=%s", VANILLA_BRANCH], check=False)
+    return _leading_version(subject) if subject else None
+
+
+def _prompt_version_value(default):
+    """Prompt until a valid version is entered; empty input takes *default*."""
+    while True:
+        if default:
+            resp = _ask(f"Enter game version [{default}]: ").strip()
+            if not resp:
+                return default
+        else:
+            resp = _ask("Enter game version (e.g. 1.2.5): ").strip()
+            if not resp:
+                continue
+        if _version_key(resp) is None:
+            print("  Not a valid version. Use a numeric form like 1.2.5.")
+            continue
+        return _normalize_version(resp)
+
+
+def _confirm_or_correct_version(detected):
+    """Confirm *detected* or type a correction; return the chosen version."""
+    resp = _ask("Press [Enter]/[y] to confirm, or type the correct "
+                "version: ").strip()
+    if not resp or resp.lower() in ("y", "yes"):
+        return detected
+    if _version_key(resp) is None:
+        return _prompt_version_value(detected)
+    return _normalize_version(resp)
+
+
+def _resolve_game_version(args, is_init):
+    """Resolve the version to prefix onto the gui/vanilla commit subject.
+
+    A ``--game-version`` flag wins and skips prompting. Otherwise the detected
+    version is always shown for interactive confirmation (press [Enter]/[y] to
+    accept or type a correction), including when it is newer than the last
+    tracked commit, so an auto-detection can always be fixed.
+    """
+    flag = getattr(args, "game_version", None)
+    if flag:
+        if _version_key(flag) is None:
+            print(f"Error: Invalid --game-version value: {flag}")
+            sys.exit(1)
+        return _normalize_version(flag)
+
+    detected = _read_continue_game_version()
+
+    if is_init:
+        if detected:
+            print(f"\nGame version read from continue_game.json: {detected}")
+            return _confirm_or_correct_version(detected)
+        print("\nGame version not found in continue_game.json.")
+        return _prompt_version_value(None)
+
+    last = _last_vanilla_commit_version()
+    if detected and last and _version_key(detected) > _version_key(last):
+        print(f"\nGame version read from continue_game.json: {detected} "
+              f"(newer than last tracked {last}).")
+        return _confirm_or_correct_version(detected)
+
+    print("\nNo newer game version detected automatically:")
+    print(f"  continue_game.json: {detected or '(unavailable)'}")
+    print(f"  last tracked:       {last or '(none)'}")
+    return _prompt_version_value(last or detected)
 
 # ─── Commands ────────────────────────────────────────────────────────────────
 
@@ -916,8 +1019,7 @@ def cmd_init(args):
                 run_git(["rm", "-rf", TRACKING_DIR_NAME])
                 run_git(["commit", "-m",
                          "Reset GUI tracking before re-initialization"])
-            # Untracked leftovers + empty dirs (git clean is Windows-friendlier
-            # than shutil for OneDrive-synced trees).
+            # git clean handles Windows/OneDrive better than shutil for leftovers + empty dirs.
             run_git(["clean", "-fdx", "--", TRACKING_DIR_NAME],
                     check=False)
             if os.path.isdir(TRACKING_DIR):
@@ -987,14 +1089,15 @@ def cmd_init(args):
         vanilla_files[tp] = header + vd.text + "\n"
 
     # 1. Create gui/vanilla orphan branch (via plumbing, no checkout)
+    version = _resolve_game_version(args, is_init=True)
     print(f"\nCreating {VANILLA_BRANCH} branch...")
     new_vanilla_sha = _update_vanilla_branch(
         vanilla_files,
         "Initialize vanilla GUI definitions",
+        version=version,
         force_push=args.force)
 
-    # 2. Set gui/vanilla-merged to point at the same commit so the next
-    #    merge has a valid base for three-way merging.
+    # 2. Anchor gui/vanilla-merged at the same commit for the next merge base.
     run_git(["update-ref", f"refs/heads/{MERGED_BRANCH}", new_vanilla_sha])
     _push_refs([MERGED_BRANCH], force=args.force)
 
@@ -1012,7 +1115,9 @@ def cmd_init(args):
     # 4. Commit
     run_git(["add", TRACKING_DIR_NAME + "/"])
     run_git(["commit", "-m",
-             f"Initialize GUI tracking with {total} definition(s)"])
+             _versioned_message(
+                 f"Initialize GUI tracking with {total} definition(s)",
+                 version)])
 
     print(f"\nDone! Tracking {total} GUI override(s).")
     print("Run 'gui_update.py check' after a game update to detect changes.")
@@ -1043,10 +1148,7 @@ def cmd_check(args):
     changed = []
     removed = []
 
-    # Compare against the last merged baseline, not gui/vanilla itself.
-    # An aborted merge will have advanced gui/vanilla but left
-    # gui/vanilla-merged behind; comparing to gui/vanilla would hide the
-    # pending changes the next merge still needs to incorporate.
+    # Compare against the merged baseline so an aborted merge still surfaces pending changes.
     base_ref = MERGED_BRANCH if _vanilla_merged_ref_exists() else VANILLA_BRANCH
 
     for key, entry in sorted(manifest["definitions"].items()):
@@ -1113,17 +1215,13 @@ def cmd_merge(args):
     vanilla_sha = run_git(["rev-parse", VANILLA_BRANCH])
     merged_sha = run_git(["rev-parse", MERGED_BRANCH])
 
-    # Sync tracking from current mod state so OURS in the merge reflects
-    # edits/deletions made since the last refresh. Skip after advancing
-    # past an absorbed merge: the resolution is in tracking and mod
-    # files may still be pre-apply, so re-deriving from mod would
-    # revert the resolution.
+    # Sync tracking from mod state. Skip if just advanced — tracking holds
+    # the resolution and mod files may still be pre-apply.
     if just_advanced:
-        print("Skipping mod-state sync (tracking is authoritative "
-              "after merge absorption).")
+        print("Skipping mod-state sync.")
     else:
         print("Syncing tracking files from current mod content...")
-        mod_defs = _scan_definitions(ROOT_DIR, GUI_SOURCES)
+        mod_defs = _scan_definitions(ROOT_DIR, GUI_SOURCES, assert_unique=True)
         mod_map = {}
         mod_consts = {}
         for d in mod_defs:
@@ -1213,9 +1311,7 @@ def cmd_merge(args):
                     or _body_hash(old_content) != _body_hash(new_content)):
                 updated += 1
 
-    # gui/vanilla-merged trailing gui/vanilla without a HEAD merge commit
-    # means the previous merge was aborted; re-run the merge from current
-    # gui/vanilla rather than treating it as a no-op.
+    # Bookmark behind vanilla without a HEAD merge means the previous run was aborted; re-run.
     behind_vanilla = vanilla_sha != merged_sha
 
     if updated == 0 and not behind_vanilla:
@@ -1223,20 +1319,20 @@ def cmd_merge(args):
         return 0
 
     if updated > 0:
+        version = _resolve_game_version(args, is_init=False)
         print(f"Updating {VANILLA_BRANCH} ({updated} definition(s) changed)...")
         new_vanilla_sha = _update_vanilla_branch(
             tracking_files,
-            f"Update {updated} vanilla GUI definition(s)")
+            f"Update {updated} vanilla GUI definition(s)",
+            version=version)
     else:
         print(f"{VANILLA_BRANCH} has unmerged commits from a previous "
               "run; resuming merge.")
         new_vanilla_sha = vanilla_sha
+        version = _last_vanilla_commit_version()
 
-    # Per-file three-way merge with explicit base ``gui/vanilla-merged``
-    # and theirs ``gui/vanilla``. Doing this manually (rather than via
-    # ``git merge``) keeps base detection on the bookmark ref instead
-    # of git ancestry, so the merge result doesn't depend on history
-    # manipulation between runs.
+    # Per-file three-way merge using gui/vanilla-merged as base and
+    # gui/vanilla as theirs.
     print("Running three-way merge...")
     conflicts = []
     clean_paths = []
@@ -1295,15 +1391,13 @@ def cmd_merge(args):
         # Stage the clean files normally.
         for tp in clean_paths:
             run_git(["add", tp])
-        # Stage conflicting files at stages 1/2/3 so git GUIs see a real
-        # merge conflict and offer their 3-way merge editor.
+        # Stage conflicts at 1/2/3 so git GUIs offer the 3-way merge editor.
         for tp, base, ours, theirs in conflicts:
             _stage_merge_entries(tp, base, ours, theirs)
-        # Set MERGE_HEAD/MERGE_MSG so ``git status`` shows a merge in
-        # progress; ``git commit`` produces a 2-parent merge commit,
-        # and the next merge run advances the bookmark to recognize it.
+        # Set MERGE_HEAD/MERGE_MSG so the next git commit produces a 2-parent merge.
         affected = len(conflicts) + len(clean_paths)
-        msg = f"Merge vanilla GUI updates ({affected} definition(s))"
+        msg = _versioned_message(
+            f"Merge vanilla GUI updates ({affected} definition(s))", version)
         _setup_merge_state(new_vanilla_sha, msg)
 
         print(f"\nConflicts in {len(conflicts)} file(s):")
@@ -1321,7 +1415,10 @@ def cmd_merge(args):
     )
     if diff_check.returncode != 0:
         run_git(["commit", "-m",
-                 f"Merge vanilla GUI updates ({len(clean_paths)} definition(s))"])
+                 _versioned_message(
+                     f"Merge vanilla GUI updates "
+                     f"({len(clean_paths)} definition(s))",
+                     version)])
 
     # Advance the bookmark to match gui/vanilla.
     run_git(["update-ref",
@@ -1350,9 +1447,7 @@ def cmd_apply(args):
     applied = 0
     errors = 0
 
-    # Read all tracking files first so constant value divergence (multiple
-    # entries pointing at the same @name in the same mod file but resolving
-    # to different values) can be reported before any file is touched.
+    # Read all tracking files first so divergent constants get reported before any mod file is touched.
     const_groups = {}
     to_apply = []
 
@@ -1394,12 +1489,17 @@ def cmd_apply(args):
             errors += 1
             continue
 
-        # Read mod file (preserve BOM + detect line endings)
+        # Read mod file (detect line endings; BOM is always restored on write).
         with open(abs_mod, "rb") as f:
             raw = f.read()
-        has_bom = raw.startswith(b"\xef\xbb\xbf")
         has_crlf = b"\r\n" in raw
         mod_text = raw.decode("utf-8-sig").replace("\r\n", "\n")
+        # Any U+FEFF past byte 0 is a corruption artifact.
+        mod_text = mod_text.replace("\ufeff", "")
+
+        if not _assert_unique_top_level_defs(mod_text, mod_file):
+            errors += 1
+            continue
 
         if key.startswith("constant:"):
             kind = "constant"
@@ -1420,10 +1520,14 @@ def cmd_apply(args):
         new_lines = lines[:start] + new_text.split("\n") + lines[end + 1:]
         result = "\n".join(new_lines)
 
+        if not _assert_unique_top_level_defs(result, mod_file):
+            errors += 1
+            continue
+
         if has_crlf:
             result = result.replace("\n", "\r\n")
 
-        new_raw = (b"\xef\xbb\xbf" if has_bom else b"") + result.encode("utf-8")
+        new_raw = b"\xef\xbb\xbf" + result.encode("utf-8")
         if new_raw == raw:
             continue
 
@@ -1541,8 +1645,9 @@ def cmd_refresh(args):
                 entry["vanilla_file"], entry["mod_file"])
             vanilla_files[entry["tracking_path"]] = (
                 header + vd.text + "\n")
+    version = _resolve_game_version(args, is_init=False)
     new_vanilla_sha = _update_vanilla_branch(
-        vanilla_files, "Refresh vanilla GUI definitions")
+        vanilla_files, "Refresh vanilla GUI definitions", version=version)
 
     # Refresh re-baselines tracking, so the bookmark moves to the new tip.
     run_git(["update-ref",
@@ -1634,6 +1739,14 @@ def main():
     sub = parser.add_subparsers(dest="command")
     sub.required = True
 
+    def add_version_arg(p):
+        p.add_argument(
+            "--game-version", "--gv", "-gv", dest="game_version",
+            metavar="VERSION", default=None,
+            help="Game version for the gui/vanilla commit subject "
+                 "(e.g. 1.2.5). Overrides auto-detection and prompting.",
+        )
+
     init_parser = sub.add_parser(
         "init", help="Initialize GUI tracking for this mod")
     init_parser.add_argument(
@@ -1642,14 +1755,18 @@ def main():
              f"{TRACKING_DIR_NAME}/, {VANILLA_BRANCH}, and "
              f"{MERGED_BRANCH}) before re-initializing.",
     )
+    add_version_arg(init_parser)
     sub.add_parser("check",
                    help="Check for vanilla GUI changes")
-    sub.add_parser("merge",
-                   help="Update vanilla branch and merge changes")
+    merge_parser = sub.add_parser(
+        "merge", help="Update vanilla branch and merge changes")
+    add_version_arg(merge_parser)
     sub.add_parser("apply",
                    help="Apply resolved changes back to mod GUI files")
-    sub.add_parser("refresh",
-                   help="Re-extract mod definitions into tracking files")
+    refresh_parser = sub.add_parser(
+        "refresh",
+        help="Re-extract mod definitions into tracking files")
+    add_version_arg(refresh_parser)
     sub.add_parser("status",
                    help="Show tracking status")
 
