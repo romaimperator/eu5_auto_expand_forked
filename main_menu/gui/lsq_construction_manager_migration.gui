@@ -1,69 +1,13 @@
 ﻿### Construction Manager migration prompt.
 ### Offers to enable Construction Manager (Workshop 3736668860), or opens the
 ### Workshop to find it, then disables this mod once Construction Manager is active.
+### The overlay is embedded in several main-menu hosts (FrontEndNews, FrontEndBackground,
+### sdk_button_style_template) so another mod overriding one host cannot suppress the check.
 types lsq_construction_manager_migration
 {
-	type FrontEndNews = widget {
+	### Main-menu overlay: migration popup plus the mods-panel opener.
+	type lsq_migration_overlay = widget {
 		size = { 100% 100% }
-
-		### News feed carousels
-		flowcontainer = {
-			parentanchor = bottom|right
-			widgetanchor = bottom|right
-			position = { -110 -20 }
-			spacing = 10
-
-			alwaystransparent = yes
-			ignoreinvisible = yes
-			visible = yes
-			scissor = yes
-
-			newsfeed_carousel = {
-				name = "newsfeed_slot_main"
-				size = { 451 230 }
-				align = left
-				datacontext = "[FrontEndMainView.AccessMarketingContainer.AccessSlotByName('main')]"
-				tooltip_enabled = no
-			}
-
-			newsfeed_carousel = {
-				name = "newsfeed_slot_secondary_1"
-				size = { 245 230 }
-				align = left
-				datacontext = "[FrontEndMainView.AccessMarketingContainer.AccessSlotByName('secondary-1')]"
-				tooltip_enabled = no
-
-				blockoverride "offset_x" {
-					position_x = -245
-				}
-				blockoverride "current_button_pos" {
-					size = { 245 230 }
-				}
-				blockoverride "next_button_pos" {
-					size = { 245 230 }
-					position = { 245 0 }
-				}
-			}
-
-			newsfeed_carousel = {
-				name = "newsfeed_slot_secondary_2"
-				size = { 245 230 }
-				align = left
-				datacontext = "[FrontEndMainView.AccessMarketingContainer.AccessSlotByName('secondary-2')]"
-				tooltip_enabled = no
-
-				blockoverride "offset_x" {
-					position_x = -245
-				}
-				blockoverride "current_button_pos" {
-					size = { 245 230 }
-				}
-				blockoverride "next_button_pos" {
-					size = { 245 230 }
-					position = { 245 0 }
-				}
-			}
-		}
 
 		### Migration prompt
 		widget = {
@@ -137,13 +81,15 @@ types lsq_construction_manager_migration
 		}
 
 		### Open the mods panel so playset_create_button instantiates and detection runs.
+		### lsq_migrate_opening stops the other hosts from also toggling it.
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
-			visible = "[And3( Not( GetVariableSystem.Exists( 'lsq_migrate_new_active' ) ), Not( GetVariableSystem.Exists( 'lsq_migrate_dismiss' ) ), Not( FrontEndMainView.IsModsOpen ) )]"
+			visible = "[And4( Not( GetVariableSystem.Exists( 'lsq_migrate_new_active' ) ), Not( GetVariableSystem.Exists( 'lsq_migrate_dismiss' ) ), Not( FrontEndMainView.IsModsOpen ), Not( GetVariableSystem.Exists( 'lsq_migrate_opening' ) ) )]"
 
 			state = {
 				name = _show
+				on_start = "[GetVariableSystem.Set( 'lsq_migrate_opening', 'yes' )]"
 				on_start = "[FrontEndMainView.ToggleOpenMods]"
 			}
 		}
@@ -152,15 +98,164 @@ types lsq_construction_manager_migration
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
-			visible = "[And( Or( GetVariableSystem.Exists( 'lsq_migrate_open_mods' ), GetVariableSystem.Exists( 'lsq_migrate_open_workshop' ) ), Not( FrontEndMainView.IsModsOpen ) )]"
+			visible = "[And3( Or( GetVariableSystem.Exists( 'lsq_migrate_open_mods' ), GetVariableSystem.Exists( 'lsq_migrate_open_workshop' ) ), Not( FrontEndMainView.IsModsOpen ), Not( GetVariableSystem.Exists( 'lsq_migrate_opening' ) ) )]"
 
 			state = {
 				name = _show
+				on_start = "[GetVariableSystem.Set( 'lsq_migrate_opening', 'yes' )]"
 				on_start = "[FrontEndMainView.ToggleOpenMods]"
 				on_start = "[GetVariableSystem.Clear( 'lsq_migrate_open_mods' )]"
 			}
 		}
+
+		### Release the open guard once the panel is open.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[And( GetVariableSystem.Exists( 'lsq_migrate_opening' ), FrontEndMainView.IsModsOpen )]"
+
+			state = {
+				name = _show
+				on_start = "[GetVariableSystem.Clear( 'lsq_migrate_opening' )]"
+			}
+		}
 	}
+
+	type FrontEndNews = widget {
+		size = { 100% 100% }
+
+		### News feed carousels
+		flowcontainer = {
+			parentanchor = bottom|right
+			widgetanchor = bottom|right
+			position = { -110 -20 }
+			spacing = 10
+
+			alwaystransparent = yes
+			ignoreinvisible = yes
+			visible = yes
+			scissor = yes
+
+			newsfeed_carousel = {
+				name = "newsfeed_slot_main"
+				size = { 451 230 }
+				align = left
+				datacontext = "[FrontEndMainView.AccessMarketingContainer.AccessSlotByName('main')]"
+				tooltip_enabled = no
+			}
+
+			newsfeed_carousel = {
+				name = "newsfeed_slot_secondary_1"
+				size = { 245 230 }
+				align = left
+				datacontext = "[FrontEndMainView.AccessMarketingContainer.AccessSlotByName('secondary-1')]"
+				tooltip_enabled = no
+
+				blockoverride "offset_x" {
+					position_x = -245
+				}
+				blockoverride "current_button_pos" {
+					size = { 245 230 }
+				}
+				blockoverride "next_button_pos" {
+					size = { 245 230 }
+					position = { 245 0 }
+				}
+			}
+
+			newsfeed_carousel = {
+				name = "newsfeed_slot_secondary_2"
+				size = { 245 230 }
+				align = left
+				datacontext = "[FrontEndMainView.AccessMarketingContainer.AccessSlotByName('secondary-2')]"
+				tooltip_enabled = no
+
+				blockoverride "offset_x" {
+					position_x = -245
+				}
+				blockoverride "current_button_pos" {
+					size = { 245 230 }
+				}
+				blockoverride "next_button_pos" {
+					size = { 245 230 }
+					position = { 245 0 }
+				}
+			}
+		}
+
+		lsq_migration_overlay = {}
+	}
+
+	type FrontEndBackground = widget {
+		size = { 100% 100% }
+
+		background = {
+			name = "frontend_bg"
+			using = FrontEndBackgroundTexture
+			size = { 100% 100% }
+			fittype = centercrop
+		}
+
+		widget = {
+			parentanchor = right
+			block "logo_container" {}
+
+			vbox = {
+				resizeparent = yes
+				margin = { 10 10 }
+				spacing = 10
+
+				hbox = {
+					layoutpolicy_horizontal = expanding
+					spacing = 10
+
+					expand = {}
+
+					icon = {
+						texture = "gfx/interface/logos/clausewitz_logo.dds"
+						size = { 100 100 }
+					}
+
+					icon = {
+						texture = "gfx/interface/logos/pdx_tinto_logo_white.dds"
+						size = { 100 100 }
+					}
+				}
+
+				vbox = {
+					using = version_label
+					blockoverride "version_label_sizing" {}
+					blockoverride "version_label_background" {
+						using = VersionLabelBackground
+					}
+				}
+			}
+		}
+
+		lsq_migration_overlay = {}
+	}
+}
+
+### Account button style: another resilient host for the overlay.
+template sdk_button_style_template {
+	buttonText = {
+		textbox = {
+			using = button_common_textobj_font
+			align = center|nobaseline
+
+			default_format = "#color_white"
+			autoresize = yes
+			resizeparent = yes
+			margin = { 30 5 }
+			minimumsize = { 80 30 }
+		}
+	}
+
+	using = button_common_properties_template
+	using = button_regular_texture
+	tooltip_enabled = no
+
+	lsq_migration_overlay = {}
 }
 
 ### Detection and playset actions. Lives in playset_create_button so it only
