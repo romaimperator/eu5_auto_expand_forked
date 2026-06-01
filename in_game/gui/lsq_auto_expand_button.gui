@@ -111,7 +111,7 @@
 		blockoverride "plusminus_icon" {
 			texture = "gfx/interface/buttons/flats/upgrade_button2.dds"
 		}
-		datacontext = "[BuildingItem.GetBuildingType.GetNextReplaced(Player.Self)]"
+		datacontext = "[BuildingItem.GetBuildingType.GetNextReplacementBuilding(Player.Self)]"
 		enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 		action_tooltip = {
 			click_mode = single
@@ -171,7 +171,7 @@
 			textbox = {
 				visible = "[GetScriptedGui('lsq_is_building_type_obsolete').IsShown(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End)]"
 				using = tooltip_text_block_template
-				raw_text = "Base cost of upgrade: [GuiScope.AddScope('building_type', BuildingType.GetNextReplaced(Player.Self).MakeScope).ScriptValue('lsq_base_building_type_cost')|2L]@gold!"
+				raw_text = "Base cost of upgrade: [GuiScope.AddScope('building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).ScriptValue('lsq_base_building_type_cost')|2L]@gold!"
 			}
 			textbox = {
 				using = tooltip_text_block_template
@@ -188,8 +188,14 @@
 				raw_text = "Market price impact: [GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('lsq_get_construction_cost_adjustment_for_building_type')|%-=]"
 			}
 			textbox = {
+				visible = "[Not(InDebugMode)]"
 				using = tooltip_text_block_template
 				raw_text = "Final cost of [GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('lsq_adjusted_building_type_cost_accounting_for_upgrades')|2L]@gold!"
+			}
+			textbox = {
+				visible = "[InDebugMode]"
+				using = tooltip_text_block_template
+				raw_text = "Final cost of [GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('lsq_adjusted_building_type_cost_accounting_for_upgrades')|5L]@gold!"
 			}
 		}
 	}
@@ -400,19 +406,20 @@ template lsq_Building_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						blockoverride "vertical_line_size" { size = { 3 41 } }
 						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('lsq_location_has_enough_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End)]"
+							visible = "[GetScriptedGui('lsq_location_has_enough_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).AddScope('country', Player.MakeScope).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('lsq_location_has_enough_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End))]"
+							visible = "[Not(GetScriptedGui('lsq_location_has_enough_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).AddScope('country', Player.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "Location has enough [Building.GetType.GetPopType.GetName] available"
+							raw_text = "Location has enough [Building.GetType.GetPopType.GetName] available (available: [Multiply_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue(Concatenate3('lsq_location_', Building.GetType.GetPopType.GetKey, '_available')), '(CFixedPoint)1000')|0+=], monthly change: [Multiply_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue(Concatenate('lsq_combined_monthly_new_pops_of_type_', Building.GetType.GetPopType.GetKey)), '(CFixedPoint)1000')|0+=])"
 						}
 					}
 					lsq_tooltip_row = {
-						blockoverride "vertical_line_size" { size = { 3 41 } }
+						blockoverride "vertical_line_size" { size = { 3 51 } }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_location_under_building_limit').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 						}
@@ -546,7 +553,7 @@ template lsq_Building_Autoexpand_Tooltip {
 									visible = "[Not(GetScriptedGui('lsq_has_enough_goods_for_construction_demand').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).AddScope('required_demand', MakeScopeValue(GoodsDemandEntry.GetValue)).End))]"
 								}
 								blockoverride "row_text" {
-									raw_text = "requires [GoodsDemandEntry.GetValue] [Goods.GetName] while we have [GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_max_required_construction_demand_to_still_allow_building')] available with a construction discount of [GuiScope.AddScope('location', Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_construction_good_adjustment')|%-=]"
+									raw_text = "requires [GoodsDemandEntry.GetValue] [Goods.GetName] while we have [GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_max_required_construction_demand_to_still_allow_building')] available with a construction discount of [GuiScope.AddScope('location', Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_construction_good_adjustment')|%-=]. Current market price is [Location.GetMarket.GetPrice(GoodsDemandEntry.GetGoods)]@gold! Current Price Impact info |[GoodsDemandEntry.GetPriceImpactInfo(Location.GetMarket)]|"
 								}
 							}
 						}
@@ -675,19 +682,20 @@ template lsq_Building_Type_Autoexpand_Tooltip {
 						}
 					}
 					lsq_tooltip_row = {
+						blockoverride "vertical_line_size" { size = { 3 41 } }
 						using = lsq_tooltip_row_is_odd
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('lsq_location_has_enough_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End)]"
+							visible = "[GetScriptedGui('lsq_location_has_enough_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('lsq_location_has_enough_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).End))]"
+							visible = "[Not(GetScriptedGui('lsq_location_has_enough_pops_available').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "Location has enough [BuildingType.GetPopType.GetName] available"
+							raw_text = "Location has enough [BuildingType.GetPopType.GetName] available (available: [Multiply_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue(Concatenate3('lsq_location_', BuildingType.GetPopType.GetKey, '_available')), '(CFixedPoint)1000')|0+=], monthly change: [Multiply_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue(Concatenate('lsq_combined_monthly_new_pops_of_type_', BuildingType.GetPopType.GetKey)), '(CFixedPoint)1000')|0+=])"
 						}
 					}
 					lsq_tooltip_row = {
-						blockoverride "vertical_line_size" { size = { 3 41 } }
+						blockoverride "vertical_line_size" { size = { 3 51 } }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('lsq_is_location_under_building_limit').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 						}
@@ -727,7 +735,7 @@ template lsq_Building_Type_Autoexpand_Tooltip {
 									visible = "[Not(GetScriptedGui('lsq_has_enough_goods_for_construction_demand').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).AddScope('required_demand', MakeScopeValue(GoodsDemandEntry.GetValue)).End))]"
 								}
 								blockoverride "row_text" {
-									raw_text = "requires [GoodsDemandEntry.GetValue] [Goods.GetName] while we have [GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_max_required_construction_demand_to_still_allow_building')] available with a construction discount of [GuiScope.AddScope('location', Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_construction_good_adjustment')|%-=]"
+									raw_text = "requires [GoodsDemandEntry.GetValue] [Goods.GetName] while we have [GuiScope.SetRoot(Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_max_required_construction_demand_to_still_allow_building')] available with a construction discount of [GuiScope.AddScope('location', Location.MakeScope).AddScope('good', Goods.MakeScope).ScriptValue('lsq_get_construction_good_adjustment')|%-=]. Current market price is [Location.GetMarket.GetPrice(GoodsDemandEntry.GetGoods)]@gold!"
 								}
 							}
 						}

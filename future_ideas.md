@@ -1,11 +1,16 @@
 ﻿Future Implementation Ideas
 
+- add a "reset" button that will disable all auto-expands (not pausing like the checkbox but actually toggle the auto-expand active)
+- add auto-build for bailiffs (idea is to allow you to easily build bailiffs in ideal places easily so maybe only do it for a few RGO types or let you configure RGO types to build it for?)
+- remove lsq_rgo_level modifier and use new rgo_level trigger everywhere
+- fix bug that prevents mass auto-expand from working with Trade Offices (likely is also broken with any other building that has special requirements)
+- add auto-build support for the Local Council building and its upgrades
 - Make it so plantations will auto-expand if we have up to 1 level of plantation worth of slaves missing since it will draw the slaves needed to run it
-- Fix bug that allows stud farms to be auto-expanded in locations that don't have the appropriate climate
+- Fix bug that allows stud farms to be auto-expanded in locations that don't have the appropriate climate (partially fixed by can_build_building protection but you can still click to enable auto-expand on them)
 - Related to the stud farm bug, there are also other buildings that can be auto-expanded even when they don't meet the actual in game conditions such as the Trade Office so add in more reliable checks for whether you can actually build a building or not for the auto-expand from zero levels button.
 - Make compatible with Glorp UI
 - Add button to enable/disable auto-expand for every building in a location
-- Modify the auto-expand button for buildings so holding control and clicking will toggle every building of that type in the province. Useful when you know you want to say auto-expand masons in a province that produces stone
+- Modify the auto-expand button for buildings so holding control and clicking will toggle every building of that type in the province. Useful when you know you want to say auto-expand masons in a province that produces stone (completed by Conner in his branch but I think it's shift)
 - Add automatic closing of buildings using construction goods to reduce demand and lower price
 - Find fix for not being able to remove enabled auto-expands and RGOs when tag switching via the world map so we can cleanup variables when you change tags in-game
 - Add additional buildings to the auto-build list based on country/religion/culture

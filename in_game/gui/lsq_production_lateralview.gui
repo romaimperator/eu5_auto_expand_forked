@@ -36,7 +36,7 @@
 
 						tooltipwidget = {
 							using = BuildingType_tooltip
-							blockoverride "building_type_tooltip_missing_input" {
+							blockoverride "building_type_tooltip_missing_input"{
 								visible = "[BuildingItem.HasBuildingsLackingInput]"
 								textcontext = "[BuildingItem.GetBuildingsInputGoodsInformation]"
 							}
@@ -177,7 +177,7 @@
 						icon = {
 							size = { 10 10 }
 							visible = "[BuildingItem.HasBuildingsLackingInput]"
-							position = { 6 6 }
+							position = { 0 6 }
 							parentanchor = top|left
 							using = warning_icon_texture
 							texture_density = 2
@@ -760,15 +760,19 @@
 									spacing = 3 # LSQ reduce to make space for auto-expand button
 
 									hbox = {
-										margin_right = 3
 										spacing = 3 # LSQ reduce to make space for auto-expand button
 										layoutpolicy_horizontal = expanding
 
-											widget = { # profit/income
+										hbox = {
+											margin_right = 3
+											spacing = 6
+											layoutpolicy_horizontal = expanding
+
+											widget = { # profit/income/upkeep
 												size = { 60 36 }
-												hbox = { #built
+												hbox = { #profit/income
 													expand = {}
-													visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing)]"
+													visible = "[BuildingItem.GetBuildingType.IsProducing]"
 
 													vbox = {#profitable
 														visible = "[GreaterThan_CFixedPoint(Building.GetProfit, '(CFixedPoint)0')]"
@@ -835,6 +839,25 @@
 														}
 													}
 												}
+
+												hbox = { #upkeep
+													expand = {}
+													visible = "[Not(BuildingItem.GetBuildingType.IsProducing)]"
+
+													text_single = {
+														maximumsize = { 60 18 }
+														fontsize = 14
+														raw_text = "#R [Building.GetUpkeep|2]#!@expense!"
+														tooltipwidget = {
+															using = Building_upkeep_tooltip
+														}
+
+														# sort_by_highlight = {
+														# 	size = { 105% 200% }
+														# 	name = "income"
+														# }
+													}
+												}
 											}
 
 											widget = { #efficiency
@@ -866,8 +889,13 @@
 											}
 										}
 
-										### lsq new button
-										lsq_auto_expand_widget = {}
+									}
+
+									### lsq new button
+									lsq_auto_expand_widget = {}
+
+									widget = {
+										size = { 20 41 }
 
 										vbox = { # buttons
 											spacing = 1
@@ -923,6 +951,8 @@
 												}
 											}
 										}
+									}
+
 
 									widget = { #builder
 										layoutpolicy_vertical = expanding
@@ -998,6 +1028,10 @@
 													align = center
 													default_format = "#overview_text"
 
+													tooltipwidget = {
+														using = BuildingMaxLevel_Tooltip
+													}
+
 													sort_by_highlight = {
 														name = "level"
 													}
@@ -1011,6 +1045,10 @@
 													align = center
 													default_format = "#overview_text"
 
+													tooltipwidget = {
+														using = BuildingMaxLevel_Tooltip
+													}
+
 													sort_by_highlight = {
 														name = "level"
 													}
@@ -1023,6 +1061,10 @@
 													raw_text = "[BuildingCandidate.GetBuilding.GetLevel|0Y] ([BuildingCandidate.GetBuilding.GetLevelsUnderConstruction|0+=]) / [BuildingCandidate.GetMaxLevel|0Y]"
 													align = center
 													default_format = "#overview_text"
+
+													tooltipwidget = {
+														using = BuildingMaxLevel_Tooltip
+													}
 
 													sort_by_highlight = {
 														name = "level"
