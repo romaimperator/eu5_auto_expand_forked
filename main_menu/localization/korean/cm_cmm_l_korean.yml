@@ -1,7 +1,7 @@
 ﻿l_korean:
  # Mod
  cm_name: "건설 관리자"
- cm_desc: "Construction Manager는 SilverSkye111의 Location Specialization QoL (Auto-Expand) 모드를 romaimperator가 포크 및 업데이트한 리브랜드 버전입니다. 수익성이 있고 인구가 가용할 경우 특정 건물이 자동으로 확장되고 추가 단계를 건설하도록 설정하는 기능을 추가합니다.\\n자동 확장 버튼은 개별 지역을 선택한 후, 해당 지역의 인구 유형 중 하나를 클릭하여 지역별 건설 메뉴를 열면 찾을 수 있습니다.\\n\\n호환성 문제가 발생할 경우 다른 UI 모드보다 나중에 불러오십시오."
+ cm_desc: "A massive quality of life mod that adds new automation, filters, and map modes, to greatly improve the EU5 construction experience."
 
  # Settings (settings) Tab
  cm__settings_name: "설정"
@@ -17,7 +17,7 @@
 
  ## Priority List Group
  cm__settings__priority_list_name: "건설 자동화"
- cm__settings__priority_list_desc: "드래그하여 기능 우선순위를 재설정하세요. 매달 활성화된 기능들이 위에서 아래로 차례대로 실행됩니다. '최소 이익'은 건설 예약을 위해 필요한 레벨당 최소 금 수익을 설정합니다 (0 = 비활성화). '최소 할인'은 허용되는 최대 건설 자재 가격 할증률을 설정합니다 (-33% = 저렴할 때만, 0 = 기본 가격일 때, +33% = 가격이 비싸더라도)."
+ cm__settings__priority_list_desc: "Drag to reorder feature priority. Each month, enabled features run top-to-bottom. Min Taxable Profit sets the minimum [taxable_profit|e] per level required to queue construction (0 = disabled). Min Discount sets the maximum construction material price markup allowed (-33% = only when cheap, 0 = at base price, +33% = even when inflated)."
  cm__priority_list_item_column_name: "기능"
  cm__priority_list_i1_name: "건물 자동 확장"
  cm__priority_list_i1_desc: "수익성이 있고 인구 여유가 있으며 금 보유량이 비축 한계치를 초과할 때 다단계 생산 및 비생산 건물을 자동으로 확장합니다. 자동 확장이 활성화된 지역에만 적용됩니다."
@@ -35,8 +35,8 @@
  cm__priority_list_i7_desc: "조건이 충족되면 수도 소재지에 수도 전용 건물(왕실 법정, 최고 법원, 육군 대학 등)을 자동으로 건설합니다."
  cm__priority_list__enabled_name: "활성화됨"
  cm__priority_list__enabled_desc: "이 기능을 활성화하거나 비활성화합니다. 비활성화된 기능은 매달 건너뜁니다."
- cm__priority_list__min_profit_name: "최소 수익"
- cm__priority_list__min_profit_desc: "건설 대기열에 추가되기 위해 필요한 레벨당 최소 골드 수익입니다. 이는 세전 총 수익입니다. 수익 확인을 비활성화하려면 0으로 설정하십시오."
+ cm__priority_list__min_profit_name: "Min Taxable Profit"
+ cm__priority_list__min_profit_desc: "Minimum [taxable_profit|e] per level required before construction is queued: the building or RGO profit after [control|e] is taken into account. Set to 0 to disable the check."
  cm__priority_list__min_profit_postfix: "@gold!"
  cm__priority_list__min_discount_name: "최소 할인"
  cm__priority_list__min_discount_desc: "허용되는 최대 건설 자재 가격 할증률입니다. -33%일 경우 자재 가격이 기본 가격보다 33% 낮을 때만 건설합니다. 0%일 경우 기본 가격 이하일 때만 건설합니다. +33%일 경우 가격이 기본 가격보다 33% 높더라도 건설합니다."
@@ -156,16 +156,16 @@
  cm__auto_urbanize_ignore_list__ignored_desc: "선택 시, 이 RGO를 보유한 농촌 정착지는 농촌-도시 승격 대상에서 제외됩니다."
 
  # Auto Town Rights (auto_town_rights) Tab
- cm__auto_town_rights_name: "도시권"
+ cm__auto_town_rights_name: "Urban Rights"
  ## Auto-Grant Town Rights (auto_town_rights) Group
- cm__auto_town_rights__auto_town_rights_name: "도시권 자동 부여"
- cm__auto_town_rights__auto_town_rights_desc: "매달 아래에 설정된 순서대로 대상 도시 및 거대도시에 활성화된 도시 특권을 부여합니다. 부여할 때마다 5의 정부 역량이 소모됩니다."
+ cm__auto_town_rights__auto_town_rights_name: "Auto-Grant Urban Rights"
+ cm__auto_town_rights__auto_town_rights_desc: "Each month, grant enabled urban rights to eligible cities and megalopolises in the order configured below. Each grant costs 5 government power."
  cm__auto_grant_town_rights_name: "활성화됨"
  cm__auto_grant_town_rights_desc: "자동 부여 패스를 활성화 또는 비활성화합니다. 비활성화 시 아래의 권리 목록은 무시됩니다."
  ## Town Rights Priority (auto_town_rights_list) Group
- cm__auto_town_rights__auto_town_rights_list_name: "도시권 우선순위"
+ cm__auto_town_rights__auto_town_rights_list_name: "Urban Rights Priority"
  cm__auto_town_rights__auto_town_rights_list_desc: "드래그하여 순서를 변경하십시오. 매달 활성화된 권리가 적격한 도시 및 거대도시에 위에서 아래 순으로 부여됩니다. 부여 시마다 5의 정부 역량이 소모됩니다. 지역이 미통합 상태이거나, 이미 해당 권리를 보유하고 있거나, 빈 슬롯이 없는 경우에는 생략됩니다."
- cm__auto_town_rights_list_item_column_name: "도시권"
+ cm__auto_town_rights_list_item_column_name: "Urban Right"
  cm__auto_town_rights_list_i1_name: "@staple_port! [ShowTownRightsName('staple_port')]"
  cm__auto_town_rights_list_i2_name: "@granary_town! [ShowTownRightsName('granary_town')]"
  cm__auto_town_rights_list_i3_name: "@royal_free_cities_town_rights! [ShowTownRightsName('royal_free_cities_town_rights')]"
@@ -198,7 +198,7 @@
  cm__auto_town_rights_list_i30_name: "@scholai_literacy_rights! [ShowTownRightsName('scholai_literacy_rights')]"
  cm__auto_town_rights_list_i31_name: "@municipia_privilegia! [ShowTownRightsName('municipia_privilegia')]"
  cm__auto_town_rights_list__enabled_name: "활성화됨"
- cm__auto_town_rights_list__enabled_desc: "이 도시 특권의 자동 부여 여부를 전환합니다. 특권은 허용 조건이 충족되는 경우에만 부여되며, 국가에서 부여할 수 없는 특권 항목은 비활성화된 상태로 두어도 됩니다."
+ cm__auto_town_rights_list__enabled_desc: "Toggle auto-granting for this urban right. The right is only granted where its allow conditions pass; rows for rights your country cannot grant can be left disabled."
 
  # Optional: self-referencing flag keys to suppress IDE warnings (safe to remove if you want)
  cm: "cm"

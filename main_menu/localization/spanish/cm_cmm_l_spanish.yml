@@ -1,7 +1,7 @@
 ﻿l_spanish:
  # Mod
  cm_name: "Gestor de construcción"
- cm_desc: "Construction Manager es una versión renovada del mod Location Specialization QoL (Auto-Expand) de SilverSkye111, bifurcado y actualizado por romaimperator. Añade la capacidad de configurar edificios específicos para que se expandan automáticamente y construyan niveles adicionales si son rentables y hay población disponible.\\nEl botón de Autoexpandir se encuentra al seleccionar localizaciones individuales y hacer clic en uno de sus tipos de población para abrir el menú de construcción específico de la localización.\\n\\nCargue después de otros mods de interfaz si hay problemas de compatibilidad."
+ cm_desc: "Un mod de calidad de vida masivo que añade nuevas funciones de automatización, filtros y modos de mapa para mejorar enormemente la experiencia de construcción en EU5."
 
  # Settings (settings) Tab
  cm__settings_name: "Ajustes"
@@ -17,7 +17,7 @@
 
  ## Priority List Group
  cm__settings__priority_list_name: "Automatización de la construcción"
- cm__settings__priority_list_desc: "Arrastra para reordenar la prioridad de las funciones. Cada mes, las funciones habilitadas se ejecutan de arriba abajo. El Beneficio Mín. establece el beneficio de oro mínimo por nivel requerido para poner la construcción en cola (0 = desactivado). El Descuento Mín. establece el recargo máximo permitido en el precio de los materiales de construcción (-33% = solo cuando es barato, 0 = al precio base, +33% = incluso cuando está inflado)."
+ cm__settings__priority_list_desc: "Drag to reorder feature priority. Each month, enabled features run top-to-bottom. Min Taxable Profit sets the minimum [taxable_profit|e] per level required to queue construction (0 = disabled). Min Discount sets the maximum construction material price markup allowed (-33% = only when cheap, 0 = at base price, +33% = even when inflated)."
  cm__priority_list_item_column_name: "Característica"
  cm__priority_list_i1_name: "Expansión automática de edificios"
  cm__priority_list_i1_desc: "Expande automáticamente edificios de producción y no producción de varios niveles cuando sea rentable, haya pops disponibles y el oro supere el umbral de reserva. Solo se aplica en localizaciones con la expansión automática activada."
@@ -35,8 +35,8 @@
  cm__priority_list_i7_desc: "Construye automáticamente edificios exclusivos de la capital (corte real, tribunal supremo, academia de guerra, etc.) en la localización de tu capital cuando las condiciones lo permitan."
  cm__priority_list__enabled_name: "Activado"
  cm__priority_list__enabled_desc: "Activa o desactiva esta función. Las funciones desactivadas se omiten cada mes."
- cm__priority_list__min_profit_name: "Beneficio mín."
- cm__priority_list__min_profit_desc: "Beneficio de oro mínimo por nivel requerido antes de que la construcción se ponga en cola. Este es el beneficio bruto antes de impuestos. Establécelo en 0 para desactivar la comprobación de beneficios."
+ cm__priority_list__min_profit_name: "Mín. beneficio gravable"
+ cm__priority_list__min_profit_desc: "[taxable_profit|e] mínimo por nivel requerido antes de poner la construcción en cola: el beneficio del edificio o RGO tras tener en cuenta [control|e]. Establécelo en 0 para desactivar la comprobación."
  cm__priority_list__min_profit_postfix: "@gold!"
  cm__priority_list__min_discount_name: "Descuento mín."
  cm__priority_list__min_discount_desc: "Margen de sobreprecio máximo permitido para los materiales de construcción. Al -33%, solo construye cuando los materiales cuestan un 33% menos que el precio base. Al 0%, solo al precio base o inferior. Al +33%, construye incluso cuando los precios están un 33% por encima del precio base."
@@ -156,16 +156,16 @@
  cm__auto_urbanize_ignore_list__ignored_desc: "Si se marca, los asentamientos rurales con este RGO se omitirán en la promoción de rural a ciudad."
 
  # Auto Town Rights (auto_town_rights) Tab
- cm__auto_town_rights_name: "Derechos de ciudad"
+ cm__auto_town_rights_name: "Derechos urbanos"
  ## Auto-Grant Town Rights (auto_town_rights) Group
- cm__auto_town_rights__auto_town_rights_name: "Otorgar derechos de ciudad automáticamente"
- cm__auto_town_rights__auto_town_rights_desc: "Cada mes, otorga los derechos de ciudad habilitados a las ciudades y megalópolis elegibles en el orden configurado a continuación. Cada concesión cuesta 5 de poder gubernamental."
+ cm__auto_town_rights__auto_town_rights_name: "Auto-Grant Urban Rights"
+ cm__auto_town_rights__auto_town_rights_desc: "Cada mes, otorga los derechos urbanos habilitados a las ciudades y megalópolis elegibles en el orden configurado a continuación. Cada concesión cuesta 5 de poder gubernamental."
  cm__auto_grant_town_rights_name: "Habilitado"
  cm__auto_grant_town_rights_desc: "Activa o desactiva el pase de concesión automática. Cuando está desactivado, se ignora la lista de derechos de abajo."
  ## Town Rights Priority (auto_town_rights_list) Group
- cm__auto_town_rights__auto_town_rights_list_name: "Prioridad de derechos de ciudad"
+ cm__auto_town_rights__auto_town_rights_list_name: "Prioridad de derechos urbanos"
  cm__auto_town_rights__auto_town_rights_list_desc: "Arrastra para reordenar. Cada mes, los derechos habilitados se conceden de arriba abajo a las ciudades y megalópolis elegibles. Cada concesión cuesta 5 de poder gubernamental. Los derechos se omiten cuando la localización no está integrada, ya tiene el derecho o no tiene huecos libres."
- cm__auto_town_rights_list_item_column_name: "Derecho de ciudad"
+ cm__auto_town_rights_list_item_column_name: "Urban Right"
  cm__auto_town_rights_list_i1_name: "@staple_port! [ShowTownRightsName('staple_port')]"
  cm__auto_town_rights_list_i2_name: "@granary_town! [ShowTownRightsName('granary_town')]"
  cm__auto_town_rights_list_i3_name: "@royal_free_cities_town_rights! [ShowTownRightsName('royal_free_cities_town_rights')]"
@@ -198,7 +198,7 @@
  cm__auto_town_rights_list_i30_name: "@scholai_literacy_rights! [ShowTownRightsName('scholai_literacy_rights')]"
  cm__auto_town_rights_list_i31_name: "@municipia_privilegia! [ShowTownRightsName('municipia_privilegia')]"
  cm__auto_town_rights_list__enabled_name: "Habilitado"
- cm__auto_town_rights_list__enabled_desc: "Alternar la concesión automática para este derecho de ciudad. El derecho solo se concede cuando se cumplen sus condiciones; las filas de los derechos que tu país no puede otorgar pueden dejarse desactivadas."
+ cm__auto_town_rights_list__enabled_desc: "Alterna la concesión automática para este derecho urbano. El derecho solo se concede allí donde se cumplen sus condiciones; las filas de los derechos que tu país no puede conceder pueden dejarse desactivadas."
 
  # Optional: self-referencing flag keys to suppress IDE warnings (safe to remove if you want)
  cm: "cm"

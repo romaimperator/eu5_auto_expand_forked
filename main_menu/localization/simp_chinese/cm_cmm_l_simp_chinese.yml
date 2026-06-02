@@ -1,7 +1,7 @@
 ﻿l_simp_chinese:
  # Mod
  cm_name: "建设管理器"
- cm_desc: "Construction Manager 是 SilverSkye111 所开发的 Location Specialization QoL (Auto-Expand) 模组的更名版本，由 romaimperator 进行分支并更新。本模组增加了将特定建筑设为自动扩建的功能，若建筑处于盈利状态且有人口可用，则会自动建造更高等级。\\n在选择特定地点后，点击其人口类型以打开地点专属建设菜单，即可找到“自动扩建”按钮。\\n\\n若存在兼容性问题，请将本模组加载在其他 UI 模组之后。"
+ cm_desc: "一个大型易用性增强模组，添加了全新的自动化功能、筛选器和地图模式，极大地优化了 EU5 的建造体验。"
 
  # Settings (settings) Tab
  cm__settings_name: "设置"
@@ -17,7 +17,7 @@
 
  ## Priority List Group
  cm__settings__priority_list_name: "建筑自动化"
- cm__settings__priority_list_desc: "拖动以重新排序功能优先级。每月，已启用的功能将自上而下依次运行。“最低利润”设定了将建筑加入建设队列所需的每级最低金币利润（0 = 禁用）。“最低折扣”设定了允许的最大建筑材料溢价幅度（-33% = 仅在价格低廉时，0 = 按基准价，+33% = 即使在价格上涨时）。"
+ cm__settings__priority_list_desc: "拖动以重排功能优先级。每个月，已启用的功能将按自上而下的顺序运行。“最小应税利润”设置了将建设任务加入队列所需的每级最低[taxable_profit|e]（0 = 禁用）。“最小折扣”设置了允许的最大建筑材料加价幅度（-33% = 仅在便宜时，0 = 按基准价格，+33% = 即使在价格上涨时）。"
  cm__priority_list_item_column_name: "功能"
  cm__priority_list_i1_name: "自动扩建建筑"
  cm__priority_list_i1_desc: "当盈利、有可用人口且金币高于储备阈值时，自动扩建多级生产与非生产建筑。仅在开启了自动扩建功能的地点生效。"
@@ -35,8 +35,8 @@
  cm__priority_list_i7_desc: "当条件允许时，自动在你的都城所在地建造仅限都城的建筑（宫廷、最高法院、战争学院等）。"
  cm__priority_list__enabled_name: "已启用"
  cm__priority_list__enabled_desc: "启用或禁用此功能。已禁用的功能每月将被跳过。"
- cm__priority_list__min_profit_name: "最低利润"
- cm__priority_list__min_profit_desc: "在建筑加入建设队列前，每级所需的最低金币利润。此为税前原始利润。设置为 0 可禁用利润检查。"
+ cm__priority_list__min_profit_name: "最低应税利润"
+ cm__priority_list__min_profit_desc: "Minimum [taxable_profit|e] per level required before construction is queued: the building or RGO profit after [control|e] is taken into account. Set to 0 to disable the check."
  cm__priority_list__min_profit_postfix: "@gold!"
  cm__priority_list__min_discount_name: "最小折扣"
  cm__priority_list__min_discount_desc: "允许的最大建筑材料价格涨幅。设置为 -33% 时，仅在材料价格低于基准价格 33% 时进行建造；设置为 0% 时，仅在不高于基准价格时进行建造；设置为 +33% 时，即使价格高出基准价格 33% 也会进行建造。"
@@ -156,16 +156,16 @@
  cm__auto_urbanize_ignore_list__ignored_desc: "勾选后，拥有此 RGO 的乡村定居点将跳过从乡村到城镇的晋升。"
 
  # Auto Town Rights (auto_town_rights) Tab
- cm__auto_town_rights_name: "城镇特权"
+ cm__auto_town_rights_name: "城市权利"
  ## Auto-Grant Town Rights (auto_town_rights) Group
- cm__auto_town_rights__auto_town_rights_name: "自动授予城镇特权"
- cm__auto_town_rights__auto_town_rights_desc: "每月按照下方配置的顺序，向符合条件的城市与巨型都市授予已启用的城镇特权。每次授予消耗5点政府力量。"
+ cm__auto_town_rights__auto_town_rights_name: "自动授予城市权利"
+ cm__auto_town_rights__auto_town_rights_desc: "Each month, grant enabled urban rights to eligible cities and megalopolises in the order configured below. Each grant costs 5 government power."
  cm__auto_grant_town_rights_name: "已启用"
  cm__auto_grant_town_rights_desc: "启用或禁用自动授予。关闭时，下方的权利列表将被忽略。"
  ## Town Rights Priority (auto_town_rights_list) Group
- cm__auto_town_rights__auto_town_rights_list_name: "城镇特权优先级"
+ cm__auto_town_rights__auto_town_rights_list_name: "城镇权利优先级"
  cm__auto_town_rights__auto_town_rights_list_desc: "拖动以重新排序。每月，已启用的权利将按从上到下的顺序授予符合条件的城市与巨型都市。每次授予消耗5点政府力量。若地点未整合、已拥有该权利或没有空余槽位，则会跳过该权利。"
- cm__auto_town_rights_list_item_column_name: "城镇权"
+ cm__auto_town_rights_list_item_column_name: "Urban Right"
  cm__auto_town_rights_list_i1_name: "@staple_port! [ShowTownRightsName('staple_port')]"
  cm__auto_town_rights_list_i2_name: "@granary_town! [ShowTownRightsName('granary_town')]"
  cm__auto_town_rights_list_i3_name: "@royal_free_cities_town_rights! [ShowTownRightsName('royal_free_cities_town_rights')]"
@@ -198,7 +198,7 @@
  cm__auto_town_rights_list_i30_name: "@scholai_literacy_rights! [ShowTownRightsName('scholai_literacy_rights')]"
  cm__auto_town_rights_list_i31_name: "@municipia_privilegia! [ShowTownRightsName('municipia_privilegia')]"
  cm__auto_town_rights_list__enabled_name: "已启用"
- cm__auto_town_rights_list__enabled_desc: "切换此城镇权利的自动授予。只有在满足其准入条件时才会授予该权利；你的国家无法授予的权利行可以保持禁用。"
+ cm__auto_town_rights_list__enabled_desc: "切换此城镇特权的自动授予。该特权仅在满足准许条件的地方授予；你的国家无法授予的特权所在的行可以保持禁用。"
 
  # Optional: self-referencing flag keys to suppress IDE warnings (safe to remove if you want)
  cm: "cm"

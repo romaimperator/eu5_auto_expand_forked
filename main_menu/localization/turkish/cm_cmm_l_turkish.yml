@@ -1,7 +1,7 @@
 ﻿l_turkish:
  # Mod
  cm_name: "İnşaat Yöneticisi"
- cm_desc: "Construction Manager, SilverSkye111 tarafından hazırlanan, romaimperator tarafından çatallanan ve güncellenen Location Specialization QoL (Auto-Expand) modunun yeniden markalanmış halidir. Belirli binaların kârlı olmaları ve nüfusun mevcut olması durumunda otomatik olarak genişlemesi ve ek seviyeler inşa etmesi özelliğini ekler.\\nOtomatik Genişletme düğmesi, münferit yerleşkeler seçildikten sonra yerleşkeye özel inşaat menüsünü açmak için nüfus türlerinden birine tıklandığında bulunur.\\n\\nUyumluluk sorunları olması durumunda diğer arayüz (UI) modlarından sonra yükleyin."
+ cm_desc: "EU5 inşaat deneyimini büyük ölçüde iyileştirmek için yeni otomasyonlar, filtreler ve harita modları ekleyen devasa bir yaşam kalitesi modu."
 
  # Settings (settings) Tab
  cm__settings_name: "Ayarlar"
@@ -17,7 +17,7 @@
 
  ## Priority List Group
  cm__settings__priority_list_name: "İnşaat Otomasyonu"
- cm__settings__priority_list_desc: "Özellik önceliğini yeniden sıralamak için sürükleyin. Her ay, etkinleştirilen özellikler yukarıdan aşağıya doğru çalışır. Min. Kâr, inşaatı sıraya koymak için gereken seviye başına minimum altın kârını belirler (0 = devre dışı). Min. İndirim, izin verilen maksimum inşaat malzemesi fiyat artışını belirler (-%33 = yalnızca ucuzken, 0 = temel fiyatta, +%33 = fiyatlar şişirilmiş olsa bile)."
+ cm__settings__priority_list_desc: "Özellik önceliğini yeniden sıralamak için sürükleyin. Her ay, etkinleştirilen özellikler yukarıdan aşağıya doğru çalışır. Min. Vergilendirilebilir Kar, inşaatı sıraya almak için gereken seviye başına minimum [taxable_profit|e] miktarını belirler (0 = devre dışı). Min. İndirim, izin verilen maksimum inşaat malzemesi fiyat artışını belirler (-%33 = sadece ucuzken, 0 = taban fiyatta, +%33 = fiyatlar şişirilmiş olsa bile)."
  cm__priority_list_item_column_name: "Özellik"
  cm__priority_list_i1_name: "Binaları Otomatik Genişlet"
  cm__priority_list_i1_desc: "Kârlı olduğunda, nüfus mevcut olduğunda ve altın miktarı rezerv eşiğinin üzerinde olduğunda çok seviyeli üretim ve üretim dışı binaları otomatik olarak genişletir. Sadece otomatik genişletmenin açık olduğu konumlarda geçerlidir."
@@ -35,8 +35,8 @@
  cm__priority_list_i7_desc: "Koşullar uygun olduğunda başkent konumunuzda otomatik olarak başkente özel binaları (kraliyet sarayı, yüksek mahkeme, harp akademisi vb.) inşa eder."
  cm__priority_list__enabled_name: "Etkin"
  cm__priority_list__enabled_desc: "Bu özelliği etkinleştirin veya devre dışı bırakın. Devre dışı bırakılan özellikler her ay atlanır."
- cm__priority_list__min_profit_name: "Min Kâr"
- cm__priority_list__min_profit_desc: "İnşaatın sıraya alınması için gereken seviye başına minimum altın kârı. Bu, vergi öncesi brüt kârdır. Kâr kontrolünü devre dışı bırakmak için 0'a ayarlayın."
+ cm__priority_list__min_profit_name: "Minimum Vergilendirilebilir Kâr"
+ cm__priority_list__min_profit_desc: "İnşaat sıraya alınmadan önce gereken seviye başına minimum [taxable_profit|e]: [control|e] hesaba katıldıktan sonraki bina veya RGO kârı. Kontrolü devre dışı bırakmak için 0'a ayarlayın."
  cm__priority_list__min_profit_postfix: "@gold!"
  cm__priority_list__min_discount_name: "Min İndirim"
  cm__priority_list__min_discount_desc: "İzin verilen maksimum inşaat malzemesi fiyat farkı. -%33'te, yalnızca malzemeler taban fiyatın %33 altındayken inşa eder. %0'da, yalnızca taban fiyatta veya altında inşa eder. +%33'te, fiyatlar taban fiyatın %33 üzerindeyken bile inşa eder."
@@ -156,16 +156,16 @@
  cm__auto_urbanize_ignore_list__ignored_desc: "İşaretlendiğinde, bu RGO'ya sahip kırsal yerleşimler kırsaldan kasabaya terfi için atlanır."
 
  # Auto Town Rights (auto_town_rights) Tab
- cm__auto_town_rights_name: "Kasaba Hakları"
+ cm__auto_town_rights_name: "Kentsel Haklar"
  ## Auto-Grant Town Rights (auto_town_rights) Group
- cm__auto_town_rights__auto_town_rights_name: "Otomatik Kasaba Hakları Tanı"
- cm__auto_town_rights__auto_town_rights_desc: "Her ay, aşağıda yapılandırılan sıraya göre uygun şehirlere ve megalopolislere etkinleştirilmiş kasaba haklarını verir. Her bir hak verme işlemi 5 hükümet gücü maliyetindedir."
+ cm__auto_town_rights__auto_town_rights_name: "Kent Haklarını Otomatik Tanı"
+ cm__auto_town_rights__auto_town_rights_desc: "Her ay, etkinleştirilen şehir haklarını aşağıda yapılandırılan sıraya göre uygun şehirlere ve megalopollere ver. Her işlem 5 hükümet gücü maliyetindedir."
  cm__auto_grant_town_rights_name: "Etkin"
  cm__auto_grant_town_rights_desc: "Otomatik verme geçişini etkinleştirin veya devre dışı bırakın. Kapalıyken aşağıdaki haklar listesi yok sayılır."
  ## Town Rights Priority (auto_town_rights_list) Group
- cm__auto_town_rights__auto_town_rights_list_name: "Şehir Hakları Önceliği"
+ cm__auto_town_rights__auto_town_rights_list_name: "Kentsel Haklar Önceliği"
  cm__auto_town_rights__auto_town_rights_list_desc: "Sıralamak için sürükleyin. Her ay, etkinleştirilmiş haklar uygun şehirlere ve megalopolislere yukarıdan aşağıya doğru verilir. Her atama 5 hükümet gücü maliyetindedir. Konumun entegre edilmediği, hakka zaten sahip olduğu veya boş yuvası olmadığı durumlarda haklar atlanır."
- cm__auto_town_rights_list_item_column_name: "Kasaba Hakkı"
+ cm__auto_town_rights_list_item_column_name: "Kentsel Hak"
  cm__auto_town_rights_list_i1_name: "@staple_port! [ShowTownRightsName('staple_port')]"
  cm__auto_town_rights_list_i2_name: "@granary_town! [ShowTownRightsName('granary_town')]"
  cm__auto_town_rights_list_i3_name: "@royal_free_cities_town_rights! [ShowTownRightsName('royal_free_cities_town_rights')]"
@@ -198,7 +198,7 @@
  cm__auto_town_rights_list_i30_name: "@scholai_literacy_rights! [ShowTownRightsName('scholai_literacy_rights')]"
  cm__auto_town_rights_list_i31_name: "@municipia_privilegia! [ShowTownRightsName('municipia_privilegia')]"
  cm__auto_town_rights_list__enabled_name: "Etkin"
- cm__auto_town_rights_list__enabled_desc: "Bu kasaba hakkı için otomatik vermeyi aç/kapat. Hak yalnızca izin koşullarının karşılandığı yerlerde verilir; ülkenizin veremediği haklara ait satırlar kapalı bırakılabilir."
+ cm__auto_town_rights_list__enabled_desc: "Bu kentsel hak için otomatik tanımayı aç/kapat. Hak yalnızca izin koşullarının sağlandığı yerlerde tanınır; ülkenizin tanıyamayacağı haklara ait satırlar devre dışı bırakılabilir."
 
  # Optional: self-referencing flag keys to suppress IDE warnings (safe to remove if you want)
  cm: "cm"
