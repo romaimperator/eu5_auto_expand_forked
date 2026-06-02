@@ -87,7 +87,7 @@ cm_is_building_fully_employed = {
 	}
 }
 
-# Root is the building. Checks that building potential profit (adjusted for control) meets the min profit
+# Root is the building. Checks that building per-level potential profit (adjusted for control) meets the min profit
 # threshold from the priority list (field slot 2, mapped to cm_priority_min_profit).
 # Non-production buildings (marketplaces, granaries, etc.) always pass — they have no profit to check.
 # Buildings with no construction goods demands (e.g. mason, lumber_mill) also bypass — they produce
@@ -98,7 +98,7 @@ cm_building_meets_minimum_profit = {
 		cm_get_construction_demand_total_count = 0
 		NOT = { owner = { has_variable_map = cm_priority_min_profit } }
 		"owner.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)" = 0
-		cm_building_potential_profit_after_control >= "owner.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+		cm_building_potential_profit_per_level_after_control >= "owner.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
 	}
 }
 

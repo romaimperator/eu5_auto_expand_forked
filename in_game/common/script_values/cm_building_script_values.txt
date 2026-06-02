@@ -104,9 +104,12 @@ cm_get_minimum_gold = {
 	} else = { value = 50 }
 }
 
-# Root is the building. Potential profit adjusted for location control.
-cm_building_potential_profit_after_control = {
+# Root is the building. Per-level potential profit adjusted for location control.
+cm_building_potential_profit_per_level_after_control = {
 	value = building_potential_profit
+	if = { limit = { building_level >= 1 }
+		divide = building_level
+	}
 	multiply = location.local_control
 }
 
