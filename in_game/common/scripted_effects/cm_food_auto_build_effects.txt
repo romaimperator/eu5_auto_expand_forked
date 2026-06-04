@@ -3,10 +3,11 @@
 # Main per-location effect. Computes marginal food for each buildable option, picks the highest, and builds it.
 # Root is the location. Expects scopes: country, location, food_good.
 cm_food_auto_build_in_location = {
-	# Preconditions: pause, build queue, market access
+	# Preconditions: pause, build queue, market access, gold reserve
 	if = { limit = { scope:country = { cm_should_pause_auto_expand = no } }
 	if = { limit = { cm_get_open_build_queue_slots > 0 }
 	if = { limit = { cm_check_location_meets_min_market_access = yes }
+	if = { limit = { cm_check_country_gold_above = { threshold = cm_food_gold_threshold } }
 
 	# Skip the location when no pop-restricted option is buildable.
 	if = { limit = { NOT = { cm_food_location_pops_still_filling = yes } }
@@ -16,7 +17,7 @@ cm_food_auto_build_in_location = {
 		set_local_variable = { name = cm_food_action value = 0 }
 
 		# ─── Option 1: RGO expand ───
-		if = { limit = { cm_food_can_build_rgo = yes cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_rgo } }
+		if = { limit = { cm_food_can_build_rgo = yes }
 			set_local_variable = { name = cm_food_m value = cm_food_marginal_rgo }
 			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
 				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
@@ -25,7 +26,7 @@ cm_food_auto_build_in_location = {
 		}
 
 		# ─── Option 2: Farming Village ───
-		if = { limit = { cm_food_can_build_farming_village = yes cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_farming_village } }
+		if = { limit = { cm_food_can_build_farming_village = yes }
 			set_local_variable = { name = cm_food_m value = cm_food_marginal_farming_village }
 			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
 				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
@@ -34,7 +35,7 @@ cm_food_auto_build_in_location = {
 		}
 
 		# ─── Option 3: Windmill ───
-		if = { limit = { cm_food_can_build_windmill = yes cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_windmill } }
+		if = { limit = { cm_food_can_build_windmill = yes }
 			set_local_variable = { name = cm_food_m value = cm_food_marginal_windmill }
 			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
 				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
@@ -43,7 +44,7 @@ cm_food_auto_build_in_location = {
 		}
 
 		# ─── Option 4: Irrigation ───
-		if = { limit = { cm_food_can_build_irrigation = yes cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_irrigation_systems } }
+		if = { limit = { cm_food_can_build_irrigation = yes }
 			set_local_variable = { name = cm_food_m value = cm_food_marginal_irrigation }
 			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
 				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
@@ -52,7 +53,7 @@ cm_food_auto_build_in_location = {
 		}
 
 		# ─── Option 5: Fishing Village ───
-		if = { limit = { cm_food_can_build_fishing_village = yes cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_fishing_village } }
+		if = { limit = { cm_food_can_build_fishing_village = yes }
 			set_local_variable = { name = cm_food_m value = cm_food_marginal_fishing_village }
 			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
 				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
@@ -61,7 +62,7 @@ cm_food_auto_build_in_location = {
 		}
 
 		# ─── Option 6: Sheep Farms ───
-		if = { limit = { cm_food_can_build_sheep_farms = yes cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_sheep_farms } }
+		if = { limit = { cm_food_can_build_sheep_farms = yes }
 			set_local_variable = { name = cm_food_m value = cm_food_marginal_sheep_farms }
 			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
 				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
@@ -70,7 +71,7 @@ cm_food_auto_build_in_location = {
 		}
 
 		# ─── Option 7: Forest Village ───
-		if = { limit = { cm_food_can_build_forest_village = yes cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_forest_village } }
+		if = { limit = { cm_food_can_build_forest_village = yes }
 			set_local_variable = { name = cm_food_m value = cm_food_marginal_forest_village }
 			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
 				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
@@ -103,6 +104,7 @@ cm_food_auto_build_in_location = {
 		}
 
 	} # end pops_still_filling check
+	} # end gold reserve
 	} # end market_access
 	} # end build queue
 	} # end pause

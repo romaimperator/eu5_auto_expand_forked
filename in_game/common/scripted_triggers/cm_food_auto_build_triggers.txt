@@ -163,71 +163,68 @@ cm_food_can_build_forest_village = {
 	}
 }
 
-# ─── Per-option viability (can-build AND affordable AND meets minimum discount) ───
-# These combine the three gates the effects file applies before constructing each option.
+# Per-option discount check: can-build AND meets minimum discount, ignoring gold.
 # Root is the location. Expects scopes: country, location.
 
-cm_food_option_rgo_viable = {
+cm_food_option_rgo_discounted = {
 	cm_food_can_build_rgo = yes
-	cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_rgo }
 	cm_rgo_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
-cm_food_option_farming_village_viable = {
+cm_food_option_farming_village_discounted = {
 	cm_food_can_build_farming_village = yes
-	cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_farming_village }
 	building_type:farming_village = { save_temporary_scope_as = building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
-cm_food_option_windmill_viable = {
+cm_food_option_windmill_discounted = {
 	cm_food_can_build_windmill = yes
-	cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_windmill }
 	building_type:windmill = { save_temporary_scope_as = building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
-cm_food_option_irrigation_viable = {
+cm_food_option_irrigation_discounted = {
 	cm_food_can_build_irrigation = yes
-	cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_irrigation_systems }
 	building_type:irrigation_systems = { save_temporary_scope_as = building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
-cm_food_option_fishing_village_viable = {
+cm_food_option_fishing_village_discounted = {
 	cm_food_can_build_fishing_village = yes
-	cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_fishing_village }
 	building_type:fishing_village = { save_temporary_scope_as = building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
-cm_food_option_sheep_farms_viable = {
+cm_food_option_sheep_farms_discounted = {
 	cm_food_can_build_sheep_farms = yes
-	cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_sheep_farms }
 	building_type:sheep_farms = { save_temporary_scope_as = building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
-cm_food_option_forest_village_viable = {
+cm_food_option_forest_village_discounted = {
 	cm_food_can_build_forest_village = yes
-	cm_check_country_gold_above = { threshold = cm_food_expected_gold_for_forest_village }
 	building_type:forest_village = { save_temporary_scope_as = building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
-# True if ANY of the seven food-building options is currently viable at this location
-# (can-build AND affordable AND meets minimum discount). Used by the location auto-food
-# button to decide green vs red glow.
-cm_food_location_has_viable_option = {
+# True if ANY of the seven food-building options meets its minimum discount (ignores gold).
+cm_food_location_has_discounted_option = {
 	OR = {
-		cm_food_option_rgo_viable = yes
-		cm_food_option_farming_village_viable = yes
-		cm_food_option_windmill_viable = yes
-		cm_food_option_irrigation_viable = yes
-		cm_food_option_fishing_village_viable = yes
-		cm_food_option_sheep_farms_viable = yes
-		cm_food_option_forest_village_viable = yes
+		cm_food_option_rgo_discounted = yes
+		cm_food_option_farming_village_discounted = yes
+		cm_food_option_windmill_discounted = yes
+		cm_food_option_irrigation_discounted = yes
+		cm_food_option_fishing_village_discounted = yes
+		cm_food_option_sheep_farms_discounted = yes
+		cm_food_option_forest_village_discounted = yes
 	}
+}
+
+# True if the location has a discounted food option AND the treasury covers the most expensive
+# food option plus the Gold Reserve. Decides green vs red glow for the location auto-food button.
+cm_food_location_has_viable_option = {
+	cm_food_location_has_discounted_option = yes
+	cm_check_country_gold_above = { threshold = cm_food_gold_threshold }
 }
 
 # True if ANY food-building option could physically be built here right now (ignores gold/discount).

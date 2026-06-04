@@ -234,10 +234,9 @@ cm_food_expected_gold_for_rgo = {
 	scope:country = { add = cm_food_get_minimum_gold }
 }
 
-# ─── Per-building gold threshold script values ───
-# Each computes: base_cost × (1 + build_modifiers) × (1 + construction_cost_adj) × (1 + inflation) + gold_reserve.
+# Per-building gold threshold script values.
+# Each computes: base_cost * (1 + build_modifiers) * (1 + construction_cost_adj) * (1 + inflation) + gold_reserve.
 # Root is the location. Expects scope:country.
-
 cm_food_expected_gold_for_farming_village = {
 	building_type:farming_village = { value = building_base_cost_in_gold }
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
@@ -296,6 +295,19 @@ cm_food_build_cost_modifier = {
 	}
 	add = modifier:local_build_buildings_cost
 	add = modifier:local_build_new_buildings_cost
+}
+
+# Gold threshold for the most expensive food option: its cost plus the Gold Reserve.
+# min = is a lower clamp, so each step keeps the larger cost (the most expensive option).
+# Root is the location. Expects scopes: country, location.
+cm_food_gold_threshold = {
+	value = cm_food_expected_gold_for_rgo
+	min = cm_food_expected_gold_for_farming_village
+	min = cm_food_expected_gold_for_windmill
+	min = cm_food_expected_gold_for_irrigation_systems
+	min = cm_food_expected_gold_for_fishing_village
+	min = cm_food_expected_gold_for_sheep_farms
+	min = cm_food_expected_gold_for_forest_village
 }
 
 # Spare pop pool after fully building out the RGO to its max level. Root is the location.
