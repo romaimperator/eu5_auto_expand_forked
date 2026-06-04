@@ -20,6 +20,11 @@ Commands:
     apply     Write resolved tracking files back to mod GUI files
     refresh   Re-extract mod definitions into tracking files
     status    Show tracking status
+
+Pass ``--beta`` (``-b``) to any vanilla-reading command (init, check, merge,
+refresh) to target the EU5 closed-beta install (Project Caesar Review) instead
+of the live game. Beta-sourced gui/vanilla commits are tagged ``(beta)`` in
+their subject.
 """
 
 import argparse
@@ -65,6 +70,15 @@ STEAM_GAME_PATHS = [
                  "common", "Europa Universalis V", "game"),
     os.path.join("C:" + os.sep, "Program Files", "Steam", "steamapps",
                  "common", "Europa Universalis V", "game"),
+]
+
+BETA_STEAM_GAME_PATHS = [
+    os.path.join("C:" + os.sep, "Steam", "steamapps", "common",
+                 "Project Caesar Review", "game"),
+    os.path.join("C:" + os.sep, "Program Files (x86)", "Steam", "steamapps",
+                 "common", "Project Caesar Review", "game"),
+    os.path.join("C:" + os.sep, "Program Files", "Steam", "steamapps",
+                 "common", "Project Caesar Review", "game"),
 ]
 
 # ─── Regex (used with .match() on lstripped lines) ───────────────────────────
@@ -457,22 +471,27 @@ def _push_refs(refs, force=False):
                 print(f"  {line}")
 
 
-def _versioned_message(message, version):
-    """Prefix the commit subject *message* with *version* when it is set."""
-    return f"{version}: {message}" if version else message
+def _versioned_message(message, version, beta=False):
+    """Prefix the commit subject *message* with *version* when it is set,
+    tagging it ``(beta)`` after the version when *beta*."""
+    marker = " (beta)" if beta else ""
+    if version:
+        return f"{version}{marker}: {message}"
+    return f"(beta) {message}" if beta else message
 
 
 def _update_vanilla_branch(tracking_files,
                            message="Update vanilla GUI definitions",
                            version=None,
-                           force_push=False):
+                           force_push=False,
+                           beta=False):
     """Create or update the ``gui/vanilla`` branch via plumbing (no checkout).
 
     *tracking_files* maps relative paths to content strings.
-    *version* prefixes the commit subject when provided.
+    *version* prefixes the commit subject when provided; *beta* tags it.
     Returns the new commit SHA.
     """
-    message = _versioned_message(message, version)
+    message = _versioned_message(message, version, beta=beta)
     tmp_index = os.path.join(ROOT_DIR, ".git", "tmp_gui_index")
     plumbing = {"GIT_INDEX_FILE": tmp_index}
 
@@ -657,16 +676,28 @@ def _resolve_game_dir(args):
         print(f"Error: Game directory not found: {args.game_dir}")
         sys.exit(1)
 
-    cfg = _load_config().get("game_directory", "")
-    if cfg and os.path.isdir(cfg):
-        return cfg
+    beta = getattr(args, "beta", False)
+    cfg = _load_config()
+    if beta:
+        cfg_dir = cfg.get("beta_game_directory", "")
+        search_paths = BETA_STEAM_GAME_PATHS
+        config_key = "beta_game_directory"
+        label = "EU5 closed beta (Project Caesar Review)"
+    else:
+        cfg_dir = cfg.get("game_directory", "")
+        search_paths = STEAM_GAME_PATHS
+        config_key = "game_directory"
+        label = "EU5 game"
 
-    for p in STEAM_GAME_PATHS:
+    if cfg_dir and os.path.isdir(cfg_dir):
+        return cfg_dir
+
+    for p in search_paths:
         if os.path.isdir(p):
             return p
 
-    print("Error: Could not locate EU5 game directory.")
-    print("Set 'game_directory' in config.toml or use --game-dir.")
+    print(f"Error: Could not locate {label} directory.")
+    print(f"Set '{config_key}' in config.toml or use --game-dir.")
     sys.exit(1)
 
 # ─── Utilities ───────────────────────────────────────────────────────────────
@@ -1095,7 +1126,8 @@ def cmd_init(args):
         vanilla_files,
         "Initialize vanilla GUI definitions",
         version=version,
-        force_push=args.force)
+        force_push=args.force,
+        beta=getattr(args, "beta", False))
 
     # 2. Anchor gui/vanilla-merged at the same commit for the next merge base.
     run_git(["update-ref", f"refs/heads/{MERGED_BRANCH}", new_vanilla_sha])
@@ -1198,7 +1230,6 @@ def cmd_check(args):
 
 
 def cmd_merge(args):
-    game_dir = _resolve_game_dir(args)
     manifest = _load_manifest()
     if manifest is None:
         print("Not initialized. Run 'gui_update.py init' first.")
@@ -1214,6 +1245,11 @@ def cmd_merge(args):
     just_advanced = _advance_merged_ref_if_absorbed()
     vanilla_sha = run_git(["rev-parse", VANILLA_BRANCH])
     merged_sha = run_git(["rev-parse", MERGED_BRANCH])
+    # An unfinished merge leaves gui/vanilla ahead of gui/vanilla-merged.
+    # Resuming reuses that tip and skips the game scan.
+    resuming = vanilla_sha != merged_sha
+    if not resuming:
+        game_dir = _resolve_game_dir(args)
 
     # Sync tracking from mod state. Skip if just advanced — tracking holds
     # the resolution and mod files may still be pre-apply.
@@ -1282,54 +1318,53 @@ def cmd_merge(args):
         else:
             print("  Tracking already in sync with mod.")
 
-    # Build the new vanilla snapshot from current game files.
-    print("Scanning current vanilla GUI files...")
-    vanilla_defs = _scan_definitions(game_dir, GUI_SOURCES)
-    vanilla_map = {}
-    vanilla_consts = {}
-    for d in vanilla_defs:
-        if d.kind == "constant":
-            vanilla_consts.setdefault((d.source_file, d.name), d)
-        else:
-            vanilla_map.setdefault(_tracking_key(d.kind, d.name), d)
+    if resuming:
+        print(f"{VANILLA_BRANCH} is ahead of {MERGED_BRANCH} from an "
+              "unfinished merge; resuming it without re-scanning vanilla.")
+        new_vanilla_sha = vanilla_sha
+        version = _last_vanilla_commit_version()
+    else:
+        # Build the new vanilla snapshot from current game files.
+        print("Scanning current vanilla GUI files...")
+        vanilla_defs = _scan_definitions(game_dir, GUI_SOURCES)
+        vanilla_map = {}
+        vanilla_consts = {}
+        for d in vanilla_defs:
+            if d.kind == "constant":
+                vanilla_consts.setdefault((d.source_file, d.name), d)
+            else:
+                vanilla_map.setdefault(_tracking_key(d.kind, d.name), d)
 
-    tracking_files = {}
-    updated = 0
-    for key, entry in manifest["definitions"].items():
-        tp = entry["tracking_path"]
-        if key.startswith("constant:"):
-            vd = vanilla_consts.get((entry["vanilla_file"], entry["name"]))
-        else:
-            vd = vanilla_map.get(key)
-        if vd is not None:
-            header = _make_tracking_header(
-                entry["vanilla_file"], entry["mod_file"])
-            new_content = header + vd.text + "\n"
-            old_content = _read_from_branch(VANILLA_BRANCH, tp)
-            tracking_files[tp] = new_content
-            if (old_content is None
-                    or _body_hash(old_content) != _body_hash(new_content)):
-                updated += 1
+        tracking_files = {}
+        updated = 0
+        for key, entry in manifest["definitions"].items():
+            tp = entry["tracking_path"]
+            if key.startswith("constant:"):
+                vd = vanilla_consts.get((entry["vanilla_file"], entry["name"]))
+            else:
+                vd = vanilla_map.get(key)
+            if vd is not None:
+                header = _make_tracking_header(
+                    entry["vanilla_file"], entry["mod_file"])
+                new_content = header + vd.text + "\n"
+                old_content = _read_from_branch(VANILLA_BRANCH, tp)
+                tracking_files[tp] = new_content
+                if (old_content is None
+                        or _body_hash(old_content) != _body_hash(new_content)):
+                    updated += 1
 
-    # Bookmark behind vanilla without a HEAD merge means the previous run was aborted; re-run.
-    behind_vanilla = vanilla_sha != merged_sha
+        if updated == 0:
+            print("Vanilla branch already up to date. Nothing to merge.")
+            return 0
 
-    if updated == 0 and not behind_vanilla:
-        print("Vanilla branch already up to date. Nothing to merge.")
-        return 0
-
-    if updated > 0:
         version = _resolve_game_version(args, is_init=False)
-        print(f"Updating {VANILLA_BRANCH} ({updated} definition(s) changed)...")
+        print(f"Updating {VANILLA_BRANCH} ({updated} definition(s) "
+              "changed)...")
         new_vanilla_sha = _update_vanilla_branch(
             tracking_files,
             f"Update {updated} vanilla GUI definition(s)",
-            version=version)
-    else:
-        print(f"{VANILLA_BRANCH} has unmerged commits from a previous "
-              "run; resuming merge.")
-        new_vanilla_sha = vanilla_sha
-        version = _last_vanilla_commit_version()
+            version=version,
+            beta=getattr(args, "beta", False))
 
     # Per-file three-way merge using gui/vanilla-merged as base and
     # gui/vanilla as theirs.
@@ -1647,7 +1682,8 @@ def cmd_refresh(args):
                 header + vd.text + "\n")
     version = _resolve_game_version(args, is_init=False)
     new_vanilla_sha = _update_vanilla_branch(
-        vanilla_files, "Refresh vanilla GUI definitions", version=version)
+        vanilla_files, "Refresh vanilla GUI definitions", version=version,
+        beta=getattr(args, "beta", False))
 
     # Refresh re-baselines tracking, so the bookmark moves to the new tip.
     run_git(["update-ref",
@@ -1747,6 +1783,14 @@ def main():
                  "(e.g. 1.2.5). Overrides auto-detection and prompting.",
         )
 
+    def add_beta_arg(p):
+        p.add_argument(
+            "--beta", "--early-access", "-b", "--b", dest="beta",
+            action="store_true",
+            help="Target the EU5 closed-beta install (Project Caesar "
+                 "Review) instead of the live game.",
+        )
+
     init_parser = sub.add_parser(
         "init", help="Initialize GUI tracking for this mod")
     init_parser.add_argument(
@@ -1756,17 +1800,21 @@ def main():
              f"{MERGED_BRANCH}) before re-initializing.",
     )
     add_version_arg(init_parser)
-    sub.add_parser("check",
-                   help="Check for vanilla GUI changes")
+    add_beta_arg(init_parser)
+    check_parser = sub.add_parser("check",
+                                  help="Check for vanilla GUI changes")
+    add_beta_arg(check_parser)
     merge_parser = sub.add_parser(
         "merge", help="Update vanilla branch and merge changes")
     add_version_arg(merge_parser)
+    add_beta_arg(merge_parser)
     sub.add_parser("apply",
                    help="Apply resolved changes back to mod GUI files")
     refresh_parser = sub.add_parser(
         "refresh",
         help="Re-extract mod definitions into tracking files")
     add_version_arg(refresh_parser)
+    add_beta_arg(refresh_parser)
     sub.add_parser("status",
                    help="Show tracking status")
 
