@@ -259,6 +259,15 @@ cm_clear_finished_upgrade_in_progress = {
 			scope:location = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:building_type } }
 		}
 		if = {
+			limit = { cm_does_building_type_count_for_fort_building_cost_modifier = yes }
+			# A fort upgrade never exposes its new tier to script while building, so the target-based
+			# check below would clear the tracking and re-stage it every pulse. For forts, clear on the
+			# source tier disappearing instead, which is the reliable finished signal.
+			if = {
+				limit = { scope:location = { NOT = { has_building = scope:building_type } } }
+				scope:location = { remove_list_variable = { name = cm_upgrade_in_progress target = scope:building_type } }
+			}
+		} else_if = {
 			limit = { is_key_in_global_variable_map = { name = cm_building_type_to_upgrade_type target = scope:building_type } }
 			"global_variable_map(cm_building_type_to_upgrade_type|scope:building_type)" = { save_temporary_scope_as = cm_upgrade_target }
 			if = {
