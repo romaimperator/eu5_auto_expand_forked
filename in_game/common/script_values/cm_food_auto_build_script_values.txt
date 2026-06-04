@@ -287,14 +287,15 @@ cm_food_expected_gold_for_forest_village = {
 
 # Build cost modifier (global + local). Root is the location, expects scope:country.
 cm_food_build_cost_modifier = {
-	scope:country = { value = modifier:global_build_buildings_cost }
+	value = 0
+	scope:country = { subtract = modifier:global_build_buildings_efficiency }
 	if = { limit = { location_rank = location_rank:rural_settlement }
-		scope:country = { add = modifier:global_rural_build_buildings_cost }
+		scope:country = { subtract = modifier:global_rural_build_buildings_efficiency }
 	} else = {
-		scope:country = { add = modifier:global_urban_build_buildings_cost }
+		scope:country = { subtract = modifier:global_urban_build_buildings_efficiency }
 	}
-	add = modifier:local_build_buildings_cost
-	add = modifier:local_build_new_buildings_cost
+	subtract = modifier:local_build_buildings_efficiency
+	subtract = modifier:local_build_new_buildings_efficiency
 }
 
 # Gold threshold for the most expensive food option: its cost plus the Gold Reserve.
