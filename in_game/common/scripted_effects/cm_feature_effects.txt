@@ -282,23 +282,6 @@ cm_clear_finished_upgrade_in_progress = {
 	}
 }
 
-# Clears cm_auto_build_in_progress for scope:building_type at scope:location once the
-# queued from-zero construction has finished (building now exists) or the location has no
-# civil constructions left (cancelled). Lets the next pulse re-build after a cancellation.
-# Expects: scope:building_type, scope:location
-cm_clear_finished_auto_build_in_progress = {
-	if = {
-		limit = {
-			scope:location = { is_target_in_variable_list = { name = cm_auto_build_in_progress target = scope:building_type } }
-			OR = {
-				scope:location = { has_building = scope:building_type }
-				scope:location = { num_civil_constructions = 0 }
-			}
-		}
-		scope:location = { remove_list_variable = { name = cm_auto_build_in_progress target = scope:building_type } }
-	}
-}
-
 # ─── Upgrade All Buildings ───
 # Upgrades every obsolete building in all owned locations.
 cm_run_upgrade_all_buildings = {
@@ -367,18 +350,15 @@ cm_run_auto_build = {
 						check_range_bounds = no
 						limit = { NOT = { integration_level = conquered } }
 						save_scope_as = location
-						cm_clear_finished_auto_build_in_progress = yes
 						if = {
 							limit = { AND = { cm_get_open_build_queue_slots > 0 cm_location_can_auto_build = yes } }
 							construct_building = { building_type = scope:building_type }
-							add_to_variable_list = { name = cm_auto_build_in_progress target = scope:building_type }
 						}
 					}
 				} else = {
 					every_in_list = {
 						variable = cm_all_locations_including_subjects_list
 						save_scope_as = location
-						cm_clear_finished_auto_build_in_progress = yes
 						if = {
 							limit = { AND = { NOT = { integration_level = conquered } cm_get_open_build_queue_slots > 0 cm_location_can_auto_build = yes } }
 							if = {
@@ -391,7 +371,6 @@ cm_run_auto_build = {
 									payer = scope:country
 								}
 							}
-							add_to_variable_list = { name = cm_auto_build_in_progress target = scope:building_type }
 						}
 					}
 				}
