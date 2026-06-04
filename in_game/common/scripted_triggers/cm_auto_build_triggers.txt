@@ -146,7 +146,21 @@ cm_auto_build_check_any_location_allowed_to_build = {
 # Expects scopes: building_type, country. Root is the location.
 cm_location_can_auto_build = {
 	cm_auto_build_will_auto_build = { target = scope:building_type }
+	cm_location_has_no_auto_build_chain_predecessor = yes
 	cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_building_type_for_auto_build }
+}
+
+# Expects scope:country (cm_auto_build_chain_predecessors populated by cm_auto_build_resolve_building_type) and scope:location.
+# True when the location has none of the resolved building type's obsolete predecessor tiers.
+cm_location_has_no_auto_build_chain_predecessor = {
+	scope:country = {
+		NOT = {
+			any_in_list = {
+				variable = cm_auto_build_chain_predecessors
+				scope:location = { has_building = prev }
+			}
+		}
+	}
 }
 
 # Root is the location. Expects the building type as a target, also expects the scope country.
