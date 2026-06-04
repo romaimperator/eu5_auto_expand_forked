@@ -99,6 +99,7 @@ template build_location_entry {
 				hbox = {
 					layoutpolicy_horizontal = expanding
 					margin = {5 0}
+					margin_right = 10
 
 					hbox = { #Location Card
 						background = {
@@ -118,8 +119,8 @@ template build_location_entry {
 							}
 						}
 						card_header_button_04 = {
-							size = {160 43}
-
+							size = {140 43}
+							
 							hbox = {
 								layoutpolicy_horizontal = expanding
 								margin_right = 4
@@ -139,7 +140,7 @@ template build_location_entry {
 
 										text_single = {
 											visible = "[IsDataModelEmpty(Location.GetCivilConstructions)]"
-											maximumsize = { 110 15}
+											maximumsize = { 105 15}
 											alwaystransparent = no
 											align = left|nobaseline
 											autoresize = yes
@@ -156,7 +157,7 @@ template build_location_entry {
 
 										text_single = {
 											visible = "[Not(IsDataModelEmpty(Location.GetCivilConstructions))]"
-											maximumsize = { 75 15}
+											maximumsize = { 65 15}
 											alwaystransparent = no
 											align = left|nobaseline
 											autoresize = yes
@@ -494,7 +495,7 @@ template build_location_entry {
 
 						hbox = {
                             margin_right = 5
-                            spacing = 6
+                            spacing = 2
                             layoutpolicy_horizontal = expanding
                             widget = { #profit
                                 size = { 60 39 }
@@ -623,66 +624,102 @@ template build_location_entry {
                                 }
                             }
                             widget = { #efficiency
-                                size = { 70 36 }
-								hbox = {
-									expand = {}
-									vbox = { #built
-										visible = "[And(LocationToBuildItem.ShowProfit, LocationToBuildItem.HasConstructedBuildingLevels)]"
-										# visible = "[Building.IsProducing]"
-										layoutpolicy_horizontal = expanding
-										datamodel = "[Building.GetProductionMethods]"
-										item = {
-											text_single = {
-												size = { 70 18 }
-												autoresize = no
-												#raw_text = "[Building.GetBuildingProductionEfficiency(ActiveProductionMethod.GetMethod)|+=2%]@efficiency!"
-												text = "BUILDING_PROD_EFFICIENCY"
-												align = nobaseline|right
-												default_format = "@bold!"
-												fontsize = 14
-												tooltipwidget = {
-													using = building_production_efficiency_tooltip
+                                size = { 70 44 }
+								vbox = {
+									layoutpolicy_horizontal = expanding
+									
+									hbox = {
+										expand = {}
+										vbox = { #built
+											visible = "[And(LocationToBuildItem.ShowProfit, LocationToBuildItem.HasConstructedBuildingLevels)]"
+											# visible = "[Building.IsProducing]"
+											layoutpolicy_horizontal = expanding
+											datamodel = "[Building.GetProductionMethods]"
+											item = {
+												text_single = {
+													size = { 70 18 }
+													autoresize = no
+													#raw_text = "[Building.GetBuildingProductionEfficiency(ActiveProductionMethod.GetMethod)|+=2%]@efficiency!"
+													text = "BUILDING_PROD_EFFICIENCY"
+													align = nobaseline|right
+													default_format = "@bold!"
+													fontsize = 14
+													tooltipwidget = {
+														using = building_production_efficiency_tooltip
+													}
+													sort_by_highlight = {
+														size = { 105% 200% }
+														name = "production_efficiency"
+													}
 												}
-												sort_by_highlight = {
-													size = { 105% 200% }
-													name = "production_efficiency"
+											}
+										}
+									}
+									
+									hbox = { #unbuilt
+										datacontext = "[LocationToBuildItem.GetBuildingType]"
+										datacontext = "[LocationToBuildItem.GetLocation]"
+										visible = "[And(LocationToBuildItem.ShowProfit, Not(LocationToBuildItem.HasConstructedBuildingLevels))]"
+										expand = {}
+										text_single = {
+											size = { 70 18 }
+											autoresize = no
+											default_format = "@bold!"
+											fontsize = 14
+											align = nobaseline|right
+											text = "BUILDING_TYPE_POSSIBLE_PROD_EFFICIENCY"
+											tooltipwidget = {
+												SimpleContextualStringPairTooltipType = {
+													blockoverride "title_icon" {
+														icon = {
+															using = tooltip_title_icon_size
+															texture = "gfx/interface/icons/flat_icons/building_panel/production_efficiency.dds"
+														}
+													}
+													blockoverride "concept_link" {
+														text = "[production_efficiency|e]"
+													}
+													lowpriotextcontext = "[BuildingType.ProductionEfficiencyInfo(LocationToBuildItem.GetOwner, LocationToBuildItem.GetLocation)]"
+												}
+											}
+											sort_by_highlight = {
+												size = { 105% 200% }
+												name = "production_efficiency"
+											}
+										}
+									}
+
+									hbox = {
+										margin_right = 2
+										margin_left = 12
+										progressbar = {
+											visible = "[Building.GetHasEstablishmentRamp]"
+											# layoutpolicy_horizontal = expanding
+											size = { 56 6 }
+											using = progress_bar_goldish_blue
+											min = 0
+											max = 1
+											value = "[FixedPointToFloat(Building.GetEstablishmentProgressFraction)]"
+											direction = horizontal
+											tooltipwidget = {
+												SimpleContextualStringPairTooltipType = {
+													blockoverride "title_icon" {
+														icon = {
+															using = tooltip_title_icon_size
+															texture = "gfx/interface/icons/flat_icons/building_panel/establishment.dds"
+														}
+													}
+													blockoverride "concept_link" {
+														text = "[establishment|e]"
+													}
+													blockoverride "tooltip_textcontext" {
+														textcontext = "[Building.GetEstablishmentTooltip]"
+													}
 												}
 											}
 										}
 									}
 								}
-                                hbox = { #unbuilt
-                                    datacontext = "[LocationToBuildItem.GetBuildingType]"
-                                    datacontext = "[LocationToBuildItem.GetLocation]"
-                                    visible = "[And(LocationToBuildItem.ShowProfit, Not(LocationToBuildItem.HasConstructedBuildingLevels))]"
-                                    expand = {}
-                                    text_single = {
-                                        size = { 70 18 }
-										autoresize = no
-                                        default_format = "@bold!"
-                                        fontsize = 14
-										align = nobaseline|right
-                                        text = "BUILDING_TYPE_POSSIBLE_PROD_EFFICIENCY"
-                                        tooltipwidget = {
-                                            SimpleContextualStringPairTooltipType = {
-                                                blockoverride "title_icon" {
-                                                    icon = {
-                                                        using = tooltip_title_icon_size
-                                                        texture = "gfx/interface/icons/flat_icons/building_panel/production_efficiency.dds"
-                                                    }
-                                                }
-                                                blockoverride "concept_link" {
-                                                    text = "[production_efficiency|e]"
-                                                }
-                                                lowpriotextcontext = "[BuildingType.ProductionEfficiencyInfo(LocationToBuildItem.GetOwner, LocationToBuildItem.GetLocation)]"
-                                            }
-                                        }
-                                        sort_by_highlight = {
-                                            size = { 105% 200% }
-                                            name = "production_efficiency"
-                                        }
-                                    }
-                                }
                             }
                         }
 
@@ -721,6 +758,7 @@ template build_location_entry {
 											description = "[LocationToBuildItem.CanDestroyDesc]"
 											# CM check if auto-expand is on when destroying a building level
 											on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+											confirmation = "[LocationToBuildItem.CanDestroyDesc]"
 											on_action = "[LocationToBuildItem.DestroyDefault]"
 											enabled = "[LocationToBuildItem.CanDestroy]"
 											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
@@ -734,6 +772,7 @@ template build_location_entry {
 
 											title = "DESTROY_BUILDING_ACTION_CTRL"
 											description = "[LocationToBuildItem.CanDestroyDescCtrl]"
+										confirmation = "[LocationToBuildItem.CanDestroyDescCtrl]"
 											on_action = "[LocationToBuildItem.DestroyCtrl]"
 											enabled = "[LocationToBuildItem.CanDestroy]"
 											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
@@ -747,6 +786,7 @@ template build_location_entry {
 
 											title = "DESTROY_BUILDING_ACTION_SHIFT"
 											description = "[LocationToBuildItem.CanDestroyDescShift]"
+											confirmation = "[LocationToBuildItem.CanDestroyDescShift]"
 											on_action = "[LocationToBuildItem.DestroyShift]"
 											enabled = "[LocationToBuildItem.CanDestroy]"
 											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
@@ -978,6 +1018,7 @@ template build_location_entry {
 											description = "[LocationToBuildItem.CanDestroyDesc]"
 											# CM check if auto-expand is on when destroying a building level
 											on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+											confirmation = "[LocationToBuildItem.CanDestroyDesc]"
 											on_action = "[LocationToBuildItem.DestroyDefault]"
 											enabled = "[LocationToBuildItem.CanDestroy]"
 											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
@@ -991,6 +1032,7 @@ template build_location_entry {
 
 											title = "DESTROY_BUILDING_ACTION_CTRL"
 											description = "[LocationToBuildItem.CanDestroyDescCtrl]"
+										confirmation = "[LocationToBuildItem.CanDestroyDescCtrl]"
 											on_action = "[LocationToBuildItem.DestroyCtrl]"
 											enabled = "[LocationToBuildItem.CanDestroy]"
 											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
@@ -1004,6 +1046,7 @@ template build_location_entry {
 
 											title = "DESTROY_BUILDING_ACTION_SHIFT"
 											description = "[LocationToBuildItem.CanDestroyDescShift]"
+											confirmation = "[LocationToBuildItem.CanDestroyDescShift]"
 											on_action = "[LocationToBuildItem.DestroyShift]"
 											enabled = "[LocationToBuildItem.CanDestroy]"
 											on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
