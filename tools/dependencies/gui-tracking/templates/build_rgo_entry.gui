@@ -90,6 +90,7 @@ template build_rgo_entry {
 				hbox = {
 					layoutpolicy_horizontal = expanding
 					margin = {5 0}
+					spacing = 4
 
 					hbox = { #Location Card
 						background = {
@@ -109,7 +110,7 @@ template build_rgo_entry {
 							}
 						}
 						card_header_button_04 = {
-							size = {160 43}
+							size = {140 43}
 							
 							hbox = {
 								layoutpolicy_horizontal = expanding
@@ -130,7 +131,7 @@ template build_rgo_entry {
 	
 										text_single = {
 											visible = "[IsDataModelEmpty(Location.GetCivilConstructions)]"
-											maximumsize = { 110 15}
+											maximumsize = { 105 15}
 											alwaystransparent = no
 											align = left|nobaseline
 											autoresize = yes
@@ -147,7 +148,7 @@ template build_rgo_entry {
 
 										text_single = {
 											visible = "[Not(IsDataModelEmpty(Location.GetCivilConstructions))]"
-											maximumsize = { 75 15}
+											maximumsize = { 65 15}
 											alwaystransparent = no
 											align = left|nobaseline
 											autoresize = yes
@@ -237,10 +238,12 @@ template build_rgo_entry {
 																	}
 																	blockoverride "field_content" {
 																		text_single = {
+																			layoutpolicy_horizontal = expanding
+																			autoresize = no
 																			text = "BUILD_LOCATION_POP_PROMOTE"
 																		}
-																		expand = {}									
 																		text_single = {
+																			autoresize = yes
 																			raw_text = "[Location.GetPromote]"
 																		}
 																	}
@@ -352,6 +355,36 @@ template build_rgo_entry {
 							}
 							contextmenu_widget = {
 								LocationContextMenu = {}
+							}
+						}
+					}
+
+					widget = {
+						size = { 20 44 }
+						datacontext = "[RawGoodLocationItem.GetLocation]"
+						button_square_checkbox = {
+							size = { 20 20 }
+							parentanchor = center
+							widgetanchor = center
+							tooltipwidget = { using = AutoExpand_RGO_Tooltip }
+							blockoverride "check_texture" {
+								texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+							}
+							blockoverride "checked_visible" {
+								visible = "[IsAutoExpandRGO(Location.Self)]"
+							}
+							blockoverride "unchecked_visible" {
+								visible = "[Not(IsAutoExpandRGO(Location.Self))]"
+							}
+							action_tooltip = {
+								click_type = left
+								title = "[SelectLocalization(IsAutoExpandRGO(Location.Self), 'TOGGLE_AUTO_EXPAND_RGO_ON', 'TOGGLE_AUTO_EXPAND_RGO_OFF')]"
+								on_action = "[ToggleAutoExpandRGO(Location.Self)]"
+							}
+							action_tooltip = {
+								click_type = right
+								title = "TOGGLE_AUTO_EXPAND_ALL_RGO"
+								on_action = "[ExpandRawGoodsLateralView.ToggleAutoExpandAllRGOs]"
 							}
 						}
 					}
@@ -518,7 +551,7 @@ template build_rgo_entry {
 
 							}
 							widget = {
-								size = { 70 30 }
+								size = { 60 30 }
 								datacontext = "[Location.GetMarket]"
 								datacontext = "[Location.GetMarket.GetMarketEntry(Location.GetRawMaterial)]"
 								tooltipwidget = {
@@ -528,7 +561,7 @@ template build_rgo_entry {
 									layoutpolicy_horizontal = expanding
 									expand = {}
 									text_single = {
-										maximumsize = { 50 18 }
+										maximumsize = { 40 18 }
 										align = nobaseline|right
 										fontsize = 14
 										raw_text = "[Location.GetMarket.GetPrice(Location.GetRawMaterial)|2]"
@@ -644,10 +677,10 @@ template build_rgo_entry {
 	
 									widget = {
 										layoutpolicy_vertical = expanding
-										size = {55 -1}
+										size = {40 -1}
 										text_single = {
 											parentanchor = center
-											maximumsize = {55 -1}
+											maximumsize = {40 -1}
 											visible = "[Not(Location.IsMaxRGOWorkersUnderConstruction)]"
 											default_format = "#important_number"
 											align = nobaseline
@@ -657,7 +690,7 @@ template build_rgo_entry {
 
 										text_single = {
 											parentanchor = center
-											maximumsize = {55 -1}
+											maximumsize = {40 -1}
 											visible = "[Location.IsMaxRGOWorkersUnderConstruction]"
 											default_format = "#important_number"
 											align = nobaseline
@@ -675,7 +708,7 @@ template build_rgo_entry {
 
 										action_tooltip = {
 											click_type = left
-											click_mode = single	
+											click_mode = single
 											enabled = "[RawGoodLocationItem.CanUpgradeRGO]"
 											title = "LOCATION_VIEW_EXPAND_RGO_TITLE"
 											description = "[RawGoodLocationItem.GetUpgradeRGOTooltip]"
@@ -683,7 +716,7 @@ template build_rgo_entry {
 											on_action = "[RawGoodLocationItem.UpgradeRGO]"
 										}
 
-										datacontext = "[RawGoodLocationItem.GetLocation]"				
+										datacontext = "[RawGoodLocationItem.GetLocation]"
 										onmousehierarchyenter = "[PdxGuiWidget.SetHighlightLocation(Location.Self)]"
 										tooltipwidget = {
 											using = location_rgo_button_tooltip

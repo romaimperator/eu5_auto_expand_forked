@@ -229,8 +229,43 @@
 							}
 
 							widget = {
-								size = {55 25}
+								size = {80 25}
 								hbox = {
+									button_square_checkbox = {
+										visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsMultipleLevels)]"
+										size = { 20 20 }
+										tooltipwidget = {
+											using = AutoExpand_Building_Tooltip
+										}
+										background = {
+											texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+											texture_density = 2
+
+											modify_texture = {
+												using = color_market_grey_texture
+												blend_mode = add
+												alpha = 0.5
+											}
+										}
+
+										blockoverride "check_texture" {
+											texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+										}
+										blockoverride "checked_visible" {
+											visible = "[AreBuildingsAutoExpand(BuildingItem.GetBuildingsFunc)]"
+										}
+										blockoverride "unchecked_visible" {
+											visible = "[Not(AreBuildingsAutoExpand(BuildingItem.GetBuildingsFunc))]"
+										}
+
+										action_tooltip = {
+											on_action = "[ToggleAutoExpandBuildings(BuildingItem.GetBuildingsFunc)]"
+											title = "[SelectLocalization( AreBuildingsAutoExpand(BuildingItem.GetBuildingsFunc), 'TOGGLE_AUTO_EXPAND_ALL_ON', 'TOGGLE_AUTO_EXPAND_ALL_OFF' )]"
+										}
+									}
+
+									expand = {}
+
 									button_square_checkbox = {
 										visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing)]"
 										size = { 20 20 }

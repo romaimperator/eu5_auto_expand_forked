@@ -33,9 +33,6 @@
 						layoutstretchfactor_horizontal = 1
 
 						using = bg_building_card_colors
-						blockoverride "building_main_texture" {
-							using = color_grey_texture
-						}
 						blockoverride "building_color" {
 							color = "[BuildingItem.GetBuildingType.GetPopType.GetColor]"
 							alpha = 0.7
@@ -361,27 +358,60 @@
 											}
 	
 											widget = { #efficiency
-												size = { 70 36 }
-												vbox = { #built
-													visible = "[Building.IsProducing]"
+												size = { 70 44 }
+												vbox = {
 													layoutpolicy_horizontal = expanding
-													datamodel = "[Building.GetProductionMethods]"
-													item = {
-														text_single = {
-															size = { 70 18 }
-															autoresize = no
-															#raw_text = "[Building.GetBuildingProductionEfficiency(ActiveProductionMethod.GetMethod)|+=2%]@efficiency!"
-															text = "BUILDING_PROD_EFFICIENCY"
-															align = nobaseline|right
-															default_format = "@bold!"
-															fontsize = 14
-															tooltipwidget = {
-																using = building_production_efficiency_tooltip
+													vbox = { #built
+														visible = "[Building.IsProducing]"
+														layoutpolicy_horizontal = expanding
+														datamodel = "[Building.GetProductionMethods]"
+														item = {
+															text_single = {
+																size = { 70 18 }
+																autoresize = no
+																#raw_text = "[Building.GetBuildingProductionEfficiency(ActiveProductionMethod.GetMethod)|+=2%]@efficiency!"
+																text = "BUILDING_PROD_EFFICIENCY"
+																align = nobaseline|right
+																default_format = "@bold!"
+																fontsize = 14
+																tooltipwidget = {
+																	using = building_production_efficiency_tooltip
+																}
+		
+																sort_by_highlight = {
+																	size = { 105% 200% }
+																	name = "production_efficiency"
+																}
 															}
-	
-															sort_by_highlight = {
-																size = { 105% 200% }
-																name = "production_efficiency"
+														}
+													}
+													hbox = {
+														margin_right = 2
+														margin_left = 12
+														progressbar = {
+															visible = "[Building.GetHasEstablishmentRamp]"
+															# layoutpolicy_horizontal = expanding
+															size = { 56 6 }
+															using = progress_bar_goldish_blue
+															min = 0
+															max = 1
+															value = "[FixedPointToFloat(Building.GetEstablishmentProgressFraction)]"
+															direction = horizontal
+															tooltipwidget = {
+																SimpleContextualStringPairTooltipType = {
+																	blockoverride "title_icon" {
+																		icon = {
+																			using = tooltip_title_icon_size
+																			texture = "gfx/interface/icons/flat_icons/building_panel/establishment.dds"
+																		}
+																	}
+																	blockoverride "concept_link" {
+																		text = "[establishment|e]"
+																	}
+																	blockoverride "tooltip_textcontext" {
+																		textcontext = "[Building.GetEstablishmentTooltip]"
+																	}
+																}
 															}
 														}
 													}
@@ -392,59 +422,96 @@
 									}
 
 									widget = {
-										size = { 20 41 }
+										size = { 42 44 }
 
-										vbox = { # buttons
-											spacing = 1
-	
-											button_square_checkbox = {
-												visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing)]"
-												size = { 20 20 }
-												enabled = "[CanSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
-												tooltipwidget = {
-													using = Building_Subsidized_Tooltip
-												}
-												
-												blockoverride "check_texture" {
-													texture = "gfx/interface/icons/flat_icons/building_panel/subsidized.dds"
-												}
-												blockoverride "checked_visible" {
-													visible = "[AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc)]"
-												}
-												blockoverride "unchecked_visible" {
-													visible = "[Not(AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc))]"
-												}
-	
-												action_tooltip = {
-													on_action = "[ToggleSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
-													on_action = "[PlayAudioEffect(Concatenate('UI_action_building_subsidize', GetToggleSuffix(AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc))))]"
-													enabled = "[CanSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
-													title = "[SelectLocalization( BuildingCandidate.GetBuilding.IsSubsidized, 'TOGGLE_SUBSIDIZE_ON', 'TOGGLE_SUBSIDIZE_OFF' )]"
+										hbox = {
+											spacing = 2
+											widget = { # AutoExpand slot
+												size = { 20 44 }
+												button_square_checkbox = {
+													visible = "[And(ObjectsEqual(Building.GetOwner, Player.Self), BuildingType.IsMultipleLevels)]"
+													size = { 20 20 }
+													parentanchor = center
+													widgetanchor = center
+													tooltipwidget = { using = AutoExpand_Building_Tooltip }
+													blockoverride "check_texture" {
+														texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+													}
+													blockoverride "checked_visible" {
+														visible = "[IsAutoExpand(Building.Self)]"
+													}
+													blockoverride "unchecked_visible" {
+														visible = "[Not(IsAutoExpand(Building.Self))]"
+													}
+													background = {
+														texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+														texture_density = 2
+														modify_texture = {
+															using = color_market_grey_texture
+															blend_mode = add
+															alpha = 0.5
+														}
+													}
+													action_tooltip = {
+														click_type = left
+														title = "[SelectLocalization(IsAutoExpand(Building.Self), 'TOGGLE_AUTO_EXPAND_ON', 'TOGGLE_AUTO_EXPAND_OFF')]"
+														on_action = "[ToggleAutoExpandBuilding(Building.Self)]"
+													}
 												}
 											}
-	
-											button_square_checkbox = {
-												visible = "[And(BuildingItem.HasBuildings, BuildingItem.ShowCloseAll)]"
-												size = { 20 20 }
-												enabled = "[CanToggleBuildings(BuildingItem.GetBuildingsFunc)]"
-												tooltipwidget = {
-													using = Building_Open_Tooltip
+
+											vbox = { # Subsidize + Close
+												spacing = 1
+
+												button_square_checkbox = {
+													visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing)]"
+													size = { 20 20 }
+													enabled = "[CanSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
+													tooltipwidget = {
+														using = Building_Subsidized_Tooltip
+													}
+
+													blockoverride "check_texture" {
+														texture = "gfx/interface/icons/flat_icons/building_panel/subsidized.dds"
+													}
+													blockoverride "checked_visible" {
+														visible = "[AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc)]"
+													}
+													blockoverride "unchecked_visible" {
+														visible = "[Not(AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc))]"
+													}
+
+													action_tooltip = {
+														on_action = "[ToggleSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
+														on_action = "[PlayAudioEffect(Concatenate('UI_action_building_subsidize', GetToggleSuffix(AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc))))]"
+														enabled = "[CanSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
+														title = "[SelectLocalization( BuildingCandidate.GetBuilding.IsSubsidized, 'TOGGLE_SUBSIDIZE_ON', 'TOGGLE_SUBSIDIZE_OFF' )]"
+													}
 												}
-												
-												blockoverride "check_texture" {
-													texture = "gfx/interface/icons/achievements/padlock.dds"
-												}
-												blockoverride "checked_visible" {
-													visible = "[AreBuildingsClosed(BuildingItem.GetBuildingsFunc)]"
-												}
-												blockoverride "unchecked_visible" {
-													visible = "[Not(AreBuildingsClosed(BuildingItem.GetBuildingsFunc))]"
-												}
-	
-												action_tooltip = {
-													on_action = "[ToggleBuildings(BuildingItem.GetBuildingsFunc)]"
+
+												button_square_checkbox = {
+													visible = "[And(BuildingItem.HasBuildings, BuildingItem.ShowCloseAll)]"
+													size = { 20 20 }
 													enabled = "[CanToggleBuildings(BuildingItem.GetBuildingsFunc)]"
-													title = "[SelectLocalization( BuildingCandidate.GetBuilding.IsOpen, 'TOGGLE_CLOSE_ON', 'TOGGLE_CLOSE_OFF' )]"
+													tooltipwidget = {
+														using = Building_Open_Tooltip
+													}
+
+													blockoverride "check_texture" {
+														texture = "gfx/interface/icons/achievements/padlock.dds"
+													}
+													blockoverride "checked_visible" {
+														visible = "[AreBuildingsClosed(BuildingItem.GetBuildingsFunc)]"
+													}
+													blockoverride "unchecked_visible" {
+														visible = "[Not(AreBuildingsClosed(BuildingItem.GetBuildingsFunc))]"
+													}
+
+													action_tooltip = {
+														on_action = "[ToggleBuildings(BuildingItem.GetBuildingsFunc)]"
+														enabled = "[CanToggleBuildings(BuildingItem.GetBuildingsFunc)]"
+														title = "[SelectLocalization( BuildingCandidate.GetBuilding.IsOpen, 'TOGGLE_CLOSE_ON', 'TOGGLE_CLOSE_OFF' )]"
+													}
 												}
 											}
 										}
@@ -453,7 +520,7 @@
 
 									widget = { #builder
 										layoutpolicy_vertical = expanding
-										size = { 120 -1 }
+										size = { 98 -1 }
 										alwaystransparent = no
 										filter_mouse = left|right
 										widget = {
@@ -468,7 +535,7 @@
 											hbox = {
 												spacing = 5
 												using = bg_text_mask_container_brown
-												margin = {5 5}
+												margin = {4 5}
 
 												button_square_minus = {
 													size = { 20 20 }
@@ -481,6 +548,7 @@
 														visible = "[Not(GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0'))]"
 														enabled = "[CanDestroyBuilding(Building.Self)]"
 														description = "[GetDestroyBuildingInfo(Building.Self)]"
+														confirmation = "[GetDestroyBuildingInfo(Building.Self)]"
 														on_action = "[DestroyBuilding(Building.Self)]"
 														on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
 													}
@@ -514,7 +582,7 @@
 												}
 
 												text_single = {
-													size = { 60 20 }
+													size = { 40 20 }
 													autoresize = no
 													visible = "[And(Not(BuildingCandidate.GetBuilding.IsUnderConstruction), Not(And(BuildingCandidate.GetBuilding.CanPlayerUpgrade, BuildingCandidate.GetBuilding.IsPlayerUpgrading)))]"
 													raw_text = "[BuildingCandidate.GetBuilding.GetLevel|0Y] / [BuildingCandidate.GetMaxLevel|0Y]"
@@ -531,7 +599,7 @@
 												}
 
 												text_single = {
-													size = { 60 20 }
+													size = { 40 20 }
 													autoresize = no
 													visible = "[And3(Not(BuildingCandidate.GetBuilding.IsUnderConstruction), BuildingCandidate.GetBuilding.CanPlayerUpgrade, BuildingCandidate.GetBuilding.IsPlayerUpgrading)]"
 													raw_text = "[BuildingCandidate.GetBuilding.GetLevel|0Y](#G -[BuildingCandidate.GetBuilding.GetLevelsUnderUpgrade|0]#!) / [BuildingCandidate.GetMaxLevel|0Y]"
@@ -548,7 +616,7 @@
 												}
 
 												text_single = {
-													size = { 60 20 }
+													size = { 40 20 }
 													autoresize = no
 													visible = "[BuildingCandidate.GetBuilding.IsUnderConstruction]"
 													raw_text = "[BuildingCandidate.GetBuilding.GetLevel|0Y] ([BuildingCandidate.GetBuilding.GetLevelsUnderConstruction|0+=]) / [BuildingCandidate.GetMaxLevel|0Y]"
