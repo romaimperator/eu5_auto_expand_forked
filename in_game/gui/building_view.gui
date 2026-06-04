@@ -46,13 +46,60 @@
 				size = { -1 220 }
 				using = bg_age_event_frame
 
-				datacontext = "[BuildingView.GetGoods]"
 				background = {
-					texture =  "[GetGoodsIllustration(Goods.Self)]"
+					texture =  "[GetGoodsIllustration(BuildingView.GetGoods)]"
 					texture_density = 2
 					alpha = 0.5
 					spriteType = stretched
 					spriteborder = { 0 0 }
+				}
+
+				datacontext = "[BuildingView.GetBuilding]"	
+				widget = { # establishment piechart
+					size = { 100 100 }
+					visible = "[Building.GetHasEstablishmentRamp]"
+					parentanchor = center
+					piechart = {
+						parentanchor = center
+						using = bg_circle_piechart
+						size = { 100 100 }
+						using = piechart_angles
+						pieslice_no_highlight = {
+							filter_mouse = none
+							alwaystransparent = yes
+							texture = "gfx/interface/pie_charts/pie_chart_alpha_80_green.dds"
+							value = "[FixedPointToFloat(Building.GetEstablishmentProgressFraction)]"
+							color = { 1 1 1 1 }
+						}
+						pieslice_no_highlight = {
+							filter_mouse = none
+							alwaystransparent = yes
+							texture = "gfx/interface/pie_charts/pie_chart_alpha_80_green.dds"
+							value = "[Subtract_float('(float)1.0', FixedPointToFloat(Building.GetEstablishmentProgressFraction))]"
+							color = { 1 1 1 0 }
+						}
+						icon = {
+							parentanchor = center
+							size = { 60 60 }
+							texture = "gfx/interface/icons/flat_icons/building_panel/establishment.dds"
+						}
+					}
+					tooltipwidget = {
+						SimpleContextualStringPairTooltipType = {
+							blockoverride "title_icon" {
+								icon = {
+									using = tooltip_title_icon_size
+									texture = "gfx/interface/icons/flat_icons/building_panel/establishment.dds"
+								}
+							}
+							blockoverride "concept_link" {
+								text = "[establishment|e]"
+							}
+							blockoverride "tooltip_textcontext" {
+								textcontext = "[Building.GetEstablishmentTooltip]"
+							}
+						}
+					}
 				}
 			}
 
@@ -63,8 +110,8 @@
 					hbox = {
 						margin_left = 12
 						using = layoutpolicy_expanding
-						maximumsize = { -1 40 }
-
+						maximumsize = { -1 80 }
+	
 						background = {
 							using = button_secondary_tab_alt_color
 							using = button_main_tab_icon_texture
@@ -675,12 +722,16 @@
 
 									text_single = {
 												autoresize = no
-												size = { 155 15 }
-										align = left|nobaseline
-										default_format = "#yellow_titles"
-										text = "[Building.GetName]"
-										tooltipwidget = {
-											using = Building_tooltip
+												size = { 130 15 }
+												align = left|nobaseline
+												default_format = "#yellow_titles"
+												text = "[Building.GetName]"
+												tooltipwidget = {
+													using = Building_tooltip
+												}
+											}
+		
+											expand = {}
 										}
 									}
 
@@ -836,118 +887,118 @@
 
 											vbox = {
 												spacing = 1
-							button_square_checkbox = {
-								size = { 20 20 }
-								enabled = "[CanSubsidizeBuildings(BuildingView.GetBuildingsFunc)]"
-								visible = "[And(BuildingView.IsMultiselection, BuildingView.GetBuilding.GetType.IsProducing)]"
-								datacontext = "[BuildingView.GetBuilding]"
-								tooltipwidget = {
-									using = Location_Building_Subsidized_Tooltip
-								}
+												button_square_checkbox = {
+													size = { 20 20 }
+													enabled = "[CanSubsidizeBuildings(BuildingView.GetBuildingsFunc)]"
+													visible = "[And(BuildingView.IsMultiselection, BuildingView.GetBuilding.GetType.IsProducing)]"
+													datacontext = "[BuildingView.GetBuilding]"							
+													tooltipwidget = {
+														using = Location_Building_Subsidized_Tooltip
+													}
+		
+													blockoverride "check_texture" {
+														texture = "gfx/interface/icons/flat_icons/building_panel/subsidized.dds"
+													}
+													blockoverride "checked_visible" {
+														visible = "[AreBuildingsSubsidized(BuildingView.GetBuildingsFunc)]"
+													}
+													blockoverride "unchecked_visible" {
+														visible = "[Not(AreBuildingsSubsidized(BuildingView.GetBuildingsFunc))]"
+													} 
+		
+													action_tooltip = {
+														title = "[SelectLocalization(Building.IsSubsidized, 'TOGGLE_SUBSIDIZE_ON', 'TOGGLE_SUBSIDIZE_OFF' )]"
+														enabled = "[CanSubsidizeBuilding(Building.Self)]"
+														description = "[GetSubsidizeBuildingInfo(Building.Self)]"
+														on_action = "[SubsidizeBuilding(Building.Self)]"
+														on_action = "[PlayAudioEffect(Concatenate('UI_action_building_subsidize', GetToggleSuffix(AreBuildingsSubsidized(BuildingView.GetBuildingsFunc))))]"
+													}
+												}
+							
+												button_square_checkbox = {
+													size = { 20 20 }
+													enabled = "[CanSubsidizeBuilding(Building.Self)]"
+													visible = "[And(Not(BuildingView.IsMultiselection), BuildingView.GetBuilding.GetType.IsProducing)]"
+													datacontext = "[BuildingView.GetBuilding]"							
+													tooltipwidget = {
+														using = Location_Building_Subsidized_Tooltip
+													}
+		
+													blockoverride "check_texture" {
+														texture = "gfx/interface/icons/flat_icons/building_panel/subsidized.dds"
+													}
+													blockoverride "checked_visible" {
+														visible = "[Building.IsSubsidized]"
+													}
+													blockoverride "unchecked_visible" {
+														visible = "[Not(Building.IsSubsidized)]"
+													}
+		
+													action_tooltip = {
+														title = "[SelectLocalization(Building.IsSubsidized, 'TOGGLE_SUBSIDIZE_ON', 'TOGGLE_SUBSIDIZE_OFF' )]"
+														enabled = "[CanSubsidizeBuilding(Building.Self)]"
+														description = "[GetSubsidizeBuildingInfo(Building.Self)]"
+														on_action = "[SubsidizeBuilding(Building.Self)]"
+														on_action = "[PlayAudioEffect(Concatenate('UI_action_building_subsidize', GetToggleSuffix(Building.IsSubsidized)))]"
+													}
+												}
+		
+												button_square_checkbox = {
+													size = { 20 20 }
+													enabled = "[CanToggleBuildings(BuildingView.GetBuildingsFunc)]"
+													visible = "[BuildingView.IsMultiselection]"						
+													tooltipwidget = {
+														SimpleContextualTooltipType = {
+															lowpriotextcontext = "[GetToggleBuildingsInfo(BuildingView.GetBuildingsFunc)]"
+														}
+													}
+		
+													blockoverride "check_texture" {
+														texture = "gfx/interface/icons/achievements/padlock.dds"
+													}
+													blockoverride "checked_visible" {
+														visible = "[AreBuildingsClosed(BuildingView.GetBuildingsFunc)]"
+													}
+													blockoverride "unchecked_visible" {
+														visible = "[Not(AreBuildingsClosed(BuildingView.GetBuildingsFunc))]"
+													}
+		
+													action_tooltip = {
+														title = "TOGGLE_CLOSE_ALL_BUILDINGS"
+														enabled = "[CanToggleBuildings(BuildingView.GetBuildingsFunc)]"
+														description = "[GetToggleBuildingsInfo(BuildingView.GetBuildingsFunc)]"
+														on_action = "[ToggleBuildings(BuildingView.GetBuildingsFunc)]"
+													}
+												}
+												
+												button_square_checkbox = {
+													size = { 20 20 }
+													enabled = "[CanToggleBuilding(Building.Self)]"
+													visible = "[Not(BuildingView.IsMultiselection)]"
+													datacontext = "[BuildingView.GetBuilding]"								
+													tooltipwidget = {
+														using = Location_Building_Open_Tooltip
+													}
+		
+													blockoverride "check_texture" {
+														texture = "gfx/interface/icons/achievements/padlock.dds"
+													}
+													blockoverride "checked_visible" {
+														visible = "[Not(Building.IsOpen)]"
+													}
+													blockoverride "unchecked_visible" {
+														visible = "[Building.IsOpen]"
+													}
+		
+													action_tooltip = {
+														title = "[SelectLocalization(Building.IsOpen, 'TOGGLE_CLOSE_ON', 'TOGGLE_CLOSE_OFF' )]"
+														enabled = "[CanToggleBuilding(Building.Self)]"
+														description = "[GetToggleBuildingInfo(Building.Self)]"
+														on_action = "[ToggleBuilding(Building.Self)]"
+													}
+												}
 
-								blockoverride "check_texture" {
-									texture = "gfx/interface/icons/flat_icons/building_panel/subsidized.dds"
-								}
-								blockoverride "checked_visible" {
-									visible = "[AreBuildingsSubsidized(BuildingView.GetBuildingsFunc)]"
-								}
-								blockoverride "unchecked_visible" {
-									visible = "[Not(AreBuildingsSubsidized(BuildingView.GetBuildingsFunc))]"
-								}
-
-								action_tooltip = {
-									title = "[SelectLocalization(Building.IsSubsidized, 'TOGGLE_SUBSIDIZE_ON', 'TOGGLE_SUBSIDIZE_OFF' )]"
-									enabled = "[CanSubsidizeBuilding(Building.Self)]"
-									description = "[GetSubsidizeBuildingInfo(Building.Self)]"
-									on_action = "[SubsidizeBuilding(Building.Self)]"
-									on_action = "[PlayAudioEffect(Concatenate('UI_action_building_subsidize', GetToggleSuffix(AreBuildingsSubsidized(BuildingView.GetBuildingsFunc))))]"
-								}
-							}
-
-							button_square_checkbox = {
-								size = { 20 20 }
-								enabled = "[CanSubsidizeBuilding(Building.Self)]"
-								visible = "[And(Not(BuildingView.IsMultiselection), BuildingView.GetBuilding.GetType.IsProducing)]"
-								datacontext = "[BuildingView.GetBuilding]"
-								tooltipwidget = {
-									using = Location_Building_Subsidized_Tooltip
-								}
-
-								blockoverride "check_texture" {
-									texture = "gfx/interface/icons/flat_icons/building_panel/subsidized.dds"
-								}
-								blockoverride "checked_visible" {
-									visible = "[Building.IsSubsidized]"
-								}
-								blockoverride "unchecked_visible" {
-									visible = "[Not(Building.IsSubsidized)]"
-								}
-
-								action_tooltip = {
-									title = "[SelectLocalization(Building.IsSubsidized, 'TOGGLE_SUBSIDIZE_ON', 'TOGGLE_SUBSIDIZE_OFF' )]"
-									enabled = "[CanSubsidizeBuilding(Building.Self)]"
-									description = "[GetSubsidizeBuildingInfo(Building.Self)]"
-									on_action = "[SubsidizeBuilding(Building.Self)]"
-									on_action = "[PlayAudioEffect(Concatenate('UI_action_building_subsidize', GetToggleSuffix(Building.IsSubsidized)))]"
-								}
-							}
-
-							button_square_checkbox = {
-								size = { 20 20 }
-								enabled = "[CanToggleBuildings(BuildingView.GetBuildingsFunc)]"
-								visible = "[BuildingView.IsMultiselection]"
-								tooltipwidget = {
-									SimpleContextualTooltipType = {
-										lowpriotextcontext = "[GetToggleBuildingsInfo(BuildingView.GetBuildingsFunc)]"
-									}
-								}
-
-								blockoverride "check_texture" {
-									texture = "gfx/interface/icons/achievements/padlock.dds"
-								}
-								blockoverride "checked_visible" {
-									visible = "[AreBuildingsClosed(BuildingView.GetBuildingsFunc)]"
-								}
-								blockoverride "unchecked_visible" {
-									visible = "[Not(AreBuildingsClosed(BuildingView.GetBuildingsFunc))]"
-								}
-
-								action_tooltip = {
-									title = "TOGGLE_CLOSE_ALL_BUILDINGS"
-									enabled = "[CanToggleBuildings(BuildingView.GetBuildingsFunc)]"
-									description = "[GetToggleBuildingsInfo(BuildingView.GetBuildingsFunc)]"
-									on_action = "[ToggleBuildings(BuildingView.GetBuildingsFunc)]"
-								}
-							}
-
-							button_square_checkbox = {
-								size = { 20 20 }
-								enabled = "[CanToggleBuilding(Building.Self)]"
-								visible = "[Not(BuildingView.IsMultiselection)]"
-								datacontext = "[BuildingView.GetBuilding]"
-								tooltipwidget = {
-									using = Location_Building_Open_Tooltip
-								}
-
-								blockoverride "check_texture" {
-									texture = "gfx/interface/icons/achievements/padlock.dds"
-								}
-								blockoverride "checked_visible" {
-									visible = "[Not(Building.IsOpen)]"
-								}
-								blockoverride "unchecked_visible" {
-									visible = "[Building.IsOpen]"
-								}
-
-								action_tooltip = {
-									title = "[SelectLocalization(Building.IsOpen, 'TOGGLE_CLOSE_ON', 'TOGGLE_CLOSE_OFF' )]"
-									enabled = "[CanToggleBuilding(Building.Self)]"
-									description = "[GetToggleBuildingInfo(Building.Self)]"
-									on_action = "[ToggleBuilding(Building.Self)]"
-								}
-							}
-
-
+		
 											}
 										}
 
@@ -967,57 +1018,58 @@
 													spacing = 5
 													using = bg_text_mask_container_brown
 													margin = {5 5}
-
-							button_square_minus = {
-								size = { 20 20 }
-								visible = "[Not(GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0'))]"
-								enabled = "[CanDestroyBuilding(Building.Self)]"
-								action_tooltip = {
-									click_mode = confirm
-									click_type = left
-									title = "DESTROY_BUILDING_ACTION"
-									visible = "[Not(GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0'))]"
-									enabled = "[CanDestroyBuilding(Building.Self)]"
-									description = "[GetDestroyBuildingInfo(Building.Self)]"
-									on_action = "[DestroyBuilding(Building.Self)]"
-									on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
-								}
-
-								tooltipwidget = {
-									using = destroy_building_in_location_tt
-								}
-								blockoverride "square_icon_size" {
-									size = {13 13}
-								}
-							}
-
-							button_square_minus = {
-								size = { 20 20 }
-								visible = "[GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0')]"
-								enabled = "[CanCancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
-								action_tooltip = {
-									click_mode = single
-									click_type = left
-									title = "DEQUEUE_BUILDING_ACTION"
-									visible = "[GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0')]"
-									enabled = "[CanCancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
-									description = "[GetCancelConstructionInfo(Building.GetUnderConstructionForPlayer.Self)]"
-									on_action = "[CancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
-								}
-
-								tooltipwidget = { BasicFunctionalTooltip = {} }
-								blockoverride "square_icon_size" {
-									size = {13 13}
-								}
-							}
-
-							text_single = {
-								size = { 60 20 }
-								autoresize = no
-								visible = "[Not(Building.IsUnderConstruction)]"
-								raw_text = "[Building.GetLevel|0Y] / [Building.GetMaxLevel|0Y]"
-								align = center
-								default_format = "#overview_text"
+		
+													button_square_minus = {
+														size = { 20 20 }
+														visible = "[Not(GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0'))]"
+														enabled = "[CanDestroyBuilding(Building.Self)]"
+														action_tooltip = {
+															click_mode = confirm
+															click_type = left
+															title = "DESTROY_BUILDING_ACTION"
+															visible = "[Not(GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0'))]"
+															enabled = "[CanDestroyBuilding(Building.Self)]"
+															description = "[GetDestroyBuildingInfo(Building.Self)]"
+															confirmation = "[GetDestroyBuildingInfo(Building.Self)]"
+															on_action = "[DestroyBuilding(Building.Self)]"
+															on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
+														}
+							
+														tooltipwidget = {
+															using = destroy_building_in_location_tt
+														}
+														blockoverride "square_icon_size" {
+															size = {13 13}
+														}
+													}
+							
+													button_square_minus = {
+														size = { 20 20 }
+														visible = "[GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0')]"
+														enabled = "[CanCancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
+														action_tooltip = {
+															click_mode = single
+															click_type = left
+															title = "DEQUEUE_BUILDING_ACTION"
+															visible = "[GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0')]"
+															enabled = "[CanCancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
+															description = "[GetCancelConstructionInfo(Building.GetUnderConstructionForPlayer.Self)]"
+															on_action = "[CancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
+														}
+							
+														tooltipwidget = { BasicFunctionalTooltip = {} }
+														blockoverride "square_icon_size" {
+															size = {13 13}
+														}
+													}
+							
+													text_single = {
+														size = { 60 20 }
+														autoresize = no
+														visible = "[Not(Building.IsUnderConstruction)]"
+														raw_text = "[Building.GetLevel|0Y] / [Building.GetMaxLevel|0Y]"
+														align = center
+														default_format = "#overview_text"
 														tooltipwidget = {
 															using = BuildingMaxLevel_Tooltip
 														}
@@ -1031,51 +1083,52 @@
 														align = center
 														default_format = "#overview_text"
 														tooltipwidget = { using = BuildingMaxLevel_Tooltip }
-							}
+													}
+									
+													button_square_plus = {
+														size = { 20 20 }
+														blockoverride "square_icon_size" {
+															size = {13 13}
+														}
+														enabled = "[CanExpandBuilding(Building.Self)]"
+														action_tooltip = {
+															click_mode = single
+															click_type = left
+															click_modifier = default
+															title = "CONSTRUCT_BUILDING_BUTTON"
+															description = "[GetExpandBuildingInfo(Building.Self)]"
+															enabled = "[CanExpandBuilding(Building.Self)]"
+															on_action = "[ExpandBuilding(Building.Self)]"
+														}
+														action_tooltip = {
+															click_type = left
+															click_mode = single
+															click_modifier = ctrl
+									
+															title = "BUILDING_IN_LOCATION_ACTION_CTRL"
+															description = "[GetExpandBuildingInfo(Building.Self)]"
+															enabled = "[CanExpandBuilding(Building.Self)]"
+									
+															on_action = "[ExpandBuildingCtrl(Building.Self)]"
+														}
+									
+														action_tooltip = {
+															click_type = left
+															click_mode = single
+															click_modifier = shift
+									
+															title = "BUILDING_IN_LOCATION_ACTION_SHIFT"
+															description = "[GetExpandBuildingInfo(Building.Self)]"
+															enabled = "[CanExpandBuilding(Building.Self)]"
+									
+															on_action = "[ExpandBuildingShift(Building.Self)]"
+														}
+														tooltipwidget = { using = construct_building_in_location_tt }
+													}
+												}
+											}
+										}
 
-							button_square_plus = {
-								size = { 20 20 }
-								blockoverride "square_icon_size" {
-									size = {13 13}
-								}
-								enabled = "[CanExpandBuilding(Building.Self)]"
-								action_tooltip = {
-									click_mode = single
-									click_type = left
-									click_modifier = default
-									title = "CONSTRUCT_BUILDING_BUTTON"
-									description = "[GetExpandBuildingInfo(Building.Self)]"
-									enabled = "[CanExpandBuilding(Building.Self)]"
-									on_action = "[ExpandBuilding(Building.Self)]"
-								}
-								action_tooltip = {
-									click_type = left
-									click_mode = single
-									click_modifier = ctrl
-
-									title = "BUILDING_IN_LOCATION_ACTION_CTRL"
-									description = "[GetExpandBuildingInfo(Building.Self)]"
-									enabled = "[CanExpandBuilding(Building.Self)]"
-
-									on_action = "[ExpandBuildingCtrl(Building.Self)]"
-								}
-
-								action_tooltip = {
-									click_type = left
-									click_mode = single
-									click_modifier = shift
-
-									title = "BUILDING_IN_LOCATION_ACTION_SHIFT"
-									description = "[GetExpandBuildingInfo(Building.Self)]"
-									enabled = "[CanExpandBuilding(Building.Self)]"
-
-									on_action = "[ExpandBuildingShift(Building.Self)]"
-								}
-								tooltipwidget = { using = construct_building_in_location_tt }
-							}
-						}
-					}
-				}
 									}
 								}
 							}
@@ -1163,7 +1216,7 @@
 																	onclick = "[ChangeBuildingProductionMethod(Building.Self, ProductionMethod.Self, GetPossibleProductionMethodIndex(BuildingType.Self, PossibleProductionMethods.Self))]"
 																	enabled = "[CanChangeToProductionMethod(Building.Self, ProductionMethod.Self, GetPossibleProductionMethodIndex(BuildingType.Self, PossibleProductionMethods.Self))]"
 																	size = { 30 30 }
-																	checked = no
+																	down = no
 																	tooltip_enabled = no
 																	alwaystransparent = yes
 																}
@@ -1282,7 +1335,7 @@
 															blockoverride "production_method_active_icon"{
 																button_checkbox_round = {
 																	size = { 30 30 }
-																	checked = yes
+																	down = yes
 																	tooltip_enabled = no
 																	alwaystransparent = yes
 																	onclick = "[ChangeBuildingProductionMethod(Building.Self, ProductionMethod.Self, GetPossibleProductionMethodIndex(BuildingType.Self, PossibleProductionMethods.Self))]"

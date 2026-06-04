@@ -533,9 +533,6 @@
 						layoutstretchfactor_horizontal = 1
 
 						using = bg_building_card_colors
-						blockoverride "building_main_texture" {
-							using = color_grey_texture
-						}
 						blockoverride "building_color" {
 							color = "[BuildingItem.GetBuildingType.GetPopType.GetColor]"
 							alpha = 0.7
@@ -861,27 +858,60 @@
 											}
 
 											widget = { #efficiency
-												size = { 70 36 }
-												vbox = { #built
-													visible = "[Building.IsProducing]"
+												size = { 70 44 }
+												vbox = {
 													layoutpolicy_horizontal = expanding
-													datamodel = "[Building.GetProductionMethods]"
-													item = {
-														text_single = {
-															size = { 70 18 }
-															autoresize = no
-															#raw_text = "[Building.GetBuildingProductionEfficiency(ActiveProductionMethod.GetMethod)|+=2%]@efficiency!"
-															text = "BUILDING_PROD_EFFICIENCY"
-															align = nobaseline|right
-															default_format = "@bold!"
-															fontsize = 14
-															tooltipwidget = {
-																using = building_production_efficiency_tooltip
+													vbox = { #built
+														visible = "[Building.IsProducing]"
+														layoutpolicy_horizontal = expanding
+														datamodel = "[Building.GetProductionMethods]"
+														item = {
+															text_single = {
+																size = { 70 18 }
+																autoresize = no
+																#raw_text = "[Building.GetBuildingProductionEfficiency(ActiveProductionMethod.GetMethod)|+=2%]@efficiency!"
+																text = "BUILDING_PROD_EFFICIENCY"
+																align = nobaseline|right
+																default_format = "@bold!"
+																fontsize = 14
+																tooltipwidget = {
+																	using = building_production_efficiency_tooltip
+																}
+		
+																sort_by_highlight = {
+																	size = { 105% 200% }
+																	name = "production_efficiency"
+																}
 															}
-
-															sort_by_highlight = {
-																size = { 105% 200% }
-																name = "production_efficiency"
+														}
+													}
+													hbox = {
+														margin_right = 2
+														margin_left = 12
+														progressbar = {
+															visible = "[Building.GetHasEstablishmentRamp]"
+															# layoutpolicy_horizontal = expanding
+															size = { 56 6 }
+															using = progress_bar_goldish_blue
+															min = 0
+															max = 1
+															value = "[FixedPointToFloat(Building.GetEstablishmentProgressFraction)]"
+															direction = horizontal
+															tooltipwidget = {
+																SimpleContextualStringPairTooltipType = {
+																	blockoverride "title_icon" {
+																		icon = {
+																			using = tooltip_title_icon_size
+																			texture = "gfx/interface/icons/flat_icons/building_panel/establishment.dds"
+																		}
+																	}
+																	blockoverride "concept_link" {
+																		text = "[establishment|e]"
+																	}
+																	blockoverride "tooltip_textcontext" {
+																		textcontext = "[Building.GetEstablishmentTooltip]"
+																	}
+																}
 															}
 														}
 													}
@@ -894,7 +924,7 @@
 									cm_auto_expand_widget = {}
 
 									widget = {
-										size = { 20 41 }
+										size = { 42 44 }
 
 										vbox = { # buttons
 											spacing = 1
@@ -946,7 +976,25 @@
 												action_tooltip = {
 													on_action = "[ToggleBuildings(BuildingItem.GetBuildingsFunc)]"
 													enabled = "[CanToggleBuildings(BuildingItem.GetBuildingsFunc)]"
-													title = "[SelectLocalization( BuildingCandidate.GetBuilding.IsOpen, 'TOGGLE_CLOSE_ON', 'TOGGLE_CLOSE_OFF' )]"
+													tooltipwidget = {
+														using = Building_Open_Tooltip
+													}
+
+													blockoverride "check_texture" {
+														texture = "gfx/interface/icons/achievements/padlock.dds"
+													}
+													blockoverride "checked_visible" {
+														visible = "[AreBuildingsClosed(BuildingItem.GetBuildingsFunc)]"
+													}
+													blockoverride "unchecked_visible" {
+														visible = "[Not(AreBuildingsClosed(BuildingItem.GetBuildingsFunc))]"
+													}
+
+													action_tooltip = {
+														on_action = "[ToggleBuildings(BuildingItem.GetBuildingsFunc)]"
+														enabled = "[CanToggleBuildings(BuildingItem.GetBuildingsFunc)]"
+														title = "[SelectLocalization( BuildingCandidate.GetBuilding.IsOpen, 'TOGGLE_CLOSE_ON', 'TOGGLE_CLOSE_OFF' )]"
+													}
 												}
 											}
 										}
@@ -985,6 +1033,7 @@
 														description = "[GetDestroyBuildingInfo(Building.Self)]"
 														# CM check if auto-expand is on when destroying a building level
 														on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+														confirmation = "[GetDestroyBuildingInfo(Building.Self)]"
 														on_action = "[DestroyBuilding(Building.Self)]"
 														on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
 													}

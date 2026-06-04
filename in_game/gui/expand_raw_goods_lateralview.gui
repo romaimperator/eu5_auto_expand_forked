@@ -1,6 +1,23 @@
 ﻿lateralview = {
 	name = "expand_raw_goods_lateralview"
 
+	blockoverride "lateralview_topbuttons_extra" {
+		widget = {
+			parentanchor = vcenter
+			size = { 40 40 }
+			position = { 30 0 }
+			button_automation_shortcut = {
+				parentanchor = vcenter
+				size = { 25 25 }
+				action_tooltip = {
+					title = "OPEN_AUTOMATION_PANEL_FILTER"
+					on_action = "[OpenLateralViewWithFilter('automation', 'automation_filter_production')]"
+				}
+				tooltipwidget = { BasicFunctionalTooltip = {} }
+			}
+		}
+	}
+
 	blockoverride "panel_header" {
 		window_header_alt = {
 			blockoverride "window_header_alt_color_texture" {
@@ -584,6 +601,7 @@ template build_rgo_entry {
 				hbox = {
 					layoutpolicy_horizontal = expanding
 					margin = {5 0}
+					spacing = 4
 
 					hbox = { #Location Card
 						background = {
@@ -603,8 +621,8 @@ template build_rgo_entry {
 							}
 						}
 						card_header_button_04 = {
-							size = {160 43}
-
+							size = {140 43}
+							
 							hbox = {
 								layoutpolicy_horizontal = expanding
 								margin_right = 4
@@ -624,7 +642,7 @@ template build_rgo_entry {
 
 										text_single = {
 											visible = "[IsDataModelEmpty(Location.GetCivilConstructions)]"
-											maximumsize = { 110 15}
+											maximumsize = { 105 15}
 											alwaystransparent = no
 											align = left|nobaseline
 											autoresize = yes
@@ -641,7 +659,7 @@ template build_rgo_entry {
 
 										text_single = {
 											visible = "[Not(IsDataModelEmpty(Location.GetCivilConstructions))]"
-											maximumsize = { 75 15}
+											maximumsize = { 65 15}
 											alwaystransparent = no
 											align = left|nobaseline
 											autoresize = yes
@@ -731,10 +749,12 @@ template build_rgo_entry {
 																	}
 																	blockoverride "field_content" {
 																		text_single = {
+																			layoutpolicy_horizontal = expanding
+																			autoresize = no
 																			text = "BUILD_LOCATION_POP_PROMOTE"
 																		}
-																		expand = {}
 																		text_single = {
+																			autoresize = yes
 																			raw_text = "[Location.GetPromote]"
 																		}
 																	}
@@ -1016,7 +1036,7 @@ template build_rgo_entry {
 
 							}
 							widget = {
-								size = { 70 30 }
+								size = { 60 30 }
 								datacontext = "[Location.GetMarket]"
 								datacontext = "[Location.GetMarket.GetMarketEntry(Location.GetRawMaterial)]"
 								tooltipwidget = {
@@ -1027,7 +1047,7 @@ template build_rgo_entry {
 
 									expand = {}
 									text_single = {
-										maximumsize = { 50 18 }
+										maximumsize = { 40 18 }
 										align = nobaseline|right
 										fontsize = 14
 										raw_text = "[Location.GetMarket.GetPrice(Location.GetRawMaterial)|2]"
@@ -1142,10 +1162,10 @@ template build_rgo_entry {
 
 									widget = {
 										layoutpolicy_vertical = expanding
-										size = {55 -1}
+										size = {40 -1}
 										text_single = {
 											parentanchor = center
-											maximumsize = {55 -1}
+											maximumsize = {40 -1}
 											visible = "[Not(Location.IsMaxRGOWorkersUnderConstruction)]"
 											default_format = "#important_number"
 											align = nobaseline
@@ -1155,7 +1175,7 @@ template build_rgo_entry {
 
 										text_single = {
 											parentanchor = center
-											maximumsize = {55 -1}
+											maximumsize = {40 -1}
 											visible = "[Location.IsMaxRGOWorkersUnderConstruction]"
 											default_format = "#important_number"
 											align = nobaseline
@@ -1368,13 +1388,12 @@ select_menu_left = {
 			blockoverride "select_menu_header_extra" {
 				button_checkbox_visibility = {
 					size = { 32 32 }
-					tooltipwidget = {
-						LeftClickButtonTooltip = {
-							blockoverride "onclick_text" { text = "TOGGLE_INRANGE_MARKETS" }
-						}
+					action_tooltip = {
+						title = "TOGGLE_INRANGE_MARKETS"
+						on_action = "[ExpandRawGoodsSelectMarket.Parent.Vars.Toggle( 'inrange_markets')]"
 					}
-					checked = "[ExpandRawGoodsSelectMarket.Parent.Vars.Exists( 'inrange_markets')]"
-					onclick = "[ExpandRawGoodsSelectMarket.Parent.Vars.Toggle( 'inrange_markets')]"
+					tooltipwidget = { BasicFunctionalTooltip = {} }
+					down = "[ExpandRawGoodsSelectMarket.Parent.Vars.Exists( 'inrange_markets')]"
 				}
 
 				text_single = {
