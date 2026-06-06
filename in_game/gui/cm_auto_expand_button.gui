@@ -238,70 +238,29 @@
 		}
 	}
 
-	type cm_mass_auto_expand_button_pl = hbox {
+	type cm_mass_auto_expand_button_pl = button_square_checkbox {
 		visible = "[And(Not(GetScriptedGui('cm_is_building_type_one_per_location').IsShown(GuiScope.AddScope('building_type', BuildingItem.GetBuildingType.MakeScope).End)), Not(IsDataModelEmpty(BuildingItem.GetBuildings)))]"
-		# text_single = { raw_text = "[GetDataModelSize(BuildingItem.GetBuildings)]"}
-		name = "cm_parent_of_auto_expand_active_locations"
-		vbox = {
-			name = "cm_auto_expand_active_locations"
-			datamodel = "[BuildingItem.GetBuildings]"
-			item = {
-				overlappingitembox = {
-					visible = "[GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(Building.GetType.MakeScope).AddScope('location', Building.GetLocation.MakeScope).End)]"
-				}
+		size = { 20 20 }
+		blockoverride "check_texture" {
+			texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+		}
+		blockoverride "checked_visible" {
+			visible = "[GetScriptedGui('cm_toggle_mass_auto_expand_for_building_type').IsShown(GuiScope.SetRoot(BuildingItem.GetBuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+		}
+		blockoverride "unchecked_visible" {
+			visible = "[Not(GetScriptedGui('cm_toggle_mass_auto_expand_for_building_type').IsShown(GuiScope.SetRoot(BuildingItem.GetBuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+		}
+		background = {
+			texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+			texture_density = 2
+			modify_texture = {
+				using = color_market_grey_texture
+				blend_mode = add
+				alpha = 0.5
 			}
 		}
-
-		vbox = {
-			name = "cm_auto_expand_possible_locations"
-			datamodel = "[BuildingItem.GetBuildings]"
-			item = {
-				overlappingitembox = {
-					visible = "[ObjectsEqual(Building.GetLocation.GetOwner, GetPlayer)]"
-				}
-			}
-		}
-
-		vbox = {
-			name = "cm_auto_expand_possible_locations_for_toggle"
-			visible = "[GetVariableSystem.Exists(Concatenate('cm_building_', BuildingItem.GetBuildingType.GetName))]"
-			datamodel = "[BuildingItem.GetBuildings]"
-			item = {
-				overlappingitembox = {
-					visible = "[ObjectsEqual(Building.GetLocation.GetOwner, GetPlayer)]"
-					state = {
-						name = "cm_mass_auto_expand_button_production_lateralview_click"
-						on_finish = "[GetScriptedGui('cm_set_auto_expand_for_building_type').Execute(GuiScope.SetRoot(Building.GetType.MakeScope).AddScope('location', Building.GetLocation.MakeScope).AddScope('set_off', MakeScopeBool(GreaterThanOrEqualTo_int32(PdxGuiWidget.AccessParent.AccessParent.FindChild('cm_auto_expand_active_locations').CountVisibleChildren, PdxGuiWidget.AccessParent.CountVisibleChildren))).End)]"
-
-					}
-				}
-			}
-		}
-
-		button_square_checkbox = {
-			size = { 20 20 }
-			blockoverride "check_texture" {
-				texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
-			}
-			blockoverride "checked_visible" {
-				visible = "[EqualTo_int32(PdxGuiWidget.AccessParent.AccessParent.FindChild('cm_auto_expand_possible_locations').CountVisibleChildren, PdxGuiWidget.AccessParent.AccessParent.FindChild('cm_auto_expand_active_locations').CountVisibleChildren)]"
-			}
-			blockoverride "unchecked_visible" {
-				visible = "[Not(EqualTo_int32(PdxGuiWidget.AccessParent.AccessParent.FindChild('cm_auto_expand_possible_locations').CountVisibleChildren, PdxGuiWidget.AccessParent.AccessParent.FindChild('cm_auto_expand_active_locations').CountVisibleChildren))]"
-			}
-			background = {
-				texture = "gfx/interface/buttons/checkbox_bg_square.dds"
-				texture_density = 2
-				modify_texture = {
-					using = color_market_grey_texture
-					blend_mode = add
-					alpha = 0.5
-				}
-			}
-			onclick = "[GetVariableSystem.Toggle(Concatenate('cm_building_', BuildingItem.GetBuildingType.GetName))]"
-			onmousehierarchyenter = "[PdxGuiTriggerAllAnimations('cm_mass_auto_expand_button_production_lateralview_click')]"
-			using = cm_rightclick_open_settings_window
-		}
+		onclick = "[GetScriptedGui('cm_toggle_mass_auto_expand_for_building_type').Execute(GuiScope.SetRoot(BuildingItem.GetBuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+		using = cm_rightclick_open_settings_window
 	}
 }
 
