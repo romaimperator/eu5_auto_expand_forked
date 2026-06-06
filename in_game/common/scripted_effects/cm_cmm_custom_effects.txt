@@ -70,9 +70,6 @@ cm_rebuild_priority_lookups = {
 	} # end guard
 }
 
-# Flip one priority feature's enabled bool (field slot 3) and re-sync the CMM data.
-# Writes every position's bool because a reorder moves features between positions.
-# Scope: country. $feature$ = feature flag id (e.g. cm_feature_auto_expand_buildings).
 cm_toggle_priority_feature = {
 	clear_variable_list = cm_priority_desired_enabled
 	every_in_list = {
@@ -95,9 +92,6 @@ cm_toggle_priority_feature = {
 	clear_variable_list = cm_priority_desired_enabled
 }
 
-# Per-item callback for cm_toggle_priority_feature. Sets item $i$'s enabled bool
-# (field slot 3) from its value's membership in cm_priority_desired_enabled.
-# Scope: country. Args: setting (key), i (number).
 cm_apply_priority_desired_item = {
 	if = {
 		limit = { is_target_in_variable_list = { name = cm_priority_desired_enabled target = scope:cmm_list_current_item_value } }

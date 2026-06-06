@@ -13,11 +13,23 @@
 		visible = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
 		size = { 23 23 }
 
-		button = {
+		button_square_checkbox = {
 			size = { 100% 100% }
+			parentanchor = center
+			widgetanchor = center
 			enabled = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
 			tooltipwidget = {
 				using = cm_RGO_Autoexpand_Tooltip
+			}
+
+			blockoverride "check_texture" {
+				texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+			}
+			blockoverride "checked_visible" {
+				visible = "[GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+			}
+			blockoverride "unchecked_visible" {
+				visible = "[Not(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 			}
 
 			action_tooltip = {
@@ -36,19 +48,6 @@
 				on_action = "[PdxGuiTriggerAllAnimations('cm_shift_click_mass_toggle_filtered_rgos')]"
 			}
 			using = cm_rightclick_open_settings_window
-
-			cm_auto_expand_checkbutton = {
-				size = { 100% 100% }
-				alwaystransparent = yes
-				tooltip_enabled = no
-				checked = "[GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
-				blockoverride "green_glow_visible" {
-					visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
-				}
-				blockoverride "red_glow_visible" {
-					visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]"
-				}
-			}
 		}
 	}
 
@@ -115,11 +114,17 @@
 			}
 		}
 
-		cm_auto_expand_checkbutton = {
+		button_square_checkbox = {
+			size = { 20 20 }
 			tooltipwidget = { using = cm_Mass_Autoexpand_RGO_Tooltip }
-			checked = "[GetScriptedGui('cm_toggle_mass_auto_expand_rgo').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-			blockoverride "green_glow_visible" {
+			blockoverride "check_texture" {
+				texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+			}
+			blockoverride "checked_visible" {
 				visible = "[GetScriptedGui('cm_toggle_mass_auto_expand_rgo').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+			blockoverride "unchecked_visible" {
+				visible = "[Not(GetScriptedGui('cm_toggle_mass_auto_expand_rgo').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 			}
 			onclick = "[GetScriptedGui('cm_toggle_mass_auto_expand_rgo').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			using = cm_rightclick_open_settings_window
