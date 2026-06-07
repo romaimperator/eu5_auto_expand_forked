@@ -527,8 +527,8 @@ template build_rgo_entry {
 				texture = "gfx/interface/component_tiles/balance_card_bg.dds"
 			}
 
-
-
+			
+			
 			piechart = {
 				visible = "[GreaterThan_CFixedPoint(Location.GetMaxRGOWorkers, '(CFixedPoint)0')]"
 				alwaystransparent = yes
@@ -597,7 +597,7 @@ template build_rgo_entry {
 				size = {100% 46}
 				using = bg_paper_card
 				parentanchor = center
-
+				
 				hbox = {
 					layoutpolicy_horizontal = expanding
 					margin = {5 0}
@@ -631,7 +631,7 @@ template build_rgo_entry {
 									margin = {5 3}
 									margin_right = 0
 									spacing = 4
-
+									
 									hbox = { #top text
 										layoutpolicy_horizontal = expanding
 										spacing = 3
@@ -639,7 +639,7 @@ template build_rgo_entry {
 											size = { 15 15 }
 											texture = "[Location.GetRankIcon]"
 										}
-
+	
 										text_single = {
 											visible = "[IsDataModelEmpty(Location.GetCivilConstructions)]"
 											maximumsize = { 105 15}
@@ -649,7 +649,7 @@ template build_rgo_entry {
 											using = Font_Size_Small
 											text = "[Location.GetNameWithNoTooltip]"
 											default_format = "#yellow_titles"
-
+							
 											sort_by_left_fade_highlight = {
 												size = { 200% 170% }
 												position = { 40 0 }
@@ -666,7 +666,7 @@ template build_rgo_entry {
 											using = Font_Size_Small
 											text = "[Location.GetNameWithNoTooltip]"
 											default_format = "#yellow_titles"
-
+							
 											sort_by_left_fade_highlight = {
 												size = { 200% 170% }
 												position = { 40 0 }
@@ -681,7 +681,7 @@ template build_rgo_entry {
 											align = left|nobaseline
 											autoresize = no
 											using = Font_Size_Small
-
+							
 											raw_text = " (#L +[GetDataModelSize(Location.GetCivilConstructions)]#! @construction!)"
 
 											hbox = {
@@ -696,10 +696,10 @@ template build_rgo_entry {
 												}
 											}
 										}
-
+	
 										expand = {}
 									}
-
+			
 									hbox = { #bottom rgo
 										layoutpolicy_horizontal = expanding
 										margin = { 2 0 }
@@ -715,14 +715,14 @@ template build_rgo_entry {
 													autoresize = yes
 													fontsize = 13
 													text = "[Location.GetEffectiveUnEmployed(GetPopTypeByName('laborers'))]"
-
+															
 													sort_by_highlight = {
 														ignore_layout = yes
 														size = { 100% 100% }
 														name = "employment"
 													}
 												}
-
+			
 												icon = {
 													size = { 15 15 }
 													texture = "[GetGraphicalCultureTextureForPopType(GetPopTypeByName('laborers'))]"
@@ -741,7 +741,7 @@ template build_rgo_entry {
 													}
 
 													blockoverride "tooltip_extra_content" {
-														TooltipListBase = {
+														TooltipListBase = { 
 															TooltipListRowContent = {
 																TooltipManualTableField = {
 																	tooltipwidget = {
@@ -762,7 +762,7 @@ template build_rgo_entry {
 															}
 														}
 													}
-
+											
 													lowpriotextcontext = BUILD_LOCATION_AVAILABLE_LABORERS
 												}
 											}
@@ -791,7 +791,7 @@ template build_rgo_entry {
 												size = { 15 15 }
 												texture = "gfx/interface/icons/pops/peasants.dds"
 											}
-
+		
 											tooltipwidget = {
 												using = available_peasants_tooltip
 											}
@@ -812,7 +812,7 @@ template build_rgo_entry {
 								# 		datacontext = "[LocationPopulationChart.GetPopsPiechartWidget]"
 								# 		datamodel = "[PopsPiechartWidget.GetTax]"
 								# 	}
-
+		
 								# 	blockoverride "pieslice_item" {
 								# 		pieslice_no_highlight = {
 								# 			texture = "gfx/interface/pie_charts/piechart_alpha.dds"
@@ -830,15 +830,15 @@ template build_rgo_entry {
 								# 		texture_density = 2
 								# 		alwaystransparent = yes
 								# 	}
-
+		
 								# 	background = {
 								# 		texture = "gfx/interface/component_tiles/hud_corners/circle_frame.dds"
 								# 		texture_density = 2
-
+		
 								# 		modify_texture = {
 								# 			using = color_gold_texture
 								# 		}
-
+		
 								# 		using = overlay_gold
 								# 	}
 								# }
@@ -854,7 +854,7 @@ template build_rgo_entry {
 							action_tooltip = {
 								click_type = right
 								click_mode = single
-
+			
 								cursor = "location_menu"
 								title = "CLICK_ACTION_LOCATION_CONTEXT_MENU"
 								on_action = "[PdxGuiWidget.ToggleContextMenu]"
@@ -870,6 +870,12 @@ template build_rgo_entry {
 						}
 					}
 
+					widget = {
+						size = { 20 44 }
+						datacontext = "[RawGoodLocationItem.GetLocation]"
+						cm_auto_expand_rgo_widget_expand_raw_goods_lateralview = {}
+					}
+
 					widget = { #subject
 						size = { 30 44 }
 						datacontext = "[RawGoodLocationItem.GetLocation]"
@@ -878,7 +884,7 @@ template build_rgo_entry {
 						vbox = {
 							visible = "[Not(Country.IsPlayer)]"
 							spacing = 2
-
+							
 							icon = {
 								size = { 20 20 }
 								texture = "[GetSubjectTypeIcon(Country.GetDiplomacy.GetSubjectType)]"
@@ -914,11 +920,11 @@ template build_rgo_entry {
 									alpha = 0.3
 								}
 							}
-
+							
 							country_flag_very_small = {}
 						}
 					}
-
+					
 					expand = {}
 
 					hbox = {
@@ -932,10 +938,6 @@ template build_rgo_entry {
 								size = { 60 36 }
 								hbox = {
 									expand = {}
-
-									# CM Auto Expand RGO button
-									cm_auto_expand_rgo_widget_expand_raw_goods_lateralview = {}
-
 									vbox = {
 										tooltipwidget = {
 											ContextualTooltipType = {
@@ -945,20 +947,20 @@ template build_rgo_entry {
 														texture = "gfx/interface/icons/treaty_type/gold.dds"
 													}
 												}
-
+											
 												blockoverride "title_text" {
 													text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE"
 												}
-
+												
 												blockoverride "concept_link" {
 													text = [profit|E]
 												}
-
+												
 												blockoverride "tooltip_content" {
 													TooltipTextBlock = {
 														blockoverride "text" {
 															text = "PROFIT_EXPAND_RGO_TOOLTIP_TEXT"
-														}
+														}		
 													}
 													TooltipStringPairList = {
 														blockoverride "block_title" {
@@ -992,12 +994,12 @@ template build_rgo_entry {
 														}
 														textcontext = "[RawGoodLocationItem.GetProfitInfo]"
 													}
-
+	
 													TooltipTextBlock = {
 														visible = "[GreaterThan_CFixedPoint(Location.GetMaxRGOWorkers, '(CFixedPoint)0')]"
 														blockoverride "text" {
 															text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE_TEXT"
-														}
+														}		
 													}
 												}
 											}
@@ -1011,7 +1013,7 @@ template build_rgo_entry {
 											raw_text = "+[RawGoodLocationItem.GetProfitPerLevel|2]@wealth!"
 											datacontext = "[RawGoodLocationItem.GetLocation]"
 											datacontext = "[RawGoodLocationItem]"
-
+											
 											sort_by_highlight = {
 												size = { 105% 100% }
 												name = "profit"
@@ -1031,7 +1033,7 @@ template build_rgo_entry {
 												name = "income"
 											}
 										}
-									}
+									}	
 								}
 
 							}
@@ -1042,9 +1044,8 @@ template build_rgo_entry {
 								tooltipwidget = {
 									using = goods_market_price_tooltip
 								}
-								hbox = {
+								hbox = { 
 									layoutpolicy_horizontal = expanding
-
 									expand = {}
 									text_single = {
 										maximumsize = { 40 18 }
@@ -1070,6 +1071,7 @@ template build_rgo_entry {
 											name = "market_price_diff"
 										}
 									}
+									
 								}
 							}
 						}
@@ -1084,25 +1086,25 @@ template build_rgo_entry {
 							widget = {
 								parentanchor = center
 								size = { 100% 35 }
-
+								
 								sort_by_highlight = {
 									ignore_layout = yes
 									size = { 100% 100% }
 									name = "number_building"
 								}
-
+								
 								hbox = {
 									spacing = 5
 									using = bg_text_mask_container_brown
 									margin = {5 5}
-
+									
 									button_square_minus = {
 										size = { 21 21 }
 										enabled = "[RawGoodLocationItem.CanReduceRGO]"
 
 										action_tooltip = {
 											click_type = left
-											click_mode = single
+											click_mode = single	
 											visible = "[Location.IsMaxRGOWorkersUnderConstruction]"
 											enabled = "[RawGoodLocationItem.CanReduceRGO]"
 											title = "LOCATION_VIEW_UNQUEUE_RGO_TITLE"
@@ -1146,7 +1148,7 @@ template build_rgo_entry {
 											on_action = "[RawGoodLocationItem.ReduceRGOShift]"
 										}
 
-										datacontext = "[RawGoodLocationItem.GetLocation]"
+										datacontext = "[RawGoodLocationItem.GetLocation]"				
 										onmousehierarchyenter = "[PdxGuiWidget.SetHighlightLocation(Location.Self)]"
 										tooltipwidget = {
 											using = location_rgo_button_tooltip
@@ -1159,7 +1161,7 @@ template build_rgo_entry {
 											}
 										}
 									}
-
+	
 									widget = {
 										layoutpolicy_vertical = expanding
 										size = {40 -1}
@@ -1227,20 +1229,20 @@ template build_rgo_entry {
 					# 					texture = "gfx/interface/icons/treaty_type/gold.dds"
 					# 				}
 					# 			}
-
+							
 					# 			blockoverride "title_text" {
 					# 				text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE"
 					# 			}
-
+													
 					# 			blockoverride "concept_link" {
 					# 				text = [profit|E]
 					# 			}
-
+							
 					# 			blockoverride "tooltip_content" {
 					# 				TooltipTextBlock = {
 					# 					blockoverride "text" {
 					# 						text = "PROFIT_EXPAND_RGO_TOOLTIP_TEXT"
-					# 					}
+					# 					}		
 					# 				}
 					# 				TooltipStringPairList = {
 					# 					blockoverride "block_title" {
@@ -1279,12 +1281,12 @@ template build_rgo_entry {
 					# 					visible = "[GreaterThan_CFixedPoint(Location.GetMaxRGOWorkers, '(CFixedPoint)0')]"
 					# 					blockoverride "text" {
 					# 						text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE_TEXT"
-					# 					}
+					# 					}		
 					# 				}
 					# 			}
 					# 		}
-					# 	}
-
+					# 	}	
+		
 					# 	sort_by_highlight = {
 					# 		size = { 105% 200% }
 					# 		name = "profit"
@@ -1327,7 +1329,7 @@ template build_rgo_entry {
 					# 	hbox = {
 					# 		visible = "[Not(Country.IsPlayer)]"
 					# 		spacing = 2
-
+							
 					# 		icon = {
 					# 			size = { 20 20 }
 					# 			texture = "[GetSubjectTypeIcon(Country.GetDiplomacy.GetSubjectType)]"
@@ -1363,7 +1365,7 @@ template build_rgo_entry {
 					# 				alpha = 0.3
 					# 			}
 					# 		}
-
+							
 					# 		country_flag_small = {}
 					# 	}
 					# }
@@ -1420,23 +1422,23 @@ select_menu_left = {
 						using = bg_cabinet_card_frame
 
 						market_card = {
-							blockoverride "market_card_title_action" {
+							blockoverride "market_card_title_action"{
 								action_tooltip = {
 									click_type = left
 									click_mode = single
 									title = "TOGGLE_MARKET_SELECTION"
 									on_action = "[ExpandRawGoodsSelectMarket.Parent.FilterByMarket(Market.Self)]"
 								}
-
+			
 								action_tooltip = {
 									click_type = right
 									click_mode = single
-
+			
 									cursor = "market_menu"
 									title = "CLICK_ACTION_MARKET_CONTEXT_MENU"
 									on_action = "[PdxGuiWidget.ToggleContextMenu]"
 								}
-
+			
 								onmousehierarchyenter = "[PdxGuiWidget.SetHighlightMarket(Market.Self)]"
 								ondoubleclick = "[PanToLocation(Market.GetCenterLocation)]"
 							}

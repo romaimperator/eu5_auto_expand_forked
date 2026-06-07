@@ -5,8 +5,36 @@
 		position = { 2 2 }
 	}
 
-	# used for construction menu in the expand rgos view (expand_raw_goods_lateralview.gui)
-	type cm_auto_expand_rgo_widget_expand_raw_goods_lateralview = cm_auto_expand_rgo_widget {
+	type cm_auto_expand_rgo_widget_expand_raw_goods_lateralview = button_square_checkbox {
+		size = { 20 20 }
+		parentanchor = center
+		widgetanchor = center
+		tooltipwidget = { using = cm_RGO_Autoexpand_Tooltip }
+		blockoverride "check_texture" {
+			texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+		}
+		blockoverride "checked_visible" {
+			visible = "[GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+		}
+		blockoverride "unchecked_visible" {
+			visible = "[Not(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
+		}
+		action_tooltip = {
+			click_type = left
+			click_mode = single
+			click_modifier = default
+			title = "CM_AUTO_EXPAND_TOGGLE"
+			on_action = "[GetScriptedGui('cm_set_auto_expand_for_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).End)]"
+		}
+		action_tooltip = {
+			click_type = left
+			click_mode = single
+			click_modifier = shift
+			title = "CM_AUTO_EXPAND_RGO_SHIFT_TOGGLE"
+			description = "CM_AUTO_EXPAND_RGO_SHIFT_TOGGLE_DESC"
+			on_action = "[PdxGuiTriggerAllAnimations('cm_shift_click_mass_toggle_filtered_rgos')]"
+		}
+		using = cm_rightclick_open_settings_window
 	}
 
 	type cm_auto_expand_rgo_widget = widget {

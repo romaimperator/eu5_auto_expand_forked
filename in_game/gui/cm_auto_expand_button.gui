@@ -6,128 +6,131 @@
 		size = { 30 30 }
 	}
 
-	# used for construction menu in location (production_lateralview.gui)
-	type cm_auto_expand_widget = widget {
-		size = { 25 25 }
-		cm_auto_expand_production_buildings_checkbuttons = {}
+	# Per-building auto-expand toggle. button_square_checkbox identical to vanilla's auto-expand
+	# button; only the state read and click actions call the mod's scripted GUIs.
+	type cm_auto_expand_widget = button_square_checkbox {
+		size = { 20 20 }
+		parentanchor = center
+		widgetanchor = center
+		tooltipwidget = { using = cm_Building_Autoexpand_Tooltip }
+		blockoverride "check_texture" {
+			texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+		}
+		blockoverride "checked_visible" {
+			visible = "[GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+		}
+		blockoverride "unchecked_visible" {
+			visible = "[Not(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+		}
+		background = {
+			texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+			texture_density = 2
+			modify_texture = {
+				using = color_market_grey_texture
+				blend_mode = add
+				alpha = 0.5
+			}
+		}
+		action_tooltip = {
+			click_type = left
+			click_mode = single
+			click_modifier = default
+			title = "CM_AUTO_EXPAND_TOGGLE"
+			on_action = "[GetScriptedGui('cm_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+		}
+		action_tooltip = {
+			click_type = left
+			click_mode = single
+			click_modifier = shift
+			title = "CM_AUTO_EXPAND_SHIFT_TOGGLE"
+			description = "CM_AUTO_EXPAND_SHIFT_TOGGLE_DESC"
+			on_action = "[PdxGuiTriggerAllAnimations('cm_shift_click_mass_toggle_filtered_building_types')]"
+		}
+		using = cm_rightclick_open_settings_window
 	}
 
-	# used in global construction menu (build_location_lateralview.gui)
-	# weird quirk with these: blockoverride "glow_visible" needs an extra AND check for building existing to I think only evaluate the 2 condition if building exits
-	# to not throw an error in the scripted GUI as building is NULL/invalid. Somehow doesnt apply to "checked =" tho
+	# Variant matching building_view.gui's vanilla button (no grey background override).
+	type cm_auto_expand_widget_building_view = button_square_checkbox {
+		size = { 20 20 }
+		tooltipwidget = { using = cm_Building_Autoexpand_Tooltip }
+		blockoverride "check_texture" {
+			texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+		}
+		blockoverride "checked_visible" {
+			visible = "[GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+		}
+		blockoverride "unchecked_visible" {
+			visible = "[Not(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+		}
+		action_tooltip = {
+			click_type = left
+			click_mode = single
+			click_modifier = default
+			title = "CM_AUTO_EXPAND_TOGGLE"
+			on_action = "[GetScriptedGui('cm_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+		}
+		action_tooltip = {
+			click_type = left
+			click_mode = single
+			click_modifier = shift
+			title = "CM_AUTO_EXPAND_SHIFT_TOGGLE"
+			description = "CM_AUTO_EXPAND_SHIFT_TOGGLE_DESC"
+			on_action = "[PdxGuiTriggerAllAnimations('cm_shift_click_mass_toggle_filtered_building_types')]"
+		}
+		using = cm_rightclick_open_settings_window
+	}
+
+	# Per-building-TYPE toggle (mod-only). Same vanilla button visual; targets the type at the location.
+	type cm_auto_expand_widget_for_building_type = button_square_checkbox {
+		size = { 20 20 }
+		parentanchor = center
+		widgetanchor = center
+		tooltipwidget = { using = cm_Building_Type_Autoexpand_Tooltip }
+		blockoverride "check_texture" {
+			texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+		}
+		blockoverride "checked_visible" {
+			visible = "[GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End)]"
+		}
+		blockoverride "unchecked_visible" {
+			visible = "[Not(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End))]"
+		}
+		background = {
+			texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+			texture_density = 2
+			modify_texture = {
+				using = color_market_grey_texture
+				blend_mode = add
+				alpha = 0.5
+			}
+		}
+		action_tooltip = {
+			click_type = left
+			click_mode = single
+			click_modifier = default
+			title = "CM_AUTO_EXPAND_TOGGLE"
+			on_action = "[GetScriptedGui('cm_set_auto_expand_for_building_type').Execute(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End)]"
+		}
+		action_tooltip = {
+			click_type = left
+			click_mode = single
+			click_modifier = shift
+			title = "CM_AUTO_EXPAND_SHIFT_TOGGLE"
+			description = "CM_AUTO_EXPAND_SHIFT_TOGGLE_DESC"
+			on_action = "[PdxGuiTriggerAllAnimations('cm_shift_click_mass_toggle_filtered_building_types')]"
+		}
+		using = cm_rightclick_open_settings_window
+	}
+
+	# build_location_lateralview.gui slot: existing building -> per-building toggle; not-yet-built
+	# -> per-building-type toggle (mod-only). Both occupy vanilla's single 20x20 slot.
 	type cm_auto_expand_widget_global_construction = widget {
 		datacontext = "[LocationToBuildItem.GetBuilding]"
 		datacontext = "[LocationToBuildItem.GetLocation]"
 		datacontext = "[LocationToBuildItem.GetBuildingType]"
-		size = { 25 25 }
-		visible = "[ObjectsEqual(LocationToBuildItem.GetOwner, Player.Self)]"
-		cm_auto_expand_production_buildings_checkbuttons = {
-			visible = "[LocationToBuildItem.HasBuilding]"
-		}
-		cm_auto_expand_production_building_types_checkbuttons = {
-			visible = "[Not(LocationToBuildItem.HasBuilding)]"
-		}
-	}
-
-	type cm_auto_expand_production_buildings_checkbuttons = widget {
-		size = { 100% 100% }
-
-		button_square_checkbox = {
-			size = { 100% 100% }
-			parentanchor = center
-			widgetanchor = center
-			tooltipwidget = { using = cm_Building_Autoexpand_Tooltip }
-
-			blockoverride "check_texture" {
-				texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
-			}
-			blockoverride "checked_visible" {
-				visible = "[GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
-			}
-			blockoverride "unchecked_visible" {
-				visible = "[Not(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
-			}
-			background = {
-				texture = "gfx/interface/buttons/checkbox_bg_square.dds"
-				texture_density = 2
-				modify_texture = {
-					using = color_market_grey_texture
-					blend_mode = add
-					alpha = 0.5
-				}
-			}
-
-			action_tooltip = {
-				click_type = left
-				click_mode = single
-				click_modifier = default
-				title = "CM_AUTO_EXPAND_TOGGLE"
-				on_action = "[GetScriptedGui('cm_set_auto_expand_for_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
-			}
-			action_tooltip = {
-				click_type = left
-				click_mode = single
-				click_modifier = shift
-				title = "CM_AUTO_EXPAND_SHIFT_TOGGLE"
-				description = "CM_AUTO_EXPAND_SHIFT_TOGGLE_DESC"
-				on_action = "[PdxGuiTriggerAllAnimations('cm_shift_click_mass_toggle_filtered_building_types')]"
-			}
-			using = cm_rightclick_open_settings_window
-		}
-	}
-
-	# used for construction menu in location (production_lateralview.gui)
-	type cm_auto_expand_widget_for_building_type = widget {
-		datacontext = "[BuildingItem.GetBuildingType]"
-		size = { 25 25 }
-		cm_auto_expand_production_building_types_checkbuttons = {}
-	}
-
-	type cm_auto_expand_production_building_types_checkbuttons = widget {
-		size = { 100% 100% }
-
-		button_square_checkbox = {
-			size = { 100% 100% }
-			parentanchor = center
-			widgetanchor = center
-			tooltipwidget = { using = cm_Building_Type_Autoexpand_Tooltip }
-
-			blockoverride "check_texture" {
-				texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
-			}
-			blockoverride "checked_visible" {
-				visible = "[GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End)]"
-			}
-			blockoverride "unchecked_visible" {
-				visible = "[Not(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End))]"
-			}
-			background = {
-				texture = "gfx/interface/buttons/checkbox_bg_square.dds"
-				texture_density = 2
-				modify_texture = {
-					using = color_market_grey_texture
-					blend_mode = add
-					alpha = 0.5
-				}
-			}
-
-			action_tooltip = {
-				click_type = left
-				click_mode = single
-				click_modifier = default
-				title = "CM_AUTO_EXPAND_TOGGLE"
-				on_action = "[GetScriptedGui('cm_set_auto_expand_for_building_type').Execute(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End)]"
-			}
-			action_tooltip = {
-				click_type = left
-				click_mode = single
-				click_modifier = shift
-				title = "CM_AUTO_EXPAND_SHIFT_TOGGLE"
-				description = "CM_AUTO_EXPAND_SHIFT_TOGGLE_DESC"
-				on_action = "[PdxGuiTriggerAllAnimations('cm_shift_click_mass_toggle_filtered_building_types')]"
-			}
-			using = cm_rightclick_open_settings_window
-		}
+		size = { 20 20 }
+		cm_auto_expand_widget = { visible = "[LocationToBuildItem.HasBuilding]" }
+		cm_auto_expand_widget_for_building_type = { visible = "[Not(LocationToBuildItem.HasBuilding)]" }
 	}
 
 	type cm_building_cost_breakdown_tooltip = TooltipListBase {

@@ -64,14 +64,14 @@
 										title = "OPEN_PROD_METHOD_BUILDING_ITEM_LOCATION"
 										on_action = "[BuildingCandidate.ShowBuilding]"
 									}
-
+				
 									action_tooltip = {
 										click_type = right
 										click_mode = single
 										title = "BUILD_BUILDING"
 										on_action = "[SelectLocationToBuildDefault(BuildingItem.GetBuildingType)]"
 									}
-
+									
 									tooltipwidget = {
 										using = Building_tooltip
 									}
@@ -152,7 +152,7 @@
 								layoutpolicy_horizontal = expanding
 								maximumsize = { -1 45 }
 								ignoreinvisible = yes
-								spacing = 4 # CM reduce to make space for auto-expand button
+								spacing = 6
 								margin_left = 3
 								margin_right = 5
 
@@ -223,7 +223,7 @@
 
 									# hbox = {
 									# 	datacontext = "[LocationToBuildItem.GetBuildingType.GetPopType]"
-
+										
 									# 	hbox = {
 									# 		spacing = 3
 									# 		layoutpolicy_vertical = expanding
@@ -239,7 +239,7 @@
 									# 				name = "population"
 									# 			}
 									# 		}
-
+		
 									# 		icon = {
 									# 			size = { 15 15 }
 									# 			texture = "[GetGraphicalCultureTextureForCountryPopType(PopType.Self, Location.GetOwner.Self)]"
@@ -252,12 +252,12 @@
 								}
 
 								# expand = {}
-
+	
 								hbox = {
-									spacing = 3 # CM reduce to make space for auto-expand button
+									spacing = 5
 
 									hbox = {
-										spacing = 3 # CM reduce to make space for auto-expand button
+										spacing = 5
 										layoutpolicy_horizontal = expanding
 
 										hbox = {
@@ -270,57 +270,57 @@
 												hbox = { #profit/income
 													expand = {}
 													visible = "[BuildingItem.GetBuildingType.IsProducing]"
-
+							
 													vbox = {#profitable
 														visible = "[GreaterThan_CFixedPoint(Building.GetProfit, '(CFixedPoint)0')]"
-
+	
 														tooltipwidget = {
 															using = BuildingProfit_Tooltip
 														}
-
+	
 														text_single = { #profit
 															size = { 60 18 }
 															autoresize = no
 															align = nobaseline|right
 															fontsize = 14
 															raw_text = "+[Building.GetProfitPerLevel|2]@wealth!"
-
+											
 															sort_by_highlight = {
 																size = { 105% 100% }
 																name = "profit"
 															}
 														}
-
+		
 														text_single = { #income
 															size = { 60 18 }
 															autoresize = no
 															align = nobaseline|right
 															fontsize = 14
 															raw_text = "[Building.GetIncomeToOwnerPerLevel|+=2]@income!"
-
+											
 															sort_by_highlight = {
 																size = { 105% 100% }
 																name = "income"
 															}
 														}
 													}
-
+							
 													text_single = { #unprofitable and not subsidized
 														visible = "[And(LessThanOrEqualTo_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'), Not(Building.IsSubsidized))]"
 														maximumsize = { 60 18 }
 														fontsize = 14
 														raw_text = "[Building.GetIncomeToOwnerPerLevel|+=2]@income!"
-
+							
 														tooltipwidget = {
 															using = BuildingProfit_Tooltip
 														}
-
+										
 														sort_by_highlight = {
 															size = { 105% 200% }
 															name = "income"
 														}
 													}
-
+							
 													text_single = { # subsidized
 														visible = "[And(LessThanOrEqualTo_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'), Building.IsSubsidized)]"
 														maximumsize = { 60 18 }
@@ -329,7 +329,7 @@
 														tooltipwidget = {
 															using = BuildingProfit_Tooltip
 														}
-
+										
 														sort_by_highlight = {
 															size = { 105% 200% }
 															name = "income"
@@ -340,7 +340,7 @@
 												hbox = { #upkeep
 													expand = {}
 													visible = "[Not(BuildingItem.GetBuildingType.IsProducing)]"
-
+							
 													text_single = {
 														maximumsize = { 60 18 }
 														fontsize = 14
@@ -348,7 +348,7 @@
 														tooltipwidget = {
 															using = Building_upkeep_tooltip
 														}
-
+										
 														# sort_by_highlight = {
 														# 	size = { 105% 200% }
 														# 	name = "income"
@@ -356,7 +356,7 @@
 													}
 												}
 											}
-
+	
 											widget = { #efficiency
 												size = { 70 44 }
 												vbox = {
@@ -418,63 +418,53 @@
 												}
 											}
 										}
-									}
 
-									### cm new button
-									cm_auto_expand_widget = {}
+									}
 
 									widget = {
 										size = { 42 44 }
 
-										vbox = { # buttons
-											spacing = 1
-
-											button_square_checkbox = {
-												visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing)]"
-												size = { 20 20 }
-												enabled = "[CanSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
-												tooltipwidget = {
-													using = Building_Subsidized_Tooltip
-												}
-
-												blockoverride "check_texture" {
-													texture = "gfx/interface/icons/flat_icons/building_panel/subsidized.dds"
-												}
-												blockoverride "checked_visible" {
-													visible = "[AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc)]"
-												}
-												blockoverride "unchecked_visible" {
-													visible = "[Not(AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc))]"
-												}
-
-												action_tooltip = {
-													on_action = "[ToggleSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
-													on_action = "[PlayAudioEffect(Concatenate('UI_action_building_subsidize', GetToggleSuffix(AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc))))]"
-													enabled = "[CanSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
-													title = "[SelectLocalization( BuildingCandidate.GetBuilding.IsSubsidized, 'TOGGLE_SUBSIDIZE_ON', 'TOGGLE_SUBSIDIZE_OFF' )]"
+										hbox = {
+											spacing = 2
+											widget = { # AutoExpand slot
+												size = { 20 44 }
+												cm_auto_expand_widget = {
+													visible = "[And(ObjectsEqual(Building.GetOwner, Player.Self), BuildingType.IsMultipleLevels)]"
 												}
 											}
 
-											button_square_checkbox = {
-												visible = "[And(BuildingItem.HasBuildings, BuildingItem.ShowCloseAll)]"
-												size = { 20 20 }
-												enabled = "[CanToggleBuildings(BuildingItem.GetBuildingsFunc)]"
-												tooltipwidget = {
-													using = Building_Open_Tooltip
+											vbox = { # Subsidize + Close
+												spacing = 1
+
+												button_square_checkbox = {
+													visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsProducing)]"
+													size = { 20 20 }
+													enabled = "[CanSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
+													tooltipwidget = {
+														using = Building_Subsidized_Tooltip
+													}
+
+													blockoverride "check_texture" {
+														texture = "gfx/interface/icons/flat_icons/building_panel/subsidized.dds"
+													}
+													blockoverride "checked_visible" {
+														visible = "[AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc)]"
+													}
+													blockoverride "unchecked_visible" {
+														visible = "[Not(AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc))]"
+													}
+
+													action_tooltip = {
+														on_action = "[ToggleSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
+														on_action = "[PlayAudioEffect(Concatenate('UI_action_building_subsidize', GetToggleSuffix(AreBuildingsSubsidized(BuildingItem.GetBuildingsFunc))))]"
+														enabled = "[CanSubsidizeBuildings(BuildingItem.GetBuildingsFunc)]"
+														title = "[SelectLocalization( BuildingCandidate.GetBuilding.IsSubsidized, 'TOGGLE_SUBSIDIZE_ON', 'TOGGLE_SUBSIDIZE_OFF' )]"
+													}
 												}
 
-												blockoverride "check_texture" {
-													texture = "gfx/interface/icons/achievements/padlock.dds"
-												}
-												blockoverride "checked_visible" {
-													visible = "[AreBuildingsClosed(BuildingItem.GetBuildingsFunc)]"
-												}
-												blockoverride "unchecked_visible" {
-													visible = "[Not(AreBuildingsClosed(BuildingItem.GetBuildingsFunc))]"
-												}
-
-												action_tooltip = {
-													on_action = "[ToggleBuildings(BuildingItem.GetBuildingsFunc)]"
+												button_square_checkbox = {
+													visible = "[And(BuildingItem.HasBuildings, BuildingItem.ShowCloseAll)]"
+													size = { 20 20 }
 													enabled = "[CanToggleBuildings(BuildingItem.GetBuildingsFunc)]"
 													tooltipwidget = {
 														using = Building_Open_Tooltip
@@ -503,25 +493,25 @@
 
 									widget = { #builder
 										layoutpolicy_vertical = expanding
-										size = { 100 -1 } # CM reduce to make space for auto-expand button
+										size = { 98 -1 }
 										alwaystransparent = no
 										filter_mouse = left|right
 										widget = {
 											parentanchor = center
 											size = { 100% 35 }
-
+											
 											sort_by_highlight = {
 												size = { 100% 100% }
 												name = "number_building"
 											}
-
+											
 											hbox = {
-												spacing = 3 # CM reduce to make space for auto-expand button
+												spacing = 5
 												using = bg_text_mask_container_brown
-												margin = {0 5} # CM reduce to make space for auto-expand button
+												margin = {4 5}
 
 												button_square_minus = {
-													size = { 15 15 } # CM reduced size
+													size = { 20 20 }
 													visible = "[Not(GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0'))]"
 													enabled = "[CanDestroyBuilding(Building.Self)]"
 													action_tooltip = {
@@ -531,9 +521,8 @@
 														visible = "[Not(GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0'))]"
 														enabled = "[CanDestroyBuilding(Building.Self)]"
 														description = "[GetDestroyBuildingInfo(Building.Self)]"
-														# CM check if auto-expand is on when destroying a building level
-														on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 														confirmation = "[GetDestroyBuildingInfo(Building.Self)]"
+														on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 														on_action = "[DestroyBuilding(Building.Self)]"
 														on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
 													}
@@ -547,7 +536,7 @@
 												}
 
 												button_square_minus = {
-													size = { 15 15 } # CM reduced size
+													size = { 20 20 }
 													visible = "[GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0')]"
 													enabled = "[CanCancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
 													action_tooltip = {
@@ -557,7 +546,6 @@
 														visible = "[GreaterThan_int32(Building.GetLevelsUnderConstruction, '(int32)0')]"
 														enabled = "[CanCancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
 														description = "[GetCancelConstructionInfo(Building.GetUnderConstructionForPlayer.Self)]"
-														# CM check if auto-expand is on when removing the building level from queue
 														on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 														on_action = "[CancelConstruction(Building.GetUnderConstructionForPlayer.Self)]"
 													}
@@ -569,7 +557,7 @@
 												}
 
 												text_single = {
-													size = { 50 20 } # CM reduced size
+													size = { 40 20 }
 													autoresize = no
 													visible = "[And(Not(BuildingCandidate.GetBuilding.IsUnderConstruction), Not(And(BuildingCandidate.GetBuilding.CanPlayerUpgrade, BuildingCandidate.GetBuilding.IsPlayerUpgrading)))]"
 													raw_text = "[BuildingCandidate.GetBuilding.GetLevel|0Y] / [BuildingCandidate.GetMaxLevel|0Y]"
@@ -586,7 +574,7 @@
 												}
 
 												text_single = {
-													size = { 50 20 } # CM reduced size
+													size = { 40 20 }
 													autoresize = no
 													visible = "[And3(Not(BuildingCandidate.GetBuilding.IsUnderConstruction), BuildingCandidate.GetBuilding.CanPlayerUpgrade, BuildingCandidate.GetBuilding.IsPlayerUpgrading)]"
 													raw_text = "[BuildingCandidate.GetBuilding.GetLevel|0Y](#G -[BuildingCandidate.GetBuilding.GetLevelsUnderUpgrade|0]#!) / [BuildingCandidate.GetMaxLevel|0Y]"
@@ -603,7 +591,7 @@
 												}
 
 												text_single = {
-													size = { 50 20 } # CM reduced size
+													size = { 40 20 }
 													autoresize = no
 													visible = "[BuildingCandidate.GetBuilding.IsUnderConstruction]"
 													raw_text = "[BuildingCandidate.GetBuilding.GetLevel|0Y] ([BuildingCandidate.GetBuilding.GetLevelsUnderConstruction|0+=]) / [BuildingCandidate.GetMaxLevel|0Y]"
@@ -620,7 +608,7 @@
 												}
 
 												button_square_plus = {
-													size = { 15 15 } # CM reduced size
+													size = { 20 20 }
 													visible = "[Not(BuildingCandidate.GetBuilding.CanPlayerUpgrade)]"
 													blockoverride "square_icon_size" {
 														size = {13 13}
@@ -662,7 +650,7 @@
 												}
 
 												button_square_plus = {
-													size = { 15 15 } # CM reduced size
+													size = { 20 20 }
 													visible = "[BuildingCandidate.GetBuilding.CanPlayerUpgrade]"
 													blockoverride "square_icon_size" {
 														size = {13 13}
@@ -681,7 +669,6 @@
 														description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 														cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 														on_action = "[UpgradeBuildingDefault(BuildingType.Self, Location.Self)]"
-														# CM trigger auto-expand check after upgrade
 														on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 													}
 
@@ -694,7 +681,6 @@
 														cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 														description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 														on_action = "[UpgradeBuildingCtrl(BuildingType.Self, Location.Self)]"
-														# CM trigger auto-expand check after upgrade
 														on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 														enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 													}
@@ -708,7 +694,6 @@
 														cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 														description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 														on_action = "[UpgradeBuildingShift(BuildingType.Self, Location.Self)]"
-														# CM trigger auto-expand check after upgrade
 														on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 														enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 													}

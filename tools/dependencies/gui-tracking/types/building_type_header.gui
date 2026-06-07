@@ -38,7 +38,7 @@
 
 						tooltipwidget = {
 							using = BuildingType_tooltip
-							blockoverride "building_type_tooltip_missing_input" {
+							blockoverride "building_type_tooltip_missing_input"{
 								visible = "[BuildingItem.HasBuildingsLackingInput]"
 								textcontext = "[BuildingItem.GetBuildingsInputGoodsInformation]"
 							}
@@ -134,7 +134,7 @@
 						position = { 5 0 }
 						size = {42 100%}
 						parentanchor = left|vcenter
-
+			
 						widget = {
 							size = {36 36}
 							using = bg_circle_outline
@@ -149,8 +149,8 @@
 								texture_density = 2
 								margin = {1 1}
 							}
-
-
+							
+							
 							parentanchor = left|vcenter
 							icon = {
 								size = {31 31}
@@ -198,7 +198,7 @@
 							margin = { 35 0 }
 							margin_right = 10
 							datacontext = "[BuildingItem.GetBuildingType]"
-
+							
 							widget = {
 								size = { 16 16}
 								icon = {
@@ -231,7 +231,9 @@
 							widget = {
 								size = {80 25}
 								hbox = {
-									cm_mass_auto_expand_button_pl = {}
+									cm_mass_auto_expand_button_pl = {
+										visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsMultipleLevels)]"
+									}
 
 									expand = {}
 
@@ -252,7 +254,7 @@
 												alpha = 0.5
 											}
 										}
-
+										
 										blockoverride "check_texture" {
 											texture = "gfx/interface/icons/flat_icons/building_panel/subsidized.dds"
 										}
@@ -284,7 +286,7 @@
 										background = {
 											texture = "gfx/interface/buttons/checkbox_bg_square.dds"
 											texture_density = 2
-
+											
 											modify_texture = {
 												using = color_market_grey_texture
 												blend_mode = add
@@ -308,7 +310,7 @@
 											title = "[SelectLocalization( AreBuildingsClosed(BuildingItem.GetBuildingsFunc), 'TOGGLE_CLOSE_ALL_OFF', 'TOGGLE_CLOSE_ALL_ON' )]"
 										}
 									}
-
+									
 								}
 							}
 

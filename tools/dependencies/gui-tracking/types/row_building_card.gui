@@ -8,7 +8,7 @@
 			parentanchor = center
 			position = {0 0}
 		}
-
+		
 		background = {
 			using = bg_round_corners_alt_texture
 			margin = {-1 0}
@@ -24,7 +24,7 @@
 			}
 		}
 
-		using = bg_tile_shadow
+		using = bg_tile_shadow		
 		using = bg_cabinet_card_frame
 		blockoverride "cabinet_card_shadow" {
 			margin_bottom = 2
@@ -46,7 +46,7 @@
 				vbox = {
 					block "margin_size" {
 						margin_top = 23
-					}
+					}	
 					widget = {
 						layoutpolicy_horizontal = expanding
 						block "number_size" {
@@ -131,7 +131,7 @@
 							enabled = "[LocationBuildingItem.IsPlayerBuilding]"
 							on_action = "[LocationBuildingItem.OpenBuildingView]"
 						}
-
+	
 						action_tooltip = {
 							click_type = right
 							click_mode = single
@@ -139,7 +139,7 @@
 							on_action = "[SetUIFocusMarket(Location.GetMarket)]"
 							on_action = "[SelectLocationToBuildDefault(LocationBuildingItem.GetBuilding.GetType)]"
 						}
-
+						
 						tooltipwidget = {
 							using = Building_tooltip
 						}
@@ -177,28 +177,28 @@
 						tooltipwidget = {
 							using = Construction_tooltip
 						}
-
+	
 						icon = {
 							texture = "gfx/interface/pie_charts/pie_chart_alpha_80.dds"
 							size = { 97% 97% }
 							parentanchor = center
 							color = { 0 0 0 1 }
 						}
-
+	
 						pieslice_no_highlight = {
 							texture = "gfx/interface/pie_charts/pie_chart_alpha_80.dds"
 							value = "[LocationBuildingItem.GetConstruction.GetProgress]"
 							color = { 0.01 0.6 0.9 1 }
 							alpha = 0.8
 						}
-
+	
 						pieslice_no_highlight = {
 							texture = "gfx/interface/pie_charts/pie_chart_alpha_80.dds"
 							value = "[Subtract_float('(float)100.0', LocationBuildingItem.GetConstruction.GetProgress)]"
 							color = { 0.0 0.1 0.1 1 }
 							alpha = 0.8
 						}
-
+	
 						icon = {
 							size = { 17 17 }
 							parentanchor = center
@@ -289,20 +289,20 @@
 						datacontext = "[LocationBuildingItem.GetBuilding]"
 						using = bg_circle
 					}
-
+					
 					icon = {
 						parentanchor = bottom|left
 						texture = "gfx/interface/icons/alerts_icons/unprofitable.dds"
 						size = { 12 12 }
 						position = { -3 1 }
 						visible = "[And3(
-							LessThan_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'),
+							LessThan_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'), 
 							Not(Building.IsSubsidized),
 							Not(LocationBuildingItem.IsLackingInput)
 						)]"
 						datacontext = "[LocationBuildingItem.GetBuilding]"
 						using = bg_circle
-					}
+					}		
 
 					icon = {
 						parentanchor = bottom|left
@@ -328,8 +328,7 @@
 					}
 
 					cm_is_auto_expand_on_icon_green = {}
-					cm_is_auto_expand_on_icon_red = {}
-
+					
 					using = bg_circle_tile_shadow
 					background = {
 						texture = "gfx/interface/component_tiles/hud_corners/circle_background.dds"
@@ -346,7 +345,7 @@
 					}
 					background = {
 						texture = "gfx/interface/component_tiles/hud_corners/circle_frame.dds"
-
+						
 						modify_texture = {
 							using = color_new_gold_texture
 						}
@@ -363,7 +362,7 @@
 					}
 				}
 			}
-
+				
 			# plus minus
 			widget = {
 				layoutpolicy_horizontal = expanding
@@ -376,7 +375,7 @@
 						spacing = -1
 						datacontext = "[LocationBuildingItem.GetBuilding.GetType]"
 						datacontext = "[LocationBuildingItem.GetBuilding]"
-						blockoverride "flag_estate_building_card_extra" {
+						blockoverride "flag_estate_building_card_extra"{
 							button_square_minus = {
 								layoutpolicy_horizontal = expanding
 								block "square_icon_out_size_minus" {
@@ -396,7 +395,7 @@
 									on_action = "[LocationBuildingItem.Destroy]"
 									on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
 								}
-
+			
 								action_tooltip = {
 									click_mode = single
 									click_type = left
@@ -430,7 +429,7 @@
 							}
 						}
 					}
-
+	
 					button_square_plus = {
 						layoutpolicy_horizontal = expanding
 						block "square_icon_out_size_plus" {
@@ -451,30 +450,30 @@
 							title = "CONSTRUCT_BUILDING_BUTTON"
 							description = "[LocationBuildingItem.GetExpandBuildingInfo]"
 							enabled = "[LocationBuildingItem.CanExpandBuilding]"
-
+	
 							on_action = "[LocationBuildingItem.ExpandBuilding]"
 						}
 						action_tooltip = {
 							click_type = left
 							click_mode = single
 							click_modifier = ctrl
-
+	
 							title = "BUILDING_IN_LOCATION_ACTION_CTRL"
 							description = "[LocationBuildingItem.GetExpandBuildingInfo]"
 							enabled = "[LocationBuildingItem.CanExpandBuilding]"
-
+	
 							on_action = "[ExpandBuildingCtrl(LocationBuildingItem.GetBuilding.Self)]"
 						}
-
+	
 						action_tooltip = {
 							click_type = left
 							click_mode = single
 							click_modifier = shift
-
+	
 							title = "BUILDING_IN_LOCATION_ACTION_SHIFT"
 							description = "[LocationBuildingItem.GetExpandBuildingInfo]"
 							enabled = "[LocationBuildingItem.CanExpandBuilding]"
-
+	
 							on_action = "[ExpandBuildingShift(LocationBuildingItem.GetBuilding.Self)]"
 						}
 						tooltipwidget = { using = construct_building_in_location_tt }
@@ -492,7 +491,6 @@
 						visible = "[And3(LocationBuildingItem.GetBuilding.CanPlayerUpgrade, Not(LocationBuildingItem.GetBuilding.GetType.IsForeign), Not(LocationBuildingItem.GetBuilding.GetType.OnlyEstatesCanBuild))]"
 						datacontext = "[LocationBuildingItem.GetBuilding.GetType.GetNextReplacementBuilding(Player.Self)]"
 						datacontext = "[LocationBuildingItem.GetBuilding.GetLocation]"
-						datacontext = "[LocationBuildingItem.GetBuilding]" # cm Building context needed for upgrade check
 						enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 						action_tooltip = {
 							click_mode = single
@@ -503,8 +501,7 @@
 							description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 							cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 							on_action = "[UpgradeBuildingDefault(BuildingType.Self, Location.Self)]"
-							# lqs upgrade check
-							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)]"
 						}
 
 						action_tooltip = {
@@ -516,8 +513,7 @@
 							cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 							description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 							on_action = "[UpgradeBuildingCtrl(BuildingType.Self, Location.Self)]"
-							# lqs upgrade check
-							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)]"
 							enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 						}
 
@@ -530,8 +526,7 @@
 							cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 							description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 							on_action = "[UpgradeBuildingShift(BuildingType.Self, Location.Self)]"
-							# lqs upgrade check
-							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
+							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)]"
 							enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 						}
 
