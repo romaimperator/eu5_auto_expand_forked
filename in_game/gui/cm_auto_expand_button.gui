@@ -74,6 +74,7 @@
 	# Building-view panel only; that panel shows no grey background on the button.
 	type cm_auto_expand_existing_building_button_bv = button_square_checkbox {
 		datacontext = "[Building]"
+		visible = "[Building.GetType.IsMultipleLevels]"
 		size = { 20 20 }
 		tooltipwidget = { using = cm_Building_Autoexpand_Tooltip }
 		blockoverride "check_texture" {
@@ -192,6 +193,27 @@
 			}
 			using = cm_rightclick_open_settings_window
 		}
+	}
+
+	type cm_auto_expand_existing_building_button_pl = widget {
+		size = { 20 44 }
+		visible = "[And(ObjectsEqual(Building.GetOwner, Player.Self), BuildingType.IsMultipleLevels)]"
+		cm_auto_expand_existing_building_button = {}
+	}
+
+	type cm_auto_expand_new_building_button_pl = cm_auto_expand_new_building_button {
+		visible = "[And(UIActionProvider.IsVisible, UIActionProvider.IsEnabled)]"
+	}
+
+	# Existing-building button if a building is already here, else the new-building button.
+	type cm_auto_expand_building_button_bll = widget {
+		size = { 20 44 }
+		visible = "[ObjectsEqual(LocationToBuildItem.GetOwner, Player.Self)]"
+		datacontext = "[LocationToBuildItem.GetBuilding]"
+		datacontext = "[LocationToBuildItem.GetLocation]"
+		datacontext = "[LocationToBuildItem.GetBuildingType]"
+		cm_auto_expand_existing_building_button = { visible = "[LocationToBuildItem.HasBuilding]" }
+		cm_auto_expand_new_building_button = { visible = "[Not(LocationToBuildItem.HasBuilding)]" parentanchor = center widgetanchor = center }
 	}
 
 	type cm_building_cost_breakdown_tooltip = TooltipListBase {

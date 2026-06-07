@@ -483,15 +483,47 @@ template build_location_entry {
 						}
 					}
 
-					widget = {
-						size = { 20 44 }
-						visible = "[ObjectsEqual(LocationToBuildItem.GetOwner, Player.Self)]"
-						datacontext = "[LocationToBuildItem.GetBuilding]"
-						datacontext = "[LocationToBuildItem.GetLocation]"
-						datacontext = "[LocationToBuildItem.GetBuildingType]"
-						cm_auto_expand_existing_building_button = { visible = "[LocationToBuildItem.HasBuilding]" }
-						cm_auto_expand_new_building_button = { visible = "[Not(LocationToBuildItem.HasBuilding)]" parentanchor = center widgetanchor = center }
-					}
+					# CM: vanilla original kept for tracking vanilla updates
+					# widget = {
+					# 	size = { 20 44 }
+					# 	visible = "[And(ObjectsEqual(LocationToBuildItem.GetBuilding.GetOwner, Player.Self), LocationToBuildItem.GetBuilding.GetType.IsMultipleLevels)]"
+					# 	datacontext = "[LocationToBuildItem.GetBuilding]"
+					# 	button_square_checkbox = {
+					# 		size = { 20 20 }
+					# 		parentanchor = center
+					# 		widgetanchor = center
+					# 		tooltipwidget = { using = AutoExpand_Building_Tooltip }
+					# 		blockoverride "check_texture" {
+					# 			texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+					# 		}
+					# 		blockoverride "checked_visible" {
+					# 			visible = "[IsAutoExpand(Building.Self)]"
+					# 		}
+					# 		blockoverride "unchecked_visible" {
+					# 			visible = "[Not(IsAutoExpand(Building.Self))]"
+					# 		}
+					# 		background = {
+					# 			texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+					# 			texture_density = 2
+					# 			modify_texture = {
+					# 				using = color_market_grey_texture
+					# 				blend_mode = add
+					# 				alpha = 0.5
+					# 			}
+					# 		}
+					# 		action_tooltip = {
+					# 			click_type = left
+					# 			title = "[SelectLocalization(IsAutoExpand(Building.Self), 'TOGGLE_AUTO_EXPAND_ON', 'TOGGLE_AUTO_EXPAND_OFF')]"
+					# 			on_action = "[ToggleAutoExpandBuilding(Building.Self)]"
+					# 		}
+					# 		action_tooltip = {
+					# 			click_type = right
+					# 			title = "TOGGLE_AUTO_EXPAND_ALL_BUILDINGS"
+					# 			on_action = "[BuildInLocationLateralView.ToggleAutoExpandAllBuildings]"
+					# 		}
+					# 	}
+					# }
+					cm_auto_expand_building_button_bll = {}
 
 					expand = {}
 	
