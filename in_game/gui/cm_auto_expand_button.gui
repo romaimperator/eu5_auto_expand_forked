@@ -132,69 +132,72 @@
 	}
 
 	# Per-building-TYPE toggle (mod-only). Same vanilla button visual; targets the type at the location.
-	type cm_auto_expand_widget_for_building_type = button_square_checkbox {
+	type cm_auto_expand_widget_for_building_type = widget {
 		datacontext = "[BuildingType]"
 		datacontext = "[Location]"
 		size = { 20 20 }
-		parentanchor = center
-		widgetanchor = center
-		tooltipwidget = { using = cm_Building_Type_Autoexpand_Tooltip }
-		blockoverride "check_texture" {
-			texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
-		}
-		blockoverride "checked_visible" {
-			visible = "[GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End)]"
-		}
-		blockoverride "unchecked_visible" {
-			visible = "[Not(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End))]"
-		}
-		background = {
-			texture = "gfx/interface/buttons/cm_glow_square.dds"
-			texture_density = 2
-			glow = {
-				name = "green_glow"
-				glow_radius = 5
-				color = { 0.0 1.0 0.0 0.9 }
-				alpha = 0.6
-				block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]" }
+		button_square_checkbox = {
+			size = { 20 20 }
+			parentanchor = center
+			widgetanchor = center
+			tooltipwidget = { using = cm_Building_Type_Autoexpand_Tooltip }
+			blockoverride "check_texture" {
+				texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
 			}
-		}
-		background = {
-			texture = "gfx/interface/buttons/cm_glow_square.dds"
-			texture_density = 2
-			glow = {
-				name = "red_glow"
-				glow_radius = 5
-				color = { 1.0 0.0 0.0 0.9 }
-				alpha = 0.6
-				block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), Not(GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]" }
+			blockoverride "checked_visible" {
+				visible = "[GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End)]"
 			}
-		}
-		background = {
-			texture = "gfx/interface/buttons/checkbox_bg_square.dds"
-			texture_density = 2
-			modify_texture = {
-				using = color_market_grey_texture
-				blend_mode = add
-				alpha = 0.5
+			blockoverride "unchecked_visible" {
+				visible = "[Not(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End))]"
 			}
+			background = {
+				texture = "gfx/interface/buttons/cm_glow_square.dds"
+				texture_density = 2
+				glow = {
+					name = "green_glow"
+					glow_radius = 5
+					color = { 0.0 1.0 0.0 0.9 }
+					alpha = 0.6
+					block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]" }
+				}
+			}
+			background = {
+				texture = "gfx/interface/buttons/cm_glow_square.dds"
+				texture_density = 2
+				glow = {
+					name = "red_glow"
+					glow_radius = 5
+					color = { 1.0 0.0 0.0 0.9 }
+					alpha = 0.6
+					block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), Not(GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]" }
+				}
+			}
+			background = {
+				texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+				texture_density = 2
+				modify_texture = {
+					using = color_market_grey_texture
+					blend_mode = add
+					alpha = 0.5
+				}
+			}
+			action_tooltip = {
+				click_type = left
+				click_mode = single
+				click_modifier = default
+				title = "CM_AUTO_EXPAND_TOGGLE"
+				on_action = "[GetScriptedGui('cm_set_auto_expand_for_building_type').Execute(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End)]"
+			}
+			action_tooltip = {
+				click_type = left
+				click_mode = single
+				click_modifier = shift
+				title = "CM_AUTO_EXPAND_SHIFT_TOGGLE"
+				description = "CM_AUTO_EXPAND_SHIFT_TOGGLE_DESC"
+				on_action = "[PdxGuiTriggerAllAnimations('cm_shift_click_mass_toggle_filtered_building_types')]"
+			}
+			using = cm_rightclick_open_settings_window
 		}
-		action_tooltip = {
-			click_type = left
-			click_mode = single
-			click_modifier = default
-			title = "CM_AUTO_EXPAND_TOGGLE"
-			on_action = "[GetScriptedGui('cm_set_auto_expand_for_building_type').Execute(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End)]"
-		}
-		action_tooltip = {
-			click_type = left
-			click_mode = single
-			click_modifier = shift
-			title = "CM_AUTO_EXPAND_SHIFT_TOGGLE"
-			description = "CM_AUTO_EXPAND_SHIFT_TOGGLE_DESC"
-			on_action = "[PdxGuiTriggerAllAnimations('cm_shift_click_mass_toggle_filtered_building_types')]"
-		}
-		using = cm_rightclick_open_settings_window
 	}
 
 	# build_location_lateralview.gui slot: existing building -> per-building toggle; not-yet-built
