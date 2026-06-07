@@ -6,9 +6,8 @@
 		size = { 30 30 }
 	}
 
-	# Per-building auto-expand toggle. button_square_checkbox identical to vanilla's auto-expand
-	# button; only the state read and click actions call the mod's scripted GUIs.
-	type cm_auto_expand_widget = button_square_checkbox {
+	# Placed in the production view and the build panel.
+	type cm_auto_expand_existing_building_button = button_square_checkbox {
 		datacontext = "[Building]"
 		size = { 20 20 }
 		parentanchor = center
@@ -72,8 +71,8 @@
 		using = cm_rightclick_open_settings_window
 	}
 
-	# Variant matching building_view.gui's vanilla button (no grey background override).
-	type cm_auto_expand_widget_building_view = button_square_checkbox {
+	# Building-view panel only; that panel shows no grey background on the button.
+	type cm_auto_expand_existing_building_button_bv = button_square_checkbox {
 		datacontext = "[Building]"
 		size = { 20 20 }
 		tooltipwidget = { using = cm_Building_Autoexpand_Tooltip }
@@ -108,11 +107,6 @@
 				block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]" }
 			}
 		}
-		background = {
-			texture = "gfx/interface/buttons/checkbox_bg_square.dds"
-			texture_density = 2
-			modify_texture = { using = color_black_texture blend_mode = multiply }
-		}
 		action_tooltip = {
 			click_type = left
 			click_mode = single
@@ -131,8 +125,8 @@
 		using = cm_rightclick_open_settings_window
 	}
 
-	# Per-building-TYPE toggle (mod-only). Same vanilla button visual; targets the type at the location.
-	type cm_auto_expand_widget_for_building_type = widget {
+	# Placed in the production view and the build panel.
+	type cm_auto_expand_new_building_button = widget {
 		datacontext = "[BuildingType]"
 		datacontext = "[Location]"
 		size = { 20 20 }
@@ -198,19 +192,6 @@
 			}
 			using = cm_rightclick_open_settings_window
 		}
-	}
-
-	# build_location_lateralview.gui slot: existing building -> per-building toggle; not-yet-built
-	# -> per-building-type toggle (mod-only). Both occupy vanilla's single 20x20 slot.
-	type cm_auto_expand_widget_global_construction = widget {
-		datacontext = "[LocationToBuildItem.GetBuilding]"
-		datacontext = "[LocationToBuildItem.GetLocation]"
-		datacontext = "[LocationToBuildItem.GetBuildingType]"
-		size = { 20 20 }
-		parentanchor = center
-		widgetanchor = center
-		cm_auto_expand_widget = { visible = "[LocationToBuildItem.HasBuilding]" }
-		cm_auto_expand_widget_for_building_type = { visible = "[Not(LocationToBuildItem.HasBuilding)]" }
 	}
 
 	type cm_building_cost_breakdown_tooltip = TooltipListBase {
