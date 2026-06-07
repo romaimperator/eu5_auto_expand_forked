@@ -1,31 +1,22 @@
 ﻿types cm_auto_expand_icon_types {
-	type cm_is_auto_expand_on_icon_green = icon {
-		visible = "[And3(ObjectsEqual(GetPlayer.Self, LocationBuildingItem.GetBuilding.GetOwner), GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End), GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End))]"
+	# Auto-expand status badge on the building card.
+	type cm_is_auto_expand_on_icon = widget {
+		visible = "[And(ObjectsEqual(GetPlayer.Self, LocationBuildingItem.GetBuilding.GetOwner), GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End))]"
 		parentanchor = top|right
 		position = { 1 -1 }
 		size = { 10 10 }
-		texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
 		using = bg_circle
-		glow = {
-			name = "green_glow"
-			glow_radius = 4
-			color = { 0.0 1.0 0.0 0.9 }
-			alpha = 0.6
+		icon = {
+			visible = "[GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)]"
+			size = { 100% 100% }
+			texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+			glow = { name = "green_glow" glow_radius = 4 color = { 0.0 1.0 0.0 0.9 } alpha = 0.6 }
 		}
-	}
-
-	type cm_is_auto_expand_on_icon_red = icon {
-		visible = "[And3(ObjectsEqual(GetPlayer.Self, LocationBuildingItem.GetBuilding.GetOwner), GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End), Not(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)))]"
-		parentanchor = top|right
-		position = { 1 -1 }
-		size = { 10 10 }
-		texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
-		using = bg_circle
-		glow = {
-			name = "red_glow"
-			glow_radius = 4
-			color = { 1.0 0.0 0.0 0.9 }
-			alpha = 0.6
+		icon = {
+			visible = "[Not(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End))]"
+			size = { 100% 100% }
+			texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+			glow = { name = "red_glow" glow_radius = 4 color = { 1.0 0.0 0.0 0.9 } alpha = 0.6 }
 		}
 	}
 }
