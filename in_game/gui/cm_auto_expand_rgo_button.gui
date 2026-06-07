@@ -6,7 +6,35 @@
 	}
 
 	type cm_auto_expand_rgo_widget_expand_raw_goods_lateralview = button_square_checkbox {
+		datacontext = "[Location]"
 		size = { 20 20 }
+		background = {
+			texture = "gfx/interface/buttons/cm_glow_square.dds"
+			texture_density = 2
+			glow = {
+				name = "green_glow"
+				glow_radius = 5
+				color = { 0.0 1.0 0.0 0.9 }
+				alpha = 0.6
+				block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]" }
+			}
+		}
+		background = {
+			texture = "gfx/interface/buttons/cm_glow_square.dds"
+			texture_density = 2
+			glow = {
+				name = "red_glow"
+				glow_radius = 5
+				color = { 1.0 0.0 0.0 0.9 }
+				alpha = 0.6
+				block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]" }
+			}
+		}
+		background = {
+			texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+			texture_density = 2
+			modify_texture = { using = color_black_texture blend_mode = multiply }
+		}
 		parentanchor = center
 		widgetanchor = center
 		tooltipwidget = { using = cm_RGO_Autoexpand_Tooltip }
@@ -43,6 +71,33 @@
 
 		button_square_checkbox = {
 			size = { 100% 100% }
+			background = {
+				texture = "gfx/interface/buttons/cm_glow_square.dds"
+				texture_density = 2
+				glow = {
+					name = "green_glow"
+					glow_radius = 5
+					color = { 0.0 1.0 0.0 0.9 }
+					alpha = 0.6
+					block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]" }
+				}
+			}
+			background = {
+				texture = "gfx/interface/buttons/cm_glow_square.dds"
+				texture_density = 2
+				glow = {
+					name = "red_glow"
+					glow_radius = 5
+					color = { 1.0 0.0 0.0 0.9 }
+					alpha = 0.6
+					block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]" }
+				}
+			}
+			background = {
+				texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+				texture_density = 2
+				modify_texture = { using = color_black_texture blend_mode = multiply }
+			}
 			parentanchor = center
 			widgetanchor = center
 			enabled = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
