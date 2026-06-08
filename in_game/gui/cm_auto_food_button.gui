@@ -1,36 +1,10 @@
 ﻿types cm_auto_food {
-	# Food variant of cm_auto_expand_checkbutton. Points at checkbox_auto_food.dds so the food icon
-	# can be edited independently.
+	# Auto-food tooltip title icon.
 	type cm_auto_food_checkbutton = checkbutton {
-		texture = "gfx/interface/buttons/checkbox_auto_food.dds"
+		texture = "gfx/interface/icons/location_icons/food.dds"
 		texture_density = 2
-		frame_grid = { 2 1 }
+		frame_grid = { 1 1 }
 		size = { 30 30 }
-
-		background = {
-			texture = "gfx/interface/buttons/checkbox_bg.dds"
-			texture_density = 2
-			using = color_dark_blue
-			glow = {
-				name = "green_glow"
-				glow_radius = 5
-				alpha = 1.0
-				color = {0.0 1.0 0.0 1.0} # green
-				block "green_glow_visible" { visible = no }
-			}
-		}
-		background = {
-			texture = "gfx/interface/buttons/checkbox_bg.dds"
-			texture_density = 2
-			using = color_dark_blue
-			glow = {
-				name = "red_glow"
-				glow_radius = 5
-				alpha = 1.0
-				color = {1.0 0.0 0.0 1.0} # red
-				block "red_glow_visible" { visible = no }
-			}
-		}
 	}
 
 	# Used for location window (location_window.gui): sits above the auto_expand_rgo widget.
@@ -45,13 +19,50 @@
 
 	type cm_auto_food_widget = widget {
 		visible = "[And(ObjectsEqual(Location.GetOwner, GetPlayer), GetScriptedGui('cm_is_food_rgo_location').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
-		size = { 23 23 }
+		size = { 20 20 }
 
-		button = {
+		button_square_checkbox = {
 			size = { 100% 100% }
+			background = {
+				texture = "gfx/interface/buttons/cm_glow_square.dds"
+				texture_density = 2
+				glow = {
+					name = "green_glow"
+					glow_radius = 5
+					color = { 0.0 1.0 0.0 0.9 }
+					alpha = 0.6
+					block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).AddScope('location', Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).AddScope('location', Location.MakeScope).End))]" }
+				}
+			}
+			background = {
+				texture = "gfx/interface/buttons/cm_glow_square.dds"
+				texture_density = 2
+				glow = {
+					name = "red_glow"
+					glow_radius = 5
+					color = { 1.0 0.0 0.0 0.9 }
+					alpha = 0.6
+					block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).AddScope('location', Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).AddScope('location', Location.MakeScope).End)))]" }
+				}
+			}
+			background = {
+				texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+				texture_density = 2
+				modify_texture = { using = color_black_texture blend_mode = multiply }
+			}
+			parentanchor = center
+			widgetanchor = center
 			enabled = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
-			tooltipwidget = {
-				using = cm_Autofood_Tooltip
+			tooltipwidget = { using = cm_Autofood_Tooltip }
+
+			blockoverride "check_texture" {
+				texture = "gfx/interface/icons/location_icons/food.dds"
+			}
+			blockoverride "checked_visible" {
+				visible = "[GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).AddScope('location', Location.MakeScope).End)]"
+			}
+			blockoverride "unchecked_visible" {
+				visible = "[Not(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).AddScope('location', Location.MakeScope).End))]"
 			}
 
 			action_tooltip = {
@@ -69,19 +80,6 @@
 				on_finish = "[GetMapMode('cm_location_food_potential').SetMapMode]"
 			}
 			using = cm_rightclick_open_settings_window
-
-			cm_auto_food_checkbutton = {
-				size = { 100% 100% }
-				alwaystransparent = yes
-				tooltip_enabled = no
-				checked = "[GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).AddScope('location', Location.MakeScope).End)]"
-				blockoverride "green_glow_visible" {
-					visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).AddScope('location', Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).AddScope('location', Location.MakeScope).End))]"
-				}
-				blockoverride "red_glow_visible" {
-					visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).AddScope('location', Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('country', Location.GetOwner.MakeScope).AddScope('location', Location.MakeScope).End)))]"
-				}
-			}
 		}
 	}
 }
