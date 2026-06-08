@@ -71,7 +71,7 @@
 		using = cm_rightclick_open_settings_window
 	}
 
-	# Building-view panel only; that panel shows no grey background on the button.
+	# Building-view panel only; the panel has no grey container, so this button supplies its own background.
 	type cm_auto_expand_existing_building_button_bv = button_square_checkbox {
 		datacontext = "[Building]"
 		visible = "[Building.GetType.IsMultipleLevels]"
@@ -86,9 +86,14 @@
 		blockoverride "unchecked_visible" {
 			visible = "[Not(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 		}
+		# cm_glow_square has the alpha the glow needs; color_black multiply tints its white to the sibling grey.
 		background = {
 			texture = "gfx/interface/buttons/cm_glow_square.dds"
 			texture_density = 2
+			modify_texture = {
+				using = color_black_texture
+				blend_mode = multiply
+			}
 			glow = {
 				name = "green_glow"
 				glow_radius = 5
@@ -100,6 +105,10 @@
 		background = {
 			texture = "gfx/interface/buttons/cm_glow_square.dds"
 			texture_density = 2
+			modify_texture = {
+				using = color_black_texture
+				blend_mode = multiply
+			}
 			glow = {
 				name = "red_glow"
 				glow_radius = 5
