@@ -151,15 +151,19 @@ cm_check_for_auto_expand_when_removing_building = {
 
 cm_is_auto_expand_active_for_building = {
 	is_shown = {
-		save_temporary_scope_as = the_building
-		scope:the_building = { building_type = { save_temporary_scope_as = building_type } }
-		OR = {
-			location = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
-			AND = {
-				owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } }
-				NOT = { location = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } } }
+		trigger_if = {
+			limit = { exists = this }
+			save_temporary_scope_as = the_building
+			scope:the_building = { building_type = { save_temporary_scope_as = building_type } }
+			OR = {
+				location = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
+				AND = {
+					owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } }
+					NOT = { location = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } } }
+				}
 			}
 		}
+		trigger_else = { always = no }
 	}
 }
 
@@ -250,24 +254,28 @@ cm_location_will_auto_expand_from_zero_levels = {
 
 cm_is_building_able_to_auto_expand = {
 	is_shown = {
-		building_type = { save_temporary_scope_as = building_type }
-		location = { save_temporary_scope_as = location }
-		owner = { save_temporary_scope_as = country }
-		# Same individual checks as the tooltip rows, in the same order
-		owner = { cm_should_pause_auto_expand = no }
-		location = { NOT = { integration_level = conquered } }
-		cm_building_meets_minimum_profit = yes
-		is_opened = yes
-		cm_is_building_fully_employed = yes
-		is_lacking_goods = no
-		cm_is_not_under_construction = yes
-		location = { cm_location_has_enough_pops_available = yes }
-		location = { cm_is_location_under_building_limit = yes }
-		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
-		cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_building_type_for_auto_expand }
-		cm_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
-		location.owner = { can_build_building = scope:building_type }
-		# can_build_building - doesn't work from Building-rooted scripted GUI so moved to GUI visibility
+		trigger_if = {
+			limit = { exists = this }
+			building_type = { save_temporary_scope_as = building_type }
+			location = { save_temporary_scope_as = location }
+			owner = { save_temporary_scope_as = country }
+			# Same individual checks as the tooltip rows, in the same order
+			owner = { cm_should_pause_auto_expand = no }
+			location = { NOT = { integration_level = conquered } }
+			cm_building_meets_minimum_profit = yes
+			is_opened = yes
+			cm_is_building_fully_employed = yes
+			is_lacking_goods = no
+			cm_is_not_under_construction = yes
+			location = { cm_location_has_enough_pops_available = yes }
+			location = { cm_is_location_under_building_limit = yes }
+			cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
+			cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_building_type_for_auto_expand }
+			cm_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
+			location.owner = { can_build_building = scope:building_type }
+			# can_build_building - doesn't work from Building-rooted scripted GUI so moved to GUI visibility
+		}
+		trigger_else = { always = no }
 	}
 }
 
