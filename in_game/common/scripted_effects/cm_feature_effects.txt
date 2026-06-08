@@ -3,6 +3,28 @@
 # the corresponding feature is enabled in the priority list.
 # All effects expect scope:country to be set.
 
+# Per-cycle construction queue. The monthly dispatcher enqueues candidates in
+# priority-feature then max_control order: a country list of locations, each carrying
+# a location list of building types. The hidden window drains it in that order, grabs
+# the engine cost/income GUI bindings, and constructs.
+# Expects scope:country, scope:location, scope:building_type.
+cm_stage_candidate = {
+	scope:country = { cmf_log = { action = cm_q_log_staging } }
+	scope:location = {
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:building_type } } }
+			add_to_variable_list = { name = cm_q_building_types target = scope:building_type }
+		}
+	}
+	scope:country = {
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = cm_q_locations target = scope:location } } }
+			add_to_variable_list = { name = cm_q_locations target = scope:location }
+		}
+	}
+}
+
+
 # ─── Auto Expand Buildings ───
 # Expands multi-level buildings that are profitable and have pops available.
 # Flags obsolete buildings for GUI-driven upgrade processing.
@@ -145,7 +167,7 @@ cm_run_auto_expand_buildings = {
 								cm_is_not_under_construction_and_gold_is_available = yes
 							}
 						}
-						scope:location = { construct_building = { building_type = scope:building_type } }
+						cm_stage_candidate = yes
 					}
 				} else_if = {
 					limit = {
@@ -186,7 +208,7 @@ cm_run_auto_expand_buildings = {
 					limit = { cm_is_building_type_obsolete = no }
 					if = {
 						limit = { cm_location_can_auto_expand_from_zero_levels = yes }
-						scope:location = { construct_building = { building_type = scope:building_type } }
+						cm_stage_candidate = yes
 					}
 				} else_if = {
 					limit = { scope:location = { cm_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes } }

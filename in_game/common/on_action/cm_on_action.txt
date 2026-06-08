@@ -43,6 +43,13 @@ cm_monthly_auto_town_rights = {
 cm_unified_auto_expand = {
 	effect = {
 		save_scope_as = country
+		# Start a fresh construction queue each cycle, drained once by the queue window.
+		every_in_list = {
+			variable = cm_q_locations
+			save_scope_as = cm_q_loc
+			scope:cm_q_loc = { clear_variable_list = cm_q_building_types }
+		}
+		clear_variable_list = cm_q_locations
 		if = { limit = { cm_should_pause_auto_expand = no }
 			if = { limit = { has_variable_list = cm_priority_features_list }
 				every_in_list = {
@@ -65,5 +72,8 @@ cm_unified_auto_expand = {
 		}
 		# Signal the hidden window GUI to process upgrades and do periodic checks
 		set_variable = cm_monthly_gui_tick
+		# Show the construction-queue drain section; its items construct once via trigger_on_create,
+		# then the wait->apply driver clears this flag so the section re-shows (re-fires) next month.
+		set_variable = { name = cm_should_construct value = yes }
 	}
 }

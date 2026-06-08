@@ -130,6 +130,50 @@ cm_gui_construct_upgrade = {
 		remove_list_variable = { name = cm_gui_upgrade_building_types target = scope:old_building_type }
 	}
 }
+# Diagnostic probe: logs unconditionally when a queue item renders (datamodel iterates).
+cm_q_probe_item = {
+	effect = {
+		cmf_log = { action = cm_q_log_probe_item }
+	}
+}
+cm_q_probe_kind1 = {
+	effect = {
+		cmf_log = { action = cm_q_log_probe_kind1 }
+	}
+}
+# Construction-queue executor for building kinds. Root is the location.
+# Invoked by the hidden window per queued entry; applies the income gate
+# and the gold-affordability gate using the engine values grabbed in GUI, then builds.
+# scope:cost = GetBuildOrExpandBuildingCost, scope:income = income-to-owner per level.
+cm_gui_try_build = {
+	saved_scopes = { building_type country cost income }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		scope:country = { cmf_log = { action = cm_q_log_fired } }
+		if = {
+			limit = { scope:income >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)" }
+			scope:country = { cmf_log = { action = cm_q_log_income_ok } }
+		} else = {
+			scope:country = { cmf_log = { action = cm_q_log_income_fail } }
+		}
+		if = {
+			limit = { scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } } }
+			scope:country = { cmf_log = { action = cm_q_log_gold_ok } }
+		} else = {
+			scope:country = { cmf_log = { action = cm_q_log_gold_fail } }
+		}
+		if = {
+			limit = {
+				scope:income >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
+			}
+			construct_building = { building_type = scope:building_type }
+			scope:country = { cmf_log = { action = cm_q_log_constructed } }
+		}
+	}
+}
 cm_check_for_auto_expand_when_removing_building = {
 	effect = {
 		save_scope_as = the_building

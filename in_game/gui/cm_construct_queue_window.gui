@@ -1,0 +1,45 @@
+﻿basic_dialog = {
+	name = "cm_construct_queue_window"
+	widgetid = cm_construct_queue_window
+	layer = top
+	visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+	parentanchor = center
+	position = { -10000 1 }
+	blockoverride "header_text" {
+		raw_text = "CM: Construct Queue Window"
+	}
+	blockoverride "content" {
+		widget = {
+			state = {
+				name = cm_q_wait
+				trigger_on_create = yes
+				next = cm_q_apply
+				on_finish = "[PdxGuiWidget.TriggerAnimation('cm_q_apply')]"
+			}
+			state = {
+				name = cm_q_apply
+				duration = 2
+				on_finish = "[GetScriptedGui('cm_clear_should_construct').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				next = cm_q_wait
+			}
+			datamodel = "[GetPlayer.MakeScope.GetList('cm_q_locations')]"
+			item = {
+				widget = {
+					datacontext = "[Scope.GetLocation]"
+					datamodel = "[Location.MakeScope.GetList('cm_q_building_types')]"
+					item = {
+						widget = {
+							datacontext = "[Scope.GetBuildingType]"
+							state = {
+								name = cm_q_construct
+								trigger_on_create = yes
+								on_finish = "[GetScriptedGui('cm_q_probe_item').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+								on_finish = "[GetScriptedGui('cm_gui_try_build').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))).End)]"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
