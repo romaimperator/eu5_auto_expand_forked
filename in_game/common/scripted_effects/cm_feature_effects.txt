@@ -9,7 +9,6 @@
 # the engine cost/income GUI bindings, and constructs.
 # Expects scope:country, scope:location, scope:building_type.
 cm_stage_candidate = {
-	scope:country = { cmf_log = { action = cm_q_log_staging } }
 	scope:location = {
 		if = {
 			limit = { NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:building_type } } }
@@ -29,7 +28,6 @@ cm_stage_candidate = {
 # Expects scope:country, scope:location.
 cm_stage_rgo_candidate = {
 	scope:country = {
-		cmf_log = { action = cm_q_log_staging }
 		if = {
 			limit = { NOT = { is_target_in_variable_list = { name = cm_q_rgo_locations target = scope:location } } }
 			add_to_variable_list = { name = cm_q_rgo_locations target = scope:location }
@@ -42,7 +40,6 @@ cm_stage_rgo_candidate = {
 # slots and affordability, then builds. Expects scope:country, scope:location, scope:building_type.
 cm_stage_ungated_candidate = {
 	scope:country = {
-		cmf_log = { action = cm_q_log_staging }
 		if = {
 			limit = { NOT = { is_target_in_variable_list = { name = cm_q_ungated_locations target = scope:location } } }
 			add_to_variable_list = { name = cm_q_ungated_locations target = scope:location }
@@ -62,7 +59,6 @@ cm_stage_ungated_candidate = {
 cm_stage_urbanize_candidate = {
 	building_type:$bt$ = { save_scope_as = building_type }
 	scope:country = {
-		cmf_log = { action = cm_q_log_staging }
 		if = {
 			limit = { NOT = { is_target_in_variable_list = { name = cm_q_urbanize_locations target = scope:location } } }
 			add_to_variable_list = { name = cm_q_urbanize_locations target = scope:location }
@@ -81,7 +77,6 @@ cm_stage_urbanize_candidate = {
 # before building. Expects scope:country, scope:location, scope:building_type.
 cm_stage_food_building_candidate = {
 	scope:country = {
-		cmf_log = { action = cm_q_log_staging }
 		if = {
 			limit = { NOT = { is_target_in_variable_list = { name = cm_q_food_locations target = scope:location } } }
 			add_to_variable_list = { name = cm_q_food_locations target = scope:location }
@@ -99,7 +94,6 @@ cm_stage_food_building_candidate = {
 # The executor re-checks build-queue slots and the food gold reserve. Expects scope:country, scope:location.
 cm_stage_food_rgo_candidate = {
 	scope:country = {
-		cmf_log = { action = cm_q_log_staging }
 		if = {
 			limit = { NOT = { is_target_in_variable_list = { name = cm_q_food_rgo_locations target = scope:location } } }
 			add_to_variable_list = { name = cm_q_food_rgo_locations target = scope:location }
@@ -370,7 +364,6 @@ cm_clear_finished_upgrade_in_progress = {
 			# source tier disappearing instead, which is the reliable finished signal.
 			if = {
 				limit = { scope:location = { NOT = { has_building = scope:building_type } } }
-				scope:country = { cmf_log = { action = cm_q_log_clear_fort } }
 				scope:location = { remove_list_variable = { name = cm_upgrade_in_progress target = scope:building_type } }
 			}
 		} else_if = {
@@ -388,12 +381,10 @@ cm_clear_finished_upgrade_in_progress = {
 						always = yes
 					}
 				}
-				scope:country = { cmf_log = { action = cm_q_log_clear_target } }
 				scope:location = { remove_list_variable = { name = cm_upgrade_in_progress target = scope:building_type } }
 			}
 		} else = {
 			# No upgrade mapping found — stale entry, clean up
-			scope:country = { cmf_log = { action = cm_q_log_clear_stale } }
 			scope:location = { remove_list_variable = { name = cm_upgrade_in_progress target = scope:building_type } }
 		}
 	}

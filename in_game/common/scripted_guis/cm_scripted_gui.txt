@@ -98,7 +98,6 @@ cm_gui_construct_upgrade = {
 	}
 	effect = {
 		construct_building = { building_type = scope:new_building_type }
-		scope:country = { cmf_log = { action = cm_q_log_upgrade_constructed } }
 		# Swap auto-expand tracking from old to new
 		if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:old_building_type } } }
 			# Mass mode: add new type to country mass list and swap exclusion entries
@@ -128,17 +127,6 @@ cm_gui_construct_upgrade = {
 		}
 	}
 }
-# Diagnostic probe: logs unconditionally when a queue item renders (datamodel iterates).
-cm_q_probe_item = {
-	effect = {
-		cmf_log = { action = cm_q_log_probe_item }
-	}
-}
-cm_q_probe_kind1 = {
-	effect = {
-		cmf_log = { action = cm_q_log_probe_kind1 }
-	}
-}
 # Construction-queue executor for building kinds. Root is the location.
 # Invoked by the hidden window per queued entry; applies the income gate
 # and the gold-affordability gate using the engine values grabbed in GUI, then builds.
@@ -149,26 +137,12 @@ cm_gui_try_build = {
 		always = yes
 	}
 	effect = {
-		scope:country = { cmf_log = { action = cm_q_log_fired } }
-		if = {
-			limit = { cm_gui_income_gate_passes = yes }
-			scope:country = { cmf_log = { action = cm_q_log_income_ok } }
-		} else = {
-			scope:country = { cmf_log = { action = cm_q_log_income_fail } }
-		}
-		if = {
-			limit = { scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } } }
-			scope:country = { cmf_log = { action = cm_q_log_gold_ok } }
-		} else = {
-			scope:country = { cmf_log = { action = cm_q_log_gold_fail } }
-		}
 		if = {
 			limit = {
 				cm_gui_income_gate_passes = yes
 				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
 			}
 			construct_building = { building_type = scope:building_type }
-			scope:country = { cmf_log = { action = cm_q_log_constructed } }
 		}
 	}
 }
@@ -180,11 +154,9 @@ cm_gui_try_rgo = {
 		always = yes
 	}
 	effect = {
-		scope:country = { cmf_log = { action = cm_q_log_rgo_fired } }
 		if = {
 			limit = { cm_should_rgo_auto_expand = yes }
 			construct_rgo_upgrade = { }
-			scope:country = { cmf_log = { action = cm_q_log_rgo_constructed } }
 		}
 	}
 }
@@ -197,7 +169,6 @@ cm_gui_try_ungated = {
 		always = yes
 	}
 	effect = {
-		scope:country = { cmf_log = { action = cm_q_log_ungated_fired } }
 		if = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
@@ -209,7 +180,6 @@ cm_gui_try_ungated = {
 			} else = {
 				construct_building = { building_type = scope:building_type owner = scope:country payer = scope:country }
 			}
-			scope:country = { cmf_log = { action = cm_q_log_ungated_constructed } }
 		}
 	}
 }
@@ -222,7 +192,6 @@ cm_gui_try_urbanize = {
 		always = yes
 	}
 	effect = {
-		scope:country = { cmf_log = { action = cm_q_log_urbanize_fired } }
 		if = {
 			limit = {
 				scope:building_type = building_type:cm_upgrade_town_to_city_building
@@ -230,7 +199,6 @@ cm_gui_try_urbanize = {
 				cm_check_country_gold_above = { threshold = cm_mass_upgrade_town_to_city_gold_needed }
 			}
 			construct_building = { building_type = building_type:cm_upgrade_town_to_city_building }
-			scope:country = { cmf_log = { action = cm_q_log_urbanize_constructed } }
 		}
 		if = {
 			limit = {
@@ -239,7 +207,6 @@ cm_gui_try_urbanize = {
 				cm_check_country_gold_above = { threshold = cm_mass_upgrade_rural_to_town_gold_needed }
 			}
 			construct_building = { building_type = building_type:cm_upgrade_rural_to_town_building }
-			scope:country = { cmf_log = { action = cm_q_log_urbanize_constructed } }
 		}
 	}
 }
@@ -252,14 +219,12 @@ cm_gui_try_food_building = {
 		always = yes
 	}
 	effect = {
-		scope:country = { cmf_log = { action = cm_q_log_food_fired } }
 		if = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
 				cm_check_country_gold_above = { threshold = cm_food_gold_threshold }
 			}
 			construct_building = { building_type = scope:building_type }
-			scope:country = { cmf_log = { action = cm_q_log_food_constructed } }
 		}
 	}
 }
@@ -271,14 +236,12 @@ cm_gui_try_food_rgo = {
 		always = yes
 	}
 	effect = {
-		scope:country = { cmf_log = { action = cm_q_log_food_fired } }
 		if = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
 				cm_check_country_gold_above = { threshold = cm_food_gold_threshold }
 			}
 			construct_rgo_upgrade = { }
-			scope:country = { cmf_log = { action = cm_q_log_food_constructed } }
 		}
 	}
 }

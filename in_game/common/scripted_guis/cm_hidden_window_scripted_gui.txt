@@ -13,9 +13,9 @@ cm_hidden_window_repeated_init = {
 	}
 }
 
-# Gates the construction-queue drain section's visibility. Root is the player.
-# Set monthly by the dispatcher; the section becomes visible, its items fire once
-# via _show, and the driver clears the flag so it hides until the next month.
+# Gates the construction-queue window's visibility. Root is the player.
+# Set monthly by the dispatcher; the window becomes visible, its items construct once
+# via trigger_on_create, and the driver clears the flag so it hides until the next month.
 cm_should_construct = {
 	is_shown = {
 		exists = var:cm_should_construct
@@ -25,7 +25,6 @@ cm_should_construct = {
 # Clears the construct flag after one drain. Root is the player.
 cm_clear_should_construct = {
 	effect = {
-		cmf_log = { action = cm_q_log_window_ran }
 		remove_variable = cm_should_construct
 	}
 }
