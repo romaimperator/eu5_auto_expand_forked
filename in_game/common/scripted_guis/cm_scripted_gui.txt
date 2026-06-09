@@ -95,6 +95,12 @@ cm_gui_construct_upgrade = {
 	is_valid = {
 		is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:old_building_type }
 		cm_auto_expand_check_minimum_gold_reserve = yes
+		# Auto-expand's obsolete upgrades are income-gated on the replacement's engine income;
+		# upgrade-all entries are not marked gated and skip the income check.
+		OR = {
+			NOT = { is_target_in_variable_list = { name = cm_q_upgrade_gated_types target = scope:old_building_type } }
+			cm_gui_income_gate_passes = yes
+		}
 	}
 	effect = {
 		construct_building = { building_type = scope:new_building_type }
