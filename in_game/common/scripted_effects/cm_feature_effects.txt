@@ -415,7 +415,7 @@ cm_run_auto_build = {
 						save_scope_as = location
 						if = {
 							limit = { AND = { cm_get_open_build_queue_slots > 0 cm_location_can_auto_build = yes } }
-							construct_building = { building_type = scope:building_type }
+							cm_stage_ungated_candidate = yes
 						}
 					}
 				} else = {
@@ -424,16 +424,7 @@ cm_run_auto_build = {
 						save_scope_as = location
 						if = {
 							limit = { AND = { NOT = { integration_level = conquered } cm_get_open_build_queue_slots > 0 cm_location_can_auto_build = yes } }
-							if = {
-								limit = { owner = scope:country }
-								construct_building = { building_type = scope:building_type }
-							} else = {
-								construct_building = {
-									building_type = scope:building_type
-									owner = scope:country
-									payer = scope:country
-								}
-							}
+							cm_stage_ungated_candidate = yes
 						}
 					}
 				}
