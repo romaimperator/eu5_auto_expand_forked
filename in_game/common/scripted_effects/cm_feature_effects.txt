@@ -24,6 +24,19 @@ cm_stage_candidate = {
 	}
 }
 
+# RGO upgrade candidate for the unified queue. Drained per location by the queue window,
+# which re-checks eligibility and gold at drain time before upgrading the RGO.
+# Expects scope:country, scope:location.
+cm_stage_rgo_candidate = {
+	scope:country = {
+		cmf_log = { action = cm_q_log_staging }
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = cm_q_rgo_locations target = scope:location } } }
+			add_to_variable_list = { name = cm_q_rgo_locations target = scope:location }
+		}
+	}
+}
+
 
 # ─── Auto Expand Buildings ───
 # Expands multi-level buildings that are profitable and have pops available.
@@ -252,7 +265,7 @@ cm_run_auto_expand_rgos = {
 			save_scope_as = location
 			if = {
 				limit = { cm_should_rgo_auto_expand = yes }
-				construct_rgo_upgrade = { }
+				cm_stage_rgo_candidate = yes
 			}
 		}
 	} else = {
@@ -265,7 +278,7 @@ cm_run_auto_expand_rgos = {
 			save_scope_as = location
 			if = {
 				limit = { cm_should_rgo_auto_expand = yes }
-				construct_rgo_upgrade = { }
+				cm_stage_rgo_candidate = yes
 			}
 		}
 	}

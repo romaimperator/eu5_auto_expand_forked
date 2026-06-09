@@ -174,6 +174,22 @@ cm_gui_try_build = {
 		}
 	}
 }
+# Construction-queue RGO executor. Root is the location; re-checks RGO eligibility
+# (including gold) at drain time, then upgrades the RGO. Expects scopes: country, location.
+cm_gui_try_rgo = {
+	saved_scopes = { country location }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		scope:country = { cmf_log = { action = cm_q_log_rgo_fired } }
+		if = {
+			limit = { cm_should_rgo_auto_expand = yes }
+			construct_rgo_upgrade = { }
+			scope:country = { cmf_log = { action = cm_q_log_rgo_constructed } }
+		}
+	}
+}
 cm_check_for_auto_expand_when_removing_building = {
 	effect = {
 		save_scope_as = the_building
