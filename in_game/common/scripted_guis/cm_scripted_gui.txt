@@ -215,6 +215,36 @@ cm_gui_try_ungated = {
 		}
 	}
 }
+# Urbanize construction-queue executor. Root is the location; the staged upgrade building type
+# selects the rank step, then re-checks rank eligibility and the fixed-price gold threshold
+# at drain time before building. Expects scopes: country, building_type.
+cm_gui_try_urbanize = {
+	saved_scopes = { country building_type }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		scope:country = { cmf_log = { action = cm_q_log_urbanize_fired } }
+		if = {
+			limit = {
+				scope:building_type = building_type:cm_upgrade_town_to_city_building
+				cm_location_can_mass_upgrade_to_city = yes
+				cm_check_country_gold_above = { threshold = cm_mass_upgrade_town_to_city_gold_needed }
+			}
+			construct_building = { building_type = building_type:cm_upgrade_town_to_city_building }
+			scope:country = { cmf_log = { action = cm_q_log_urbanize_constructed } }
+		}
+		if = {
+			limit = {
+				scope:building_type = building_type:cm_upgrade_rural_to_town_building
+				cm_location_can_mass_upgrade_to_town = yes
+				cm_check_country_gold_above = { threshold = cm_mass_upgrade_rural_to_town_gold_needed }
+			}
+			construct_building = { building_type = building_type:cm_upgrade_rural_to_town_building }
+			scope:country = { cmf_log = { action = cm_q_log_urbanize_constructed } }
+		}
+	}
+}
 cm_check_for_auto_expand_when_removing_building = {
 	effect = {
 		save_scope_as = the_building
