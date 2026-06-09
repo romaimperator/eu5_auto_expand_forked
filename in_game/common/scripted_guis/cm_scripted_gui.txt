@@ -153,7 +153,7 @@ cm_gui_try_build = {
 	effect = {
 		scope:country = { cmf_log = { action = cm_q_log_fired } }
 		if = {
-			limit = { scope:income >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)" }
+			limit = { cm_gui_income_gate_passes = yes }
 			scope:country = { cmf_log = { action = cm_q_log_income_ok } }
 		} else = {
 			scope:country = { cmf_log = { action = cm_q_log_income_fail } }
@@ -166,7 +166,7 @@ cm_gui_try_build = {
 		}
 		if = {
 			limit = {
-				scope:income >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+				cm_gui_income_gate_passes = yes
 				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
 			}
 			construct_building = { building_type = scope:building_type }

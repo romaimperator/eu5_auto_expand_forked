@@ -102,6 +102,19 @@ cm_building_meets_minimum_profit = {
 	}
 }
 
+# Income gate for the GUI construction executor. Expects scopes: country, building_type, income.
+# Passes when the building is profit-exempt (non-production, no construction demand, or no
+# threshold) or its income-to-owner meets the configured minimum.
+cm_gui_income_gate_passes = {
+	OR = {
+		NOT = { scope:building_type = { cm_is_building_type_production_building = yes } }
+		cm_get_construction_demand_total_count = 0
+		NOT = { scope:country = { has_variable_map = cm_priority_min_profit } }
+		"scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)" = 0
+		scope:income >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+	}
+}
+
 # Expects scope:building_type. Checks if the building type produces a good that is also
 # one of its construction demand goods (e.g. horse_breeders produces and requires horses).
 # Precomputed by the hidden window GUI at game start.
