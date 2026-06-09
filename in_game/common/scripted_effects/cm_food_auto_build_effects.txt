@@ -82,25 +82,31 @@ cm_food_auto_build_in_location = {
 		# ─── Execute best action (discount-gated: if the winner fails min discount, build nothing) ───
 		if = { limit = { local_var:cm_food_action = 1 cm_rgo_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "CM Food: RGO expand in [THIS.GetLocation.GetNameWithNoTooltip] (marginal=[GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('cm_food_marginal_rgo')])" }
-			construct_rgo_upgrade = {}
+			cm_stage_food_rgo_candidate = yes
 		} else_if = { limit = { local_var:cm_food_action = 2 building_type:farming_village = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "CM Food: farming_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			construct_building = { building_type = building_type:farming_village }
+			building_type:farming_village = { save_scope_as = building_type }
+			cm_stage_food_building_candidate = yes
 		} else_if = { limit = { local_var:cm_food_action = 3 building_type:windmill = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "CM Food: windmill in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			construct_building = { building_type = building_type:windmill }
+			building_type:windmill = { save_scope_as = building_type }
+			cm_stage_food_building_candidate = yes
 		} else_if = { limit = { local_var:cm_food_action = 4 building_type:irrigation_systems = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "CM Food: irrigation in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			construct_building = { building_type = building_type:irrigation_systems }
+			building_type:irrigation_systems = { save_scope_as = building_type }
+			cm_stage_food_building_candidate = yes
 		} else_if = { limit = { local_var:cm_food_action = 5 building_type:fishing_village = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "CM Food: fishing_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			construct_building = { building_type = building_type:fishing_village }
+			building_type:fishing_village = { save_scope_as = building_type }
+			cm_stage_food_building_candidate = yes
 		} else_if = { limit = { local_var:cm_food_action = 6 building_type:sheep_farms = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "CM Food: sheep_farms in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			construct_building = { building_type = building_type:sheep_farms }
+			building_type:sheep_farms = { save_scope_as = building_type }
+			cm_stage_food_building_candidate = yes
 		} else_if = { limit = { local_var:cm_food_action = 7 building_type:forest_village = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "CM Food: forest_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			construct_building = { building_type = building_type:forest_village }
+			building_type:forest_village = { save_scope_as = building_type }
+			cm_stage_food_building_candidate = yes
 		}
 
 	} # end pops_still_filling check

@@ -245,6 +245,45 @@ cm_gui_try_urbanize = {
 		}
 	}
 }
+# Food building construction-queue executor. Root is the location; re-checks build-queue slots
+# and the food gold reserve at drain time, then builds the staged food building.
+# Expects scopes: country, building_type.
+cm_gui_try_food_building = {
+	saved_scopes = { country building_type }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		scope:country = { cmf_log = { action = cm_q_log_food_fired } }
+		if = {
+			limit = {
+				cm_get_open_build_queue_slots > 0
+				cm_check_country_gold_above = { threshold = cm_food_gold_threshold }
+			}
+			construct_building = { building_type = scope:building_type }
+			scope:country = { cmf_log = { action = cm_q_log_food_constructed } }
+		}
+	}
+}
+# Food RGO construction-queue executor. Root is the location; re-checks build-queue slots
+# and the food gold reserve at drain time, then upgrades the RGO. Expects scopes: country.
+cm_gui_try_food_rgo = {
+	saved_scopes = { country }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		scope:country = { cmf_log = { action = cm_q_log_food_fired } }
+		if = {
+			limit = {
+				cm_get_open_build_queue_slots > 0
+				cm_check_country_gold_above = { threshold = cm_food_gold_threshold }
+			}
+			construct_rgo_upgrade = { }
+			scope:country = { cmf_log = { action = cm_q_log_food_constructed } }
+		}
+	}
+}
 cm_check_for_auto_expand_when_removing_building = {
 	effect = {
 		save_scope_as = the_building

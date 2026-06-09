@@ -83,6 +83,40 @@
 					}
 				}
 			}
+			# Food buildings: per-location list of the chosen food building type.
+			widget = {
+				datamodel = "[GetPlayer.MakeScope.GetList('cm_q_food_locations')]"
+				item = {
+					widget = {
+						datacontext = "[Scope.GetLocation]"
+						datamodel = "[Location.MakeScope.GetList('cm_q_food_building_types')]"
+						item = {
+							widget = {
+								datacontext = "[Scope.GetBuildingType]"
+								state = {
+									name = cm_q_construct_food
+									trigger_on_create = yes
+									on_finish = "[GetScriptedGui('cm_gui_try_food_building').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+								}
+							}
+						}
+					}
+				}
+			}
+			# Food RGO upgrades: per-location; the executor re-checks slots and the food gold reserve.
+			widget = {
+				datamodel = "[GetPlayer.MakeScope.GetList('cm_q_food_rgo_locations')]"
+				item = {
+					widget = {
+						datacontext = "[Scope.GetLocation]"
+						state = {
+							name = cm_q_construct_food_rgo
+							trigger_on_create = yes
+							on_finish = "[GetScriptedGui('cm_gui_try_food_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+						}
+					}
+				}
+			}
 			# RGO upgrades: per-location; the executor re-checks eligibility and gold.
 			widget = {
 				datamodel = "[GetPlayer.MakeScope.GetList('cm_q_rgo_locations')]"

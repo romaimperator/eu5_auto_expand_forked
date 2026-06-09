@@ -76,6 +76,37 @@ cm_stage_urbanize_candidate = {
 	}
 }
 
+# Food building candidate for the unified queue (the marginal comparison already picked the
+# winning building type). The executor re-checks build-queue slots and the food gold reserve
+# before building. Expects scope:country, scope:location, scope:building_type.
+cm_stage_food_building_candidate = {
+	scope:country = {
+		cmf_log = { action = cm_q_log_staging }
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = cm_q_food_locations target = scope:location } } }
+			add_to_variable_list = { name = cm_q_food_locations target = scope:location }
+		}
+	}
+	scope:location = {
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = cm_q_food_building_types target = scope:building_type } } }
+			add_to_variable_list = { name = cm_q_food_building_types target = scope:building_type }
+		}
+	}
+}
+
+# Food RGO candidate for the unified queue (the marginal comparison picked an RGO expand).
+# The executor re-checks build-queue slots and the food gold reserve. Expects scope:country, scope:location.
+cm_stage_food_rgo_candidate = {
+	scope:country = {
+		cmf_log = { action = cm_q_log_staging }
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = cm_q_food_rgo_locations target = scope:location } } }
+			add_to_variable_list = { name = cm_q_food_rgo_locations target = scope:location }
+		}
+	}
+}
+
 
 # ─── Auto Expand Buildings ───
 # Expands multi-level buildings that are profitable and have pops available.
