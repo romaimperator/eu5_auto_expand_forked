@@ -22,7 +22,7 @@
 				on_finish = "[GetScriptedGui('cm_clear_should_construct').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 				next = cm_q_wait
 			}
-			# Building constructs: per-location list of building types.
+			# Income-gated building constructs: per-location list of building types.
 			widget = {
 				datamodel = "[GetPlayer.MakeScope.GetList('cm_q_locations')]"
 				item = {
@@ -37,6 +37,26 @@
 									trigger_on_create = yes
 									on_finish = "[GetScriptedGui('cm_q_probe_item').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 									on_finish = "[GetScriptedGui('cm_gui_try_build').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))).End)]"
+								}
+							}
+						}
+					}
+				}
+			}
+			# Ungated building constructs (auto-build, capital): per-location list of building types.
+			widget = {
+				datamodel = "[GetPlayer.MakeScope.GetList('cm_q_ungated_locations')]"
+				item = {
+					widget = {
+						datacontext = "[Scope.GetLocation]"
+						datamodel = "[Location.MakeScope.GetList('cm_q_ungated_building_types')]"
+						item = {
+							widget = {
+								datacontext = "[Scope.GetBuildingType]"
+								state = {
+									name = cm_q_construct_ungated
+									trigger_on_create = yes
+									on_finish = "[GetScriptedGui('cm_gui_try_ungated').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End)]"
 								}
 							}
 						}

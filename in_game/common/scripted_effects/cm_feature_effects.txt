@@ -37,6 +37,25 @@ cm_stage_rgo_candidate = {
 	}
 }
 
+# Ungated building candidate (auto-build, capital) for the unified queue. Drained per
+# location by the queue window with the engine cost; the executor re-checks build-queue
+# slots and affordability, then builds. Expects scope:country, scope:location, scope:building_type.
+cm_stage_ungated_candidate = {
+	scope:country = {
+		cmf_log = { action = cm_q_log_staging }
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = cm_q_ungated_locations target = scope:location } } }
+			add_to_variable_list = { name = cm_q_ungated_locations target = scope:location }
+		}
+	}
+	scope:location = {
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:building_type } } }
+			add_to_variable_list = { name = cm_q_ungated_building_types target = scope:building_type }
+		}
+	}
+}
+
 
 # ─── Auto Expand Buildings ───
 # Expands multi-level buildings that are profitable and have pops available.
@@ -514,7 +533,8 @@ cm_try_construct_capital_building = {
 		limit = {
 			scope:capital_location = { cm_capital_location_can_auto_build = yes }
 		}
-		scope:capital_location = { construct_building = { building_type = scope:building_type } }
+		scope:capital_location = { save_scope_as = location }
+		cm_stage_ungated_candidate = yes
 	}
 }
 

@@ -190,6 +190,31 @@ cm_gui_try_rgo = {
 		}
 	}
 }
+# Ungated construction-queue executor (auto-build, capital). Root is the location;
+# re-checks build-queue slots and affordability against the engine cost, then builds.
+# Subject locations build with the country as owner and payer. Expects scopes: country, building_type, cost.
+cm_gui_try_ungated = {
+	saved_scopes = { country building_type cost }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		scope:country = { cmf_log = { action = cm_q_log_ungated_fired } }
+		if = {
+			limit = {
+				cm_get_open_build_queue_slots > 0
+				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
+			}
+			if = {
+				limit = { owner = scope:country }
+				construct_building = { building_type = scope:building_type }
+			} else = {
+				construct_building = { building_type = scope:building_type owner = scope:country payer = scope:country }
+			}
+			scope:country = { cmf_log = { action = cm_q_log_ungated_constructed } }
+		}
+	}
+}
 cm_check_for_auto_expand_when_removing_building = {
 	effect = {
 		save_scope_as = the_building
