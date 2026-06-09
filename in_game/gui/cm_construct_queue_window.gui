@@ -43,6 +43,26 @@
 					}
 				}
 			}
+			# Obsolete-building upgrades: per-location list of obsolete types, replaced with the engine's next tier.
+			widget = {
+				datamodel = "[GetPlayer.MakeScope.GetList('cm_gui_upgrade_locations')]"
+				item = {
+					widget = {
+						datacontext = "[Scope.GetLocation]"
+						datamodel = "[Location.MakeScope.GetList('cm_gui_upgrade_building_types')]"
+						item = {
+							widget = {
+								datacontext = "[Scope.GetBuildingType]"
+								state = {
+									name = cm_q_construct_upgrade
+									trigger_on_create = yes
+									on_finish = "[GetScriptedGui('cm_gui_construct_upgrade').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('old_building_type', BuildingType.MakeScope).AddScope('new_building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+								}
+							}
+						}
+					}
+				}
+			}
 			# Ungated building constructs (auto-build, capital): per-location list of building types.
 			widget = {
 				datamodel = "[GetPlayer.MakeScope.GetList('cm_q_ungated_locations')]"

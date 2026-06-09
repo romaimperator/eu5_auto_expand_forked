@@ -93,12 +93,12 @@ cm_check_for_auto_expand_when_upgrading_building = {
 # Root = location, scope:old_building_type = obsolete type, scope:new_building_type = upgrade target (from GetNextReplacementBuilding), scope:country = player
 cm_gui_construct_upgrade = {
 	is_valid = {
-		scope:country = { has_variable = cm_gui_upgrades_pending }
 		is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:old_building_type }
 		cm_auto_expand_check_minimum_gold_reserve = yes
 	}
 	effect = {
 		construct_building = { building_type = scope:new_building_type }
+		scope:country = { cmf_log = { action = cm_q_log_upgrade_constructed } }
 		# Swap auto-expand tracking from old to new
 		if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:old_building_type } } }
 			# Mass mode: add new type to country mass list and swap exclusion entries
@@ -126,8 +126,6 @@ cm_gui_construct_upgrade = {
 		if = { limit = { NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:old_building_type } } }
 			add_to_variable_list = { name = cm_upgrade_in_progress target = scope:old_building_type }
 		}
-		# Clear from pending list
-		remove_list_variable = { name = cm_gui_upgrade_building_types target = scope:old_building_type }
 	}
 }
 # Diagnostic probe: logs unconditionally when a queue item renders (datamodel iterates).

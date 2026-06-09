@@ -4,27 +4,10 @@
 cm_hidden_window_repeated_init = {
 	effect = {
 		if = { limit = { AND = { scope:skip = no exists = scope:country } }
-			# Phase 1: Monthly tick — do periodic checks and signal upgrades
+			# Monthly tick: refresh country variables.
 			if = { limit = { scope:country = { has_variable = cm_monthly_gui_tick } }
 				cm_check_that_country_variables_are_set = {}
-				scope:country = {
-					remove_variable = cm_monthly_gui_tick
-					set_variable = cm_gui_upgrades_pending
-					set_variable = cm_gui_construct_pending
-				}
-			}
-			# Phase 2: Cleanup — clear upgrade data after the GUI has processed it
-			else_if = { limit = { scope:country = { has_variable = cm_gui_upgrades_pending } }
-				scope:country = {
-					remove_variable = cm_gui_upgrades_pending
-					remove_variable = cm_gui_construct_pending
-					every_in_list = {
-						variable = cm_gui_upgrade_locations
-						save_scope_as = cm_upgrade_loc
-						scope:cm_upgrade_loc = { clear_variable_list = cm_gui_upgrade_building_types }
-					}
-					clear_variable_list = cm_gui_upgrade_locations
-				}
+				scope:country = { remove_variable = cm_monthly_gui_tick }
 			}
 		}
 	}

@@ -19,7 +19,6 @@
 					trigger_on_create = yes
 					duration = 2
 					on_finish = "[GetScriptedGui('cm_hidden_window_repeated_init').Execute(GuiScope.AddScope('country', GetPlayer.MakeScope).AddScope('skip', MakeScopeBool('(bool)no')).End)]"
-					on_finish = "[PdxGuiTriggerAllAnimations('cm_do_upgrade')]"
 					on_finish = "[PdxGuiWidget.TriggerAnimation('cm_hidden_window_repeated_init')]"
 				}
 			}
@@ -75,28 +74,6 @@
 											}
 										}
 									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			# Upgrade processing: iterates locations/building types flagged by the monthly script tick.
-			# The scripted GUI resolves the upgrade target via cm_find_upgrade_building_type.
-			# Triggered once per month by the repeated_init loop when cm_gui_upgrades_pending is set.
-			vbox = {
-				datamodel = "[GetPlayer.MakeScope.GetList('cm_gui_upgrade_locations')]"
-				item = {
-					vbox = {
-						datacontext = "[Scope.GetLocation]"
-						datamodel = "[Location.MakeScope.GetList('cm_gui_upgrade_building_types')]"
-						item = {
-							hbox = {
-								datacontext = "[Scope.GetBuildingType]"
-								state = {
-									name = cm_do_upgrade
-									on_finish = "[GetScriptedGui('cm_gui_construct_upgrade').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('old_building_type', BuildingType.MakeScope).AddScope('new_building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
 								}
 							}
 						}
