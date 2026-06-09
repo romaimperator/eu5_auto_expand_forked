@@ -171,6 +171,7 @@ cm_location_will_auto_expand_from_zero_levels = {
 	AND = {
 		cm_location_will_auto_expand_from_zero_levels_for_upgrade = yes
 		cm_location_allowed_to_build = { target = scope:building_type }
+		cm_location_building_type_not_under_construction = yes
 	}
 }
 
@@ -192,6 +193,17 @@ cm_auto_expand_check_minimum_gold_reserve = {
 # Root is the building
 cm_is_not_under_construction = {
 	building_levels_under_construction = 0
+}
+
+# Root is the location, expects scope:building_type. False if this building type already has
+# levels queued or under construction at the location (a queued first level counts).
+cm_location_building_type_not_under_construction = {
+	NOT = {
+		any_buildings_in_location = {
+			building_type = scope:building_type
+			building_levels_under_construction > 0
+		}
+	}
 }
 
 # Root is the building. Thin wrapper: saves scopes and delegates to the shared trigger.
