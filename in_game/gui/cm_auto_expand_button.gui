@@ -32,7 +32,7 @@
 				glow_radius = 5
 				color = { 0.0 1.0 0.0 0.9 }
 				alpha = 0.6
-				block "green_glow_visible" { visible = "[And3(ObjectsEqual(GetPlayer.Self, Building.GetOwner), GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]" }
+				block "green_glow_visible" { visible = "[And3(ObjectsEqual(GetPlayer.Self, Building.GetOwner), GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation))).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(Building.GetType, Building.GetLocation))).End))]" }
 			}
 		}
 		background = {
@@ -43,7 +43,7 @@
 				glow_radius = 5
 				color = { 1.0 0.0 0.0 0.9 }
 				alpha = 0.6
-				block "red_glow_visible" { visible = "[And3(ObjectsEqual(GetPlayer.Self, Building.GetOwner), GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]" }
+				block "red_glow_visible" { visible = "[And3(ObjectsEqual(GetPlayer.Self, Building.GetOwner), GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation))).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(Building.GetType, Building.GetLocation))).End)))]" }
 			}
 		}
 		background = {
@@ -101,7 +101,7 @@
 				glow_radius = 5
 				color = { 0.0 1.0 0.0 0.9 }
 				alpha = 0.6
-				block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]" }
+				block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation))).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(Building.GetType, Building.GetLocation))).End))]" }
 			}
 		}
 		background = {
@@ -116,7 +116,7 @@
 				glow_radius = 5
 				color = { 1.0 0.0 0.0 0.9 }
 				alpha = 0.6
-				block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]" }
+				block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation))).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(Building.GetType, Building.GetLocation))).End)))]" }
 			}
 		}
 		action_tooltip = {
@@ -164,7 +164,7 @@
 					glow_radius = 5
 					color = { 0.0 1.0 0.0 0.9 }
 					alpha = 0.6
-					block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]" }
+					block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End))]" }
 				}
 			}
 			background = {
@@ -175,7 +175,7 @@
 					glow_radius = 5
 					color = { 1.0 0.0 0.0 0.9 }
 					alpha = 0.6
-					block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), Not(GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]" }
+					block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), Not(GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End)))]" }
 				}
 			}
 			background = {
@@ -208,8 +208,24 @@
 
 	type cm_auto_expand_existing_building_button_pl = widget {
 		size = { 20 44 }
-		visible = "[And(ObjectsEqual(Building.GetOwner, Player.Self), BuildingType.IsMultipleLevels)]"
-		cm_auto_expand_existing_building_button = {}
+		visible = "[And(Not(BuildingCandidate.IsForeign), BuildingItem.GetBuildingType.IsMultipleLevels)]"
+		widget = {
+			visible = "[GreaterThan_CFixedPoint(Building.GetLevel, '(CFixedPoint)0')]"
+			size = { 20 20 }
+			parentanchor = center
+			widgetanchor = center
+			cm_auto_expand_existing_building_button = {}
+		}
+		# A candidate with no built levels can't use the per-building toggle.
+		widget = {
+			visible = "[Not(GreaterThan_CFixedPoint(Building.GetLevel, '(CFixedPoint)0'))]"
+			size = { 20 20 }
+			parentanchor = center
+			widgetanchor = center
+			datacontext = "[BuildingItem.GetBuildingType]"
+			datacontext = "[ProductionView.GetSelectedLocation]"
+			cm_auto_expand_new_building_button = {}
+		}
 	}
 
 	type cm_auto_expand_new_building_button_pl = cm_auto_expand_new_building_button {
@@ -239,38 +255,18 @@
 		margin = { 5 10 }
 		vbox = {
 			textbox = {
-				visible = "[Not(GetScriptedGui('cm_is_building_type_obsolete').IsShown(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End))]"
-				using = tooltip_text_block_template
-				raw_text = "Base cost: [GuiScope.AddScope('building_type', BuildingType.MakeScope).ScriptValue('cm_base_building_type_cost')|2L]@gold!"
-			}
-			textbox = {
-				visible = "[GetScriptedGui('cm_is_building_type_obsolete').IsShown(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End)]"
-				using = tooltip_text_block_template
-				raw_text = "Base cost of upgrade: [GuiScope.AddScope('building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).ScriptValue('cm_base_building_type_cost')|2L]@gold!"
-			}
-			textbox = {
-				using = tooltip_text_block_template
-				visible = "[Not(GetScriptedGui('cm_is_building_type_obsolete').IsShown(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End))]"
-				raw_text = "Buildings cost modifier: [GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('cm_adjustment_to_base_building_cost')|%-=]"
-			}
-			textbox = {
-				using = tooltip_text_block_template
-				visible = "[GetScriptedGui('cm_is_building_type_obsolete').IsShown(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End)]"
-				raw_text = "Buildings cost modifier of upgrade: [GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).AddScope('upgrade_building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).ScriptValue('cm_adjustment_to_base_building_cost')|%-=]"
-			}
-			textbox = {
 				using = tooltip_text_block_template
 				raw_text = "Market price impact: [GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('cm_get_construction_cost_adjustment_for_building_type')|%-=]"
 			}
 			textbox = {
 				using = tooltip_text_block_template
 				visible = "[Not(GetScriptedGui('cm_is_building_type_obsolete').IsShown(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End))]"
-				raw_text = "Final cost: [GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('cm_adjusted_building_type_cost')|2L]@gold!"
+				raw_text = "Cost: [GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self)|2L]@gold!"
 			}
 			textbox = {
 				using = tooltip_text_block_template
 				visible = "[GetScriptedGui('cm_is_building_type_obsolete').IsShown(GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', Player.MakeScope).End)]"
-				raw_text = "Final cost of upgrade: [GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('upgrade_building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).AddScope('country', Player.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('cm_adjusted_building_type_cost')|2L]@gold!"
+				raw_text = "Cost of upgrade: [GetBuildOrExpandBuildingCost(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self)|2L]@gold!"
 			}
 		}
 	}
@@ -400,13 +396,13 @@ template cm_Building_Autoexpand_Tooltip {
 
 		blockoverride "tooltip_content" {
 			TooltipTextBlock = {
-				visible = "[And(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('cm_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End))]"
+				visible = "[And(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation))).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(Building.GetType, Building.GetLocation))).End), GetScriptedGui('cm_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End))]"
 				blockoverride "text" {
 					text = "CM_AUTO_EXPAND_ALL_REQUIREMENTS_MET"
 				}
 			}
 			TooltipListBase = {
-				visible = "[Not(And(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('cm_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End)))]"
+				visible = "[Not(And(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation))).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(Building.GetType, Building.GetLocation))).End), GetScriptedGui('cm_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End)))]"
 				blockoverride "block_title" {
 					raw_text = "Cannot expand until the following requirements are met:"
 				}
@@ -439,15 +435,15 @@ template cm_Building_Autoexpand_Tooltip {
 						}
 					}
 					cm_tooltip_row = {
-						visible = "[And(GetScriptedGui('cm_is_building_type_producing').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End), Not(GetScriptedGui('cm_building_meets_minimum_profit').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]"
+						visible = "[And(GetScriptedGui('cm_is_building_type_producing').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End), Not(GetScriptedGui('cm_income_gate_shown').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('building_type', Building.GetType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation))).End)))]"
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('cm_building_meets_minimum_profit').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+							visible = "[GetScriptedGui('cm_income_gate_shown').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('building_type', Building.GetType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation))).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('cm_building_meets_minimum_profit').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+							visible = "[Not(GetScriptedGui('cm_income_gate_shown').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('building_type', Building.GetType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation))).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "Building meets minimum [taxable_profit|e] per level (currently [Building.GetTaxBaseValuePerLevel|2]/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_buildings')).GetValue|2]@gold!)"
+							raw_text = "Building meets minimum income to owner per level (currently [GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation)|2]/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_buildings')).GetValue|2]@gold!)"
 						}
 					}
 					cm_tooltip_row = {
@@ -538,13 +534,13 @@ template cm_Building_Autoexpand_Tooltip {
 						}
 					}
 					cm_tooltip_row = {
-						visible = "[Not(GetScriptedGui('cm_has_enough_gold_for_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+						visible = "[Not(GetScriptedGui('cm_has_enough_gold_for_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(Building.GetType, Building.GetLocation))).End))]"
 						using = cm_tooltip_row_is_odd
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('cm_has_enough_gold_for_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
+							visible = "[GetScriptedGui('cm_has_enough_gold_for_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(Building.GetType, Building.GetLocation))).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('cm_has_enough_gold_for_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
+							visible = "[Not(GetScriptedGui('cm_has_enough_gold_for_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(Building.GetType, Building.GetLocation))).End))]"
 						}
 						blockoverride "row_text" {
 							raw_text = "Enough gold available"
@@ -668,17 +664,17 @@ template cm_Building_Autoexpand_Tooltip {
 			}
 
 			CMTooltipTextBlockContainer = {
-				visible = "[And(And(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End)), GetScriptedGui('cm_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End))]"
+				visible = "[And(And(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation))).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(Building.GetType, Building.GetLocation))).End)), GetScriptedGui('cm_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End))]"
 
 				blockoverride "text_content" {
 					CMTooltipTextBox = {
 						blockoverride "text" {
-							raw_text = "Building will expand if at least [GuiScope.AddScope('building_type', Building.GetType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('cm_expected_gold_available_for_building_type_for_auto_expand')|2L]@gold! is available"
+							raw_text = "Building will expand if its cost and your reserve are covered"
 						}
 					}
 					CMTooltipTextBox = {
 						blockoverride "text" {
-							raw_text = "(min [GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('cm_get_minimum_gold')|0L]@gold! + cost [GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_adjusted_building_type_cost')|2L]@gold!)"
+							raw_text = "(cost [GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self)|2L]@gold! + reserve [GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('cm_get_minimum_gold')|0L]@gold!)"
 						}
 					}
 				}
@@ -690,7 +686,7 @@ template cm_Building_Autoexpand_Tooltip {
 			}
 
 			TooltipTextBlock = {
-				visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(And(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).End), GetScriptedGui('cm_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End))))]"
+				visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building').IsShown(GuiScope.SetRoot(Building.MakeScope).End), Not(And(GetScriptedGui('cm_is_building_able_to_auto_expand').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(Building.GetType, Building.GetLocation))).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(Building.GetType, Building.GetLocation))).End), GetScriptedGui('cm_can_build_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', Building.GetType.MakeScope).End))))]"
 				blockoverride "text" {
 					raw_text = "Building will not expand; conditions are not met"
 				}
@@ -748,13 +744,13 @@ template cm_Building_Type_Autoexpand_Tooltip {
 
 		blockoverride "tooltip_content" {
 			TooltipTextBlock = {
-				visible = "[GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+				visible = "[GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End)]"
 				blockoverride "text" {
 					text = "CM_AUTO_EXPAND_ALL_REQUIREMENTS_MET"
 				}
 			}
 			TooltipListBase = {
-				visible = "[Not(GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+				visible = "[Not(GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End))]"
 				blockoverride "block_title" {
 					raw_text = "Cannot expand until the following requirements are met:"
 				}
@@ -824,13 +820,13 @@ template cm_Building_Type_Autoexpand_Tooltip {
 						}
 					}
 					cm_tooltip_row = {
-						visible = "[Not(GetScriptedGui('cm_has_enough_gold_for_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+						visible = "[Not(GetScriptedGui('cm_has_enough_gold_for_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End))]"
 						using = cm_tooltip_row_is_odd
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('cm_has_enough_gold_for_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+							visible = "[GetScriptedGui('cm_has_enough_gold_for_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('cm_has_enough_gold_for_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+							visible = "[Not(GetScriptedGui('cm_has_enough_gold_for_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End))]"
 						}
 						blockoverride "row_text" {
 							raw_text = "Enough gold available"
@@ -865,17 +861,17 @@ template cm_Building_Type_Autoexpand_Tooltip {
 			}
 
 			CMTooltipTextBlockContainer = {
-				visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
+				visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End))]"
 
 				blockoverride "text_content" {
 					CMTooltipTextBox = {
 						blockoverride "text" {
-							raw_text = "Building will expand if at least [GuiScope.AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('location', Location.MakeScope).ScriptValue('cm_expected_gold_available_for_building_type_for_auto_expand')|2L]@gold! is available"
+							raw_text = "Building will expand if its cost and your reserve are covered"
 						}
 					}
 					CMTooltipTextBox = {
 						blockoverride "text" {
-							raw_text = "(min [GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('cm_get_minimum_gold')|0L]@gold! + cost [GuiScope.AddScope('location', Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_adjusted_building_type_cost')|2L]@gold!)"
+							raw_text = "(cost [GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self)|2L]@gold! + reserve [GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('building_type', BuildingType.MakeScope).ScriptValue('cm_get_minimum_gold')|0L]@gold!)"
 						}
 					}
 				}
@@ -887,7 +883,7 @@ template cm_Building_Type_Autoexpand_Tooltip {
 			}
 
 			TooltipTextBlock = {
-				visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), Not(GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]"
+				visible = "[And(GetScriptedGui('cm_is_auto_expand_active_for_building_type').IsShown(GuiScope.SetRoot(BuildingType.MakeScope).AddScope('location', Location.MakeScope).End), Not(GetScriptedGui('cm_location_will_auto_expand_from_zero_levels').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End)))]"
 				blockoverride "text" {
 					raw_text = "Building will not expand; conditions are not met"
 				}

@@ -1,14 +1,4 @@
-﻿# Expects scopes: building type
-cm_does_building_type_count_for_port_building_cost_modifier = {
-	OR = {
-		scope:building_type = building_type:dock
-		scope:building_type = building_type:dry_dock
-		scope:building_type = building_type:shipyard
-		scope:building_type = building_type:grand_shipyard
-		scope:building_type = building_type:naval_base
-	}
-}
-
+﻿
 # Expects scopes: building type
 cm_does_building_type_count_for_fort_building_cost_modifier = {
 	AND = {
@@ -84,21 +74,6 @@ cm_is_building_fully_employed = {
 			is_full_capacity = yes
 			building_level = 0
 		}
-	}
-}
-
-# Root is the building. Checks that building per-level potential profit (adjusted for control) meets the min profit
-# threshold from the priority list (field slot 2, mapped to cm_priority_min_profit).
-# Non-production buildings (marketplaces, granaries, etc.) always pass — they have no profit to check.
-# Buildings with no construction goods demands (e.g. mason, lumber_mill) also bypass — they produce
-# base goods with no input costs, so the min profit threshold is not meaningful.
-cm_building_meets_minimum_profit = {
-	OR = {
-		NOT = { building_type = { cm_is_building_type_production_building = yes } }
-		cm_get_construction_demand_total_count = 0
-		NOT = { owner = { has_variable_map = cm_priority_min_profit } }
-		"owner.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)" = 0
-		cm_building_potential_profit_per_level_after_control >= "owner.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
 	}
 }
 
@@ -187,7 +162,6 @@ cm_location_will_auto_expand_from_zero_levels_for_upgrade = {
 		cm_is_location_under_building_limit = yes
 		save_temporary_scope_as = location
 		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
-		cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_building_type_for_auto_expand }
 	}
 }
 
@@ -218,14 +192,6 @@ cm_auto_expand_check_minimum_gold_reserve = {
 # Root is the building
 cm_is_not_under_construction = {
 	building_levels_under_construction = 0
-}
-
-# Expects scopes: building, building type, country, and location
-cm_is_not_under_construction_and_gold_is_available = {
-	AND = {
-		cm_is_not_under_construction = yes
-		cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_building_type_for_auto_expand }
-	}
 }
 
 # Root is the building. Thin wrapper: saves scopes and delegates to the shared trigger.
