@@ -208,7 +208,7 @@
 
 	type cm_auto_expand_existing_building_button_pl = widget {
 		size = { 20 44 }
-		visible = "[And(Not(BuildingCandidate.IsForeign), BuildingItem.GetBuildingType.IsMultipleLevels)]"
+		visible = "[And(ObjectsEqual(ProductionView.GetSelectedLocation.GetOwner, Player.Self), BuildingItem.GetBuildingType.IsMultipleLevels)]"
 		widget = {
 			visible = "[GreaterThan_CFixedPoint(Building.GetLevel, '(CFixedPoint)0')]"
 			size = { 20 20 }
@@ -247,7 +247,7 @@
 			widgetanchor = center
 			cm_auto_expand_existing_building_button = {}
 		}
-		cm_auto_expand_new_building_button = { visible = "[Not(LocationToBuildItem.HasBuilding)]" parentanchor = center widgetanchor = center }
+		cm_auto_expand_new_building_button = { visible = "[Not(LocationToBuildItem.HasConstructedBuildingLevels)]" parentanchor = center widgetanchor = center }
 	}
 
 	type cm_building_cost_breakdown_tooltip = TooltipListBase {
