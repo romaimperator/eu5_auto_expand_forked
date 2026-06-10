@@ -132,6 +132,9 @@ cm_gui_construct_upgrade = {
 		if = { limit = { NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:old_building_type } } }
 			add_to_variable_list = { name = cm_upgrade_in_progress target = scope:old_building_type }
 		}
+		# Record the constructed target for the finished-upgrade check
+		remove_from_variable_map = { name = cm_upgrade_in_progress_targets key = scope:old_building_type }
+		add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:old_building_type value = scope:new_building_type }
 	}
 }
 # Construction-queue executor for building kinds. Root is the location.

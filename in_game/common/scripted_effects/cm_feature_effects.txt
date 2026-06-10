@@ -368,10 +368,16 @@ cm_clear_finished_upgrade_in_progress = {
 			if = {
 				limit = { scope:location = { NOT = { has_building = scope:building_type } } }
 				scope:location = { remove_list_variable = { name = cm_upgrade_in_progress target = scope:building_type } }
+				scope:location = { remove_from_variable_map = { name = cm_upgrade_in_progress_targets key = scope:building_type } }
 			}
 		} else_if = {
-			limit = { is_key_in_global_variable_map = { name = cm_building_type_to_upgrade_type target = scope:building_type } }
-			"global_variable_map(cm_building_type_to_upgrade_type|scope:building_type)" = { save_temporary_scope_as = cm_upgrade_target }
+			limit = {
+				scope:location = {
+					has_variable_map = cm_upgrade_in_progress_targets
+					is_key_in_variable_map = { name = cm_upgrade_in_progress_targets target = scope:building_type }
+				}
+			}
+			scope:location = { "variable_map(cm_upgrade_in_progress_targets|scope:building_type)" = { save_temporary_scope_as = cm_upgrade_target } }
 			if = {
 				limit = {
 					trigger_if = {
@@ -385,9 +391,10 @@ cm_clear_finished_upgrade_in_progress = {
 					}
 				}
 				scope:location = { remove_list_variable = { name = cm_upgrade_in_progress target = scope:building_type } }
+				scope:location = { remove_from_variable_map = { name = cm_upgrade_in_progress_targets key = scope:building_type } }
 			}
 		} else = {
-			# No upgrade mapping found — stale entry, clean up
+			# No recorded target - stale entry
 			scope:location = { remove_list_variable = { name = cm_upgrade_in_progress target = scope:building_type } }
 		}
 	}
