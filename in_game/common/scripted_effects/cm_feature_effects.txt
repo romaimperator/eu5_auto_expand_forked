@@ -54,8 +54,8 @@ cm_stage_ungated_candidate = {
 }
 
 # Urbanize rank-upgrade candidate for the unified queue. The fixed upgrade building type
-# encodes the rank step; the executor re-checks rank eligibility and the fixed-price gold
-# threshold before building. Expects scope:country, scope:location. $bt$ = upgrade building type key.
+# encodes the rank step; the executor re-checks rank eligibility and affordability against
+# the engine cost before building. Expects scope:country, scope:location. $bt$ = upgrade building type key.
 cm_stage_urbanize_candidate = {
 	building_type:$bt$ = { save_scope_as = building_type }
 	scope:country = {
@@ -518,10 +518,7 @@ cm_run_auto_urbanize = {
 			check_range_bounds = no
 			save_scope_as = location
 			limit = { NOT = { integration_level = conquered } cm_location_can_mass_upgrade_to_city = yes }
-			if = {
-				limit = { cm_check_country_gold_above = { threshold = cm_mass_upgrade_town_to_city_gold_needed } }
-				cm_stage_urbanize_candidate = { bt = cm_upgrade_town_to_city_building }
-			}
+			cm_stage_urbanize_candidate = { bt = cm_upgrade_town_to_city_building }
 		}
 	}
 	if = {
@@ -532,10 +529,7 @@ cm_run_auto_urbanize = {
 			check_range_bounds = no
 			save_scope_as = location
 			limit = { NOT = { integration_level = conquered } cm_location_can_mass_upgrade_to_town = yes }
-			if = {
-				limit = { cm_check_country_gold_above = { threshold = cm_mass_upgrade_rural_to_town_gold_needed } }
-				cm_stage_urbanize_candidate = { bt = cm_upgrade_rural_to_town_building }
-			}
+			cm_stage_urbanize_candidate = { bt = cm_upgrade_rural_to_town_building }
 		}
 	}
 }

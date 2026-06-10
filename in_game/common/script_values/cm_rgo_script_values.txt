@@ -13,11 +13,9 @@ cm_expected_gold_available_for_rgo_auto_expand = {
 cm_get_adjustment_to_base_cost_for_rgo = {
 	value = 0
 	add = {
-		# Per-good adjustment: (default_price - 2) / 4 encodes default_price * GOODS_RGO_PRICE_SCALE(0.25) - GOODS_RGO_BASE_COST(0.5),
-		# both from loading_screen/common/defines/00_defines.txt (2 = 0.5/0.25, 4 = 1/0.25). Expensive goods cost more, cheap goods less.
 		value = "default_price(scope:location.raw_material)"
-		subtract = 2
-		divide = 4
+		multiply = define:NEconomy|GOODS_RGO_PRICE_SCALE
+		subtract = define:NEconomy|GOODS_RGO_BASE_COST
 	}
 	if = { limit = { scope:location.raw_material = { goods_method = mining } }
 		add = scope:country.modifier:expand_rgo_mining_cost_modifier
