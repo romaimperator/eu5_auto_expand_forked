@@ -18,6 +18,8 @@ FILE_MAP = {
     "in_game/gui/glorpUI_shared_types.gui": "in_game/gui/cm_glorp_synced_types.gui",
     "in_game/common/scripted_guis/glorpui_construction_manager_scripted_gui.txt":
         "in_game/common/scripted_guis/glorpui_construction_manager_scripted_gui.txt",
+    "in_game/common/scripted_guis/glorpui_build_location_scripted_gui.txt":
+        "in_game/common/scripted_guis/glorpui_build_location_scripted_gui.txt",
     "main_menu/localization/english/glorpui_shared_l_english.yml":
         "main_menu/localization/english/glorpui_shared_l_english.yml",
 }
