@@ -40,6 +40,8 @@ cm_cmm_post_registration = {
 	cm_rebuild_auto_urbanize_lookups = yes
 	cm_rebuild_auto_town_rights_lookups = yes
 
+	cm_apply_expand_metric_bounds = yes
+
 	# Hide buildings whose advance hasn't been researched yet
 	cm_update_auto_build_list_visibility = yes
 	# Hide town rights whose potential doesn't pass for this country
@@ -58,7 +60,7 @@ cm_rebuild_priority_lookups = {
 	# Ordered features list (for monthly pulse iteration in priority order)
 	cmm_build_list_ordered_values = { setting = cm__priority_list list_name = cm_priority_features_list }
 
-	# Min profit by feature (numeric field slot 1, direct gold values)
+	# Gate threshold by feature (numeric field slot 1, direct values)
 	cmm_build_list_field_map = { setting = cm__priority_list field_slot = 1 map_name = cm_priority_min_profit multiply = 1 }
 
 	# Min discount by feature (numeric field slot 2, CMM -33..33 → -0.33..0.33)
@@ -68,6 +70,121 @@ cm_rebuild_priority_lookups = {
 	cmm_build_list_bool_list = { setting = cm__priority_list field_slot = 3 list_name = cm_priority_features_enabled }
 
 	} # end guard
+}
+
+# Re-register the threshold field with the active metric's bounds.
+# Called on registration and on metric change.
+# Scope: country
+cm_apply_expand_metric_bounds = {
+	if = {
+		limit = {
+			OR = {
+				NOT = { exists = var:cm_expand_metric }
+				var:cm_expand_metric <= 2
+			}
+		}
+		cmm_register_list_numeric_field = {
+			mod_id = cm
+			setting_id = priority_list
+			field_id = min_profit
+			default_value = 0
+			min_value = 0
+			max_value = 15
+			step_value = 0.1
+		}
+	}
+	else = {
+		cmm_register_list_numeric_field = {
+			mod_id = cm
+			setting_id = priority_list
+			field_id = min_profit
+			default_value = 0
+			min_value = 0
+			max_value = 100
+			step_value = 1
+		}
+	}
+}
+
+# Copy the live threshold column into metric $m$'s memory map.
+# Scope: country
+cm_save_expand_thresholds = {
+	remove_from_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_buildings }
+	add_to_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_buildings value = "variable_map(cmm|flag:cm__priority_list_i1_f1)" }
+	remove_from_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_rgos }
+	add_to_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_rgos value = "variable_map(cmm|flag:cm__priority_list_i2_f1)" }
+}
+
+# Copy metric $m$'s memory map into the live threshold column.
+# Scope: country
+cm_load_expand_thresholds = {
+	remove_from_variable_map = { name = cmm key = flag:cm__priority_list_i1_f1 }
+	if = {
+		limit = { is_key_in_variable_map = { name = cm_expand_threshold_m$m$ target = flag:cm_feature_auto_expand_buildings } }
+		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i1_f1 value = "variable_map(cm_expand_threshold_m$m$|flag:cm_feature_auto_expand_buildings)" }
+	}
+	else = {
+		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i1_f1 value = 0 }
+	}
+	remove_from_variable_map = { name = cmm key = flag:cm__priority_list_i2_f1 }
+	if = {
+		limit = { is_key_in_variable_map = { name = cm_expand_threshold_m$m$ target = flag:cm_feature_auto_expand_rgos } }
+		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i2_f1 value = "variable_map(cm_expand_threshold_m$m$|flag:cm_feature_auto_expand_rgos)" }
+	}
+	else = {
+		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i2_f1 value = 0 }
+	}
+}
+
+# Copy metric $m$'s threshold memory from scope:old_country.
+# Scope: country
+cm_copy_expand_thresholds = {
+	if = {
+		limit = { scope:old_country = { is_key_in_variable_map = { name = cm_expand_threshold_m$m$ target = flag:cm_feature_auto_expand_buildings } } }
+		remove_from_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_buildings }
+		add_to_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_buildings value = "scope:old_country.variable_map(cm_expand_threshold_m$m$|flag:cm_feature_auto_expand_buildings)" }
+	}
+	if = {
+		limit = { scope:old_country = { is_key_in_variable_map = { name = cm_expand_threshold_m$m$ target = flag:cm_feature_auto_expand_rgos } } }
+		remove_from_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_rgos }
+		add_to_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_rgos value = "scope:old_country.variable_map(cm_expand_threshold_m$m$|flag:cm_feature_auto_expand_rgos)" }
+	}
+}
+
+# Per-metric threshold memory: each metric keeps its own per-feature column values.
+# var:cm_expand_metric still holds the outgoing metric when this runs; the cmm map
+# already holds the incoming one.
+# Scope: country
+cm_apply_expand_metric_change = {
+	if = {
+		limit = { NOT = { "variable_map(cmm|flag:cm__expand_metric)" = var:cm_expand_metric } }
+		switch = {
+			trigger = var:cm_expand_metric
+			1 = { cm_save_expand_thresholds = { m = 1 } }
+			2 = { cm_save_expand_thresholds = { m = 2 } }
+			3 = { cm_save_expand_thresholds = { m = 3 } }
+			4 = { cm_save_expand_thresholds = { m = 4 } }
+		}
+		cmm_sync_setting_alias = {
+			setting = cm__expand_metric
+			alias = cm_expand_metric
+		}
+		cm_apply_expand_metric_bounds = yes
+		switch = {
+			trigger = var:cm_expand_metric
+			1 = { cm_load_expand_thresholds = { m = 1 } }
+			2 = { cm_load_expand_thresholds = { m = 2 } }
+			3 = { cm_load_expand_thresholds = { m = 3 } }
+			4 = { cm_load_expand_thresholds = { m = 4 } }
+		}
+		cm_rebuild_priority_lookups = yes
+	}
+	else = {
+		cmm_sync_setting_alias = {
+			setting = cm__expand_metric
+			alias = cm_expand_metric
+		}
+	}
 }
 
 cm_toggle_priority_feature = {

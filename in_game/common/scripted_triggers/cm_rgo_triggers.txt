@@ -9,6 +9,7 @@ cm_rgo_basic_expand_eligibility = {
 }
 
 # This trigger is used by the GUI to see if the prerequisites for auto expanding RGO are met
+# Expects scopes: country, location, profit
 cm_is_able_to_auto_expand_rgo = {
 	AND = {
 		owner = {
@@ -17,13 +18,14 @@ cm_is_able_to_auto_expand_rgo = {
 		}
 		cm_rgo_basic_expand_eligibility = yes
 		cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_rgo_auto_expand }
-		cm_rgo_meets_minimum_profit = yes
+		cm_rgo_metric_gate_passes = yes
 		cm_rgo_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_rgos }
 		# cm_is_rgo_under_construction = no # don't check if it's under construction when we're deciding if the button should be green or red
 	}
 }
 
-# This trigger is used by the on action to determine if the RGO should be auto expanded
+# This trigger is used at staging time to determine if the RGO should be queued.
+# The metric gate runs at drain time in cm_gui_try_rgo, where the engine profit value exists.
 # Expects scopes: country, location
 cm_should_rgo_auto_expand = {
 	scope:location = {
@@ -31,20 +33,44 @@ cm_should_rgo_auto_expand = {
 			cm_rgo_basic_expand_eligibility = yes
 			cm_is_rgo_under_construction = no
 			cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_rgo_auto_expand }
-			cm_rgo_meets_minimum_profit = yes
 			cm_rgo_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_rgos }
 		}
 	}
 }
 
-# Root is the location. Expects scopes: country
-# Checks estimated RGO profit per level against the min profit threshold
-# from the priority list (field slot 2, mapped to cm_priority_min_profit).
-cm_rgo_meets_minimum_profit = {
+# Root is the location. Expects scopes: country, profit.
+# Metric gate for RGO expansion. Tax Income compares the script-side estimate;
+# Profit compares the engine value passed as scope:profit. The threshold is
+# monthly gold per level for Tax Income and Profit, years to recoup the expansion
+# cost for the ROI metrics.
+cm_rgo_metric_gate_passes = {
 	OR = {
 		NOT = { scope:country = { has_variable_map = cm_priority_min_profit } }
 		"scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_rgos)" = 0
-		cm_rgo_estimated_profit_per_level >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_rgos)"
+		AND = {
+			cm_expand_metric_is_tax_income = yes
+			cm_rgo_estimated_profit_per_level >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_rgos)"
+		}
+		AND = {
+			cm_expand_metric_is = { metric = 2 }
+			scope:profit >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_rgos)"
+		}
+		AND = {
+			cm_expand_metric_is = { metric = 3 }
+			cm_get_adjusted_construction_cost_for_rgo <= {
+				value = cm_rgo_estimated_profit_per_level
+				multiply = "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_rgos)"
+				multiply = 12
+			}
+		}
+		AND = {
+			cm_expand_metric_is = { metric = 4 }
+			cm_get_adjusted_construction_cost_for_rgo <= {
+				value = scope:profit
+				multiply = "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_rgos)"
+				multiply = 12
+			}
+		}
 	}
 }
 

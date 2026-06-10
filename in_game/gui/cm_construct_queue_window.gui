@@ -22,7 +22,7 @@
 				on_finish = "[GetScriptedGui('cm_clear_should_construct').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 				next = cm_q_wait
 			}
-			# Income-gated building constructs: per-location list of building types.
+			# Metric-gated building constructs: per-location list of building types.
 			widget = {
 				datamodel = "[GetPlayer.MakeScope.GetList('cm_q_locations')]"
 				item = {
@@ -35,7 +35,7 @@
 								state = {
 									name = cm_q_construct
 									trigger_on_create = yes
-									on_finish = "[GetScriptedGui('cm_gui_try_build').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))).End)]"
+									on_finish = "[GetScriptedGui('cm_gui_try_build').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))).AddScope('profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))).End)]"
 								}
 							}
 						}
@@ -55,7 +55,7 @@
 								state = {
 									name = cm_q_construct_upgrade
 									trigger_on_create = yes
-									on_finish = "[GetScriptedGui('cm_gui_construct_upgrade').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('old_building_type', BuildingType.MakeScope).AddScope('new_building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).AddScope('building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self))).End)]"
+									on_finish = "[GetScriptedGui('cm_gui_construct_upgrade').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('old_building_type', BuildingType.MakeScope).AddScope('new_building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).AddScope('building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self))).AddScope('income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self))).AddScope('profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self))).End)]"
 								}
 							}
 						}
@@ -145,7 +145,7 @@
 						state = {
 							name = cm_q_construct_rgo
 							trigger_on_create = yes
-							on_finish = "[GetScriptedGui('cm_gui_try_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End)]"
+							on_finish = "[GetScriptedGui('cm_gui_try_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).End)]"
 						}
 					}
 				}

@@ -31,13 +31,14 @@ cm_register_cmf_mod = {
 	cmm_set_list_item_value = { mod_id = cm setting_id = priority_list item = 6 value = flag:cm_feature_auto_urbanize }
 	cmm_set_list_item_value = { mod_id = cm setting_id = priority_list item = 7 value = flag:cm_feature_auto_build_capital }
 
+	# Widest bounds of any metric: registration re-runs on every load and clamps stored values.
 	cmm_register_list_numeric_field = {
 		mod_id = cm
 		setting_id = priority_list
 		field_id = min_profit
 		default_value = 0
 		min_value = 0
-		max_value = 15
+		max_value = 100
 		step_value = 0.1
 	}
 	cmm_set_list_field_format = { mod_id = cm setting_id = priority_list field_id = min_profit }
@@ -64,6 +65,21 @@ cm_register_cmf_mod = {
 		setting_id = priority_list
 		field_id = enabled
 		default_value = 0
+	}
+
+	# Gate metric for auto-expand buildings and RGOs: 1 Tax Income, 2 Profit,
+	# 3 ROI Tax Income, 4 ROI Profit.
+	cmm_register_dropdown_setting = {
+		mod_id = cm
+		setting_id = expand_metric
+		tab_id = settings
+		group_id = priority_list
+		default_index = 1
+		option_count = 4
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__expand_metric
+		alias = cm_expand_metric
 	}
 
 	cmm_register_slider_setting = {
@@ -651,6 +667,9 @@ cm_handle_cmf_callback = {
 				setting = cm__allowed_building_overbuild_levels
 				alias = cm_allowed_building_overbuild_levels
 			}
+		}
+		flag:cm__expand_metric = {
+			cm_apply_expand_metric_change = yes
 		}
 		# Auto Urbanize (auto_urbanize) Tab
 		## Auto Urbanize Settings (auto_urbanize) Group
