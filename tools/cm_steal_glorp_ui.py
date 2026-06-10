@@ -11,10 +11,10 @@ from pathlib import Path
 # GlorpUI source -> this mod destination, relative to each mod root.
 FILE_MAP = {
     "in_game/gui/location_window.gui": "in_game/gui/location_window.gui",
-    "in_game/gui/glorpUI_production_lateralview.gui": "in_game/gui/cm_production_lateralview.gui",
+    "in_game/gui/production_lateralview.gui": "in_game/gui/production_lateralview.gui",
     "in_game/gui/glorpUI_build_location_lateralview.gui": "in_game/gui/cm_build_location_lateralview.gui",
     "in_game/gui/glorpUI_food_production_lateralview.gui": "in_game/gui/cm_food_production_lateralview.gui",
-    "in_game/gui/glorpUI_expand_raw_goods_lateralview.gui": "in_game/gui/expand_raw_goods_lateralview.gui",
+    "in_game/gui/expand_raw_goods_lateralview.gui": "in_game/gui/expand_raw_goods_lateralview.gui",
     "in_game/gui/glorpUI_shared_types.gui": "in_game/gui/cm_glorp_synced_types.gui",
     "in_game/common/scripted_guis/glorpui_construction_manager_scripted_gui.txt":
         "in_game/common/scripted_guis/glorpui_construction_manager_scripted_gui.txt",
