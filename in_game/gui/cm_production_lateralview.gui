@@ -10,7 +10,7 @@
 		datamodel = "[GetPopTypes]"
 		datacontext = "[ProductionView.GetSelectedLocation]"
 
-        hbox = { # Glorp UI - Extra Piecharts
+        hbox = { # GlorpUI: Extra Piecharts
             piechart = {
                 using = bg_circle
                 visible = "[Not(Location.HasTooManyBuildingLevel)]"
@@ -1898,7 +1898,7 @@ types GlorpUIBuildings {
 
 							parentanchor = left|vcenter
 							icon = {
-								size = {40 40} # GlorpUI: 40->31
+								size = {40 40} # GlorpUI: 31->40
 								parentanchor = center
 								texture = "[GetBuildingIcon(BuildingItem.GetBuildingType.Self)]"
 
@@ -1976,14 +1976,12 @@ types GlorpUIBuildings {
 							widget = {
 								size = {80 25}
 								hbox = {
-									# Construction Manager mass auto-expand button.
-									cm_mass_auto_expand_button_pl = {
-										visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsMultipleLevels)]"
-									}
+									# GlorpUI: Construction Manager mass auto-expand button
+									cm_mass_auto_expand_button_pl = {}
 
 									button_square_checkbox = {
-										# Suppressed in favor of the Construction Manager mass auto-expand button.
-										visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsMultipleLevels, Not(GetScriptedGui('glorpui_is_cm_active').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
+										# GlorpUI: hidden when Construction Manager is active
+										visible = "[And3(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsMultipleLevels, Not(GetScriptedGui('glorpui_is_cm_active').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
 										size = { 20 20 }
 										tooltipwidget = {
 											using = AutoExpand_Building_Tooltip

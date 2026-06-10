@@ -96,7 +96,7 @@
 
 				hbox = {
 					layoutpolicy_horizontal = expanding
-					margin = { 0 0 }
+					margin = { 0 0 } # GlorpUI: 5 0 -> 0 0, removed margin_right 10
 
 					hbox = {
 						# Location + Population Info
@@ -117,13 +117,13 @@
 							}
 						}
 						card_header_button_04 = {
-							size = { 220 46 } # GlorpUI: {160 43} -> {220 46}
+							size = { 220 46 } # GlorpUI: {140 43} -> {220 46}
 
 							hbox = {
 								layoutpolicy_horizontal = expanding
-								margin_right = 0
+								margin_right = 0 # GlorpUI: 4->0
 								vbox = {
-									maximumsize = { 160 46 }
+									maximumsize = { 160 46 } # GlorpUI: added
 									layoutpolicy_horizontal = expanding
 									margin = { 5 3 }
 									margin_right = 0
@@ -135,7 +135,7 @@
 										spacing = 3
 
 										widget = {
-											# Glorp UI - Replace Location Icon w/ Clickable Upgrade Button
+											# GlorpUI: Replace Location Icon w/ Clickable Upgrade Button
 											size = { 15 15 }
 
 											button = {
@@ -196,7 +196,7 @@
 
 										text_single = {
 											visible = "[IsDataModelEmpty(Location.GetCivilConstructions)]"
-											maximumsize = { 120 15 }
+											maximumsize = { 120 15 } # GlorpUI: 105->120
 											alwaystransparent = no
 											align = left|nobaseline
 											autoresize = yes
@@ -213,7 +213,7 @@
 
 										text_single = {
 											visible = "[Not(IsDataModelEmpty(Location.GetCivilConstructions))]"
-											maximumsize = { 105 15 }
+											maximumsize = { 105 15 } # GlorpUI: 65->105
 											alwaystransparent = no
 											align = left|nobaseline
 											autoresize = yes
@@ -231,13 +231,13 @@
 										text_single = {
 											datacontext = "[LocationToBuildItem.GetLocation]"
 											visible = "[Not(IsDataModelEmpty(Location.GetCivilConstructions))]"
-											size = { 30 15 }
+											size = { 30 15 } # GlorpUI: 40->30
 											alwaystransparent = no
 											align = left|nobaseline
 											autoresize = no
 											using = Font_Size_Small
 
-											raw_text = "#L +[GetDataModelSize(Location.GetCivilConstructions)]#! @construction!"
+											raw_text = "#L +[GetDataModelSize(Location.GetCivilConstructions)]#! @construction!" # GlorpUI: removed wrapping parens
 
 											hbox = {
 												datamodel = "[DataModelFirst(Location.GetCivilConstructions,'(int32)1')]"
@@ -259,12 +259,12 @@
 										#bottom
 										datacontext = "[LocationToBuildItem.GetLocation]"
 										layoutpolicy_horizontal = expanding
-										spacing = 0
-										margin = { 0 0 }
-										margin_right = 0
+										spacing = 0 # GlorpUI: added
+										margin = { 0 0 } # GlorpUI: 2 0 -> 0 0
+										margin_right = 0 # GlorpUI: 8->0
 
 										hbox = {
-											# Glorp UI - Building Limit and RGO
+											# GlorpUI: Building Limit and RGO
 											button = {
 												size = { 20 20 }
 
@@ -333,7 +333,7 @@
 													maximumsize = { 60 -1 }
 													align = center|nobaseline
 													autoresize = yes
-													fontsize = 15
+													fontsize = 15 # GlorpUI: 13->15
 													text = "[Location.GetExpectedUnEmployed(PopType.Self)]"
 													sort_by_highlight = {
 														size = { 105% 200% }
@@ -345,7 +345,7 @@
 													texture = "[GetGraphicalCultureTextureForCountryPopType(PopType.Self, Location.GetOwner.Self)]"
 												}
 
-												tooltipwidget = {
+												tooltipwidget = { # GlorpUI: moved one level in
 													using = locationview_employed_tt
 												}
 											}
@@ -361,7 +361,7 @@
 												layoutpolicy_vertical = expanding
 												maximumsize = { 60 -1 }
 												align = center|nobaseline
-												fontsize = 15
+												fontsize = 15 # GlorpUI: 13->15
 												autoresize = yes
 												text = "[GetUnEmployedPeasantsFromLocation(LocationToBuildItem.GetLocation)]"
 												sort_by_highlight = {
@@ -382,7 +382,7 @@
 									}
 								}
 
-								# Glorp UI - Market Access (or Terrain Bonus when constructing a fort), Control
+								# GlorpUI: Market Access or fort Terrain Bonus, Control
 								vbox = {
 									maximumsize = { 60 46 }
 									layoutpolicy_horizontal = expanding
@@ -573,12 +573,12 @@
 
 					widget = {
 						#subsidize/close
-						size = { 23 46 }
+						size = { 23 46 } # GlorpUI: {30 44} -> {23 46}
 						vbox = {
 							spacing = 0
 							button_square_checkbox = {
 								visible = "[And(ObjectsEqual(LocationToBuildItem.GetBuilding.GetOwner, Player.Self), LocationToBuildItem.GetBuilding.GetType.IsProducing)]"
-								size = { 23 23 }
+								size = { 23 23 } # GlorpUI: 20->23
 								enabled = "[CanSubsidizeBuilding(LocationToBuildItem.GetBuilding.Self)]"
 
 								blockoverride "check_texture" {
@@ -626,7 +626,7 @@
 							}
 
 							button_square_checkbox = {
-								size = { 23 23 }
+								size = { 23 23 } # GlorpUI: 20->23
 								enabled = "[CanToggleBuilding(Building.Self)]"
 								visible = "[ObjectsEqual(LocationToBuildItem.GetBuilding.GetOwner, Player.Self)]"
 								datacontext = "[LocationToBuildItem.GetBuilding]"
@@ -719,19 +719,19 @@
 					}
 
 					widget = {
-						size = { 20 44 }
+						size = { 20 44 } # GlorpUI: visible moved onto the checkbox
 						datacontext = "[LocationToBuildItem.GetBuilding]"
 
-						# Construction Manager auto-expand button.
+						# GlorpUI: Construction Manager auto-expand button
 						cm_auto_expand_building_button_bll = { position = { -2 0 } } # GlorpUI: pull left toward subsidize/close
 
 						button_square_checkbox = {
-							# Suppressed in favor of Construction Manager's auto-expand button.
-							visible = "[And(ObjectsEqual(LocationToBuildItem.GetBuilding.GetOwner, Player.Self), LocationToBuildItem.GetBuilding.GetType.IsMultipleLevels, Not(GetScriptedGui('glorpui_is_cm_active').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
+							# GlorpUI: hidden when Construction Manager is active
+							visible = "[And3(ObjectsEqual(LocationToBuildItem.GetBuilding.GetOwner, Player.Self), LocationToBuildItem.GetBuilding.GetType.IsMultipleLevels, Not(GetScriptedGui('glorpui_is_cm_active').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
 							size = { 20 20 }
 							parentanchor = center
 							widgetanchor = center
-							position = { -2 0 }
+							position = { -2 0 } # GlorpUI: added
 							tooltipwidget = { using = AutoExpand_Building_Tooltip }
 							blockoverride "check_texture" {
 								texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
@@ -764,7 +764,7 @@
 						}
 					}
 
-					# expand = {}
+					# expand = {} # GlorpUI: disabled
 
 					hbox = {
 						# Profits, Efficiencies, Build Buttons
@@ -772,13 +772,13 @@
 						datacontext = "[LocationToBuildItem.GetBuilding]"
 
 						hbox = {
-							margin_right = 2
-							spacing = 0
+							margin_right = 2 # GlorpUI: 5->2
+							spacing = 0 # GlorpUI: 2->0
 							layoutpolicy_horizontal = expanding
-							layoutpolicy_vertical = expanding
+							layoutpolicy_vertical = expanding # GlorpUI: added
 							widget = {
 								#profit
-								size = { 44 39 } # CM: reduced from 60 to make room for builder
+								size = { 44 39 } # GlorpUI: 60->44 to fit the builder
 								hbox = {
 									#built
 									visible = "[And(LocationToBuildItem.ShowProfit, LocationToBuildItem.HasConstructedBuildingLevels)]"
@@ -792,8 +792,8 @@
 											using = BuildingProfit_Tooltip
 										}
 										text_single = {
-											size = { 48 18 } # CM: reduced from 60
-											align = nobaseline|left
+											size = { 48 18 } # GlorpUI: 60->48
+											align = nobaseline|left # GlorpUI: right->left
 											autoresize = no
 											fontsize = 14
 											raw_text = "+[Building.GetProfitPerLevel|2]@wealth!"
@@ -803,8 +803,8 @@
 											}
 										}
 										text_single = {
-											size = { 48 18 } # CM: reduced from 60
-											align = nobaseline|left
+											size = { 48 18 } # GlorpUI: 60->48
+											align = nobaseline|left # GlorpUI: right->left
 											autoresize = no
 											fontsize = 14
 											raw_text = "[Building.GetIncomeToOwnerPerLevel|+=2]@income!"
@@ -817,7 +817,7 @@
 									text_single = {
 										#unprofitable and not subsidized
 										visible = "[And(LessThanOrEqualTo_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'), Not(Building.IsSubsidized))]"
-										maximumsize = { 48 18 } # CM: reduced from 60
+										maximumsize = { 48 18 } # GlorpUI: 60->48
 										fontsize = 14
 										raw_text = "[Building.GetProfitPerLevel|+=2]@wealth!"
 										sort_by_highlight = {
@@ -831,7 +831,7 @@
 									text_single = {
 										# subsidized
 										visible = "[And(LessThanOrEqualTo_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'), Building.IsSubsidized)]"
-										maximumsize = { 48 18 } # CM: reduced from 60
+										maximumsize = { 48 18 } # GlorpUI: 60->48
 										fontsize = 14
 										raw_text = "#L [Building.GetProfitPerLevel|2]#!@wealth!"
 										sort_by_highlight = {
@@ -870,8 +870,8 @@
 										}
 										text_single = {
 											visible = "[Not(LessThan_CFixedPoint(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self), '(CFixedPoint)0'))]"
-											size = { 48 18 } # CM: reduced from 60
-											align = nobaseline|left
+											size = { 48 18 } # GlorpUI: 60->48
+											align = nobaseline|left # GlorpUI: right->left
 											autoresize = no
 											fontsize = 14
 											raw_text = "+[GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self)|2]@wealth!"
@@ -882,8 +882,8 @@
 										}
 										text_single = {
 											visible = "[LessThan_CFixedPoint(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self), '(CFixedPoint)0')]"
-											size = { 48 18 } # CM: reduced from 60
-											align = nobaseline|left
+											size = { 48 18 } # GlorpUI: 60->48
+											align = nobaseline|left # GlorpUI: right->left
 											autoresize = no
 											fontsize = 14
 											raw_text = "[GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self)|+=2]@wealth!"
@@ -895,8 +895,8 @@
 
 										text_single = {
 											visible = "[Not(LessThan_CFixedPoint(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self), '(CFixedPoint)0'))]"
-											size = { 48 18 } # CM: reduced from 60
-											align = nobaseline|left
+											size = { 48 18 } # GlorpUI: 60->48
+											align = nobaseline|left # GlorpUI: right->left
 											autoresize = no
 											fontsize = 14
 											raw_text = "[GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self)|+=<2]@income!"
@@ -910,7 +910,7 @@
 								}
 							}
 							widget = { #efficiency
-								size = { 58 46 } # CM: reduced from 70 to make room for builder
+								size = { 58 46 } # GlorpUI: {70 44} -> {58 46} to fit the builder
 								vbox = {
 									layoutpolicy_horizontal = expanding
 
@@ -923,12 +923,12 @@
 											datamodel = "[Building.GetProductionMethods]"
 											item = {
 												text_single = {
-													size = { 58 15 }
+													size = { 58 15 } # GlorpUI: {70 18} -> {58 15}
 													autoresize = no
 													text = "BUILDING_PROD_EFFICIENCY"
 													align = nobaseline|right
 													default_format = "@bold!"
-													fontsize = 13
+													fontsize = 13 # GlorpUI: 14->13
 													tooltipwidget = {
 														using = building_production_efficiency_tooltip
 													}
@@ -942,7 +942,7 @@
 									}
 
 									hbox = {
-										#built ROI
+										# GlorpUI: built ROI
 										expand = { }
 										datacontext = "[LocationToBuildItem.GetBuildingType]"
 										visible = "[And(LocationToBuildItem.ShowProfit, LocationToBuildItem.HasConstructedBuildingLevels)]"
@@ -979,10 +979,10 @@
 										visible = "[And(LocationToBuildItem.ShowProfit, Not(LocationToBuildItem.HasConstructedBuildingLevels))]"
 										expand = { }
 										text_single = {
-											size = { 58 15 }
+											size = { 58 15 } # GlorpUI: {70 18} -> {58 15}
 											autoresize = no
 											default_format = "@bold!"
-											fontsize = 13
+											fontsize = 13 # GlorpUI: 14->13
 											align = nobaseline|right
 											text = "BUILDING_TYPE_POSSIBLE_PROD_EFFICIENCY"
 											tooltipwidget = {
@@ -1007,7 +1007,7 @@
 									}
 
 									hbox = {
-										#unbuilt ROI
+										# GlorpUI: unbuilt ROI
 										datacontext = "[LocationToBuildItem.GetBuildingType]"
 										datacontext = "[LocationToBuildItem.GetLocation]"
 										visible = "[And(LocationToBuildItem.ShowProfit, Not(LocationToBuildItem.HasConstructedBuildingLevels))]"
@@ -1076,14 +1076,14 @@
 							#builder
 							visible = "[Not(And(LocationToBuildItem.HasBuilding, LocationToBuildItem.GetBuilding.CanPlayerUpgrade))]"
 							layoutpolicy_vertical = expanding
-							size = { 90 -1 }
+							size = { 90 -1 } # GlorpUI: 120->90
 							alwaystransparent = no
 							filter_mouse = left|right
 							widget = {
 								parentanchor = center
 								size = { 100% 35 }
 
-								sort_by_highlight = {
+								sort_by_highlight = { # GlorpUI: added
 									name = "tax_base"
 									using = layoutpolicy_expanding
 								}
@@ -1094,12 +1094,12 @@
 								}
 
 								hbox = {
-									spacing = 0
+									spacing = 0 # GlorpUI: 5->0
 									using = bg_text_mask_container_brown
 									margin = { 5 5 }
 
 									button_square_minus = {
-										size = { 15 15 }
+										size = { 15 15 } # GlorpUI: 21->15
 										datacontext = "[LocationToBuildItem.GetBuilding]"
 										enabled = "[Or(LocationToBuildItem.CanDestroy, LocationToBuildItem.CanDequeue)]"
 										datacontext = "[BuildInLocationLateralView.GetBuildingType]"
@@ -1112,7 +1112,7 @@
 											title = "DESTROY_BUILDING_ACTION"
 											description = "[LocationToBuildItem.CanDestroyDesc]"
 											confirmation = "[LocationToBuildItem.CanDestroyDesc]"
-											# CM: check if auto-expand is on when destroying a building level
+											# GlorpUI: Construction Manager auto-expand check
 											on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 											on_action = "[LocationToBuildItem.DestroyDefault]"
 											enabled = "[LocationToBuildItem.CanDestroy]"
@@ -1154,7 +1154,7 @@
 
 											title = "DEQUEUE_BUILDING_TYPE_LOCATION_ACTION"
 											description = "[LocationToBuildItem.CanDequeueDesc]"
-											# CM: check if auto-expand is on when removing the building level from queue
+											# GlorpUI: Construction Manager auto-expand check
 											on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 											on_action = "[LocationToBuildItem.Dequeue]"
 											visible = "[LocationToBuildItem.CanDequeue]"
@@ -1167,7 +1167,7 @@
 
 									widget = {
 										layoutpolicy_vertical = expanding
-										size = { 50 -1 }
+										size = { 50 -1 } # GlorpUI: 55->50
 										tooltipwidget = {
 											SimpleContextualTooltipType = {
 												blockoverride "title_icon" {
@@ -1199,7 +1199,7 @@
 
 										text_single = {
 											parentanchor = center
-											maximumsize = { 50 -1 }
+											maximumsize = { 50 -1 } # GlorpUI: 55->50
 											visible = "[Not(LocationToBuildItem.HasBuilding)]"
 											raw_text = "0 / [LocationToBuildItem.GetMaxLevel|0Y]"
 											default_format = "#important_number"
@@ -1208,7 +1208,7 @@
 
 										text_single = {
 											parentanchor = center
-											maximumsize = { 50 -1 }
+											maximumsize = { 50 -1 } # GlorpUI: 55->50
 											visible = "[And3(LocationToBuildItem.HasBuilding, Not(LocationToBuildItem.GetBuilding.IsUnderConstruction), Not(And(LocationToBuildItem.GetBuilding.CanPlayerUpgrade, LocationToBuildItem.GetBuilding.IsPlayerUpgrading)))]"
 											raw_text = "[LocationToBuildItem.GetBuilding.GetLevel|0Y] / [LocationToBuildItem.GetBuilding.GetMaxLevel|0Y]"
 											default_format = "#important_number"
@@ -1217,7 +1217,7 @@
 
 										text_single = {
 											parentanchor = center
-											maximumsize = { 50 -1 }
+											maximumsize = { 50 -1 } # GlorpUI: 55->50
 											visible = "[And4(LocationToBuildItem.HasBuilding, Not(LocationToBuildItem.GetBuilding.IsUnderConstruction), LocationToBuildItem.GetBuilding.CanPlayerUpgrade, LocationToBuildItem.GetBuilding.IsPlayerUpgrading)]"
 											raw_text = "[LocationToBuildItem.GetBuilding.GetLevel|0Y](#G -[LocationToBuildItem.GetBuilding.GetLevelsUnderUpgrade|0]#!) / [LocationToBuildItem.GetBuilding.GetMaxLevel|0Y]"
 											default_format = "#important_number"
@@ -1226,7 +1226,7 @@
 
 										text_single = {
 											parentanchor = center
-											maximumsize = { 50 -1 }
+											maximumsize = { 50 -1 } # GlorpUI: 55->50
 											visible = "[And(LocationToBuildItem.HasBuilding, LocationToBuildItem.GetBuilding.IsUnderConstruction)]"
 											raw_text = "[LocationToBuildItem.GetBuilding.GetLevel|0Y]([LocationToBuildItem.GetBuilding.GetLevelsUnderConstruction|0+=]) / [LocationToBuildItem.GetBuilding.GetMaxLevel|0Y]"
 											default_format = "#important_number"
@@ -1239,7 +1239,7 @@
 										enabled = "[LocationToBuildItem.CanCreateBuilding]"
 										datacontext = "[LocationToBuildItem.GetLocation]"
 										datacontext = "[LocationToBuildItem.GetBuildingType]"
-										size = { 15 15 }
+										size = { 15 15 } # GlorpUI: 21->15
 
 										action_tooltip = {
 											click_type = left
@@ -1289,7 +1289,7 @@
 										enabled = "[LocationToBuildItem.CanCreateBuilding]"
 										datacontext = "[LocationToBuildItem.GetLocation]"
 										datacontext = "[LocationToBuildItem.GetBuildingType]"
-										size = { 15 15 }
+										size = { 15 15 } # GlorpUI: 21->15
 
 										action_tooltip = {
 											click_type = left
@@ -1339,23 +1339,23 @@
 							#upgrader
 							visible = "[And(LocationToBuildItem.HasBuilding, LocationToBuildItem.GetBuilding.CanPlayerUpgrade)]"
 							layoutpolicy_vertical = expanding
-							size = { 90 -1 }
+							size = { 90 -1 } # GlorpUI: 120->90
 							alwaystransparent = no
 							filter_mouse = left|right
 
 							widget = {
-								parentanchor = center
-								size = { 100% 35 }
+								parentanchor = center # GlorpUI: left->center
+								size = { 100% 35 } # GlorpUI: 49%->100%, removed sort_by_highlight
 							}
 
 							hbox = {
-								spacing = 0
+								spacing = 0 # GlorpUI: 2->0
 								using = bg_text_mask_container_brown
-								margin = { 2 5 }
+								margin = { 2 5 } # GlorpUI: removed margin_left 5
 
 								#destroy current
 								button_square_minus = {
-									size = { 15 15 }
+									size = { 15 15 } # GlorpUI: 21->15
 									datacontext = "[LocationToBuildItem.GetBuilding]"
 									enabled = "[Or(LocationToBuildItem.CanDestroy, LocationToBuildItem.CanDequeue)]"
 									datacontext = "[BuildInLocationLateralView.GetBuildingType]"
@@ -1368,7 +1368,7 @@
 										title = "DESTROY_BUILDING_ACTION"
 										description = "[LocationToBuildItem.CanDestroyDesc]"
 										confirmation = "[LocationToBuildItem.CanDestroyDesc]"
-										# CM: check if auto-expand is on when destroying a building level
+										# GlorpUI: Construction Manager auto-expand check
 										on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 										on_action = "[LocationToBuildItem.DestroyDefault]"
 										enabled = "[LocationToBuildItem.CanDestroy]"
@@ -1410,7 +1410,7 @@
 
 										title = "DEQUEUE_BUILDING_TYPE_LOCATION_ACTION"
 										description = "[LocationToBuildItem.CanDequeueDesc]"
-										# CM: check if auto-expand is on when removing the building level from queue
+										# GlorpUI: Construction Manager auto-expand check
 										on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_removing_building').Execute(GuiScope.SetRoot(Building.MakeScope).End)]"
 										on_action = "[LocationToBuildItem.Dequeue]"
 										visible = "[LocationToBuildItem.CanDequeue]"
@@ -1423,7 +1423,7 @@
 
 								widget = {
 									layoutpolicy_vertical = expanding
-									size = { 35 -1 }
+									size = { 35 -1 } # GlorpUI: 28->35
 									tooltipwidget = {
 										SimpleContextualTooltipType = {
 											blockoverride "title_icon" {
@@ -1448,7 +1448,7 @@
 
 									text_single = {
 										parentanchor = center
-										maximumsize = { 35 -1 }
+										maximumsize = { 35 -1 } # GlorpUI: 28->35
 										visible = "[And3(LocationToBuildItem.HasBuilding, Not(LocationToBuildItem.GetBuilding.IsUnderConstruction), Not(And(LocationToBuildItem.GetBuilding.CanPlayerUpgrade, LocationToBuildItem.GetBuilding.IsPlayerUpgrading)))]"
 										raw_text = "[LocationToBuildItem.GetBuilding.GetLevel|0Y]"
 										default_format = "#important_number"
@@ -1457,7 +1457,7 @@
 
 									text_single = {
 										parentanchor = center
-										maximumsize = { 35 -1 }
+										maximumsize = { 35 -1 } # GlorpUI: 28->35
 										visible = "[And4(LocationToBuildItem.HasBuilding, Not(LocationToBuildItem.GetBuilding.IsUnderConstruction), LocationToBuildItem.GetBuilding.CanPlayerUpgrade, LocationToBuildItem.GetBuilding.IsPlayerUpgrading)]"
 										raw_text = "[LocationToBuildItem.GetBuilding.GetLevel|0Y](#G -[LocationToBuildItem.GetBuilding.GetLevelsUnderUpgrade|0]#!)"
 										default_format = "#important_number"
@@ -1478,8 +1478,8 @@
 								button_square_plus = {
 									visible = "[And(LocationToBuildItem.HasBuilding, LocationToBuildItem.GetBuilding.CanPlayerUpgrade)]"
 									datacontext = "[LocationToBuildItem.GetBuilding.GetType.GetNextReplacementBuilding(Player.Self)]"
-									datacontext = "[LocationToBuildItem.GetBuilding]" # CM: Building context needed for upgrade check
-									size = { 15 15 }
+									datacontext = "[LocationToBuildItem.GetBuilding]" # GlorpUI: Building scope for the auto-expand check
+									size = { 15 15 } # GlorpUI: 21->15
 									blockoverride "plusminus_icon" {
 										texture = "gfx/interface/buttons/flats/upgrade_button2.dds"
 									}
@@ -1494,7 +1494,7 @@
 										description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 										cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 										on_action = "[UpgradeBuildingDefault(BuildingType.Self, Location.Self)]"
-										# CM: upgrade check
+										# GlorpUI: Construction Manager auto-expand check
 										on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationToBuildItem.GetBuilding.MakeScope).End)]"
 									}
 
@@ -1507,7 +1507,7 @@
 										cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 										description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 										on_action = "[UpgradeBuildingCtrl(BuildingType.Self, Location.Self)]"
-										# CM: upgrade check
+										# GlorpUI: Construction Manager auto-expand check
 										on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationToBuildItem.GetBuilding.MakeScope).End)]"
 										enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 									}
@@ -1521,7 +1521,7 @@
 										cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 										description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 										on_action = "[UpgradeBuildingShift(BuildingType.Self, Location.Self)]"
-										on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationToBuildItem.GetBuilding.MakeScope).End)]"
+										on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationToBuildItem.GetBuilding.MakeScope).End)]" # GlorpUI: Construction Manager auto-expand check
 										enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 									}
 
@@ -1530,7 +1530,7 @@
 									}
 								}
 
-								#upgrade
+								#upgrade # GlorpUI: disabled
 								# widget = {
 								# 	# parentanchor = right
 								# 	size = { 45% 35 }
@@ -1571,7 +1571,7 @@
 					}
 				}
 			}
-			# Glorp UI Deleted Commented-Out Code
+			# GlorpUI: deleted commented-out code
 		}
 	}
 }
@@ -1873,7 +1873,7 @@ types GlorpBuildLocationTypes {
 											texture = "gfx/interface/icons/flat_icons/mass_construct.dds"
 										}
 
-										# CM: mass auto-expand button
+										# GlorpUI: Construction Manager mass auto-expand button
 										cm_mass_auto_expand_button_bll = {}
 
 										text_single = {
@@ -1954,7 +1954,7 @@ types GlorpBuildLocationTypes {
 											texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
 										}
 
-										# CM: mass auto-expand button
+										# GlorpUI: Construction Manager mass auto-expand button
 										cm_mass_auto_expand_button_bll = {}
 
 										text_single = {
@@ -2039,7 +2039,7 @@ types GlorpBuildLocationTypes {
 											texture = "gfx/interface/icons/flat_icons/mass_construct.dds"
 										}
 
-										# Invisible spacer for the overlay twin.
+										# GlorpUI: invisible spacer for the overlay twin
 										cm_mass_auto_expand_button_bll = {
 											alpha = 0
 											enabled = no
@@ -2070,6 +2070,7 @@ types GlorpBuildLocationTypes {
 								}
 							}
 
+							# GlorpUI: Construction Manager mass auto-expand overlay
 							cm_mass_auto_expand_overlay_no_upgrade = {}
 
 							header_button_right = {
@@ -2096,6 +2097,7 @@ types GlorpBuildLocationTypes {
 											texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
 										}
 
+										# GlorpUI: invisible spacer for the overlay twin
 										cm_mass_auto_expand_button_bll = {
 											alpha = 0
 											enabled = no
@@ -2126,6 +2128,7 @@ types GlorpBuildLocationTypes {
 								}
 							}
 
+							# GlorpUI: Construction Manager mass auto-expand overlay
 							cm_mass_auto_expand_overlay_upgrade = {}
 						}
 					}

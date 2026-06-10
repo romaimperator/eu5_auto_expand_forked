@@ -202,7 +202,7 @@
 
 					expand = {}
 				}
-                zoom_to_button = {
+                zoom_to_button = { # GlorpUI: Zoom To
                     blockoverride "onclick_action" {
                         onclick = "[PanToLocation(LocationView.GetLocation)]"
                     }
@@ -1965,7 +1965,7 @@
 													}
 													using = bg_control_romboid
 
-                                                    button = { # Glorp UI - Mapmode Hover
+                                                    button = { # GlorpUI: Mapmode Hover
                                                         size = { 100% 100% }
                                                         datacontext = "[GetMapMode('control')]"
                                                         onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('control')]"
@@ -2093,7 +2093,7 @@
 														}
 													}
 
-                                                    button = { # Glorp UI - Mapmode Hover
+                                                    button = { # GlorpUI: Mapmode Hover
                                                         size = { 100% 100% }
                                                         datacontext = "[GetMapMode('proximity')]"
                                                         onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('proximity')]"
@@ -2221,7 +2221,7 @@
 														}
 													}
 
-                                                    button = { # Glorp UI - Mapmode Hover
+                                                    button = { # GlorpUI: Mapmode Hover
                                                         size = { 100% 100% }
                                                         datacontext = "[GetMapMode('tax_base')]"
                                                         onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('tax_base')]"
@@ -2248,10 +2248,10 @@
 
 											datacontext = "[LocationView.GetLocation]"
 
-											# CM: Auto Food button (only on food-RGO locations)
+											# GlorpUI: Construction Manager auto-food widget, food RGO locations only
 											cm_auto_food_widget_location_window = {}
 
-											# CM: Auto Expand RGO button
+											# GlorpUI: Construction Manager RGO auto-expand widget
 											cm_auto_expand_rgo_widget_location_window = {}
 
 											tooltipwidget = {
@@ -2437,7 +2437,7 @@
 														enabled = "[And(IsCabinetActionAllowed('develop_province'), Location.GetOwner.IsPlayer)]"
 														conditions = "[GetCabinetActionTooltip('develop_province')]"
 													}
-                                                    datacontext = "[GetMapMode('development')]" # Glorp UI - Mapmode Hover
+                                                    datacontext = "[GetMapMode('development')]" # GlorpUI: Mapmode Hover
                                                     onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('development')]"
                                                     action_tooltip = {
                                                         click_type = right
@@ -2515,7 +2515,7 @@
 											widget = {
 												size = { 80 35 }
 												sneaky_button = {
-                                                    # When we can do recovery_effort
+                                                    # GlorpUI: recovery_effort available
                                                     visible = "[And3(IsCabinetActionAllowed('recovery_effort'), Location.GetOwner.IsPlayer, HasProsperityIntelOn(Location.Self))]"
 													size = { 100% 100% }
 													action_tooltip = {
@@ -2535,13 +2535,13 @@
                                                         on_action = "[MapMode.SetMapMode]"
                                                     }
 
-													# enabled = "[And(IsCabinetActionAllowed('recovery_effort'), Location.GetOwner.IsPlayer)]"
+													# enabled = "[And(IsCabinetActionAllowed('recovery_effort'), Location.GetOwner.IsPlayer)]" # GlorpUI: disabled, folded into visible
 
 													tooltipwidget = {
 														using = location_prosperity_tooltip
 													}
 												}
-                                                # When we can't do recovery_effort
+                                                # GlorpUI: recovery_effort unavailable
                                                 sneaky_button = {
                                                     visible = "[Or(Not(IsCabinetActionAllowed('recovery_effort')), Not(Location.GetOwner.IsPlayer))]"
                                                     size = { 100% 100% }
@@ -2729,7 +2729,7 @@
 											widget = {
 												size = { 80 35 }
 												sneaky_button = {
-                                                    onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('institution')]" # Glorp UI - Mapmode Hover
+                                                    onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('institution')]" # GlorpUI: Mapmode Hover
 													size = { 100% 100% }
 													action_tooltip = {
 														click_type = left
@@ -2800,7 +2800,7 @@
 													}
 													enabled = "[Location.GetOwner.IsPlayer]"
 
-                                                    datacontext = "[GetMapMode('food_productivity')]" # Glorp UI - Mapmode Hover
+                                                    datacontext = "[GetMapMode('food_productivity')]" # GlorpUI: Mapmode Hover
                                                     onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('food_productivity')]"
                                                     action_tooltip = {
                                                         click_type = right
@@ -2868,7 +2868,7 @@
 													}
 													enabled = "[Location.GetOwner.IsPlayer]"
 
-                                                    datacontext = "[GetMapMode('food')]" # Glorp UI - Mapmode Hover
+                                                    datacontext = "[GetMapMode('food')]" # GlorpUI: Mapmode Hover
                                                     onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('food')]"
                                                     action_tooltip = {
                                                         click_type = right
@@ -7915,7 +7915,7 @@ types LocationWindowTypes {
 						parentanchor = top|right
 						size = { 10 10 }
 						position = { 1 -1 }
-						# Suppressed in favor of the Construction Manager auto-expand status icon.
+						# GlorpUI: hidden when Construction Manager is active
 						visible = "[And(IsAutoExpand(LocationBuildingItem.GetBuilding.Self), Not(GetScriptedGui('glorpui_is_cm_active').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
 						datacontext = "[LocationBuildingItem.GetBuilding]"
 						texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
@@ -7925,7 +7925,7 @@ types LocationWindowTypes {
 						}
 					}
 
-					# Construction Manager auto-expand status icon.
+					# GlorpUI: Construction Manager auto-expand status icon
 					cm_is_auto_expand_on_icon = {}
 					
 					using = bg_circle_tile_shadow
@@ -8100,7 +8100,7 @@ types LocationWindowTypes {
 							description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 							cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 							on_action = "[UpgradeBuildingDefault(BuildingType.Self, Location.Self)]"
-							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)]"
+							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)]" # GlorpUI: Construction Manager auto-expand check
 						}
 
 						action_tooltip = {
@@ -8112,7 +8112,7 @@ types LocationWindowTypes {
 							cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 							description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 							on_action = "[UpgradeBuildingCtrl(BuildingType.Self, Location.Self)]"
-							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)]"
+							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)]" # GlorpUI: Construction Manager auto-expand check
 							enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 						}
 
@@ -8125,7 +8125,7 @@ types LocationWindowTypes {
 							cost = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
 							description = "[CanUpgradeToBuildingInfo(BuildingType.Self, Location.Self)]"
 							on_action = "[UpgradeBuildingShift(BuildingType.Self, Location.Self)]"
-							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)]"
+							on_action = "[GetScriptedGui('cm_check_for_auto_expand_when_upgrading_building').Execute(GuiScope.SetRoot(LocationBuildingItem.GetBuilding.MakeScope).End)]" # GlorpUI: Construction Manager auto-expand check
 							enabled = "[CanUpgradeToBuilding(BuildingType.Self, Location.Self)]"
 						}
 

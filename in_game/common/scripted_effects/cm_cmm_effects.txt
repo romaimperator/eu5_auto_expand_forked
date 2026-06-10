@@ -562,11 +562,21 @@ cm_register_cmf_mod = {
 	# Specialized-goods-output rights (royal_*, flemish_cloth, scandinavian_tar,
 	# constantinopolitan_silk) are intentionally omitted: blindly granting them
 	# without knowing where each good is produced isn't useful.
+	# CMF builds list item identities only on first registration.
+	if = {
+		limit = {
+			has_variable = cmm_list_initialized_cm__auto_town_rights_list
+			var:cmm_setting_list_count_cm__auto_town_rights_list < 38
+		}
+		remove_variable = cmm_list_initialized_cm__auto_town_rights_list
+		remove_from_variable_map = { name = cmm_list_count key = flag:cm__auto_town_rights_list }
+		remove_from_variable_map = { name = cmm_list_last_index key = flag:cm__auto_town_rights_list }
+	}
 	cmm_register_settings_list = {
 		mod_id = cm
 		setting_id = auto_town_rights_list
 		tab_id = auto_town_rights
-		item_count = 31
+		item_count = 38
 		is_ordered = 1
 	}
 
@@ -609,6 +619,15 @@ cm_register_cmf_mod = {
 	cmm_set_list_item_value = { mod_id = cm setting_id = auto_town_rights_list item = 29 value = town_rights_type:imperial_breadbasket_rights }
 	cmm_set_list_item_value = { mod_id = cm setting_id = auto_town_rights_list item = 30 value = town_rights_type:scholai_literacy_rights }
 	cmm_set_list_item_value = { mod_id = cm setting_id = auto_town_rights_list item = 31 value = town_rights_type:municipia_privilegia }
+	# Traditions
+	cmm_set_list_item_value = { mod_id = cm setting_id = auto_town_rights_list item = 32 value = town_rights_type:market_charter }
+	cmm_set_list_item_value = { mod_id = cm setting_id = auto_town_rights_list item = 33 value = town_rights_type:free_town_charter }
+	cmm_set_list_item_value = { mod_id = cm setting_id = auto_town_rights_list item = 34 value = town_rights_type:fortress_town }
+	cmm_set_list_item_value = { mod_id = cm setting_id = auto_town_rights_list item = 35 value = town_rights_type:mining_charter }
+	cmm_set_list_item_value = { mod_id = cm setting_id = auto_town_rights_list item = 36 value = town_rights_type:studium_privileges }
+	# Reform-gated
+	cmm_set_list_item_value = { mod_id = cm setting_id = auto_town_rights_list item = 37 value = town_rights_type:agrarian_community_town_right }
+	cmm_set_list_item_value = { mod_id = cm setting_id = auto_town_rights_list item = 38 value = town_rights_type:enlightened_leadership_reform_town_right }
 
 	cmm_register_list_bool_field = {
 		mod_id = cm

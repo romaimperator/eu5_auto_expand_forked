@@ -19,6 +19,56 @@ cm_can_grant_specific_town_right_at_location = {
 		}
 	}
 	trigger_else_if = {
+		limit = { scope:town_right = town_rights_type:market_charter }
+		scope:target = {
+			NOR = {
+				has_town_rights = town_rights_type:staple_port
+				has_town_rights = town_rights_type:free_town_charter
+			}
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:town_right = town_rights_type:free_town_charter }
+		scope:target = {
+			NOR = {
+				has_town_rights = town_rights_type:market_charter
+				has_town_rights = town_rights_type:staple_port
+			}
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:town_right = town_rights_type:mining_charter }
+		scope:target = {
+			custom_tooltip = {
+				text = mining_charter_rgo_tt
+				OR = {
+					is_mining_rgo = yes
+					AND = {
+						is_port = no
+						raw_material = goods:salt
+					}
+				}
+			}
+			NOR = {
+				has_town_rights = town_rights_type:scandinavian_bergslag_privileges
+				has_town_rights = town_rights_type:upper_bergregal
+				has_town_rights = town_rights_type:lower_bergregal
+			}
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:town_right = town_rights_type:studium_privileges }
+		scope:target = {
+			custom_tooltip = {
+				text = studium_privileges_rank_tt
+				OR = {
+					location_rank = location_rank:city
+					location_rank = location_rank:megalopolis
+				}
+			}
+		}
+	}
+	trigger_else_if = {
 		limit = { scope:town_right = town_rights_type:royal_naval_rights }
 		custom_tooltip = {
 			text = not_forcefully_revoked_last_10_years_tt
@@ -34,6 +84,26 @@ cm_can_grant_specific_town_right_at_location = {
 	trigger_else_if = {
 		limit = { scope:town_right = town_rights_type:flemish_cloth_industries_right }
 		scope:target = { NOT = { has_town_rights = town_rights_type:royal_textile_rights } }
+	}
+	trigger_else_if = {
+		limit = { scope:town_right = town_rights_type:agrarian_community_town_right }
+		scope:target = {
+			custom_tooltip = {
+				text = agrarian_community_raw_material_tt
+				OR = {
+					raw_material = goods:wheat
+					raw_material = goods:maize
+					raw_material = goods:rice
+					raw_material = goods:millet
+					raw_material = goods:legumes
+					raw_material = goods:potato
+					raw_material = goods:livestock
+					raw_material = goods:olives
+					raw_material = goods:fruit
+					raw_material = goods:beeswax
+				}
+			}
+		}
 	}
 	trigger_else_if = {
 		limit = { scope:town_right = town_rights_type:scandinavian_fishing_privileges }
@@ -90,13 +160,16 @@ cm_can_grant_specific_town_right_at_location = {
 	trigger_else_if = {
 		limit = { scope:town_right = town_rights_type:upper_bergregal }
 		scope:target = {
-			OR = {
-				raw_material = goods:silver
-				raw_material = goods:goods_gold
-				raw_material = goods:gems
-				AND = {
-					is_port = no
-					raw_material = goods:salt
+			custom_tooltip = {
+				text = upper_bergregal_raw_material_tt
+				OR = {
+					raw_material = goods:silver
+					raw_material = goods:goods_gold
+					raw_material = goods:gems
+					AND = {
+						is_port = no
+						raw_material = goods:salt
+					}
 				}
 			}
 		}
@@ -104,17 +177,20 @@ cm_can_grant_specific_town_right_at_location = {
 	trigger_else_if = {
 		limit = { scope:town_right = town_rights_type:lower_bergregal }
 		scope:target = {
-			OR = {
-				raw_material = goods:iron
-				raw_material = goods:copper
-				raw_material = goods:lead
-				raw_material = goods:tin
-				raw_material = goods:alum
-				raw_material = goods:marble
-				raw_material = goods:mercury
-				raw_material = goods:coal
-				raw_material = goods:stone
-				raw_material = goods:saltpeter
+			custom_tooltip = {
+				text = lower_bergregal_raw_material_tt
+				OR = {
+					raw_material = goods:iron
+					raw_material = goods:copper
+					raw_material = goods:lead
+					raw_material = goods:tin
+					raw_material = goods:alum
+					raw_material = goods:marble
+					raw_material = goods:mercury
+					raw_material = goods:coal
+					raw_material = goods:stone
+					raw_material = goods:saltpeter
+				}
 			}
 		}
 	}
@@ -266,9 +342,12 @@ cm_can_grant_specific_town_right_at_location = {
 		limit = { scope:town_right = town_rights_type:imperial_breadbasket_rights }
 		scope:target = {
 			NOT = { has_town_rights = town_rights_type:granary_town }
-			OR = {
-				location_rank = location_rank:city
-				location_rank = location_rank:megalopolis
+			custom_tooltip = {
+				text = imperial_breadbasket_rights_rank_tt
+				OR = {
+					location_rank = location_rank:city
+					location_rank = location_rank:megalopolis
+				}
 			}
 			custom_tooltip = {
 				text = imperial_breadbasket_rights_granary_tt
@@ -282,8 +361,11 @@ cm_can_grant_specific_town_right_at_location = {
 	trigger_else_if = {
 		limit = { scope:town_right = town_rights_type:constantinopolitan_silk_monopoly_rights }
 		scope:target = {
-			this = location:constantinople
-			is_full_expanded_rgo = yes
+			custom_tooltip = {
+				text = constantinopolitan_silk_monopoly_rights_tt
+				this = location:constantinople
+				is_full_expanded_rgo = yes
+			}
 		}
 	}
 	trigger_else_if = {
@@ -297,11 +379,14 @@ cm_can_grant_specific_town_right_at_location = {
 	}
 	trigger_else_if = {
 		limit = { scope:town_right = town_rights_type:municipia_privilegia }
-		scope:target.owner = {
-			OR = {
-				societal_value:latinization_vs_hellenization < -50
-				court_language = language:latin_language
-				dominant_language = language:latin_language
+		custom_tooltip = {
+			text = municipia_privilegia_latin_tt
+			scope:target.owner = {
+				OR = {
+					societal_value:latinization_vs_hellenization < -50
+					court_language = language:latin_language
+					dominant_language = language:latin_language
+				}
 			}
 		}
 	}

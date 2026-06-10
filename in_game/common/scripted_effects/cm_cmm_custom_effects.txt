@@ -33,14 +33,15 @@ cm_cmm_post_registration = {
 		add_to_variable_map = { name = cmm key = flag:cm__auto_urbanize_ignore_list_i2_f1 value = 1 }
 	}
 
+	cm_repair_expand_thresholds = yes
+	cm_apply_expand_metric_bounds = yes
+
 	# Build lookup tables from CMM list fields
 	cm_rebuild_priority_lookups = yes
 	cm_rebuild_auto_build_lookups = yes
 	cm_rebuild_auto_food_lookups = yes
 	cm_rebuild_auto_urbanize_lookups = yes
 	cm_rebuild_auto_town_rights_lookups = yes
-
-	cm_apply_expand_metric_bounds = yes
 
 	# Hide buildings whose advance hasn't been researched yet
 	cm_update_auto_build_list_visibility = yes
@@ -72,7 +73,7 @@ cm_rebuild_priority_lookups = {
 	} # end guard
 }
 
-# Re-register the threshold field with the active metric's bounds.
+# Re-register the threshold field with the active metric's bounds and localization.
 # Called on registration and on metric change.
 # Scope: country
 cm_apply_expand_metric_bounds = {
@@ -104,32 +105,101 @@ cm_apply_expand_metric_bounds = {
 			step_value = 1
 		}
 	}
+	# Re-registration resets has_format and the loc keys to the field defaults.
+	cmm_set_list_field_format = { mod_id = cm setting_id = priority_list field_id = min_profit }
+	if = {
+		limit = {
+			exists = var:cm_expand_metric
+			var:cm_expand_metric = 2
+		}
+		cmm_set_list_field_localization = {
+			mod_id = cm
+			setting_id = priority_list
+			field_id = min_profit
+			name = cm__priority_list__min_profit_profit_name
+			root = cm__priority_list__min_profit
+		}
+	}
+	else_if = {
+		limit = {
+			exists = var:cm_expand_metric
+			var:cm_expand_metric >= 3
+		}
+		cmm_set_list_field_localization = {
+			mod_id = cm
+			setting_id = priority_list
+			field_id = min_profit
+			name = cm__priority_list__min_profit_roi_name
+			root = cm__priority_list__min_profit_roi
+		}
+	}
 }
 
-# Copy the live threshold column into metric $m$'s memory map.
+# Copy the live threshold column into metric $m$'s memory variables.
+# Reads go through local variables; an inline variable_map lookup as an effect
+# value resolves to empty. Unreadable entries are stored as 0.
 # Scope: country
 cm_save_expand_thresholds = {
-	remove_from_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_buildings }
-	add_to_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_buildings value = "variable_map(cmm|flag:cm__priority_list_i1_f1)" }
-	remove_from_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_rgos }
-	add_to_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_rgos value = "variable_map(cmm|flag:cm__priority_list_i2_f1)" }
+	set_variable = { name = cm_expand_threshold_buildings_m$m$ value = 0 }
+	if = {
+		limit = { is_key_in_variable_map = { name = cmm target = flag:cm__priority_list_i1_f1 } }
+		set_local_variable = { name = cm_tmp_field_key value = flag:cm__priority_list_i1_f1 }
+		set_local_variable = { name = cm_tmp_read value = "variable_map(cmm|local_var:cm_tmp_field_key)" }
+		if = {
+			limit = {
+				trigger_if = {
+					limit = { exists = local_var:cm_tmp_read }
+					local_var:cm_tmp_read >= 0
+				}
+				trigger_else = {
+					always = no
+				}
+			}
+			set_variable = { name = cm_expand_threshold_buildings_m$m$ value = local_var:cm_tmp_read }
+		}
+	}
+	set_variable = { name = cm_expand_threshold_rgos_m$m$ value = 0 }
+	if = {
+		limit = { is_key_in_variable_map = { name = cmm target = flag:cm__priority_list_i2_f1 } }
+		set_local_variable = { name = cm_tmp_field_key value = flag:cm__priority_list_i2_f1 }
+		set_local_variable = { name = cm_tmp_read2 value = "variable_map(cmm|local_var:cm_tmp_field_key)" }
+		if = {
+			limit = {
+				trigger_if = {
+					limit = { exists = local_var:cm_tmp_read2 }
+					local_var:cm_tmp_read2 >= 0
+				}
+				trigger_else = {
+					always = no
+				}
+			}
+			set_variable = { name = cm_expand_threshold_rgos_m$m$ value = local_var:cm_tmp_read2 }
+		}
+	}
+
+	# Benign warning suppression
+	if = {
+		limit = { always = no }
+		cmf_suppress = { v = cm_tmp_field_key }
+	}
 }
 
-# Copy metric $m$'s memory map into the live threshold column.
+# Copy metric $m$'s memory variables into the live threshold column. Missing
+# entries load as 0.
 # Scope: country
 cm_load_expand_thresholds = {
 	remove_from_variable_map = { name = cmm key = flag:cm__priority_list_i1_f1 }
 	if = {
-		limit = { is_key_in_variable_map = { name = cm_expand_threshold_m$m$ target = flag:cm_feature_auto_expand_buildings } }
-		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i1_f1 value = "variable_map(cm_expand_threshold_m$m$|flag:cm_feature_auto_expand_buildings)" }
+		limit = { exists = var:cm_expand_threshold_buildings_m$m$ }
+		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i1_f1 value = var:cm_expand_threshold_buildings_m$m$ }
 	}
 	else = {
 		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i1_f1 value = 0 }
 	}
 	remove_from_variable_map = { name = cmm key = flag:cm__priority_list_i2_f1 }
 	if = {
-		limit = { is_key_in_variable_map = { name = cm_expand_threshold_m$m$ target = flag:cm_feature_auto_expand_rgos } }
-		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i2_f1 value = "variable_map(cm_expand_threshold_m$m$|flag:cm_feature_auto_expand_rgos)" }
+		limit = { exists = var:cm_expand_threshold_rgos_m$m$ }
+		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i2_f1 value = var:cm_expand_threshold_rgos_m$m$ }
 	}
 	else = {
 		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i2_f1 value = 0 }
@@ -140,14 +210,47 @@ cm_load_expand_thresholds = {
 # Scope: country
 cm_copy_expand_thresholds = {
 	if = {
-		limit = { scope:old_country = { is_key_in_variable_map = { name = cm_expand_threshold_m$m$ target = flag:cm_feature_auto_expand_buildings } } }
-		remove_from_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_buildings }
-		add_to_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_buildings value = "scope:old_country.variable_map(cm_expand_threshold_m$m$|flag:cm_feature_auto_expand_buildings)" }
+		limit = { scope:old_country = { exists = var:cm_expand_threshold_buildings_m$m$ } }
+		set_variable = { name = cm_expand_threshold_buildings_m$m$ value = scope:old_country.var:cm_expand_threshold_buildings_m$m$ }
 	}
 	if = {
-		limit = { scope:old_country = { is_key_in_variable_map = { name = cm_expand_threshold_m$m$ target = flag:cm_feature_auto_expand_rgos } } }
-		remove_from_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_rgos }
-		add_to_variable_map = { name = cm_expand_threshold_m$m$ key = flag:cm_feature_auto_expand_rgos value = "scope:old_country.variable_map(cm_expand_threshold_m$m$|flag:cm_feature_auto_expand_rgos)" }
+		limit = { scope:old_country = { exists = var:cm_expand_threshold_rgos_m$m$ } }
+		set_variable = { name = cm_expand_threshold_rgos_m$m$ value = scope:old_country.var:cm_expand_threshold_rgos_m$m$ }
+	}
+}
+
+# Restore 0 in the live threshold column where an entry is unreadable.
+# Scope: country
+cm_repair_expand_thresholds = {
+	set_local_variable = { name = cm_tmp_field_key value = flag:cm__priority_list_i1_f1 }
+	set_local_variable = { name = cm_tmp_read value = "variable_map(cmm|local_var:cm_tmp_field_key)" }
+	if = {
+		limit = {
+			trigger_if = {
+				limit = { exists = local_var:cm_tmp_read }
+				NOT = { local_var:cm_tmp_read >= 0 }
+			}
+			trigger_else = {
+				always = yes
+			}
+		}
+		remove_from_variable_map = { name = cmm key = flag:cm__priority_list_i1_f1 }
+		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i1_f1 value = 0 }
+	}
+	set_local_variable = { name = cm_tmp_field_key value = flag:cm__priority_list_i2_f1 }
+	set_local_variable = { name = cm_tmp_read2 value = "variable_map(cmm|local_var:cm_tmp_field_key)" }
+	if = {
+		limit = {
+			trigger_if = {
+				limit = { exists = local_var:cm_tmp_read2 }
+				NOT = { local_var:cm_tmp_read2 >= 0 }
+			}
+			trigger_else = {
+				always = yes
+			}
+		}
+		remove_from_variable_map = { name = cmm key = flag:cm__priority_list_i2_f1 }
+		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i2_f1 value = 0 }
 	}
 }
 

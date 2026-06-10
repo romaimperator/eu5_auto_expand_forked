@@ -322,7 +322,7 @@
 	}
 
 	type cm_mass_auto_expand_button_pl = button_square_checkbox {
-		visible = "[And(Not(GetScriptedGui('cm_is_building_type_one_per_location').IsShown(GuiScope.AddScope('building_type', BuildingItem.GetBuildingType.MakeScope).End)), Not(IsDataModelEmpty(BuildingItem.GetBuildings)))]"
+		visible = "[And3(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsMultipleLevels, Or(Not(ProductionView.IsLocationFilterEnabled), ObjectsEqual(ProductionView.GetSelectedLocation.GetOwner, Player.Self)))]"
 		size = { 20 20 }
 		tooltipwidget = { using = cm_Mass_Autoexpand_Tooltip }
 		blockoverride "check_texture" {

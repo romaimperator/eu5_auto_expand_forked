@@ -18,7 +18,7 @@ cm_auto_town_rights_potential_passes = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:scandinavian_thing_rights }
 		has_advance = scandinavian_thing_rights_advance
 	}
-	# Potential-gated rights (tag / culture / estate privilege / policy / HRE / DLC).
+	# Rights gated by a potential block.
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:royal_free_cities_town_rights }
 		tag = HUN
@@ -38,7 +38,7 @@ cm_auto_town_rights_potential_passes = {
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:ville_franche_town_rights }
 		culture = { has_culture_group = culture_group:french_group }
-		has_estate_privilege = estate_privilege:villes_franches
+		modifier:allow_ville_franche_town_rights = yes
 	}
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:borgo_franco_town_rights }
@@ -47,7 +47,7 @@ cm_auto_town_rights_potential_passes = {
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:magdeburg_rights_town_rights }
 		capital ?= { region = region:north_german_region }
-		has_estate_privilege = estate_privilege:magdeburg_rights
+		modifier:allow_magdeburg_rights_town_rights = yes
 	}
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:lubeck_town_rights }
@@ -56,7 +56,7 @@ cm_auto_town_rights_potential_passes = {
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:nuremberg_rights_town_rights }
 		capital ?= { region = region:south_german_region }
-		has_estate_privilege = estate_privilege:magdeburg_rights
+		modifier:allow_nuremberg_rights_town_rights = yes
 	}
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:upper_bergregal }
@@ -68,7 +68,7 @@ cm_auto_town_rights_potential_passes = {
 	}
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:stapelrecht_town_rights }
-		international_organization:hre = {
+		international_organization:hre ?= {
 			country_has_special_status = {
 				type = special_status:free_city
 				country = root
@@ -77,11 +77,11 @@ cm_auto_town_rights_potential_passes = {
 	}
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:kulm_town_rights }
-		has_estate_privilege = estate_privilege:kulm_law
+		modifier:allow_kulm_town_rights = yes
 	}
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:novi_fori_town_rights }
-		has_estate_privilege = estate_privilege:novi_fori
+		modifier:allow_novi_fori_town_rights = yes
 	}
 	trigger_else_if = {
 		limit = { scope:cmm_list_current_item_value = town_rights_type:borough_customals }
@@ -162,6 +162,14 @@ cm_auto_town_rights_potential_passes = {
 			has_or_had_tag = BYZ
 			has_or_had_tag = ROM
 		}
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:agrarian_community_town_right }
+		has_reform = government_reform:agrarian_community
+	}
+	trigger_else_if = {
+		limit = { scope:cmm_list_current_item_value = town_rights_type:enlightened_leadership_reform_town_right }
+		has_reform = government_reform:enlightened_leadership_reform
 	}
 	trigger_else = {
 		always = yes
