@@ -1,0 +1,183 @@
+﻿# Shared with the Construction Manager mod.
+types glorp_shared_types {
+    type zoom_to_button = button {
+        name = "zoom_to"
+        parentanchor = right
+        size = { 25 25 }
+        position = { -30 7 }
+
+        using = ui_direction_button_overlay
+        texture = "gfx/interface/icons/unit_actions/go_to.dds"
+        texture_density = 2
+        background = {
+            using = bg_button_light_round_texture
+            modify_texture = {
+                using = color_dark_blue_texture
+            }
+        }
+
+        input_action = "macro_builder"
+        use_global_input_instance = yes
+        block "onclick_action" {}
+
+        action_tooltip = {
+            click_type = left
+            click_mode = single
+            title = "GO_TO_LOCATION"
+        }
+        tooltipwidget = {
+            LeftClickButtonTooltip = {
+                blockoverride "onclick_text" { text = "GO_TO" }
+            }
+        }
+    }
+}
+
+template glorpUI_building_roi_tooltip_base {
+	ContextualTooltipType = {
+		blockoverride "title_icon" {
+			icon = {
+				using = tooltip_title_icon_size
+				texture = "[GetBuildingIcon(BuildingType.Self)]"
+			}
+		}
+		blockoverride "title_text" {
+			text = "GLORP_UI_BUILDING_ROI_TT_TITLE"
+		}
+		blockoverride "concept_link" {
+			text = "[building|e]"
+		}
+		blockoverride "tooltip_content" {
+			TooltipTextBlock = {
+				blockoverride "text" {
+					text = "GLORP_UI_BUILDING_ROI_TT_DESC"
+				}
+			}
+			TooltipListBase = {
+				TooltipManualTableField = {
+					blockoverride "field_content" {
+						text_single = {
+							layoutpolicy_horizontal = expanding
+							autoresize = no
+							text = "GLORP_UI_BUILDING_ROI_TT_COST"
+						}
+						text_single = {
+							autoresize = yes
+							raw_text = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
+						}
+					}
+				}
+				TooltipManualTableField = {
+					blockoverride "field_content" {
+						text_single = {
+							layoutpolicy_horizontal = expanding
+							autoresize = no
+							text = "GLORP_UI_BUILDING_ROI_TT_TAX_INCOME"
+						}
+						text_single = {
+							autoresize = yes
+							block "roi_tax_income_value" {}
+						}
+					}
+				}
+				TooltipManualTableField = {
+					blockoverride "field_content" {
+						text_single = {
+							layoutpolicy_horizontal = expanding
+							autoresize = no
+							text = "GLORP_UI_BUILDING_ROI_TT_TAX_ROI"
+							default_format = "#W"
+						}
+						text_single = {
+							autoresize = yes
+							visible = "[Player.MakeScope.GetVariable('roiUseMonths').IsSet]"
+							block "roi_tax_months_value" {}
+						}
+						text_single = {
+							autoresize = yes
+							visible = "[Not(Player.MakeScope.GetVariable('roiUseMonths').IsSet)]"
+							block "roi_tax_years_value" {}
+						}
+					}
+				}
+				TooltipManualTableField = {
+					blockoverride "field_content" {
+						text_single = {
+							layoutpolicy_horizontal = expanding
+							autoresize = no
+							text = "GLORP_UI_BUILDING_ROI_TT_PROFIT"
+						}
+						text_single = {
+							autoresize = yes
+							block "roi_profit_value" {}
+						}
+					}
+				}
+				TooltipManualTableField = {
+					blockoverride "field_content" {
+						text_single = {
+							layoutpolicy_horizontal = expanding
+							autoresize = no
+							text = "GLORP_UI_BUILDING_ROI_TT_PROFIT_ROI"
+							default_format = "#W"
+						}
+						text_single = {
+							autoresize = yes
+							visible = "[Player.MakeScope.GetVariable('roiUseMonths').IsSet]"
+							block "roi_profit_months_value" {}
+						}
+						text_single = {
+							autoresize = yes
+							visible = "[Not(Player.MakeScope.GetVariable('roiUseMonths').IsSet)]"
+							block "roi_profit_years_value" {}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+template glorpUI_building_roi_tooltip {
+	using = glorpUI_building_roi_tooltip_base
+	blockoverride "roi_tax_income_value" {
+		raw_text = "[Building.GetIncomeToOwnerPerLevel|2]@income!"
+	}
+	blockoverride "roi_tax_months_value" {
+		raw_text = "[Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), Building.GetIncomeToOwnerPerLevel)|0]m @efficiency!"
+	}
+	blockoverride "roi_tax_years_value" {
+		raw_text = "[Divide_CFixedPoint(Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), Building.GetIncomeToOwnerPerLevel), '(CFixedPoint)12')|1]y @efficiency!"
+	}
+	blockoverride "roi_profit_value" {
+		raw_text = "[Building.GetProfitPerLevel|2]@wealth!"
+	}
+	blockoverride "roi_profit_months_value" {
+		raw_text = "[Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), Building.GetProfitPerLevel)|0]m @efficiency!"
+	}
+	blockoverride "roi_profit_years_value" {
+		raw_text = "[Divide_CFixedPoint(Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), Building.GetProfitPerLevel), '(CFixedPoint)12')|1]y @efficiency!"
+	}
+}
+
+template glorpUI_building_type_roi_tooltip {
+	using = glorpUI_building_roi_tooltip_base
+	blockoverride "roi_tax_income_value" {
+		raw_text = "[GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self)|2]@income!"
+	}
+	blockoverride "roi_tax_months_value" {
+		raw_text = "[Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))|0]m @efficiency!"
+	}
+	blockoverride "roi_tax_years_value" {
+		raw_text = "[Divide_CFixedPoint(Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self)), '(CFixedPoint)12')|1]y @efficiency!"
+	}
+	blockoverride "roi_profit_value" {
+		raw_text = "[GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self)|2]@wealth!"
+	}
+	blockoverride "roi_profit_months_value" {
+		raw_text = "[Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))|0]m @efficiency!"
+	}
+	blockoverride "roi_profit_years_value" {
+		raw_text = "[Divide_CFixedPoint(Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self)), '(CFixedPoint)12')|1]y @efficiency!"
+	}
+}
