@@ -178,7 +178,7 @@ def render(rights):
 def write_output(text):
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
-    data = b"\xef\xbb\xbf" + normalized.replace("\n", "\r\n").encode("utf-8")
+    data = b"\xef\xbb\xbf" + normalized.encode("utf-8")
     with open(OUTPUT_PATH, "wb") as f:
         f.write(data)
 

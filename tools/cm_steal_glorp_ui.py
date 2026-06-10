@@ -23,8 +23,8 @@ FILE_MAP = {
 BOM = b"\xef\xbb\xbf"
 
 
-def to_bom_crlf(text):
-    text = text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+def to_bom_lf(text):
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
     return BOM + text.encode("utf-8")
 
 
@@ -63,7 +63,7 @@ def main():
             print(f"[dry-run] {src_rel} -> {dst_rel}")
         else:
             dst_path.parent.mkdir(parents=True, exist_ok=True)
-            dst_path.write_bytes(to_bom_crlf(src_path.read_text(encoding="utf-8-sig")))
+            dst_path.write_bytes(to_bom_lf(src_path.read_text(encoding="utf-8-sig")))
             print(f"stole   {src_rel} -> {dst_rel}")
         stolen += 1
 
