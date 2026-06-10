@@ -409,14 +409,6 @@ cm_income_gate_shown = {
 	}
 }
 
-# Tooltip/visibility wrapper for the gold-affordability gate. The caller passes the GUI-only
-# engine cost as scope:cost. Expects scopes: country, cost.
-cm_gold_gate_shown = {
-	is_shown = {
-		scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
-	}
-}
-
 cm_building_meets_minimum_discount_for_auto_expand = {
 	is_shown = {
 		building_type = { save_temporary_scope_as = building_type }
@@ -516,23 +508,9 @@ cm_is_building_type_producing = {
 		scope:building_type = { cm_is_building_type_production_building = yes }
 	}
 }
-cm_is_building_type_multiple_levels = {
-	is_shown = {
-		scope:building_type = { cm_is_building_type_non_production_multi_level_building = yes }
-	}
-}
 cm_is_building_type_one_per_location = {
 	is_shown = {
 		scope:building_type = { cm_is_building_type_one_per_location_building = yes }
-	}
-}
-cm_is_building_type_more_than_one = {
-	is_shown = {
-		NOR = {
-			"global_variable_map(cm_building_type_to_is_production_building|scope:building_type)" = 0
-			"global_variable_map(cm_building_type_to_is_non_production_multi_level_building|scope:building_type)" = 0
-			"global_variable_map(cm_building_type_to_is_one_per_location_building|scope:building_type)" = 0
-		}
 	}
 }
 

@@ -1,12 +1,5 @@
 ﻿cm_max_guess_at_number_of_locations = 1000000
 
-# Root is country. Expects scope building_type. Returns required RGO/lumber levels before auto-building this improvement (sawmill/windmill/local_smelters).
-cm_get_required_rgo_levels_before_improvement_building = {
-	if = { limit = { has_variable_map = cm_min_rgos_by_building_type is_key_in_variable_map = { name = cm_min_rgos_by_building_type target = scope:building_type } }
-		value = "variable_map(cm_min_rgos_by_building_type|scope:building_type)"
-	} else = { value = 0 }
-}
-
 # Root is the country
 cm_get_allowed_building_overbuild_levels = {
 	if = { limit = { exists = var:cm_allowed_building_overbuild_levels }
@@ -25,26 +18,6 @@ cm_get_remaining_free_building_levels_allowed = {
 cm_get_available_building_levels = {
   value = modifier:free_building_levels
   subtract = total_building_levels
-}
-
-cm_local_pop_promotion_speed = {
-  value = modifier:local_pop_promotion_speed
-}
-
-cm_local_pop_promotion_speed_modifier = {
-  value = modifier:local_pop_promotion_speed_modifier
-}
-
-cm_local_pop_promotion_speed_scaled = {
-  value = modifier:local_pop_promotion_speed_scaled
-}
-
-cm_global_pop_promotion_speed = {
-  value = modifier:global_pop_promotion_speed
-}
-
-cm_global_pop_promotion_speed_modifier = {
-  value = modifier:global_pop_promotion_speed_modifier
 }
 
 # Root is the location
@@ -97,29 +70,6 @@ cm_combined_pop_promotion_speed_for_peasants = {
   value = cm_combined_pop_promotion_speed
   multiply = 0.5
 }
-
-# Population growth modifier wrappers. Pop growth rate percentages are yearly.
-# Root is the location
-cm_local_population_growth = { value = modifier:local_population_growth }
-cm_local_nobles_pop_growth = { value = modifier:local_nobles_pop_growth }
-cm_local_clergy_pop_growth = { value = modifier:local_clergy_pop_growth }
-cm_local_burghers_pop_growth = { value = modifier:local_burghers_pop_growth }
-cm_local_laborers_pop_growth = { value = modifier:local_laborers_pop_growth }
-cm_local_soldiers_pop_growth = { value = modifier:local_soldiers_pop_growth }
-cm_local_peasants_pop_growth = { value = modifier:local_peasants_pop_growth }
-cm_local_slaves_pop_growth = { value = modifier:local_slaves_pop_growth }
-cm_local_tribesmen_pop_growth = { value = modifier:local_tribesmen_pop_growth }
-
-# Root is country
-cm_global_population_growth = { value = modifier:global_population_growth }
-cm_global_nobles_pop_growth = { value = modifier:global_nobles_pop_growth }
-cm_global_clergy_pop_growth = { value = modifier:global_clergy_pop_growth }
-cm_global_burghers_pop_growth = { value = modifier:global_burghers_pop_growth }
-cm_global_laborers_pop_growth = { value = modifier:global_laborers_pop_growth }
-cm_global_soldiers_pop_growth = { value = modifier:global_soldiers_pop_growth }
-cm_global_peasants_pop_growth = { value = modifier:global_peasants_pop_growth }
-cm_global_slaves_pop_growth = { value = modifier:global_slaves_pop_growth }
-cm_global_tribesmen_pop_growth = { value = modifier:global_tribesmen_pop_growth }
 
 # Root is the location
 cm_base_location_pop_growth_rate = {

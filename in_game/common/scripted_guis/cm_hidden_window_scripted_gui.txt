@@ -29,7 +29,6 @@ cm_clear_should_construct = {
 	}
 }
 
-
 # Root is the player
 cm_should_building_type_section_show = {
 	is_shown = {
@@ -60,16 +59,6 @@ cm_building_type_section_buildings_init = {
 			}
 		} else = {
 			add_to_global_variable_map = { name = cm_building_type_to_is_production_building key = scope:building_type value = 0 }
-		}
-		if = { limit = { AND = { scope:is_producing = no scope:is_multiple_levels = yes } }
-			add_to_global_variable_map = { name = cm_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 1 }
-			if = { limit = { scope:is_fort = yes }
-				# debug_log = "CM: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: yes"
-			} else = {
-				# debug_log = "CM: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_non_production_multi_level_building: yes is_fort: no"
-			}
-		} else = {
-			add_to_global_variable_map = { name = cm_building_type_to_is_non_production_multi_level_building key = scope:building_type value = 0 }
 		}
 		if = { limit = { scope:is_multiple_levels = no }
 			add_to_global_variable_map = { name = cm_building_type_to_is_one_per_location_building key = scope:building_type value = 1 }
@@ -380,20 +369,3 @@ cm_produced_good = {
 	}
 }
 
-# Root is the building type
-cm_is_building_type_processed = {
-	is_shown = {
-		trigger_if = {
-			limit = { exists = this }
-			save_temporary_scope_as = building_type
-			AND = {
-				has_global_variable_map = cm_building_type_processed
-				is_key_in_global_variable_map = { name = cm_building_type_processed target = scope:building_type }
-			}
-		}
-		trigger_else = {
-			# Invalid building type scope — treat as already processed so the GUI hides this item
-			always = yes
-		}
-	}
-}
