@@ -24,7 +24,7 @@
 				glow_radius = 5
 				color = { 0.0 1.0 0.0 0.9 }
 				alpha = 0.6
-				block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]" }
+				block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]" }
 			}
 		}
 		background = {
@@ -35,7 +35,7 @@
 				glow_radius = 5
 				color = { 1.0 0.0 0.0 0.9 }
 				alpha = 0.6
-				block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)))]" }
+				block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)))]" }
 			}
 		}
 		background = {
@@ -87,7 +87,7 @@
 					glow_radius = 5
 					color = { 0.0 1.0 0.0 0.9 }
 					alpha = 0.6
-					block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]" }
+					block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]" }
 				}
 			}
 			background = {
@@ -98,7 +98,7 @@
 					glow_radius = 5
 					color = { 1.0 0.0 0.0 0.9 }
 					alpha = 0.6
-					block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)))]" }
+					block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)))]" }
 				}
 			}
 			background = {
@@ -244,13 +244,13 @@ template cm_RGO_Autoexpand_Tooltip {
 
 		blockoverride "tooltip_content" {
 			TooltipTextBlock = {
-				visible = "[GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
+				visible = "[GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
 				blockoverride "text" {
 					text = "CM_AUTO_EXPAND_ALL_REQUIREMENTS_MET"
 				}
 			}
 			TooltipListBase = {
-				visible = "[Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
+				visible = "[Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
 				blockoverride "block_title" {
 					raw_text = "Cannot expand until the following requirements are met:"
 				}
@@ -335,49 +335,49 @@ template cm_RGO_Autoexpand_Tooltip {
 					cm_tooltip_row = {
 						visible = "[Not(GreaterThan_CFixedPoint(GetPlayer.MakeScope.GetVariable('cm_expand_metric').GetValue, '(CFixedPoint)1'))]"
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
+							visible = "[GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
+							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO meets minimum income per level (estimated [Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase))|2]/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|2]@gold!)"
+							raw_text = "RGO meets minimum income per level (currently [Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase))|2]/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|2]@gold!)"
 						}
 					}
 					cm_tooltip_row = {
 						visible = "[EqualTo_CFixedPoint(GetPlayer.MakeScope.GetVariable('cm_expand_metric').GetValue, '(CFixedPoint)2')]"
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
+							visible = "[GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
+							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO meets minimum profit per level (currently [Location.GetRGOProfitPerLevel|2]/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|2]@gold!)"
+							raw_text = "RGO meets minimum profit per level (currently [Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl)|2]/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|2]@gold!)"
 						}
 					}
 					cm_tooltip_row = {
 						visible = "[EqualTo_CFixedPoint(GetPlayer.MakeScope.GetVariable('cm_expand_metric').GetValue, '(CFixedPoint)3')]"
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
+							visible = "[GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
+							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO recoups its cost from income within the ROI limit (currently [Divide_CFixedPoint(Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase))), '(CFixedPoint)12')|1]y/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|0]y)"
+							raw_text = "RGO recoups its cost from income within the ROI limit (currently [Divide_CFixedPoint(Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase))), '(CFixedPoint)12')|1]y/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|0]y)"
 						}
 					}
 					cm_tooltip_row = {
 						visible = "[EqualTo_CFixedPoint(GetPlayer.MakeScope.GetVariable('cm_expand_metric').GetValue, '(CFixedPoint)4')]"
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
+							visible = "[GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
+							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO recoups its cost from profit within the ROI limit (currently [Divide_CFixedPoint(Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), Location.GetRGOProfitPerLevel), '(CFixedPoint)12')|1]y/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|0]y)"
+							raw_text = "RGO recoups its cost from profit within the ROI limit (currently [Divide_CFixedPoint(Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl)), '(CFixedPoint)12')|1]y/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|0]y)"
 						}
 					}
 					cm_tooltip_row = {
@@ -411,7 +411,7 @@ template cm_RGO_Autoexpand_Tooltip {
 			}
 
 			CMTooltipTextBlockContainer = {
-				visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
+				visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
 
 				blockoverride "text_content" {
 					CMTooltipTextBox = {
@@ -433,7 +433,7 @@ template cm_RGO_Autoexpand_Tooltip {
 			}
 
 			TooltipTextBlock = {
-				visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Location.GetRGOProfitPerLevel, Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)))]"
+				visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)))]"
 				blockoverride "text" {
 					raw_text = "RGO will not expand; conditions are not met"
 				}
