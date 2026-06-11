@@ -571,25 +571,75 @@
 						}
 					}
 
-					hbox = {
-						# Location Wealth
+					widget = {
+						# GlorpUI: location wealth when building a bailiff
 						visible = "[GetScriptedGui('glorpui_building_type_is_bailiff').IsShown(GuiScope.SetRoot(BuildInLocationLateralView.GetBuildingType.MakeScope).End)]"
 						datacontext = "[LocationToBuildItem.GetLocation]"
-						margin = { 3 0 }
-						spacing = 2
-						icon = {
-							texture = "[GetConceptTexture('wealth')]"
-							size = { 20 20 }
-						}
-						text_single = {
-							size = { 40 18 }
-							align = nobaseline|left
-							autoresize = no
-							fontsize = 14
-							raw_text = "[Location.GetTotalPossibleTaxBase|1]"
-						}
+						size = { 68 46 }
+						alwaystransparent = no
 						tooltipwidget = {
-							using = location_tax_base_tooltip
+							# Sharing the cooltip layer's location_tax_base_tooltip widgetid breaks hover.
+							ContextualTooltipType = {
+								widgetid = "glorpui_bl_wealth_tooltip"
+
+								blockoverride "title_icon" {
+									icon = {
+										using = tooltip_title_icon_size
+										texture = "[GetConceptTexture('wealth')]"
+									}
+								}
+
+								blockoverride "title_text" {
+									text = "BASE_TAX_FROM_LOC_TITLE"
+								}
+
+								blockoverride "title_button" {
+									mapmode_tooltip_button = {
+										datacontext = "[GetMapMode('potential_tax_base')]"
+									}
+									mapmode_tooltip_button = {
+										datacontext = "[GetMapMode('tax_base')]"
+									}
+									mapmode_tooltip_button = {
+										datacontext = "[GetMapMode('net_building_profit')]"
+									}
+									mapmode_tooltip_button = {
+										datacontext = "[GetMapMode('peasant_enfranchisement')]"
+									}
+								}
+
+								blockoverride "concept_link" {
+									text = [wealth|e]
+								}
+
+								blockoverride "tooltip_content" {
+									vbox = {
+										visible = "[HasLocationTaxBaseIntelOn(Location.Self)]"
+										using = location_tax_base_details
+									}
+									text_single = {
+										visible = "[Not(HasLocationTaxBaseIntelOn(Location.Self))]"
+										tagtooltip_enabled = yes
+										text = "INTEL_FOG_LOC_TAX_BASE_UNKNOWN"
+									}
+								}
+							}
+						}
+
+						hbox = {
+							parentanchor = center
+							spacing = 2
+							icon = {
+								texture = "[GetConceptTexture('wealth')]"
+								size = { 20 20 }
+							}
+							text_single = {
+								size = { 40 18 }
+								align = nobaseline|left
+								autoresize = no
+								fontsize = 14
+								raw_text = "[Location.GetTotalPossibleTaxBase|1]"
+							}
 						}
 					}
 
@@ -932,6 +982,7 @@
 								}
 							}
 							widget = { #efficiency
+								visible = "[Not(GetScriptedGui('glorpui_building_type_is_bailiff').IsShown(GuiScope.SetRoot(BuildInLocationLateralView.GetBuildingType.MakeScope).End))]" # GlorpUI: hidden when building a bailiff
 								size = { 58 46 } # GlorpUI: {70 44} -> {58 46} to fit the builder
 								vbox = {
 									layoutpolicy_horizontal = expanding
