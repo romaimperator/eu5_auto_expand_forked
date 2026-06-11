@@ -9,7 +9,7 @@ cm_rgo_basic_expand_eligibility = {
 }
 
 # This trigger is used by the GUI to see if the prerequisites for auto expanding RGO are met
-# Expects scopes: country, location, profit
+# Expects scopes: country, location, income, profit
 cm_is_able_to_auto_expand_rgo = {
 	AND = {
 		owner = {
@@ -38,18 +38,17 @@ cm_should_rgo_auto_expand = {
 	}
 }
 
-# Root is the location. Expects scopes: country, profit.
-# Metric gate for RGO expansion. Tax Income compares the script-side estimate;
-# Profit compares the engine value passed as scope:profit. The threshold is
-# monthly gold per level for Tax Income and Profit, years to recoup the expansion
-# cost for the ROI metrics.
+# Root is the location. Expects scopes: country, income, profit.
+# Metric gate for RGO expansion. scope:income is the RGO profit scaled by the
+# location income-to-wealth ratio. The threshold is monthly gold per level for
+# Tax Income and Profit, years to recoup the expansion cost for the ROI metrics.
 cm_rgo_metric_gate_passes = {
 	OR = {
 		NOT = { scope:country = { has_variable_map = cm_priority_min_profit } }
 		"scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_rgos)" = 0
 		AND = {
 			cm_expand_metric_is_tax_income = yes
-			cm_rgo_estimated_profit_per_level >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_rgos)"
+			scope:income >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_rgos)"
 		}
 		AND = {
 			cm_expand_metric_is = { metric = 2 }
@@ -58,7 +57,7 @@ cm_rgo_metric_gate_passes = {
 		AND = {
 			cm_expand_metric_is = { metric = 3 }
 			glorpui_rgo_expand_cost <= {
-				value = cm_rgo_estimated_profit_per_level
+				value = scope:income
 				multiply = "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_rgos)"
 				multiply = 12
 			}
