@@ -33,24 +33,17 @@ types glorp_shared_types {
     }
 }
 
-template glorpUI_building_roi_tooltip_base {
+template glorpUI_roi_tooltip_base {
 	ContextualTooltipType = {
-		blockoverride "title_icon" {
-			icon = {
-				using = tooltip_title_icon_size
-				texture = "[GetBuildingIcon(BuildingType.Self)]"
-			}
-		}
 		blockoverride "title_text" {
 			text = "GLORP_UI_BUILDING_ROI_TT_TITLE"
-		}
-		blockoverride "concept_link" {
-			text = "[building|e]"
 		}
 		blockoverride "tooltip_content" {
 			TooltipTextBlock = {
 				blockoverride "text" {
-					text = "GLORP_UI_BUILDING_ROI_TT_DESC"
+					block "roi_desc_text" {
+						text = "GLORP_UI_BUILDING_ROI_TT_DESC"
+					}
 				}
 			}
 			TooltipListBase = {
@@ -59,11 +52,13 @@ template glorpUI_building_roi_tooltip_base {
 						text_single = {
 							layoutpolicy_horizontal = expanding
 							autoresize = no
-							text = "GLORP_UI_BUILDING_ROI_TT_COST"
+							block "roi_cost_label" {
+								text = "GLORP_UI_BUILDING_ROI_TT_COST"
+							}
 						}
 						text_single = {
 							autoresize = yes
-							raw_text = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
+							block "roi_cost_value" {}
 						}
 					}
 				}
@@ -138,6 +133,22 @@ template glorpUI_building_roi_tooltip_base {
 	}
 }
 
+template glorpUI_building_roi_tooltip_base {
+	using = glorpUI_roi_tooltip_base
+	blockoverride "title_icon" {
+		icon = {
+			using = tooltip_title_icon_size
+			texture = "[GetBuildingIcon(BuildingType.Self)]"
+		}
+	}
+	blockoverride "concept_link" {
+		text = "[building|e]"
+	}
+	blockoverride "roi_cost_value" {
+		raw_text = "[GetBuildOrExpandBuildingCostValue(BuildingType.Self, Location.Self)]"
+	}
+}
+
 template glorpUI_building_roi_tooltip {
 	using = glorpUI_building_roi_tooltip_base
 	blockoverride "roi_tax_income_value" {
@@ -179,5 +190,45 @@ template glorpUI_building_type_roi_tooltip {
 	}
 	blockoverride "roi_profit_years_value" {
 		raw_text = "[Divide_CFixedPoint(Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self)), '(CFixedPoint)12')|1]y @efficiency!"
+	}
+}
+
+template glorpUI_rgo_roi_tooltip {
+	using = glorpUI_roi_tooltip_base
+	blockoverride "title_icon" {
+		icon = {
+			using = tooltip_title_icon_size
+			texture = "[GetGoodsIcon(Location.GetRawMaterial)]"
+		}
+	}
+	blockoverride "concept_link" {
+		text = "[rgo|e]"
+	}
+	blockoverride "roi_desc_text" {
+		text = "GLORP_UI_RGO_ROI_TT_DESC"
+	}
+	blockoverride "roi_cost_label" {
+		text = "GLORP_UI_RGO_ROI_TT_COST"
+	}
+	blockoverride "roi_cost_value" {
+		raw_text = "[GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('glorpui_rgo_expand_cost')|0]@gold!"
+	}
+	blockoverride "roi_tax_income_value" {
+		raw_text = "[RawGoodLocationItem.GetIncomePerLevel|2]@income!"
+	}
+	blockoverride "roi_tax_months_value" {
+		raw_text = "[Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), RawGoodLocationItem.GetIncomePerLevel)|0]m @efficiency!"
+	}
+	blockoverride "roi_tax_years_value" {
+		raw_text = "[Divide_CFixedPoint(Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), RawGoodLocationItem.GetIncomePerLevel), '(CFixedPoint)12')|1]y @efficiency!"
+	}
+	blockoverride "roi_profit_value" {
+		raw_text = "[RawGoodLocationItem.GetProfitPerLevel|2]@wealth!"
+	}
+	blockoverride "roi_profit_months_value" {
+		raw_text = "[Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), RawGoodLocationItem.GetProfitPerLevel)|0]m @efficiency!"
+	}
+	blockoverride "roi_profit_years_value" {
+		raw_text = "[Divide_CFixedPoint(Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), RawGoodLocationItem.GetProfitPerLevel), '(CFixedPoint)12')|1]y @efficiency!"
 	}
 }

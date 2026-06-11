@@ -20,7 +20,7 @@
 
 	blockoverride "panel_header" {
 		window_header_alt = {
-			blockoverride "window_header_alt_color_texture"{
+			blockoverride "window_header_alt_color_texture" {
 				using = color_production_texture
 			}
 			blockoverride "header_text" {
@@ -34,13 +34,13 @@
 			using = layoutpolicy_expanding
 			using = bg_main_inner_alt
 			using = window_main_tabs_margin_alt
-			
+
 			filtered_sorted_list = {
 				margin_top = 10
 				datacontext = "[ExpandRawGoodsLateralView.GetRawGoodLocationsSortSearch.WithFilterTags('raw_goods')]"
 				name = "raw_good_location_filtered_list"
 
-				blockoverride "subheader_upper_divider"{
+				blockoverride "subheader_upper_divider" {
 					spacing = 5
 
 					widget = {
@@ -66,7 +66,7 @@
 									vbox = {
 										layoutpolicy_vertical = expanding
 										spacing = 3
-		
+
 										filter_button_alt = {
 											size = { 23 23 }
 											blockoverride "filter_button_action" {
@@ -85,18 +85,18 @@
 												}
 											}
 											tooltipwidget = { BasicFunctionalTooltip = {} }
-														
+
 											blockoverride "glow_visible" {
 												visible = "[ExpandRawGoodsLateralView.IsExpandRawGoodsSelectMarketOpened(PdxGuiWidget.FindParent('raw_good_location_filtered_list').Self)]"
 											}
 										}
-		
+
 										button = {
 											using = market_filter_button
 											enabled = "[ExpandRawGoodsLateralView.IsMarketFilterEnabled]"
 											blockoverride "functional_tooltip" {
 												tooltipwidget = { BasicFunctionalTooltip = {} }
-				
+
 												action_tooltip = {
 													click_type = left
 													click_mode = single
@@ -133,7 +133,7 @@
 								title = "SCROLL_CAPITAL_MARKET_FILTER"
 								on_action = "[SelectDefaultFocusMarket]"
 							}
-							
+
 							tooltipwidget = { BasicFunctionalTooltip = {} }
 
 							hbox = {
@@ -173,7 +173,7 @@
 									}
 								}
 								tooltipwidget = { BasicFunctionalTooltip = {} }
-								
+
 								blockoverride "glow_visible" {
 									visible = "[ExpandRawGoodsLateralView.IsExpandRawGoodsSelectMarketOpened(PdxGuiWidget.FindParent('raw_good_location_filtered_list').Self)]"
 								}
@@ -198,7 +198,7 @@
 								datacontext = "[RawGoodLocationItem.GetLocation]"
 								datacontext = "[Location.GetRawMaterial]"
 								datacontext = "[Location.GetMarket]"
-								
+
 								blockoverride "icon_overlay" {}
 								blockoverride "icon_texture" {
 									texture = "[GetGoodsIcon(Goods.Self)]"
@@ -243,13 +243,13 @@
 								}
 							}
 						}
-						
+
 						header_button_left = {
 							layoutpolicy_horizontal = expanding
 
 							visible = "[Not(ExpandRawGoodsLateralView.HasLastExpandingLocationItem)]"
 							enabled = no
-							
+
 							blockoverride "icon_overlay" {}
 							blockoverride "icon_texture" {
 								visible = no
@@ -285,7 +285,7 @@
 							visible = "[ExpandRawGoodsLateralView.HasBestExpandingLocationItem]"
 							header_button_right = {
 								size = { 100% 100% }
-								
+
 								datacontext = "[ExpandRawGoodsLateralView.GetExpandRankingItems]"
 								datacontext = "[ExpandRawGoodsLateralView.GetBestExpandingLocationItem]"
 								datacontext = "[RawGoodLocationItem.GetLocation]"
@@ -347,7 +347,7 @@
 
 								action_tooltip = {
 									click_type = left
-									click_mode = single	
+									click_mode = single
 									click_modifier = default
 
 									enabled = "[RawGoodLocationItem.CanUpgradeRGO]"
@@ -375,7 +375,7 @@
 									click_type = left
 									click_mode = single
 									click_modifier = shift
-									
+
 									enabled = "[RawGoodLocationItem.CanUpgradeRGO]"
 									title = "EXPAND_RGO_IN_BEST_LOCATION_ACTION_SHIFT"
 									description = "[RawGoodLocationItem.GetUpgradeRGOTooltip]"
@@ -393,7 +393,7 @@
 
 						header_button_right = {
 							layoutpolicy_horizontal = expanding
-							
+
 							visible = "[Not(ExpandRawGoodsLateralView.HasBestExpandingLocationItem)]"
 							enabled = no
 							datacontext = "[ExpandRawGoodsLateralView.GetExpandRankingItems]"
@@ -415,7 +415,7 @@
 							action_tooltip = {
 								click_type = left
 								click_mode = single
-								
+
 								enabled = no
 								title = "LOCATION_VIEW_EXPAND_RGO_TITLE"
 								description = "EXPAND_RGO_IN_BEST_LOCATION_ACTION_EMPTY"
@@ -434,7 +434,7 @@
 						layoutpolicy_vertical = expanding
 						size = { 65 -1 }
 					}
-	
+
 					sort_by_key_button = {
 						name = "employment"
 						layoutpolicy_vertical = expanding
@@ -511,6 +511,7 @@
 		}
 	}
 }
+
 
 template build_rgo_entry {
 	# icon
@@ -1204,40 +1205,73 @@ template build_rgo_entry {
 
 							}
 							widget = {
-								size = { 50 30 } # GlorpUI: 60->50
+								size = { 50 36 } # GlorpUI: {60 30} -> {50 36}
 								datacontext = "[Location.GetMarket]"
 								datacontext = "[Location.GetMarket.GetMarketEntry(Location.GetRawMaterial)]"
 								tooltipwidget = {
 									using = goods_market_price_tooltip
 								}
-								hbox = {
+								vbox = {
 									layoutpolicy_horizontal = expanding
-									expand = {}
-									text_single = {
-										maximumsize = { 40 18 }
-										align = nobaseline|right
-										fontsize = 14
-										raw_text = "[Location.GetMarket.GetPrice(Location.GetRawMaterial)|2]"
+									hbox = {
+										layoutpolicy_horizontal = expanding
+										expand = {}
+										text_single = {
+											maximumsize = { 40 18 }
+											align = nobaseline|right
+											fontsize = 14
+											raw_text = "[Location.GetMarket.GetPrice(Location.GetRawMaterial)|2]"
 
-										sort_by_highlight = {
-											size = { 105% 100% }
-											name = "market_price"
+											sort_by_highlight = {
+												size = { 105% 100% }
+												name = "market_price"
+											}
 										}
+
+										text_single = {
+
+											maximumsize = { 20 18 }
+											align = nobaseline|center
+											fontsize = 14
+											raw_text = "@[Location.GetRawMaterial.GetPriceDifferenceIconName(Location.GetMarket.GetPrice(Location.GetRawMaterial))]!"
+
+											sort_by_highlight = {
+												size = { 105% 100% }
+												name = "market_price_diff"
+											}
+										}
+
 									}
 
-									text_single = {
-
-										maximumsize = { 20 18 }
-										align = nobaseline|center
-										fontsize = 14
-										raw_text = "@[Location.GetRawMaterial.GetPriceDifferenceIconName(Location.GetMarket.GetPrice(Location.GetRawMaterial))]!"
-
-										sort_by_highlight = {
-											size = { 105% 100% }
-											name = "market_price_diff"
+									hbox = {
+										# GlorpUI: expand RGO ROI
+										layoutpolicy_horizontal = expanding
+										expand = {}
+										text_single = {
+											size = { 50 18 }
+											autoresize = no
+											align = nobaseline|right
+											fontsize = 13
+											default_format = "#color_green"
+											visible = "[And3(GreaterThan_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), '(CFixedPoint)0'), GreaterThan_CFixedPoint(Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, RawGoodLocationItem.GetProfitPerLevel, RawGoodLocationItem.GetIncomePerLevel), '(CFixedPoint)0'), Player.MakeScope.GetVariable('roiUseMonths').IsSet)]"
+											raw_text = "[Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, RawGoodLocationItem.GetProfitPerLevel, RawGoodLocationItem.GetIncomePerLevel))|0]m @efficiency!"
+											tooltipwidget = {
+												using = glorpUI_rgo_roi_tooltip
+											}
+										}
+										text_single = {
+											size = { 50 18 }
+											autoresize = no
+											align = nobaseline|right
+											fontsize = 13
+											default_format = "#color_green"
+											visible = "[And3(GreaterThan_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), '(CFixedPoint)0'), GreaterThan_CFixedPoint(Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, RawGoodLocationItem.GetProfitPerLevel, RawGoodLocationItem.GetIncomePerLevel), '(CFixedPoint)0'), Not(Player.MakeScope.GetVariable('roiUseMonths').IsSet))]"
+											raw_text = "[Divide_CFixedPoint(Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', Player.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, RawGoodLocationItem.GetProfitPerLevel, RawGoodLocationItem.GetIncomePerLevel)), '(CFixedPoint)12')|1]y @efficiency!"
+											tooltipwidget = {
+												using = glorpUI_rgo_roi_tooltip
+											}
 										}
 									}
-
 								}
 							}
 						}
