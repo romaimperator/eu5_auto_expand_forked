@@ -235,7 +235,7 @@ template cm_RGO_Autoexpand_Tooltip {
 		}
 
 		blockoverride "title_text" {
-			raw_text = "RGO Auto-Expand"
+			text = "CM_AUTO_EXPAND_RGO_TT_TITLE"
 		}
 
 		blockoverride "concept_link" {
@@ -252,7 +252,7 @@ template cm_RGO_Autoexpand_Tooltip {
 			TooltipListBase = {
 				visible = "[Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
 				blockoverride "block_title" {
-					raw_text = "Cannot expand until the following requirements are met:"
+					text = "CM_AUTO_EXPAND_REQ_HEADER"
 				}
 				TooltipListRowContent = {
 					cm_tooltip_row = {
@@ -266,7 +266,7 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[GetScriptedGui('cm_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						}
 						blockoverride "row_text" {
-							raw_text = "Auto-expand is not paused"
+							text = "CM_AUTO_EXPAND_REQ_NOT_PAUSED"
 						}
 					}
 					cm_tooltip_row = {
@@ -278,7 +278,7 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('cm_is_auto_expand_rgos_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO auto-expand feature is enabled"
+							text = "CM_AUTO_EXPAND_REQ_RGO_ENABLED"
 						}
 					}
 					cm_tooltip_row = {
@@ -291,7 +291,7 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('cm_is_rgo_advance_researched').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO is researched"
+							text = "CM_AUTO_EXPAND_REQ_RGO_RESEARCHED"
 						}
 					}
 					cm_tooltip_row = {
@@ -303,7 +303,7 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('cm_is_rgo_not_max_level_already').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO is not max level already"
+							text = "CM_AUTO_EXPAND_REQ_RGO_NOT_MAX"
 						}
 					}
 					cm_tooltip_row = {
@@ -316,7 +316,7 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('cm_is_rgo_fully_employed').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "Location has enough [ShowPopTypeName('laborers')] and/or [ShowPopTypeName('slaves')] (available: [Multiply_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue('cm_location_laborers_or_slaves_available'), '(CFixedPoint)1000')|0+=], monthly change: [Multiply_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue('cm_combined_monthly_new_pops_of_type_laborers_or_slaves'), '(CFixedPoint)1000')|0+=])"
+							text = "CM_AUTO_EXPAND_REQ_RGO_POPS"
 						}
 					}
 					cm_tooltip_row = {
@@ -329,7 +329,7 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('cm_rgo_meets_minimum_discount_for_auto_expand').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO meets minimum construction discount"
+							text = "CM_AUTO_EXPAND_REQ_RGO_DISCOUNT"
 						}
 					}
 					cm_tooltip_row = {
@@ -341,7 +341,7 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO meets minimum income per level (currently [Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase))|2]/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|2]@gold!)"
+							text = "CM_AUTO_EXPAND_REQ_RGO_MIN_INCOME"
 						}
 					}
 					cm_tooltip_row = {
@@ -353,7 +353,7 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO meets minimum profit per level (currently [Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl)|2]/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|2]@gold!)"
+							text = "CM_AUTO_EXPAND_REQ_RGO_MIN_PROFIT"
 						}
 					}
 					cm_tooltip_row = {
@@ -365,7 +365,7 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO recoups its cost from income within the ROI limit (currently [Divide_CFixedPoint(Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase))), '(CFixedPoint)12')|1]y/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|0]y)"
+							text = "CM_AUTO_EXPAND_REQ_RGO_ROI_INCOME"
 						}
 					}
 					cm_tooltip_row = {
@@ -377,7 +377,7 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('cm_rgo_metric_gate_shown').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO recoups its cost from profit within the ROI limit (currently [Divide_CFixedPoint(Divide_CFixedPoint(GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl)), '(CFixedPoint)12')|1]y/[GetPlayer.MakeScope.GetVariableFromVariableMap('cm_priority_min_profit', MakeScopeFlag('cm_feature_auto_expand_rgos')).GetValue|0]y)"
+							text = "CM_AUTO_EXPAND_REQ_RGO_ROI_PROFIT"
 						}
 					}
 					cm_tooltip_row = {
@@ -416,12 +416,12 @@ template cm_RGO_Autoexpand_Tooltip {
 				blockoverride "text_content" {
 					CMTooltipTextBox = {
 						blockoverride "text" {
-							raw_text = "RGO will expand if at least [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_expected_gold_available_for_rgo_auto_expand')|2]@gold! is available"
+							text = "CM_AUTO_EXPAND_RGO_WILL_EXPAND"
 						}
 					}
 					CMTooltipTextBox = {
 						blockoverride "text" {
-							raw_text = "(min [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_get_minimum_gold')|0L]@gold! + cost [GuiScope.AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).ScriptValue('glorpui_rgo_expand_cost')|2L]@gold!)"
+							text = "CM_AUTO_EXPAND_RGO_WILL_EXPAND_COSTS"
 						}
 					}
 				}
@@ -435,7 +435,7 @@ template cm_RGO_Autoexpand_Tooltip {
 			TooltipTextBlock = {
 				visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)))]"
 				blockoverride "text" {
-					raw_text = "RGO will not expand; conditions are not met"
+					text = "CM_AUTO_EXPAND_RGO_WILL_NOT_EXPAND"
 				}
 				blockoverride "textblock_background_tint"  {
 					modify_texture = {
@@ -663,7 +663,7 @@ template cm_RGO_Autoexpand_Tooltip {
 					text = "[UIAction.GetLeftClickName]"
 				}
 				blockoverride "action_right_text" {
-					raw_text = "Open Settings"
+					text = "CM_OPEN_SETTINGS"
 				}
 			}
 			TooltipTextBlock = {
@@ -687,7 +687,7 @@ template cm_Mass_Autoexpand_RGO_Tooltip {
 		}
 
 		blockoverride "title_text" {
-			raw_text = "Mass Auto-Expand RGOs"
+			text = "CM_MASS_AUTO_EXPAND_RGO_TT_TITLE"
 		}
 
 		blockoverride "concept_link" {
@@ -697,7 +697,7 @@ template cm_Mass_Autoexpand_RGO_Tooltip {
 		blockoverride "tooltip_content" {
 			TooltipListBase = {
 				blockoverride "block_title" {
-					raw_text = "When enabled, all RGO locations will automatically expand. Disable individual locations by toggling them off. New locations will be included automatically."
+					text = "CM_MASS_AUTO_EXPAND_RGO_TT_DESC"
 				}
 			}
 		}
@@ -706,10 +706,10 @@ template cm_Mass_Autoexpand_RGO_Tooltip {
 			TooltipFunctionalBlock = {
 				using = tooltip_left_right_click_template
 				blockoverride "action_left_text" {
-					raw_text = "Toggle Auto-Expand"
+					text = "CM_AUTO_EXPAND_TOGGLE"
 				}
 				blockoverride "action_right_text" {
-					raw_text = "Open Settings"
+					text = "CM_OPEN_SETTINGS"
 				}
 			}
 		}

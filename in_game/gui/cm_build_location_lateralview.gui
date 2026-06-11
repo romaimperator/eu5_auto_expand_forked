@@ -571,6 +571,28 @@
 						}
 					}
 
+					hbox = {
+						# Location Wealth
+						visible = "[GetScriptedGui('glorpui_building_type_is_bailiff').IsShown(GuiScope.SetRoot(BuildInLocationLateralView.GetBuildingType.MakeScope).End)]"
+						datacontext = "[LocationToBuildItem.GetLocation]"
+						margin = { 3 0 }
+						spacing = 2
+						icon = {
+							texture = "[GetConceptTexture('wealth')]"
+							size = { 20 20 }
+						}
+						text_single = {
+							size = { 40 18 }
+							align = nobaseline|left
+							autoresize = no
+							fontsize = 14
+							raw_text = "[Location.GetTotalPossibleTaxBase|1]"
+						}
+						tooltipwidget = {
+							using = location_tax_base_tooltip
+						}
+					}
+
 					widget = {
 						#subsidize/close
 						size = { 23 46 } # GlorpUI: {30 44} -> {23 46}
@@ -953,7 +975,7 @@
 											fontsize = 13
 											default_format = "#color_green"
 											visible = "[And3(GreaterThan_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), '(CFixedPoint)0'), GreaterThan_CFixedPoint(Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, Building.GetProfitPerLevel, Building.GetIncomeToOwnerPerLevel), '(CFixedPoint)0'), Player.MakeScope.GetVariable('roiUseMonths').IsSet)]"
-											raw_text = "[Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, Building.GetProfitPerLevel, Building.GetIncomeToOwnerPerLevel))|0]m @efficiency!"
+											text = "GLORP_UI_BL_ROI_MONTHS_VALUE"
 											tooltipwidget = {
 												using = glorpUI_building_roi_tooltip
 											}
@@ -965,7 +987,7 @@
 											fontsize = 13
 											default_format = "#color_green"
 											visible = "[And3(GreaterThan_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), '(CFixedPoint)0'), GreaterThan_CFixedPoint(Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, Building.GetProfitPerLevel, Building.GetIncomeToOwnerPerLevel), '(CFixedPoint)0'), Not(Player.MakeScope.GetVariable('roiUseMonths').IsSet))]"
-											raw_text = "[Divide_CFixedPoint(Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, Building.GetProfitPerLevel, Building.GetIncomeToOwnerPerLevel)), '(CFixedPoint)12')|1]y @efficiency!"
+											text = "GLORP_UI_BL_ROI_YEARS_VALUE"
 											tooltipwidget = {
 												using = glorpUI_building_roi_tooltip
 											}
@@ -1019,7 +1041,7 @@
 											fontsize = 13
 											default_format = "#color_green"
 											visible = "[And3(GreaterThan_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), '(CFixedPoint)0'), GreaterThan_CFixedPoint(Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self), GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self)), '(CFixedPoint)0'), Player.MakeScope.GetVariable('roiUseMonths').IsSet)]"
-											raw_text = "[Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self), GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self)))|0]m @efficiency!"
+											text = "GLORP_UI_BL_BT_ROI_MONTHS_VALUE"
 											tooltipwidget = {
 												using = glorpUI_building_type_roi_tooltip
 											}
@@ -1031,7 +1053,7 @@
 											fontsize = 13
 											default_format = "#color_green"
 											visible = "[And3(GreaterThan_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), '(CFixedPoint)0'), GreaterThan_CFixedPoint(Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self), GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self)), '(CFixedPoint)0'), Not(Player.MakeScope.GetVariable('roiUseMonths').IsSet))]"
-											raw_text = "[Divide_CFixedPoint(Divide_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self), GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))), '(CFixedPoint)12')|1]y @efficiency!"
+											text = "GLORP_UI_BL_BT_ROI_YEARS_VALUE"
 											tooltipwidget = {
 												using = glorpUI_building_type_roi_tooltip
 											}
