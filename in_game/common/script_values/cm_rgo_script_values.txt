@@ -1,50 +1,8 @@
-﻿# 100 gold is the base cost of all types of RGO defined in in_game/common/prices/00_hardcoded.txt
-cm_get_defined_base_cost_for_rgo = 100
-
-# Expects scopes: country, location
+﻿# Expects scopes: country, location
 cm_expected_gold_available_for_rgo_auto_expand = {
-	value = cm_get_adjusted_construction_cost_for_rgo
+	value = glorpui_rgo_expand_cost
 	if = { limit = { exists = scope:country.var:cm_minimum_gold }
 		add = scope:country.var:cm_minimum_gold
-	}
-}
-
-# Expects scopes: country, location. Sum of all multiplicative-style adjustments to the base RGO cost.
-cm_get_adjustment_to_base_cost_for_rgo = {
-	value = 0
-	add = {
-		value = "default_price(scope:location.raw_material)"
-		multiply = "define:NEconomy|GOODS_RGO_PRICE_SCALE"
-		subtract = "define:NEconomy|GOODS_RGO_BASE_COST"
-	}
-	if = { limit = { scope:location.raw_material = { goods_method = mining } }
-		add = scope:country.modifier:expand_rgo_mining_cost_modifier
-	}
-	if = { limit = { scope:location.raw_material = { goods_method = farming } }
-		add = scope:country.modifier:expand_rgo_farming_cost_modifier
-	}
-	if = { limit = { scope:location.raw_material = { goods_method = hunting } }
-		add = scope:country.modifier:expand_rgo_hunting_cost_modifier
-	}
-	if = { limit = { scope:location.raw_material = { goods_method = gathering } }
-		add = scope:country.modifier:expand_rgo_gathering_cost_modifier
-	}
-	if = { limit = { scope:location.raw_material = { goods_method = forestry } }
-		add = scope:country.modifier:expand_rgo_forestry_cost_modifier
-	}
-	add = scope:country.inflation
-}
-
-# Expects scopes: country, location
-cm_get_adjusted_construction_cost_for_rgo = {
-	value = cm_get_defined_base_cost_for_rgo
-	multiply = {
-		value = 1
-		add = cm_get_adjustment_to_base_cost_for_rgo
-	}
-	multiply = {
-		value = 1
-		add = cm_get_construction_cost_adjustment_for_rgo
 	}
 }
 

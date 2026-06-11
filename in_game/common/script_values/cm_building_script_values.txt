@@ -7,26 +7,6 @@ cm_get_minimum_gold = {
 	} else = { value = 50 }
 }
 
-# Expects scopes: good, location
-cm_get_construction_good_adjustment = {
-	if = { limit = { "scope:location.market.market_price(scope:good)" > "default_price(scope:good)" }
-		value = "scope:location.market.market_price(scope:good)"
-		divide = "default_price(scope:good)"
-		subtract = 1
-		divide = 2
-	} else_if = { limit = { "scope:location.market.market_price(scope:good)" < "default_price(scope:good)" }
-		value = "scope:location.market.market_price(scope:good)"
-		divide = "default_price(scope:good)"
-		subtract = 1
-		multiply = {
-			value = 1
-			divide = 9
-			add = 1
-		}
-	} else = {
-		value = 0
-	}
-}
 cm_p_building_age_1_traditions_cost_modifier = {
 	value = modifier:p_building_age_1_traditions_cost_modifier
 }
