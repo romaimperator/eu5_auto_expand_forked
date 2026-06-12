@@ -404,6 +404,7 @@ cm_location_will_auto_expand_from_zero_levels = {
 		cm_gui_metric_gate_passes = yes
 		cm_location_building_type_not_under_construction = yes
 		scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
+		scope:can_build = yes
 		scope:country = { save_temporary_scope_as = actor }
 		can_build_building = scope:building_type
 		scope:country = { can_build_building = scope:building_type }
@@ -432,6 +433,13 @@ cm_is_building_able_to_auto_expand = {
 		cm_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
 		location.owner = { can_build_building = scope:building_type }
 		# can_build_building - doesn't work from Building-rooted scripted GUI so moved to GUI visibility
+		# scope:can_build = CanBuildOrExpandBuilding, scope:can_upgrade = CanUpgradeToBuilding for the replacement.
+		trigger_if = { limit = { owner = { building_type_is_obsolete = scope:building_type } }
+			scope:can_upgrade = yes
+		}
+		trigger_else = {
+			scope:can_build = yes
+		}
 	}
 }
 
