@@ -26,12 +26,6 @@ cm_food_fishing_village_level = {
 	} else = { value = 0 }
 }
 
-cm_food_sheep_farms_level = {
-	if = { limit = { has_building = building_type:sheep_farms }
-		"building(building_type:sheep_farms|owner)" = { value = building_level }
-	} else = { value = 0 }
-}
-
 cm_food_fruit_orchard_level = {
 	if = { limit = { has_building = building_type:fruit_orchard }
 		"building(building_type:fruit_orchard|owner)" = { value = building_level }
@@ -58,7 +52,6 @@ cm_food_rgo_output_mod = {
 # Output rates are hardcoded from in_game/common/production_methods/village_production_methods.txt; food values read dynamically via goods.food_value.
 #   farming_village    0.5 livestock per level
 #   fishing_village    0.5 fish per level
-#   sheep_farms        0.5 wool per level
 #   fruit_orchard      0.3 fruit per level
 #   forest_village     0.2 wild_game per level + 1.0 local_monthly_food per level
 cm_food_base_food = {
@@ -80,12 +73,6 @@ cm_food_base_food = {
 		value = cm_food_fishing_village_level
 		multiply = 0.5
 		goods:fish = { multiply = food_value }
-	}
-	# Sheep farms: 0.5 wool per level
-	add = {
-		value = cm_food_sheep_farms_level
-		multiply = 0.5
-		goods:wool = { multiply = food_value }
 	}
 	# Fruit orchard: 0.3 fruit per level
 	add = {
@@ -189,14 +176,6 @@ cm_food_marginal_fishing_village = {
 	multiply = cm_food_one_plus_total_food_mod
 }
 
-# Sheep Farms: delta B = +0.5 * wool.food_value. delta food = delta_B * R * F.
-cm_food_marginal_sheep_farms = {
-	value = 0.5
-	goods:wool = { multiply = food_value }
-	multiply = cm_food_raw_material_output_mod
-	multiply = cm_food_one_plus_total_food_mod
-}
-
 # Forest Village: delta B = +0.2 * wild_game.food_value + 1.0 (local_monthly_food). delta food = delta_B * R * F.
 cm_food_marginal_forest_village = {
 	value = 0.2
@@ -257,14 +236,6 @@ cm_food_expected_gold_for_fishing_village = {
 	scope:country = { add = cm_food_get_minimum_gold }
 }
 
-cm_food_expected_gold_for_sheep_farms = {
-	building_type:sheep_farms = { value = building_base_cost_in_gold }
-	multiply = { value = 1 add = cm_food_build_cost_modifier }
-	multiply = { value = 1 building_type:sheep_farms = { add = cm_get_construction_cost_adjustment_for_building_type } }
-	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = cm_food_get_minimum_gold }
-}
-
 cm_food_expected_gold_for_forest_village = {
 	building_type:forest_village = { value = building_base_cost_in_gold }
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
@@ -295,7 +266,6 @@ cm_food_gold_threshold = {
 	min = cm_food_expected_gold_for_windmill
 	min = cm_food_expected_gold_for_irrigation_systems
 	min = cm_food_expected_gold_for_fishing_village
-	min = cm_food_expected_gold_for_sheep_farms
 	min = cm_food_expected_gold_for_forest_village
 }
 

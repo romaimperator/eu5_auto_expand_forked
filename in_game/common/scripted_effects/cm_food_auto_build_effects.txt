@@ -12,7 +12,7 @@ cm_food_auto_build_in_location = {
 	# Skip the location when no pop-restricted option is buildable.
 	if = { limit = { NOT = { cm_food_location_pops_still_filling = yes } }
 
-		# Track best marginal and action (0=none, 1=rgo, 2=farming_village, 3=windmill, 4=irrigation, 5=fishing_village, 6=sheep_farms, 7=forest_village)
+		# Track best marginal and action: 0=none, 1=rgo, 2=farming_village, 3=windmill, 4=irrigation, 5=fishing_village, 6=forest_village
 		set_local_variable = { name = cm_food_best value = 0 }
 		set_local_variable = { name = cm_food_action value = 0 }
 
@@ -61,21 +61,12 @@ cm_food_auto_build_in_location = {
 			}
 		}
 
-		# ─── Option 6: Sheep Farms ───
-		if = { limit = { cm_food_can_build_sheep_farms = yes }
-			set_local_variable = { name = cm_food_m value = cm_food_marginal_sheep_farms }
-			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
-				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
-				set_local_variable = { name = cm_food_action value = 6 }
-			}
-		}
-
-		# ─── Option 7: Forest Village ───
+		# --- Option 6: Forest Village ---
 		if = { limit = { cm_food_can_build_forest_village = yes }
 			set_local_variable = { name = cm_food_m value = cm_food_marginal_forest_village }
 			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
 				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
-				set_local_variable = { name = cm_food_action value = 7 }
+				set_local_variable = { name = cm_food_action value = 6 }
 			}
 		}
 
@@ -99,11 +90,7 @@ cm_food_auto_build_in_location = {
 			if = { limit = { debug_only = yes } debug_log = "CM Food: fishing_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
 			building_type:fishing_village = { save_scope_as = building_type }
 			cm_stage_food_building_candidate = yes
-		} else_if = { limit = { local_var:cm_food_action = 6 building_type:sheep_farms = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
-			if = { limit = { debug_only = yes } debug_log = "CM Food: sheep_farms in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			building_type:sheep_farms = { save_scope_as = building_type }
-			cm_stage_food_building_candidate = yes
-		} else_if = { limit = { local_var:cm_food_action = 7 building_type:forest_village = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
+		} else_if = { limit = { local_var:cm_food_action = 6 building_type:forest_village = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "CM Food: forest_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
 			building_type:forest_village = { save_scope_as = building_type }
 			cm_stage_food_building_candidate = yes
@@ -195,7 +182,6 @@ cm_update_food_data_columns = {
 	set_variable = { name = cm_food_col_11 value = 0 }
 	set_variable = { name = cm_food_col_12 value = 0 }
 	set_variable = { name = cm_food_col_13 value = 0 }
-	set_variable = { name = cm_food_col_14 value = 0 }
 
 	# Single pass: accumulate food by RGO type
 	every_owned_location = {
@@ -223,26 +209,23 @@ cm_update_food_data_columns = {
 			else_if = { limit = { scope:food_loc = { raw_material = goods:legumes } }
 				change_variable = { name = cm_food_col_7 add = scope:food_loc.cm_food_location_total }
 			}
-			else_if = { limit = { scope:food_loc = { raw_material = goods:wool } }
+			else_if = { limit = { scope:food_loc = { raw_material = goods:fish } }
 				change_variable = { name = cm_food_col_8 add = scope:food_loc.cm_food_location_total }
 			}
-			else_if = { limit = { scope:food_loc = { raw_material = goods:fish } }
+			else_if = { limit = { scope:food_loc = { raw_material = goods:olives } }
 				change_variable = { name = cm_food_col_9 add = scope:food_loc.cm_food_location_total }
 			}
-			else_if = { limit = { scope:food_loc = { raw_material = goods:olives } }
+			else_if = { limit = { scope:food_loc = { raw_material = goods:fruit } }
 				change_variable = { name = cm_food_col_10 add = scope:food_loc.cm_food_location_total }
 			}
-			else_if = { limit = { scope:food_loc = { raw_material = goods:fruit } }
+			else_if = { limit = { scope:food_loc = { raw_material = goods:wild_game } }
 				change_variable = { name = cm_food_col_11 add = scope:food_loc.cm_food_location_total }
 			}
-			else_if = { limit = { scope:food_loc = { raw_material = goods:wild_game } }
+			else_if = { limit = { scope:food_loc = { raw_material = goods:beeswax } }
 				change_variable = { name = cm_food_col_12 add = scope:food_loc.cm_food_location_total }
 			}
-			else_if = { limit = { scope:food_loc = { raw_material = goods:beeswax } }
-				change_variable = { name = cm_food_col_13 add = scope:food_loc.cm_food_location_total }
-			}
 			else_if = { limit = { scope:food_loc = { raw_material = goods:fur } }
-				change_variable = { name = cm_food_col_14 add = scope:food_loc.cm_food_location_total }
+				change_variable = { name = cm_food_col_13 add = scope:food_loc.cm_food_location_total }
 			}
 		}
 	}
@@ -261,7 +244,6 @@ cm_update_food_data_columns = {
 	round_variable = { name = cm_food_col_11 nearest = 1 }
 	round_variable = { name = cm_food_col_12 nearest = 1 }
 	round_variable = { name = cm_food_col_13 nearest = 1 }
-	round_variable = { name = cm_food_col_14 nearest = 1 }
 
 	# Write totals to CMM data columns
 	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 1 value = var:cm_food_col_1 }
@@ -277,7 +259,6 @@ cm_update_food_data_columns = {
 	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 11 value = var:cm_food_col_11 }
 	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 12 value = var:cm_food_col_12 }
 	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 13 value = var:cm_food_col_13 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 14 value = var:cm_food_col_14 }
 
 	# Suppress "set but never used" warnings for accumulators (referenced via text substitution)
 	if = { limit = { always = no }
@@ -294,6 +275,5 @@ cm_update_food_data_columns = {
 		cmf_suppress = { v = cm_food_col_11 }
 		cmf_suppress = { v = cm_food_col_12 }
 		cmf_suppress = { v = cm_food_col_13 }
-		cmf_suppress = { v = cm_food_col_14 }
 	}
 }
