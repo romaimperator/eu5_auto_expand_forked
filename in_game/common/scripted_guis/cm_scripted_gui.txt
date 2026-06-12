@@ -92,10 +92,12 @@ cm_check_for_auto_expand_when_upgrading_building = {
 # Called from the hidden window GUI to perform a building upgrade.
 # Root = location, scope:old_building_type = obsolete type, scope:new_building_type = upgrade target (from GetNextReplacementBuilding), scope:country = player
 # scope:cost, scope:income, scope:profit = engine values for the replacement type.
+# scope:can_build = CanUpgradeToBuilding for the replacement type.
 cm_gui_construct_upgrade = {
 	is_valid = {
 		is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:old_building_type }
-		cm_auto_expand_check_minimum_gold_reserve = yes
+		scope:can_build = yes
+		scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
 		# Auto-expand's obsolete upgrades are gated on the replacement's engine values;
 		# upgrade-all entries are not marked gated and skip the metric check.
 		OR = {
@@ -141,9 +143,9 @@ cm_gui_construct_upgrade = {
 # Invoked by the hidden window per queued entry; applies the metric gate
 # and the gold-affordability gate using the engine values grabbed in GUI, then builds.
 # scope:cost = GetBuildOrExpandBuildingCost, scope:income = income-to-owner per level,
-# scope:profit = profit per level.
+# scope:profit = profit per level, scope:can_build = CanBuildOrExpandBuilding.
 cm_gui_try_build = {
-	saved_scopes = { building_type country cost income profit }
+	saved_scopes = { building_type country cost income profit can_build }
 	is_valid = {
 		always = yes
 	}
@@ -151,6 +153,7 @@ cm_gui_try_build = {
 		if = {
 			limit = {
 				cm_gui_metric_gate_passes = yes
+				scope:can_build = yes
 				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
 				# A staged upgrade already constructs this type here
 				NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:building_type } }
@@ -180,9 +183,9 @@ cm_gui_try_rgo = {
 }
 # Ungated construction-queue executor (auto-build, capital). Root is the location;
 # re-checks build-queue slots and affordability against the engine cost, then builds.
-# Subject locations build with the country as owner and payer. Expects scopes: country, building_type, cost.
+# Subject locations build with the country as owner and payer. Expects scopes: country, building_type, cost, can_build.
 cm_gui_try_ungated = {
-	saved_scopes = { country building_type cost }
+	saved_scopes = { country building_type cost can_build }
 	is_valid = {
 		always = yes
 	}
@@ -191,6 +194,11 @@ cm_gui_try_ungated = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
 				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
+				# The engine buildability bool is unverified for subject locations.
+				OR = {
+					NOT = { owner = scope:country }
+					scope:can_build = yes
+				}
 			}
 			if = {
 				limit = { owner = scope:country }
@@ -230,9 +238,9 @@ cm_gui_try_urbanize = {
 }
 # Food building construction-queue executor. Root is the location; re-checks build-queue slots
 # and the food gold reserve at drain time, then builds the staged food building.
-# Expects scopes: country, building_type.
+# Expects scopes: country, building_type, can_build.
 cm_gui_try_food_building = {
-	saved_scopes = { country building_type }
+	saved_scopes = { country building_type can_build }
 	is_valid = {
 		always = yes
 	}
@@ -241,6 +249,11 @@ cm_gui_try_food_building = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
 				cm_check_country_gold_above = { threshold = cm_food_gold_threshold }
+				# The engine buildability bool is unverified for subject locations.
+				OR = {
+					NOT = { owner = scope:country }
+					scope:can_build = yes
+				}
 			}
 			construct_building = { building_type = scope:building_type }
 		}
