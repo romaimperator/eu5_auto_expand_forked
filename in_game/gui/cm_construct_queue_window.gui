@@ -115,7 +115,7 @@
 								state = {
 									name = cm_q_construct_food
 									trigger_on_create = yes
-									on_finish = "[GetScriptedGui('cm_gui_try_food_building').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('can_build', MakeScopeBool(CanBuildOrExpandBuilding(BuildingType.Self, Location.Self))).End)]"
+									on_finish = "[GetScriptedGui('cm_gui_try_food_building').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('building_type', BuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).AddScope('can_build', MakeScopeBool(CanBuildOrExpandBuilding(BuildingType.Self, Location.Self))).End)]"
 								}
 							}
 						}
@@ -146,6 +146,46 @@
 							name = cm_q_construct_rgo
 							trigger_on_create = yes
 							on_finish = "[GetScriptedGui('cm_gui_try_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('location', Location.MakeScope).AddScope('country', GetPlayer.MakeScope).AddScope('profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
+						}
+					}
+				}
+			}
+			# Approved builds from the executors; each entry fires the engine build action once.
+			widget = {
+				datamodel = "[GetPlayer.MakeScope.GetList('cm_q_approved_build_locations')]"
+				item = {
+					widget = {
+						datacontext = "[Scope.GetLocation]"
+						datamodel = "[Location.MakeScope.GetList('cm_q_approved_build_types')]"
+						item = {
+							widget = {
+								datacontext = "[Scope.GetBuildingType]"
+								state = {
+									name = cm_q_fire_build
+									trigger_on_create = yes
+									on_finish = "[BuildOrExpandBuildingDefault(BuildingType.Self, Location.Self)]"
+								}
+							}
+						}
+					}
+				}
+			}
+			# Approved upgrades keyed by the obsolete type; each entry fires the engine upgrade action on the replacement.
+			widget = {
+				datamodel = "[GetPlayer.MakeScope.GetList('cm_q_approved_upgrade_locations')]"
+				item = {
+					widget = {
+						datacontext = "[Scope.GetLocation]"
+						datamodel = "[Location.MakeScope.GetList('cm_q_approved_upgrade_types')]"
+						item = {
+							widget = {
+								datacontext = "[Scope.GetBuildingType]"
+								state = {
+									name = cm_q_fire_upgrade
+									trigger_on_create = yes
+									on_finish = "[UpgradeBuildingDefault(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self)]"
+								}
+							}
 						}
 					}
 				}

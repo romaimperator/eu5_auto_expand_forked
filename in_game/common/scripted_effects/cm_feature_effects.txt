@@ -142,6 +142,25 @@ cm_stage_upgrade_candidate = {
 	scope:cm_ae_staged_type = { save_scope_as = building_type }
 }
 
+# Drain-time approval: the queue window fires the engine build action once per
+# approved entry. The script construct_building effect does not charge
+# special-currency price components.
+# Root is the location. Expects scope:country, scope:building_type, scope:cost.
+cm_approve_gui_build = {
+	if = {
+		limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:building_type } } }
+		add_to_variable_list = { name = cm_q_approved_build_types target = scope:building_type }
+		save_temporary_scope_as = cm_approved_location
+		scope:country = {
+			if = {
+				limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_build_locations target = scope:cm_approved_location } } }
+				add_to_variable_list = { name = cm_q_approved_build_locations target = scope:cm_approved_location }
+			}
+			change_variable = { name = cm_q_planned_spend add = scope:cost }
+		}
+	}
+}
+
 # ─── Auto Expand Buildings ───
 # Expands multi-level buildings that are profitable and have pops available.
 # Flags obsolete buildings for GUI-driven upgrade processing.
