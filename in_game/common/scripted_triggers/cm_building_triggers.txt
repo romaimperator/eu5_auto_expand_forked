@@ -159,13 +159,13 @@ cm_building_meets_minimum_discount = {
 	}
 }
 
-# Root is the building. Shared core of the two cm_building_can_auto_expand_* triggers —
-# the checks that apply to both normal-path and upgrade-path expansion.
-# The upgrade path cannot use can_build_building (fails for obsolete building types);
+# Root is the building. Shared core of the two cm_building_can_auto_expand_* triggers.
+# Expects scope:building_type as the type whose discount and pops gates are evaluated:
+# expansion callers pass the building's own type, upgrade staging passes the replacement.
+# can_build_building fails for obsolete building types; the upgrade path omits it and
 # the normal path adds it via cm_building_can_auto_expand_other_than_checking_for_upgrades.
 cm_building_can_auto_expand_for_upgrade = {
 	location = { save_temporary_scope_as = location }
-	building_type = { save_temporary_scope_as = building_type }
 	owner = { save_temporary_scope_as = country }
 	AND = {
 		is_opened = yes
@@ -191,9 +191,7 @@ cm_location_can_auto_expand_from_zero_levels = {
 }
 
 # Root is the location, also expects scope:building_type and scope:country.
-# Shared core of the two cm_location_will_auto_expand_from_zero_levels_* triggers.
-# The upgrade path cannot use can_build_building (fails for obsolete building types);
-# the normal path adds it via cm_location_will_auto_expand_from_zero_levels.
+# Core checks of cm_location_will_auto_expand_from_zero_levels, without can_build_building.
 cm_location_will_auto_expand_from_zero_levels_for_upgrade = {
 	AND = {
 		scope:country = { cm_should_pause_auto_expand = no }
@@ -213,12 +211,6 @@ cm_location_will_auto_expand_from_zero_levels = {
 		cm_location_allowed_to_build = { target = scope:building_type }
 		cm_location_building_type_not_under_construction = yes
 	}
-}
-
-# Expects scopes: building type, country, and location. Same as cm_location_can_auto_expand_from_zero_levels
-# but without the can_build_building check, which fails for obsolete building types.
-cm_location_can_auto_expand_from_zero_levels_for_upgrade = {
-	scope:location = { cm_location_will_auto_expand_from_zero_levels_for_upgrade = yes }
 }
 
 # Expects scope:country. Checks that the player has gold above their minimum reserve setting.

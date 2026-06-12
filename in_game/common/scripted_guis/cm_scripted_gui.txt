@@ -2,6 +2,13 @@
 	effect = {
 		save_scope_as = the_building
 		building_type = { save_scope_as = building_type }
+		owner = { save_scope_as = country }
+		# A standing obsolete building toggles its replacement's registration
+		if = {
+			limit = { scope:country = { building_type_is_obsolete = scope:building_type } }
+			scope:building_type = { cm_find_current_building_type = yes }
+			scope:cm_current_building_type = { save_scope_as = building_type }
+		}
 		location = {
 			if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } } }
 				# Mass mode: operate on exclusion list (inverted logic)
@@ -152,6 +159,8 @@ cm_gui_try_build = {
 			limit = {
 				cm_gui_metric_gate_passes = yes
 				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
+				# A staged upgrade already constructs this type here
+				NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:building_type } }
 			}
 			construct_building = { building_type = scope:building_type }
 		}
@@ -265,14 +274,30 @@ cm_check_for_auto_expand_when_removing_building = {
 	effect = {
 		save_scope_as = the_building
 		scope:the_building = { building_type = { save_temporary_scope_as = building_type } }
+		owner = { save_scope_as = country }
 		location = {
 			if = { limit = { scope:the_building = { building_level < 2 } }
+				scope:building_type = { cm_find_current_building_type = yes }
 				# Clean up both lists — only the relevant one will have an entry
 				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
 					remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
 				}
 				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } }
 					remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+				}
+				# Demolishing the last tier of a transferred lineage clears the replacement's entries
+				if = {
+					limit = {
+						scope:country = { building_type_is_obsolete = scope:building_type }
+						NOT = { scope:country = { building_type_is_obsolete = scope:cm_current_building_type } }
+						NOT = { has_building = scope:cm_current_building_type }
+					}
+					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_current_building_type } }
+						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_current_building_type }
+					}
+					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_current_building_type } }
+						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_current_building_type }
+					}
 				}
 			}
 		}
@@ -284,6 +309,21 @@ cm_is_auto_expand_active_for_building = {
 	is_shown = {
 		save_temporary_scope_as = the_building
 		scope:the_building = { building_type = { save_temporary_scope_as = building_type } }
+		# A standing obsolete building reads its replacement's registration
+		trigger_if = {
+			limit = {
+				owner = { building_type_is_obsolete = scope:building_type }
+				is_key_in_global_variable_map = { name = cm_building_type_to_upgrade_type target = scope:building_type }
+			}
+			"global_variable_map(cm_building_type_to_upgrade_type|scope:building_type)" = { save_temporary_scope_as = building_type }
+		}
+		trigger_if = {
+			limit = {
+				owner = { building_type_is_obsolete = scope:building_type }
+				is_key_in_global_variable_map = { name = cm_building_type_to_upgrade_type target = scope:building_type }
+			}
+			"global_variable_map(cm_building_type_to_upgrade_type|scope:building_type)" = { save_temporary_scope_as = building_type }
+		}
 		OR = {
 			location = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
 			AND = {
