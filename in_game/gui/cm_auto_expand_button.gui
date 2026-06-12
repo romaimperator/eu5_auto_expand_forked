@@ -9,7 +9,7 @@
 	# Placed in the production view and the build panel.
 	type cm_auto_expand_existing_building_button = button_square_checkbox {
 		datacontext = "[Building]"
-		visible = "[Building.GetType.IsMultipleLevels]"
+		visible = "[And(Building.GetType.IsMultipleLevels, Not(GetScriptedGui('cm_is_building_obsolete').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]"
 		size = { 20 20 }
 		parentanchor = center
 		widgetanchor = center
@@ -75,7 +75,7 @@
 	# Building-view panel only; the panel has no grey container, so this button supplies its own background.
 	type cm_auto_expand_existing_building_button_bv = button_square_checkbox {
 		datacontext = "[Building]"
-		visible = "[Building.GetType.IsMultipleLevels]"
+		visible = "[And(Building.GetType.IsMultipleLevels, Not(GetScriptedGui('cm_is_building_obsolete').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]"
 		size = { 20 20 }
 		tooltipwidget = { using = cm_Building_Autoexpand_Tooltip }
 		blockoverride "check_texture" {
@@ -208,7 +208,7 @@
 	type cm_auto_expand_existing_building_button_pl = widget {
 		size = { 20 44 }
 		visible = "[BuildingItem.GetBuildingType.IsMultipleLevels]"
-		cm_auto_expand_existing_building_button = { visible = "[ObjectsEqual(Building.GetLocation.GetOwner, Player.Self)]" }
+		cm_auto_expand_existing_building_button = { visible = "[And(ObjectsEqual(Building.GetLocation.GetOwner, Player.Self), Not(GetScriptedGui('cm_is_building_obsolete').IsShown(GuiScope.SetRoot(Building.MakeScope).End)))]" }
 	}
 
 	type cm_auto_expand_new_building_button_pl = cm_auto_expand_new_building_button {
@@ -322,7 +322,7 @@
 	}
 
 	type cm_mass_auto_expand_button_pl = button_square_checkbox {
-		visible = "[And3(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsMultipleLevels, Or(Not(ProductionView.IsLocationFilterEnabled), ObjectsEqual(ProductionView.GetSelectedLocation.GetOwner, Player.Self)))]"
+		visible = "[And(And3(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsMultipleLevels, Or(Not(ProductionView.IsLocationFilterEnabled), ObjectsEqual(ProductionView.GetSelectedLocation.GetOwner, Player.Self))), Not(GetScriptedGui('cm_is_building_type_obsolete').IsShown(GuiScope.AddScope('building_type', BuildingItem.GetBuildingType.MakeScope).AddScope('country', GetPlayer.MakeScope).End)))]"
 		size = { 20 20 }
 		tooltipwidget = { using = cm_Mass_Autoexpand_Tooltip }
 		blockoverride "check_texture" {
