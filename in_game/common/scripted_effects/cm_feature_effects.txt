@@ -118,6 +118,7 @@ cm_stage_upgrade_candidate = {
 				cm_building_can_auto_expand_for_upgrade = yes
 				cm_is_not_under_construction = yes
 			}
+			scope:location = { cm_location_building_type_not_under_construction = yes }
 			cm_auto_expand_check_minimum_gold_reserve = yes
 			NOT = { scope:location = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_ae_staged_type } } }
 		}
@@ -499,23 +500,36 @@ cm_run_upgrade_all_buildings = {
 					cm_upgrade_all_meets_minimum_discount = yes
 					NOT = { scope:location = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:building_type } } }
 				}
-				scope:location = { remove_list_variable = { name = cm_q_upgrade_gated_types target = scope:building_type } }
-				# Record the replacement for the per-pulse construct dedupe
 				scope:building_type = { cm_find_current_building_type = yes }
-				scope:location = {
-					if = {
-						limit = { NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type } } }
-						add_to_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type }
+				if = {
+					# An in-flight upgrade carries its construction levels on the replacement type.
+					limit = {
+						scope:location = {
+							NOT = {
+								any_buildings_in_location = {
+									building_type = scope:cm_current_building_type
+									building_levels_under_construction > 0
+								}
+							}
+						}
 					}
-					if = {
-						limit = { NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:building_type } } }
-						add_to_variable_list = { name = cm_gui_upgrade_building_types target = scope:building_type }
+					scope:location = { remove_list_variable = { name = cm_q_upgrade_gated_types target = scope:building_type } }
+					# Record the replacement for the per-pulse construct dedupe
+					scope:location = {
+						if = {
+							limit = { NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type } } }
+							add_to_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type }
+						}
+						if = {
+							limit = { NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:building_type } } }
+							add_to_variable_list = { name = cm_gui_upgrade_building_types target = scope:building_type }
+						}
 					}
-				}
-				scope:country = {
-					if = {
-						limit = { NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_locations target = scope:location } } }
-						add_to_variable_list = { name = cm_gui_upgrade_locations target = scope:location }
+					scope:country = {
+						if = {
+							limit = { NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_locations target = scope:location } } }
+							add_to_variable_list = { name = cm_gui_upgrade_locations target = scope:location }
+						}
 					}
 				}
 			}
