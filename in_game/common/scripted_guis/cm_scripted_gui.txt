@@ -155,8 +155,9 @@ cm_gui_construct_upgrade = {
 # and the gold-affordability gate using the engine values grabbed in GUI, then approves the build.
 # scope:cost = GetBuildOrExpandBuildingCost, scope:income = income-to-owner per level,
 # scope:profit = profit per level, scope:can_build = CanBuildOrExpandBuilding.
+# scope:obsolete_building = the standing obsolete predecessor from GetObsoleteBuildingInLocation, unset when none.
 cm_gui_try_build = {
-	saved_scopes = { building_type country cost income profit can_build }
+	saved_scopes = { building_type country cost income profit can_build obsolete_building }
 	is_valid = {
 		always = yes
 	}
@@ -168,8 +169,24 @@ cm_gui_try_build = {
 				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }
 				# A staged upgrade already constructs this type here
 				NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:building_type } }
+				# The engine converts a build into the standing obsolete predecessor's upgrade.
+				trigger_if = {
+					limit = { exists = scope:obsolete_building }
+					scope:obsolete_building = { building_type = { save_temporary_scope_as = cm_build_obsolete_type } }
+					NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_build_obsolete_type } }
+				}
 			}
 			cm_approve_gui_build = yes
+			if = {
+				limit = { exists = scope:obsolete_building }
+				scope:obsolete_building = { building_type = { save_temporary_scope_as = cm_build_obsolete_type } }
+				if = {
+					limit = { NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_build_obsolete_type } } }
+					add_to_variable_list = { name = cm_upgrade_in_progress target = scope:cm_build_obsolete_type }
+				}
+				remove_from_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_build_obsolete_type }
+				add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_build_obsolete_type value = scope:building_type }
+			}
 		}
 	}
 }
