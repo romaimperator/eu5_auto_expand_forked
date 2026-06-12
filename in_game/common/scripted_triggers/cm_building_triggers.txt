@@ -191,8 +191,7 @@ cm_location_can_auto_expand_from_zero_levels = {
 }
 
 # Root is the location, also expects scope:building_type and scope:country.
-# Core checks of cm_location_will_auto_expand_from_zero_levels, without can_build_building.
-cm_location_will_auto_expand_from_zero_levels_for_upgrade = {
+cm_location_will_auto_expand_from_zero_levels = {
 	AND = {
 		scope:country = { cm_should_pause_auto_expand = no }
 		NOT = { integration_level = conquered }
@@ -200,14 +199,6 @@ cm_location_will_auto_expand_from_zero_levels_for_upgrade = {
 		cm_is_location_under_building_limit = yes
 		save_temporary_scope_as = location
 		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
-	}
-}
-
-# Root is the location, also expects scope:building_type and scope:country.
-# Same checks as cm_location_will_auto_expand_from_zero_levels_for_upgrade, plus can_build_building.
-cm_location_will_auto_expand_from_zero_levels = {
-	AND = {
-		cm_location_will_auto_expand_from_zero_levels_for_upgrade = yes
 		cm_location_allowed_to_build = { target = scope:building_type }
 		cm_location_building_type_not_under_construction = yes
 	}
@@ -256,15 +247,6 @@ cm_is_building_type_production_building = {
 		has_global_variable_map = cm_building_type_to_is_production_building
 		is_key_in_global_variable_map = { name = cm_building_type_to_is_production_building target = this }
 		"global_variable_map(cm_building_type_to_is_production_building|this)" = 1
-	}
-}
-
-# Root is the building type
-cm_is_building_type_one_per_location_building = {
-	AND = {
-		has_global_variable_map = cm_building_type_to_is_one_per_location_building
-		is_key_in_global_variable_map = { name = cm_building_type_to_is_one_per_location_building target = this }
-		"global_variable_map(cm_building_type_to_is_one_per_location_building|this)" = 1
 	}
 }
 

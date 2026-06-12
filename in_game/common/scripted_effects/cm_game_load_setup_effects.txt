@@ -65,11 +65,6 @@ cm_initialize_goods_globals = {
 # Expects scopes: country
 cm_check_that_country_variables_are_set = {
   scope:country = {
-    # Reset the location lists every time we load the game
-    if = { limit = { OR = { NOT = { has_variable_list = cm_all_controlled_locations_list } NOT = { has_variable_list = cm_all_locations_including_subjects_list } } }
-      cm_reset_locations_lists = {}
-    }
-
     # Simple settings (CMM aliases — initialized by CMM registration, defaults here for non-CMF fallback)
     if = { limit = { NOT = { has_variable = cm_minimum_gold } }
       set_variable = { name = cm_minimum_gold value = 50 }
@@ -84,18 +79,14 @@ cm_check_that_country_variables_are_set = {
 # Expects scopes: country
 cm_reset_locations_lists = {
   scope:country = {
-    # Make list of all directly owned locations
-    # Also, add to the beginning of the all including subjects list, the sorted list of directly owned locations
-    clear_variable_list = cm_all_controlled_locations_list
+    # Directly owned locations first, sorted by max control
     clear_variable_list = cm_all_locations_including_subjects_list
     ordered_owned_location = {
       order_by = max_control
       save_scope_as = location
       max = cm_max_guess_at_number_of_locations
       check_range_bounds = no
-      scope:country = { add_to_variable_list = { name = cm_all_controlled_locations_list target = scope:location } }
       scope:country = { add_to_variable_list = { name = cm_all_locations_including_subjects_list target = scope:location } }
-      # debug_log = "Adding location [THIS.GetLocation.GetNameWithNoTooltip] to cm_all_controlled_locations_list with max control [THIS.GetLocation.GetMaxControl]"
     }
 
     # Make unsorted list of locations of all subjects and below

@@ -3,39 +3,7 @@
 		save_scope_as = the_building
 		building_type = { save_scope_as = building_type }
 		location = {
-			if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } } }
-				# Mass mode: operate on exclusion list (inverted logic)
-				if = { limit = { NOT = { exists = scope:set_off } }
-					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } }
-						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
-					} else = {
-						add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
-					}
-				} else = {
-					if = { limit = { scope:set_off = yes }
-						if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } } }
-							add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
-						}
-					} else = {
-						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
-					}
-				}
-			} else = {
-				# Normal mode: operate on registration list
-				if = { limit = { NOT = { exists = scope:set_off } }
-					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
-						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
-					} else = {
-						add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
-					}
-				} else = {
-					if = { limit = { scope:set_off = yes }
-						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
-					} else = {
-						add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
-					}
-				}
-			}
+			cm_apply_auto_expand_toggle = yes
 		}
 	}
 }
@@ -89,7 +57,7 @@ cm_check_for_auto_expand_when_upgrading_building = {
 		}
 	}
 }
-# Called from the hidden window GUI to approve a building upgrade for the engine-action fire pass.
+# Called from the construct queue window to approve a building upgrade for the engine-action fire pass.
 # Root = location, scope:old_building_type = obsolete type, scope:new_building_type = upgrade target (from GetNextReplacementBuilding), scope:country = player
 # scope:cost, scope:income, scope:profit = engine values for the replacement type.
 # scope:can_build = CanUpgradeToBuilding for the replacement type.
@@ -151,7 +119,7 @@ cm_gui_construct_upgrade = {
 	}
 }
 # Construction-queue executor for building kinds. Root is the location.
-# Invoked by the hidden window per queued entry; applies the metric gate
+# Invoked by the construct queue window per queued entry; applies the metric gate
 # and the gold-affordability gate using the engine values grabbed in GUI, then approves the build.
 # scope:cost = GetBuildOrExpandBuildingCost, scope:income = income-to-owner per level,
 # scope:profit = profit per level, scope:can_build = CanBuildOrExpandBuilding.
@@ -362,39 +330,7 @@ cm_set_auto_expand_for_building_type = {
 	effect = {
 		save_scope_as = building_type
 		scope:location = {
-			if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } } }
-				# Mass mode: operate on exclusion list (inverted logic)
-				if = { limit = { NOT = { exists = scope:set_off } }
-					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } }
-						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
-					} else = {
-						add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
-					}
-				} else = {
-					if = { limit = { scope:set_off = yes }
-						if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } } }
-							add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
-						}
-					} else = {
-						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
-					}
-				}
-			} else = {
-				# Normal mode: operate on registration list
-				if = { limit = { NOT = { exists = scope:set_off } }
-					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
-						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
-					} else = {
-						add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
-					}
-				} else = {
-					if = { limit = { scope:set_off = yes }
-						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
-					} else = {
-						add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
-					}
-				}
-			}
+			cm_apply_auto_expand_toggle = yes
 		}
 	}
 }
@@ -424,23 +360,14 @@ cm_can_build_building = {
 	}
 }
 
-# Root is the location, also expects scope:building_type and scope:country
+# Root is the location. Expects scope:building_type, scope:country, scope:cost, scope:can_build.
 cm_location_will_auto_expand_from_zero_levels = {
 	is_shown = {
 		save_temporary_scope_as = location
-		# Same individual checks as the tooltip rows, in the same order
-		scope:country = { cm_should_pause_auto_expand = no }
-		NOT = { integration_level = conquered }
-		cm_location_has_enough_pops_available = yes
-		cm_is_location_under_building_limit = yes
-		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
+		cm_location_will_auto_expand_from_zero_levels = yes
 		cm_gui_metric_gate_passes = yes
-		cm_location_building_type_not_under_construction = yes
 		scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
 		scope:can_build = yes
-		scope:country = { save_temporary_scope_as = actor }
-		can_build_building = scope:building_type
-		scope:country = { can_build_building = scope:building_type }
 	}
 }
 
@@ -590,12 +517,6 @@ cm_is_building_type_producing = {
 		scope:building_type = { cm_is_building_type_production_building = yes }
 	}
 }
-cm_is_building_type_one_per_location = {
-	is_shown = {
-		scope:building_type = { cm_is_building_type_one_per_location_building = yes }
-	}
-}
-
 cm_is_building_obsolete = {
 	is_shown = {
 		cm_is_building_obsolete = yes

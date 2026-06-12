@@ -3,54 +3,67 @@
 # the corresponding feature is enabled in the priority list.
 # All effects expect scope:country to be set.
 
+# Add-if-absent queue staging shared by the cm_stage_* effects below: appends
+# scope:location to the country's $COUNTRY_LIST$ and scope:building_type to the
+# location's $LOCATION_LIST$. Expects scope:country, scope:location, scope:building_type.
+cm_stage_location_and_type_to_queue = {
+	scope:country = {
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = $COUNTRY_LIST$ target = scope:location } } }
+			add_to_variable_list = { name = $COUNTRY_LIST$ target = scope:location }
+		}
+	}
+	scope:location = {
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = $LOCATION_LIST$ target = scope:building_type } } }
+			add_to_variable_list = { name = $LOCATION_LIST$ target = scope:building_type }
+		}
+	}
+}
+
+# Location-only variant for queues without a per-location type list.
+# Expects scope:country, scope:location.
+cm_stage_location_to_queue = {
+	scope:country = {
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = $COUNTRY_LIST$ target = scope:location } } }
+			add_to_variable_list = { name = $COUNTRY_LIST$ target = scope:location }
+		}
+	}
+}
+
+# Empties each queued location's $LOCATION_LIST$, then the country's $COUNTRY_LIST$.
+# Root is the country.
+cm_clear_queue_pair = {
+	every_in_list = {
+		variable = $COUNTRY_LIST$
+		save_scope_as = cm_q_clear_loc
+		scope:cm_q_clear_loc = { clear_variable_list = $LOCATION_LIST$ }
+	}
+	clear_variable_list = $COUNTRY_LIST$
+}
+
 # Per-cycle construction queue. The monthly dispatcher enqueues candidates in
 # priority-feature then max_control order: a country list of locations, each carrying
-# a location list of building types. The hidden window drains it in that order, grabs
+# a location list of building types. The queue window drains it in that order, grabs
 # the engine cost/income GUI bindings, and constructs.
 # Expects scope:country, scope:location, scope:building_type.
 cm_stage_candidate = {
-	scope:location = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:building_type } } }
-			add_to_variable_list = { name = cm_q_building_types target = scope:building_type }
-		}
-	}
-	scope:country = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = cm_q_locations target = scope:location } } }
-			add_to_variable_list = { name = cm_q_locations target = scope:location }
-		}
-	}
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_locations LOCATION_LIST = cm_q_building_types }
 }
 
 # RGO upgrade candidate for the unified queue. Drained per location by the queue window,
 # which re-checks eligibility and gold at drain time before upgrading the RGO.
 # Expects scope:country, scope:location.
 cm_stage_rgo_candidate = {
-	scope:country = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = cm_q_rgo_locations target = scope:location } } }
-			add_to_variable_list = { name = cm_q_rgo_locations target = scope:location }
-		}
-	}
+	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_rgo_locations }
 }
 
 # Ungated building candidate (auto-build, capital) for the unified queue. Drained per
 # location by the queue window with the engine cost; the executor re-checks build-queue
 # slots and affordability, then builds. Expects scope:country, scope:location, scope:building_type.
 cm_stage_ungated_candidate = {
-	scope:country = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = cm_q_ungated_locations target = scope:location } } }
-			add_to_variable_list = { name = cm_q_ungated_locations target = scope:location }
-		}
-	}
-	scope:location = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:building_type } } }
-			add_to_variable_list = { name = cm_q_ungated_building_types target = scope:building_type }
-		}
-	}
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_ungated_locations LOCATION_LIST = cm_q_ungated_building_types }
 }
 
 # Urbanize rank-upgrade candidate for the unified queue. The fixed upgrade building type
@@ -58,47 +71,20 @@ cm_stage_ungated_candidate = {
 # the engine cost before building. Expects scope:country, scope:location. $bt$ = upgrade building type key.
 cm_stage_urbanize_candidate = {
 	building_type:$bt$ = { save_scope_as = building_type }
-	scope:country = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = cm_q_urbanize_locations target = scope:location } } }
-			add_to_variable_list = { name = cm_q_urbanize_locations target = scope:location }
-		}
-	}
-	scope:location = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = cm_q_urbanize_building_types target = scope:building_type } } }
-			add_to_variable_list = { name = cm_q_urbanize_building_types target = scope:building_type }
-		}
-	}
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_urbanize_locations LOCATION_LIST = cm_q_urbanize_building_types }
 }
 
 # Food building candidate for the unified queue (the marginal comparison already picked the
 # winning building type). The executor re-checks build-queue slots and the food gold reserve
 # before building. Expects scope:country, scope:location, scope:building_type.
 cm_stage_food_building_candidate = {
-	scope:country = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = cm_q_food_locations target = scope:location } } }
-			add_to_variable_list = { name = cm_q_food_locations target = scope:location }
-		}
-	}
-	scope:location = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = cm_q_food_building_types target = scope:building_type } } }
-			add_to_variable_list = { name = cm_q_food_building_types target = scope:building_type }
-		}
-	}
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_food_locations LOCATION_LIST = cm_q_food_building_types }
 }
 
 # Food RGO candidate for the unified queue (the marginal comparison picked an RGO expand).
 # The executor re-checks build-queue slots and the food gold reserve. Expects scope:country, scope:location.
 cm_stage_food_rgo_candidate = {
-	scope:country = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = cm_q_food_rgo_locations target = scope:location } } }
-			add_to_variable_list = { name = cm_q_food_rgo_locations target = scope:location }
-		}
-	}
+	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_food_rgo_locations }
 }
 
 # Gated upgrade candidate for the unified queue, keyed by the standing obsolete type.
@@ -165,6 +151,44 @@ cm_approve_gui_build = {
 # ─── Auto Expand Buildings ───
 # Expands multi-level buildings that are profitable and have pops available.
 # Flags obsolete buildings for GUI-driven upgrade processing.
+
+# Toggles auto-expand for scope:building_type at the root location.
+# Optional scope:set_off forces the direction instead of toggling.
+cm_apply_auto_expand_toggle = {
+	if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:building_type } } }
+		# Mass mode: operate on exclusion list (inverted logic)
+		if = { limit = { NOT = { exists = scope:set_off } }
+			if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } }
+				remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+			} else = {
+				add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+			}
+		} else = {
+			if = { limit = { scope:set_off = yes }
+				if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } } }
+					add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+				}
+			} else = {
+				remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:building_type }
+			}
+		}
+	} else = {
+		# Normal mode: operate on registration list
+		if = { limit = { NOT = { exists = scope:set_off } }
+			if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type } }
+				remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+			} else = {
+				add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+			}
+		} else = {
+			if = { limit = { scope:set_off = yes }
+				remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+			} else = {
+				add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
+			}
+		}
+	}
+}
 
 # Moves auto-expand registrations from researched obsolete types to their current
 # replacement types. Unresolvable types stay registered and the obsolete fallback
@@ -581,7 +605,6 @@ cm_run_auto_build = {
 			}
 		}
 	}
-	cm_reset_locations_lists = { }
 }
 
 # ─── Auto Food ───

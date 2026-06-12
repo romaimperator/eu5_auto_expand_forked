@@ -44,32 +44,13 @@ cm_unified_auto_expand = {
 	effect = {
 		save_scope_as = country
 		# Start a fresh construction queue each cycle, drained once by the queue window.
-		every_in_list = {
-			variable = cm_q_locations
-			save_scope_as = cm_q_loc
-			scope:cm_q_loc = { clear_variable_list = cm_q_building_types }
-		}
-		clear_variable_list = cm_q_locations
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_locations LOCATION_LIST = cm_q_building_types }
 		clear_variable_list = cm_q_rgo_locations
-		every_in_list = {
-			variable = cm_q_ungated_locations
-			save_scope_as = cm_q_uloc
-			scope:cm_q_uloc = { clear_variable_list = cm_q_ungated_building_types }
-		}
-		clear_variable_list = cm_q_ungated_locations
-		every_in_list = {
-			variable = cm_q_urbanize_locations
-			save_scope_as = cm_q_urb_loc
-			scope:cm_q_urb_loc = { clear_variable_list = cm_q_urbanize_building_types }
-		}
-		clear_variable_list = cm_q_urbanize_locations
-		every_in_list = {
-			variable = cm_q_food_locations
-			save_scope_as = cm_q_food_loc
-			scope:cm_q_food_loc = { clear_variable_list = cm_q_food_building_types }
-		}
-		clear_variable_list = cm_q_food_locations
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_ungated_locations LOCATION_LIST = cm_q_ungated_building_types }
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_urbanize_locations LOCATION_LIST = cm_q_urbanize_building_types }
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_food_locations LOCATION_LIST = cm_q_food_building_types }
 		clear_variable_list = cm_q_food_rgo_locations
+		# The upgrade queue carries two extra per-location lists alongside the drained one
 		every_in_list = {
 			variable = cm_gui_upgrade_locations
 			save_scope_as = cm_q_up_loc
@@ -80,18 +61,8 @@ cm_unified_auto_expand = {
 			}
 		}
 		clear_variable_list = cm_gui_upgrade_locations
-		every_in_list = {
-			variable = cm_q_approved_build_locations
-			save_scope_as = cm_q_app_loc
-			scope:cm_q_app_loc = { clear_variable_list = cm_q_approved_build_types }
-		}
-		clear_variable_list = cm_q_approved_build_locations
-		every_in_list = {
-			variable = cm_q_approved_upgrade_locations
-			save_scope_as = cm_q_app_up_loc
-			scope:cm_q_app_up_loc = { clear_variable_list = cm_q_approved_upgrade_types }
-		}
-		clear_variable_list = cm_q_approved_upgrade_locations
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_build_locations LOCATION_LIST = cm_q_approved_build_types }
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_upgrade_locations LOCATION_LIST = cm_q_approved_upgrade_types }
 		set_variable = { name = cm_q_planned_spend value = 0 }
 		if = { limit = { cm_should_pause_auto_expand = no }
 			if = { limit = { has_variable_list = cm_priority_features_list }

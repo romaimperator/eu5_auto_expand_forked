@@ -110,35 +110,6 @@ cm_auto_build_check_rgo_level_requirement_met_local_smelters = {
 	}
 }
 
-# Expects the scope building_type. True only for sawmill, windmill, local_smelters (so tooltip row "Has required RGO levels" is shown only for those).
-cm_auto_build_show_rgo_level_tooltip_row = {
-	OR = {
-		scope:building_type = building_type:sawmill
-		scope:building_type = building_type:windmill
-		scope:building_type = building_type:local_smelters
-	}
-}
-
-# Root is the country. Expects the building type as a target, also expects the scope country
-cm_auto_build_check_any_location_allowed_to_build = {
-	trigger_if = { limit = { is_target_in_variable_list = { name = cm_auto_build_building_types_in_subjects_enabled target = scope:building_type } }
-		OR = {
-			any_owned_location = {
-				cm_location_allowed_to_build = { target = $target$ }
-			}
-			any_subject_or_below = {
-				any_owned_location = {
-					cm_location_allowed_to_build = { target = $target$ }
-				}
-			}
-		}
-	} trigger_else = {
-		any_owned_location = {
-			cm_location_allowed_to_build = { target = $target$ }
-		}
-	}
-}
-
 # ─── Generic auto-build trigger chain ───
 # These replace the old per-building trigger files. All building-specific
 # logic is resolved dynamically via engine triggers and precomputed maps.
