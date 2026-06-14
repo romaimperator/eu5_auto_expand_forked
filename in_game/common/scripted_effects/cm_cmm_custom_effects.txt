@@ -4,42 +4,17 @@
 # Post-registration: override default values and build lookup tables.
 # Scope: country
 cm_cmm_post_registration = {
-	# Override min_control defaults: early_council_hall(1), minting_office(2), settlement_building(3) should start at 0
-	# (they increase control / population growth, so best to build everywhere regardless of control)
-	if = {
-		limit = { NOT = { has_variable = cm_cmm_auto_build_list_initialized } }
-		set_variable = { name = cm_cmm_auto_build_list_initialized value = 1 }
-		add_to_variable_map = { name = cmm key = flag:cm__auto_build_list_i1_f3 value = 0 }
-		add_to_variable_map = { name = cmm key = flag:cm__auto_build_list_i2_f3 value = 0 }
-		add_to_variable_map = { name = cmm key = flag:cm__auto_build_list_i3_f3 value = 0 }
-	}
-
-	# Override priority list defaults: enable buildings (item 1) and RGOs (item 2) by default
-	# Auto Build Capital Buildings (item 7) starts at +33% min_discount so capital buildings
-	# are constructed immediately regardless of construction material prices.
-	if = {
-		limit = { NOT = { has_variable = cm_cmm_priority_list_initialized } }
-		set_variable = { name = cm_cmm_priority_list_initialized value = 1 }
-		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i1_f3 value = 1 }
-		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i2_f3 value = 1 }
-		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i7_f2 value = 33 }
-	}
-
-	# Override urbanize ignore list defaults: Gold (item 1) and Silver (item 2) ignored by default.
-	if = {
-		limit = { NOT = { has_variable = cm_cmm_auto_urbanize_ignore_list_initialized } }
-		set_variable = { name = cm_cmm_auto_urbanize_ignore_list_initialized value = 1 }
-		add_to_variable_map = { name = cmm key = flag:cm__auto_urbanize_ignore_list_i1_f1 value = 1 }
-		add_to_variable_map = { name = cmm key = flag:cm__auto_urbanize_ignore_list_i2_f1 value = 1 }
-	}
-
-	# Per-item reset defaults, matching the starting values overridden above.
+	# early_council_hall, minting_office, and settlement_building build regardless of control, since they raise control and population.
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_build_list field_id = min_control item = 1 value = 0 }
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_build_list field_id = min_control item = 2 value = 0 }
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_build_list field_id = min_control item = 3 value = 0 }
+
+	# Auto-expand buildings and RGOs start enabled; auto-build capital builds regardless of construction material prices.
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = priority_list field_id = enabled item = 1 value = 1 }
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = priority_list field_id = enabled item = 2 value = 1 }
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = priority_list field_id = min_discount item = 7 value = 33 }
+
+	# Gold and Silver are excluded from rural-to-town urbanization by default.
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_urbanize_ignore_list field_id = ignored item = 1 value = 1 }
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_urbanize_ignore_list field_id = ignored item = 2 value = 1 }
 
@@ -569,7 +544,6 @@ _cm_cmm_suppress_warnings = {
 		cmf_suppress = { v = cm_priority_desired_enabled }
 		cmf_suppress = { v = cm_priority_min_profit }
 		cmf_suppress = { v = cm_priority_min_discount }
-		cmf_suppress = { v = cm_cmm_priority_list_initialized }
 		cmf_suppress = { v = cmm_list_item_hidden }
 		# Food auto-build (lookup lists)
 		cmf_suppress = { v = cm_auto_food_rgo_types_list }
@@ -578,7 +552,6 @@ _cm_cmm_suppress_warnings = {
 		cmf_suppress = { v = cm_auto_food_rgo_types_in_subjects_enabled }
 		# Auto-urbanize ignore list
 		cmf_suppress = { v = cm_auto_urbanize_ignored_rgo_goods }
-		cmf_suppress = { v = cm_cmm_auto_urbanize_ignore_list_initialized }
 		# Auto town rights (lookup lists)
 		cmf_suppress = { v = cm_auto_town_rights_list }
 		cmf_suppress = { v = cm_auto_town_rights_enabled }
