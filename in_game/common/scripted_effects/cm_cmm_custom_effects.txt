@@ -57,6 +57,9 @@ cm_cmm_post_registration = {
 	cm_update_auto_build_list_visibility = yes
 	# Hide town rights whose potential doesn't pass for this country
 	cm_update_auto_town_rights_list_visibility = yes
+	# Hide food goods and ignore-list goods the country doesn't produce
+	cm_update_auto_food_list_visibility = yes
+	cm_update_auto_urbanize_ignore_list_visibility = yes
 }
 
 # Rebuild priority feature lookup tables from CMM list field data.
@@ -481,6 +484,68 @@ cm_auto_town_rights_list_update_visibility_item = {
 	}
 	else = {
 		cmm_hide_list_item = { mod_id = cm setting_id = auto_town_rights_list item = $i$ }
+	}
+
+	# Accept $setting$ param from cmm_for_each_list_item (unused here)
+	if = {
+		limit = { always = no }
+		cmf_suppress = { v = $setting$_$i$ }
+	}
+}
+
+# Hide/show auto-food list rows based on whether the country produces the food good.
+# Scope: country
+cm_update_auto_food_list_visibility = {
+	if = {
+		limit = { has_variable_list = cmm_list_items_cm__auto_food_list }
+		cmm_for_each_list_item = {
+			setting = cm__auto_food_list
+			effect = cm_auto_food_list_update_visibility_item
+		}
+	}
+}
+
+# Callback for cmm_for_each_list_item. Shows or hides item $i$ based on whether the
+# country owns a location producing the good. scope:cmm_list_current_item_value = goods.
+# Root: country
+cm_auto_food_list_update_visibility_item = {
+	if = {
+		limit = { any_owned_location = { raw_material = scope:cmm_list_current_item_value } }
+		cmm_show_list_item = { mod_id = cm setting_id = auto_food_list item = $i$ }
+	}
+	else = {
+		cmm_hide_list_item = { mod_id = cm setting_id = auto_food_list item = $i$ }
+	}
+
+	# Accept $setting$ param from cmm_for_each_list_item (unused here)
+	if = {
+		limit = { always = no }
+		cmf_suppress = { v = $setting$_$i$ }
+	}
+}
+
+# Hide/show auto-urbanize ignore list rows based on whether the country produces the good.
+# Scope: country
+cm_update_auto_urbanize_ignore_list_visibility = {
+	if = {
+		limit = { has_variable_list = cmm_list_items_cm__auto_urbanize_ignore_list }
+		cmm_for_each_list_item = {
+			setting = cm__auto_urbanize_ignore_list
+			effect = cm_auto_urbanize_ignore_list_update_visibility_item
+		}
+	}
+}
+
+# Callback for cmm_for_each_list_item. Shows or hides item $i$ based on whether the
+# country owns a location producing the good. scope:cmm_list_current_item_value = goods.
+# Root: country
+cm_auto_urbanize_ignore_list_update_visibility_item = {
+	if = {
+		limit = { any_owned_location = { raw_material = scope:cmm_list_current_item_value } }
+		cmm_show_list_item = { mod_id = cm setting_id = auto_urbanize_ignore_list item = $i$ }
+	}
+	else = {
+		cmm_hide_list_item = { mod_id = cm setting_id = auto_urbanize_ignore_list item = $i$ }
 	}
 
 	# Accept $setting$ param from cmm_for_each_list_item (unused here)

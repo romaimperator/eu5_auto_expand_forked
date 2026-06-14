@@ -7,6 +7,24 @@ cm_get_allowed_building_overbuild_levels = {
 	} else = { value = 0 }
 }
 
+# Root is the country
+cm_grant_town_rights_cost = {
+	value = 5
+	multiply = {
+		value = 1
+		add = modifier:grant_town_rights_cost_modifier
+		min = 0
+	}
+}
+
+# Minimum government power needed to grant without dropping below the floor. Root is the country.
+cm_town_rights_grant_min_required = {
+	if = { limit = { exists = var:cm_town_rights_min_gov_power }
+		value = var:cm_town_rights_min_gov_power
+	} else = { value = 0 }
+	add = cm_grant_town_rights_cost
+}
+
 # Root is the location.
 cm_get_remaining_free_building_levels_allowed = {
 	value = modifier:free_building_levels

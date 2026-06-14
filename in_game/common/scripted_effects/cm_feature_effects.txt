@@ -698,7 +698,7 @@ cm_try_construct_capital_building = {
 
 # ─── Auto Town Rights ───
 # Grants enabled town rights to eligible locations in priority order.
-# Granting costs 5 government_power per use (modified by grant_town_rights_cost_modifier).
+# Raw grant_town_rights skips the price.
 cm_run_auto_town_rights = {
 	if = {
 		limit = {
@@ -712,7 +712,7 @@ cm_run_auto_town_rights = {
 				if = {
 					limit = {
 						is_target_in_variable_list = { name = cm_auto_town_rights_enabled target = scope:town_right }
-						government_power >= 5
+						cm_town_rights_grant_affordable = yes
 					}
 					ordered_owned_location = {
 						order_by = max_control
@@ -722,12 +722,21 @@ cm_run_auto_town_rights = {
 							NOT = { integration_level = conquered }
 							has_max_town_rights = no
 							NOT = { has_town_rights = scope:town_right }
-							scope:country = { government_power >= 5 }
 						}
 						save_scope_as = target
+						# ordered_owned_location snapshots its limit before the body runs.
 						if = {
-							limit = { scope:country = { cm_can_grant_specific_town_right_at_location = yes } }
+							limit = {
+								scope:country = {
+									cm_town_rights_grant_affordable = yes
+									cm_can_grant_specific_town_right_at_location = yes
+								}
+							}
 							grant_town_rights = scope:town_right
+							if = {
+								limit = { NOT = { cm_town_rights_grants_are_free = yes } }
+								scope:country = { pay_price = price:grant_town_rights }
+							}
 						}
 					}
 				}

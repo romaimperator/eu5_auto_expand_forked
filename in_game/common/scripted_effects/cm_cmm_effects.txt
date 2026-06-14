@@ -556,6 +556,37 @@ cm_register_cmf_mod = {
 		alias = cm_auto_grant_town_rights
 	}
 
+	cmm_register_global_bool_setting = {
+		mod_id = cm
+		setting_id = town_rights_free_grants
+		tab_id = auto_town_rights
+		group_id = auto_town_rights
+		default_value = 0
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = town_rights_free_grants
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = town_rights_min_gov_power
+		tab_id = auto_town_rights
+		group_id = auto_town_rights
+		default_value = 90
+		min_value = 0
+		max_value = 100
+		step_value = 5
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__town_rights_min_gov_power
+		alias = cm_town_rights_min_gov_power
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = town_rights_min_gov_power
+	}
+
 	## Town Rights Priority (auto_town_rights_list) Group
 	# Specialized-goods-output rights (royal_*, flemish_cloth, scandinavian_tar,
 	# constantinopolitan_silk) are intentionally omitted: blindly granting them
@@ -708,6 +739,12 @@ cm_handle_cmf_callback = {
 			cmm_sync_bool_alias = {
 				setting = cm__auto_grant_town_rights
 				alias = cm_auto_grant_town_rights
+			}
+		}
+		flag:cm__town_rights_min_gov_power = {
+			cmm_sync_setting_alias = {
+				setting = cm__town_rights_min_gov_power
+				alias = cm_town_rights_min_gov_power
 			}
 		}
 	}

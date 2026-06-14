@@ -175,3 +175,18 @@ cm_auto_town_rights_potential_passes = {
 		always = yes
 	}
 }
+
+# Yes when the global Free Grants rule is on.
+# Scope: any
+cm_town_rights_grants_are_free = {
+	"global_variable_map(cmm|flag:cm__town_rights_free_grants)" >= 1
+}
+
+# Whether a town-rights grant may proceed.
+# Scope: country
+cm_town_rights_grant_affordable = {
+	OR = {
+		cm_town_rights_grants_are_free = yes
+		government_power >= cm_town_rights_grant_min_required
+	}
+}
