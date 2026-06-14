@@ -65,7 +65,7 @@ cm_gui_construct_upgrade = {
 	is_valid = {
 		is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:old_building_type }
 		scope:can_build = yes
-		scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }
+		cm_country_can_afford_staged_cost = yes
 		# Auto-expand's obsolete upgrades are gated on the replacement's engine values;
 		# upgrade-all entries are not marked gated and skip the metric check.
 		OR = {
@@ -134,7 +134,7 @@ cm_gui_try_build = {
 			limit = {
 				cm_gui_metric_gate_passes = yes
 				scope:can_build = yes
-				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }
+				cm_country_can_afford_staged_cost = yes
 				# A staged upgrade already constructs this type here
 				NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:building_type } }
 				# The engine converts a build into the standing obsolete predecessor's upgrade.
@@ -189,7 +189,7 @@ cm_gui_try_ungated = {
 		if = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
-				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }
+				cm_country_can_afford_staged_cost = yes
 				# The engine buildability bool is unverified for subject locations.
 				OR = {
 					NOT = { owner = scope:country }
@@ -218,7 +218,7 @@ cm_gui_try_urbanize = {
 			limit = {
 				scope:building_type = building_type:cm_upgrade_town_to_city_building
 				cm_location_can_mass_upgrade_to_city = yes
-				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }
+				cm_country_can_afford_staged_cost = yes
 			}
 			construct_building = { building_type = building_type:cm_upgrade_town_to_city_building }
 		}
@@ -226,7 +226,7 @@ cm_gui_try_urbanize = {
 			limit = {
 				scope:building_type = building_type:cm_upgrade_rural_to_town_building
 				cm_location_can_mass_upgrade_to_town = yes
-				scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }
+				cm_country_can_afford_staged_cost = yes
 			}
 			construct_building = { building_type = building_type:cm_upgrade_rural_to_town_building }
 		}
@@ -366,7 +366,7 @@ cm_location_will_auto_expand_from_zero_levels = {
 		save_temporary_scope_as = location
 		cm_location_will_auto_expand_from_zero_levels = yes
 		cm_gui_metric_gate_passes = yes
-		scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
+		cm_country_can_afford_predicted_cost = yes
 		scope:can_build = yes
 	}
 }
@@ -389,7 +389,7 @@ cm_is_building_able_to_auto_expand = {
 		location = { cm_location_has_enough_pops_available = yes }
 		location = { cm_is_location_under_building_limit = yes }
 		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
-		scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
+		cm_country_can_afford_predicted_cost = yes
 		cm_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
 		location.owner = { can_build_building = scope:building_type }
 		# can_build_building - doesn't work from Building-rooted scripted GUI so moved to GUI visibility
@@ -500,7 +500,7 @@ cm_has_enough_gold_for_auto_expand = {
 		building_type = { save_temporary_scope_as = building_type }
 		location = { save_temporary_scope_as = location }
 		owner = { save_temporary_scope_as = country }
-		scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
+		cm_country_can_afford_predicted_cost = yes
 	}
 }
 
@@ -508,7 +508,7 @@ cm_has_enough_gold_for_auto_expand = {
 cm_has_enough_gold_for_auto_expand_from_zero_levels = {
 	is_shown = {
 		save_temporary_scope_as = location
-		scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
+		cm_country_can_afford_predicted_cost = yes
 	}
 }
 

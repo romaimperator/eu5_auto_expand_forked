@@ -1,5 +1,25 @@
 ﻿# Food auto-build effects — marginal comparison and construction dispatch.
 
+# The cm_food_* local vars are owned by the calling effect.
+cm_food_consider_option = {
+	if = { limit = { $CAN$ = yes }
+		set_local_variable = { name = cm_food_m value = $MARGINAL$ }
+		if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
+			set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
+			set_local_variable = { name = cm_food_action value = $ACTION$ }
+		}
+	}
+}
+
+# Root is the location.
+cm_food_stage_building_option = {
+	if = { limit = { local_var:cm_food_action = $ACTION$ $BT$ = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
+		if = { limit = { debug_only = yes } debug_log = "CM Food: stage food building in [THIS.GetLocation.GetNameWithNoTooltip]" }
+		$BT$ = { save_scope_as = building_type }
+		cm_stage_food_building_candidate = yes
+	}
+}
+
 # Main per-location effect. Computes marginal food for each buildable option, picks the highest, and builds it.
 # Root is the location. Expects scopes: country, location, food_good.
 cm_food_auto_build_in_location = {
@@ -16,85 +36,23 @@ cm_food_auto_build_in_location = {
 		set_local_variable = { name = cm_food_best value = 0 }
 		set_local_variable = { name = cm_food_action value = 0 }
 
-		# ─── Option 1: RGO expand ───
-		if = { limit = { cm_food_can_build_rgo = yes }
-			set_local_variable = { name = cm_food_m value = cm_food_marginal_rgo }
-			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
-				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
-				set_local_variable = { name = cm_food_action value = 1 }
-			}
-		}
-
-		# ─── Option 2: Farming Village ───
-		if = { limit = { cm_food_can_build_farming_village = yes }
-			set_local_variable = { name = cm_food_m value = cm_food_marginal_farming_village }
-			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
-				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
-				set_local_variable = { name = cm_food_action value = 2 }
-			}
-		}
-
-		# ─── Option 3: Windmill ───
-		if = { limit = { cm_food_can_build_windmill = yes }
-			set_local_variable = { name = cm_food_m value = cm_food_marginal_windmill }
-			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
-				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
-				set_local_variable = { name = cm_food_action value = 3 }
-			}
-		}
-
-		# ─── Option 4: Irrigation ───
-		if = { limit = { cm_food_can_build_irrigation = yes }
-			set_local_variable = { name = cm_food_m value = cm_food_marginal_irrigation }
-			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
-				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
-				set_local_variable = { name = cm_food_action value = 4 }
-			}
-		}
-
-		# ─── Option 5: Fishing Village ───
-		if = { limit = { cm_food_can_build_fishing_village = yes }
-			set_local_variable = { name = cm_food_m value = cm_food_marginal_fishing_village }
-			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
-				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
-				set_local_variable = { name = cm_food_action value = 5 }
-			}
-		}
-
-		# --- Option 6: Forest Village ---
-		if = { limit = { cm_food_can_build_forest_village = yes }
-			set_local_variable = { name = cm_food_m value = cm_food_marginal_forest_village }
-			if = { limit = { local_var:cm_food_m > local_var:cm_food_best }
-				set_local_variable = { name = cm_food_best value = local_var:cm_food_m }
-				set_local_variable = { name = cm_food_action value = 6 }
-			}
-		}
+		cm_food_consider_option = { CAN = cm_food_can_build_rgo MARGINAL = cm_food_marginal_rgo ACTION = 1 }
+		cm_food_consider_option = { CAN = cm_food_can_build_farming_village MARGINAL = cm_food_marginal_farming_village ACTION = 2 }
+		cm_food_consider_option = { CAN = cm_food_can_build_windmill MARGINAL = cm_food_marginal_windmill ACTION = 3 }
+		cm_food_consider_option = { CAN = cm_food_can_build_irrigation MARGINAL = cm_food_marginal_irrigation ACTION = 4 }
+		cm_food_consider_option = { CAN = cm_food_can_build_fishing_village MARGINAL = cm_food_marginal_fishing_village ACTION = 5 }
+		cm_food_consider_option = { CAN = cm_food_can_build_forest_village MARGINAL = cm_food_marginal_forest_village ACTION = 6 }
 
 		# ─── Execute best action (discount-gated: if the winner fails min discount, build nothing) ───
 		if = { limit = { local_var:cm_food_action = 1 cm_rgo_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "CM Food: RGO expand in [THIS.GetLocation.GetNameWithNoTooltip] (marginal=[GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('cm_food_marginal_rgo')])" }
 			cm_stage_food_rgo_candidate = yes
-		} else_if = { limit = { local_var:cm_food_action = 2 building_type:farming_village = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
-			if = { limit = { debug_only = yes } debug_log = "CM Food: farming_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			building_type:farming_village = { save_scope_as = building_type }
-			cm_stage_food_building_candidate = yes
-		} else_if = { limit = { local_var:cm_food_action = 3 building_type:windmill = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
-			if = { limit = { debug_only = yes } debug_log = "CM Food: windmill in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			building_type:windmill = { save_scope_as = building_type }
-			cm_stage_food_building_candidate = yes
-		} else_if = { limit = { local_var:cm_food_action = 4 building_type:irrigation_systems = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
-			if = { limit = { debug_only = yes } debug_log = "CM Food: irrigation in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			building_type:irrigation_systems = { save_scope_as = building_type }
-			cm_stage_food_building_candidate = yes
-		} else_if = { limit = { local_var:cm_food_action = 5 building_type:fishing_village = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
-			if = { limit = { debug_only = yes } debug_log = "CM Food: fishing_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			building_type:fishing_village = { save_scope_as = building_type }
-			cm_stage_food_building_candidate = yes
-		} else_if = { limit = { local_var:cm_food_action = 6 building_type:forest_village = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
-			if = { limit = { debug_only = yes } debug_log = "CM Food: forest_village in [THIS.GetLocation.GetNameWithNoTooltip]" }
-			building_type:forest_village = { save_scope_as = building_type }
-			cm_stage_food_building_candidate = yes
 		}
+		cm_food_stage_building_option = { ACTION = 2 BT = building_type:farming_village }
+		cm_food_stage_building_option = { ACTION = 3 BT = building_type:windmill }
+		cm_food_stage_building_option = { ACTION = 4 BT = building_type:irrigation_systems }
+		cm_food_stage_building_option = { ACTION = 5 BT = building_type:fishing_village }
+		cm_food_stage_building_option = { ACTION = 6 BT = building_type:forest_village }
 
 	} # end pops_still_filling check
 	} # end gold reserve

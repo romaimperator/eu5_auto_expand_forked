@@ -2,7 +2,6 @@
 
 - add a "reset" button that will disable all auto-expands (not pausing like the checkbox but actually toggle the auto-expand active)
 - add auto-build for bailiffs (idea is to allow you to easily build bailiffs in ideal places easily so maybe only do it for a few RGO types or let you configure RGO types to build it for?)
-- remove lsq_rgo_level modifier and use new rgo_level trigger everywhere
 - fix bug that prevents mass auto-expand from working with Trade Offices (likely is also broken with any other building that has special requirements)
 - Make it so plantations will auto-expand if we have up to 1 level of plantation worth of slaves missing since it will draw the slaves needed to run it
 - Fix bug that allows stud farms to be auto-expanded in locations that don't have the appropriate climate (partially fixed by can_build_building protection but you can still click to enable auto-expand on them)

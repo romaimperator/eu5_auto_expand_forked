@@ -186,19 +186,11 @@ cm_food_marginal_forest_village = {
 }
 
 # ─── Building cost helpers ───
-# Gold threshold for food auto-build. Reads the unified gold reserve setting.
-# Scope: country
-cm_food_get_minimum_gold = {
-	if = { limit = { exists = var:cm_minimum_gold }
-		value = var:cm_minimum_gold
-	} else = { value = 50 }
-}
-
 # Expected gold needed for RGO expansion (food system).
 # Expects scopes: country, location
 cm_food_expected_gold_for_rgo = {
 	value = glorpui_rgo_expand_cost
-	scope:country = { add = cm_food_get_minimum_gold }
+	scope:country = { add = cm_get_minimum_gold }
 }
 
 # Per-building gold threshold script values.
@@ -209,7 +201,7 @@ cm_food_expected_gold_for_farming_village = {
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
 	multiply = { value = 1 building_type:farming_village = { add = cm_get_construction_cost_adjustment_for_building_type } }
 	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = cm_food_get_minimum_gold }
+	scope:country = { add = cm_get_minimum_gold }
 }
 
 cm_food_expected_gold_for_windmill = {
@@ -217,7 +209,7 @@ cm_food_expected_gold_for_windmill = {
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
 	multiply = { value = 1 building_type:windmill = { add = cm_get_construction_cost_adjustment_for_building_type } }
 	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = cm_food_get_minimum_gold }
+	scope:country = { add = cm_get_minimum_gold }
 }
 
 cm_food_expected_gold_for_irrigation_systems = {
@@ -225,7 +217,7 @@ cm_food_expected_gold_for_irrigation_systems = {
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
 	multiply = { value = 1 building_type:irrigation_systems = { add = cm_get_construction_cost_adjustment_for_building_type } }
 	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = cm_food_get_minimum_gold }
+	scope:country = { add = cm_get_minimum_gold }
 }
 
 cm_food_expected_gold_for_fishing_village = {
@@ -233,7 +225,7 @@ cm_food_expected_gold_for_fishing_village = {
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
 	multiply = { value = 1 building_type:fishing_village = { add = cm_get_construction_cost_adjustment_for_building_type } }
 	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = cm_food_get_minimum_gold }
+	scope:country = { add = cm_get_minimum_gold }
 }
 
 cm_food_expected_gold_for_forest_village = {
@@ -241,7 +233,7 @@ cm_food_expected_gold_for_forest_village = {
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
 	multiply = { value = 1 building_type:forest_village = { add = cm_get_construction_cost_adjustment_for_building_type } }
 	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = cm_food_get_minimum_gold }
+	scope:country = { add = cm_get_minimum_gold }
 }
 
 # Build cost modifier (global + local). Root is the location, expects scope:country.

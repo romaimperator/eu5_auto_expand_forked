@@ -1,109 +1,45 @@
-﻿# Populate the global building type list and trigger classification on game start/load.
-# Uses the non-country variant so it runs once per lobby, not per player.
+﻿# Populate building-type and goods globals once per lobby.
 on_game_start_after_lobby = {
 	on_actions = {
-		cm_on_init_building_classification
-		cm_on_init_goods_globals
+		cm_on_init_lobby_globals
 	}
 }
 
 on_game_load_after_lobby = {
 	on_actions = {
-		cm_on_init_building_classification
-		cm_on_init_goods_globals
+		cm_on_init_lobby_globals
 	}
 }
 
-cm_on_init_building_classification = {
+cm_on_init_lobby_globals = {
 	effect = {
 		cm_populate_building_types_to_process = {}
-	}
-}
-
-cm_on_init_goods_globals = {
-	effect = {
 		cm_initialize_goods_globals = {}
 	}
 }
 
-# Calculate food data columns and auto-build visibility on game start/load
-# so the UI is populated immediately instead of waiting for the first monthly tick.
+# Seed food data, list visibility, and the first GUI tick at game start so the UI is populated immediately.
 on_game_start_after_lobby_human_country = {
 	on_actions = {
-		cm_on_init_food_data
-		cm_on_init_auto_build_visibility
-		cm_on_init_auto_town_rights_visibility
-		cm_on_init_auto_food_visibility
-		cm_on_init_auto_urbanize_ignore_visibility
-		cm_on_init_monthly_gui_tick
+		cm_on_init_human_country
 	}
 }
 
 on_game_load_after_lobby_human_country = {
 	on_actions = {
-		cm_on_init_food_data
-		cm_on_init_auto_build_visibility
-		cm_on_init_auto_town_rights_visibility
-		cm_on_init_auto_food_visibility
-		cm_on_init_auto_urbanize_ignore_visibility
-		cm_on_init_monthly_gui_tick
-		cm_on_migrate_building_registrations
+		cm_on_init_human_country
 	}
 }
 
-cm_on_init_food_data = {
+cm_on_init_human_country = {
 	effect = {
 		cm_update_food_data_columns = yes
-	}
-}
-
-cm_on_init_auto_build_visibility = {
-	effect = {
 		cm_update_auto_build_list_visibility = yes
-	}
-}
-
-cm_on_init_auto_town_rights_visibility = {
-	effect = {
 		cm_update_auto_town_rights_list_visibility = yes
-	}
-}
-
-cm_on_init_auto_food_visibility = {
-	effect = {
 		cm_update_auto_food_list_visibility = yes
-	}
-}
-
-cm_on_init_auto_urbanize_ignore_visibility = {
-	effect = {
 		cm_update_auto_urbanize_ignore_list_visibility = yes
-	}
-}
-
-cm_on_init_monthly_gui_tick = {
-	effect = {
 		set_variable = cm_monthly_gui_tick
 		set_variable = { name = cm_q_planned_spend value = 0 }
-	}
-}
-
-# Transfers per-location building auto-expand selections from the lsq_-prefixed list
-# into the cm_-prefixed list and clears the old list
-cm_on_migrate_building_registrations = {
-	effect = {
-		every_owned_location = {
-			limit = { has_variable_list = lsq_auto_expand_registered_building_types }
-			save_scope_as = location
-			every_in_list = {
-				variable = lsq_auto_expand_registered_building_types
-				save_scope_as = building_type
-				scope:location = {
-					add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:building_type }
-				}
-			}
-			clear_variable_list = lsq_auto_expand_registered_building_types
-		}
 	}
 }
 
