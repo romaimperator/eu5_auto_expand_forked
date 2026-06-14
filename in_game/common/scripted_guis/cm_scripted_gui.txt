@@ -8,48 +8,33 @@
 	}
 }
 
+# Manual-upgrade auto-expand swap. Root is the obsolete building being upgraded;
+# scope:new_building_type is its engine replacement tier from the call site, unset when none.
 cm_check_for_auto_expand_when_upgrading_building = {
 	effect = {
-		# given scope is the obsolete version of building that is being upgraded
 		save_scope_as = the_building
 		scope:the_building = { building_type = { save_temporary_scope_as = old_building_type } }
-		location = {
-			if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:old_building_type } } }
-				# Mass mode: add new type to country mass list, swap exclusion entries
-				ordered_buildings_in_location = {
-					order_by = building_index
-					save_scope_as = the_new_building
-					scope:the_new_building = {
-						building_type = { save_temporary_scope_as = new_building_type }
-					}
+		if = { limit = { exists = scope:new_building_type }
+			location = {
+				if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:old_building_type } } }
+					# Mass mode: add new type to country mass list, swap exclusion entries
 					owner = {
 						if = { limit = { NOT = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:new_building_type } } }
 							add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:new_building_type }
 						}
 					}
-					location = {
-						if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:old_building_type } }
-							remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:old_building_type }
-							if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:new_building_type } } }
-								add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:new_building_type }
-							}
+					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:old_building_type } }
+						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:old_building_type }
+						if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:new_building_type } } }
+							add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:new_building_type }
 						}
 					}
-				}
-			} else = {
-				# Normal mode: swap registration from old to new
-				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:old_building_type } }
-					remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:old_building_type }
-					ordered_buildings_in_location = {
-						order_by = building_index
-						save_scope_as = the_new_building
-						scope:the_new_building = {
-							building_type = { save_temporary_scope_as = new_building_type }
-						}
-						location = {
-							if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:new_building_type } } }
-								add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:new_building_type }
-							}
+				} else = {
+					# Normal mode: swap registration from old to new
+					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:old_building_type } }
+						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:old_building_type }
+						if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:new_building_type } } }
+							add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:new_building_type }
 						}
 					}
 				}

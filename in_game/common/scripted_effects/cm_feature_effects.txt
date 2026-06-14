@@ -129,6 +129,51 @@ cm_stage_upgrade_candidate = {
 	scope:cm_ae_staged_type = { save_scope_as = building_type }
 }
 
+# From-zero auto-expand path for a building type with no levels at the location. Expects
+# scope:country, scope:location, scope:building_type.
+cm_stage_from_zero_candidate = {
+	if = {
+		limit = { scope:location = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:building_type } } }
+		scope:location = { remove_list_variable = { name = cm_upgrade_in_progress target = scope:building_type } }
+	}
+	if = {
+		limit = { cm_is_building_type_obsolete = no }
+		if = {
+			limit = {
+				cm_location_can_auto_expand_from_zero_levels = yes
+				NOT = { scope:location = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:building_type } } }
+			}
+			cm_stage_candidate = yes
+		}
+	}
+}
+
+# Staging decision for a building that already has levels at the location. Expects scope:country,
+# scope:location, scope:building, and scope:building_type as the standing type.
+cm_stage_expand_or_upgrade_candidate = {
+	if = {
+		limit = { cm_is_building_type_obsolete = no }
+		if = {
+			limit = {
+				scope:building = {
+					cm_building_can_auto_expand_other_than_checking_for_upgrades = yes
+					is_at_max_level = no
+					cm_is_not_under_construction = yes
+				}
+				# A staged upgrade already constructs this type here this pulse
+				NOT = { scope:location = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:building_type } } }
+			}
+			cm_stage_candidate = yes
+		}
+	} else_if = {
+		limit = {
+			scope:location = { cm_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
+		}
+		scope:building_type = { cm_find_current_building_type = yes }
+		cm_stage_upgrade_candidate = yes
+	}
+}
+
 # Drain-time approval: the queue window fires the engine build action once per
 # approved entry. The script construct_building effect does not charge
 # special-currency price components.
@@ -289,26 +334,7 @@ cm_run_auto_expand_buildings = {
 						# Not excluded by the player at this location
 						NOT = { scope:location = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_current_building_type } } }
 					}
-					if = {
-						limit = { cm_is_building_type_obsolete = no }
-						if = {
-							limit = {
-								scope:building = {
-									cm_building_can_auto_expand_other_than_checking_for_upgrades = yes
-									is_at_max_level = no
-									cm_is_not_under_construction = yes
-								}
-								# A staged upgrade already constructs this type here this pulse
-								NOT = { scope:location = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:building_type } } }
-							}
-							cm_stage_candidate = yes
-						}
-					} else_if = {
-						limit = {
-							scope:location = { cm_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
-						}
-						cm_stage_upgrade_candidate = yes
-					}
+					cm_stage_expand_or_upgrade_candidate = yes
 				}
 			}
 			# ── Mass mode: construct missing buildings from zero levels ──
@@ -321,21 +347,7 @@ cm_run_auto_expand_buildings = {
 							NOT = { scope:location = { has_building = scope:building_type } }
 							NOT = { scope:location = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:building_type } } }
 						}
-						# Clean up in-progress upgrade tracking if the old building type is gone (upgrade completed)
-						if = {
-							limit = { scope:location = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:building_type } } }
-							scope:location = { remove_list_variable = { name = cm_upgrade_in_progress target = scope:building_type } }
-						}
-						if = {
-							limit = { cm_is_building_type_obsolete = no }
-							if = {
-								limit = {
-									cm_location_can_auto_expand_from_zero_levels = yes
-									NOT = { scope:location = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:building_type } } }
-								}
-								cm_stage_candidate = yes
-							}
-						}
+						cm_stage_from_zero_candidate = yes
 					}
 				}
 			}
@@ -374,43 +386,9 @@ cm_run_auto_expand_buildings = {
 			if = {
 				limit = { scope:location = { has_building = scope:building_type } }
 				scope:location = { "building(scope:building_type|scope:country)" = { save_scope_as = building } }
-				if = {
-					limit = { cm_is_building_type_obsolete = no }
-					if = {
-						limit = {
-							scope:building = {
-								cm_building_can_auto_expand_other_than_checking_for_upgrades = yes
-								is_at_max_level = no
-								cm_is_not_under_construction = yes
-							}
-							NOT = { scope:location = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:building_type } } }
-						}
-						cm_stage_candidate = yes
-					}
-				} else_if = {
-					limit = {
-						scope:location = { cm_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
-					}
-					scope:building_type = { cm_find_current_building_type = yes }
-					cm_stage_upgrade_candidate = yes
-				}
+				cm_stage_expand_or_upgrade_candidate = yes
 			} else = {
-				# Building has no levels — not yet queued for construction
-				# Clean up in-progress upgrade tracking if the old building type is gone (upgrade completed)
-				if = {
-					limit = { scope:location = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:building_type } } }
-					scope:location = { remove_list_variable = { name = cm_upgrade_in_progress target = scope:building_type } }
-				}
-				if = {
-					limit = { cm_is_building_type_obsolete = no }
-					if = {
-						limit = {
-							cm_location_can_auto_expand_from_zero_levels = yes
-							NOT = { scope:location = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:building_type } } }
-						}
-						cm_stage_candidate = yes
-					}
-				}
+				cm_stage_from_zero_candidate = yes
 			}
 		}
 	}
