@@ -43,7 +43,7 @@ cm_check_for_auto_expand_when_upgrading_building = {
 	}
 }
 # Called from the construct queue window to approve a building upgrade for the engine-action fire pass.
-# Root = location, scope:cm_old_building_type = obsolete type, scope:cm_new_building_type = upgrade target (from GetNextReplacementBuilding), scope:cm_country = player
+# Root = location, scope:cm_old_building_type = obsolete type, scope:cm_new_building_type = upgrade target from GetNextReplacementBuilding, scope:cm_country = player
 # scope:cm_cost, scope:cm_income, scope:cm_profit = engine values for the replacement type.
 # scope:cm_can_build = CanUpgradeToBuilding for the replacement type.
 cm_gui_construct_upgrade = {
@@ -86,7 +86,7 @@ cm_gui_construct_upgrade = {
 				}
 			}
 		} else = {
-			# Normal mode: swap registration entries (only if old type was registered)
+			# Normal mode: swap registration entries, only if old type was registered.
 			if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_old_building_type } }
 				remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_old_building_type }
 				if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_new_building_type } } }
@@ -144,7 +144,7 @@ cm_gui_try_build = {
 	}
 }
 # Construction-queue RGO executor. Root is the location; re-checks RGO eligibility
-# (including gold) and the metric gate at drain time, then upgrades the RGO.
+# including gold, and the metric gate at drain time, then upgrades the RGO.
 # Expects scopes: country, location, income, profit. scope:cm_profit = Location.GetRGOProfitPerLevel / Location.GetControl.
 # scope:cm_income = scope:cm_profit scaled by the location income-to-wealth ratio.
 cm_gui_try_rgo = {
@@ -162,7 +162,7 @@ cm_gui_try_rgo = {
 		}
 	}
 }
-# Ungated construction-queue executor (auto-build, capital). Root is the location;
+# Ungated construction-queue executor for auto-build and capital. Root is the location;
 # re-checks build-queue slots and affordability against the engine cost, then approves the build.
 # Subject locations build with the country as owner and payer. Expects scopes: country, building_type, cost, can_build.
 cm_gui_try_ungated = {
@@ -270,7 +270,7 @@ cm_check_for_auto_expand_when_removing_building = {
 		location = {
 			if = { limit = { scope:the_building = { building_level < 2 } }
 				scope:cm_building_type = { cm_find_current_building_type = yes }
-				# Clean up both lists — only the relevant one will have an entry
+				# Clean up both lists - only the relevant one will have an entry
 				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type } }
 					remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
 				}
@@ -553,14 +553,14 @@ cm_pause_auto_expand = {
 }
 
 # Root is the building type. Toggles mass auto-expand for this specific building type.
-# When ON: this building type auto-expands at all owned locations (exclusion-based per location).
+# When ON: this building type auto-expands at all owned locations, exclusion-based per location.
 # When OFF: this building type is removed from mass tracking and location exclusion lists are cleaned.
 cm_toggle_mass_auto_expand_for_building_type = {
 	saved_scopes = { cm_country }
 	effect = {
 		save_scope_as = cm_building_type
 		if = { limit = { scope:cm_country = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } } }
-			# Turning OFF — remove from country list and clear exclusion entries for this type
+			# Turning OFF - remove from country list and clear exclusion entries for this type
 			scope:cm_country = {
 				remove_list_variable = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type }
 				ordered_owned_location = {
@@ -572,7 +572,7 @@ cm_toggle_mass_auto_expand_for_building_type = {
 				}
 			}
 		} else = {
-			# Turning ON — add to country list and clear per-location registrations for this type
+			# Turning ON - add to country list and clear per-location registrations for this type
 			scope:cm_country = {
 				add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type }
 				ordered_owned_location = {

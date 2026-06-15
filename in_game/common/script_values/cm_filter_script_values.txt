@@ -59,7 +59,7 @@ cm_location_attacker_penalty = {
 # Windmill/irrigation: subtract effective contribution, add assumed-max.
 # farming_village has no food modifier; raw_material_output and livestock handled in
 # cm_location_food_potential.
-# Other situational food buildings (bund, polders, terraces) keep current contribution.
+# Other situational food buildings, namely bund, polders, and terraces, keep current contribution.
 cm_location_food_potential_food_multiplier = {
 	value = 1
 	add = modifier:local_monthly_food_modifier
@@ -98,7 +98,7 @@ cm_location_food_potential_food_multiplier = {
 				raw_material ?= goods:millet
 			}
 		}
-		add = 0.10  # 1 windmill * 0.10 (max_levels = 1)
+		add = 0.10  # 1 windmill * 0.10, max_levels = 1
 	}
 	if = {
 		limit = {
@@ -112,8 +112,8 @@ cm_location_food_potential_food_multiplier = {
 	min = 0
 }
 
-# Reads modifier:local_raw_material_output (captures devastation, static modifiers, and the
-# employed portion of built farming_villages) then swaps farming_village's current effective
+# Reads modifier:local_raw_material_output, which captures devastation, static modifiers, and the
+# employed portion of built farming_villages, then swaps farming_village's current effective
 # contribution for the assumed-max bonus.
 cm_location_food_potential_raw_output_multiplier = {
 	value = 1
@@ -141,8 +141,8 @@ cm_location_food_potential_raw_output_multiplier = {
 	}
 }
 
-# Final score: (rgo food_value * raw_output_multiplier + farming_village livestock side
-# production) * food_multiplier. exists guard keeps locations without an rgo from erroring
+# Final score: [rgo food_value * raw_output_multiplier + farming_village livestock side
+# production] * food_multiplier. exists guard keeps locations without an rgo from erroring
 # on raw_material.food_value.
 cm_location_food_potential = {
 	value = 0
@@ -165,7 +165,7 @@ cm_location_food_potential = {
 				raw_material ?= goods:fruit
 			}
 		}
-		add = 3.45  # 0.5 livestock * 8 food * 0.75 ratio * 1.15 econ-scale (16 FV)
+		add = 3.45  # 0.5 livestock * 8 food * 0.75 ratio * 1.15 econ-scale, 16 FV
 	}
 	multiply = cm_location_food_potential_food_multiplier
 }

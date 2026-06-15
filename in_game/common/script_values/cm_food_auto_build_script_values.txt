@@ -1,7 +1,7 @@
-﻿# Food auto-build script values — marginal food calculations and building cost helpers.
+﻿# Food auto-build script values - marginal food calculations and building cost helpers.
 # All values are location-scoped unless noted otherwise.
 
-# ─── Food value per RGO good ───
+# --- Food value per RGO good ---
 # Reads food_value directly from the location's raw_material. Non-food RGOs return 0.
 cm_food_value_of_rgo = {
 	value = 0
@@ -12,8 +12,8 @@ cm_food_value_of_rgo = {
 	}
 }
 
-# ─── Building level helpers ───
-# Returns the building level (0 if not present).
+# --- Building level helpers ---
+# Returns the building level, or 0 if not present.
 cm_food_farming_village_level = {
 	if = { limit = { has_building = building_type:farming_village }
 		"building(building_type:farming_village|owner)" = { value = building_level }
@@ -38,7 +38,7 @@ cm_food_forest_village_level = {
 	} else = { value = 0 }
 }
 
-# ─── RGO output modifier from windmill ───
+# --- RGO output modifier from windmill ---
 # Returns 0.1 if windmill exists AND the RGO good benefits from it, else 0.
 cm_food_rgo_output_mod = {
 	value = 0
@@ -47,15 +47,15 @@ cm_food_rgo_output_mod = {
 	}
 }
 
-# ─── Base food calculation ───
-# base_food = N * food_value + sum(building_levels * output_rate * food_value) + forest_village_levels * 1.0.
+# --- Base food calculation ---
+# base_food = N * food_value + sum[building_levels * output_rate * food_value] + forest_village_levels * 1.0.
 # Output rates are hardcoded from in_game/common/production_methods/village_production_methods.txt; food values read dynamically via goods.food_value.
 #   farming_village    0.5 livestock per level
 #   fishing_village    0.5 fish per level
 #   fruit_orchard      0.3 fruit per level
 #   forest_village     0.2 wild_game per level + 1.0 local_monthly_food per level
 cm_food_base_food = {
-	# RGO contribution: N * food_value * (1 + rgo_output_mod)
+	# RGO contribution: N * food_value * [1 + rgo_output_mod]
 	value = cm_modifier_rgo_level
 	multiply = cm_food_value_of_rgo
 	multiply = {
@@ -91,10 +91,10 @@ cm_food_base_food = {
 	}
 }
 
-# ─── Engine modifier helpers ───
+# --- Engine modifier helpers ---
 # Engine model: total_food = base_food * R * F, where
-#   R = 1 + local_raw_material_output (RGO output multiplier)
-#   F = 1 + local_monthly_food_modifier (food output multiplier)
+#   R = 1 + local_raw_material_output, the RGO output multiplier
+#   F = 1 + local_monthly_food_modifier, the food output multiplier
 
 # Food output multiplier F.
 cm_food_total_food_mod = {
@@ -112,7 +112,7 @@ cm_food_raw_material_output_mod = {
 	add = modifier:local_raw_material_output
 }
 
-# ─── Total food at location ───
+# --- Total food at location ---
 # Returns base_food * R * F.
 cm_food_location_total = {
 	value = cm_food_base_food
@@ -120,10 +120,10 @@ cm_food_location_total = {
 	multiply = cm_food_one_plus_total_food_mod
 }
 
-# ─── Marginal food per added unit (1 building level, or 1 RGO expansion) ───
+# --- Marginal food per added unit: 1 building level or 1 RGO expansion ---
 # delta = food_new - food_old. Each option's effect on B, R, or F is captured below.
 
-# RGO expansion: delta B = food_value * (1 + per_good_output_mod). delta food = delta B * R * F.
+# RGO expansion: delta B = food_value * [1 + per_good_output_mod]. delta food = delta B * R * F.
 cm_food_marginal_rgo = {
 	value = cm_food_value_of_rgo
 	multiply = {
@@ -134,8 +134,8 @@ cm_food_marginal_rgo = {
 	multiply = cm_food_one_plus_total_food_mod
 }
 
-# Farming Village: delta B = +0.5 * livestock.food_value, delta R = +0.025 (local_raw_material_output), delta F = 0.
-# delta food = (B + delta_B) * (R + 0.025) * F - B * R * F.
+# Farming Village: delta B = +0.5 * livestock.food_value, delta R = +0.025 to local_raw_material_output, delta F = 0.
+# delta food = [B + delta_B] * [R + 0.025] * F - B * R * F.
 cm_food_marginal_farming_village = {
 	value = cm_food_base_food
 	add = {
@@ -150,7 +150,7 @@ cm_food_marginal_farming_village = {
 	subtract = cm_food_location_total
 }
 
-# Windmill: delta(per_good_output_mod) = +0.1 on the location's RGO good (wheat/rice/millet).
+# Windmill: delta per_good_output_mod = +0.1 when the location's RGO good is wheat, rice, or millet.
 # delta food = N * food_value * 0.1 * R * F.
 cm_food_marginal_windmill = {
 	value = 0.1
@@ -160,7 +160,7 @@ cm_food_marginal_windmill = {
 	multiply = cm_food_one_plus_total_food_mod
 }
 
-# Irrigation: delta F = +0.05 (local_monthly_food_modifier).
+# Irrigation: delta F = +0.05 to local_monthly_food_modifier.
 # delta food = B * R * 0.05.
 cm_food_marginal_irrigation = {
 	value = cm_food_base_food
@@ -176,7 +176,7 @@ cm_food_marginal_fishing_village = {
 	multiply = cm_food_one_plus_total_food_mod
 }
 
-# Forest Village: delta B = +0.2 * wild_game.food_value + 1.0 (local_monthly_food). delta food = delta_B * R * F.
+# Forest Village: delta B = +0.2 * wild_game.food_value + 1.0 local_monthly_food. delta food = delta_B * R * F.
 cm_food_marginal_forest_village = {
 	value = 0.2
 	goods:wild_game = { multiply = food_value }
@@ -185,8 +185,8 @@ cm_food_marginal_forest_village = {
 	multiply = cm_food_one_plus_total_food_mod
 }
 
-# ─── Building cost helpers ───
-# Expected gold needed for RGO expansion (food system).
+# --- Building cost helpers ---
+# Expected gold needed for RGO expansion in the food system.
 # Expects scopes: country, location
 cm_food_expected_gold_for_rgo = {
 	value = glorpui_rgo_expand_cost
@@ -194,7 +194,7 @@ cm_food_expected_gold_for_rgo = {
 }
 
 # Per-building gold threshold script values.
-# Each computes: base_cost * (1 + build_modifiers) * (1 + construction_cost_adj) * (1 + inflation) + gold_reserve.
+# Each computes: base_cost * [1 + build_modifiers] * [1 + construction_cost_adj] * [1 + inflation] + gold_reserve.
 # Root is the location. Expects scope:cm_country.
 cm_food_expected_gold_for_farming_village = {
 	building_type:farming_village = { value = building_base_cost_in_gold }
@@ -236,7 +236,7 @@ cm_food_expected_gold_for_forest_village = {
 	scope:cm_country = { add = cm_get_minimum_gold }
 }
 
-# Build cost modifier (global + local). Root is the location, expects scope:cm_country.
+# Build cost modifier, global plus local. Root is the location, expects scope:cm_country.
 cm_food_build_cost_modifier = {
 	value = 0
 	scope:cm_country = { subtract = modifier:global_build_buildings_efficiency }
@@ -250,7 +250,7 @@ cm_food_build_cost_modifier = {
 }
 
 # Gold threshold for the most expensive food option: its cost plus the Gold Reserve.
-# min = is a lower clamp, so each step keeps the larger cost (the most expensive option).
+# min = is a lower clamp, so each step keeps the larger cost.
 # Root is the location. Expects scopes: country, location.
 cm_food_gold_threshold = {
 	value = cm_food_expected_gold_for_rgo
@@ -269,7 +269,7 @@ cm_food_gold_threshold_plus_planned_spend = {
 }
 
 # Spare pop pool after fully building out the RGO to its max level. Root is the location.
-#   = peasants_available + laborers_available - (max_rgo_level - current_level - levels_under_construction)
+#   = peasants_available + laborers_available - [max_rgo_level - current_level - levels_under_construction]
 cm_food_pop_pool_after_rgo_buildout = {
 	value = cm_location_peasants_available
 	add = cm_location_laborers_available

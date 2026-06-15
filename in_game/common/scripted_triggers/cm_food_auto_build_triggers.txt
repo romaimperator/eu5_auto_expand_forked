@@ -1,16 +1,16 @@
-﻿# Food auto-build triggers — eligibility, affordability, pop, and cap checks.
-# Gold threshold checks are done in the effects file (per-building script values).
+﻿# Food auto-build triggers - eligibility, affordability, pop, and cap checks.
+# Gold threshold checks are done in the effects file via per-building script values.
 
 # Root is the location. Expects $target$ = a building_type.
-# For 1-level buildings (e.g. windmill), the max-level check also subsumes NOT has_building.
+# For 1-level buildings such as windmill, the max-level check also subsumes NOT has_building.
 cm_food_location_buildable_for_building_type = {
 	cm_location_allowed_to_build = { target = $target$ }
 	cm_location_building_type_is_not_at_max_level = { target = $target$ }
 }
 
-# ─── Location matching ───
+# --- Location matching ---
 
-# Root is the location. Expects scope:food_good (the goods scope from the CMM list).
+# Root is the location. Expects scope:food_good, the goods scope from the CMM list.
 # True if this location's RGO produces the specified food good.
 cm_food_location_matches_rgo_type = {
 	raw_material = scope:food_good
@@ -26,7 +26,7 @@ cm_food_location_meets_river_filter = {
 	}
 }
 
-# ─── Pool pop checks ───
+# --- Pool pop checks ---
 
 # Root is the location. Expects scope:cm_country.
 # True when no pop-restricted food option is buildable.
@@ -41,8 +41,8 @@ cm_food_location_pops_still_filling = {
 }
 
 # Root is the location.
-# True when peasants_available + laborers_available can fill the RGO's remaining levels (or
-# the RGO is already at max).
+# True when peasants_available + laborers_available can fill the RGO's remaining levels, or
+# the RGO is already at max.
 cm_food_pop_pool_fits_full_rgo_buildout = {
 	trigger_if = { limit = { cm_is_rgo_not_max_level_already = no }
 		always = yes
@@ -52,7 +52,7 @@ cm_food_pop_pool_fits_full_rgo_buildout = {
 	}
 }
 
-# ─── Can-build checks per option ───
+# --- Can-build checks per option ---
 # Each checks: requirements met, not at cap, pops available.
 # Gold threshold is checked separately in the effects file.
 # Root is the location. Expects scopes: country, location.
@@ -89,7 +89,7 @@ cm_food_can_build_farming_village = {
 	}
 }
 
-# Option 3: Windmill (1 level max)
+# Option 3: Windmill, 1 level max
 # Requires: wheat/rice/millet RGO, rural, windmills advance researched
 cm_food_can_build_windmill = {
 	AND = {
@@ -184,7 +184,7 @@ cm_food_option_forest_village_discounted = {
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
-# True if ANY of the six food-building options meets its minimum discount (ignores gold).
+# True if ANY of the six food-building options meets its minimum discount, ignoring gold.
 cm_food_location_has_discounted_option = {
 	OR = {
 		cm_food_option_rgo_discounted = yes
@@ -203,7 +203,7 @@ cm_food_location_has_viable_option = {
 	cm_check_country_gold_above = { threshold = cm_food_gold_threshold }
 }
 
-# True if ANY food-building option could physically be built here right now (ignores gold/discount).
+# True if ANY food-building option could physically be built here right now, ignoring gold/discount.
 cm_food_location_has_buildable_option = {
 	OR = {
 		cm_food_can_build_rgo = yes

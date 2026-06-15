@@ -1,7 +1,7 @@
 ﻿cm_set_auto_expand_for_rgo = {
 	effect = {
 		if = { limit = { owner = { exists = var:cm_mass_auto_expand_rgo } }
-			# Mass mode: operate on exclusion variable (inverted logic)
+			# Mass mode: operate on exclusion variable with inverted logic.
 			if = { limit = { NOT = { exists = scope:cm_set_off } }
 				if = { limit = { exists = var:auto_expand_rgo_excluded }
 					remove_variable = auto_expand_rgo_excluded
@@ -51,7 +51,7 @@ cm_toggle_mass_auto_expand_rgo = {
 	scope = country
 	effect = {
 		if = { limit = { exists = var:cm_mass_auto_expand_rgo }
-			# Turning OFF — clear flag and all exclusion variables
+			# Turning OFF - clear flag and all exclusion variables
 			remove_variable = cm_mass_auto_expand_rgo
 			ordered_owned_location = {
 				order_by = max_control
@@ -61,7 +61,7 @@ cm_toggle_mass_auto_expand_rgo = {
 				remove_variable = auto_expand_rgo_excluded
 			}
 		} else = {
-			# Turning ON — set flag, clear all per-location enable variables
+			# Turning ON - set flag, clear all per-location enable variables
 			set_variable = { name = cm_mass_auto_expand_rgo value = yes }
 			ordered_owned_location = {
 				order_by = max_control
@@ -120,22 +120,22 @@ cm_is_rgo_advance_researched = {
 
 cm_is_rgo_not_max_level_already = {
 	is_shown = {
-		# Root scope is a location (passed from GUI). Use the location trigger for RGO max expansion.
+		# Root scope is a location passed from GUI. Use the location trigger for RGO max expansion.
 		cm_is_rgo_not_max_level_already = yes
 	}
 }
 
 cm_is_rgo_fully_employed = {
 	is_shown = {
-		# Root scope is a location (passed from GUI).
-		# True if the location is not in a negative labourer deficit (i.e. can be filled, including imminent promotion).
+		# Root scope is a location passed from GUI.
+		# True if the location is not in a negative labourer deficit, i.e. can be filled, including imminent promotion.
 		cm_check_location_has_laborers_available_or_will_be = yes
 	}
 }
 
 cm_is_rgo_under_construction = {
 	is_shown = {
-		# Root scope is a location (passed from GUI).
+		# Root scope is a location passed from GUI.
 		cm_is_rgo_under_construction = no
 	}
 }

@@ -59,7 +59,7 @@ cm_stage_rgo_candidate = {
 	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_rgo_locations }
 }
 
-# Ungated building candidate (auto-build, capital) for the unified queue. Drained per
+# Ungated auto-build and capital building candidate for the unified queue. Drained per
 # location by the queue window with the engine cost; the executor re-checks build-queue
 # slots and affordability, then builds. Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_stage_ungated_candidate = {
@@ -74,14 +74,14 @@ cm_stage_urbanize_candidate = {
 	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_urbanize_locations LOCATION_LIST = cm_q_urbanize_building_types }
 }
 
-# Food building candidate for the unified queue (the marginal comparison already picked the
-# winning building type). The executor re-checks build-queue slots and the food gold reserve
+# Food building candidate for the unified queue; the marginal comparison already picked the
+# winning building type. The executor re-checks build-queue slots and the food gold reserve
 # before building. Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_stage_food_building_candidate = {
 	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_food_locations LOCATION_LIST = cm_q_food_building_types }
 }
 
-# Food RGO candidate for the unified queue (the marginal comparison picked an RGO expand).
+# Food RGO candidate for the unified queue; the marginal comparison picked an RGO expand.
 # The executor re-checks build-queue slots and the food gold reserve. Expects scope:cm_country, scope:cm_location.
 cm_stage_food_rgo_candidate = {
 	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_food_rgo_locations }
@@ -193,7 +193,7 @@ cm_approve_gui_build = {
 	}
 }
 
-# ─── Auto Expand Buildings ───
+# --- Auto Expand Buildings ---
 # Expands multi-level buildings that are profitable and have pops available.
 # Flags obsolete buildings for GUI-driven upgrade processing.
 
@@ -201,7 +201,7 @@ cm_approve_gui_build = {
 # Optional scope:cm_set_off forces the direction instead of toggling.
 cm_apply_auto_expand_toggle = {
 	if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } } }
-		# Mass mode: operate on exclusion list (inverted logic)
+		# Mass mode: operate on exclusion list with inverted logic.
 		if = { limit = { NOT = { exists = scope:cm_set_off } }
 			if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type } }
 				remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
@@ -312,7 +312,7 @@ cm_run_auto_expand_buildings = {
 	cm_transfer_obsolete_auto_expand_registrations = yes
 	if = {
 		limit = { has_variable_list = cm_mass_auto_expand_building_types }
-		# ── Mass mode: iterate all existing buildings at all owned locations ──
+		# -- Mass mode: iterate all existing buildings at all owned locations --
 		ordered_owned_location = {
 			order_by = max_control
 			max = cm_max_guess_at_number_of_locations
@@ -337,7 +337,7 @@ cm_run_auto_expand_buildings = {
 					cm_stage_expand_or_upgrade_candidate = yes
 				}
 			}
-			# ── Mass mode: construct missing buildings from zero levels ──
+			# -- Mass mode: construct missing buildings from zero levels --
 			scope:cm_country = {
 				every_in_list = {
 					variable = cm_mass_auto_expand_building_types
@@ -353,8 +353,8 @@ cm_run_auto_expand_buildings = {
 			}
 		}
 	}
-	# ── Normal mode: iterate per-location registered building types ──
-	# Runs unconditionally — per-location registrations are processed alongside mass mode.
+	# -- Normal mode: iterate per-location registered building types --
+	# Runs unconditionally - per-location registrations are processed alongside mass mode.
 	ordered_owned_location = {
 		order_by = max_control
 		max = cm_max_guess_at_number_of_locations
@@ -394,9 +394,9 @@ cm_run_auto_expand_buildings = {
 	}
 }
 
-# ─── Auto Expand RGOs ───
+# --- Auto Expand RGOs ---
 # Expands RGO levels in locations with auto_expand_rgo enabled.
-# Single monthly pass (no daily spread).
+# Single monthly pass, no daily spread.
 cm_run_auto_expand_rgos = {
 	if = {
 		limit = { exists = var:cm_mass_auto_expand_rgo }
@@ -459,11 +459,11 @@ cm_clear_finished_upgrade_in_progress = {
 				limit = {
 					trigger_if = {
 						limit = { scope:cm_location = { has_building = scope:cm_upgrade_target } }
-						# Upgrade target exists but has no levels under construction — construction finished
+						# Upgrade target exists but has no levels under construction - construction finished
 						scope:cm_location = { "building(scope:cm_upgrade_target|scope:cm_country)" = { building_levels_under_construction = 0 } }
 					}
 					trigger_else = {
-						# Upgrade target doesn't exist — construction was cancelled
+						# Upgrade target doesn't exist - construction was cancelled
 						always = yes
 					}
 				}
@@ -477,7 +477,7 @@ cm_clear_finished_upgrade_in_progress = {
 	}
 }
 
-# ─── Upgrade All Buildings ───
+# --- Upgrade All Buildings ---
 # Upgrades every obsolete building in all owned locations.
 cm_run_upgrade_all_buildings = {
 	ordered_owned_location = {
@@ -539,7 +539,7 @@ cm_run_upgrade_all_buildings = {
 	}
 }
 
-# ─── Auto Build ───
+# --- Auto Build ---
 # Auto-constructs one-per-location buildings in priority order.
 cm_run_auto_build = {
 	cm_reset_locations_lists = { }
@@ -555,7 +555,7 @@ cm_run_auto_build = {
 				} else = {
 					set_local_variable = { name = cm_auto_build_include_subjects value = 0 }
 				}
-				# Resolve obsolete building type to current non-obsolete upgrade (e.g. dock → dry_dock)
+				# Resolve obsolete building type to current non-obsolete upgrade, e.g. dock -> dry_dock
 				cm_auto_build_resolve_building_type = yes
 				if = {
 					limit = { local_var:cm_auto_build_include_subjects = 0 }
@@ -585,12 +585,12 @@ cm_run_auto_build = {
 	}
 }
 
-# ─── Auto Food ───
+# --- Auto Food ---
 # Auto-builds food RGOs and related buildings in priority order.
-# Single monthly pass (no daily spread).
+# Single monthly pass, no daily spread.
 #
-# Dispatches cm_food_auto_build_for_rgo_type for every food good in the list (not just the ones
-# enabled in the mass settings), because individual locations may opt in via
+# Dispatches cm_food_auto_build_for_rgo_type for every food good in the list, not just the ones
+# enabled in the mass settings, because individual locations may opt in via
 # var:auto_food_location_enabled even when their good's mass setting is off. The per-location
 # eligibility check inside cm_food_auto_build_for_rgo_type combines mass coverage with the
 # per-location opt-in/opt-out flags.
@@ -608,7 +608,7 @@ cm_run_auto_food = {
 	}
 }
 
-# ─── Auto Urbanize ───
+# --- Auto Urbanize ---
 # Promotes location ranks: towns to cities, and rural settlements to towns.
 # Each upgrade type is gated by its own sub-toggle on the Urbanize tab.
 cm_run_auto_urbanize = {
@@ -636,7 +636,7 @@ cm_run_auto_urbanize = {
 	}
 }
 
-# ─── Auto Build Capital ───
+# --- Auto Build Capital ---
 # Auto-constructs capital-only buildings in the country's capital location.
 cm_run_auto_build_capital = {
 	if = {
@@ -674,7 +674,7 @@ cm_try_construct_capital_building = {
 	}
 }
 
-# ─── Auto Town Rights ───
+# --- Auto Town Rights ---
 # Grants enabled town rights to eligible locations in priority order.
 # Raw grant_town_rights skips the price.
 cm_run_auto_town_rights = {

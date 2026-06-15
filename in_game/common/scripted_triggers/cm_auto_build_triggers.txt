@@ -65,8 +65,8 @@ cm_check_location_has_tribesmen_available_or_will_be = {
 	0 <= { value = cm_combined_monthly_new_pops_of_type_tribesmen add = cm_location_tribesmen_available }
 }
 
-# Root is the location. Expects the building type as target and scope country. True when location has enough RGO/lumber levels for this building type (sawmill: RGO or lumber_mill >= required; windmill/local_smelters: RGO >= required).
-# Non-RGO buildings always pass (fallback = yes).
+# Root is the location. Expects the building type as target and scope country. True when location has enough RGO/lumber levels for this building type: sawmill needs RGO or lumber_mill >= required; windmill/local_smelters need RGO >= required.
+# Non-RGO buildings always pass via the fallback.
 cm_auto_build_check_rgo_level_requirement_met = {
 	switch = { trigger = $target$
 		building_type:sawmill = { cm_auto_build_check_rgo_level_requirement_met_sawmill = yes }
@@ -110,7 +110,7 @@ cm_auto_build_check_rgo_level_requirement_met_local_smelters = {
 	}
 }
 
-# ─── Generic auto-build trigger chain ───
+# --- Generic auto-build trigger chain ---
 # These replace the old per-building trigger files. All building-specific
 # logic is resolved dynamically via engine triggers and precomputed maps.
 
@@ -120,7 +120,7 @@ cm_location_can_auto_build = {
 	cm_location_has_no_auto_build_chain_predecessor = yes
 }
 
-# Expects scope:cm_country (cm_auto_build_chain_predecessors populated by cm_auto_build_resolve_building_type) and scope:cm_location.
+# Expects scope:cm_country, with cm_auto_build_chain_predecessors populated by cm_auto_build_resolve_building_type, and scope:cm_location.
 # True when the location has none of the resolved building type's obsolete predecessor tiers.
 cm_location_has_no_auto_build_chain_predecessor = {
 	scope:cm_country = {
@@ -149,9 +149,9 @@ cm_auto_build_will_auto_build = {
 }
 
 # Root is the location. Expects the building type as a target, also expects the scope country.
-# Uses can_build_building to check all placement prerequisites (tech, location rank, terrain, culture, etc.).
-# Foreign-only building types (is_foreign = yes, e.g. hanseatic_kontor, fondaco) are excluded:
-# can_build_building does not filter them out, but we do not support auto-expanding them in owned locations.
+# Uses can_build_building to check all placement prerequisites such as tech, location rank, terrain, and culture.
+# Foreign-only building types with is_foreign = yes, such as hanseatic_kontor and fondaco, are excluded:
+# can_build_building does not filter them out, but auto-expanding them in owned locations is not supported.
 cm_location_allowed_to_build = {
 	scope:cm_country = { save_temporary_scope_as = actor }
 	$target$ = { is_foreign = no }
@@ -168,7 +168,7 @@ cm_auto_build_check_meets_minimum_control = {
 # Expects scopes: country, location
 # Expects param: target => building_type
 # The 0.005 added is a 0.5% tolerance so that a setting of -33% matches a cost
-# adjustment of -32.5% (avoids float-rounding misses at the boundary).
+# adjustment of -32.5%, avoiding float-rounding misses at the boundary.
 cm_auto_build_check_meets_minimum_market_price_impact = {
 	OR = {
 		$target$ = { save_temporary_scope_as = cm_building_type cm_get_standard_construction_demand_total = 0 }
@@ -176,11 +176,11 @@ cm_auto_build_check_meets_minimum_market_price_impact = {
 	}
 }
 
-# ─── Auto Build Capital triggers ───
+# --- Auto Build Capital triggers ---
 # Root is the capital location. Expects scope:cm_building_type, scope:cm_country.
 # Reads min_discount from the per-feature priority list field
-# (cm_priority_min_discount keyed on flag:cm_feature_auto_build_capital).
-# Allows multi-level capital buildings (chancery) to be queued up to their cap:
+# cm_priority_min_discount keyed on flag:cm_feature_auto_build_capital.
+# Allows multi-level capital buildings such as chancery to be queued up to their cap:
 # cm_location_building_type_is_not_at_max_level passes when the building doesn't
 # exist yet OR exists below max with no level currently under construction.
 cm_capital_location_can_auto_build = {
@@ -196,7 +196,7 @@ cm_capital_location_can_auto_build = {
 
 # Expects scopes: country, location, building_type.
 # Discount setting is read from the priority list's per-feature min_discount field.
-# Demand-only buildings (zero standard construction demand) always pass.
+# Demand-only buildings with zero standard construction demand always pass.
 # 0.005 tolerance matches the auto_build_list discount check so a -33% slider
 # accepts a -32.5% real cost adjustment without float-rounding misses.
 cm_capital_meets_min_discount = {

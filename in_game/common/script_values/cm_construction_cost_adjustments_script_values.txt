@@ -5,8 +5,8 @@ cm_get_construction_cost_adjustment_for_building_type = {
 	value = cm_get_construction_cost_modifier_for_building_type
 }
 
-# Standard-goods-only wrapper (lumber, masonry, glass, sand, stone). Used for the min
-# discount threshold so that non-depressible goods (gold, tools, paper, etc.) don't block building.
+# Standard-goods-only wrapper: lumber, masonry, glass, sand, stone. Used for the min
+# discount threshold so non-depressible goods such as gold, tools, and paper don't block building.
 cm_get_standard_construction_cost_adjustment_for_building_type = {
 	if = { limit = { NOT = { exists = scope:cm_building_type } } save_temporary_scope_as = cm_building_type }
 	value = cm_get_standard_construction_cost_modifier_for_building_type
@@ -26,8 +26,8 @@ cm_get_min_discount_for_auto_build_capital = { value = "scope:cm_country.variabl
 # The 28 construction goods below are a stable game constant.
 #
 # Algorithm: for each construction good, clamp the raw price adjustment to the engine's
-# [MIN_PRICE_IMPACT, MAX_PRICE_IMPACT] = [-0.33, 3.0] range, then weight by demand share
-# (demand_for_good / total_demand). Weights sum to 1.0, so the result stays in [-0.33, 3.0].
+# [MIN_PRICE_IMPACT, MAX_PRICE_IMPACT] = [-0.33, 3.0] range, then weight by demand share,
+# demand_for_good / total_demand. Weights sum to 1.0, so the result stays in [-0.33, 3.0].
 #
 # Expects scopes: location, building_type
 cm_get_construction_cost_modifier_for_building_type = {
@@ -314,7 +314,7 @@ cm_get_construction_cost_modifier_for_building_type = {
   }
 }
 
-# Standard-goods-only cost modifier (lumber, masonry, glass, sand, stone).
+# Standard-goods-only cost modifier: lumber, masonry, glass, sand, stone.
 # Expects scopes: location, building_type
 cm_get_standard_construction_cost_modifier_for_building_type = {
   value = 0

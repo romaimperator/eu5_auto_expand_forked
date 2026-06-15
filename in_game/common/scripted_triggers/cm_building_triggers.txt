@@ -34,7 +34,7 @@ cm_is_building_upgradeable = {
 }
 
 # Root is the location, also expects scope:cm_building_type and scope:cm_country.
-# False if the location doesn't have the building (nothing to upgrade).
+# False if the location doesn't have the building.
 cm_building_type_can_be_upgraded_by_owner = {
 	has_building = scope:cm_building_type
 	"building(scope:cm_building_type|scope:cm_country)" = { building_can_be_upgraded_by = scope:cm_country }
@@ -63,7 +63,7 @@ cm_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_an
 	}
 }
 
-# Root is the location. Effective cap is free_building_levels plus the owner's cm_allowed_building_overbuild_levels (default 0).
+# Root is the location. Effective cap is free_building_levels plus the owner's cm_allowed_building_overbuild_levels, default 0.
 cm_is_location_under_building_limit = {
 	0 < { value = cm_get_remaining_free_building_levels_allowed ceiling = yes }
 }
@@ -141,7 +141,7 @@ cm_gui_metric_gate_passes = {
 }
 
 # Expects scope:cm_building_type. Checks if the building type produces a good that is also
-# one of its construction demand goods (e.g. horse_breeders produces and requires horses).
+# one of its construction demand goods, e.g. horse_breeders produces and requires horses.
 # Precomputed by the hidden window GUI at game start.
 cm_building_type_produces_own_construction_good = {
 	AND = {
@@ -152,11 +152,11 @@ cm_building_type_produces_own_construction_good = {
 }
 
 # Checks construction cost adjustment against the min discount threshold
-# from the priority list (field slot 2, mapped to cm_priority_min_discount, pre-scaled ×0.01).
+# from the priority list, field slot 2, mapped to cm_priority_min_discount, pre-scaled by 0.01.
 # Expects scopes: country, building_type.
 # $threshold$ = the full variable_map lookup expression for the discount threshold.
 # The 0.005 added to $threshold$ is a 0.5% tolerance so that a setting of -33%
-# matches a cost adjustment of -32.5% (avoids float-rounding misses at the boundary).
+# matches a cost adjustment of -32.5%, avoiding float-rounding misses at the boundary.
 cm_building_meets_minimum_discount = {
 	OR = {
 		NOT = { scope:cm_country = { has_variable_map = cm_priority_min_discount } }
@@ -229,7 +229,7 @@ cm_is_not_under_construction = {
 }
 
 # Root is the location, expects scope:cm_building_type. False if this building type already has
-# levels queued or under construction at the location (a queued first level counts).
+# levels queued or under construction at the location, including a queued first level.
 cm_location_building_type_not_under_construction = {
 	NOT = {
 		any_buildings_in_location = {

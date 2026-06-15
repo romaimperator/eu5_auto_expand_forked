@@ -1,5 +1,5 @@
 ﻿# Populates the global list of building types for classification by the hidden window GUI.
-# Called from on_game_start_after_lobby and on_game_load_after_lobby (once per lobby, not per player).
+# Called from on_game_start_after_lobby and on_game_load_after_lobby, once per lobby, not per player.
 # Stateless: always rebuilds from scratch so no version tracking or migration is needed.
 cm_populate_building_types_to_process = {
   clear_global_variable_list = cm_building_types_to_process
@@ -13,9 +13,8 @@ cm_populate_building_types_to_process = {
   set_global_variable = { name = cm_process_buildings value = yes }
 }
 
-# Stores goods scope references in global variables so localization can read
-# `[GetGlobalVariable('cm_goods_<id>').GetGoods.GetDefaultMarketPrice]` to display
-# each good's base price next to its name in the auto-urbanize ignore list.
+# Stores goods scope references in global variables so localization can display
+# each good's base market price next to its name in the auto-urbanize ignore list.
 cm_initialize_goods_globals = {
   set_global_variable = { name = cm_goods_goods_gold value = goods:goods_gold }
   set_global_variable = { name = cm_goods_silver value = goods:silver }
@@ -65,7 +64,7 @@ cm_initialize_goods_globals = {
 # Expects scopes: country
 cm_check_that_country_variables_are_set = {
   scope:cm_country = {
-    # Simple settings (CMM aliases — initialized by CMM registration, defaults here for non-CMF fallback)
+    # Simple settings: CMM aliases initialized by CMM registration, defaults here for non-CMF fallback.
     if = { limit = { NOT = { has_variable = cm_minimum_gold } }
       set_variable = { name = cm_minimum_gold value = 50 }
     }

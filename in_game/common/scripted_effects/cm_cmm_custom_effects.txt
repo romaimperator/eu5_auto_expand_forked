@@ -1,5 +1,5 @@
 ﻿# Custom CMM integration code not managed by the visual editor.
-# Called after cm_register_cmf_mod (visual-editor-managed) completes.
+# Called after the visual-editor-managed cm_register_cmf_mod completes.
 
 # Post-registration: override default values and build lookup tables.
 # Scope: country
@@ -46,16 +46,16 @@ cm_rebuild_priority_lookups = {
 	}
 	else = {
 
-	# Ordered features list (for monthly pulse iteration in priority order)
+	# Ordered features list for monthly pulse iteration in priority order.
 	cmm_build_list_ordered_values = { setting = cm__priority_list list_name = cm_priority_features_list }
 
-	# Gate threshold by feature (numeric field slot 1, direct values)
+	# Gate threshold by feature, numeric field slot 1, direct values.
 	cmm_build_list_field_map = { setting = cm__priority_list field_slot = 1 map_name = cm_priority_min_profit multiply = 1 }
 
-	# Min discount by feature (numeric field slot 2, CMM -33..33 → -0.33..0.33)
+	# Min discount by feature, numeric field slot 2, CMM -33..33 -> -0.33..0.33.
 	cmm_build_list_field_map = { setting = cm__priority_list field_slot = 2 map_name = cm_priority_min_discount multiply = 0.01 }
 
-	# Enabled features (bool field slot 3)
+	# Enabled features, bool field slot 3.
 	cmm_build_list_bool_list = { setting = cm__priority_list field_slot = 3 list_name = cm_priority_features_enabled }
 
 	} # end guard
@@ -317,29 +317,29 @@ cm_apply_priority_desired_item = {
 # Called on registration and on every setting change.
 # Scope: country
 cm_rebuild_auto_build_lookups = {
-	# Guard: skip if CMM list data doesn't exist yet (first registration may not have completed)
+	# Guard: skip if CMM list data doesn't exist yet; first registration may not have completed.
 	if = {
 		limit = { NOT = { has_variable_list = cmm_list_items_cm__auto_build_list } }
-		# List not initialized yet — lookups will be built on next registration cycle
+		# List not initialized yet - lookups will be built on next registration cycle
 	}
 	else = {
 
-	# Ordered building types list (for monthly pulse iteration in priority order)
+	# Ordered building types list for monthly pulse iteration in priority order.
 	cmm_build_list_ordered_values = { setting = cm__auto_build_list list_name = cm_auto_build_building_types_list }
 
-	# Enabled building types (bool field slot 1)
+	# Enabled building types, bool field slot 1.
 	cmm_build_list_bool_list = { setting = cm__auto_build_list field_slot = 1 list_name = cm_auto_build_building_types_enabled }
 
-	# Subjects-enabled building types (bool field slot 2)
+	# Subjects-enabled building types, bool field slot 2.
 	cmm_build_list_bool_list = { setting = cm__auto_build_list field_slot = 2 list_name = cm_auto_build_building_types_in_subjects_enabled }
 
-	# Min control by building type (numeric field slot 3, CMM 0-100 → 0-1)
+	# Min control by building type, numeric field slot 3, CMM 0-100 -> 0-1.
 	cmm_build_list_field_map = { setting = cm__auto_build_list field_slot = 3 map_name = cm_min_control_by_building_type multiply = 0.01 }
 
-	# Min discount by building type (numeric field slot 4, CMM -33..33 → -0.33..0.33)
+	# Min discount by building type, numeric field slot 4, CMM -33..33 -> -0.33..0.33.
 	cmm_build_list_field_map = { setting = cm__auto_build_list field_slot = 4 map_name = cm_min_discount_by_building_type multiply = 0.01 }
 
-	# Min RGOs by building type (numeric field slot 5, direct values)
+	# Min RGOs by building type, numeric field slot 5, direct values.
 	cmm_build_list_field_map = { setting = cm__auto_build_list field_slot = 5 map_name = cm_min_rgos_by_building_type multiply = 1 }
 
 	} # end guard
@@ -354,7 +354,7 @@ cm_rebuild_auto_urbanize_lookups = {
 	}
 	else = {
 
-	# Goods marked ignored (bool field slot 1)
+	# Goods marked ignored, bool field slot 1.
 	cmm_build_list_bool_list = { setting = cm__auto_urbanize_ignore_list field_slot = 1 list_name = cm_auto_urbanize_ignored_rgo_goods }
 
 	} # end guard
@@ -369,10 +369,10 @@ cm_rebuild_auto_town_rights_lookups = {
 	}
 	else = {
 
-	# Ordered town rights list (for monthly pulse iteration in priority order)
+	# Ordered town rights list for monthly pulse iteration in priority order.
 	cmm_build_list_ordered_values = { setting = cm__auto_town_rights_list list_name = cm_auto_town_rights_list }
 
-	# Enabled town rights (bool field slot 1)
+	# Enabled town rights, bool field slot 1.
 	cmm_build_list_bool_list = { setting = cm__auto_town_rights_list field_slot = 1 list_name = cm_auto_town_rights_enabled }
 
 	} # end guard
@@ -387,16 +387,16 @@ cm_rebuild_auto_food_lookups = {
 	}
 	else = {
 
-	# Ordered food RGO types list (for daily tick iteration in priority order)
+	# Ordered food RGO types list for daily tick iteration in priority order.
 	cmm_build_list_ordered_values = { setting = cm__auto_food_list list_name = cm_auto_food_rgo_types_list }
 
-	# Enabled food RGO types (bool field slot 2, after data column)
+	# Enabled food RGO types, bool field slot 2, after data column.
 	cmm_build_list_bool_list = { setting = cm__auto_food_list field_slot = 2 list_name = cm_auto_food_rgo_types_enabled }
 
-	# River-only food RGO types (bool field slot 3)
+	# River-only food RGO types, bool field slot 3.
 	cmm_build_list_bool_list = { setting = cm__auto_food_list field_slot = 3 list_name = cm_auto_food_rgo_types_river_only }
 
-	# Subjects-enabled food RGO types (bool field slot 4)
+	# Subjects-enabled food RGO types, bool field slot 4.
 	cmm_build_list_bool_list = { setting = cm__auto_food_list field_slot = 4 list_name = cm_auto_food_rgo_types_in_subjects_enabled }
 
 	} # end guard
@@ -426,7 +426,7 @@ cm_auto_build_list_update_visibility_item = {
 		cmm_hide_list_item = { mod_id = cm setting_id = auto_build_list item = $i$ }
 	}
 
-	# Accept $setting$ param from cmm_for_each_list_item (unused here)
+	# Accept $setting$ param from cmm_for_each_list_item, unused here.
 	if = {
 		limit = { always = no }
 		cmf_suppress = { v = $setting$_$i$ }
@@ -434,7 +434,7 @@ cm_auto_build_list_update_visibility_item = {
 }
 
 # Hide/show auto town rights list rows based on whether the country can currently
-# grant the right (basic advance researched, plus the right's potential block passes).
+# grant the right: basic advance researched, plus the right's potential block passes.
 # Scope: country
 cm_update_auto_town_rights_list_visibility = {
 	if = {
@@ -461,7 +461,7 @@ cm_auto_town_rights_list_update_visibility_item = {
 		cmm_hide_list_item = { mod_id = cm setting_id = auto_town_rights_list item = $i$ }
 	}
 
-	# Accept $setting$ param from cmm_for_each_list_item (unused here)
+	# Accept $setting$ param from cmm_for_each_list_item, unused here.
 	if = {
 		limit = { always = no }
 		cmf_suppress = { v = $setting$_$i$ }
@@ -492,7 +492,7 @@ cm_auto_food_list_update_visibility_item = {
 		cmm_hide_list_item = { mod_id = cm setting_id = auto_food_list item = $i$ }
 	}
 
-	# Accept $setting$ param from cmm_for_each_list_item (unused here)
+	# Accept $setting$ param from cmm_for_each_list_item, unused here.
 	if = {
 		limit = { always = no }
 		cmf_suppress = { v = $setting$_$i$ }
@@ -523,7 +523,7 @@ cm_auto_urbanize_ignore_list_update_visibility_item = {
 		cmm_hide_list_item = { mod_id = cm setting_id = auto_urbanize_ignore_list item = $i$ }
 	}
 
-	# Accept $setting$ param from cmm_for_each_list_item (unused here)
+	# Accept $setting$ param from cmm_for_each_list_item, unused here.
 	if = {
 		limit = { always = no }
 		cmf_suppress = { v = $setting$_$i$ }
@@ -534,7 +534,7 @@ cm_auto_urbanize_ignore_list_update_visibility_item = {
 _cm_cmm_suppress_warnings = {
 	if = {
 		limit = { always = no }
-		# CMM-derived lookup maps (set at runtime by cmm_build_list_* utilities)
+		# CMM-derived lookup maps, set at runtime by cmm_build_list_* utilities.
 		cmf_suppress = { v = cm_min_control_by_building_type }
 		cmf_suppress = { v = cm_min_discount_by_building_type }
 		cmf_suppress = { v = cm_min_rgos_by_building_type }
@@ -545,14 +545,14 @@ _cm_cmm_suppress_warnings = {
 		cmf_suppress = { v = cm_priority_min_profit }
 		cmf_suppress = { v = cm_priority_min_discount }
 		cmf_suppress = { v = cmm_list_item_hidden }
-		# Food auto-build (lookup lists)
+		# Food auto-build lookup lists
 		cmf_suppress = { v = cm_auto_food_rgo_types_list }
 		cmf_suppress = { v = cm_auto_food_rgo_types_enabled }
 		cmf_suppress = { v = cm_auto_food_rgo_types_river_only }
 		cmf_suppress = { v = cm_auto_food_rgo_types_in_subjects_enabled }
 		# Auto-urbanize ignore list
 		cmf_suppress = { v = cm_auto_urbanize_ignored_rgo_goods }
-		# Auto town rights (lookup lists)
+		# Auto town rights lookup lists
 		cmf_suppress = { v = cm_auto_town_rights_list }
 		cmf_suppress = { v = cm_auto_town_rights_enabled }
 	}

@@ -1,4 +1,4 @@
-﻿# Food auto-build effects — marginal comparison and construction dispatch.
+﻿# Food auto-build effects - marginal comparison and construction dispatch.
 
 # The cm_food_* local vars are owned by the calling effect.
 cm_food_consider_option = {
@@ -36,14 +36,17 @@ cm_food_auto_build_in_location = {
 		set_local_variable = { name = cm_food_best value = 0 }
 		set_local_variable = { name = cm_food_action value = 0 }
 
-		cm_food_consider_option = { CAN = cm_food_can_build_rgo MARGINAL = cm_food_marginal_rgo ACTION = 1 }
+		# construct_rgo_upgrade has no payer arg, so a subject's RGO can't be overlord-funded.
+		if = { limit = { owner = scope:cm_country }
+			cm_food_consider_option = { CAN = cm_food_can_build_rgo MARGINAL = cm_food_marginal_rgo ACTION = 1 }
+		}
 		cm_food_consider_option = { CAN = cm_food_can_build_farming_village MARGINAL = cm_food_marginal_farming_village ACTION = 2 }
 		cm_food_consider_option = { CAN = cm_food_can_build_windmill MARGINAL = cm_food_marginal_windmill ACTION = 3 }
 		cm_food_consider_option = { CAN = cm_food_can_build_irrigation MARGINAL = cm_food_marginal_irrigation ACTION = 4 }
 		cm_food_consider_option = { CAN = cm_food_can_build_fishing_village MARGINAL = cm_food_marginal_fishing_village ACTION = 5 }
 		cm_food_consider_option = { CAN = cm_food_can_build_forest_village MARGINAL = cm_food_marginal_forest_village ACTION = 6 }
 
-		# ─── Execute best action (discount-gated: if the winner fails min discount, build nothing) ───
+		# --- Execute best action, discount-gated: if the winner fails min discount, build nothing ---
 		if = { limit = { local_var:cm_food_action = 1 cm_rgo_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
 			if = { limit = { debug_only = yes } debug_log = "CM Food: RGO expand in [THIS.GetLocation.GetNameWithNoTooltip] (marginal=[GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('cm_food_marginal_rgo')])" }
 			cm_stage_food_rgo_candidate = yes
@@ -62,12 +65,12 @@ cm_food_auto_build_in_location = {
 }
 
 # Iterate locations for a specific food RGO type and build optimally.
-# Root is the country. Expects scope:food_good (the goods scope for this food type).
+# Root is the country. Expects scope:food_good, the goods scope for this food type.
 #
 # Eligibility combines mass setting with per-location opt-in/opt-out flags:
-#   - Opt-in (auto_food_location_enabled): location is processed regardless of mass/river status
+#   - Opt-in via auto_food_location_enabled: location is processed regardless of mass/river status
 #   - Mass-covered: good is enabled in the auto_food_list AND river filter passes AND
-#     location is NOT opted out (auto_food_location_excluded)
+#     location is NOT opted out via auto_food_location_excluded
 cm_food_auto_build_for_rgo_type = {
 	save_scope_as = cm_country
 
@@ -126,7 +129,7 @@ cm_food_auto_build_for_rgo_type = {
 # Root is the country.
 cm_update_food_data_columns = {
 	save_scope_as = cm_country
-	# Initialize per-type accumulators (item order matches registration in cm_cmm_effects)
+	# Initialize per-type accumulators; item order matches registration in cm_cmm_effects.
 	set_variable = { name = cm_food_col_1 value = 0 }
 	set_variable = { name = cm_food_col_2 value = 0 }
 	set_variable = { name = cm_food_col_3 value = 0 }
@@ -218,7 +221,7 @@ cm_update_food_data_columns = {
 	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 12 value = var:cm_food_col_12 }
 	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 13 value = var:cm_food_col_13 }
 
-	# Suppress "set but never used" warnings for accumulators (referenced via text substitution)
+	# Suppress "set but never used" warnings for accumulators referenced via text substitution.
 	if = { limit = { always = no }
 		cmf_suppress = { v = cm_food_col_1 }
 		cmf_suppress = { v = cm_food_col_2 }

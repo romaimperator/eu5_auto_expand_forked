@@ -1,5 +1,5 @@
 ﻿# Food auto-build CMM list change handler.
-# Fires when any field in the auto_food_list changes (enable/disable, reorder, river_only toggle).
+# Fires when any field in the auto_food_list changes: enable/disable, reorder, river_only toggle.
 cm__auto_food_list_on_changed = {
 	scope = country
 	is_shown = { always = yes }
@@ -10,8 +10,8 @@ cm__auto_food_list_on_changed = {
 }
 
 # Root is location; returns true if location is a rural settlement with one of the 13 food good RGOs.
-# Used by the location window widget to gate visibility of the auto-food button — towns and cities
-# can't build the food-specific buildings (farming village, fishing village, etc.) so the button is
+# Used by the location window widget to gate visibility of the auto-food button - towns and cities
+# can't build the food-specific buildings such as farming village or fishing village, so the button is
 # hidden there.
 cm_is_food_rgo_location = {
 	is_shown = {
@@ -34,11 +34,11 @@ cm_is_food_rgo_location = {
 	}
 }
 
-# Root is location. Expects scope:food_good, scope:cm_country (owner). Optional scope:cm_set_off (bool).
+# Root is location. Expects scope:food_good, scope:cm_country as owner. Optional bool scope:cm_set_off.
 # Toggles per-location auto_food state, mirroring cm_set_auto_expand_for_rgo's dual-flag logic:
-#   - If the location is currently "covered by mass" (good enabled AND river filter passes),
-#     flip auto_food_location_excluded (opt-out).
-#   - Otherwise flip auto_food_location_enabled (opt-in).
+#   - If the location is currently "covered by mass", meaning good enabled AND river filter passes,
+#     flip auto_food_location_excluded, the opt-out flag.
+#   - Otherwise flip auto_food_location_enabled, the opt-in flag.
 cm_set_auto_food_for_location = {
 	effect = {
 		if = {
@@ -98,7 +98,7 @@ cm_set_auto_food_for_location = {
 	}
 }
 
-# ─── Glow / tooltip gates ───
+# --- Glow / tooltip gates ---
 
 # Root is country.
 # True if auto-food is active in the country's priority feature list.
@@ -125,8 +125,8 @@ cm_food_location_pops_not_still_filling = {
 }
 
 # Root is location. Expects scope:cm_country, scope:food_good.
-# True if at least one of the six food-building options is viable right now
-# (can-build AND affordable AND meets minimum discount).
+# True if at least one of the six food-building options is viable right now:
+# can-build AND affordable AND meets minimum discount.
 cm_food_location_has_viable_option = {
 	is_shown = {
 		cm_food_location_has_viable_option = yes
@@ -134,8 +134,8 @@ cm_food_location_has_viable_option = {
 }
 
 # Root is location. Expects scope:cm_country, scope:food_good.
-# True if at least one food-building option could physically be built here
-# (can-build only; ignores gold/discount). Used to disambiguate the "no option"
+# True if at least one food-building option could physically be built here:
+# can-build only, ignores gold/discount. Used to disambiguate the "no option"
 # tooltip row from the "no option meets min discount" tooltip row.
 cm_food_location_has_buildable_option = {
 	is_shown = {
@@ -144,7 +144,7 @@ cm_food_location_has_buildable_option = {
 }
 
 # Root is location. Expects scope:cm_country, scope:food_good.
-# True if at least one buildable food option meets the minimum discount (ignores gold).
+# True if at least one buildable food option meets the minimum discount, ignoring gold.
 # Disambiguates the "no option meets min discount" tooltip row from the "not enough gold" row.
 cm_food_location_has_discounted_option = {
 	is_shown = {
