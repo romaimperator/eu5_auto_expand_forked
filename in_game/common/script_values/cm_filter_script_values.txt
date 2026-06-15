@@ -15,8 +15,12 @@ cm_location_total_building_levels = {
 }
 
 cm_location_rgo_value = {
-	raw_material = { save_temporary_scope_as = cm_rgo_good }
-	value = "default_price(scope:cm_rgo_good)"
+	value = 0
+	if = {
+		limit = { exists = raw_material }
+		raw_material = { save_temporary_scope_as = cm_rgo_good }
+		add = "default_price(scope:cm_rgo_good)"
+	}
 }
 
 cm_location_attacker_penalty = {

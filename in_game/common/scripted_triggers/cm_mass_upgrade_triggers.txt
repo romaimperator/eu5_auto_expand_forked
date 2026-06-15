@@ -7,7 +7,7 @@ cm_location_pop_at_or_near_cap = {
 	}
 }
 
-# Root is the location, expects scope:country
+# Root is the location, expects scope:cm_country
 cm_location_can_mass_upgrade_to_city = {
 	AND = {
 		location_rank = location_rank:town
@@ -20,7 +20,7 @@ cm_location_can_mass_upgrade_to_city = {
 	}
 }
 
-# Root is the location, expects scope:country
+# Root is the location, expects scope:cm_country
 cm_location_can_mass_upgrade_to_town = {
 	AND = {
 		location_rank = location_rank:rural_settlement
@@ -38,35 +38,35 @@ cm_location_can_mass_upgrade_to_town = {
 	}
 }
 
-# Root is the location, expects scope:country.
+# Root is the location, expects scope:cm_country.
 # True when the location's RGO good is not in the player-configured ignore list.
 cm_rural_to_town_rgo_not_ignored = {
 	raw_material = { save_temporary_scope_as = cm_rgo_good }
-	NOT = { scope:country = { is_target_in_variable_list = { name = cm_auto_urbanize_ignored_rgo_goods target = scope:cm_rgo_good } } }
+	NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_auto_urbanize_ignored_rgo_goods target = scope:cm_rgo_good } } }
 }
 
-# Root is the location, expects scope:country.
+# Root is the location, expects scope:cm_country.
 # True when the auto-food feature is enabled and this location's RGO good is mass-covered.
 cm_location_reserved_by_mass_auto_food = {
-	scope:country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_food } }
+	scope:cm_country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_food } }
 	raw_material = { save_temporary_scope_as = food_good }
-	scope:country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:food_good } }
+	scope:cm_country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:food_good } }
 	cm_food_location_meets_river_filter = yes
 	NOT = { exists = var:auto_food_location_excluded }
 }
 
-# Root is the location, expects scope:country.
+# Root is the location, expects scope:cm_country.
 # Checks that the market price impact of city upgrade construction demand is within the player's threshold.
 cm_mass_upgrade_town_to_city_discount_check = {
-	save_temporary_scope_as = location
-	building_type:cm_upgrade_town_to_city_building = { save_temporary_scope_as = building_type }
+	save_temporary_scope_as = cm_location
+	building_type:cm_upgrade_town_to_city_building = { save_temporary_scope_as = cm_building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_urbanize }
 }
 
-# Root is the location, expects scope:country.
+# Root is the location, expects scope:cm_country.
 # Checks that the market price impact of town upgrade construction demand is within the player's threshold.
 cm_mass_upgrade_rural_to_town_discount_check = {
-	save_temporary_scope_as = location
-	building_type:cm_upgrade_rural_to_town_building = { save_temporary_scope_as = building_type }
+	save_temporary_scope_as = cm_location
+	building_type:cm_upgrade_rural_to_town_building = { save_temporary_scope_as = cm_building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_urbanize }
 }

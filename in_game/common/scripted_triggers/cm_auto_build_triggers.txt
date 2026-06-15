@@ -1,8 +1,8 @@
 ﻿# Generic triggers for auto-building
 
-# Shared gold-threshold check. Expects scope:country. Callers supply the script value to compare against.
+# Shared gold-threshold check. Expects scope:cm_country. Callers supply the script value to compare against.
 cm_check_country_gold_above = {
-	scope:country.gold > $threshold$
+	scope:cm_country.gold > $threshold$
 }
 
 # Root is the location. Expects $target$ = a building_type.
@@ -79,9 +79,9 @@ cm_auto_build_check_rgo_level_requirement_met = {
 # Root is the location, also expects the scope country
 cm_auto_build_check_rgo_level_requirement_met_sawmill = {
 	OR = {
-		AND = { raw_material = goods:lumber cm_modifier_rgo_level >= "scope:country.variable_map(cm_min_rgos_by_building_type|building_type:sawmill)" }
-		AND = { has_building = building_type:lumber_mill "building(building_type:lumber_mill|owner)" = { building_level >= "scope:country.variable_map(cm_min_rgos_by_building_type|building_type:sawmill)" } }
-		"scope:country.variable_map(cm_min_rgos_by_building_type|building_type:sawmill)" = 0
+		AND = { raw_material = goods:lumber cm_modifier_rgo_level >= "scope:cm_country.variable_map(cm_min_rgos_by_building_type|building_type:sawmill)" }
+		AND = { has_building = building_type:lumber_mill "building(building_type:lumber_mill|owner)" = { building_level >= "scope:cm_country.variable_map(cm_min_rgos_by_building_type|building_type:sawmill)" } }
+		"scope:cm_country.variable_map(cm_min_rgos_by_building_type|building_type:sawmill)" = 0
 	}
 }
 
@@ -93,7 +93,7 @@ cm_auto_build_check_rgo_level_requirement_met_windmill = {
 			raw_material = goods:millet
 			raw_material = goods:rice
 		}
-		cm_modifier_rgo_level >= "scope:country.variable_map(cm_min_rgos_by_building_type|building_type:windmill)"
+		cm_modifier_rgo_level >= "scope:cm_country.variable_map(cm_min_rgos_by_building_type|building_type:windmill)"
 	}
 }
 
@@ -106,7 +106,7 @@ cm_auto_build_check_rgo_level_requirement_met_local_smelters = {
 			raw_material = goods:tin
 			raw_material = goods:lead
 		}
-		cm_modifier_rgo_level >= "scope:country.variable_map(cm_min_rgos_by_building_type|building_type:local_smelters)"
+		cm_modifier_rgo_level >= "scope:cm_country.variable_map(cm_min_rgos_by_building_type|building_type:local_smelters)"
 	}
 }
 
@@ -116,18 +116,18 @@ cm_auto_build_check_rgo_level_requirement_met_local_smelters = {
 
 # Expects scopes: building_type, country. Root is the location.
 cm_location_can_auto_build = {
-	cm_auto_build_will_auto_build = { target = scope:building_type }
+	cm_auto_build_will_auto_build = { target = scope:cm_building_type }
 	cm_location_has_no_auto_build_chain_predecessor = yes
 }
 
-# Expects scope:country (cm_auto_build_chain_predecessors populated by cm_auto_build_resolve_building_type) and scope:location.
+# Expects scope:cm_country (cm_auto_build_chain_predecessors populated by cm_auto_build_resolve_building_type) and scope:cm_location.
 # True when the location has none of the resolved building type's obsolete predecessor tiers.
 cm_location_has_no_auto_build_chain_predecessor = {
-	scope:country = {
+	scope:cm_country = {
 		NOT = {
 			any_in_list = {
 				variable = cm_auto_build_chain_predecessors
-				scope:location = { has_building = prev }
+				scope:cm_location = { has_building = prev }
 			}
 		}
 	}
@@ -135,8 +135,8 @@ cm_location_has_no_auto_build_chain_predecessor = {
 
 # Root is the location. Expects the building type as a target, also expects the scope country.
 cm_auto_build_will_auto_build = {
-	scope:country = { cm_should_pause_auto_expand = no }
-	save_temporary_scope_as = location
+	scope:cm_country = { cm_should_pause_auto_expand = no }
+	save_temporary_scope_as = cm_location
 	# Auto-build only constructs one level per location. Multi-level upgrades
 	# are handled by the auto-expand-buildings feature.
 	NOT = { has_building = $target$ }
@@ -153,16 +153,16 @@ cm_auto_build_will_auto_build = {
 # Foreign-only building types (is_foreign = yes, e.g. hanseatic_kontor, fondaco) are excluded:
 # can_build_building does not filter them out, but we do not support auto-expanding them in owned locations.
 cm_location_allowed_to_build = {
-	scope:country = { save_temporary_scope_as = actor }
+	scope:cm_country = { save_temporary_scope_as = actor }
 	$target$ = { is_foreign = no }
 	can_build_building = $target$
-	scope:country = { can_build_building = $target$ }
+	scope:cm_country = { can_build_building = $target$ }
 }
 
 # Expects scopes: country, location
 # Expects param: target => building_type
 cm_auto_build_check_meets_minimum_control = {
-	scope:location.max_control >= $target$.cm_get_minimum_control_for_auto_build
+	scope:cm_location.max_control >= $target$.cm_get_minimum_control_for_auto_build
 }
 
 # Expects scopes: country, location
@@ -171,23 +171,23 @@ cm_auto_build_check_meets_minimum_control = {
 # adjustment of -32.5% (avoids float-rounding misses at the boundary).
 cm_auto_build_check_meets_minimum_market_price_impact = {
 	OR = {
-		$target$ = { save_temporary_scope_as = building_type cm_get_standard_construction_demand_total = 0 }
+		$target$ = { save_temporary_scope_as = cm_building_type cm_get_standard_construction_demand_total = 0 }
 		$target$ = { cm_get_standard_construction_cost_adjustment_for_building_type <= { value = cm_get_minimum_market_price_impact_for_auto_build add = 0.005 } }
 	}
 }
 
 # ─── Auto Build Capital triggers ───
-# Root is the capital location. Expects scope:building_type, scope:country.
+# Root is the capital location. Expects scope:cm_building_type, scope:cm_country.
 # Reads min_discount from the per-feature priority list field
 # (cm_priority_min_discount keyed on flag:cm_feature_auto_build_capital).
 # Allows multi-level capital buildings (chancery) to be queued up to their cap:
 # cm_location_building_type_is_not_at_max_level passes when the building doesn't
 # exist yet OR exists below max with no level currently under construction.
 cm_capital_location_can_auto_build = {
-	scope:country = { cm_should_pause_auto_expand = no }
-	save_temporary_scope_as = location
-	cm_location_building_type_is_not_at_max_level = { target = scope:building_type }
-	cm_location_allowed_to_build = { target = scope:building_type }
+	scope:cm_country = { cm_should_pause_auto_expand = no }
+	save_temporary_scope_as = cm_location
+	cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
+	cm_location_allowed_to_build = { target = scope:cm_building_type }
 	cm_location_has_enough_pops_available = yes
 	cm_check_location_meets_min_market_access = yes
 	cm_capital_meets_min_discount = yes
@@ -201,8 +201,8 @@ cm_capital_location_can_auto_build = {
 # accepts a -32.5% real cost adjustment without float-rounding misses.
 cm_capital_meets_min_discount = {
 	OR = {
-		scope:building_type = { save_temporary_scope_as = building_type cm_get_standard_construction_demand_total = 0 }
-		scope:building_type = { cm_get_standard_construction_cost_adjustment_for_building_type <= { value = cm_get_min_discount_for_auto_build_capital add = 0.005 } }
+		scope:cm_building_type = { save_temporary_scope_as = cm_building_type cm_get_standard_construction_demand_total = 0 }
+		scope:cm_building_type = { cm_get_standard_construction_cost_adjustment_for_building_type <= { value = cm_get_min_discount_for_auto_build_capital add = 0.005 } }
 	}
 }
 

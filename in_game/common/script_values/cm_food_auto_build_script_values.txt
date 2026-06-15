@@ -190,60 +190,60 @@ cm_food_marginal_forest_village = {
 # Expects scopes: country, location
 cm_food_expected_gold_for_rgo = {
 	value = glorpui_rgo_expand_cost
-	scope:country = { add = cm_get_minimum_gold }
+	scope:cm_country = { add = cm_get_minimum_gold }
 }
 
 # Per-building gold threshold script values.
 # Each computes: base_cost * (1 + build_modifiers) * (1 + construction_cost_adj) * (1 + inflation) + gold_reserve.
-# Root is the location. Expects scope:country.
+# Root is the location. Expects scope:cm_country.
 cm_food_expected_gold_for_farming_village = {
 	building_type:farming_village = { value = building_base_cost_in_gold }
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
 	multiply = { value = 1 building_type:farming_village = { add = cm_get_construction_cost_adjustment_for_building_type } }
-	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = cm_get_minimum_gold }
+	multiply = { value = 1 add = scope:cm_country.inflation }
+	scope:cm_country = { add = cm_get_minimum_gold }
 }
 
 cm_food_expected_gold_for_windmill = {
 	building_type:windmill = { value = building_base_cost_in_gold }
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
 	multiply = { value = 1 building_type:windmill = { add = cm_get_construction_cost_adjustment_for_building_type } }
-	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = cm_get_minimum_gold }
+	multiply = { value = 1 add = scope:cm_country.inflation }
+	scope:cm_country = { add = cm_get_minimum_gold }
 }
 
 cm_food_expected_gold_for_irrigation_systems = {
 	building_type:irrigation_systems = { value = building_base_cost_in_gold }
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
 	multiply = { value = 1 building_type:irrigation_systems = { add = cm_get_construction_cost_adjustment_for_building_type } }
-	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = cm_get_minimum_gold }
+	multiply = { value = 1 add = scope:cm_country.inflation }
+	scope:cm_country = { add = cm_get_minimum_gold }
 }
 
 cm_food_expected_gold_for_fishing_village = {
 	building_type:fishing_village = { value = building_base_cost_in_gold }
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
 	multiply = { value = 1 building_type:fishing_village = { add = cm_get_construction_cost_adjustment_for_building_type } }
-	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = cm_get_minimum_gold }
+	multiply = { value = 1 add = scope:cm_country.inflation }
+	scope:cm_country = { add = cm_get_minimum_gold }
 }
 
 cm_food_expected_gold_for_forest_village = {
 	building_type:forest_village = { value = building_base_cost_in_gold }
 	multiply = { value = 1 add = cm_food_build_cost_modifier }
 	multiply = { value = 1 building_type:forest_village = { add = cm_get_construction_cost_adjustment_for_building_type } }
-	multiply = { value = 1 add = scope:country.inflation }
-	scope:country = { add = cm_get_minimum_gold }
+	multiply = { value = 1 add = scope:cm_country.inflation }
+	scope:cm_country = { add = cm_get_minimum_gold }
 }
 
-# Build cost modifier (global + local). Root is the location, expects scope:country.
+# Build cost modifier (global + local). Root is the location, expects scope:cm_country.
 cm_food_build_cost_modifier = {
 	value = 0
-	scope:country = { subtract = modifier:global_build_buildings_efficiency }
+	scope:cm_country = { subtract = modifier:global_build_buildings_efficiency }
 	if = { limit = { location_rank = location_rank:rural_settlement }
-		scope:country = { subtract = modifier:global_rural_build_buildings_efficiency }
+		scope:cm_country = { subtract = modifier:global_rural_build_buildings_efficiency }
 	} else = {
-		scope:country = { subtract = modifier:global_urban_build_buildings_efficiency }
+		scope:cm_country = { subtract = modifier:global_urban_build_buildings_efficiency }
 	}
 	subtract = modifier:local_build_buildings_efficiency
 	subtract = modifier:local_build_new_buildings_efficiency
@@ -265,7 +265,7 @@ cm_food_gold_threshold = {
 # Root is the location. Expects scopes: country, location.
 cm_food_gold_threshold_plus_planned_spend = {
 	value = cm_food_gold_threshold
-	scope:country = { add = var:cm_q_planned_spend }
+	scope:cm_country = { add = var:cm_q_planned_spend }
 }
 
 # Spare pop pool after fully building out the RGO to its max level. Root is the location.

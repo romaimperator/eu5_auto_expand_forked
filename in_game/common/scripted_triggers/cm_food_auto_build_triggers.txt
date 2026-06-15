@@ -16,10 +16,10 @@ cm_food_location_matches_rgo_type = {
 	raw_material = scope:food_good
 }
 
-# Root is the location. Expects scope:food_good and scope:country.
+# Root is the location. Expects scope:food_good and scope:cm_country.
 # True if location passes the river_only filter for this food good.
 cm_food_location_meets_river_filter = {
-	trigger_if = { limit = { scope:country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_river_only target = scope:food_good } } }
+	trigger_if = { limit = { scope:cm_country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_river_only target = scope:food_good } } }
 		OR = { has_river = yes is_adjacent_to_lake = yes }
 	} trigger_else = {
 		always = yes
@@ -28,7 +28,7 @@ cm_food_location_meets_river_filter = {
 
 # ─── Pool pop checks ───
 
-# Root is the location. Expects scope:country.
+# Root is the location. Expects scope:cm_country.
 # True when no pop-restricted food option is buildable.
 cm_food_location_pops_still_filling = {
 	OR = {
@@ -99,7 +99,7 @@ cm_food_can_build_windmill = {
 			raw_material = goods:rice
 			raw_material = goods:millet
 		}
-		scope:country = { has_advance = windmills_advance }
+		scope:cm_country = { has_advance = windmills_advance }
 		cm_food_location_buildable_for_building_type = { target = building_type:windmill }
 		cm_check_location_has_laborers_available_or_will_be = yes
 		cm_check_location_has_peasants_available_or_will_be = yes
@@ -156,31 +156,31 @@ cm_food_option_rgo_discounted = {
 
 cm_food_option_farming_village_discounted = {
 	cm_food_can_build_farming_village = yes
-	building_type:farming_village = { save_temporary_scope_as = building_type }
+	building_type:farming_village = { save_temporary_scope_as = cm_building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
 cm_food_option_windmill_discounted = {
 	cm_food_can_build_windmill = yes
-	building_type:windmill = { save_temporary_scope_as = building_type }
+	building_type:windmill = { save_temporary_scope_as = cm_building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
 cm_food_option_irrigation_discounted = {
 	cm_food_can_build_irrigation = yes
-	building_type:irrigation_systems = { save_temporary_scope_as = building_type }
+	building_type:irrigation_systems = { save_temporary_scope_as = cm_building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
 cm_food_option_fishing_village_discounted = {
 	cm_food_can_build_fishing_village = yes
-	building_type:fishing_village = { save_temporary_scope_as = building_type }
+	building_type:fishing_village = { save_temporary_scope_as = cm_building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
 cm_food_option_forest_village_discounted = {
 	cm_food_can_build_forest_village = yes
-	building_type:forest_village = { save_temporary_scope_as = building_type }
+	building_type:forest_village = { save_temporary_scope_as = cm_building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 

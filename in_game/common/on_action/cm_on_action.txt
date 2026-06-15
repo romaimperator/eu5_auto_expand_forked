@@ -21,7 +21,7 @@ cm_update_all_list_visibility = {
 # Still respects the master pause toggle.
 cm_monthly_auto_town_rights = {
 	effect = {
-		save_scope_as = country
+		save_scope_as = cm_country
 		if = {
 			limit = {
 				cm_should_pause_auto_expand = no
@@ -36,7 +36,7 @@ cm_monthly_auto_town_rights = {
 # enabled feature's effect. Gated by the master pause toggle.
 cm_unified_auto_expand = {
 	effect = {
-		save_scope_as = country
+		save_scope_as = cm_country
 		# Start a fresh construction queue each cycle, drained once by the queue window.
 		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_locations LOCATION_LIST = cm_q_building_types }
 		clear_variable_list = cm_q_rgo_locations
@@ -63,16 +63,16 @@ cm_unified_auto_expand = {
 				every_in_list = {
 					variable = cm_priority_features_list
 					save_scope_as = feature
-					if = { limit = { scope:country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = scope:feature } } }
+					if = { limit = { scope:cm_country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = scope:feature } } }
 						switch = {
 							trigger = scope:feature
-							flag:cm_feature_auto_expand_buildings = { scope:country = { cm_run_auto_expand_buildings = yes } }
-							flag:cm_feature_auto_expand_rgos = { scope:country = { cm_run_auto_expand_rgos = yes } }
-							flag:cm_feature_upgrade_all_buildings = { scope:country = { cm_run_upgrade_all_buildings = yes } }
-							flag:cm_feature_auto_build = { scope:country = { cm_run_auto_build = yes } }
-							flag:cm_feature_auto_food = { scope:country = { cm_run_auto_food = yes } }
-							flag:cm_feature_auto_urbanize = { scope:country = { cm_run_auto_urbanize = yes } }
-							flag:cm_feature_auto_build_capital = { scope:country = { cm_run_auto_build_capital = yes } }
+							flag:cm_feature_auto_expand_buildings = { scope:cm_country = { cm_run_auto_expand_buildings = yes } }
+							flag:cm_feature_auto_expand_rgos = { scope:cm_country = { cm_run_auto_expand_rgos = yes } }
+							flag:cm_feature_upgrade_all_buildings = { scope:cm_country = { cm_run_upgrade_all_buildings = yes } }
+							flag:cm_feature_auto_build = { scope:cm_country = { cm_run_auto_build = yes } }
+							flag:cm_feature_auto_food = { scope:cm_country = { cm_run_auto_food = yes } }
+							flag:cm_feature_auto_urbanize = { scope:cm_country = { cm_run_auto_urbanize = yes } }
+							flag:cm_feature_auto_build_capital = { scope:cm_country = { cm_run_auto_build_capital = yes } }
 						}
 					}
 				}

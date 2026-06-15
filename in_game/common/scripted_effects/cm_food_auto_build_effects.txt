@@ -13,9 +13,9 @@ cm_food_consider_option = {
 
 # Root is the location.
 cm_food_stage_building_option = {
-	if = { limit = { local_var:cm_food_action = $ACTION$ $BT$ = { save_temporary_scope_as = building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
+	if = { limit = { local_var:cm_food_action = $ACTION$ $BT$ = { save_temporary_scope_as = cm_building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
 		if = { limit = { debug_only = yes } debug_log = "CM Food: stage food building in [THIS.GetLocation.GetNameWithNoTooltip]" }
-		$BT$ = { save_scope_as = building_type }
+		$BT$ = { save_scope_as = cm_building_type }
 		cm_stage_food_building_candidate = yes
 	}
 }
@@ -24,7 +24,7 @@ cm_food_stage_building_option = {
 # Root is the location. Expects scopes: country, location, food_good.
 cm_food_auto_build_in_location = {
 	# Preconditions: pause, build queue, market access, gold reserve
-	if = { limit = { scope:country = { cm_should_pause_auto_expand = no } }
+	if = { limit = { scope:cm_country = { cm_should_pause_auto_expand = no } }
 	if = { limit = { cm_get_open_build_queue_slots > 0 }
 	if = { limit = { cm_check_location_meets_min_market_access = yes }
 	if = { limit = { cm_check_country_gold_above = { threshold = cm_food_gold_threshold } }
@@ -69,7 +69,7 @@ cm_food_auto_build_in_location = {
 #   - Mass-covered: good is enabled in the auto_food_list AND river filter passes AND
 #     location is NOT opted out (auto_food_location_excluded)
 cm_food_auto_build_for_rgo_type = {
-	save_scope_as = country
+	save_scope_as = cm_country
 
 	# Process owned rural locations matching this food good
 	ordered_owned_location = {
@@ -83,13 +83,13 @@ cm_food_auto_build_for_rgo_type = {
 			OR = {
 				exists = var:auto_food_location_enabled
 				AND = {
-					scope:country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:food_good } }
+					scope:cm_country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:food_good } }
 					cm_food_location_meets_river_filter = yes
 					NOT = { exists = var:auto_food_location_excluded }
 				}
 			}
 		}
-		save_scope_as = location
+		save_scope_as = cm_location
 		cm_food_auto_build_in_location = yes
 	}
 
@@ -111,9 +111,9 @@ cm_food_auto_build_for_rgo_type = {
 					cm_food_location_matches_rgo_type = yes
 					cm_food_location_meets_river_filter = yes
 				}
-				save_scope_as = location
-				scope:country = {
-					scope:location = {
+				save_scope_as = cm_location
+				scope:cm_country = {
+					scope:cm_location = {
 						cm_food_auto_build_in_location = yes
 					}
 				}
@@ -125,7 +125,7 @@ cm_food_auto_build_for_rgo_type = {
 # Update food data columns: sums total food per RGO type across all owned rural locations.
 # Root is the country.
 cm_update_food_data_columns = {
-	save_scope_as = country
+	save_scope_as = cm_country
 	# Initialize per-type accumulators (item order matches registration in cm_cmm_effects)
 	set_variable = { name = cm_food_col_1 value = 0 }
 	set_variable = { name = cm_food_col_2 value = 0 }
@@ -145,7 +145,7 @@ cm_update_food_data_columns = {
 	every_owned_location = {
 		limit = { location_rank = location_rank:rural_settlement }
 		save_scope_as = food_loc
-		scope:country = {
+		scope:cm_country = {
 			if = { limit = { scope:food_loc = { raw_material = goods:rice } }
 				change_variable = { name = cm_food_col_1 add = scope:food_loc.cm_food_location_total }
 			}

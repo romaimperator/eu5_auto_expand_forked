@@ -1,28 +1,28 @@
 ﻿
 
-# Root is the country. Expects scope:building_type.
-# If scope:building_type is obsolete for this country, walks the upgrade chain
-# and re-saves scope:building_type to the current non-obsolete version.
+# Root is the country. Expects scope:cm_building_type.
+# If scope:cm_building_type is obsolete for this country, walks the upgrade chain
+# and re-saves scope:cm_building_type to the current non-obsolete version.
 # Unrolled to max depth 4 (dock → dry_dock → shipyard → grand_shipyard → naval_base).
 # Also collects the obsolete tiers it walks into cm_auto_build_chain_predecessors.
 cm_auto_build_resolve_building_type = {
 	clear_variable_list = cm_auto_build_chain_predecessors
-	if = { limit = { building_type_is_obsolete = scope:building_type }
-		add_to_variable_list = { name = cm_auto_build_chain_predecessors target = scope:building_type }
-		scope:building_type = { cm_find_upgrade_building_type = yes }
-		scope:return_scope = { save_scope_as = building_type }
-		if = { limit = { building_type_is_obsolete = scope:building_type }
-			add_to_variable_list = { name = cm_auto_build_chain_predecessors target = scope:building_type }
-			scope:building_type = { cm_find_upgrade_building_type = yes }
-			scope:return_scope = { save_scope_as = building_type }
-			if = { limit = { building_type_is_obsolete = scope:building_type }
-				add_to_variable_list = { name = cm_auto_build_chain_predecessors target = scope:building_type }
-				scope:building_type = { cm_find_upgrade_building_type = yes }
-				scope:return_scope = { save_scope_as = building_type }
-				if = { limit = { building_type_is_obsolete = scope:building_type }
-					add_to_variable_list = { name = cm_auto_build_chain_predecessors target = scope:building_type }
-					scope:building_type = { cm_find_upgrade_building_type = yes }
-					scope:return_scope = { save_scope_as = building_type }
+	if = { limit = { building_type_is_obsolete = scope:cm_building_type }
+		add_to_variable_list = { name = cm_auto_build_chain_predecessors target = scope:cm_building_type }
+		scope:cm_building_type = { cm_find_upgrade_building_type = yes }
+		scope:return_scope = { save_scope_as = cm_building_type }
+		if = { limit = { building_type_is_obsolete = scope:cm_building_type }
+			add_to_variable_list = { name = cm_auto_build_chain_predecessors target = scope:cm_building_type }
+			scope:cm_building_type = { cm_find_upgrade_building_type = yes }
+			scope:return_scope = { save_scope_as = cm_building_type }
+			if = { limit = { building_type_is_obsolete = scope:cm_building_type }
+				add_to_variable_list = { name = cm_auto_build_chain_predecessors target = scope:cm_building_type }
+				scope:cm_building_type = { cm_find_upgrade_building_type = yes }
+				scope:return_scope = { save_scope_as = cm_building_type }
+				if = { limit = { building_type_is_obsolete = scope:cm_building_type }
+					add_to_variable_list = { name = cm_auto_build_chain_predecessors target = scope:cm_building_type }
+					scope:cm_building_type = { cm_find_upgrade_building_type = yes }
+					scope:return_scope = { save_scope_as = cm_building_type }
 				}
 			}
 		}

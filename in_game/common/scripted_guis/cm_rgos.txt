@@ -2,14 +2,14 @@
 	effect = {
 		if = { limit = { owner = { exists = var:cm_mass_auto_expand_rgo } }
 			# Mass mode: operate on exclusion variable (inverted logic)
-			if = { limit = { NOT = { exists = scope:set_off } }
+			if = { limit = { NOT = { exists = scope:cm_set_off } }
 				if = { limit = { exists = var:auto_expand_rgo_excluded }
 					remove_variable = auto_expand_rgo_excluded
 				} else = {
 					set_variable = { name = auto_expand_rgo_excluded value = yes }
 				}
 			} else = {
-				if = { limit = { scope:set_off = yes }
+				if = { limit = { scope:cm_set_off = yes }
 					if = { limit = { NOT = { exists = var:auto_expand_rgo_excluded } }
 						set_variable = { name = auto_expand_rgo_excluded value = yes }
 					}
@@ -19,14 +19,14 @@
 			}
 		} else = {
 			# Normal mode: operate on enable variable
-			if = { limit = { NOT = { exists = scope:set_off } }
+			if = { limit = { NOT = { exists = scope:cm_set_off } }
 				if = { limit = { exists = var:auto_expand_rgo }
 					remove_variable = auto_expand_rgo
 				} else = {
 					set_variable = { name = auto_expand_rgo value = yes }
 				}
 			} else = {
-				if = { limit = { scope:set_off = yes }
+				if = { limit = { scope:cm_set_off = yes }
 					remove_variable = auto_expand_rgo
 				} else = {
 					set_variable = { name = auto_expand_rgo value = yes }
@@ -81,7 +81,7 @@ cm_toggle_mass_auto_expand_rgo = {
 # Expects scopes: country, income, profit
 cm_is_able_to_auto_expand_rgo = {
 	is_shown = {
-		save_temporary_scope_as = location
+		save_temporary_scope_as = cm_location
 		cm_is_able_to_auto_expand_rgo = yes
 	}
 }
@@ -91,7 +91,7 @@ cm_is_able_to_auto_expand_rgo = {
 # Expects scopes: country, income, profit
 cm_rgo_metric_gate_shown = {
 	is_shown = {
-		save_temporary_scope_as = location
+		save_temporary_scope_as = cm_location
 		cm_rgo_metric_gate_passes = yes
 	}
 }
@@ -151,7 +151,7 @@ cm_is_there_enough_gold_available = {
 # Expects scopes: country
 cm_rgo_meets_minimum_discount_for_auto_expand = {
 	is_shown = {
-		save_temporary_scope_as = location
+		save_temporary_scope_as = cm_location
 		cm_rgo_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_rgos }
 	}
 }

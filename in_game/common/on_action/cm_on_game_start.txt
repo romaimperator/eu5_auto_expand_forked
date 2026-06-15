@@ -43,8 +43,7 @@ cm_on_init_human_country = {
 	}
 }
 
-# Country transfer hook. CMF has already copied CMM setting values.
-# Copy CM-specific non-CMM data (location lists, etc.).
+# CMF copies CMM setting values and re-runs registration before this fires; only the non-CMM expand-threshold memory is copied here.
 cmf_on_country_transfer = {
 	on_actions = {
 		cm_on_country_transfer
@@ -53,26 +52,9 @@ cmf_on_country_transfer = {
 
 cm_on_country_transfer = {
 	effect = {
-		# Copy simple setting aliases from old country
-		if = { limit = { scope:old_country = { has_variable = cm_pause_auto_expand } }
-			set_variable = { name = cm_pause_auto_expand value = scope:old_country.var:cm_pause_auto_expand }
-		}
-		if = { limit = { scope:old_country = { has_variable = cm_minimum_gold } }
-			set_variable = { name = cm_minimum_gold value = scope:old_country.var:cm_minimum_gold }
-		}
-		if = { limit = { scope:old_country = { has_variable = cm_allowed_building_overbuild_levels } }
-			set_variable = { name = cm_allowed_building_overbuild_levels value = scope:old_country.var:cm_allowed_building_overbuild_levels }
-		}
-		if = { limit = { scope:old_country = { has_variable = cm_expand_metric } }
-			set_variable = { name = cm_expand_metric value = scope:old_country.var:cm_expand_metric }
-		}
 		cm_copy_expand_thresholds = { m = 1 }
 		cm_copy_expand_thresholds = { m = 2 }
 		cm_copy_expand_thresholds = { m = 3 }
 		cm_copy_expand_thresholds = { m = 4 }
-		cm_apply_expand_metric_bounds = yes
-
-		# Rebuild priority lookup tables for new country
-		cm_rebuild_priority_lookups = yes
 	}
 }

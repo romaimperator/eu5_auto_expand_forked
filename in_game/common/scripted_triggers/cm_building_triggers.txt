@@ -1,20 +1,20 @@
 ﻿
 # Affordability gate for the construction drain.
 cm_country_can_afford_staged_cost = {
-	scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }
+	scope:cm_country = { gold >= { value = scope:cm_cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }
 }
 
 # Affordability gate for the auto-expand tooltips.
 cm_country_can_afford_predicted_cost = {
-	scope:country = { gold >= { value = scope:cost add = cm_get_minimum_gold } }
+	scope:cm_country = { gold >= { value = scope:cm_cost add = cm_get_minimum_gold } }
 }
 
 # Expects scopes: building type
 cm_does_building_type_count_for_fort_building_cost_modifier = {
 	AND = {
 		has_global_variable_map = cm_building_type_to_is_fort
-		is_key_in_global_variable_map = { name = cm_building_type_to_is_fort target = scope:building_type }
-		"global_variable_map(cm_building_type_to_is_fort|scope:building_type)" = 1
+		is_key_in_global_variable_map = { name = cm_building_type_to_is_fort target = scope:cm_building_type }
+		"global_variable_map(cm_building_type_to_is_fort|scope:cm_building_type)" = 1
 	}
 }
 
@@ -23,9 +23,9 @@ cm_is_building_obsolete = {
 	building_type = { save_temporary_scope_as = the_building_type }
 	owner = { building_type_is_obsolete = scope:the_building_type }
 }
-# Expects scope:building_type and scope:country. Root scope is unused.
+# Expects scope:cm_building_type and scope:cm_country. Root scope is unused.
 cm_is_building_type_obsolete = {
-	scope:country = { building_type_is_obsolete = scope:building_type }
+	scope:cm_country = { building_type_is_obsolete = scope:cm_building_type }
 }
 
 # Root is the building
@@ -33,11 +33,11 @@ cm_is_building_upgradeable = {
 	building_type = { is_upgradeable = yes }
 }
 
-# Root is the location, also expects scope:building_type and scope:country.
+# Root is the location, also expects scope:cm_building_type and scope:cm_country.
 # False if the location doesn't have the building (nothing to upgrade).
 cm_building_type_can_be_upgraded_by_owner = {
-	has_building = scope:building_type
-	"building(scope:building_type|scope:country)" = { building_can_be_upgraded_by = scope:country }
+	has_building = scope:cm_building_type
+	"building(scope:cm_building_type|scope:cm_country)" = { building_can_be_upgraded_by = scope:cm_country }
 }
 
 # Root is the building
@@ -47,10 +47,10 @@ cm_is_building_upgradeable_and_can_be_upgraded_by_owner = {
 		building_can_be_upgraded_by = owner
 	}
 }
-# Root is the location, also expects scope:building_type and scope:country
+# Root is the location, also expects scope:cm_building_type and scope:cm_country
 cm_is_building_type_upgradeable_and_can_be_upgraded_by_owner = {
 	AND = {
-		scope:building_type = { is_upgradeable = yes }
+		scope:cm_building_type = { is_upgradeable = yes }
 		cm_building_type_can_be_upgraded_by_owner = yes
 	}
 }
@@ -87,17 +87,17 @@ cm_is_building_fully_employed = {
 	}
 }
 
-# Expects scope:country.
+# Expects scope:cm_country.
 cm_expand_metric_is_tax_income = {
 	OR = {
-		NOT = { scope:country = { exists = var:cm_expand_metric } }
-		scope:country.var:cm_expand_metric = 1
+		NOT = { scope:cm_country = { exists = var:cm_expand_metric } }
+		scope:cm_country.var:cm_expand_metric = 1
 	}
 }
 
-# Expects scope:country. $metric$ = dropdown index 2 to 4.
+# Expects scope:cm_country. $metric$ = dropdown index 2 to 4.
 cm_expand_metric_is = {
-	scope:country = {
+	scope:cm_country = {
 		exists = var:cm_expand_metric
 		var:cm_expand_metric = $metric$
 	}
@@ -109,45 +109,45 @@ cm_expand_metric_is = {
 # Profit, years to recoup the cost for the ROI metrics.
 cm_gui_metric_gate_passes = {
 	OR = {
-		NOT = { scope:building_type = { cm_is_building_type_production_building = yes } }
+		NOT = { scope:cm_building_type = { cm_is_building_type_production_building = yes } }
 		cm_get_construction_demand_total_count = 0
-		NOT = { scope:country = { has_variable_map = cm_priority_min_profit } }
-		"scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)" = 0
+		NOT = { scope:cm_country = { has_variable_map = cm_priority_min_profit } }
+		"scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)" = 0
 		AND = {
 			cm_expand_metric_is_tax_income = yes
-			scope:income >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+			scope:cm_income >= "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
 		}
 		AND = {
 			cm_expand_metric_is = { metric = 2 }
-			scope:profit >= "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+			scope:cm_profit >= "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
 		}
 		AND = {
 			cm_expand_metric_is = { metric = 3 }
-			scope:cost <= {
-				value = scope:income
-				multiply = "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+			scope:cm_cost <= {
+				value = scope:cm_income
+				multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
 				multiply = 12
 			}
 		}
 		AND = {
 			cm_expand_metric_is = { metric = 4 }
-			scope:cost <= {
-				value = scope:profit
-				multiply = "scope:country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+			scope:cm_cost <= {
+				value = scope:cm_profit
+				multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
 				multiply = 12
 			}
 		}
 	}
 }
 
-# Expects scope:building_type. Checks if the building type produces a good that is also
+# Expects scope:cm_building_type. Checks if the building type produces a good that is also
 # one of its construction demand goods (e.g. horse_breeders produces and requires horses).
 # Precomputed by the hidden window GUI at game start.
 cm_building_type_produces_own_construction_good = {
 	AND = {
 		has_global_variable_map = cm_building_type_produces_own_construction_good
-		is_key_in_global_variable_map = { name = cm_building_type_produces_own_construction_good target = scope:building_type }
-		"global_variable_map(cm_building_type_produces_own_construction_good|scope:building_type)" = 1
+		is_key_in_global_variable_map = { name = cm_building_type_produces_own_construction_good target = scope:cm_building_type }
+		"global_variable_map(cm_building_type_produces_own_construction_good|scope:cm_building_type)" = 1
 	}
 }
 
@@ -159,24 +159,24 @@ cm_building_type_produces_own_construction_good = {
 # matches a cost adjustment of -32.5% (avoids float-rounding misses at the boundary).
 cm_building_meets_minimum_discount = {
 	OR = {
-		NOT = { scope:country = { has_variable_map = cm_priority_min_discount } }
+		NOT = { scope:cm_country = { has_variable_map = cm_priority_min_discount } }
 		cm_get_construction_demand_total_count = 0
 		cm_building_type_produces_own_construction_good = yes
 		cm_get_standard_construction_demand_total = 0
-		scope:building_type = {
+		scope:cm_building_type = {
 			cm_get_standard_construction_cost_adjustment_for_building_type <= { value = $threshold$ add = 0.005 }
 		}
 	}
 }
 
 # Root is the building. Shared core of the two cm_building_can_auto_expand_* triggers.
-# Expects scope:building_type as the type whose discount and pops gates are evaluated:
+# Expects scope:cm_building_type as the type whose discount and pops gates are evaluated:
 # expansion callers pass the building's own type, upgrade staging passes the replacement.
 # can_build_building fails for obsolete building types; the upgrade path omits it and
 # the normal path adds it via cm_building_can_auto_expand_other_than_checking_for_upgrades.
 cm_building_can_auto_expand_for_upgrade = {
-	location = { save_temporary_scope_as = location }
-	owner = { save_temporary_scope_as = country }
+	location = { save_temporary_scope_as = cm_location }
+	owner = { save_temporary_scope_as = cm_country }
 	AND = {
 		is_opened = yes
 		cm_is_building_fully_employed = yes
@@ -191,35 +191,35 @@ cm_building_can_auto_expand_for_upgrade = {
 cm_building_can_auto_expand_other_than_checking_for_upgrades = {
 	AND = {
 		cm_building_can_auto_expand_for_upgrade = yes
-		location = { cm_location_allowed_to_build = { target = scope:building_type } }
+		location = { cm_location_allowed_to_build = { target = scope:cm_building_type } }
 	}
 }
 
 # Expects scopes: building type, country, and location
 cm_location_can_auto_expand_from_zero_levels = {
-	scope:location = { cm_location_will_auto_expand_from_zero_levels = yes }
+	scope:cm_location = { cm_location_will_auto_expand_from_zero_levels = yes }
 }
 
-# Root is the location, also expects scope:building_type and scope:country.
+# Root is the location, also expects scope:cm_building_type and scope:cm_country.
 cm_location_will_auto_expand_from_zero_levels = {
 	AND = {
-		scope:country = { cm_should_pause_auto_expand = no }
+		scope:cm_country = { cm_should_pause_auto_expand = no }
 		NOT = { integration_level = conquered }
 		cm_location_has_enough_pops_available = yes
 		cm_is_location_under_building_limit = yes
-		save_temporary_scope_as = location
+		save_temporary_scope_as = cm_location
 		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
-		cm_location_allowed_to_build = { target = scope:building_type }
+		cm_location_allowed_to_build = { target = scope:cm_building_type }
 		cm_location_building_type_not_under_construction = yes
 	}
 }
 
-# Expects scope:country. Checks that the player has gold above their minimum reserve setting.
+# Expects scope:cm_country. Checks that the player has gold above their minimum reserve setting.
 # Used for upgrade branches where the exact upgrade cost is resolved by the GUI.
 cm_auto_expand_check_minimum_gold_reserve = {
 	OR = {
-		NOT = { scope:country = { exists = var:cm_minimum_gold } }
-		scope:country.gold > scope:country.var:cm_minimum_gold
+		NOT = { scope:cm_country = { exists = var:cm_minimum_gold } }
+		scope:cm_country.gold > scope:cm_country.var:cm_minimum_gold
 	}
 }
 
@@ -228,12 +228,12 @@ cm_is_not_under_construction = {
 	building_levels_under_construction = 0
 }
 
-# Root is the location, expects scope:building_type. False if this building type already has
+# Root is the location, expects scope:cm_building_type. False if this building type already has
 # levels queued or under construction at the location (a queued first level counts).
 cm_location_building_type_not_under_construction = {
 	NOT = {
 		any_buildings_in_location = {
-			building_type = scope:building_type
+			building_type = scope:cm_building_type
 			building_levels_under_construction > 0
 		}
 	}
@@ -241,8 +241,8 @@ cm_location_building_type_not_under_construction = {
 
 # Root is the building. Thin wrapper: saves scopes and delegates to the shared trigger.
 cm_upgrade_all_meets_minimum_discount = {
-	owner = { save_temporary_scope_as = country }
-	building_type = { save_temporary_scope_as = building_type }
+	owner = { save_temporary_scope_as = cm_country }
+	building_type = { save_temporary_scope_as = cm_building_type }
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_upgrade_all_buildings }
 }
 

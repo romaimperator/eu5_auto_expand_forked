@@ -64,7 +64,7 @@ cm_initialize_goods_globals = {
 
 # Expects scopes: country
 cm_check_that_country_variables_are_set = {
-  scope:country = {
+  scope:cm_country = {
     # Simple settings (CMM aliases — initialized by CMM registration, defaults here for non-CMF fallback)
     if = { limit = { NOT = { has_variable = cm_minimum_gold } }
       set_variable = { name = cm_minimum_gold value = 50 }
@@ -78,23 +78,23 @@ cm_check_that_country_variables_are_set = {
 
 # Expects scopes: country
 cm_reset_locations_lists = {
-  scope:country = {
+  scope:cm_country = {
     # Directly owned locations first, sorted by max control
     clear_variable_list = cm_all_locations_including_subjects_list
     ordered_owned_location = {
       order_by = max_control
-      save_scope_as = location
+      save_scope_as = cm_location
       max = cm_max_guess_at_number_of_locations
       check_range_bounds = no
-      scope:country = { add_to_variable_list = { name = cm_all_locations_including_subjects_list target = scope:location } }
+      scope:cm_country = { add_to_variable_list = { name = cm_all_locations_including_subjects_list target = scope:cm_location } }
     }
 
     # Make unsorted list of locations of all subjects and below
     clear_variable_list = cm_all_locations_including_subjects_list_temp
     every_subject_or_below = {
       every_owned_location = {
-        save_scope_as = location
-        scope:country = { add_to_variable_list = { name = cm_all_locations_including_subjects_list_temp target = scope:location } }
+        save_scope_as = cm_location
+        scope:cm_country = { add_to_variable_list = { name = cm_all_locations_including_subjects_list_temp target = scope:cm_location } }
       }
     }
 
@@ -104,8 +104,8 @@ cm_reset_locations_lists = {
       order_by = max_control
       max = cm_max_guess_at_number_of_locations
       check_range_bounds = no
-      save_scope_as = location
-      scope:country = { add_to_variable_list = { name = cm_all_locations_including_subjects_list target = scope:location } }
+      save_scope_as = cm_location
+      scope:cm_country = { add_to_variable_list = { name = cm_all_locations_including_subjects_list target = scope:cm_location } }
     }
     clear_variable_list = cm_all_locations_including_subjects_list_temp
   }
