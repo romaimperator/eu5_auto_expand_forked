@@ -24,12 +24,20 @@ cm_is_able_to_auto_expand_rgo = {
 	}
 }
 
+# Root is the location.
+# The owner feature-enabled check prevents suppressing RGO auto-expand while auto-food is off.
+cm_location_auto_food_supersedes_rgo = {
+	owner = { is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_food } }
+	cm_location_is_auto_food_active = yes
+}
+
 # This trigger is used at staging time to determine if the RGO should be queued.
 # The metric gate runs at drain time in cm_gui_try_rgo, where the engine profit value exists.
 # Expects scopes: country, location
 cm_should_rgo_auto_expand = {
 	scope:cm_location = {
 		AND = {
+			NOT = { cm_location_auto_food_supersedes_rgo = yes }
 			cm_rgo_basic_expand_eligibility = yes
 			cm_is_rgo_under_construction = no
 			cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_rgo_auto_expand }
