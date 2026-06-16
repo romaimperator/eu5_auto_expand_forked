@@ -10,17 +10,15 @@
 	}
 	blockoverride "content" {
 		widget = {
-			state = {
-				name = cm_q_wait
-				trigger_on_create = yes
-				next = cm_q_apply
-				on_finish = "[PdxGuiWidget.TriggerAnimation('cm_q_apply')]"
-			}
-			state = {
-				name = cm_q_apply
-				duration = 2
-				on_finish = "[GetScriptedGui('cm_clear_should_construct').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-				next = cm_q_wait
+			widget = {
+				size = { 0 0 }
+				visible_at_creation = no
+				visible = "[GetScriptedGui('cm_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				state = {
+					name = _show
+					duration = 2
+					on_finish = "[GetScriptedGui('cm_clear_should_construct').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				}
 			}
 			# Metric-gated building constructs: per-location list of building types.
 			widget = {

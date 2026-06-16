@@ -1,14 +1,9 @@
-﻿# Expects scopes: country
-# Polls every 2 seconds from the hidden window GUI. Only does real work
-# when a monthly tick flag is present, keeping inter-month cycles as no-ops.
-cm_hidden_window_repeated_init = {
+﻿# Refreshes country variables when the monthly tick fires. Expects scope: cm_country.
+cm_refresh_country_variables = {
 	effect = {
-		if = { limit = { AND = { scope:skip = no exists = scope:cm_country } }
-			# Monthly tick: refresh country variables.
-			if = { limit = { scope:cm_country = { has_variable = cm_monthly_gui_tick } }
-				cm_check_that_country_variables_are_set = {}
-				scope:cm_country = { remove_variable = cm_monthly_gui_tick }
-			}
+		if = { limit = { exists = scope:cm_country }
+			cm_check_that_country_variables_are_set = {}
+			scope:cm_country = { remove_variable = cm_monthly_gui_tick }
 		}
 	}
 }
@@ -19,6 +14,13 @@ cm_hidden_window_repeated_init = {
 cm_should_construct = {
 	is_shown = {
 		exists = var:cm_should_construct
+	}
+}
+
+# Gates the monthly country-variable refresh. Root is the player.
+cm_should_refresh_country_variables = {
+	is_shown = {
+		exists = var:cm_monthly_gui_tick
 	}
 }
 
