@@ -92,7 +92,7 @@ cm_stage_food_rgo_candidate = {
 # Eligibility reads the standing building for employment and goods; the discount and
 # pops gates read the replacement type because the replacement is what gets constructed.
 # scope:cm_building_type holds the replacement between the stash and the restore below.
-# Expects scope:cm_country, scope:cm_location, scope:building, scope:cm_building_type as the
+# Expects scope:cm_country, scope:cm_location, scope:cm_building, scope:cm_building_type as the
 # standing obsolete type, scope:cm_current_building_type as the resolved replacement.
 cm_stage_upgrade_candidate = {
 	cm_clear_finished_upgrade_in_progress = yes
@@ -100,7 +100,7 @@ cm_stage_upgrade_candidate = {
 	scope:cm_current_building_type = { save_scope_as = cm_building_type }
 	if = {
 		limit = {
-			scope:building = {
+			scope:cm_building = {
 				cm_building_can_auto_expand_for_upgrade = yes
 				cm_is_not_under_construction = yes
 			}
@@ -149,13 +149,13 @@ cm_stage_from_zero_candidate = {
 }
 
 # Staging decision for a building that already has levels at the location. Expects scope:cm_country,
-# scope:cm_location, scope:building, and scope:cm_building_type as the standing type.
+# scope:cm_location, scope:cm_building, and scope:cm_building_type as the standing type.
 cm_stage_expand_or_upgrade_candidate = {
 	if = {
 		limit = { cm_is_building_type_obsolete = no }
 		if = {
 			limit = {
-				scope:building = {
+				scope:cm_building = {
 					cm_building_can_auto_expand_other_than_checking_for_upgrades = yes
 					is_at_max_level = no
 					cm_is_not_under_construction = yes
@@ -323,7 +323,7 @@ cm_run_auto_expand_buildings = {
 				order_by = building_index
 				max = 100
 				check_range_bounds = no
-				save_scope_as = building
+				save_scope_as = cm_building
 				building_type = { save_scope_as = cm_building_type }
 				# Standing obsolete buildings match the lists through their replacement type
 				scope:cm_building_type = { cm_find_current_building_type = yes }
@@ -366,7 +366,7 @@ cm_run_auto_expand_buildings = {
 			order_by = building_index
 			max = 100
 			check_range_bounds = no
-			save_scope_as = building
+			save_scope_as = cm_building
 			building_type = { save_scope_as = cm_building_type }
 			if = {
 				limit = { cm_is_building_type_obsolete = yes }
@@ -385,7 +385,7 @@ cm_run_auto_expand_buildings = {
 			save_scope_as = cm_building_type
 			if = {
 				limit = { scope:cm_location = { has_building = scope:cm_building_type } }
-				scope:cm_location = { "building(scope:cm_building_type|scope:cm_country)" = { save_scope_as = building } }
+				scope:cm_location = { "building(scope:cm_building_type|scope:cm_country)" = { save_scope_as = cm_building } }
 				cm_stage_expand_or_upgrade_candidate = yes
 			} else = {
 				cm_stage_from_zero_candidate = yes
@@ -395,7 +395,7 @@ cm_run_auto_expand_buildings = {
 }
 
 # --- Auto Expand RGOs ---
-# Expands RGO levels in locations with auto_expand_rgo enabled.
+# Expands RGO levels in locations with cm_auto_expand_rgo enabled.
 # Single monthly pass, no daily spread.
 cm_run_auto_expand_rgos = {
 	if = {
@@ -405,7 +405,7 @@ cm_run_auto_expand_rgos = {
 			order_by = max_control
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
-			limit = { NOT = { exists = var:auto_expand_rgo_excluded } NOT = { integration_level = conquered } }
+			limit = { NOT = { exists = var:cm_auto_expand_rgo_excluded } NOT = { integration_level = conquered } }
 			save_scope_as = cm_location
 			if = {
 				limit = { cm_should_rgo_auto_expand = yes }
@@ -413,12 +413,12 @@ cm_run_auto_expand_rgos = {
 			}
 		}
 	} else = {
-		# Normal mode: expand only locations with auto_expand_rgo enabled
+		# Normal mode: expand only locations with cm_auto_expand_rgo enabled
 		ordered_owned_location = {
 			order_by = max_control
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
-			limit = { exists = var:auto_expand_rgo NOT = { integration_level = conquered } }
+			limit = { exists = var:cm_auto_expand_rgo NOT = { integration_level = conquered } }
 			save_scope_as = cm_location
 			if = {
 				limit = { cm_should_rgo_auto_expand = yes }
@@ -490,7 +490,7 @@ cm_run_upgrade_all_buildings = {
 			order_by = building_index
 			max = 100
 			check_range_bounds = no
-			save_scope_as = building
+			save_scope_as = cm_building
 			building_type = { save_scope_as = cm_building_type }
 			cm_clear_finished_upgrade_in_progress = yes
 			if = {
@@ -591,7 +591,7 @@ cm_run_auto_build = {
 #
 # Dispatches cm_food_auto_build_for_rgo_type for every food good in the list, not just the ones
 # enabled in the mass settings, because individual locations may opt in via
-# var:auto_food_location_enabled even when their good's mass setting is off. The per-location
+# var:cm_auto_food_location_enabled even when their good's mass setting is off. The per-location
 # eligibility check inside cm_food_auto_build_for_rgo_type combines mass coverage with the
 # per-location opt-in/opt-out flags.
 cm_run_auto_food = {
@@ -600,7 +600,7 @@ cm_run_auto_food = {
 		limit = { has_variable_list = cm_auto_food_rgo_types_list }
 		every_in_list = {
 			variable = cm_auto_food_rgo_types_list
-			save_scope_as = food_good
+			save_scope_as = cm_food_good
 			scope:cm_country = {
 				cm_food_auto_build_for_rgo_type = yes
 			}
@@ -642,7 +642,7 @@ cm_run_auto_build_capital = {
 	if = {
 		limit = { exists = capital }
 		capital = {
-			save_scope_as = capital_location
+			save_scope_as = cm_capital_location
 			if = {
 				limit = { NOT = { integration_level = conquered } }
 				cm_try_construct_capital_building = { building_type_text = royal_court }
@@ -667,9 +667,9 @@ cm_try_construct_capital_building = {
 	building_type:$building_type_text$ = { save_scope_as = cm_building_type }
 	if = {
 		limit = {
-			scope:capital_location = { cm_capital_location_can_auto_build = yes }
+			scope:cm_capital_location = { cm_capital_location_can_auto_build = yes }
 		}
-		scope:capital_location = { save_scope_as = cm_location }
+		scope:cm_capital_location = { save_scope_as = cm_location }
 		cm_stage_ungated_candidate = yes
 	}
 }
@@ -685,11 +685,11 @@ cm_run_auto_town_rights = {
 		}
 		every_in_list = {
 			variable = cm_auto_town_rights_list
-			save_scope_as = town_right
+			save_scope_as = cm_town_right
 			scope:cm_country = {
 				if = {
 					limit = {
-						is_target_in_variable_list = { name = cm_auto_town_rights_enabled target = scope:town_right }
+						is_target_in_variable_list = { name = cm_auto_town_rights_enabled target = scope:cm_town_right }
 						cm_town_rights_grant_affordable = yes
 					}
 					ordered_owned_location = {
@@ -699,7 +699,7 @@ cm_run_auto_town_rights = {
 						limit = {
 							NOT = { integration_level = conquered }
 							has_max_town_rights = no
-							NOT = { has_town_rights = scope:town_right }
+							NOT = { has_town_rights = scope:cm_town_right }
 						}
 						save_scope_as = target
 						# ordered_owned_location snapshots its limit before the body runs.
@@ -710,7 +710,7 @@ cm_run_auto_town_rights = {
 									cm_can_grant_specific_town_right_at_location = yes
 								}
 							}
-							grant_town_rights = scope:town_right
+							grant_town_rights = scope:cm_town_right
 							if = {
 								limit = { NOT = { cm_town_rights_grants_are_free = yes } }
 								scope:cm_country = { pay_price = price:grant_town_rights }

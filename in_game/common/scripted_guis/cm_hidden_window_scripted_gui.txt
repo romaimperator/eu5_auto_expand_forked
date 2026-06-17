@@ -52,9 +52,9 @@ cm_building_type_section_buildings_init = {
 		# debug_log = "CM: Initializing buildings [TopScope.sBuildingType('building_type').GetNameWithNoTooltip]"
 
 		# Set the which type of building this should be treated as
-		if = { limit = { AND = { scope:is_producing = yes scope:is_multiple_levels = yes } }
+		if = { limit = { AND = { scope:cm_is_producing = yes scope:cm_is_multiple_levels = yes } }
 			add_to_global_variable_map = { name = cm_building_type_to_is_production_building key = scope:cm_building_type value = 1 }
-			if = { limit = { scope:is_fort = yes }
+			if = { limit = { scope:cm_is_fort = yes }
 				# debug_log = "CM: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: yes"
 			} else = {
 				# debug_log = "CM: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: no"
@@ -63,19 +63,19 @@ cm_building_type_section_buildings_init = {
 			add_to_global_variable_map = { name = cm_building_type_to_is_production_building key = scope:cm_building_type value = 0 }
 		}
 		# Set if this building type is a fort for discount purposes
-		if = { limit = { scope:is_fort = yes }
+		if = { limit = { scope:cm_is_fort = yes }
 			add_to_global_variable_map = { name = cm_building_type_to_is_fort key = scope:cm_building_type value = 1 }
 		} else = {
 			add_to_global_variable_map = { name = cm_building_type_to_is_fort key = scope:cm_building_type value = 0 }
 		}
 		# Set the pop type employed by this building type
-		if = { limit = { exists = scope:pop_type }
-			add_to_global_variable_map = { name = cm_building_type_to_pop_type key = scope:cm_building_type value = scope:pop_type }
+		if = { limit = { exists = scope:cm_pop_type }
+			add_to_global_variable_map = { name = cm_building_type_to_pop_type key = scope:cm_building_type value = scope:cm_pop_type }
 		}
 
 		# Set the building type that this building upgrades into if there is one
-		if = { limit = { exists = scope:upgrade_type }
-			add_to_global_variable_map = { name = cm_building_type_to_upgrade_type key = scope:cm_building_type value = scope:upgrade_type }
+		if = { limit = { exists = scope:cm_upgrade_type }
+			add_to_global_variable_map = { name = cm_building_type_to_upgrade_type key = scope:cm_building_type value = scope:cm_upgrade_type }
 	  }
 
 		# Set that this building type has been processed
@@ -99,115 +99,115 @@ cm_construction_demand = {
 		switch = { trigger = scope:cm_good
 			goods:books = {
 				remove_from_global_variable_map = { name = cm_construction_demand_books key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_books key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_books key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:clay = {
 				remove_from_global_variable_map = { name = cm_construction_demand_clay key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_clay key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_clay key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:cloth = {
 				remove_from_global_variable_map = { name = cm_construction_demand_cloth key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_cloth key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_cloth key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:copper = {
 				remove_from_global_variable_map = { name = cm_construction_demand_copper key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_copper key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_copper key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:fine_cloth = {
 				remove_from_global_variable_map = { name = cm_construction_demand_fine_cloth key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_fine_cloth key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_fine_cloth key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:firearms = {
 				remove_from_global_variable_map = { name = cm_construction_demand_firearms key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_firearms key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_firearms key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:glass = {
 				remove_from_global_variable_map = { name = cm_construction_demand_glass key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_glass key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_glass key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:goods_gold = {
 				remove_from_global_variable_map = { name = cm_construction_demand_goods_gold key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_goods_gold key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_goods_gold key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:horses = {
 				remove_from_global_variable_map = { name = cm_construction_demand_horses key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_horses key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_horses key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:jewelry = {
 				remove_from_global_variable_map = { name = cm_construction_demand_jewelry key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_jewelry key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_jewelry key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:leather = {
 				remove_from_global_variable_map = { name = cm_construction_demand_leather key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_leather key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_leather key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:liquor = {
 				remove_from_global_variable_map = { name = cm_construction_demand_liquor key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_liquor key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_liquor key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:livestock = {
 				remove_from_global_variable_map = { name = cm_construction_demand_livestock key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_livestock key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_livestock key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:lumber = {
 				remove_from_global_variable_map = { name = cm_construction_demand_lumber key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_lumber key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_lumber key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:marble = {
 				remove_from_global_variable_map = { name = cm_construction_demand_marble key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_marble key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_marble key = scope:cm_building_type value = scope:cm_amount }
 			}
 			goods:masonry = {
 				remove_from_global_variable_map = { name = cm_construction_demand_masonry key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_masonry key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_masonry key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:naval_supplies = {
 				remove_from_global_variable_map = { name = cm_construction_demand_naval_supplies key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_naval_supplies key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_naval_supplies key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:paper = {
 				remove_from_global_variable_map = { name = cm_construction_demand_paper key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_paper key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_paper key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:salt = {
 				remove_from_global_variable_map = { name = cm_construction_demand_salt key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_salt key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_salt key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:sand = {
 				remove_from_global_variable_map = { name = cm_construction_demand_sand key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_sand key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_sand key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:silver = {
 				remove_from_global_variable_map = { name = cm_construction_demand_silver key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_silver key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_silver key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:steel = {
 				remove_from_global_variable_map = { name = cm_construction_demand_steel key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_steel key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_steel key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:stone = {
 				remove_from_global_variable_map = { name = cm_construction_demand_stone key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_stone key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_stone key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:tin = {
 				remove_from_global_variable_map = { name = cm_construction_demand_tin key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_tin key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_tin key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:tools = {
 				remove_from_global_variable_map = { name = cm_construction_demand_tools key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_tools key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_tools key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:weaponry = {
 				remove_from_global_variable_map = { name = cm_construction_demand_weaponry key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_weaponry key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_weaponry key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:wheat = {
 				remove_from_global_variable_map = { name = cm_construction_demand_wheat key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_wheat key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_wheat key = scope:cm_building_type value = scope:cm_amount }
 			}
       goods:wool = {
 				remove_from_global_variable_map = { name = cm_construction_demand_wool key = scope:cm_building_type }
-				add_to_global_variable_map = { name = cm_construction_demand_wool key = scope:cm_building_type value = scope:amount }
+				add_to_global_variable_map = { name = cm_construction_demand_wool key = scope:cm_building_type value = scope:cm_amount }
 			}
 		}
 	}
@@ -216,8 +216,8 @@ cm_construction_demand = {
 cm_produced_good = {
 	saved_scopes = { cm_building_type produced_good }
 	effect = {
-		add_to_global_variable_map = { name = cm_building_type_to_produced_good key = scope:cm_building_type value = scope:produced_good }
-		switch = { trigger = scope:produced_good
+		add_to_global_variable_map = { name = cm_building_type_to_produced_good key = scope:cm_building_type value = scope:cm_produced_good }
+		switch = { trigger = scope:cm_produced_good
 			goods:books = {
 				if = { limit = { has_global_variable_map = cm_construction_demand_books is_key_in_global_variable_map = { name = cm_construction_demand_books target = scope:cm_building_type } }
 					add_to_global_variable_map = { name = cm_building_type_produces_own_construction_good key = scope:cm_building_type value = 1 }

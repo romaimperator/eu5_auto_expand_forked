@@ -34,32 +34,32 @@ cm_is_food_rgo_location = {
 	}
 }
 
-# Root is location. Expects scope:food_good, scope:cm_country as owner. Optional bool scope:cm_set_off.
+# Root is location. Expects scope:cm_food_good, scope:cm_country as owner. Optional bool scope:cm_set_off.
 # Toggles per-location auto_food state, mirroring cm_set_auto_expand_for_rgo's dual-flag logic:
 #   - If the location is currently "covered by mass", meaning good enabled AND river filter passes,
-#     flip auto_food_location_excluded, the opt-out flag.
-#   - Otherwise flip auto_food_location_enabled, the opt-in flag.
+#     flip cm_auto_food_location_excluded, the opt-out flag.
+#   - Otherwise flip cm_auto_food_location_enabled, the opt-in flag.
 cm_set_auto_food_for_location = {
 	effect = {
 		if = {
 			limit = {
-				scope:cm_country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:food_good } }
+				scope:cm_country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:cm_food_good } }
 				cm_food_location_meets_river_filter = yes
 			}
 			# Covered by mass: toggle the excluded flag
 			if = { limit = { NOT = { exists = scope:cm_set_off } }
-				if = { limit = { exists = var:auto_food_location_excluded }
-					remove_variable = auto_food_location_excluded
+				if = { limit = { exists = var:cm_auto_food_location_excluded }
+					remove_variable = cm_auto_food_location_excluded
 				} else = {
-					set_variable = { name = auto_food_location_excluded value = yes }
+					set_variable = { name = cm_auto_food_location_excluded value = yes }
 				}
 			} else = {
 				if = { limit = { scope:cm_set_off = yes }
-					if = { limit = { NOT = { exists = var:auto_food_location_excluded } }
-						set_variable = { name = auto_food_location_excluded value = yes }
+					if = { limit = { NOT = { exists = var:cm_auto_food_location_excluded } }
+						set_variable = { name = cm_auto_food_location_excluded value = yes }
 					}
 				} else = {
-					remove_variable = auto_food_location_excluded
+					remove_variable = cm_auto_food_location_excluded
 				}
 			}
 		} else = {
@@ -67,19 +67,19 @@ cm_set_auto_food_for_location = {
 			# The enabled flag marks a manual per-location opt-in, so it also locks
 			# the location against rank upgrades via cm_auto_food_locked_location.
 			if = { limit = { NOT = { exists = scope:cm_set_off } }
-				if = { limit = { exists = var:auto_food_location_enabled }
-					remove_variable = auto_food_location_enabled
+				if = { limit = { exists = var:cm_auto_food_location_enabled }
+					remove_variable = cm_auto_food_location_enabled
 					remove_location_modifier = cm_auto_food_locked_location
 				} else = {
-					set_variable = { name = auto_food_location_enabled value = yes }
+					set_variable = { name = cm_auto_food_location_enabled value = yes }
 					add_location_modifier = { modifier = cm_auto_food_locked_location years = 1000 mode = replace }
 				}
 			} else = {
 				if = { limit = { scope:cm_set_off = yes }
-					remove_variable = auto_food_location_enabled
+					remove_variable = cm_auto_food_location_enabled
 					remove_location_modifier = cm_auto_food_locked_location
 				} else = {
-					set_variable = { name = auto_food_location_enabled value = yes }
+					set_variable = { name = cm_auto_food_location_enabled value = yes }
 					add_location_modifier = { modifier = cm_auto_food_locked_location years = 1000 mode = replace }
 				}
 			}
@@ -88,11 +88,11 @@ cm_set_auto_food_for_location = {
 
 	is_shown = {
 		OR = {
-			exists = var:auto_food_location_enabled
+			exists = var:cm_auto_food_location_enabled
 			AND = {
-				scope:cm_country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:food_good } }
+				scope:cm_country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:cm_food_good } }
 				cm_food_location_meets_river_filter = yes
-				NOT = { exists = var:auto_food_location_excluded }
+				NOT = { exists = var:cm_auto_food_location_excluded }
 			}
 		}
 	}
@@ -124,7 +124,7 @@ cm_food_location_pops_not_still_filling = {
 	}
 }
 
-# Root is location. Expects scope:cm_country, scope:food_good.
+# Root is location. Expects scope:cm_country, scope:cm_food_good.
 # True if at least one of the six food-building options is viable right now:
 # can-build AND affordable AND meets minimum discount.
 cm_food_location_has_viable_option = {
@@ -133,7 +133,7 @@ cm_food_location_has_viable_option = {
 	}
 }
 
-# Root is location. Expects scope:cm_country, scope:food_good.
+# Root is location. Expects scope:cm_country, scope:cm_food_good.
 # True if at least one food-building option could physically be built here:
 # can-build only, ignores gold/discount. Used to disambiguate the "no option"
 # tooltip row from the "no option meets min discount" tooltip row.
@@ -143,7 +143,7 @@ cm_food_location_has_buildable_option = {
 	}
 }
 
-# Root is location. Expects scope:cm_country, scope:food_good.
+# Root is location. Expects scope:cm_country, scope:cm_food_good.
 # True if at least one buildable food option meets the minimum discount, ignoring gold.
 # Disambiguates the "no option meets min discount" tooltip row from the "not enough gold" row.
 cm_food_location_has_discounted_option = {
@@ -152,7 +152,7 @@ cm_food_location_has_discounted_option = {
 	}
 }
 
-# Root is location. Expects scope:cm_country, scope:food_good.
+# Root is location. Expects scope:cm_country, scope:cm_food_good.
 # Top-level glow gate for the per-location auto-food button. Mirrors the preconditions
 # inside cm_food_auto_build_in_location, minus transient/queue conditions.
 cm_is_able_to_auto_food_location = {

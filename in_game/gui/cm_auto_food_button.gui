@@ -7,7 +7,7 @@
 		size = { 30 30 }
 	}
 
-	# Used for the location window in location_window.gui: sits above the auto_expand_rgo widget.
+	# Used for the location window in location_window.gui: sits above the cm_auto_expand_rgo widget.
 	type cm_auto_food_widget_location_window = cm_auto_food_widget {
 		parentanchor = bottom|right
 		# Flush against each other:
@@ -39,7 +39,7 @@
 					glow_radius = 5
 					color = { 0.0 1.0 0.0 0.9 }
 					alpha = 0.6
-					block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]" }
+					block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]" }
 				}
 			}
 			background = {
@@ -50,7 +50,7 @@
 					glow_radius = 5
 					color = { 1.0 0.0 0.0 0.9 }
 					alpha = 0.6
-					block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]" }
+					block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]" }
 				}
 			}
 			background = {
@@ -67,10 +67,10 @@
 				texture = "gfx/interface/icons/location_icons/food.dds"
 			}
 			blockoverride "checked_visible" {
-				visible = "[GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
+				visible = "[GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
 			}
 			blockoverride "unchecked_visible" {
-				visible = "[Not(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
+				visible = "[Not(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
 			}
 
 			action_tooltip = {
@@ -78,7 +78,7 @@
 				click_mode = single
 				click_modifier = default
 				title = "CM_AUTO_FOOD_TOGGLE"
-				on_action = "[GetScriptedGui('cm_set_auto_food_for_location').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
+				on_action = "[GetScriptedGui('cm_set_auto_food_for_location').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
 				on_action = "[GetMapMode('cm_location_food_potential_hidden').SetMapMode]"
 				on_action = "[PdxGuiWidget.TriggerAnimation('cm_swap_map_mode_state')]"
 			}
@@ -98,7 +98,7 @@ template cm_Autofood_Tooltip {
 			cm_auto_food_checkbutton = {
 				using = tooltip_title_icon_size
 				tooltip_enabled = no
-				checked = "[GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
+				checked = "[GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
 				enabled = yes
 			}
 		}
@@ -115,13 +115,13 @@ template cm_Autofood_Tooltip {
 			}
 
 			TooltipTextBlock = {
-				visible = "[GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
+				visible = "[GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
 				blockoverride "text" {
 					text = "CM_AUTO_EXPAND_ALL_REQUIREMENTS_MET"
 				}
 			}
 			TooltipListBase = {
-				visible = "[Not(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
+				visible = "[Not(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
 				blockoverride "block_title" {
 					text = "CM_AUTO_FOOD_REQ_HEADER"
 				}
@@ -179,37 +179,37 @@ template cm_Autofood_Tooltip {
 						}
 					}
 					cm_tooltip_row = {
-						visible = "[Not(GetScriptedGui('cm_food_location_has_buildable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
+						visible = "[Not(GetScriptedGui('cm_food_location_has_buildable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('cm_food_location_has_buildable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
+							visible = "[GetScriptedGui('cm_food_location_has_buildable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('cm_food_location_has_buildable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
+							visible = "[Not(GetScriptedGui('cm_food_location_has_buildable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
 							text = "CM_AUTO_FOOD_REQ_BUILDABLE"
 						}
 					}
 					cm_tooltip_row = {
-						visible = "[And(GetScriptedGui('cm_food_location_has_buildable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_food_location_has_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]"
+						visible = "[And(GetScriptedGui('cm_food_location_has_buildable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_food_location_has_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]"
 						using = cm_tooltip_row_is_odd
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('cm_food_location_has_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
+							visible = "[GetScriptedGui('cm_food_location_has_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('cm_food_location_has_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
+							visible = "[Not(GetScriptedGui('cm_food_location_has_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
 							text = "CM_AUTO_FOOD_REQ_DISCOUNT"
 						}
 					}
 					cm_tooltip_row = {
-						visible = "[And(GetScriptedGui('cm_food_location_has_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_food_location_has_viable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]"
+						visible = "[And(GetScriptedGui('cm_food_location_has_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_food_location_has_viable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]"
 						blockoverride "yes_visible" {
-							visible = "[GetScriptedGui('cm_food_location_has_viable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
+							visible = "[GetScriptedGui('cm_food_location_has_viable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
 						}
 						blockoverride "no_visible" {
-							visible = "[Not(GetScriptedGui('cm_food_location_has_viable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
+							visible = "[Not(GetScriptedGui('cm_food_location_has_viable_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
 							text = "CM_AUTO_FOOD_REQ_GOLD"
@@ -219,7 +219,7 @@ template cm_Autofood_Tooltip {
 			}
 
 			TooltipTextBlock = {
-				visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]"
+				visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]"
 				blockoverride "text" {
 					text = "CM_AUTO_FOOD_WILL_NOT_BUILD"
 				}

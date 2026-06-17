@@ -6,7 +6,7 @@ verbatim into a single scripted trigger, keyed by town right. The auto-grant loo
 calls that trigger so it only grants a right on a location the engine would allow.
 
 The `allow` body is copied without rewriting: the loop saves the candidate
-location as scope:target and the right as scope:town_right, which are exactly the
+location as scope:target and the right as scope:cm_town_right, which are exactly the
 scopes vanilla `allow` blocks read. New triggers Paradox adds to an `allow` block
 therefore pass straight through on the next regeneration.
 
@@ -59,7 +59,7 @@ HEADER = (
     "#\n"
     "# Country trigger. Mirrors each vanilla town_rights_type `allow` block so auto-grant\n"
     "# only grants a right on a location the engine would allow it on.\n"
-    "# Expects scope:town_right (the right) and scope:target (the candidate location).\n"
+    "# Expects scope:cm_town_right (the right) and scope:target (the candidate location).\n"
     "# Rights with no `allow` restriction fall through to the trailing trigger_else.\n"
 )
 
@@ -167,7 +167,7 @@ def render(rights):
         keyword = "trigger_if" if idx == 0 else "trigger_else_if"
         branches.append(
             f"\t{keyword} = {{\n"
-            f"\t\tlimit = {{ scope:town_right = town_rights_type:{name} }}\n"
+            f"\t\tlimit = {{ scope:cm_town_right = town_rights_type:{name} }}\n"
             f"{body}\n"
             f"\t}}"
         )

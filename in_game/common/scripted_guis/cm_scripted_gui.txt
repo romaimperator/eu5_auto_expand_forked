@@ -1,6 +1,6 @@
 ﻿cm_set_auto_expand_for_building = {
 	effect = {
-		save_scope_as = the_building
+		save_scope_as = cm_the_building
 		building_type = { save_scope_as = cm_building_type }
 		location = {
 			cm_apply_auto_expand_toggle = yes
@@ -12,8 +12,8 @@
 # scope:cm_new_building_type is its engine replacement tier from the call site, unset when none.
 cm_check_for_auto_expand_when_upgrading_building = {
 	effect = {
-		save_scope_as = the_building
-		scope:the_building = { building_type = { save_temporary_scope_as = cm_old_building_type } }
+		save_scope_as = cm_the_building
+		scope:cm_the_building = { building_type = { save_temporary_scope_as = cm_old_building_type } }
 		if = { limit = { exists = scope:cm_new_building_type }
 			location = {
 				if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_old_building_type } } }
@@ -264,11 +264,11 @@ cm_gui_try_food_rgo = {
 }
 cm_check_for_auto_expand_when_removing_building = {
 	effect = {
-		save_scope_as = the_building
-		scope:the_building = { building_type = { save_temporary_scope_as = cm_building_type } }
+		save_scope_as = cm_the_building
+		scope:cm_the_building = { building_type = { save_temporary_scope_as = cm_building_type } }
 		owner = { save_scope_as = cm_country }
 		location = {
-			if = { limit = { scope:the_building = { building_level < 2 } }
+			if = { limit = { scope:cm_the_building = { building_level < 2 } }
 				scope:cm_building_type = { cm_find_current_building_type = yes }
 				# Clean up both lists - only the relevant one will have an entry
 				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type } }
@@ -299,8 +299,8 @@ cm_check_for_auto_expand_when_removing_building = {
 
 cm_is_auto_expand_active_for_building = {
 	is_shown = {
-		save_temporary_scope_as = the_building
-		scope:the_building = { building_type = { save_temporary_scope_as = cm_building_type } }
+		save_temporary_scope_as = cm_the_building
+		scope:cm_the_building = { building_type = { save_temporary_scope_as = cm_building_type } }
 		OR = {
 			location = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type } }
 			AND = {

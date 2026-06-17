@@ -3,33 +3,33 @@
 		if = { limit = { owner = { exists = var:cm_mass_auto_expand_rgo } }
 			# Mass mode: operate on exclusion variable with inverted logic.
 			if = { limit = { NOT = { exists = scope:cm_set_off } }
-				if = { limit = { exists = var:auto_expand_rgo_excluded }
-					remove_variable = auto_expand_rgo_excluded
+				if = { limit = { exists = var:cm_auto_expand_rgo_excluded }
+					remove_variable = cm_auto_expand_rgo_excluded
 				} else = {
-					set_variable = { name = auto_expand_rgo_excluded value = yes }
+					set_variable = { name = cm_auto_expand_rgo_excluded value = yes }
 				}
 			} else = {
 				if = { limit = { scope:cm_set_off = yes }
-					if = { limit = { NOT = { exists = var:auto_expand_rgo_excluded } }
-						set_variable = { name = auto_expand_rgo_excluded value = yes }
+					if = { limit = { NOT = { exists = var:cm_auto_expand_rgo_excluded } }
+						set_variable = { name = cm_auto_expand_rgo_excluded value = yes }
 					}
 				} else = {
-					remove_variable = auto_expand_rgo_excluded
+					remove_variable = cm_auto_expand_rgo_excluded
 				}
 			}
 		} else = {
 			# Normal mode: operate on enable variable
 			if = { limit = { NOT = { exists = scope:cm_set_off } }
-				if = { limit = { exists = var:auto_expand_rgo }
-					remove_variable = auto_expand_rgo
+				if = { limit = { exists = var:cm_auto_expand_rgo }
+					remove_variable = cm_auto_expand_rgo
 				} else = {
-					set_variable = { name = auto_expand_rgo value = yes }
+					set_variable = { name = cm_auto_expand_rgo value = yes }
 				}
 			} else = {
 				if = { limit = { scope:cm_set_off = yes }
-					remove_variable = auto_expand_rgo
+					remove_variable = cm_auto_expand_rgo
 				} else = {
-					set_variable = { name = auto_expand_rgo value = yes }
+					set_variable = { name = cm_auto_expand_rgo value = yes }
 				}
 			}
 		}
@@ -37,10 +37,10 @@
 
 	is_shown = {
 		OR = {
-			exists = var:auto_expand_rgo
+			exists = var:cm_auto_expand_rgo
 			AND = {
 				owner = { exists = var:cm_mass_auto_expand_rgo }
-				NOT = { exists = var:auto_expand_rgo_excluded }
+				NOT = { exists = var:cm_auto_expand_rgo_excluded }
 			}
 		}
 	}
@@ -65,8 +65,8 @@ cm_toggle_mass_auto_expand_rgo = {
 				order_by = max_control
 				max = cm_max_guess_at_number_of_locations
 				check_range_bounds = no
-				limit = { exists = var:auto_expand_rgo_excluded }
-				remove_variable = auto_expand_rgo_excluded
+				limit = { exists = var:cm_auto_expand_rgo_excluded }
+				remove_variable = cm_auto_expand_rgo_excluded
 			}
 		} else = {
 			# Turning ON - set flag, clear all per-location enable variables
@@ -75,8 +75,8 @@ cm_toggle_mass_auto_expand_rgo = {
 				order_by = max_control
 				max = cm_max_guess_at_number_of_locations
 				check_range_bounds = no
-				limit = { exists = var:auto_expand_rgo }
-				remove_variable = auto_expand_rgo
+				limit = { exists = var:cm_auto_expand_rgo }
+				remove_variable = cm_auto_expand_rgo
 			}
 		}
 	}
