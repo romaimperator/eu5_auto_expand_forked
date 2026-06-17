@@ -1,7 +1,11 @@
-﻿widget = {
+﻿# Always-present hidden window with two jobs: a once-per-lobby pass that classifies every building type,
+# and a monthly refresh of the player country's cached variables. Engine bindings like IsProducing and
+# GetNextReplacementBuilding read only in GUI, so classification runs here and writes maps that script reads.
+widget = {
 	name = "cm_hidden_window"
 	widgetid = cm_hidden_window
 	layer = top
+	# Keeps descendant visibility gates re-evaluating each frame.
 	visible = "[EqualTo_CFixedPoint('(CFixedPoint)0', '(CFixedPoint)0')]"
 	parentanchor = center
 
@@ -9,6 +13,7 @@
 	vbox = {
 		visible = "[GetPlayer.Exists]"
 
+		# Runs cm_refresh_country_variables when cm_monthly_gui_tick is set; the effect clears the tick.
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
@@ -19,19 +24,23 @@
 			}
 		}
 
+		# Building-type classification: runs once per lobby and writes the type maps that script reads.
 		vbox = {
 			name = building_type_section
 			visible_at_creation = no
+			# Pass 1: record each type's per-good construction demand.
 			state = {
 				name = _show
 				next = cm_building_type_pass_produced
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_building_type_section_buildings_construction_demand_state')]"
 			}
+			# Pass 2: record each producing type's output good.
 			state = {
 				name = cm_building_type_pass_produced
 				next = cm_building_type_pass_init
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_building_type_section_produced_good_state')]"
 			}
+			# Pass 3: record producing/multi-level/fort flags, pop type, and upgrade target.
 			state = {
 				name = cm_building_type_pass_init
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_building_type_section_buildings_init_state')]"
