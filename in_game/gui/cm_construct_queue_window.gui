@@ -2,7 +2,7 @@
 	name = "cm_construct_queue_window"
 	widgetid = cm_construct_queue_window
 	layer = top
-	visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+	visible = "[EqualTo_CFixedPoint('(CFixedPoint)0', '(CFixedPoint)0')]"
 	parentanchor = center
 	position = { -10000 1 }
 	blockoverride "header_text" {
@@ -12,10 +12,10 @@
 		widget = {
 			widget = {
 				size = { 0 0 }
-				visible_at_creation = no
-				visible = "[GetScriptedGui('cm_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 				state = {
 					name = _show
+					duration = 0.5
 					on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct')]"
 					on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_upgrade')]"
 					on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_ungated')]"
