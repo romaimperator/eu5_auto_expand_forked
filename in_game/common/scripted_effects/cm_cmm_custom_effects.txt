@@ -247,8 +247,11 @@ cm_repair_expand_thresholds = {
 # already holds the incoming one.
 # Scope: country
 cm_apply_expand_metric_change = {
+	set_local_variable = { name = cm_tmp_incoming_metric value = "variable_map(cmm|flag:cm__expand_metric)" }
+	set_local_variable = { name = cm_tmp_metric_changed value = 0 }
 	if = {
-		limit = { NOT = { "variable_map(cmm|flag:cm__expand_metric)" = var:cm_expand_metric } }
+		limit = { NOT = { local_var:cm_tmp_incoming_metric = var:cm_expand_metric } }
+		set_local_variable = { name = cm_tmp_metric_changed value = 1 }
 		switch = {
 			trigger = var:cm_expand_metric
 			1 = { cm_save_expand_thresholds = { m = 1 } }
@@ -256,11 +259,14 @@ cm_apply_expand_metric_change = {
 			3 = { cm_save_expand_thresholds = { m = 3 } }
 			4 = { cm_save_expand_thresholds = { m = 4 } }
 		}
-		cmm_sync_setting_alias = {
-			setting = cm__expand_metric
-			alias = cm_expand_metric
-		}
-		cm_apply_expand_metric_bounds = yes
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__expand_metric
+		alias = cm_expand_metric
+	}
+	cm_apply_expand_metric_bounds = yes
+	if = {
+		limit = { local_var:cm_tmp_metric_changed = 1 }
 		switch = {
 			trigger = var:cm_expand_metric
 			1 = { cm_load_expand_thresholds = { m = 1 } }
@@ -269,12 +275,6 @@ cm_apply_expand_metric_change = {
 			4 = { cm_load_expand_thresholds = { m = 4 } }
 		}
 		cm_rebuild_priority_lookups = yes
-	}
-	else = {
-		cmm_sync_setting_alias = {
-			setting = cm__expand_metric
-			alias = cm_expand_metric
-		}
 	}
 }
 
@@ -450,6 +450,7 @@ cm_update_auto_town_rights_list_visibility = {
 # country-level prerequisites.
 # Root: country
 cm_auto_town_rights_list_update_visibility_item = {
+	scope:cmm_list_current_item_value = { save_scope_as = cm_town_right }
 	if = {
 		limit = {
 			modifier:can_grant_town_rights = yes
