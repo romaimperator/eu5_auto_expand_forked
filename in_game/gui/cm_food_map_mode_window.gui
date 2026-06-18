@@ -1,0 +1,17 @@
+# Switches the map mode to food potential when the food production lateralview opens.
+widget = {
+	name = "cm_food_map_mode_window"
+	# Keeps the descendant visibility gate re-evaluating each frame.
+	visible = "[EqualTo_CFixedPoint('(CFixedPoint)0', '(CFixedPoint)0')]"
+	position = { -10000 1 }
+	# Gate tears down on view close and rebuilds on open, re-running _show.
+	widget = {
+		size = { 0 0 }
+		visible = "[And(GetPlayer.Exists, IsLateralViewOpened('food_production'))]"
+		state = {
+			name = _show
+			duration = 0.1
+			on_finish = "[GetMapMode('cm_location_food_potential').SetMapMode]"
+		}
+	}
+}
