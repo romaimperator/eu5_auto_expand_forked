@@ -1,6 +1,6 @@
-﻿# Always-present hidden window with two jobs: a once-per-lobby pass that classifies every building type,
-# and a monthly refresh of the player country's cached variables. Engine bindings like IsProducing and
-# GetNextReplacementBuilding read only in GUI, so classification runs here and writes maps that script reads.
+﻿# Always-present hidden window that classifies every building type once per lobby. Engine bindings like
+# IsProducing and GetNextReplacementBuilding read only in GUI, so classification runs here and writes
+# maps that script reads.
 widget = {
 	name = "cm_hidden_window"
 	# Keeps descendant visibility gates re-evaluating each frame.
@@ -8,17 +8,6 @@ widget = {
 	position = { -10000 1 }
 	widget = {
 		visible = "[GetPlayer.Exists]"
-
-		# Runs cm_refresh_country_variables when cm_monthly_gui_tick is set; the effect clears the tick.
-		widget = {
-			size = { 0 0 }
-			visible_at_creation = no
-			visible = "[GetScriptedGui('cm_should_refresh_country_variables').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-			state = {
-				name = _show
-				on_start = "[GetScriptedGui('cm_refresh_country_variables').Execute(GuiScope.AddScope('cm_country', GetPlayer.MakeScope).End)]"
-			}
-		}
 
 		# Building-type classification: runs once per lobby and writes the type maps that script reads.
 		vbox = {
