@@ -94,8 +94,8 @@ cm_apply_expand_metric_bounds = {
 			step_value = 1
 		}
 	}
-	# Re-registration resets has_format and the loc keys to the field defaults.
 	cmm_set_list_field_format = { mod_id = cm setting_id = priority_list field_id = min_profit }
+	# The metric-change path doesn't reset the loc keys.
 	if = {
 		limit = {
 			exists = var:cm_expand_metric
@@ -120,6 +120,15 @@ cm_apply_expand_metric_bounds = {
 			field_id = min_profit
 			name = cm__priority_list__min_profit_roi_name
 			root = cm__priority_list__min_profit_roi
+		}
+	}
+	else = {
+		cmm_set_list_field_localization = {
+			mod_id = cm
+			setting_id = priority_list
+			field_id = min_profit
+			name = cm__priority_list__min_profit_name
+			root = cm__priority_list__min_profit
 		}
 	}
 }
