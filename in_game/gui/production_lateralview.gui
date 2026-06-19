@@ -156,6 +156,7 @@
 	}
 }
 
+@building_entry_height = 40 # Vanilla = 44 (not 48, cause of different spacing)
 lateralview = {
 	name = "production_lateralview"
 	widgetid = "production_lateralview"
@@ -383,7 +384,7 @@ lateralview = {
 							name = "name"
 							using = layoutpolicy_expanding
 						}
-		
+
 						# sort_by_key_button = {
 						# 	name = "profit"
 						# 	layoutpolicy_vertical = expanding
@@ -407,17 +408,13 @@ lateralview = {
 						vbox = {
 							fixedgridbox = {
 								visible = "[ProductionView.Vars.NotExistOrHasValue( 'display', 'lists' )]"
-								addrow = 48
+								addrow = @building_entry_height
 								addcolumn = 100%
 								datamodel = "[ProductionView.GetBuildingItems]"
 								item = {
 									widget = {
-										size = { 100% 48 }
-
-										vbox = {
-											margin_top = 5
-											building_type_header = {}
-										}
+										size = { 100% @building_entry_height }
+										building_type_header = {}
 									}
 								}
 							}
@@ -433,7 +430,7 @@ lateralview = {
 					datacontext = "[ProductionView.GetBuildingsSortSearch.WithFilterTags('building')]"
 					name = "building_categories_filtered_list"
 
-					blockoverride "subheader_upper_divider"{
+					blockoverride "subheader_upper_divider" {
 						# MARKET FILTERED
 						widget = {
 							visible = "[ProductionView.IsMarketFilterEnabled]"
@@ -634,7 +631,7 @@ lateralview = {
 															enabled = "[GreaterThan_int32(CategoryBuildingTypesItem.GetBuildingTypesAmount, '(int32)0')]"
 															on_action = "[CategoryBuildingTypesItem.Toggle]"
 														}
-								
+
 														action_tooltip = {
 															click_type = right
 															click_mode = single
@@ -656,7 +653,7 @@ lateralview = {
 														datacontext = "[CategoryBuildingTypesItem.GetCategory]"
 
 														icon = {
-															size = {25 36} # GlorpUI: 36->25
+															size = {36 36} # GlorpUI: 36->25
 															texture = "[GetBuildingCategoryIcon(CategoryBuildingTypesItem.GetCategory)]"
 														}
 
@@ -667,13 +664,12 @@ lateralview = {
 															maximumsize = {200 -1}
 														}
 
-
 														expand = {}
 
 														text_single = {
 															# visible = "[CategoryBuildingTypesItem.HasProducingBuildingsBuilt]"
 															visible = "[And(
-																Not(CategoryBuildingTypesItem.HasUpkeepBuildingsBuilt), 
+																Not(CategoryBuildingTypesItem.HasUpkeepBuildingsBuilt),
 																CategoryBuildingTypesItem.HasProducingBuildingsBuilt
 															)]"
                                                             raw_text = "[CategoryBuildingTypesItem.GetTotalNetProfit|+=2]@tax_base!"
@@ -692,7 +688,7 @@ lateralview = {
 
 														text_single = {
 															visible = "[And(
-																Not(CategoryBuildingTypesItem.HasUpkeepBuildingsBuilt), 
+																Not(CategoryBuildingTypesItem.HasUpkeepBuildingsBuilt),
 																CategoryBuildingTypesItem.HasProducingBuildingsBuilt
 															)]"
 															# visible = "[CategoryBuildingTypesItem.HasProducingBuildingsBuilt]"
@@ -709,7 +705,7 @@ lateralview = {
 																using = BuildingCategory_income_tooltip
 															}
                                                         }
-														
+
                                                         text_single = {
 															visible = "[CategoryBuildingTypesItem.HasUpkeepBuildingsBuilt]"
                                                             raw_text = "#R -[CategoryBuildingTypesItem.GetTotalMaintenanceCost|2]#!@expense!"
@@ -723,7 +719,7 @@ lateralview = {
 															}
 															tooltipwidget = {
 																using = BuildingCategory_upkeep_tooltip
-															}	
+															}
                                                         }
 
                                                         text_single = {
@@ -864,7 +860,7 @@ lateralview = {
 																						game_concept = "[building|E]"
 																						title = "BUILDING_TYPE_INCOME_TT_TITLE"
 																					}
-																					tooltipwidget = { 
+																					tooltipwidget = {
 																						using = BuildingType_income_tooltip
 																					}
 																				}
@@ -877,7 +873,7 @@ lateralview = {
 																						game_concept = "[building_maintenance|E]"
 																						title = "BUILDING_TYPE_UPKEEP_TT_TITLE"
 																					}
-																					tooltipwidget = { 
+																					tooltipwidget = {
 																						using = BuildingType_upkeep_tooltip
 																					}
 																				}
@@ -924,7 +920,7 @@ lateralview = {
 																			}
 																			background = {
 																				texture = "gfx/interface/component_tiles/hud_corners/circle_frame.dds"
-																				
+
 																				modify_texture = {
 																					using = color_new_gold_texture
 																				}
@@ -963,7 +959,7 @@ lateralview = {
 																					visible = "[BuildingItem.HasBuildingsLackingInput]"
 																					using = bg_circle
 																				}
-																				
+
 																			}
 																		}
 																	}
@@ -1130,7 +1126,7 @@ lateralview = {
 																			}
 																			background = {
 																				texture = "gfx/interface/component_tiles/hud_corners/circle_frame.dds"
-																				
+
 																				modify_texture = {
 																					using = color_new_gold_texture
 																				}
@@ -1169,7 +1165,7 @@ lateralview = {
 																					visible = "[BuildingItem.HasBuildingsLackingInput]"
 																					using = bg_circle
 																				}
-																				
+
 																			}
 																		}
 																	}
@@ -1765,12 +1761,12 @@ types GlorpUIBuildings {
 				blockoverride "header_pattern_texture_density" {texture_density = 2.5}
 
 				widget = {
-					size = { -1 43 }
+					size = { -1 @[building_entry_height - 5] }
 					layoutpolicy_horizontal = expanding
 					onmousehierarchyenter = "[ProductionView.RebuildBuildRankingItems(BuildingItem.GetBuildingType)]"
 
 					card_header_button_buildings = {
-						size = { 100% 40 }
+						size = { 100% @[building_entry_height - 5] }
 						parentanchor = center
 
 						datacontext = "[BuildingItem.GetBuildingItemUIAction]"
@@ -1818,7 +1814,7 @@ types GlorpUIBuildings {
 					}
 
 					card_header_button_buildings = {
-						size = { 100% 40 }
+						size = { 100% @[building_entry_height - 5] }
 
 						parentanchor = center
 
@@ -1876,12 +1872,12 @@ types GlorpUIBuildings {
 
 					# BUILDING ICON
 					widget = {
-						position = { 5 0 }
+						position = { 0 0 }
 						size = {42 100%}
 						parentanchor = left|vcenter
 
 						widget = {
-							size = {36 36}
+							size = {@[building_entry_height - 6] @[building_entry_height - 6]}
 							using = bg_circle_outline
 							blockoverride "inside_color" {
 								modify_texture = {
@@ -1898,7 +1894,13 @@ types GlorpUIBuildings {
 
 							parentanchor = left|vcenter
 							icon = {
-								size = {40 40} # GlorpUI: 31->40
+								parentanchor = center
+								size = { 120% 120% }
+								visible = "[BuildingItem.GetBuildingType.IsSpecialBuilding]"
+								texture = "gfx/interface/component_tiles/specialbuildings_frame_gold.dds"
+							}
+							icon = {
+								size = {120% 120%} # GlorpUI: 31->100%
 								parentanchor = center
 								texture = "[GetBuildingIcon(BuildingItem.GetBuildingType.Self)]"
 
@@ -1912,11 +1914,6 @@ types GlorpUIBuildings {
 									color = {0.0 0.0 0.0 1.0}
 									alpha = 0.3
 								}
-							}
-							icon = {
-								size = { 100% 100% }
-								visible = "[BuildingItem.GetBuildingType.IsSpecialBuilding]"
-								texture = "gfx/interface/component_tiles/specialbuildings_frame_gold.dds"
 							}
 						}
 
@@ -1936,30 +1933,30 @@ types GlorpUIBuildings {
 					# CARD INFO
 					widget = {
 						position = { 5 0 }
-						size = { 100% 40 }
+						size = { 100% @[building_entry_height - 8] }
 						parentanchor = top
 						hbox = {
 							spacing = 5
-							margin = { 35 0 }
+							margin = { 40 0 }
 							margin_right = 10
 							datacontext = "[BuildingItem.GetBuildingType]"
 
-							widget = {
-								size = { 16 16}
-								icon = {
-									parentanchor = center
-									position = {0 2}
-									size = { 16 16 }
-									texture = "[GetGraphicalCultureTextureForPopType(BuildingType.GetPopType)]"
-									texture_density = 2
-									glow = {
-										name = "drop_shadow"
-										glow_radius = 3
-										color = {0.0 0.0 0.0 1.0}
-										alpha = 0.3
-									}
-								}
-							}
+							# widget = {
+							# 	size = { 16 16}
+							# 	icon = {
+							# 		parentanchor = center
+							# 		position = {0 2}
+							# 		size = { 16 16 }
+							# 		texture = "[GetGraphicalCultureTextureForPopType(BuildingType.GetPopType)]"
+							# 		texture_density = 2
+							# 		glow = {
+							# 			name = "drop_shadow"
+							# 			glow_radius = 3
+							# 			color = {0.0 0.0 0.0 1.0}
+							# 			alpha = 0.3
+							# 		}
+							# 	}
+							# }
 
 							text_single = {
 								size = {129 30}
@@ -2094,7 +2091,7 @@ types GlorpUIBuildings {
 
 							# PROFIT
 							widget = {
-								size = {120 40}
+								size = {120 30}
 								hbox = {
 									visible = "[And(BuildingItem.GetBuildingType.IsProducing, BuildingItem.HasPossibleBuildings)]"
 									spacing = 3
@@ -2168,7 +2165,7 @@ types GlorpUIBuildings {
 
 							# LEVELS
 							widget = {
-								size = { 75 40 }
+								size = { 75 30 }
 								hbox = {
 									expand = {}
 									spacing = 5
@@ -2347,14 +2344,14 @@ types GlorpUIBuildings {
 										title = "OPEN_PROD_METHOD_BUILDING_ITEM_LOCATION"
 										on_action = "[BuildingCandidate.ShowBuilding]"
 									}
-				
+
 									action_tooltip = {
 										click_type = right
 										click_mode = single
 										title = "BUILD_BUILDING"
 										on_action = "[SelectLocationToBuildDefault(BuildingItem.GetBuildingType)]"
 									}
-									
+
 									tooltipwidget = {
 										using = Building_tooltip
 									}
@@ -2506,7 +2503,7 @@ types GlorpUIBuildings {
 
 									# hbox = {
 									# 	datacontext = "[LocationToBuildItem.GetBuildingType.GetPopType]"
-										
+
 									# 	hbox = {
 									# 		spacing = 3
 									# 		layoutpolicy_vertical = expanding
@@ -2522,7 +2519,7 @@ types GlorpUIBuildings {
 									# 				name = "population"
 									# 			}
 									# 		}
-		
+
 									# 		icon = {
 									# 			size = { 15 15 }
 									# 			texture = "[GetGraphicalCultureTextureForCountryPopType(PopType.Self, Location.GetOwner.Self)]"
@@ -2535,7 +2532,7 @@ types GlorpUIBuildings {
 								}
 
 								# expand = {}
-	
+
 								hbox = {
 									spacing = 5
 
@@ -2553,57 +2550,57 @@ types GlorpUIBuildings {
 												hbox = { #profit/income
 													expand = {}
 													visible = "[BuildingItem.GetBuildingType.IsProducing]"
-							
+
 													vbox = {#profitable
 														visible = "[GreaterThan_CFixedPoint(Building.GetProfit, '(CFixedPoint)0')]"
-	
+
 														tooltipwidget = {
 															using = BuildingProfit_Tooltip
 														}
-	
+
 														text_single = { #profit
 															size = { 60 18 }
 															autoresize = no
 															align = nobaseline|right
 															fontsize = 14
 															raw_text = "+[Building.GetProfitPerLevel|2]@wealth!"
-											
+
 															sort_by_highlight = {
 																size = { 105% 100% }
 																name = "profit"
 															}
 														}
-		
+
 														text_single = { #income
 															size = { 60 18 }
 															autoresize = no
 															align = nobaseline|right
 															fontsize = 14
 															raw_text = "[Building.GetIncomeToOwnerPerLevel|+=2]@income!"
-											
+
 															sort_by_highlight = {
 																size = { 105% 100% }
 																name = "income"
 															}
 														}
 													}
-							
+
 													text_single = { #unprofitable and not subsidized
 														visible = "[And(LessThanOrEqualTo_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'), Not(Building.IsSubsidized))]"
 														maximumsize = { 60 18 }
 														fontsize = 14
 														raw_text = "[Building.GetIncomeToOwnerPerLevel|+=2]@income!"
-							
+
 														tooltipwidget = {
 															using = BuildingProfit_Tooltip
 														}
-										
+
 														sort_by_highlight = {
 															size = { 105% 200% }
 															name = "income"
 														}
 													}
-							
+
 													text_single = { # subsidized
 														visible = "[And(LessThanOrEqualTo_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'), Building.IsSubsidized)]"
 														maximumsize = { 60 18 }
@@ -2612,7 +2609,7 @@ types GlorpUIBuildings {
 														tooltipwidget = {
 															using = BuildingProfit_Tooltip
 														}
-										
+
 														sort_by_highlight = {
 															size = { 105% 200% }
 															name = "income"
@@ -2623,7 +2620,7 @@ types GlorpUIBuildings {
 												hbox = { #upkeep
 													expand = {}
 													visible = "[Not(BuildingItem.GetBuildingType.IsProducing)]"
-							
+
 													text_single = {
 														maximumsize = { 60 18 }
 														fontsize = 14
@@ -2631,7 +2628,7 @@ types GlorpUIBuildings {
 														tooltipwidget = {
 															using = Building_upkeep_tooltip
 														}
-										
+
 														# sort_by_highlight = {
 														# 	size = { 105% 200% }
 														# 	name = "income"
@@ -2639,7 +2636,7 @@ types GlorpUIBuildings {
 													}
 												}
 											}
-	
+
 											widget = { #efficiency
 												size = { 70 44 }
 												vbox = {
@@ -2660,7 +2657,7 @@ types GlorpUIBuildings {
 																tooltipwidget = {
 																	using = building_production_efficiency_tooltip
 																}
-		
+
 																sort_by_highlight = {
 																	size = { 105% 200% }
 																	name = "production_efficiency"
@@ -2837,12 +2834,12 @@ types GlorpUIBuildings {
 										widget = {
 											parentanchor = center
 											size = { 100% 35 }
-											
+
 											sort_by_highlight = {
 												size = { 100% 100% }
 												name = "number_building"
 											}
-											
+
 											hbox = {
 												spacing = 5
 												using = bg_text_mask_container_brown
@@ -3285,12 +3282,12 @@ types GlorpUIBuildings {
 
 						tooltipwidget = {
 							using = BuildingType_tooltip
-							blockoverride "production_method_simple_good_tooltip" { 
+							blockoverride "production_method_simple_good_tooltip" {
 								datacontext = "[Location.GetMarket]"
-								tooltipwidget = { 
-									
-									using = SpecificGoodsMarket_tooltip 
-								} 
+								tooltipwidget = {
+
+									using = SpecificGoodsMarket_tooltip
+								}
 							}
 						}
 
@@ -3376,7 +3373,7 @@ types GlorpUIBuildings {
 											align = nobaseline|right
 											fontsize = 14
 											raw_text = "+[GetBuildingTypeProfitInLocation(BuildingItem.GetBuildingType, Location.Self)|2]@wealth!"
-							
+
 											sort_by_highlight = {
 												size = { 105% 100% }
 												name = "profit"
@@ -3389,20 +3386,20 @@ types GlorpUIBuildings {
 											align = nobaseline|right
 											fontsize = 14
 											raw_text = "[GetBuildingTypeProfitInLocation(BuildingItem.GetBuildingType, Location.Self)|2+=]@wealth!"
-							
+
 											sort_by_highlight = {
 												size = { 105% 100% }
 												name = "profit"
 											}
 										}
-				
+
 										text_single = { #income
 											size = { 60 18 }
 											autoresize = no
 											align = nobaseline|right
 											fontsize = 14
 											raw_text = "[GetBuildingTypeIncomeToOwnerInLocation(BuildingItem.GetBuildingType, Location.Self)|+=2]@income!"
-							
+
 											sort_by_highlight = {
 												size = { 105% 100% }
 												name = "income"
@@ -3412,8 +3409,8 @@ types GlorpUIBuildings {
 								}
 
 								widget = { #efficiency
-									datacontext = "[BuildingItem.GetBuildingType]"	
-									datacontext = "[Location]"	
+									datacontext = "[BuildingItem.GetBuildingType]"
+									datacontext = "[Location]"
 									size = { 70 36 }
 									vbox = {
 										# GlorpUI: stack ROI under the efficiency text
@@ -3483,7 +3480,7 @@ types GlorpUIBuildings {
 									widget = {
 										size = { 25 25 }
 										using = bg_circle_piechart
-	
+
 										icon = {
 											visible = "[BuildingItem.GetBuildingType.BuildOnlyInCapital]"
 											texture = "gfx/interface/buttons/flats/move_capital_button.dds"

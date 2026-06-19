@@ -2526,8 +2526,8 @@
 														enabled = "[And(IsCabinetActionAllowed('develop_province'), Location.GetOwner.IsPlayer)]"
 														conditions = "[GetCabinetActionTooltip('recovery_effort')]"
 													}
-                                                    datacontext = "[GetMapMode('development')]"
-                                                    onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('development')]"
+                                                    datacontext = "[GetMapMode('prosperity')]"
+                                                    onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('prosperity')]"
                                                     action_tooltip = {
                                                         click_type = right
                                                         click_mode = single
@@ -2632,6 +2632,8 @@
 													tooltipwidget = {
 														using = location_art_tooltip
 													}
+													datacontext = "[GetMapMode('works_of_art')]"
+													onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('works_of_art')]"
 												}
 												hbox = {
 													spacing = 7
@@ -7541,7 +7543,7 @@ types LocationWindowTypes {
 			parentanchor = center
 			position = {0 0}
 		}
-		
+
 		background = {
 			using = bg_round_corners_alt_texture
 			margin = {-1 0}
@@ -7557,7 +7559,7 @@ types LocationWindowTypes {
 			}
 		}
 
-		using = bg_tile_shadow		
+		using = bg_tile_shadow
 		using = bg_cabinet_card_frame
 		blockoverride "cabinet_card_shadow" {
 			margin_bottom = 2
@@ -7579,7 +7581,7 @@ types LocationWindowTypes {
 				vbox = {
 					block "margin_size" {
 						margin_top = 23
-					}	
+					}
 					widget = {
 						layoutpolicy_horizontal = expanding
 						block "number_size" {
@@ -7664,7 +7666,7 @@ types LocationWindowTypes {
 							enabled = "[LocationBuildingItem.IsPlayerBuilding]"
 							on_action = "[LocationBuildingItem.OpenBuildingView]"
 						}
-	
+
 						action_tooltip = {
 							click_type = right
 							click_mode = single
@@ -7672,7 +7674,7 @@ types LocationWindowTypes {
 							on_action = "[SetUIFocusMarket(Location.GetMarket)]"
 							on_action = "[SelectLocationToBuildDefault(LocationBuildingItem.GetBuilding.GetType)]"
 						}
-						
+
 						tooltipwidget = {
 							using = Building_tooltip
 						}
@@ -7690,7 +7692,7 @@ types LocationWindowTypes {
 					}
 					icon = {
 						visible = "[Not(LocationBuildingItem.IsConstruction)]"
-						size = { 80% 80% }
+						size = { 110% 110% }
 						parentanchor = center
 						position = { 0 -1}
 						texture = "[GetBuildingIcon(LocationBuildingItem.GetBuilding.GetType)]"
@@ -7710,30 +7712,30 @@ types LocationWindowTypes {
 						tooltipwidget = {
 							using = Construction_tooltip
 						}
-	
+
 						icon = {
 							texture = "gfx/interface/pie_charts/pie_chart_alpha_80.dds"
 							size = { 97% 97% }
 							parentanchor = center
 							color = { 0 0 0 1 }
 						}
-	
+
 						pieslice_no_highlight = {
 							texture = "gfx/interface/pie_charts/pie_chart_alpha_80.dds"
 							value = "[LocationBuildingItem.GetConstruction.GetProgress]"
 							color = { 0.01 0.6 0.9 1 }
 							alpha = 0.8
 						}
-	
+
 						pieslice_no_highlight = {
 							texture = "gfx/interface/pie_charts/pie_chart_alpha_80.dds"
 							value = "[Subtract_float('(float)100.0', LocationBuildingItem.GetConstruction.GetProgress)]"
 							color = { 0.0 0.1 0.1 1 }
 							alpha = 0.8
 						}
-	
+
 						icon = {
-							size = { 17 17 }
+							size = { 30 30 }
 							parentanchor = center
 							texture = "[GetBuildingIcon(LocationBuildingItem.GetBuilding.GetType)]"
 						}
@@ -7822,20 +7824,20 @@ types LocationWindowTypes {
 						datacontext = "[LocationBuildingItem.GetBuilding]"
 						using = bg_circle
 					}
-					
+
 					icon = {
 						parentanchor = bottom|left
 						texture = "gfx/interface/icons/alerts_icons/unprofitable.dds"
 						size = { 12 12 }
 						position = { -3 1 }
 						visible = "[And3(
-							LessThan_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'), 
+							LessThan_CFixedPoint(Building.GetProfit, '(CFixedPoint)0'),
 							Not(Building.IsSubsidized),
 							Not(LocationBuildingItem.IsLackingInput)
 						)]"
 						datacontext = "[LocationBuildingItem.GetBuilding]"
 						using = bg_circle
-					}		
+					}
 
 					icon = {
 						parentanchor = bottom|left
@@ -7862,7 +7864,7 @@ types LocationWindowTypes {
 
 					icon = {
 						parentanchor = top|right
-						size = { 10 10 }
+						size = { 12 12 }
 						position = { 1 -1 }
 						# GlorpUI: hidden when Construction Manager is active
 						visible = "[And(IsAutoExpand(LocationBuildingItem.GetBuilding.Self), Not(GetScriptedGui('glorpui_is_cm_active').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
@@ -7876,7 +7878,7 @@ types LocationWindowTypes {
 
 					# GlorpUI: Construction Manager auto-expand status icon
 					cm_is_auto_expand_on_icon = {}
-					
+
 					using = bg_circle_tile_shadow
 					background = {
 						texture = "gfx/interface/component_tiles/hud_corners/circle_background.dds"
@@ -7893,7 +7895,7 @@ types LocationWindowTypes {
 					}
 					background = {
 						texture = "gfx/interface/component_tiles/hud_corners/circle_frame.dds"
-						
+
 						modify_texture = {
 							using = color_new_gold_texture
 						}
@@ -7910,7 +7912,7 @@ types LocationWindowTypes {
 					}
 				}
 			}
-				
+
 			# plus minus
 			widget = {
 				layoutpolicy_horizontal = expanding
@@ -7943,7 +7945,7 @@ types LocationWindowTypes {
 									on_action = "[LocationBuildingItem.Destroy]"
 									on_action = "[PlayAudioEffect('UI_action_building_destroy')]"
 								}
-			
+
 								action_tooltip = {
 									click_mode = single
 									click_type = left
@@ -7977,7 +7979,7 @@ types LocationWindowTypes {
 							}
 						}
 					}
-	
+
 					button_square_plus = {
 						layoutpolicy_horizontal = expanding
 						block "square_icon_out_size_plus" {
@@ -7998,30 +8000,30 @@ types LocationWindowTypes {
 							title = "CONSTRUCT_BUILDING_BUTTON"
 							description = "[LocationBuildingItem.GetExpandBuildingInfo]"
 							enabled = "[LocationBuildingItem.CanExpandBuilding]"
-	
+
 							on_action = "[LocationBuildingItem.ExpandBuilding]"
 						}
 						action_tooltip = {
 							click_type = left
 							click_mode = single
 							click_modifier = ctrl
-	
+
 							title = "BUILDING_IN_LOCATION_ACTION_CTRL"
 							description = "[LocationBuildingItem.GetExpandBuildingInfo]"
 							enabled = "[LocationBuildingItem.CanExpandBuilding]"
-	
+
 							on_action = "[ExpandBuildingCtrl(LocationBuildingItem.GetBuilding.Self)]"
 						}
-	
+
 						action_tooltip = {
 							click_type = left
 							click_mode = single
 							click_modifier = shift
-	
+
 							title = "BUILDING_IN_LOCATION_ACTION_SHIFT"
 							description = "[LocationBuildingItem.GetExpandBuildingInfo]"
 							enabled = "[LocationBuildingItem.CanExpandBuilding]"
-	
+
 							on_action = "[ExpandBuildingShift(LocationBuildingItem.GetBuilding.Self)]"
 						}
 						tooltipwidget = { using = construct_building_in_location_tt }
