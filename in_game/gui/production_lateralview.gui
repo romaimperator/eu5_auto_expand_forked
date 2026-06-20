@@ -2736,8 +2736,11 @@ types GlorpUIBuildings {
 											spacing = 2
 											widget = { # AutoExpand slot
 												size = { 20 44 }
+												# GlorpUI: Construction Manager auto-expand button
+												cm_auto_expand_existing_building_button_pl = {}
 												button_square_checkbox = {
-													visible = "[And(ObjectsEqual(Building.GetOwner, Player.Self), BuildingType.IsMultipleLevels)]"
+													# GlorpUI: hidden when Construction Manager is active
+													visible = "[And3(Not(GetScriptedGui('glorpui_is_cm_active').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), ObjectsEqual(Building.GetOwner, Player.Self), BuildingType.IsMultipleLevels)]"
 													size = { 20 20 }
 													parentanchor = center
 													widgetanchor = center
@@ -3476,6 +3479,8 @@ types GlorpUIBuildings {
 
 								hbox = {
 									layoutpolicy_horizontal = expanding
+									# GlorpUI: Construction Manager auto-expand button (unbuilt)
+									cm_auto_expand_new_building_button_pl = {}
 									expand = {}
 									widget = {
 										size = { 25 25 }
