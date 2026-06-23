@@ -264,7 +264,7 @@
 
 	type cm_mass_auto_expand_button_bll = hbox {
 		name = "cm_parent_of_auto_expand_active_locations"
-		visible = "[Not(GetScriptedGui('cm_is_building_type_obsolete').IsShown(GuiScope.AddScope('cm_building_type', BuildInLocationLateralView.GetBuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End))]"
+		visible = "[And(Not(BuildInLocationLateralView.GetBuildingType.IsForeign), Not(GetScriptedGui('cm_is_building_type_obsolete').IsShown(GuiScope.AddScope('cm_building_type', BuildInLocationLateralView.GetBuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End)))]"
 
 		# Hidden datamodels drive the shift-click filtered mass toggle on the standard
 		# auto-expand buttons named cm_auto_expand_production_*_checkbuttons. The shift
@@ -331,7 +331,7 @@
 	}
 
 	type cm_mass_auto_expand_button_pl = button_square_checkbox {
-		visible = "[And3(BuildingItem.GetBuildingType.IsMultipleLevels, Or(Not(ProductionView.IsLocationFilterEnabled), ObjectsEqual(ProductionView.GetSelectedLocation.GetOwner, Player.Self)), Not(GetScriptedGui('cm_is_building_type_obsolete').IsShown(GuiScope.AddScope('cm_building_type', BuildingItem.GetBuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End)))]"
+		visible = "[And4(Not(BuildingItem.GetBuildingType.IsForeign), BuildingItem.GetBuildingType.IsMultipleLevels, Or(Not(ProductionView.IsLocationFilterEnabled), ObjectsEqual(ProductionView.GetSelectedLocation.GetOwner, Player.Self)), Not(GetScriptedGui('cm_is_building_type_obsolete').IsShown(GuiScope.AddScope('cm_building_type', BuildingItem.GetBuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End)))]"
 		size = { 20 20 }
 		tooltipwidget = { using = cm_Mass_Autoexpand_Tooltip }
 		blockoverride "check_texture" {
