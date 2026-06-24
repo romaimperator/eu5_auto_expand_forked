@@ -118,196 +118,123 @@ template build_location_entry {
 								alpha = 0.1
 							}
 						}
+
 						card_header_button_04 = {
-							size = {140 43}
+							size = { 140 44 }
 							
-							hbox = {
-								layoutpolicy_horizontal = expanding
-								margin_right = 4
-								vbox = {
+							vbox = {
+								using = layoutpolicy_expanding
+								margin = { 6 0 }
+
+								expand = {}
+								
+								hbox = {
 									layoutpolicy_horizontal = expanding
-									margin = {5 3}
-									margin_right = 0
-									spacing = 4
+									spacing = 3
 									
-									hbox = { #top text
-										layoutpolicy_horizontal = expanding
-										spacing = 3
-										icon = {
-											size = { 15 15 }
-											texture = "[Location.GetRankIcon]"
-										}
-	
-										text_single = {
-											visible = "[IsDataModelEmpty(Location.GetCivilConstructions)]"
-											maximumsize = { 105 15}
-											alwaystransparent = no
-											align = left|nobaseline
-											autoresize = yes
-											using = Font_Size_Small
-											text = "[LocationToBuildItem.GetLocation.GetNameWithNoTooltip]"
-											default_format = "#yellow_titles"
-							
-											sort_by_left_fade_highlight = {
-												size = { 200% 170% }
-												position = { 40 0 }
-												name = "name"
-											}
-										}
-
-										text_single = {
-											visible = "[Not(IsDataModelEmpty(Location.GetCivilConstructions))]"
-											maximumsize = { 65 15}
-											alwaystransparent = no
-											align = left|nobaseline
-											autoresize = yes
-											using = Font_Size_Small
-											text = "[LocationToBuildItem.GetLocation.GetNameWithNoTooltip]"
-											default_format = "#yellow_titles"
-							
-											sort_by_left_fade_highlight = {
-												size = { 200% 170% }
-												position = { 40 0 }
-												name = "name"
-											}
-										}
-
-										text_single = {
-											datacontext = "[LocationToBuildItem.GetLocation]"
-											visible = "[Not(IsDataModelEmpty(Location.GetCivilConstructions))]"
-											size = { 40 15}
-											alwaystransparent = no
-											align = left|nobaseline
-											autoresize = no
-											using = Font_Size_Small
-							
-											raw_text = " (#L +[GetDataModelSize(Location.GetCivilConstructions)]#! @construction!)"
-
-											hbox = {
-												datamodel = "[DataModelFirst(Location.GetCivilConstructions,'(int32)1')]"
-												item = {
-													hbox = {
-														using = layoutpolicy_expanding
-														tooltipwidget = {
-															using = Construction_tooltip
-														}
-													}
-												}
-											}
-										}
-	
-										expand = {}
+									icon = {
+										size = { 15 15 }
+										texture = "[Location.GetRankIcon]"
 									}
-			
-									hbox = { #bottom
-										datacontext = "[LocationToBuildItem.GetLocation]"
+
+									text_single = {
 										layoutpolicy_horizontal = expanding
-										# spacing = 10
-										margin = { 2 0 }
-										margin_right = 8
-										hbox = {
-											datacontext = "[LocationToBuildItem.GetBuildingType.GetPopType]"
-											
-											hbox = {
-												spacing = 3
-												layoutpolicy_vertical = expanding
-												text_single = {
-													layoutpolicy_vertical = expanding
-													maximumsize = { 60 -1 }
-													align = center|nobaseline
-													autoresize = yes
-													fontsize = 13
-													text = "[Location.GetExpectedUnEmployed(PopType.Self)]"
-													sort_by_highlight = {
-														size = { 105% 200% }
-														name = "employment"
-													}
-												}
-			
-												icon = {
-													size = { 15 15 }
-													texture = "[GetGraphicalCultureTextureForCountryPopType(PopType.Self, Location.GetOwner.Self)]"
-												}
-											}
-											tooltipwidget = {
-												using = locationview_employed_tt
-											}
+										autoresize = yes
+										using = Font_Size_Very_Small
+										text = "[LocationToBuildItem.GetLocation.GetNameWithNoTooltip]"
+										default_format = "#yellow_titles"
+						
+										sort_by_left_fade_highlight = {
+											size = { 200% 170% }
+											position = { 40 0 }
+											name = "name"
 										}
+									}
 
-										expand = {}
+									text_single = {
+										datacontext = "[LocationToBuildItem.GetLocation]"
+										visible = "[DataModelHasItems(Location.GetCivilConstructions)]"
 
-										hbox = {
-											layoutpolicy_vertical = expanding
-											visible = "[And(Not(LocationToBuildItem.GetBuildingType.GetPopType.IsPeasant), Not(LocationToBuildItem.GetBuildingType.GetPopType.IsSlaves))]"
-											spacing = 3
-											text_single = {
-												layoutpolicy_vertical = expanding
-												maximumsize = { 60 -1 }
-												align = center|nobaseline
-												fontsize = 13
-												autoresize = yes
-												text = "[GetUnEmployedPeasantsFromLocation(LocationToBuildItem.GetLocation)]"
-												sort_by_highlight = {
-													size = { 105% 200% }
-													name = "population"
-												}
-											}
-											icon = {
-												size = { 15 15 }
-												texture = "gfx/interface/icons/pops/peasants.dds"
-											}
+										autoresize = yes
+										using = Font_Size_Very_Small
+										raw_text = "(#L +[GetDataModelSize(Location.GetCivilConstructions)]#! @construction!)"
+
+										datacontext_from_model = { 
+											datamodel = "[Location.GetCivilConstructions]"
+											index = 0
+										}
+										
+										tooltipwidget = {
+											using = Construction_tooltip
+										}
+									}
+								}
 		
-											tooltipwidget = {
-												using = available_peasants_tooltip
-											}
+								hbox = {
+									datacontext = "[LocationToBuildItem.GetLocation]"
+									datacontext = "[LocationToBuildItem.GetBuildingType.GetPopType]"
+									layoutpolicy_horizontal = expanding
+
+									location_building_levels_piechart = {
+										size = { 15 15 }
+									}
+
+									widget = {
+										size = { 5 15 }
+									}
+
+									text_single = {
+										autoresize = yes
+										using = Font_Size_Very_Small
+										text = "[Location.GetExpectedUnEmployed(PopType.Self)]"
+										sort_by_highlight = {
+											size = { 105% 200% }
+											name = "employment"
 										}
 
+										tooltipwidget = {
+											using = locationview_employed_tt
+										}
+									}
+
+									icon = {
+										size = { 15 15 }
+										texture = "[GetGraphicalCultureTextureForCountryPopType(PopType.Self, Location.GetOwner.Self)]"
+
+										tooltipwidget = {
+											using = locationview_employed_tt
+										}
+									}
+
+									expand = {}
+
+									text_single = {
+										visible = "[And(Not(LocationToBuildItem.GetBuildingType.GetPopType.IsPeasant), Not(LocationToBuildItem.GetBuildingType.GetPopType.IsSlaves))]"
+										autoresize = yes
+										using = Font_Size_Very_Small
+										text = "[GetUnEmployedPeasantsFromLocation(LocationToBuildItem.GetLocation)]"
+										sort_by_highlight = {
+											size = { 105% 200% }
+											name = "population"
+										}
+
+										tooltipwidget = {
+											using = available_peasants_tooltip
+										}
+									}
+
+									icon = {
+										visible = "[And(Not(LocationToBuildItem.GetBuildingType.GetPopType.IsPeasant), Not(LocationToBuildItem.GetBuildingType.GetPopType.IsSlaves))]"
+										size = { 15 15 }
+										texture = "gfx/interface/icons/pops/peasants.dds"
+
+										tooltipwidget = {
+											using = available_peasants_tooltip
+										}
 									}
 								}
 
 								expand = {}
-
-								# icon_pie_left = {
-								# 	tooltipwidget = {
-								# 		using = location_tax_base_tooltip
-								# 	}
-								# 	blockoverride "PieSize" { size = { 35 35 } }
-								# 	blockoverride "pie_datamodel" {
-								# 		datacontext = "[Location.GetPopulationChart]"
-								# 		datacontext = "[LocationPopulationChart.GetPopsPiechartWidget]"
-								# 		datamodel = "[PopsPiechartWidget.GetTax]"
-								# 	}
-		
-								# 	blockoverride "pieslice_item" {
-								# 		pieslice_no_highlight = {
-								# 			texture = "gfx/interface/pie_charts/piechart_alpha.dds"
-								# 			texture_density = 2
-								# 			tooltip_enabled = no
-								# 			value = "[PopTaxItem.GetPercentage]"
-								# 			color = "[PopTaxItem.GetColor]"
-								# 			alpha = 0.99
-								# 			alwaystransparent = yes
-								# 		}
-								# 	}
-								# 	blockoverride "Icon_Size" { size = { 60% 60% } }
-								# 	blockoverride "Icon" {
-								# 		texture = "gfx/interface/icons/location_icons/tax_base.dds"
-								# 		texture_density = 2
-								# 		alwaystransparent = yes
-								# 	}
-		
-								# 	background = {
-								# 		texture = "gfx/interface/component_tiles/hud_corners/circle_frame.dds"
-								# 		texture_density = 2
-		
-								# 		modify_texture = {
-								# 			using = color_gold_texture
-								# 		}
-		
-								# 		using = overlay_gold
-								# 	}
-								# }
-
 							}
 		
 							action_tooltip = {
