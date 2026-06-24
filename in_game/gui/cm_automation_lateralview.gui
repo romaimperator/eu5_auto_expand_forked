@@ -28,7 +28,7 @@
 				blockoverride "header_color" { using = color_government_texture }
 			}
 			background = {
-				visible = "[AutomatedSystemsItem.IsName('cabinetactions')]"
+				visible = "[AutomatedSystemsItem.IsName('cabinet')]"
 				using = bg_card_header_01_default
 				blockoverride "header_color" { using = color_government_texture }
 			}
@@ -218,10 +218,18 @@
 				on_action = "[OpenLateralView('advances')]"
 			}
 			action_tooltip = {
+				click_type = left
+				enabled = "[Not(AutomatedSystemsItem.IsEnabled)]"
+				title = "AUTOMATE_ALL_MARKETS"
+				conditions = "AUTOMATE_ALL_MARKETS_DISABLED"
+				on_action = "[AutomatedSystemsItem.Toggle]"
+				visible = "[AutomatedSystemsItem.IsName('trade')]"
+			}
+			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
 				visible = "[AutomatedSystemsItem.IsName('trade')]"
-				on_action = "[OpenLateralViewWithParams('trade', 'subtab = trades')]"
+				on_action = "[OpenLateralViewWithParams('trade', 'subtab = markets')]"
 			}
 			action_tooltip = {
 				click_type = right
@@ -244,7 +252,7 @@
 			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
-				visible = "[AutomatedSystemsItem.IsName('cabinetactions')]"
+				visible = "[AutomatedSystemsItem.IsName('cabinet')]"
 				on_action = "[OpenLateralViewWithParams('government', 'tabcontent = cabinet')]"
 			}
 			action_tooltip = {
@@ -399,7 +407,7 @@
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('laws')]" texture = "[GetConceptTexture('law')]" }
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('governmentreforms')]" texture = "[GetConceptTexture('government_reform')]" }
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('cabinetmembers')]" texture = "[GetConceptTexture('cabinet_member')]" }
-							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('cabinetactions')]" texture = "[GetConceptTexture('cabinet_action')]" }
+							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('cabinet')]" texture = "[GetConceptTexture('cabinet_action')]" }
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('parliament')]" texture = "[GetConceptTexture('parliament')]" }
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('estates')]" texture = "[GetConceptTexture('estate')]" }
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('exploration')]" texture = "[GetConceptTexture('exploration')]" }
@@ -438,7 +446,7 @@
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('laws')]" text = "[law|e]" }
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('governmentreforms')]" text = "[government_reform|e]" }
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('cabinetmembers')]" text = "[cabinet_member|e]" }
-							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('cabinetactions')]" text = "[cabinet_action|e]" }
+							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('cabinet')]" text = "[cabinet_action|e]" }
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('parliament')]" text = "[parliament|e]" }
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('estates')]" text = "[estate|e]" }
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('exploration')]" text = "[exploration|e]" }
@@ -468,6 +476,11 @@
 								text = "[AutomatedSystemsItem.GetDescription]"
 							}
 						}
+
+						TooltipBlockList = {
+							visible = "[And(AutomatedSystemsItem.IsName('trade'), Not(AutomatedSystemsItem.IsEnabled))]"
+							textcontext = "AUTOMATE_ALL_MARKETS_TT"
+						}
 					}
 				}
 			}
@@ -481,29 +494,33 @@
 				# Automation state indicator, cog icon, left side
 				widget = {
 					size = { 22 22 }
-					background = {
-						texture = "gfx/interface/buttons/checkbox_auto_bg.dds"
-						texture_density = 2
-						using = color_dark_blue
-						margin = { 1 1 }
-						shaderfile = "gfx/FX/pdxgui_default.shader"
-					}
-					icon = {
+					widget = {
 						size = { 100% 100% }
-						using = checkbox_auto_texture
-						frame = 1
-					}
-					icon = {
-						size = { 100% 100% }
-						using = checkbox_auto_texture
-						frame = 2
-						visible = "[And(AutomatedSystemsItem.IsEnabled, Not(Or(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'))))]"
-					}
-					icon = {
-						size = { 100% 100% }
-						using = checkbox_auto_texture
-						frame = 2
-						visible = "[Or(And(AutomatedSystemsItem.IsName('expandbuildings'), GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('expandrgo'), GetScriptedGui('cm_is_auto_expand_rgos_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
+						background = {
+							texture = "gfx/interface/buttons/checkbox_auto_bg.dds"
+							texture_density = 2
+							using = color_dark_blue
+							margin = { 1 1 }
+							shaderfile = "gfx/FX/pdxgui_default.shader"
+						}
+						icon = {
+							size = { 100% 100% }
+							using = checkbox_auto_texture
+							frame = 1
+						}
+						icon = {
+							size = { 100% 100% }
+							using = checkbox_auto_texture
+							frame = 2
+							visible = "[And(AutomatedSystemsItem.IsEnabled, Not(Or(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'))))]"
+						}
+						# CM: expand-buildings/expand-RGO cards reflect the auto-expand feature toggle
+						icon = {
+							size = { 100% 100% }
+							using = checkbox_auto_texture
+							frame = 2
+							visible = "[Or(And(AutomatedSystemsItem.IsName('expandbuildings'), GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('expandrgo'), GetScriptedGui('cm_is_auto_expand_rgos_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
+						}
 					}
 				}
 
@@ -518,7 +535,7 @@
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('laws')]"                 texture = "[GetConceptTexture('law')]"                }
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('governmentreforms')]"    texture = "[GetConceptTexture('government_reform')]"  }
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('cabinetmembers')]"       texture = "[GetConceptTexture('cabinet_member')]"     }
-					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('cabinetactions')]"       texture = "[GetConceptTexture('cabinet_action')]"     }
+					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('cabinet')]"       texture = "[GetConceptTexture('cabinet_action')]"     }
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('parliament')]"           texture = "[GetConceptTexture('parliament')]"         }
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('estates')]"              texture = "[GetConceptTexture('estate')]"             }
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('exploration')]"          texture = "[GetConceptTexture('exploration')]"        }
@@ -606,7 +623,7 @@
 					}
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
-						visible = "[AutomatedSystemsItem.IsName('cabinetactions')]"
+						visible = "[AutomatedSystemsItem.IsName('cabinet')]"
 						on_action = "[OpenLateralViewWithParams('government', 'tabcontent = cabinet')]"
 					}
 					action_tooltip = {
