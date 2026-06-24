@@ -1,0 +1,98 @@
+# vanilla: in_game/gui/production_lateralview.gui
+# mod: in_game/gui/production_lateralview.gui
+
+template production_view_poptypes {
+	hbox = {
+		layoutpolicy_horizontal = expanding
+		spacing = 2
+		margin = { 2 5 }
+		visible = "[And3(Not(ProductionView.Vars.HasValue( 'display', 'foreign' )), Not(ProductionView.Vars.HasValue( 'display', 'estate' )), ProductionView.IsLocationFilterEnabled)]"
+		datamodel = "[GetPopTypes]"
+		datacontext = "[ProductionView.GetSelectedLocation]"
+
+		item = {
+			# ESTATES FILTERS
+			estates_filter_button = {
+				visible = "[ShowBuildingCardForLocation(Location.Self, PopType.Self)]"
+				blockoverride "building_color" {
+					color = "[PopType.GetColor]"
+					alpha = 0.8
+					blend_mode = overlay
+				}
+				blockoverride "estates_filter_button_action" {
+					action_tooltip = {
+						click_type = left
+						click_mode = single
+						on_action = "[SearchBar.ToggleFilterByKeyForceExclusive(PopType.GetKey)]"
+						on_action = "[SearchBar.EnableFilterByKey('hide_estate_only_buildings')]"
+						on_action = "[ShowProductionViewWithLocation(Location.GetId, '(bool)no')]"
+						datacontext = "[PopType]"
+						title = "TOGGLE_BUILDINGS_POP_TYPE"
+					}
+
+					action_tooltip = {
+						click_type = right
+						title = "[SelectLocalization(SearchBar.IsFilterPinnedByKey(PopType.GetKey), 'UNPIN_FILTER', 'PIN_FILTER')]"
+						on_action = "[SearchBar.ToggleFilterPinByKey(PopType.GetKey)]"
+					}
+				}
+				blockoverride "estates_filter_button_texture" {
+					texture = "[GetGraphicalCultureTextureForCountryPopType(PopType.Self, Location.GetOwner.Self)]"
+				}
+				blockoverride "estates_filter_button_pin" {
+					widget = {
+						size = { 14 14 }
+						datacontext = "[ProductionView.GetBuildingsSortSearch.GetSearchBar]"
+						using = estates_filter_button_pin_overlay
+					}
+				}
+				blockoverride "estates_filter_button_searchbar_datacontext" {
+					datacontext = "[ProductionView.GetBuildingsSortSearch.GetSearchBar]"
+				}
+			}
+		}
+	}
+	hbox = {
+		layoutpolicy_horizontal = expanding
+		spacing = 2
+		margin = { 2 5 }
+		visible = "[And3(Not(ProductionView.Vars.HasValue( 'display', 'foreign' )),  Not(ProductionView.Vars.HasValue( 'display', 'estate' )), Not(ProductionView.IsLocationFilterEnabled))]"
+		datamodel = "[GetPopTypes]"
+		datacontext = "[ProductionView.GetSelectedLocation]"
+
+		item = {
+			# ESTATES FILTERS
+			estates_filter_button = {
+				blockoverride "building_color" {
+					color = "[PopType.GetColor]"
+					alpha = 0.8
+					blend_mode = overlay
+				}
+				blockoverride "estates_filter_button_inner_content"{}
+				blockoverride "estates_filter_button_tooltip"{
+					# tooltipwidget = { BasicFunctionalTooltip = {} }
+
+					action_tooltip = {
+						click_type = right
+						title = "[SelectLocalization(SearchBar.IsFilterPinnedByKey(PopType.GetKey), 'UNPIN_FILTER', 'PIN_FILTER')]"
+						on_action = "[SearchBar.ToggleFilterPinByKey(PopType.GetKey)]"
+					}
+
+					tooltipwidget = {
+						using = pop_filter_button_tt
+					}
+				}
+				blockoverride "estates_filter_button_pin" {
+					widget = {
+						size = { 14 14 }
+						datacontext = "[ProductionView.GetBuildingsSortSearch.GetSearchBar]"
+						using = estates_filter_button_pin_overlay
+					}
+				}
+				blockoverride "estates_filter_button_searchbar_datacontext" {
+					datacontext = "[ProductionView.GetBuildingsSortSearch.GetSearchBar]"
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,37 @@
+# vanilla: main_menu/gui/mods_gui/mods_gui.gui
+# mod: main_menu/gui/cmf_dependency_check.gui
+
+    type playset_create_button = hbox {
+        layoutpolicy_horizontal = expanding
+
+        spacing = 5
+        margin = {10 0}
+
+        editbox_single = {
+            name = "create_playset_editbox"
+            layoutpolicy_horizontal = expanding
+            layoutpolicy_vertical = fixed
+            tooltipwidget = { LeftClickButtonTooltip = { blockoverride "onclick_text" { text = "MODS_GUI_PLAYSET_LABEL_TOOLTIP" } } }
+
+            blockoverride "editbox_label" {
+                text = "MODS_GUI_PLAYSET_LABEL"
+            }
+        }
+
+        button_regular = {
+            text = "MODS_GUI_CREATE_PLAYSET"
+            tooltipwidget = {BasicFunctionalTooltip = {}}
+
+            action_tooltip = {
+                click_type = left
+                click_mode = single
+                title = "[ModsGui.CreatePlaysetTooltip(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+                on_action = "[ModsGui.CreatePlayset(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+                on_action = "[PdxClearEditBoxText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox'))]"
+                enabled = "[ModsGui.CanCreatePlayset(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+            }
+            enabled = "[ModsGui.CanCreatePlayset(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+            align = center|nobaseline
+            using = button_resize_to_fit_text
+        }
+    }
