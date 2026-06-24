@@ -1,0 +1,186 @@
+﻿# vanilla: main_menu/gui/mods_gui/mods_gui.gui
+# mod: main_menu/gui/cmf_dependency_check.gui
+
+	type playset_create_button = vbox {
+		layoutpolicy_horizontal = expanding
+
+		### Original playset_create_button content
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			spacing = 5
+			margin = {10 0}
+
+			editbox_single = {
+				name = "create_playset_editbox"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = fixed
+				tooltipwidget = {
+					LeftClickButtonTooltip = {
+						blockoverride "onclick_text" {
+							text = "MODS_GUI_PLAYSET_LABEL_TOOLTIP"
+						}
+					}
+				}
+
+				blockoverride "editbox_label" {
+					text = "MODS_GUI_PLAYSET_LABEL"
+				}
+			}
+
+			button_regular = {
+				text = "MODS_GUI_CREATE_PLAYSET"
+				tooltipwidget = {BasicFunctionalTooltip = {}}
+
+				action_tooltip = {
+					click_type = left
+					click_mode = single
+					title = "[ModsGui.CreatePlaysetTooltip(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+					on_action = "[ModsGui.CreatePlayset(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+					on_action = "[PdxClearEditBoxText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox'))]"
+					enabled = "[ModsGui.CanCreatePlayset(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+				}
+				enabled = "[ModsGui.CanCreatePlayset(PdxGuiEditboxGetText(PdxGuiWidget.AccessParent.FindChild('create_playset_editbox')))]"
+				align = center|nobaseline
+				using = button_resize_to_fit_text
+			}
+		}
+
+		### Detection widget — sets cmf_installed if CMF is in LocalMods.
+		### Fires at main menu load via visible_at_creation = no + _show.
+		vbox = {
+			datamodel = "[ModsGui.LocalMods]"
+
+			item = {
+				widget = {
+					size = { 0 0 }
+					visible_at_creation = no
+					visible = "[Or( StringContains( LocalMod.Path, '3692202776' ), StringContains( LocalMod.Path, 'community-mod-framework' ) )]"
+
+					state = {
+						name = _show
+						on_start = "[GetVariableSystem.Set( 'cmf_installed', 'yes' )]"
+					}
+				}
+			}
+		}
+
+		### Auto-enable: dev/local copy (priority, fires immediately)
+		vbox = {
+			datamodel = "[ModsGui.LocalMods]"
+
+			item = {
+				widget = {
+					size = { 0 0 }
+					visible_at_creation = no
+					visible = "[And3( GetVariableSystem.Exists( 'cmf_dep_auto_enable' ), StringContains( LocalMod.Path, 'community-mod-framework' ), Not( ModsGui.ActivePlayset.ContainsMod( LocalMod.Id ) ) )]"
+
+					state = {
+						name = _show
+						on_start = "[ModsGui.ActivePlayset.AddMod( LocalMod.Id )]"
+						on_start = "[GetVariableSystem.Set( 'cmf_dep_reorder', 'yes' )]"
+						on_start = "[GetVariableSystem.Clear( 'cmf_dep_auto_enable' )]"
+					}
+				}
+			}
+		}
+
+		### Workshop delay timer — waits 0.5s before enabling the workshop fallback.
+		### If the dev copy fired and cleared cmf_dep_auto_enable, the workshop
+		### condition below checks for it and won't fire.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[GetVariableSystem.Exists( 'cmf_dep_auto_enable' )]"
+
+			state = {
+				name = _show
+				duration = 0.5
+				on_finish = "[GetVariableSystem.Set( 'cmf_dep_workshop_go', 'yes' )]"
+			}
+		}
+
+		### Auto-enable: workshop copy (fallback, fires after 0.5s delay)
+		### Also checks cmf_dep_auto_enable still exists — if the dev copy fired
+		### and cleared it, this won't match.
+		vbox = {
+			datamodel = "[ModsGui.LocalMods]"
+
+			item = {
+				widget = {
+					size = { 0 0 }
+					visible_at_creation = no
+					visible = "[And4( GetVariableSystem.Exists( 'cmf_dep_workshop_go' ), GetVariableSystem.Exists( 'cmf_dep_auto_enable' ), StringContains( LocalMod.Path, '3692202776' ), Not( ModsGui.ActivePlayset.ContainsMod( LocalMod.Id ) ) )]"
+
+					state = {
+						name = _show
+						on_start = "[ModsGui.ActivePlayset.AddMod( LocalMod.Id )]"
+						on_start = "[GetVariableSystem.Set( 'cmf_dep_reorder', 'yes' )]"
+						on_start = "[GetVariableSystem.Clear( 'cmf_dep_auto_enable' )]"
+						on_start = "[GetVariableSystem.Clear( 'cmf_dep_workshop_go' )]"
+					}
+				}
+			}
+		}
+
+		### Reorder delay timer — waits 0.5s after AddMod for ModifiableMods to update.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[GetVariableSystem.Exists( 'cmf_dep_reorder' )]"
+
+			state = {
+				name = _show
+				duration = 0.5
+				on_finish = "[GetVariableSystem.Set( 'cmf_dep_do_reorder', 'yes' )]"
+			}
+		}
+
+		### Move CMF to top of load order.
+		### Iterates ModifiableMods (ModsPlaysetEntry context) to call SetLoadOrder.
+		vbox = {
+			datamodel = "[ModsGui.GetPlayset( ModsGui.SelectedPlaysetId ).ModifiableMods]"
+
+			item = {
+				widget = {
+					size = { 0 0 }
+					visible_at_creation = no
+					visible = "[And( GetVariableSystem.Exists( 'cmf_dep_do_reorder' ), StringContains( ModsPlaysetEntry.Name, 'Community Mod Framework' ) )]"
+
+					state = {
+						name = _show
+						on_start = "[ModsPlaysetEntry.SetLoadOrder( '(uint32)0' )]"
+						on_start = "[GetVariableSystem.Set( 'cmf_dep_apply', 'yes' )]"
+						on_start = "[GetVariableSystem.Clear( 'cmf_dep_reorder' )]"
+						on_start = "[GetVariableSystem.Clear( 'cmf_dep_do_reorder' )]"
+					}
+				}
+			}
+		}
+
+		### Delayed apply — waits 0.5s after reorder for the change to commit.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[GetVariableSystem.Exists( 'cmf_dep_apply' )]"
+
+			state = {
+				name = _show
+				duration = 0.5
+				on_finish = "[ModsGui.DownloadAndApplyChanges]"
+				on_finish = "[GetVariableSystem.Clear( 'cmf_dep_apply' )]"
+			}
+		}
+
+		### Open Workshop when flag is set — fires via _show when mods panel opens.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[GetVariableSystem.Exists( 'cmf_dep_open_workshop' )]"
+
+			state = {
+				name = _show
+				on_start = "[ModsGui.OpenExternalInterface()]"
+				on_start = "[GetVariableSystem.Clear( 'cmf_dep_open_workshop' )]"
+			}
+		}
+	}

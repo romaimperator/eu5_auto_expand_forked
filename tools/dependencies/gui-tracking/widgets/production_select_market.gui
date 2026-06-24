@@ -1,13 +1,13 @@
-﻿# vanilla: in_game/gui/expand_raw_goods_lateralview.gui
-# mod: in_game/gui/expand_raw_goods_lateralview.gui
+﻿# vanilla: in_game/gui/production_lateralview.gui
+# mod: in_game/gui/production_lateralview.gui
 
 select_menu_left = {
 	datacontext = "[GetQuickVisibleMarkets(Player.Self)]"
 	blockoverride "menu_setup" {
-		name = "expand_raw_goods_select_market"
+		name = "production_select_market"
 	}
 
-	blockoverride "close_on_action" { on_action = "[ExpandRawGoodsSelectMarket.OnClose]" }
+	blockoverride "close_on_action" { on_action = "[ProductionSelectMarket.OnClose]" }
 	blockoverride "select_content" {
 		select_menu_header = {
 			blockoverride "select_menu_header_extra" {
@@ -15,10 +15,10 @@ select_menu_left = {
 					size = { 32 32 }
 					action_tooltip = {
 						title = "TOGGLE_INRANGE_MARKETS"
-						on_action = "[ExpandRawGoodsSelectMarket.Parent.Vars.Toggle( 'inrange_markets')]"
+						on_action = "[ProductionSelectMarket.Parent.Vars.Toggle( 'inrange_markets')]"
 					}
 					tooltipwidget = { BasicFunctionalTooltip = {} }
-					down = "[ExpandRawGoodsSelectMarket.Parent.Vars.Exists( 'inrange_markets')]"
+					down = "[ProductionSelectMarket.Parent.Vars.Exists( 'inrange_markets')]"
 				}
 
 				text_single = {
@@ -38,7 +38,7 @@ select_menu_left = {
 			item = {
 				widget = {
 					size = { 485 70 }
-					visible = "[Or3(GreaterThan_CFixedPoint(Market.GetCountryPopulation(Player.Self),'(CFixedPoint)0'), GreaterThan_CFixedPoint(Market.GetTotalMerchantCapacity(Player.Self),'(CFixedPoint)0'), And(ExpandRawGoodsSelectMarket.Parent.Vars.Exists( 'inrange_markets'), IsMarketInRange(Market.Self)))]"
+					visible = "[Or3(GreaterThan_CFixedPoint(Market.GetCountryPopulation(Player.Self),'(CFixedPoint)0'), GreaterThan_CFixedPoint(Market.GetTotalMerchantCapacity(Player.Self),'(CFixedPoint)0'), And(ProductionSelectMarket.Parent.Vars.Exists( 'inrange_markets'), IsMarketInRange(Market.Self)))]"
 
 					hbox = {
 						using = bg_market_card
@@ -50,7 +50,7 @@ select_menu_left = {
 									click_type = left
 									click_mode = single
 									title = "TOGGLE_MARKET_SELECTION"
-									on_action = "[ExpandRawGoodsSelectMarket.Parent.FilterByMarket(Market.Self)]"
+									on_action = "[ProductionSelectMarket.Parent.FilterByMarket(Market.Self)]"
 								}
 
 								action_tooltip = {

@@ -4,17 +4,11 @@
 	type food_production_location = widget {
 		visible = "[FoodProductionListItem.IsLocationItem]"
 		size = { 100% 51 }
-
-		state = {
-			name = cm_init_food_potential_map_mode
-			trigger_on_create = yes
-			on_start = "[GetMapMode('cm_location_food_potential').SetMapMode]"
-		}
 		button_building_paper = {
 			datacontext = "[FoodProductionListItem.AccessLocationItem]"
 			parentanchor = center
 			size = { 100% 46 }
-	
+
 			datacontext = "[FoodLocationItem.GetLocation]"
 
 			action_tooltip = {
@@ -27,7 +21,7 @@
 			action_tooltip = {
 				click_type = right
 				click_mode = single
-	
+
 				cursor = "location_menu"
 				title = "CLICK_ACTION_LOCATION_CONTEXT_MENU"
 				on_action = "[PdxGuiWidget.ToggleContextMenu]"
@@ -43,9 +37,63 @@
 				margin = { 10 0 }
 				spacing = 5
 				ignoreinvisible = yes
-				icon = {
+				widget = { # GlorpUI: Replace Location Icon w/ Clickable Upgrade Button
 					size = { 22 22 }
-					texture = "[Location.GetRankIcon]"
+
+					button = {
+						size = { 100% 100% }
+						position = {0 0}
+
+						action_tooltip = {
+							click_type = left
+							click_mode = confirm
+							enabled = "[Location.CanUpgradeRank]"
+							title = "[Location.GetUpgradeRankName]"
+							cost = "[Location.GetUpgradeRankPrice]"
+							description = "[Location.GetUpgradeRankDescription]"
+							effects = "[Location.GetUpgradeRankEffects]"
+							conditions = "[Location.GetUpgradeRankConditions]"
+							on_action = "[UpgradeLocationRank(Location.Self)]"
+						}
+
+						action_tooltip = {
+							click_type = right
+							click_mode = confirm
+							enabled = "[Location.CanDowngradeRank]"
+							title = "location_downgrade"
+							cost = "[Location.GetDowngradeRankPrice]"
+							description = "[Location.GetDowngradeRankDescription]"
+							effects = "[Location.GetDowngradeRankEffects]"
+							conditions = "[Location.GetDowngradeRankConditions]"
+							on_action = "[DowngradeLocationRank(Location.Self)]"
+						}
+
+						enabled = "[Or(Location.CanUpgradeRank, Location.CanDowngradeRank)]"
+
+						tooltipwidget = {
+							using = location_rank_tooltip
+							blockoverride "location_rank_tooltip_button" {
+								TooltipBlockList = {
+									visible = "[Not(StringIsEmpty(Location.GetUpgradeRankPriceBreakdown))]"
+									textcontext = "[Location.GetUpgradeRankPriceBreakdown]"
+								}
+							}
+						}
+
+						icon = {
+							size = { 100% 100% }
+							parentanchor = center
+							position = {0 0}
+							texture = "[Location.GetRankIcon]"
+
+							glow = {
+								visible = "[Location.CanUpgradeRank]"
+								glow_radius = 3
+								color = {0.3 1.0 0.3 1.0}
+								alpha = 0.6
+							}
+						}
+					}
 				}
 
 				widget = {
@@ -57,7 +105,7 @@
 						align = left|nobaseline
 						text = "[FoodLocationItem.GetLocation.GetNameWithNoTooltip]"
 						default_format = "#L"
-								
+
 					}
 				}
 
@@ -77,7 +125,7 @@
 							size = { 95% 100% }
 							autoresize = no
 							align = center
-							text = "[FoodLocationItem.GetLocation.GetFoodsOutputModifiers|+=%]"	
+							text = "[FoodLocationItem.GetLocation.GetFoodsOutputModifiers|+=%]"
 						}
 						using = bg_number_container_bckg
 						blockoverride "number_container_extra" {
@@ -88,7 +136,7 @@
 						sort_by_small_highlight = {
 							name = "food"
 							size = { 75% 70% }
-						}								
+						}
 					}
 
 					widget = {
@@ -101,7 +149,7 @@
 							align = center
 							raw_text = "[FoodLocationItem.GetLocation.GetFoodsOutputWithLabel]@food!"
 
-									
+
 						}
 						using = bg_number_container_bckg
 						blockoverride "number_container_extra" {
@@ -113,7 +161,7 @@
 
 				button_regular_icon = {
 					onclick = "[OpenLateralViewWithFilter('production', 'food_production')]"
-                    onclick = "[ShowLocationProductionView(FoodLocationItem.GetLocation.GetId, '(bool)no')]"
+					onclick = "[ShowLocationProductionView(FoodLocationItem.GetLocation.GetId, '(bool)no')]"
 					enabled = "[FoodLocationItem.CanProduceFoodBuildings]"
 					size = {40 25 }
 
@@ -123,7 +171,7 @@
 						size = {15 15}
 					}
 					datacontext = "[FoodLocationItem.GetLocation]"
-							
+
 					action_tooltip = {
 						click_modifier = default
 						enabled = "[FoodLocationItem.CanProduceFoodBuildings]"
@@ -131,7 +179,7 @@
 						click_type = left
 						title = "BUILD_FOOD_BUILDINGS_LOCATION"
 						on_action = "[OpenLateralViewWithFilter('production', 'food_production')]"
-                        on_action = "[ShowLocationProductionView(FoodLocationItem.GetLocation.GetId, '(bool)no')]"
+						on_action = "[ShowLocationProductionView(FoodLocationItem.GetLocation.GetId, '(bool)no')]"
 					}
 
 					action_tooltip = {
@@ -149,6 +197,7 @@
 					}
 				}
 
+				# GlorpUI: Construction Manager auto-food widget, food RGO locations only
 				cm_auto_food_widget_food_production_lateralview = {}
 
 				widget = {
@@ -163,7 +212,7 @@
 								blockoverride "title_icon_texture" {
 									texture = "gfx/interface/icons/trade_goods/icon_goods_steel.dds"
 								}
-										
+
 								blockoverride "concept_link" {
 									text = [food_raw_material|E]
 								}
@@ -241,9 +290,9 @@
 							fontsize = 13
 							raw_text = "[Location.GetMaxRGOWorkers|0] [Location.GetMaxRGOWorkersUnderConstruction|+=] / [Location.GetMaximumMaxRGOWorkersValueForUI|0]"
 						}
-								
 
-								
+
+
 						datacontext = "[Location]"
 						tooltipwidget = {
 							using = location_rgo_button_tooltip
@@ -280,7 +329,7 @@
 						using = piechart_angles
 						using = bg_circle_piechart
 						parentanchor = left|vcenter
-				
+
 						pieslice_no_highlight = {
 							filter_mouse = none
 							alwaystransparent = yes
@@ -288,7 +337,7 @@
 							value = "[Divide_CFixedPoint(Location.GetEffectiveRGOWorkers, Location.GetMaxRGOWorkers)]"
 							color = { 1 1 1 1 }
 						}
-				
+
 						pieslice_no_highlight = {
 							filter_mouse = none
 							alwaystransparent = yes

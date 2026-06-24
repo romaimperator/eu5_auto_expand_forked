@@ -1,5 +1,5 @@
 ﻿# vanilla: in_game/gui/production_lateralview.gui
-# mod: in_game/gui/cm_production_lateralview.gui
+# mod: in_game/gui/production_lateralview.gui
 
 	type location_filtered_header_no_candidate = hbox {
 		# !!! for performance, it's important that location_filtered_header_with_candidate and location_filtered_header_no_candidate have the same size !!!
@@ -55,12 +55,12 @@
 
 						tooltipwidget = {
 							using = BuildingType_tooltip
-							blockoverride "production_method_simple_good_tooltip" { 
+							blockoverride "production_method_simple_good_tooltip" {
 								datacontext = "[Location.GetMarket]"
-								tooltipwidget = { 
-									
-									using = SpecificGoodsMarket_tooltip 
-								} 
+								tooltipwidget = {
+
+									using = SpecificGoodsMarket_tooltip
+								}
 							}
 						}
 
@@ -128,7 +128,6 @@
 							hbox = {
 								margin_right = 3
 								spacing = 5
-								layoutpolicy_horizontal = expanding
 
 								widget = { #profit / income
 									size = { 60 36 }
@@ -146,7 +145,7 @@
 											align = nobaseline|right
 											fontsize = 14
 											raw_text = "+[GetBuildingTypeProfitInLocation(BuildingItem.GetBuildingType, Location.Self)|2]@wealth!"
-							
+
 											sort_by_highlight = {
 												size = { 105% 100% }
 												name = "profit"
@@ -159,20 +158,20 @@
 											align = nobaseline|right
 											fontsize = 14
 											raw_text = "[GetBuildingTypeProfitInLocation(BuildingItem.GetBuildingType, Location.Self)|2+=]@wealth!"
-							
+
 											sort_by_highlight = {
 												size = { 105% 100% }
 												name = "profit"
 											}
 										}
-				
+
 										text_single = { #income
 											size = { 60 18 }
 											autoresize = no
 											align = nobaseline|right
 											fontsize = 14
 											raw_text = "[GetBuildingTypeIncomeToOwnerInLocation(BuildingItem.GetBuildingType, Location.Self)|+=2]@income!"
-							
+
 											sort_by_highlight = {
 												size = { 105% 100% }
 												name = "income"
@@ -182,29 +181,63 @@
 								}
 
 								widget = { #efficiency
-									datacontext = "[BuildingItem.GetBuildingType]"	
-									datacontext = "[Location]"	
+									datacontext = "[BuildingItem.GetBuildingType]"
+									datacontext = "[Location]"
 									size = { 70 36 }
-									hbox = { #unbuilt
-										visible = "[BuildingItem.GetBuildingType.IsProducing]"
-										expand = {}
-										text_single = {
-											maximumsize = { 70 18 }
-											default_format = "@bold!"
-											fontsize = 14
-											text = "BUILDING_TYPE_POSSIBLE_PROD_EFFICIENCY"
-											tooltipwidget = {
-												SimpleContextualStringPairTooltipType = {
-													blockoverride "title_icon" {
-														icon = {
-															using = tooltip_title_icon_size
-															texture = "gfx/interface/icons/flat_icons/building_panel/production_efficiency.dds"
+									vbox = {
+										# GlorpUI: stack ROI under the efficiency text
+										layoutpolicy_horizontal = expanding
+										hbox = { #unbuilt
+											visible = "[BuildingItem.GetBuildingType.IsProducing]"
+											expand = {}
+											text_single = {
+												size = { 70 15 } # GlorpUI: {70 18} -> {70 15}
+												autoresize = no
+												align = nobaseline|right
+												default_format = "@bold!"
+												fontsize = 13 # GlorpUI: 14->13
+												text = "BUILDING_TYPE_POSSIBLE_PROD_EFFICIENCY"
+												tooltipwidget = {
+													SimpleContextualStringPairTooltipType = {
+														blockoverride "title_icon" {
+															icon = {
+																using = tooltip_title_icon_size
+																texture = "gfx/interface/icons/flat_icons/building_panel/production_efficiency.dds"
+															}
 														}
+														blockoverride "concept_link" {
+															text = "[production_efficiency|e]"
+														}
+														lowpriotextcontext = "[BuildingItem.GetBuildingType.ProductionEfficiencyInfo(Location.GetOwnerPtr, Location.Self)]"
 													}
-													blockoverride "concept_link" {
-														text = "[production_efficiency|e]"
-													}
-													lowpriotextcontext = "[BuildingItem.GetBuildingType.ProductionEfficiencyInfo(Location.GetOwnerPtr, Location.Self)]"
+												}
+											}
+										}
+										hbox = {
+											# GlorpUI: unbuilt ROI
+											expand = { }
+											text_single = {
+												size = { 70 15 }
+												autoresize = no
+												align = nobaseline|right
+												fontsize = 13
+												default_format = "#color_green"
+												visible = "[And3(GreaterThan_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), '(CFixedPoint)0'), GreaterThan_CFixedPoint(Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self), GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self)), '(CFixedPoint)0'), Player.MakeScope.GetVariable('roiUseMonths').IsSet)]"
+												text = "GLORP_UI_BL_BT_ROI_MONTHS_VALUE"
+												tooltipwidget = {
+													using = glorpUI_building_type_roi_tooltip
+												}
+											}
+											text_single = {
+												size = { 70 15 }
+												autoresize = no
+												align = nobaseline|right
+												fontsize = 13
+												default_format = "#color_green"
+												visible = "[And3(GreaterThan_CFixedPoint(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self), '(CFixedPoint)0'), GreaterThan_CFixedPoint(Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self), GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self)), '(CFixedPoint)0'), Not(Player.MakeScope.GetVariable('roiUseMonths').IsSet))]"
+												text = "GLORP_UI_BL_BT_ROI_YEARS_VALUE"
+												tooltipwidget = {
+													using = glorpUI_building_type_roi_tooltip
 												}
 											}
 										}
@@ -217,14 +250,11 @@
 
 								hbox = {
 									layoutpolicy_horizontal = expanding
-									# CM: mod-added, no vanilla equivalent
-									cm_auto_expand_new_building_button_pl = {}
-
 									expand = {}
 									widget = {
 										size = { 25 25 }
 										using = bg_circle_piechart
-	
+
 										icon = {
 											visible = "[BuildingItem.GetBuildingType.BuildOnlyInCapital]"
 											texture = "gfx/interface/buttons/flats/move_capital_button.dds"
@@ -248,8 +278,13 @@
 
 						}
 					}
-
-					cm_auto_expand_unbuilt_buildings_card_header_button_04 = {}
+					# GlorpUI: Construction Manager auto-expand button (unbuilt) - overlaid outside the card build button so it can render
+					cm_auto_expand_new_building_button_pl = {
+						ignore_layout = yes
+						parentanchor = right|vcenter
+						position = { -133 0 }
+						datacontext = "[BuildingItem.GetBuildingType]"
+					}
 				}
 			}
 		}

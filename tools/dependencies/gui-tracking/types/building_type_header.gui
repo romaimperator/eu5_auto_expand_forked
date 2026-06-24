@@ -1,5 +1,5 @@
 ﻿# vanilla: in_game/gui/production_lateralview.gui
-# mod: in_game/gui/cm_production_lateralview.gui
+# mod: in_game/gui/production_lateralview.gui
 
 	type building_type_header = hbox {
 		layoutpolicy_horizontal = expanding
@@ -20,12 +20,12 @@
 				blockoverride "header_pattern_texture_density" {texture_density = 2.5}
 
 				widget = {
-					size = { -1 43 }
+					size = { -1 @[building_entry_height - 5] }
 					layoutpolicy_horizontal = expanding
 					onmousehierarchyenter = "[ProductionView.RebuildBuildRankingItems(BuildingItem.GetBuildingType)]"
 
 					card_header_button_buildings = {
-						size = { 100% 40 }
+						size = { 100% @[building_entry_height - 5] }
 						parentanchor = center
 
 						datacontext = "[BuildingItem.GetBuildingItemUIAction]"
@@ -38,7 +38,7 @@
 
 						tooltipwidget = {
 							using = BuildingType_tooltip
-							blockoverride "building_type_tooltip_missing_input"{
+							blockoverride "building_type_tooltip_missing_input" {
 								visible = "[BuildingItem.HasBuildingsLackingInput]"
 								textcontext = "[BuildingItem.GetBuildingsInputGoodsInformation]"
 							}
@@ -73,7 +73,7 @@
 					}
 
 					card_header_button_buildings = {
-						size = { 100% 40 }
+						size = { 100% @[building_entry_height - 5] }
 
 						parentanchor = center
 
@@ -131,12 +131,12 @@
 
 					# BUILDING ICON
 					widget = {
-						position = { 5 0 }
+						position = { 0 0 }
 						size = {42 100%}
 						parentanchor = left|vcenter
-			
+
 						widget = {
-							size = {36 36}
+							size = {@[building_entry_height - 6] @[building_entry_height - 6]}
 							using = bg_circle_outline
 							blockoverride "inside_color" {
 								modify_texture = {
@@ -149,11 +149,17 @@
 								texture_density = 2
 								margin = {1 1}
 							}
-							
-							
+
+
 							parentanchor = left|vcenter
 							icon = {
-								size = {31 31}
+								parentanchor = center
+								size = { 120% 120% }
+								visible = "[BuildingItem.GetBuildingType.IsSpecialBuilding]"
+								texture = "gfx/interface/component_tiles/specialbuildings_frame_gold.dds"
+							}
+							icon = {
+								size = {120% 120%} # GlorpUI: 31->100%
 								parentanchor = center
 								texture = "[GetBuildingIcon(BuildingItem.GetBuildingType.Self)]"
 
@@ -167,11 +173,6 @@
 									color = {0.0 0.0 0.0 1.0}
 									alpha = 0.3
 								}
-							}
-							icon = {
-								size = { 100% 100% }
-								visible = "[BuildingItem.GetBuildingType.IsSpecialBuilding]"
-								texture = "gfx/interface/component_tiles/specialbuildings_frame_gold.dds"
 							}
 						}
 
@@ -191,30 +192,30 @@
 					# CARD INFO
 					widget = {
 						position = { 5 0 }
-						size = { 100% 40 }
+						size = { 100% @[building_entry_height - 8] }
 						parentanchor = top
 						hbox = {
 							spacing = 5
-							margin = { 35 0 }
+							margin = { 40 0 }
 							margin_right = 10
 							datacontext = "[BuildingItem.GetBuildingType]"
-							
-							widget = {
-								size = { 16 16}
-								icon = {
-									parentanchor = center
-									position = {0 2}
-									size = { 16 16 }
-									texture = "[GetGraphicalCultureTextureForPopType(BuildingType.GetPopType)]"
-									texture_density = 2
-									glow = {
-										name = "drop_shadow"
-										glow_radius = 3
-										color = {0.0 0.0 0.0 1.0}
-										alpha = 0.3
-									}
-								}
-							}
+
+							# widget = {
+							# 	size = { 16 16}
+							# 	icon = {
+							# 		parentanchor = center
+							# 		position = {0 2}
+							# 		size = { 16 16 }
+							# 		texture = "[GetGraphicalCultureTextureForPopType(BuildingType.GetPopType)]"
+							# 		texture_density = 2
+							# 		glow = {
+							# 			name = "drop_shadow"
+							# 			glow_radius = 3
+							# 			color = {0.0 0.0 0.0 1.0}
+							# 			alpha = 0.3
+							# 		}
+							# 	}
+							# }
 
 							text_single = {
 								size = {129 30}
@@ -231,8 +232,41 @@
 							widget = {
 								size = {80 25}
 								hbox = {
-									cm_mass_auto_expand_button_pl = {
-										visible = "[And(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsMultipleLevels)]"
+									# GlorpUI: Construction Manager mass auto-expand button
+									cm_mass_auto_expand_button_pl = {}
+
+									button_square_checkbox = {
+										# GlorpUI: hidden when Construction Manager is active
+										visible = "[And3(BuildingItem.HasBuildings, BuildingItem.GetBuildingType.IsMultipleLevels, Not(GetScriptedGui('glorpui_is_cm_active').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
+										size = { 20 20 }
+										tooltipwidget = {
+											using = AutoExpand_Building_Tooltip
+										}
+										background = {
+											texture = "gfx/interface/buttons/checkbox_bg_square.dds"
+											texture_density = 2
+
+											modify_texture = {
+												using = color_market_grey_texture
+												blend_mode = add
+												alpha = 0.5
+											}
+										}
+
+										blockoverride "check_texture" {
+											texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+										}
+										blockoverride "checked_visible" {
+											visible = "[AreBuildingsAutoExpand(BuildingItem.GetBuildingsFunc)]"
+										}
+										blockoverride "unchecked_visible" {
+											visible = "[Not(AreBuildingsAutoExpand(BuildingItem.GetBuildingsFunc))]"
+										}
+
+										action_tooltip = {
+											on_action = "[ToggleAutoExpandBuildings(BuildingItem.GetBuildingsFunc)]"
+											title = "[SelectLocalization( AreBuildingsAutoExpand(BuildingItem.GetBuildingsFunc), 'TOGGLE_AUTO_EXPAND_ALL_ON', 'TOGGLE_AUTO_EXPAND_ALL_OFF' )]"
+										}
 									}
 
 									expand = {}
@@ -254,7 +288,7 @@
 												alpha = 0.5
 											}
 										}
-										
+
 										blockoverride "check_texture" {
 											texture = "gfx/interface/icons/flat_icons/building_panel/subsidized.dds"
 										}
@@ -286,7 +320,7 @@
 										background = {
 											texture = "gfx/interface/buttons/checkbox_bg_square.dds"
 											texture_density = 2
-											
+
 											modify_texture = {
 												using = color_market_grey_texture
 												blend_mode = add
@@ -310,13 +344,13 @@
 											title = "[SelectLocalization( AreBuildingsClosed(BuildingItem.GetBuildingsFunc), 'TOGGLE_CLOSE_ALL_OFF', 'TOGGLE_CLOSE_ALL_ON' )]"
 										}
 									}
-									
+
 								}
 							}
 
 							# PROFIT
 							widget = {
-								size = {120 40}
+								size = {120 30}
 								hbox = {
 									visible = "[And(BuildingItem.GetBuildingType.IsProducing, BuildingItem.HasPossibleBuildings)]"
 									spacing = 3
@@ -390,7 +424,7 @@
 
 							# LEVELS
 							widget = {
-								size = { 75 40 }
+								size = { 75 30 }
 								hbox = {
 									expand = {}
 									spacing = 5

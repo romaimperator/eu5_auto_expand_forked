@@ -4,78 +4,6 @@
 template build_rgo_entry {
 	# icon
 	datacontext = "[RawGoodLocationItem.GetLocation]"
-	hbox = {
-		layoutpolicy_vertical = expanding
-		card_header_button_04 = {
-			layoutpolicy_vertical = expanding
-			size = { 50 -1 }
-
-			tooltip_enabled = no
-
-			background = {
-				texture = "gfx/interface/component_tiles/balance_card_bg.dds"
-			}
-
-			
-			
-			piechart = {
-				visible = "[GreaterThan_CFixedPoint(Location.GetMaxRGOWorkers, '(CFixedPoint)0')]"
-				alwaystransparent = yes
-				parentanchor = center
-				size = { 35 35 }
-				using = piechart_angles
-				using = bg_circle
-				using = bg_circle_piechart
-
-				pieslice_no_highlight = {
-					filter_mouse = none
-					alwaystransparent = yes
-					texture = "gfx/interface/pie_charts/pie_chart_alpha_80_green.dds"
-					value = "[Divide_CFixedPoint(Location.GetEffectiveRGOWorkers, Location.GetMaxRGOWorkers)]"
-					color = { 1 1 1 1 }
-				}
-
-				pieslice_no_highlight = {
-					filter_mouse = none
-					alwaystransparent = yes
-					texture = "gfx/interface/pie_charts/pie_chart_alpha_80_red.dds"
-					value = "[Subtract_float('(float)1.0', FixedPointToFloatPercentageCapped(Divide_CFixedPoint(Location.GetEffectiveRGOWorkers, Location.GetMaxRGOWorkers), '(bool)yes'))]"
-					color = { 1 1 1 1 }
-				}
-			}
-
-			button = {
-				size = { 100% 100% }
-				parentanchor = center
-
-				action_tooltip = {
-					click_type = left
-					click_mode = single
-					title = "OPEN_GOOD_PANEL"
-					on_action = "[ShowGoods(Location.GetRawMaterial)]"
-				}
-
-				datacontext = "[Location.GetRawMaterial]"
-				datacontext = "[Location.GetOwner]"
-				datacontext = "[Location.GetMarket]"
-				tooltipwidget = {
-					using = location_rgo_button_tooltip
-				}
-				icon = {
-					alwaystransparent = yes
-					size = { 23 23 }
-					parentanchor = center
-					texture = "[GetGoodsIcon(Location.GetRawMaterial)]"
-				}
-			}
-
-			sort_by_highlight = {
-				size = { 100% 100% }
-				name = "name"
-			}
-		}
-	}
-
 	vbox = {
 		layoutpolicy_horizontal = expanding
 		widget = {
@@ -86,11 +14,11 @@ template build_rgo_entry {
 				size = {100% 46}
 				using = bg_paper_card
 				parentanchor = center
-				
+
 				hbox = {
 					layoutpolicy_horizontal = expanding
-					margin = {5 0}
-					spacing = 4
+					margin = {0 0} # GlorpUI: {5 0} -> {0 0}, removed spacing 4
+                    margin_right = 5 # GlorpUI: added
 
 					hbox = { #Location Card
 						background = {
@@ -110,25 +38,142 @@ template build_rgo_entry {
 							}
 						}
 						card_header_button_04 = {
-							size = {140 43}
-							
+							size = {220 46} # GlorpUI: {140 43} -> {220 46}
+
 							hbox = {
 								layoutpolicy_horizontal = expanding
-								margin_right = 4
+								margin_right = 0 # GlorpUI: 4->0
+								widget = {
+									layoutpolicy_vertical = expanding
+									size = { 46 46 }
+									tooltip_enabled = no
+
+									piechart = {
+										visible = "[GreaterThan_CFixedPoint(Location.GetMaxRGOWorkers, '(CFixedPoint)0')]"
+										alwaystransparent = yes
+										parentanchor = center
+										size = { 45 45 }
+										using = piechart_angles
+										using = bg_circle
+										using = bg_circle_piechart
+
+										pieslice_no_highlight = {
+											filter_mouse = none
+											alwaystransparent = yes
+											texture = "gfx/interface/pie_charts/pie_chart_alpha_80_green.dds"
+											value = "[Divide_CFixedPoint(Location.GetEffectiveRGOWorkers, Location.GetMaxRGOWorkers)]"
+											color = { 1 1 1 1 }
+										}
+
+										pieslice_no_highlight = {
+											filter_mouse = none
+											alwaystransparent = yes
+											texture = "gfx/interface/pie_charts/pie_chart_alpha_80_red.dds"
+											value = "[Subtract_float('(float)1.0', FixedPointToFloatPercentageCapped(Divide_CFixedPoint(Location.GetEffectiveRGOWorkers, Location.GetMaxRGOWorkers), '(bool)yes'))]"
+											color = { 1 1 1 1 }
+										}
+									}
+
+									button = {
+										size = { 100% 100% }
+										parentanchor = center
+
+										action_tooltip = {
+											click_type = left
+											click_mode = single
+											title = "OPEN_GOOD_PANEL"
+											on_action = "[ShowGoods(Location.GetRawMaterial)]"
+										}
+
+										datacontext = "[Location.GetRawMaterial]"
+										datacontext = "[Location.GetOwner]"
+										datacontext = "[Location.GetMarket]"
+										tooltipwidget = {
+											using = location_rgo_button_tooltip
+										}
+										icon = {
+											alwaystransparent = yes
+											size = { 80% 80% }
+											parentanchor = center
+											texture = "[GetGoodsIcon(Location.GetRawMaterial)]"
+										}
+									}
+
+									sort_by_highlight = {
+										size = { 100% 100% }
+										name = "name"
+									}
+								}
+
 								vbox = {
 									layoutpolicy_horizontal = expanding
 									margin = {5 3}
 									margin_right = 0
 									spacing = 4
-									
+
 									hbox = { #top text
 										layoutpolicy_horizontal = expanding
 										spacing = 3
-										icon = {
+
+										widget = { # GlorpUI: Replace Location Icon w/ Clickable Upgrade Button
 											size = { 15 15 }
-											texture = "[Location.GetRankIcon]"
+
+											button = {
+												size = { 100% 100% }
+												position = {0 0}
+
+												action_tooltip = {
+													click_type = left
+													click_mode = confirm
+													enabled = "[Location.CanUpgradeRank]"
+													title = "[Location.GetUpgradeRankName]"
+													cost = "[Location.GetUpgradeRankPrice]"
+													description = "[Location.GetUpgradeRankDescription]"
+													effects = "[Location.GetUpgradeRankEffects]"
+													conditions = "[Location.GetUpgradeRankConditions]"
+													on_action = "[UpgradeLocationRank(Location.Self)]"
+												}
+
+												action_tooltip = {
+													click_type = right
+													click_mode = confirm
+													enabled = "[Location.CanDowngradeRank]"
+													title = "location_downgrade"
+													cost = "[Location.GetDowngradeRankPrice]"
+													description = "[Location.GetDowngradeRankDescription]"
+													effects = "[Location.GetDowngradeRankEffects]"
+													conditions = "[Location.GetDowngradeRankConditions]"
+													on_action = "[DowngradeLocationRank(Location.Self)]"
+												}
+
+												enabled = "[Or(Location.CanUpgradeRank, Location.CanDowngradeRank)]"
+
+												tooltipwidget = {
+													using = location_rank_tooltip
+													blockoverride "location_rank_tooltip_button" {
+														TooltipBlockList = {
+															visible = "[Not(StringIsEmpty(Location.GetUpgradeRankPriceBreakdown))]"
+															textcontext = "[Location.GetUpgradeRankPriceBreakdown]"
+														}
+													}
+												}
+
+												icon = {
+													size = { 100% 100% }
+													parentanchor = center
+													position = {0 0}
+													texture = "[Location.GetRankIcon]"
+
+													glow = {
+														visible = "[Location.CanUpgradeRank]"
+														glow_radius = 3
+														color = {0.3 1.0 0.3 1.0}
+														alpha = 0.6
+													}
+												}
+											}
 										}
-	
+
 										text_single = {
 											visible = "[IsDataModelEmpty(Location.GetCivilConstructions)]"
 											maximumsize = { 105 15}
@@ -138,7 +183,7 @@ template build_rgo_entry {
 											using = Font_Size_Small
 											text = "[Location.GetNameWithNoTooltip]"
 											default_format = "#yellow_titles"
-							
+
 											sort_by_left_fade_highlight = {
 												size = { 200% 170% }
 												position = { 40 0 }
@@ -155,7 +200,7 @@ template build_rgo_entry {
 											using = Font_Size_Small
 											text = "[Location.GetNameWithNoTooltip]"
 											default_format = "#yellow_titles"
-							
+
 											sort_by_left_fade_highlight = {
 												size = { 200% 170% }
 												position = { 40 0 }
@@ -170,7 +215,7 @@ template build_rgo_entry {
 											align = left|nobaseline
 											autoresize = no
 											using = Font_Size_Small
-							
+
 											raw_text = " (#L +[GetDataModelSize(Location.GetCivilConstructions)]#! @construction!)"
 
 											hbox = {
@@ -185,10 +230,10 @@ template build_rgo_entry {
 												}
 											}
 										}
-	
+
 										expand = {}
 									}
-			
+
 									hbox = { #bottom rgo
 										layoutpolicy_horizontal = expanding
 										margin = { 2 0 }
@@ -204,14 +249,14 @@ template build_rgo_entry {
 													autoresize = yes
 													fontsize = 13
 													text = "[Location.GetEffectiveUnEmployed(GetPopTypeByName('laborers'))]"
-															
+
 													sort_by_highlight = {
 														ignore_layout = yes
 														size = { 100% 100% }
 														name = "employment"
 													}
 												}
-			
+
 												icon = {
 													size = { 15 15 }
 													texture = "[GetGraphicalCultureTextureForPopType(GetPopTypeByName('laborers'))]"
@@ -226,11 +271,11 @@ template build_rgo_entry {
 														}
 													}
 													blockoverride "concept_link" {
-														text = [available_population|E]
+														text = "[available_population|E]" # GlorpUI: quoted
 													}
 
 													blockoverride "tooltip_extra_content" {
-														TooltipListBase = { 
+														TooltipListBase = {
 															TooltipListRowContent = {
 																TooltipManualTableField = {
 																	tooltipwidget = {
@@ -251,7 +296,7 @@ template build_rgo_entry {
 															}
 														}
 													}
-											
+
 													lowpriotextcontext = BUILD_LOCATION_AVAILABLE_LABORERS
 												}
 											}
@@ -280,7 +325,7 @@ template build_rgo_entry {
 												size = { 15 15 }
 												texture = "gfx/interface/icons/pops/peasants.dds"
 											}
-		
+
 											tooltipwidget = {
 												using = available_peasants_tooltip
 											}
@@ -288,50 +333,130 @@ template build_rgo_entry {
 
 									}
 								}
+                                # GlorpUI: Market Access, Control
+                                vbox = {
+                                    maximumsize = {60 46}
+                                    layoutpolicy_horizontal = expanding
+                                    hbox = { # Market Access
+                                        piechart = {
+                                            size = { 20 20 }
+                                            alwaystransparent = yes
+                                            datacontext = "[GetMapMode('market')]"
+                                            datacontext = "[Location.GetMarket]"
 
-								expand = {}
+                                            using = piechart_angles
+                                            pieslice_no_highlight = {
+                                                texture = "gfx/interface/pie_charts/pie_chart_alpha_80_green.dds"
+                                                value = "[FixedPointToFloat(Location.GetMarketAccess)]"
+                                                color = { 1 1 1 1 }
+                                                alwaystransparent = yes
+                                            }
 
-								# icon_pie_left = {
-								# 	tooltipwidget = {
-								# 		using = location_tax_base_tooltip
-								# 	}
-								# 	blockoverride "PieSize" { size = { 35 35 } }
-								# 	blockoverride "pie_datamodel" {
-								# 		datacontext = "[Location.GetPopulationChart]"
-								# 		datacontext = "[LocationPopulationChart.GetPopsPiechartWidget]"
-								# 		datamodel = "[PopsPiechartWidget.GetTax]"
-								# 	}
-		
-								# 	blockoverride "pieslice_item" {
-								# 		pieslice_no_highlight = {
-								# 			texture = "gfx/interface/pie_charts/piechart_alpha.dds"
-								# 			texture_density = 2
-								# 			tooltip_enabled = no
-								# 			value = "[PopTaxItem.GetPercentage]"
-								# 			color = "[PopTaxItem.GetColor]"
-								# 			alpha = 0.99
-								# 			alwaystransparent = yes
-								# 		}
-								# 	}
-								# 	blockoverride "Icon_Size" { size = { 60% 60% } }
-								# 	blockoverride "Icon" {
-								# 		texture = "gfx/interface/icons/location_icons/tax_base.dds"
-								# 		texture_density = 2
-								# 		alwaystransparent = yes
-								# 	}
-		
-								# 	background = {
-								# 		texture = "gfx/interface/component_tiles/hud_corners/circle_frame.dds"
-								# 		texture_density = 2
-		
-								# 		modify_texture = {
-								# 			using = color_gold_texture
-								# 		}
-		
-								# 		using = overlay_gold
-								# 	}
-								# }
+                                            pieslice_no_highlight = {
+                                                texture = "gfx/interface/pie_charts/pie_chart_alpha_80_red.dds"
+                                                value = "[Subtract_float('(float)1.0', FixedPointToFloat(Location.GetMarketAccess))]"
+                                                color = { 1 1 1 1 }
+                                                alwaystransparent = yes
+                                            }
 
+                                            icon = {
+                                                size = { 61% 61% }
+                                                parentanchor = center
+                                                texture = "gfx/interface/icons/location_icons/market.dds"
+                                            }
+
+                                            using = bg_circle_piechart
+                                            button = { # Tooltip + Action
+                                                parentanchor = center
+                                                size = { 100% 100% }
+                                                tooltipwidget = {
+                                                    using = location_market_tooltip
+                                                }
+                                                action_tooltip = {
+                                                    click_type = left
+                                                    click_mode = single
+                                                    title = "OPEN_MARKET"
+                                                    on_action = "[ShowMarket(Location.GetMarket.Self)]"
+                                                }
+                                                action_tooltip = {
+                                                    click_type = right
+                                                    click_mode = single
+                                                    title = "MAPMODE_SELECT"
+                                                    on_action = "[MapMode.SetMapMode]"
+                                                }
+                                            }
+                                        }
+                                        text_single = {
+                                            size = { 30 18 }
+                                            align = nobaseline|right
+                                            autoresize = no
+                                            fontsize = 14
+                                            raw_text = "[Location.GetMarketAccess|0%]"
+                                        }
+                                    }
+                                    hbox = { # Control
+                                        piechart = {
+                                            name = "location_control"
+                                            using = bg_circle
+                                            size = { 20 20 }
+                                            datacontext = "[Location]"
+                                            tooltipwidget = {
+                                                using = location_control_tooltip
+                                                blockoverride "location_control_widgetid" {
+                                                    widgetid = "location_control_tooltip_id"
+                                                }
+                                            }
+                                            using = piechart_angles
+
+                                            pieslice_no_highlight = {
+                                                texture = "gfx/interface/pie_charts/pie_chart_alpha_80_green.dds"
+                                                value = "[FixedPointToFloat(Location.GetControl)]"
+                                                color = { 1 1 1 1 }
+                                                alwaystransparent = yes
+                                            }
+
+                                            pieslice_no_highlight = {
+                                                texture = "gfx/interface/pie_charts/pie_chart_alpha_80_red.dds"
+                                                value = "[Subtract_float('(float)1.0', FixedPointToFloat(Location.GetControl))]"
+                                                color = { 1 1 1 1 }
+                                                alwaystransparent = yes
+                                            }
+
+                                            icon = {
+                                                size = { 60% 60% }
+                                                parentanchor = center
+                                                texture = "gfx/interface/icons/location_icons/control.dds"
+                                            }
+
+                                            using = bg_circle_piechart
+
+                                            button = { # Tooltip + Action
+                                                size = { 100% 100% }
+                                                datacontext = "[GetMapMode('control')]"
+                                                datacontext = "[Location]"
+                                                tooltipwidget = {
+                                                    using = location_control_tooltip
+                                                    blockoverride "location_control_widgetid" {
+                                                        widgetid = "location_control_tooltip_id"
+                                                    }
+                                                }
+                                                action_tooltip = {
+                                                    click_type = left
+                                                    click_mode = single
+                                                    title = "MAPMODE_SELECT"
+                                                    on_action = "[MapMode.SetMapMode]"
+                                                }
+                                            }
+                                        }
+                                        text_single = {
+                                            size = { 30 18 }
+                                            align = nobaseline|right
+                                            autoresize = no
+                                            fontsize = 14
+                                            raw_text = "[Location.GetControl|0%]"
+                                        }
+                                    }
+                                }
 							}
 
 							action_tooltip = {
@@ -343,7 +468,7 @@ template build_rgo_entry {
 							action_tooltip = {
 								click_type = right
 								click_mode = single
-			
+
 								cursor = "location_menu"
 								title = "CLICK_ACTION_LOCATION_CONTEXT_MENU"
 								on_action = "[PdxGuiWidget.ToggleContextMenu]"
@@ -362,7 +487,37 @@ template build_rgo_entry {
 					widget = {
 						size = { 20 44 }
 						datacontext = "[RawGoodLocationItem.GetLocation]"
+
+						# GlorpUI: Construction Manager RGO auto-expand widget
 						cm_auto_expand_rgo_widget_expand_raw_goods_lateralview = {}
+
+						button_square_checkbox = {
+							# GlorpUI: hidden when Construction Manager is active
+							visible = "[Not(GetScriptedGui('glorpui_is_cm_active').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+							size = { 20 20 }
+							parentanchor = center
+							widgetanchor = center
+							tooltipwidget = { using = AutoExpand_RGO_Tooltip }
+							blockoverride "check_texture" {
+								texture = "gfx/interface/icons/flat_icons/mass_upgrade.dds"
+							}
+							blockoverride "checked_visible" {
+								visible = "[IsAutoExpandRGO(Location.Self)]"
+							}
+							blockoverride "unchecked_visible" {
+								visible = "[Not(IsAutoExpandRGO(Location.Self))]"
+							}
+							action_tooltip = {
+								click_type = left
+								title = "[SelectLocalization(IsAutoExpandRGO(Location.Self), 'TOGGLE_AUTO_EXPAND_RGO_ON', 'TOGGLE_AUTO_EXPAND_RGO_OFF')]"
+								on_action = "[ToggleAutoExpandRGO(Location.Self)]"
+							}
+							action_tooltip = {
+								click_type = right
+								title = "TOGGLE_AUTO_EXPAND_ALL_RGO"
+								on_action = "[ExpandRawGoodsLateralView.ToggleAutoExpandAllRGOs]"
+							}
+						}
 					}
 
 					widget = { #subject
@@ -373,7 +528,7 @@ template build_rgo_entry {
 						vbox = {
 							visible = "[Not(Country.IsPlayer)]"
 							spacing = 2
-							
+
 							icon = {
 								size = { 20 20 }
 								texture = "[GetSubjectTypeIcon(Country.GetDiplomacy.GetSubjectType)]"
@@ -409,11 +564,11 @@ template build_rgo_entry {
 									alpha = 0.3
 								}
 							}
-							
+
 							country_flag_very_small = {}
 						}
 					}
-					
+
 					expand = {}
 
 					hbox = {
@@ -424,9 +579,10 @@ template build_rgo_entry {
 							spacing = 5
 							layoutpolicy_horizontal = expanding
 							widget = { # taxbase
-								size = { 60 36 }
+								size = { 50 36 } # GlorpUI: 60->50
 								hbox = {
 									expand = {}
+
 									vbox = {
 										tooltipwidget = {
 											ContextualTooltipType = {
@@ -436,20 +592,20 @@ template build_rgo_entry {
 														texture = "gfx/interface/icons/treaty_type/gold.dds"
 													}
 												}
-											
+
 												blockoverride "title_text" {
 													text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE"
 												}
-												
+
 												blockoverride "concept_link" {
-													text = [profit|E]
+													text = "[profit|E]" # GlorpUI: quoted
 												}
-												
+
 												blockoverride "tooltip_content" {
 													TooltipTextBlock = {
 														blockoverride "text" {
 															text = "PROFIT_EXPAND_RGO_TOOLTIP_TEXT"
-														}		
+														}
 													}
 													TooltipStringPairList = {
 														blockoverride "block_title" {
@@ -483,26 +639,26 @@ template build_rgo_entry {
 														}
 														textcontext = "[RawGoodLocationItem.GetProfitInfo]"
 													}
-	
+
 													TooltipTextBlock = {
 														visible = "[GreaterThan_CFixedPoint(Location.GetMaxRGOWorkers, '(CFixedPoint)0')]"
 														blockoverride "text" {
 															text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE_TEXT"
-														}		
+														}
 													}
 												}
 											}
 										}
 										# profit
 										text_single = {
-											size = { 60 18 }
+											size = { 50 18 } # GlorpUI: 60->50
 											autoresize = no
 											fontsize = 14
 											align = nobaseline|right
 											raw_text = "+[RawGoodLocationItem.GetProfitPerLevel|2]@wealth!"
 											datacontext = "[RawGoodLocationItem.GetLocation]"
 											datacontext = "[RawGoodLocationItem]"
-											
+
 											sort_by_highlight = {
 												size = { 105% 100% }
 												name = "profit"
@@ -511,7 +667,7 @@ template build_rgo_entry {
 
 										# income
 										text_single = {
-											size = { 60 18 }
+											size = { 50 18 } # GlorpUI: 60->50
 											autoresize = no
 											fontsize = 14
 											align = nobaseline|right
@@ -522,45 +678,78 @@ template build_rgo_entry {
 												name = "income"
 											}
 										}
-									}	
+									}
 								}
 
 							}
 							widget = {
-								size = { 60 30 }
+								size = { 50 36 } # GlorpUI: {60 30} -> {50 36}
 								datacontext = "[Location.GetMarket]"
 								datacontext = "[Location.GetMarket.GetMarketEntry(Location.GetRawMaterial)]"
 								tooltipwidget = {
 									using = goods_market_price_tooltip
 								}
-								hbox = { 
+								vbox = {
 									layoutpolicy_horizontal = expanding
-									expand = {}
-									text_single = {
-										maximumsize = { 40 18 }
-										align = nobaseline|right
-										fontsize = 14
-										raw_text = "[Location.GetMarket.GetPrice(Location.GetRawMaterial)|2]"
+									hbox = {
+										layoutpolicy_horizontal = expanding
+										expand = {}
+										text_single = {
+											maximumsize = { 40 18 }
+											align = nobaseline|right
+											fontsize = 14
+											raw_text = "[Location.GetMarket.GetPrice(Location.GetRawMaterial)|2]"
 
-										sort_by_highlight = {
-											size = { 105% 100% }
-											name = "market_price"
+											sort_by_highlight = {
+												size = { 105% 100% }
+												name = "market_price"
+											}
 										}
+
+										text_single = {
+
+											maximumsize = { 20 18 }
+											align = nobaseline|center
+											fontsize = 14
+											raw_text = "@[Location.GetRawMaterial.GetPriceDifferenceIconName(Location.GetMarket.GetPrice(Location.GetRawMaterial))]!"
+
+											sort_by_highlight = {
+												size = { 105% 100% }
+												name = "market_price_diff"
+											}
+										}
+
 									}
 
-									text_single = {
-
-										maximumsize = { 20 18 }
-										align = nobaseline|center
-										fontsize = 14
-										raw_text = "@[Location.GetRawMaterial.GetPriceDifferenceIconName(Location.GetMarket.GetPrice(Location.GetRawMaterial))]!"
-
-										sort_by_highlight = {
-											size = { 105% 100% }
-											name = "market_price_diff"
+									hbox = {
+										# GlorpUI: expand RGO ROI
+										layoutpolicy_horizontal = expanding
+										expand = {}
+										text_single = {
+											size = { 50 18 }
+											autoresize = no
+											align = nobaseline|right
+											fontsize = 13
+											default_format = "#color_green"
+											visible = "[And3(GreaterThan_CFixedPoint(GuiScope.AddScope('cm_location', Location.MakeScope).AddScope('cm_country', Player.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), '(CFixedPoint)0'), GreaterThan_CFixedPoint(Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, RawGoodLocationItem.GetProfitPerLevel, RawGoodLocationItem.GetIncomePerLevel), '(CFixedPoint)0'), Player.MakeScope.GetVariable('roiUseMonths').IsSet)]"
+											text = "GLORP_UI_ERG_ROI_MONTHS_VALUE"
+											tooltipwidget = {
+												using = glorpUI_rgo_roi_tooltip
+											}
+										}
+										text_single = {
+											size = { 50 18 }
+											autoresize = no
+											align = nobaseline|right
+											fontsize = 13
+											default_format = "#color_green"
+											visible = "[And3(GreaterThan_CFixedPoint(GuiScope.AddScope('cm_location', Location.MakeScope).AddScope('cm_country', Player.MakeScope).ScriptValue('glorpui_rgo_expand_cost'), '(CFixedPoint)0'), GreaterThan_CFixedPoint(Select_CFixedPoint(Player.MakeScope.GetVariable('roiUseProfit').IsSet, RawGoodLocationItem.GetProfitPerLevel, RawGoodLocationItem.GetIncomePerLevel), '(CFixedPoint)0'), Not(Player.MakeScope.GetVariable('roiUseMonths').IsSet))]"
+											text = "GLORP_UI_ERG_ROI_YEARS_VALUE"
+											tooltipwidget = {
+												using = glorpUI_rgo_roi_tooltip
+											}
 										}
 									}
-									
 								}
 							}
 						}
@@ -569,31 +758,31 @@ template build_rgo_entry {
 
 						widget = { #builder
 							layoutpolicy_vertical = expanding
-							size = { 120 -1 }
+							size = { 90 -1 } # GlorpUI: 120->90
 							alwaystransparent = no
 							filter_mouse = left|right
 							widget = {
 								parentanchor = center
 								size = { 100% 35 }
-								
+
 								sort_by_highlight = {
 									ignore_layout = yes
 									size = { 100% 100% }
 									name = "number_building"
 								}
-								
+
 								hbox = {
-									spacing = 5
+									spacing = 0 # GlorpUI: 5->0
 									using = bg_text_mask_container_brown
 									margin = {5 5}
-									
+
 									button_square_minus = {
-										size = { 21 21 }
+										size = { 15 15 } # GlorpUI: 21->15
 										enabled = "[RawGoodLocationItem.CanReduceRGO]"
 
 										action_tooltip = {
 											click_type = left
-											click_mode = single	
+											click_mode = single
 											visible = "[Location.IsMaxRGOWorkersUnderConstruction]"
 											enabled = "[RawGoodLocationItem.CanReduceRGO]"
 											title = "LOCATION_VIEW_UNQUEUE_RGO_TITLE"
@@ -637,7 +826,7 @@ template build_rgo_entry {
 											on_action = "[RawGoodLocationItem.ReduceRGOShift]"
 										}
 
-										datacontext = "[RawGoodLocationItem.GetLocation]"				
+										datacontext = "[RawGoodLocationItem.GetLocation]"
 										onmousehierarchyenter = "[PdxGuiWidget.SetHighlightLocation(Location.Self)]"
 										tooltipwidget = {
 											using = location_rgo_button_tooltip
@@ -650,13 +839,13 @@ template build_rgo_entry {
 											}
 										}
 									}
-	
+
 									widget = {
 										layoutpolicy_vertical = expanding
-										size = {40 -1}
+										size = {50 -1} # GlorpUI: 40->50
 										text_single = {
 											parentanchor = center
-											maximumsize = {40 -1}
+											maximumsize = {50 -1} # GlorpUI: 40->50
 											visible = "[Not(Location.IsMaxRGOWorkersUnderConstruction)]"
 											default_format = "#important_number"
 											align = nobaseline
@@ -666,7 +855,7 @@ template build_rgo_entry {
 
 										text_single = {
 											parentanchor = center
-											maximumsize = {40 -1}
+											maximumsize = {50 -1} # GlorpUI: 40->50
 											visible = "[Location.IsMaxRGOWorkersUnderConstruction]"
 											default_format = "#important_number"
 											align = nobaseline
@@ -679,7 +868,7 @@ template build_rgo_entry {
 									}
 
 									button_square_plus = {
-										size = { 21 21 }
+										size = { 15 15 } # GlorpUI: 21->15
 										enabled = "[RawGoodLocationItem.CanUpgradeRGO]"
 
 										action_tooltip = {
@@ -704,160 +893,6 @@ template build_rgo_entry {
 						}
 					}
 
-					# text_single = { # tax rgo
-					# 	maximumsize = { 50 18 }
-					# 	fontsize = 13
-					# 	raw_text = "[RawGoodLocationItem.GetProfitPerLevel|2+=]@wealth!"
-					# 	datacontext = "[RawGoodLocationItem.GetLocation]"
-					# 	datacontext = "[RawGoodLocationItem]"
-					# 	tooltipwidget = {
-					# 		ContextualTooltipType = {
-					# 			blockoverride "title_icon" {
-					# 				icon = {
-					# 					using = tooltip_title_icon_size
-					# 					texture = "gfx/interface/icons/treaty_type/gold.dds"
-					# 				}
-					# 			}
-							
-					# 			blockoverride "title_text" {
-					# 				text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE"
-					# 			}
-													
-					# 			blockoverride "concept_link" {
-					# 				text = [profit|E]
-					# 			}
-							
-					# 			blockoverride "tooltip_content" {
-					# 				TooltipTextBlock = {
-					# 					blockoverride "text" {
-					# 						text = "PROFIT_EXPAND_RGO_TOOLTIP_TEXT"
-					# 					}		
-					# 				}
-					# 				TooltipStringPairList = {
-					# 					blockoverride "block_title" {
-					# 						text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE_LIST"
-					# 					}
-					# 					blockoverride "tooltip_table_text_single" {
-					# 						text_single = {
-					# 							visible = "[EqualTo_int32('(int32)0',PdxGuiWidget.GetIndexInDataModel)]"
-					# 							tooltipmeta = {
-					# 								texture = "gfx/interface/icons/treaty_type/gold.dds"
-					# 								game_concept = "[profit|e]"
-					# 							}
-					# 							block "field_text" { align = right|nobaseline }
-					# 						}
-					# 						text_single = {
-					# 							visible = "[EqualTo_int32('(int32)1',PdxGuiWidget.GetIndexInDataModel)]"
-					# 							tooltipmeta = {
-					# 								texture = "gfx/interface/icons/modifier_types/global_raw_material_output.dds"
-					# 								game_concept = "[output|e]"
-					# 							}
-					# 							block "field_text" { align = right|nobaseline }
-					# 						}
-					# 						text_single = {
-					# 							visible = "[EqualTo_int32('(int32)2',PdxGuiWidget.GetIndexInDataModel)]"
-					# 							tooltipmeta = {
-					# 								texture = "gfx/interface/icons/location_icons/control.dds"
-					# 								game_concept = "[control|e]"
-					# 							}
-					# 							block "field_text" { align = right|nobaseline }
-					# 						}
-					# 					}
-					# 					textcontext = "[RawGoodLocationItem.GetProfitInfo]"
-					# 				}
-
-					# 				TooltipTextBlock = {
-					# 					visible = "[GreaterThan_CFixedPoint(Location.GetMaxRGOWorkers, '(CFixedPoint)0')]"
-					# 					blockoverride "text" {
-					# 						text = "PROFIT_EXPAND_RGO_TOOLTIP_TITLE_TEXT"
-					# 					}		
-					# 				}
-					# 			}
-					# 		}
-					# 	}	
-		
-					# 	sort_by_highlight = {
-					# 		size = { 105% 200% }
-					# 		name = "profit"
-					# 	}
-					# }
-
-					# widget = { #queue rgo
-					# 	size = { 43 18 }
-					# 	datamodel = "[DataModelFirst(Location.GetCivilConstructions,'(int32)1')]"
-					# 	item = {
-					# 		text_single = {
-					# 			align = left
-					# 			fontsize = 12
-					# 			#autoresize = no #jon
-					# 			visible = "[Not(Or(Construction.IsStalled, Construction.GetLocation.HasStalledConstruction))]"
-					# 			text = "SPECIFIC_CONSTRUCTION_DURATION_DAYS_PLUS_QUEUE"
-					# 			parentanchor = vcenter
-					# 			tooltipwidget = {
-					# 				using = Construction_tooltip
-					# 			}
-					# 		}
-					# 		# text_single = { #No room
-					# 		# 	fontsize = 12
-					# 		# 	visible = "[Or(Construction.IsStalled, Construction.GetLocation.HasStalledConstruction)]"
-					# 		# 	text = "CONSTRUCTION_INFO_STALLED"
-					# 		# 	parentanchor = vcenter
-					# 		# 	tooltipwidget = {
-					# 		# 		using = Construction_tooltip
-					# 		# 	}
-					# 		# }
-					# 	}
-					# }
-
-					# widget = { #subject rgo
-					# 	size = { 48 25 }
-					# 	datacontext = "[RawGoodLocationItem.GetLocation]"
-					# 	datacontext = "[RawGoodLocationItem.GetLocation.GetOwner]"
-
-					# 	# subject info
-					# 	hbox = {
-					# 		visible = "[Not(Country.IsPlayer)]"
-					# 		spacing = 2
-							
-					# 		icon = {
-					# 			size = { 20 20 }
-					# 			texture = "[GetSubjectTypeIcon(Country.GetDiplomacy.GetSubjectType)]"
-
-					# 			tooltipwidget = {
-					# 				using = SubjectTypeDetail_tooltip
-					# 			}
-
-					# 			alpha = 0.8
-					# 			using = bg_circle_piechart
-					# 			blockoverride "inside_color" {
-					# 				modify_texture = {
-					# 					using = color_bg_blue_texture
-					# 					blend_mode = multiply
-					# 				}
-					# 			}
-					# 			blockoverride "frame_color" {
-					# 				modify_texture = {
-					# 					using = color_new_gold_texture
-					# 					blend_mode = multiply
-					# 				}
-					# 				modify_texture = {
-					# 					using = color_gold_texture
-					# 					# blend_mode = multiply
-					# 					alpha = 0.5
-					# 				}
-					# 			}
-
-					# 			glow = {
-					# 				name = "drop_shadow"
-					# 				glow_radius = 3
-					# 				color = {0.0 0.0 0.0 1.0}
-					# 				alpha = 0.3
-					# 			}
-					# 		}
-							
-					# 		country_flag_small = {}
-					# 	}
-					# }
 				}
 			}
 		}
