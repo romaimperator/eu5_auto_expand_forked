@@ -97,75 +97,6 @@ cm_combined_pop_promotion_speed_for_soldiers = {
 }
 
 # Root is the location
-cm_base_location_pop_growth_rate = {
-  value = modifier:local_population_growth
-  owner = { add = modifier:global_population_growth }
-}
-
-# Per-pop-type yearly growth rate. Root is the location.
-cm_location_laborers_pop_growth_rate = {
-  value = cm_base_location_pop_growth_rate
-  multiply = {
-    value = 1
-    add = modifier:local_laborers_pop_growth
-    owner = { add = modifier:global_laborers_pop_growth }
-  }
-}
-cm_location_peasants_pop_growth_rate = {
-  value = cm_base_location_pop_growth_rate
-  multiply = {
-    value = 1
-    add = modifier:local_peasants_pop_growth
-    owner = { add = modifier:global_peasants_pop_growth }
-  }
-}
-cm_location_slaves_pop_growth_rate = {
-  value = cm_base_location_pop_growth_rate
-  multiply = {
-    value = 1
-    add = modifier:local_slaves_pop_growth
-    owner = { add = modifier:global_slaves_pop_growth }
-  }
-}
-
-# Per-pop-type expected new pops next month. Yearly growth rate divided by 12.
-# Root is the location.
-cm_location_expected_new_laborers = {
-  value = num_pop_type:laborers
-  multiply = cm_location_laborers_pop_growth_rate
-  divide = 12
-}
-cm_location_expected_new_peasants = {
-  value = num_pop_type:peasants
-  multiply = cm_location_peasants_pop_growth_rate
-  divide = 12
-}
-cm_location_expected_new_slaves = {
-  value = num_pop_type:slaves
-  multiply = cm_location_slaves_pop_growth_rate
-  divide = 12
-}
-
-# Combined monthly pop additions: promotion speed plus new pop growth.
-# Slaves and tribesmen aren't promoted, so only growth contributes.
-# Root is the location.
-cm_combined_monthly_new_pops_of_type_laborers = {
-  value = cm_combined_pop_promotion_speed_for_laborers
-  add = cm_location_expected_new_laborers
-}
-cm_combined_monthly_new_pops_of_type_peasants = {
-  value = cm_combined_pop_promotion_speed_for_peasants
-  add = cm_location_expected_new_peasants
-}
-cm_combined_monthly_new_pops_of_type_slaves = {
-  value = cm_location_expected_new_slaves
-}
-cm_combined_monthly_new_pops_of_type_laborers_or_slaves = {
-  value = cm_combined_monthly_new_pops_of_type_laborers
-  add = cm_combined_monthly_new_pops_of_type_slaves
-}
-
-# Root is the location
 cm_location_laborers_needed_for_buildings = {
   value = 0
   every_buildings_in_location = {
@@ -347,4 +278,11 @@ cm_location_promotion_buffer_slack = {
     add = cm_location_peasants_available
     add = { value = cm_combined_pop_promotion_speed_for_peasants multiply = 12 max = cm_location_peasants_promotion_source_pool }
   }
+}
+
+# Projected one-year laborers/slaves slack for RGO expansion: surplus plus a year of laborers promotion
+# capped by the source pool (slaves count toward the surplus but do not promote). Root is the location.
+cm_location_rgo_promotion_buffer_slack = {
+  value = cm_location_laborers_or_slaves_available
+  add = { value = cm_combined_pop_promotion_speed_for_laborers multiply = 12 max = cm_location_laborers_promotion_source_pool }
 }

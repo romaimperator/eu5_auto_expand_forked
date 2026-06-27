@@ -24,15 +24,14 @@ cm_check_location_meets_min_market_access = {
 	market_access > 0
 }
 
-# Root is the location.
-# Allows up to a 250-pop laborer shortfall so promotion slots stay open during construction.
+# Root is the location. True when laborers staff the location now or fill within a year via promotion (capped by source pops).
 cm_check_location_has_laborers_available_or_will_be = {
-	0 <= { value = cm_combined_monthly_new_pops_of_type_laborers add = cm_location_laborers_available add = 0.25 }
+	0 <= { value = cm_location_laborers_available add = { value = cm_combined_pop_promotion_speed_for_laborers multiply = 12 max = cm_location_laborers_promotion_source_pool } }
 }
 
-# Root is the location
+# Root is the location. True when peasants staff the location now or fill within a year via promotion (capped by source pops).
 cm_check_location_has_peasants_available_or_will_be = {
-	0 <= { value = cm_combined_monthly_new_pops_of_type_peasants add = cm_location_peasants_available }
+	0 <= { value = cm_location_peasants_available add = { value = cm_combined_pop_promotion_speed_for_peasants multiply = 12 max = cm_location_peasants_promotion_source_pool } }
 }
 
 # Root is the location. Expects the building type as target and scope country. True when location has enough RGO/lumber levels for this building type: sawmill needs RGO or lumber_mill >= required; windmill/local_smelters need RGO >= required.
