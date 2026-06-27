@@ -143,26 +143,6 @@
 		}
 	}
 
-	type cm_debug_location_pop_type_breakdown = CMTooltipTextBlockContainer {
-		blockoverride "text_content" {
-			CMTooltipTextBox = {
-				blockoverride "text" {
-					raw_text = "[PopType.GetName] pop count: [GuiScope.SetRoot(Location.MakeScope).ScriptValue(Concatenate3('cm_location_', PopType.GetKey, '_pop_count'))]"
-				}
-			}
-			CMTooltipTextBox = {
-				blockoverride "text" {
-					raw_text = "buildings need: [GuiScope.SetRoot(Location.MakeScope).ScriptValue(Concatenate3('cm_location_', PopType.GetKey, '_needed_for_buildings'))]"
-				}
-			}
-			CMTooltipTextBox = {
-				blockoverride "text" {
-					raw_text = "available: [GuiScope.SetRoot(Location.MakeScope).ScriptValue(Concatenate3('cm_location_', PopType.GetKey, '_available'))]"
-				}
-			}
-		}
-	}
-
 	type cm_mass_auto_expand_rgo_button = hbox {
 		name = "cm_parent_of_auto_expand_active_rgos"
 
@@ -393,8 +373,7 @@ template cm_RGO_Autoexpand_Tooltip {
 						}
 					}
 					cm_tooltip_row = {
-						visible = "[And(InDebugMode, Not(GetScriptedGui('cm_is_rgo_under_construction').IsShown(GuiScope.SetRoot(Location.MakeScope).End)))]"
-						background = { using = bg_tooltip_debug }
+						visible = "[Not(GetScriptedGui('cm_is_rgo_under_construction').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('cm_is_rgo_under_construction').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
 						}
@@ -402,13 +381,12 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('cm_is_rgo_under_construction').IsShown(GuiScope.SetRoot(Location.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "RGO isn't already under construction"
+							text = "CM_AUTO_EXPAND_REQ_RGO_NOT_CONSTRUCTING"
 						}
 					}
 					cm_tooltip_row = {
-						visible = "[And(InDebugMode, Not(GetScriptedGui('cm_is_there_enough_gold_available').IsShown(GuiScope.AddScope('cm_location', Location.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End)))]"
+						visible = "[Not(GetScriptedGui('cm_is_there_enough_gold_available').IsShown(GuiScope.AddScope('cm_location', Location.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End))]"
 						using = cm_tooltip_row_is_odd
-						background = { using = bg_tooltip_debug }
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('cm_is_there_enough_gold_available').IsShown(GuiScope.AddScope('cm_location', Location.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End)]"
 						}
@@ -416,7 +394,7 @@ template cm_RGO_Autoexpand_Tooltip {
 							visible = "[Not(GetScriptedGui('cm_is_there_enough_gold_available').IsShown(GuiScope.AddScope('cm_location', Location.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End))]"
 						}
 						blockoverride "row_text" {
-							raw_text = "Country has [GetPlayer.GetCurrencyValue('gold')]@gold! vs required [GuiScope.AddScope('cm_location', Location.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_expected_gold_available_for_rgo_auto_expand')]@gold!"
+							text = "CM_AUTO_EXPAND_REQ_RGO_GOLD"
 						}
 					}
 				}
@@ -452,132 +430,6 @@ template cm_RGO_Autoexpand_Tooltip {
 				blockoverride "textblock_background_tint"  {
 					modify_texture = {
 						using = color_red_texture
-					}
-				}
-			}
-
-			vbox = {
-				visible = "[InDebugMode]"
-				background = {
-					using = bg_tooltip_debug
-				}
-				cm_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('nobles')]" }
-				cm_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('clergy')]" }
-				cm_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('burghers')]" }
-				cm_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('laborers')]" }
-				cm_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('soldiers')]" }
-				cm_debug_location_pop_type_breakdown = { datacontext = "[GetPopTypeByName('peasants')]" }
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_modifier_rgo_level: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('cm_modifier_rgo_level')]"
-					}
-				}
-				TooltipTextBlock = {
-					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue('cm_local_build_new_buildings_cost'), '(CFixedPoint)0'))]"
-					blockoverride "text" {
-						raw_text = "cm_local_build_new_buildings_cost: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('cm_local_build_new_buildings_cost')]"
-					}
-				}
-				TooltipTextBlock = {
-					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue('cm_local_build_buildings_cost'), '(CFixedPoint)0'))]"
-					blockoverride "text" {
-						raw_text = "cm_local_build_buildings_cost: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('cm_local_build_buildings_cost')]"
-					}
-				}
-				TooltipTextBlock = {
-					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).ScriptValue('cm_local_port_build_buildings_cost'), '(CFixedPoint)0'))]"
-					blockoverride "text" {
-						raw_text = "cm_local_port_build_buildings_cost: [GuiScope.SetRoot(Location.MakeScope).ScriptValue('cm_local_port_build_buildings_cost')]"
-					}
-				}
-				TooltipTextBlock = {
-					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_global_build_buildings_cost'), '(CFixedPoint)0'))]"
-					blockoverride "text" {
-						raw_text = "cm_global_build_buildings_cost: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_global_build_buildings_cost')]"
-					}
-				}
-				TooltipTextBlock = {
-					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_global_fort_build_buildings_cost'), '(CFixedPoint)0'))]"
-					blockoverride "text" {
-						raw_text = "cm_global_fort_build_buildings_cost: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_global_fort_build_buildings_cost')]"
-					}
-				}
-				TooltipTextBlock = {
-					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_global_port_build_buildings_cost'), '(CFixedPoint)0'))]"
-					blockoverride "text" {
-						raw_text = "cm_global_port_build_buildings_cost: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_global_port_build_buildings_cost')]"
-					}
-				}
-				TooltipTextBlock = {
-					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_global_urban_build_buildings_cost'), '(CFixedPoint)0'))]"
-					blockoverride "text" {
-						raw_text = "cm_global_urban_build_buildings_cost: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_global_urban_build_buildings_cost')]"
-					}
-				}
-				TooltipTextBlock = {
-					visible = "[Not(EqualTo_CFixedPoint(GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_global_rural_build_buildings_cost'), '(CFixedPoint)0'))]"
-					blockoverride "text" {
-						raw_text = "cm_global_rural_build_buildings_cost: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_global_rural_build_buildings_cost')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_building_age_1_traditions_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_building_age_1_traditions_cost_modifier')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_building_age_2_renaissance_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_building_age_2_renaissance_cost_modifier')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_building_age_3_discovery_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_building_age_3_discovery_cost_modifier')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_building_age_4_reformation_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_building_age_4_reformation_cost_modifier')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_building_age_5_absolutism_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_building_age_5_absolutism_cost_modifier')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_building_age_6_revolutions_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_building_age_6_revolutions_cost_modifier')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_expensive_building_age_1_traditions_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_expensive_building_age_1_traditions_cost_modifier')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_expensive_building_age_2_renaissance_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_expensive_building_age_2_renaissance_cost_modifier')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_expensive_building_age_3_discovery_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_expensive_building_age_3_discovery_cost_modifier')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_expensive_building_age_4_reformation_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_expensive_building_age_4_reformation_cost_modifier')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_expensive_building_age_5_absolutism_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_expensive_building_age_5_absolutism_cost_modifier')]"
-					}
-				}
-				TooltipTextBlock = {
-					blockoverride "text" {
-						raw_text = "cm_p_expensive_building_age_6_revolutions_cost_modifier: [GuiScope.SetRoot(GetPlayer.MakeScope).ScriptValue('cm_p_expensive_building_age_6_revolutions_cost_modifier')]"
 					}
 				}
 			}
