@@ -4,17 +4,14 @@
 - add auto-build for bailiffs (idea is to allow you to easily build bailiffs in ideal places easily so maybe only do it for a few RGO types or let you configure RGO types to build it for?)
 - fix bug that prevents mass auto-expand from working with Trade Offices (likely is also broken with any other building that has special requirements)
 - Make it so plantations will auto-expand if we have up to 1 level of plantation worth of slaves missing since it will draw the slaves needed to run it
-- Fix bug that allows stud farms to be auto-expanded in locations that don't have the appropriate climate (partially fixed by can_build_building protection but you can still click to enable auto-expand on them)
-- Related to the stud farm bug, there are also other buildings that can be auto-expanded even when they don't meet the actual in game conditions such as the Trade Office so add in more reliable checks for whether you can actually build a building or not for the auto-expand from zero levels button.
 - Add button to enable/disable auto-expand for every building in a location
-- Modify the auto-expand button for buildings so holding control and clicking will toggle every building of that type in the province. Useful when you know you want to say auto-expand masons in a province that produces stone (completed by Conner in his branch but I think it's shift)
+- Modify the auto-expand button for buildings so holding control and clicking will toggle every building of that type in the province. Useful when you know you want to say auto-expand masons in a province that produces stone
 - Add automatic closing of buildings using construction goods to reduce demand and lower price
 - Find fix for not being able to remove enabled auto-expands and RGOs when tag switching via the world map so we can cleanup variables when you change tags in-game
 - Add additional buildings to the auto-build list based on country/religion/culture
 - Use on_location_changed_owner to remove auto-expand variables when a location changes hands
   #root= location, scope:loser = previous owner, scope:winner = new owner
   on_location_changed_owner
-- Pull together the disparate auto stuff into a single monthly check or daily check rather than having 3 separate on actions
 - Fix conservative check for enough construction goods with some testing around when construction stalls and when if it slows down when it's not stalled but there's a negative balance of a good
 - Fix auto-build so we skip locations that the player owns that are currently occupied by the enemy in a war (not bug since game will prevent the building from making progress but a waste of money since it won't build)
 - Add notification for when you don't have a cheap enough price in a market for max discount
@@ -32,6 +29,9 @@ Completed Ideas:
 - See if we can add a filter so you can filter irrigation and farming villages by RGO in the location (ending up implementing as a filter by a specific food value)
 - add auto-build support for the Local Council building and its upgrades
 - Make compatible with Glorp UI
+- Pull together the disparate auto stuff into a single monthly check or daily check rather than having 3 separate on actions
+- Fix bug that allows stud farms to be auto-expanded in locations that don't have the appropriate climate
+- Related to the stud farm bug, there are also other buildings that can be auto-expanded even when they don't meet the actual in game conditions such as the Trade Office so add in more reliable checks for whether you can actually build a building or not for the auto-expand from zero levels button.
 
 
 
