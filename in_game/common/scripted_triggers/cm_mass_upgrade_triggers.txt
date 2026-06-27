@@ -61,7 +61,11 @@ cm_location_reserved_by_mass_auto_food = {
 # Checks that the market price impact of city upgrade construction demand is within the player's threshold.
 cm_mass_upgrade_town_to_city_discount_check = {
 	save_temporary_scope_as = cm_location
-	building_type:cm_upgrade_town_to_city_building = { save_temporary_scope_as = cm_building_type }
+	# A temporary cm_building_type clashes with the permanent one the executor provides.
+	trigger_if = {
+		limit = { NOT = { exists = scope:cm_building_type } }
+		building_type:cm_upgrade_town_to_city_building = { save_temporary_scope_as = cm_building_type }
+	}
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_urbanize }
 }
 
@@ -69,6 +73,9 @@ cm_mass_upgrade_town_to_city_discount_check = {
 # Checks that the market price impact of town upgrade construction demand is within the player's threshold.
 cm_mass_upgrade_rural_to_town_discount_check = {
 	save_temporary_scope_as = cm_location
-	building_type:cm_upgrade_rural_to_town_building = { save_temporary_scope_as = cm_building_type }
+	trigger_if = {
+		limit = { NOT = { exists = scope:cm_building_type } }
+		building_type:cm_upgrade_rural_to_town_building = { save_temporary_scope_as = cm_building_type }
+	}
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_urbanize }
 }
