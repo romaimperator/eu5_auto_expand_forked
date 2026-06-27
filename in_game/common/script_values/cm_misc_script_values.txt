@@ -38,6 +38,19 @@ cm_get_available_building_levels = {
   subtract = total_building_levels
 }
 
+# Location-wide unemployed pops of the building type's pop type. Root is the location, expects scope:cm_building_type.
+cm_location_unemployed_for_building_type = {
+  value = 0
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:nobles }    value = "unemployed_pops_of_pop_type_in_location(pop_type:nobles)" }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:clergy }    value = "unemployed_pops_of_pop_type_in_location(pop_type:clergy)" }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:burghers }  value = "unemployed_pops_of_pop_type_in_location(pop_type:burghers)" }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:laborers }  value = "unemployed_pops_of_pop_type_in_location(pop_type:laborers)" }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:soldiers }  value = "unemployed_pops_of_pop_type_in_location(pop_type:soldiers)" }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:peasants }  value = "unemployed_pops_of_pop_type_in_location(pop_type:peasants)" }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:slaves }    value = "unemployed_pops_of_pop_type_in_location(pop_type:slaves)" }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:tribesmen } value = "unemployed_pops_of_pop_type_in_location(pop_type:tribesmen)" }
+}
+
 # Root is the location
 cm_combined_pop_promotion_speed = {
   value = modifier:local_pop_promotion_speed
@@ -54,33 +67,9 @@ cm_combined_pop_promotion_speed = {
 }
 
 # Root is the location
-cm_combined_pop_promotion_speed_for_nobles = {
-  value = cm_combined_pop_promotion_speed
-  multiply = 0.1
-}
-
-# Root is the location
-cm_combined_pop_promotion_speed_for_clergy = {
-  value = cm_combined_pop_promotion_speed
-  multiply = 0.1
-}
-
-# Root is the location
-cm_combined_pop_promotion_speed_for_burghers = {
-  value = cm_combined_pop_promotion_speed
-  multiply = 0.5
-}
-
-# Root is the location
 cm_combined_pop_promotion_speed_for_laborers = {
   value = cm_combined_pop_promotion_speed
   multiply = 1.5
-}
-
-# Root is the location
-cm_combined_pop_promotion_speed_for_soldiers = {
-  value = cm_combined_pop_promotion_speed
-  multiply = 1.0
 }
 
 # Root is the location
@@ -96,44 +85,12 @@ cm_base_location_pop_growth_rate = {
 }
 
 # Per-pop-type yearly growth rate. Root is the location.
-cm_location_nobles_pop_growth_rate = {
-  value = cm_base_location_pop_growth_rate
-  multiply = {
-    value = 1
-    add = modifier:local_nobles_pop_growth
-    owner = { add = modifier:global_nobles_pop_growth }
-  }
-}
-cm_location_clergy_pop_growth_rate = {
-  value = cm_base_location_pop_growth_rate
-  multiply = {
-    value = 1
-    add = modifier:local_clergy_pop_growth
-    owner = { add = modifier:global_clergy_pop_growth }
-  }
-}
-cm_location_burghers_pop_growth_rate = {
-  value = cm_base_location_pop_growth_rate
-  multiply = {
-    value = 1
-    add = modifier:local_burghers_pop_growth
-    owner = { add = modifier:global_burghers_pop_growth }
-  }
-}
 cm_location_laborers_pop_growth_rate = {
   value = cm_base_location_pop_growth_rate
   multiply = {
     value = 1
     add = modifier:local_laborers_pop_growth
     owner = { add = modifier:global_laborers_pop_growth }
-  }
-}
-cm_location_soldiers_pop_growth_rate = {
-  value = cm_base_location_pop_growth_rate
-  multiply = {
-    value = 1
-    add = modifier:local_soldiers_pop_growth
-    owner = { add = modifier:global_soldiers_pop_growth }
   }
 }
 cm_location_peasants_pop_growth_rate = {
@@ -152,40 +109,12 @@ cm_location_slaves_pop_growth_rate = {
     owner = { add = modifier:global_slaves_pop_growth }
   }
 }
-cm_location_tribesmen_pop_growth_rate = {
-  value = cm_base_location_pop_growth_rate
-  multiply = {
-    value = 1
-    add = modifier:local_tribesmen_pop_growth
-    owner = { add = modifier:global_tribesmen_pop_growth }
-  }
-}
 
 # Per-pop-type expected new pops next month. Yearly growth rate divided by 12.
 # Root is the location.
-cm_location_expected_new_nobles = {
-  value = num_pop_type:nobles
-  multiply = cm_location_nobles_pop_growth_rate
-  divide = 12
-}
-cm_location_expected_new_clergy = {
-  value = num_pop_type:clergy
-  multiply = cm_location_clergy_pop_growth_rate
-  divide = 12
-}
-cm_location_expected_new_burghers = {
-  value = num_pop_type:burghers
-  multiply = cm_location_burghers_pop_growth_rate
-  divide = 12
-}
 cm_location_expected_new_laborers = {
   value = num_pop_type:laborers
   multiply = cm_location_laborers_pop_growth_rate
-  divide = 12
-}
-cm_location_expected_new_soldiers = {
-  value = num_pop_type:soldiers
-  multiply = cm_location_soldiers_pop_growth_rate
   divide = 12
 }
 cm_location_expected_new_peasants = {
@@ -198,34 +127,13 @@ cm_location_expected_new_slaves = {
   multiply = cm_location_slaves_pop_growth_rate
   divide = 12
 }
-cm_location_expected_new_tribesmen = {
-  value = num_pop_type:tribesmen
-  multiply = cm_location_tribesmen_pop_growth_rate
-  divide = 12
-}
 
 # Combined monthly pop additions: promotion speed plus new pop growth.
 # Slaves and tribesmen aren't promoted, so only growth contributes.
 # Root is the location.
-cm_combined_monthly_new_pops_of_type_nobles = {
-  value = cm_combined_pop_promotion_speed_for_nobles
-  add = cm_location_expected_new_nobles
-}
-cm_combined_monthly_new_pops_of_type_clergy = {
-  value = cm_combined_pop_promotion_speed_for_clergy
-  add = cm_location_expected_new_clergy
-}
-cm_combined_monthly_new_pops_of_type_burghers = {
-  value = cm_combined_pop_promotion_speed_for_burghers
-  add = cm_location_expected_new_burghers
-}
 cm_combined_monthly_new_pops_of_type_laborers = {
   value = cm_combined_pop_promotion_speed_for_laborers
   add = cm_location_expected_new_laborers
-}
-cm_combined_monthly_new_pops_of_type_soldiers = {
-  value = cm_combined_pop_promotion_speed_for_soldiers
-  add = cm_location_expected_new_soldiers
 }
 cm_combined_monthly_new_pops_of_type_peasants = {
   value = cm_combined_pop_promotion_speed_for_peasants
@@ -234,60 +142,9 @@ cm_combined_monthly_new_pops_of_type_peasants = {
 cm_combined_monthly_new_pops_of_type_slaves = {
   value = cm_location_expected_new_slaves
 }
-cm_combined_monthly_new_pops_of_type_tribesmen = {
-  value = cm_location_expected_new_tribesmen
-}
 cm_combined_monthly_new_pops_of_type_laborers_or_slaves = {
   value = cm_combined_monthly_new_pops_of_type_laborers
   add = cm_combined_monthly_new_pops_of_type_slaves
-}
-
-# Root is the location
-cm_location_nobles_needed_for_buildings = {
-  value = 0
-  every_buildings_in_location = {
-    limit = { building_pop_type = nobles }
-    save_temporary_scope_as = cm_building
-    add = cm_building_employment_required
-  }
-}
-
-# Root is the location
-cm_location_nobles_available = {
-  value = num_pop_type:nobles
-  subtract = cm_location_nobles_needed_for_buildings
-}
-
-# Root is the location
-cm_location_clergy_needed_for_buildings = {
-  value = 0
-  every_buildings_in_location = {
-    limit = { building_pop_type = clergy }
-    save_temporary_scope_as = cm_building
-    add = cm_building_employment_required
-  }
-}
-
-# Root is the location
-cm_location_clergy_available = {
-  value = num_pop_type:clergy
-  subtract = cm_location_clergy_needed_for_buildings
-}
-
-# Root is the location
-cm_location_burghers_needed_for_buildings = {
-  value = 0
-  every_buildings_in_location = {
-    limit = { building_pop_type = burghers }
-    save_temporary_scope_as = cm_building
-    add = cm_building_employment_required
-  }
-}
-
-# Root is the location
-cm_location_burghers_available = {
-  value = num_pop_type:burghers
-  subtract = cm_location_burghers_needed_for_buildings
 }
 
 # Root is the location
@@ -320,22 +177,6 @@ cm_location_laborers_available = {
 }
 
 # Root is the location
-cm_location_soldiers_needed_for_buildings = {
-  value = 0
-  every_buildings_in_location = {
-    limit = { building_pop_type = soldiers }
-    save_temporary_scope_as = cm_building
-    add = cm_building_employment_required
-  }
-}
-
-# Root is the location
-cm_location_soldiers_available = {
-  value = num_pop_type:soldiers
-  subtract = cm_location_soldiers_needed_for_buildings
-}
-
-# Root is the location
 cm_location_peasants_needed_for_buildings = {
   value = 0
   every_buildings_in_location = {
@@ -361,12 +202,6 @@ cm_location_slaves_needed_for_buildings = {
   }
 }
 
-# Root is the location
-cm_location_slaves_available = {
-  value = num_pop_type:slaves
-  subtract = cm_location_slaves_needed_for_buildings
-}
-
 # Root is the location. Combined laborer+slave pool minus the jobs either pop type can fill.
 cm_location_laborers_or_slaves_available = {
   value = num_pop_type:laborers
@@ -375,22 +210,6 @@ cm_location_laborers_or_slaves_available = {
   subtract = cm_location_slaves_needed_for_buildings
   subtract = cm_modifier_rgo_level
   subtract = cm_get_rgos_under_construction
-}
-
-# Root is the location
-cm_location_tribesmen_needed_for_buildings = {
-  value = 0
-  every_buildings_in_location = {
-    limit = { building_pop_type = tribesmen }
-    save_temporary_scope_as = cm_building
-    add = cm_building_employment_required
-  }
-}
-
-# Root is the location
-cm_location_tribesmen_available = {
-  value = num_pop_type:tribesmen
-  subtract = cm_location_tribesmen_needed_for_buildings
 }
 
 # Includes potential employment from levels under construction and from buildings that are subsidized but not fully employed
