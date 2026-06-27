@@ -7,12 +7,13 @@ widget = {
 	visible = "[EqualTo_CFixedPoint('(CFixedPoint)0', '(CFixedPoint)0')]"
 	position = { -10000 1 }
 	widget = {
-		visible = "[GetPlayer.Exists]"
-
 		# Classification driver. Demand before produced because cm_produced_good reads the demand maps.
+		# visible_at_creation = no pins it hidden at creation so a loaded save (gate already true when the
+		# window builds) still gets a hidden->shown first-show that fires _show.
 		widget = {
 			size = { 0 0 }
-			visible = "[GetScriptedGui('cm_should_building_type_section_show').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End)]"
+			visible_at_creation = no
+			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_should_building_type_section_show').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End))]"
 			state = {
 				name = _show
 				duration = 0.5
