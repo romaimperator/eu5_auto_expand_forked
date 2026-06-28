@@ -1,0 +1,469 @@
+﻿# Per-market construction-goods shortage margins for the auto-construction gate.
+
+# Effective shortage factor: 75% of the engine's stall define (1.5x supply at the default 2.0),
+# so the mod stops queuing with headroom below the real construction stall.
+cm_get_market_shortage_factor = {
+  value = "define:NMarket|MARKET_CONSTRUCTION_NEEDS_BLOCK_FACTOR"
+  multiply = 0.75
+}
+
+# The shortage factor as a percentage, for the tooltip "exceeds N% of supply" text.
+cm_get_market_shortage_factor_pct = {
+  value = cm_get_market_shortage_factor
+  multiply = 100
+}
+
+# Market scope. Shortage margin for one good: >= 0 means it is short for this build in this market.
+# Expects scope:cm_market (committed-map key) and scope:cm_building_type (own demand).
+cm_market_glass_build_overage = {
+  value = "goods_demand_in_market(goods:glass)"
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_glass is_key_in_global_variable_map = { name = cm_q_market_committed_glass target = scope:cm_market } } }
+    add = "global_variable_map(cm_q_market_committed_glass|scope:cm_market)"
+  }
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_glass is_key_in_global_variable_map = { name = cm_construction_demand_glass target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_glass|scope:cm_building_type)"
+  }
+  subtract = {
+    value = "goods_supply_in_market(goods:glass)"
+    multiply = cm_get_market_shortage_factor
+  }
+}
+
+cm_market_lumber_build_overage = {
+  value = "goods_demand_in_market(goods:lumber)"
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_lumber is_key_in_global_variable_map = { name = cm_q_market_committed_lumber target = scope:cm_market } } }
+    add = "global_variable_map(cm_q_market_committed_lumber|scope:cm_market)"
+  }
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_lumber is_key_in_global_variable_map = { name = cm_construction_demand_lumber target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_lumber|scope:cm_building_type)"
+  }
+  subtract = {
+    value = "goods_supply_in_market(goods:lumber)"
+    multiply = cm_get_market_shortage_factor
+  }
+}
+
+cm_market_masonry_build_overage = {
+  value = "goods_demand_in_market(goods:masonry)"
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_masonry is_key_in_global_variable_map = { name = cm_q_market_committed_masonry target = scope:cm_market } } }
+    add = "global_variable_map(cm_q_market_committed_masonry|scope:cm_market)"
+  }
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_masonry is_key_in_global_variable_map = { name = cm_construction_demand_masonry target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_masonry|scope:cm_building_type)"
+  }
+  subtract = {
+    value = "goods_supply_in_market(goods:masonry)"
+    multiply = cm_get_market_shortage_factor
+  }
+}
+
+cm_market_sand_build_overage = {
+  value = "goods_demand_in_market(goods:sand)"
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_sand is_key_in_global_variable_map = { name = cm_q_market_committed_sand target = scope:cm_market } } }
+    add = "global_variable_map(cm_q_market_committed_sand|scope:cm_market)"
+  }
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_sand is_key_in_global_variable_map = { name = cm_construction_demand_sand target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_sand|scope:cm_building_type)"
+  }
+  subtract = {
+    value = "goods_supply_in_market(goods:sand)"
+    multiply = cm_get_market_shortage_factor
+  }
+}
+
+cm_market_stone_build_overage = {
+  value = "goods_demand_in_market(goods:stone)"
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_stone is_key_in_global_variable_map = { name = cm_q_market_committed_stone target = scope:cm_market } } }
+    add = "global_variable_map(cm_q_market_committed_stone|scope:cm_market)"
+  }
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_stone is_key_in_global_variable_map = { name = cm_construction_demand_stone target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_stone|scope:cm_building_type)"
+  }
+  subtract = {
+    value = "goods_supply_in_market(goods:stone)"
+    multiply = cm_get_market_shortage_factor
+  }
+}
+
+cm_market_books_build_overage = {
+  value = "goods_demand_in_market(goods:books)"
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_books is_key_in_global_variable_map = { name = cm_q_market_committed_books target = scope:cm_market } } }
+    add = "global_variable_map(cm_q_market_committed_books|scope:cm_market)"
+  }
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_books is_key_in_global_variable_map = { name = cm_construction_demand_books target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_books|scope:cm_building_type)"
+  }
+  subtract = {
+    value = "goods_supply_in_market(goods:books)"
+    multiply = cm_get_market_shortage_factor
+  }
+}
+
+cm_market_paper_build_overage = {
+  value = "goods_demand_in_market(goods:paper)"
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_paper is_key_in_global_variable_map = { name = cm_q_market_committed_paper target = scope:cm_market } } }
+    add = "global_variable_map(cm_q_market_committed_paper|scope:cm_market)"
+  }
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_paper is_key_in_global_variable_map = { name = cm_construction_demand_paper target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_paper|scope:cm_building_type)"
+  }
+  subtract = {
+    value = "goods_supply_in_market(goods:paper)"
+    multiply = cm_get_market_shortage_factor
+  }
+}
+
+# Market scope. Plain shortage snapshot (no within-cycle committed term) for the light RGO path.
+# >= 0 means the good is already short in the market.
+cm_market_lumber_snapshot_overage = {
+  value = "goods_demand_in_market(goods:lumber)"
+  subtract = {
+    value = "goods_supply_in_market(goods:lumber)"
+    multiply = cm_get_market_shortage_factor
+  }
+}
+
+cm_market_masonry_snapshot_overage = {
+  value = "goods_demand_in_market(goods:masonry)"
+  subtract = {
+    value = "goods_supply_in_market(goods:masonry)"
+    multiply = cm_get_market_shortage_factor
+  }
+}
+
+# --- Per-good shortage tooltip breakdown ---
+# Location-scoped display values for the per-good tooltip rows. The *_disp_market/_limit/_committed
+# values expect scope:cm_location; *_disp_own/_projected/_block also expect scope:cm_building_type.
+# *_disp_block returns 1 when the build demands the good and it is short (row visibility).
+# cm_rgo_*_disp_block are the snapshot (no committed/own) RGO-path equivalents.
+
+cm_market_glass_disp_market = {
+  value = "scope:cm_location.market.goods_demand_in_market(goods:glass)"
+}
+
+cm_market_glass_disp_limit = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:glass)"
+  multiply = cm_get_market_shortage_factor
+}
+
+cm_market_glass_disp_committed = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_glass is_key_in_global_variable_map = { name = cm_q_market_committed_glass target = scope:cm_location.market } } }
+    add = "global_variable_map(cm_q_market_committed_glass|scope:cm_location.market)"
+  }
+}
+
+cm_market_glass_disp_own = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_glass is_key_in_global_variable_map = { name = cm_construction_demand_glass target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_glass|scope:cm_building_type)"
+  }
+}
+
+cm_market_glass_disp_projected = {
+  value = cm_market_glass_disp_market
+  add = cm_market_glass_disp_committed
+  add = cm_market_glass_disp_own
+}
+
+cm_market_glass_disp_block = {
+  value = 0
+  if = {
+    limit = {
+      AND = { has_global_variable_map = cm_construction_demand_glass is_key_in_global_variable_map = { name = cm_construction_demand_glass target = scope:cm_building_type } }
+      cm_market_glass_disp_projected >= cm_market_glass_disp_limit
+    }
+    value = 1
+  }
+}
+
+cm_market_lumber_disp_market = {
+  value = "scope:cm_location.market.goods_demand_in_market(goods:lumber)"
+}
+
+cm_market_lumber_disp_limit = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:lumber)"
+  multiply = cm_get_market_shortage_factor
+}
+
+cm_market_lumber_disp_committed = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_lumber is_key_in_global_variable_map = { name = cm_q_market_committed_lumber target = scope:cm_location.market } } }
+    add = "global_variable_map(cm_q_market_committed_lumber|scope:cm_location.market)"
+  }
+}
+
+cm_market_lumber_disp_own = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_lumber is_key_in_global_variable_map = { name = cm_construction_demand_lumber target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_lumber|scope:cm_building_type)"
+  }
+}
+
+cm_market_lumber_disp_projected = {
+  value = cm_market_lumber_disp_market
+  add = cm_market_lumber_disp_committed
+  add = cm_market_lumber_disp_own
+}
+
+cm_market_lumber_disp_block = {
+  value = 0
+  if = {
+    limit = {
+      AND = { has_global_variable_map = cm_construction_demand_lumber is_key_in_global_variable_map = { name = cm_construction_demand_lumber target = scope:cm_building_type } }
+      cm_market_lumber_disp_projected >= cm_market_lumber_disp_limit
+    }
+    value = 1
+  }
+}
+
+cm_market_masonry_disp_market = {
+  value = "scope:cm_location.market.goods_demand_in_market(goods:masonry)"
+}
+
+cm_market_masonry_disp_limit = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:masonry)"
+  multiply = cm_get_market_shortage_factor
+}
+
+cm_market_masonry_disp_committed = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_masonry is_key_in_global_variable_map = { name = cm_q_market_committed_masonry target = scope:cm_location.market } } }
+    add = "global_variable_map(cm_q_market_committed_masonry|scope:cm_location.market)"
+  }
+}
+
+cm_market_masonry_disp_own = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_masonry is_key_in_global_variable_map = { name = cm_construction_demand_masonry target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_masonry|scope:cm_building_type)"
+  }
+}
+
+cm_market_masonry_disp_projected = {
+  value = cm_market_masonry_disp_market
+  add = cm_market_masonry_disp_committed
+  add = cm_market_masonry_disp_own
+}
+
+cm_market_masonry_disp_block = {
+  value = 0
+  if = {
+    limit = {
+      AND = { has_global_variable_map = cm_construction_demand_masonry is_key_in_global_variable_map = { name = cm_construction_demand_masonry target = scope:cm_building_type } }
+      cm_market_masonry_disp_projected >= cm_market_masonry_disp_limit
+    }
+    value = 1
+  }
+}
+
+cm_market_sand_disp_market = {
+  value = "scope:cm_location.market.goods_demand_in_market(goods:sand)"
+}
+
+cm_market_sand_disp_limit = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:sand)"
+  multiply = cm_get_market_shortage_factor
+}
+
+cm_market_sand_disp_committed = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_sand is_key_in_global_variable_map = { name = cm_q_market_committed_sand target = scope:cm_location.market } } }
+    add = "global_variable_map(cm_q_market_committed_sand|scope:cm_location.market)"
+  }
+}
+
+cm_market_sand_disp_own = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_sand is_key_in_global_variable_map = { name = cm_construction_demand_sand target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_sand|scope:cm_building_type)"
+  }
+}
+
+cm_market_sand_disp_projected = {
+  value = cm_market_sand_disp_market
+  add = cm_market_sand_disp_committed
+  add = cm_market_sand_disp_own
+}
+
+cm_market_sand_disp_block = {
+  value = 0
+  if = {
+    limit = {
+      AND = { has_global_variable_map = cm_construction_demand_sand is_key_in_global_variable_map = { name = cm_construction_demand_sand target = scope:cm_building_type } }
+      cm_market_sand_disp_projected >= cm_market_sand_disp_limit
+    }
+    value = 1
+  }
+}
+
+cm_market_stone_disp_market = {
+  value = "scope:cm_location.market.goods_demand_in_market(goods:stone)"
+}
+
+cm_market_stone_disp_limit = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:stone)"
+  multiply = cm_get_market_shortage_factor
+}
+
+cm_market_stone_disp_committed = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_stone is_key_in_global_variable_map = { name = cm_q_market_committed_stone target = scope:cm_location.market } } }
+    add = "global_variable_map(cm_q_market_committed_stone|scope:cm_location.market)"
+  }
+}
+
+cm_market_stone_disp_own = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_stone is_key_in_global_variable_map = { name = cm_construction_demand_stone target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_stone|scope:cm_building_type)"
+  }
+}
+
+cm_market_stone_disp_projected = {
+  value = cm_market_stone_disp_market
+  add = cm_market_stone_disp_committed
+  add = cm_market_stone_disp_own
+}
+
+cm_market_stone_disp_block = {
+  value = 0
+  if = {
+    limit = {
+      AND = { has_global_variable_map = cm_construction_demand_stone is_key_in_global_variable_map = { name = cm_construction_demand_stone target = scope:cm_building_type } }
+      cm_market_stone_disp_projected >= cm_market_stone_disp_limit
+    }
+    value = 1
+  }
+}
+
+cm_market_books_disp_market = {
+  value = "scope:cm_location.market.goods_demand_in_market(goods:books)"
+}
+
+cm_market_books_disp_limit = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:books)"
+  multiply = cm_get_market_shortage_factor
+}
+
+cm_market_books_disp_committed = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_books is_key_in_global_variable_map = { name = cm_q_market_committed_books target = scope:cm_location.market } } }
+    add = "global_variable_map(cm_q_market_committed_books|scope:cm_location.market)"
+  }
+}
+
+cm_market_books_disp_own = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_books is_key_in_global_variable_map = { name = cm_construction_demand_books target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_books|scope:cm_building_type)"
+  }
+}
+
+cm_market_books_disp_projected = {
+  value = cm_market_books_disp_market
+  add = cm_market_books_disp_committed
+  add = cm_market_books_disp_own
+}
+
+cm_market_books_disp_block = {
+  value = 0
+  if = {
+    limit = {
+      AND = { has_global_variable_map = cm_construction_demand_books is_key_in_global_variable_map = { name = cm_construction_demand_books target = scope:cm_building_type } }
+      cm_market_books_disp_projected >= cm_market_books_disp_limit
+    }
+    value = 1
+  }
+}
+
+cm_market_paper_disp_market = {
+  value = "scope:cm_location.market.goods_demand_in_market(goods:paper)"
+}
+
+cm_market_paper_disp_limit = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:paper)"
+  multiply = cm_get_market_shortage_factor
+}
+
+cm_market_paper_disp_committed = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_paper is_key_in_global_variable_map = { name = cm_q_market_committed_paper target = scope:cm_location.market } } }
+    add = "global_variable_map(cm_q_market_committed_paper|scope:cm_location.market)"
+  }
+}
+
+cm_market_paper_disp_own = {
+  value = 0
+  if = { limit = { AND = { has_global_variable_map = cm_construction_demand_paper is_key_in_global_variable_map = { name = cm_construction_demand_paper target = scope:cm_building_type } } }
+    add = "global_variable_map(cm_construction_demand_paper|scope:cm_building_type)"
+  }
+}
+
+cm_market_paper_disp_projected = {
+  value = cm_market_paper_disp_market
+  add = cm_market_paper_disp_committed
+  add = cm_market_paper_disp_own
+}
+
+cm_market_paper_disp_block = {
+  value = 0
+  if = {
+    limit = {
+      AND = { has_global_variable_map = cm_construction_demand_paper is_key_in_global_variable_map = { name = cm_construction_demand_paper target = scope:cm_building_type } }
+      cm_market_paper_disp_projected >= cm_market_paper_disp_limit
+    }
+    value = 1
+  }
+}
+
+cm_rgo_lumber_disp_block = {
+  value = 0
+  if = {
+    limit = {
+      scope:cm_location.raw_material = { OR = { goods_method = mining goods_method = farming goods_method = hunting goods_method = gathering } }
+      cm_market_lumber_disp_market >= cm_market_lumber_disp_limit
+    }
+    value = 1
+  }
+}
+
+cm_rgo_masonry_disp_block = {
+  value = 0
+  if = {
+    limit = {
+      scope:cm_location.raw_material = { goods_method = forestry }
+      cm_market_masonry_disp_market >= cm_market_masonry_disp_limit
+    }
+    value = 1
+  }
+}
+
+# Raw market supply per good, for the tooltip "% of supply" display. Expects scope:cm_location.
+cm_market_glass_disp_supply = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:glass)"
+}
+
+cm_market_lumber_disp_supply = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:lumber)"
+}
+
+cm_market_masonry_disp_supply = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:masonry)"
+}
+
+cm_market_sand_disp_supply = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:sand)"
+}
+
+cm_market_stone_disp_supply = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:stone)"
+}
+
+cm_market_books_disp_supply = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:books)"
+}
+
+cm_market_paper_disp_supply = {
+  value = "scope:cm_location.market.goods_supply_in_market(goods:paper)"
+}

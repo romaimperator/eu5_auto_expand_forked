@@ -1,0 +1,76 @@
+﻿# Within-cycle per-market committed construction demand: accumulate on approval, reset each cycle.
+
+# Root = location. Expects scope:cm_building_type. Adds this build's standard construction-goods
+# demand to the location market's within-cycle committed totals so later builds in the same cycle
+# see it; the engine's market demand number does not update until the next monthly tick.
+# add_to_global_variable_map overwrites, so each good is a read-modify-write.
+cm_commit_market_demand = {
+	market = { save_temporary_scope_as = cm_market }
+	if = { limit = { AND = { has_global_variable_map = cm_construction_demand_glass is_key_in_global_variable_map = { name = cm_construction_demand_glass target = scope:cm_building_type } } }
+		set_local_variable = { name = cm_new_committed value = "global_variable_map(cm_construction_demand_glass|scope:cm_building_type)" }
+		if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_glass is_key_in_global_variable_map = { name = cm_q_market_committed_glass target = scope:cm_market } } }
+			change_local_variable = { name = cm_new_committed add = "global_variable_map(cm_q_market_committed_glass|scope:cm_market)" }
+			remove_from_global_variable_map = { name = cm_q_market_committed_glass key = scope:cm_market }
+		}
+		add_to_global_variable_map = { name = cm_q_market_committed_glass key = scope:cm_market value = local_var:cm_new_committed }
+	}
+	if = { limit = { AND = { has_global_variable_map = cm_construction_demand_lumber is_key_in_global_variable_map = { name = cm_construction_demand_lumber target = scope:cm_building_type } } }
+		set_local_variable = { name = cm_new_committed value = "global_variable_map(cm_construction_demand_lumber|scope:cm_building_type)" }
+		if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_lumber is_key_in_global_variable_map = { name = cm_q_market_committed_lumber target = scope:cm_market } } }
+			change_local_variable = { name = cm_new_committed add = "global_variable_map(cm_q_market_committed_lumber|scope:cm_market)" }
+			remove_from_global_variable_map = { name = cm_q_market_committed_lumber key = scope:cm_market }
+		}
+		add_to_global_variable_map = { name = cm_q_market_committed_lumber key = scope:cm_market value = local_var:cm_new_committed }
+	}
+	if = { limit = { AND = { has_global_variable_map = cm_construction_demand_masonry is_key_in_global_variable_map = { name = cm_construction_demand_masonry target = scope:cm_building_type } } }
+		set_local_variable = { name = cm_new_committed value = "global_variable_map(cm_construction_demand_masonry|scope:cm_building_type)" }
+		if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_masonry is_key_in_global_variable_map = { name = cm_q_market_committed_masonry target = scope:cm_market } } }
+			change_local_variable = { name = cm_new_committed add = "global_variable_map(cm_q_market_committed_masonry|scope:cm_market)" }
+			remove_from_global_variable_map = { name = cm_q_market_committed_masonry key = scope:cm_market }
+		}
+		add_to_global_variable_map = { name = cm_q_market_committed_masonry key = scope:cm_market value = local_var:cm_new_committed }
+	}
+	if = { limit = { AND = { has_global_variable_map = cm_construction_demand_sand is_key_in_global_variable_map = { name = cm_construction_demand_sand target = scope:cm_building_type } } }
+		set_local_variable = { name = cm_new_committed value = "global_variable_map(cm_construction_demand_sand|scope:cm_building_type)" }
+		if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_sand is_key_in_global_variable_map = { name = cm_q_market_committed_sand target = scope:cm_market } } }
+			change_local_variable = { name = cm_new_committed add = "global_variable_map(cm_q_market_committed_sand|scope:cm_market)" }
+			remove_from_global_variable_map = { name = cm_q_market_committed_sand key = scope:cm_market }
+		}
+		add_to_global_variable_map = { name = cm_q_market_committed_sand key = scope:cm_market value = local_var:cm_new_committed }
+	}
+	if = { limit = { AND = { has_global_variable_map = cm_construction_demand_stone is_key_in_global_variable_map = { name = cm_construction_demand_stone target = scope:cm_building_type } } }
+		set_local_variable = { name = cm_new_committed value = "global_variable_map(cm_construction_demand_stone|scope:cm_building_type)" }
+		if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_stone is_key_in_global_variable_map = { name = cm_q_market_committed_stone target = scope:cm_market } } }
+			change_local_variable = { name = cm_new_committed add = "global_variable_map(cm_q_market_committed_stone|scope:cm_market)" }
+			remove_from_global_variable_map = { name = cm_q_market_committed_stone key = scope:cm_market }
+		}
+		add_to_global_variable_map = { name = cm_q_market_committed_stone key = scope:cm_market value = local_var:cm_new_committed }
+	}
+	if = { limit = { AND = { has_global_variable_map = cm_construction_demand_books is_key_in_global_variable_map = { name = cm_construction_demand_books target = scope:cm_building_type } } }
+		set_local_variable = { name = cm_new_committed value = "global_variable_map(cm_construction_demand_books|scope:cm_building_type)" }
+		if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_books is_key_in_global_variable_map = { name = cm_q_market_committed_books target = scope:cm_market } } }
+			change_local_variable = { name = cm_new_committed add = "global_variable_map(cm_q_market_committed_books|scope:cm_market)" }
+			remove_from_global_variable_map = { name = cm_q_market_committed_books key = scope:cm_market }
+		}
+		add_to_global_variable_map = { name = cm_q_market_committed_books key = scope:cm_market value = local_var:cm_new_committed }
+	}
+	if = { limit = { AND = { has_global_variable_map = cm_construction_demand_paper is_key_in_global_variable_map = { name = cm_construction_demand_paper target = scope:cm_building_type } } }
+		set_local_variable = { name = cm_new_committed value = "global_variable_map(cm_construction_demand_paper|scope:cm_building_type)" }
+		if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_paper is_key_in_global_variable_map = { name = cm_q_market_committed_paper target = scope:cm_market } } }
+			change_local_variable = { name = cm_new_committed add = "global_variable_map(cm_q_market_committed_paper|scope:cm_market)" }
+			remove_from_global_variable_map = { name = cm_q_market_committed_paper key = scope:cm_market }
+		}
+		add_to_global_variable_map = { name = cm_q_market_committed_paper key = scope:cm_market value = local_var:cm_new_committed }
+	}
+}
+
+# Clears the within-cycle committed maps at the top of each construct cycle.
+cm_reset_market_committed_demand = {
+	clear_global_variable_map = cm_q_market_committed_glass
+	clear_global_variable_map = cm_q_market_committed_lumber
+	clear_global_variable_map = cm_q_market_committed_masonry
+	clear_global_variable_map = cm_q_market_committed_sand
+	clear_global_variable_map = cm_q_market_committed_stone
+	clear_global_variable_map = cm_q_market_committed_books
+	clear_global_variable_map = cm_q_market_committed_paper
+}
