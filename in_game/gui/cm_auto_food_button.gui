@@ -215,6 +215,19 @@ template cm_Autofood_Tooltip {
 							text = "CM_AUTO_FOOD_REQ_GOLD"
 						}
 					}
+					cm_tooltip_row = {
+						visible = "[And(GetScriptedGui('cm_food_location_has_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_food_location_has_unshortaged_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]"
+						using = cm_tooltip_row_is_odd
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('cm_food_location_has_unshortaged_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('cm_food_location_has_unshortaged_discounted_option').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]"
+						}
+						blockoverride "row_text" {
+							text = "CM_AUTO_FOOD_REQ_MARKET_GOODS"
+						}
+					}
 				}
 			}
 

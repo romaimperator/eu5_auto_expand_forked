@@ -1,0 +1,51 @@
+﻿# Market construction-goods shortage gate for the auto-construction executors and tooltips.
+
+# Root = location. Expects scope:cm_building_type. False when any standard construction good the
+# building needs would be short in the location's market this construct cycle.
+cm_market_has_construction_goods_for_building = {
+	trigger_if = {
+		limit = { NOT = { exists = scope:cm_market } }
+		market = { save_temporary_scope_as = cm_market }
+	}
+	trigger_if = {
+		limit = { AND = { has_global_variable_map = cm_construction_demand_glass is_key_in_global_variable_map = { name = cm_construction_demand_glass target = scope:cm_building_type } } }
+		scope:cm_market = { cm_market_glass_build_overage < 0 }
+	}
+	trigger_if = {
+		limit = { AND = { has_global_variable_map = cm_construction_demand_lumber is_key_in_global_variable_map = { name = cm_construction_demand_lumber target = scope:cm_building_type } } }
+		scope:cm_market = { cm_market_lumber_build_overage < 0 }
+	}
+	trigger_if = {
+		limit = { AND = { has_global_variable_map = cm_construction_demand_masonry is_key_in_global_variable_map = { name = cm_construction_demand_masonry target = scope:cm_building_type } } }
+		scope:cm_market = { cm_market_masonry_build_overage < 0 }
+	}
+	trigger_if = {
+		limit = { AND = { has_global_variable_map = cm_construction_demand_sand is_key_in_global_variable_map = { name = cm_construction_demand_sand target = scope:cm_building_type } } }
+		scope:cm_market = { cm_market_sand_build_overage < 0 }
+	}
+	trigger_if = {
+		limit = { AND = { has_global_variable_map = cm_construction_demand_stone is_key_in_global_variable_map = { name = cm_construction_demand_stone target = scope:cm_building_type } } }
+		scope:cm_market = { cm_market_stone_build_overage < 0 }
+	}
+	trigger_if = {
+		limit = { AND = { has_global_variable_map = cm_construction_demand_books is_key_in_global_variable_map = { name = cm_construction_demand_books target = scope:cm_building_type } } }
+		scope:cm_market = { cm_market_books_build_overage < 0 }
+	}
+	trigger_if = {
+		limit = { AND = { has_global_variable_map = cm_construction_demand_paper is_key_in_global_variable_map = { name = cm_construction_demand_paper target = scope:cm_building_type } } }
+		scope:cm_market = { cm_market_paper_build_overage < 0 }
+	}
+}
+
+# Root = location. Light snapshot for RGO upgrades: false only when the single construction good
+# implied by the RGO's goods_method is already short.
+cm_market_has_construction_goods_for_rgo = {
+	trigger_if = {
+		limit = { raw_material = { OR = { goods_method = mining goods_method = farming goods_method = hunting goods_method = gathering } } }
+		market = { cm_market_lumber_snapshot_overage < 0 }
+	}
+	trigger_if = {
+		limit = { raw_material = { goods_method = forestry } }
+		market = { cm_market_masonry_snapshot_overage < 0 }
+	}
+}

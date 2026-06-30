@@ -51,6 +51,8 @@ cm_gui_construct_upgrade = {
 		is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_old_building_type }
 		scope:cm_can_build = yes
 		cm_country_can_afford_staged_cost = yes
+		scope:cm_new_building_type = { save_temporary_scope_as = cm_building_type }
+		cm_market_has_construction_goods_for_building = yes
 		# Auto-expand's obsolete upgrades are gated on the replacement's engine values;
 		# upgrade-all entries are not marked gated and skip the metric check.
 		OR = {
@@ -70,6 +72,8 @@ cm_gui_construct_upgrade = {
 				}
 				change_variable = { name = cm_q_planned_spend add = scope:cm_cost }
 			}
+			scope:cm_new_building_type = { save_temporary_scope_as = cm_building_type }
+			cm_commit_market_demand = yes
 		}
 		# Swap auto-expand tracking from old to new
 		if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_old_building_type } } }
@@ -120,6 +124,7 @@ cm_gui_try_build = {
 				cm_gui_metric_gate_passes = yes
 				scope:cm_can_build = yes
 				cm_country_can_afford_staged_cost = yes
+				cm_market_has_construction_goods_for_building = yes
 				# A staged upgrade already constructs this type here
 				NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
 				# The engine converts a build into the standing obsolete predecessor's upgrade.
@@ -157,6 +162,7 @@ cm_gui_try_rgo = {
 			limit = {
 				cm_should_rgo_auto_expand = yes
 				cm_rgo_metric_gate_passes = yes
+				cm_market_has_construction_goods_for_rgo = yes
 			}
 			construct_rgo_upgrade = { }
 		}
@@ -175,6 +181,7 @@ cm_gui_try_ungated = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
 				cm_country_can_afford_staged_cost = yes
+				cm_market_has_construction_goods_for_building = yes
 				# The engine buildability bool is unverified for subject locations.
 				OR = {
 					NOT = { owner = scope:cm_country }
@@ -186,6 +193,7 @@ cm_gui_try_ungated = {
 				cm_approve_gui_build = yes
 			} else = {
 				construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
+				cm_commit_market_demand = yes
 			}
 		}
 	}
@@ -204,16 +212,20 @@ cm_gui_try_urbanize = {
 				scope:cm_building_type = building_type:cm_upgrade_town_to_city_building
 				cm_location_can_mass_upgrade_to_city = yes
 				cm_country_can_afford_staged_cost = yes
+				cm_market_has_construction_goods_for_building = yes
 			}
 			construct_building = { building_type = building_type:cm_upgrade_town_to_city_building }
+			cm_commit_market_demand = yes
 		}
 		if = {
 			limit = {
 				scope:cm_building_type = building_type:cm_upgrade_rural_to_town_building
 				cm_location_can_mass_upgrade_to_town = yes
 				cm_country_can_afford_staged_cost = yes
+				cm_market_has_construction_goods_for_building = yes
 			}
 			construct_building = { building_type = building_type:cm_upgrade_rural_to_town_building }
+			cm_commit_market_demand = yes
 		}
 	}
 }
@@ -230,6 +242,7 @@ cm_gui_try_food_building = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
 				cm_check_country_gold_above = { threshold = cm_food_gold_threshold_plus_planned_spend }
+				cm_market_has_construction_goods_for_building = yes
 				# The engine buildability bool is unverified for subject locations.
 				OR = {
 					NOT = { owner = scope:cm_country }
@@ -241,6 +254,7 @@ cm_gui_try_food_building = {
 				cm_approve_gui_build = yes
 			} else = {
 				construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
+				cm_commit_market_demand = yes
 			}
 		}
 	}
@@ -257,6 +271,7 @@ cm_gui_try_food_rgo = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
 				cm_check_country_gold_above = { threshold = cm_food_gold_threshold_plus_planned_spend }
+				cm_market_has_construction_goods_for_rgo = yes
 			}
 			construct_rgo_upgrade = { }
 		}
@@ -387,6 +402,7 @@ cm_is_building_able_to_auto_expand = {
 		trigger_else = {
 			scope:cm_can_build = yes
 		}
+		location = { cm_market_has_construction_goods_for_building = yes }
 	}
 }
 
