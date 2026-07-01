@@ -58,7 +58,20 @@ cm__town_rights_free_grants_on_changed = {
 		cmf_can_use_unrestricted_tools = yes
 	}
 
-	effect = { }
+	# Global rule, so mirror it onto every country's revoke cost.
+	effect = {
+		if = {
+			limit = { cm_town_rights_grants_are_free = yes }
+			every_country = {
+				add_country_modifier = { modifier = cm_town_rights_free years = 1000 mode = replace }
+			}
+		}
+		else = {
+			every_country = {
+				remove_country_modifier = cm_town_rights_free
+			}
+		}
+	}
 }
 
 cm__town_rights_min_gov_power_on_changed = {
