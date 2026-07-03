@@ -11,10 +11,16 @@ widget = {
 		widget = {
 			size = { 0 0 }
 			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
-			# Pass 1: PdxGuiTriggerAllAnimations runs the like-named state on every queued item, invoking its try-executor.
+			# Step lengths only pace the loop; completion is decided by cm_q_sync_check.
 			state = {
 				name = _show
 				duration = 0.1
+				next = cm_q_round_fire
+			}
+			# Rounds are safe to repeat: executors skip entries already processed this cycle.
+			state = {
+				name = cm_q_round_fire
+				duration = 0.15
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_upgrade')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_ungated')]"
@@ -22,20 +28,32 @@ widget = {
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_food')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_food_rgo')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_rgo')]"
-				next = cm_q_pass_fire
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_probe')]"
+				next = cm_q_round_check
 			}
-			# Pass 2: build the approved lists via the engine action, after pass 1's appends settle.
 			state = {
-				name = cm_q_pass_fire
-				duration = 1.5
+				name = cm_q_round_check
+				duration = 0.15
+				on_finish = "[GetScriptedGui('cm_q_sync_check').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				next = cm_q_round_fire
+			}
+		}
+		# Fire driver: the gate flag flips once per cycle, so _show runs the engine actions exactly once.
+		widget = {
+			size = { 0 0 }
+			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_q_fire_approved_gate').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			state = {
+				name = _show
+				duration = 0.1
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_fire_build')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_fire_upgrade')]"
-				next = cm_q_pass_clear
+				next = cm_q_fire_done
 			}
-			# Pass 3: clear the flag to end the cycle.
+			# 0.25s lets the fire playbacks land before teardown; one deferred past it drops rather than double-fires.
 			state = {
-				name = cm_q_pass_clear
-				on_finish = "[GetScriptedGui('cm_clear_should_construct').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				name = cm_q_fire_done
+				duration = 0.25
+				on_finish = "[GetScriptedGui('cm_q_end_cycle').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 		}
 		# Metric-gated building constructs: per-location list of building types.
@@ -173,6 +191,14 @@ widget = {
 								name = cm_q_fire_build
 								on_finish = "[BuildOrExpandBuildingDefault(BuildingType.Self, Location.Self)]"
 							}
+							# Probe on a child so its re-triggers stay off the fire state's machine.
+							widget = {
+								size = { 0 0 }
+								state = {
+									name = cm_q_probe
+									on_finish = "[GetScriptedGui('cm_q_probe_build').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).End)]"
+								}
+							}
 						}
 					}
 				}
@@ -191,6 +217,13 @@ widget = {
 							state = {
 								name = cm_q_fire_upgrade
 								on_finish = "[UpgradeBuildingDefault(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self)]"
+							}
+							widget = {
+								size = { 0 0 }
+								state = {
+									name = cm_q_probe
+									on_finish = "[GetScriptedGui('cm_q_probe_upgrade').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).End)]"
+								}
 							}
 						}
 					}

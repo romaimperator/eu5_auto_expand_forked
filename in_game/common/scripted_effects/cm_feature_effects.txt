@@ -5,29 +5,35 @@
 
 # Add-if-absent queue staging shared by the cm_stage_* effects below: appends
 # scope:cm_location to the country's $COUNTRY_LIST$ and scope:cm_building_type to the
-# location's $LOCATION_LIST$. Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
+# location's $LOCATION_LIST$. $DONE_LIST$ is the queue's per-location processed-marker list.
+# Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_stage_location_and_type_to_queue = {
 	scope:cm_country = {
 		if = {
 			limit = { NOT = { is_target_in_variable_list = { name = $COUNTRY_LIST$ target = scope:cm_location } } }
 			add_to_variable_list = { name = $COUNTRY_LIST$ target = scope:cm_location }
+			scope:cm_location = { clear_variable_list = $DONE_LIST$ }
 		}
 	}
 	scope:cm_location = {
 		if = {
 			limit = { NOT = { is_target_in_variable_list = { name = $LOCATION_LIST$ target = scope:cm_building_type } } }
 			add_to_variable_list = { name = $LOCATION_LIST$ target = scope:cm_building_type }
+			scope:cm_country = { change_variable = { name = cm_q_staged add = 1 } }
 		}
 	}
 }
 
 # Location-only variant for queues without a per-location type list.
+# $DONE_VAR$ is the queue's per-location processed-marker variable.
 # Expects scope:cm_country, scope:cm_location.
 cm_stage_location_to_queue = {
 	scope:cm_country = {
 		if = {
 			limit = { NOT = { is_target_in_variable_list = { name = $COUNTRY_LIST$ target = scope:cm_location } } }
 			add_to_variable_list = { name = $COUNTRY_LIST$ target = scope:cm_location }
+			change_variable = { name = cm_q_staged add = 1 }
+			scope:cm_location = { remove_variable = $DONE_VAR$ }
 		}
 	}
 }
@@ -43,27 +49,36 @@ cm_clear_queue_pair = {
 	clear_variable_list = $COUNTRY_LIST$
 }
 
+# End-of-cycle teardown: clearing the approved lists keeps approved item widgets from
+# outliving their cycle. Root is the country.
+cm_q_reset_cycle_state = {
+	cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_build_locations LOCATION_LIST = cm_q_approved_build_types }
+	cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_upgrade_locations LOCATION_LIST = cm_q_approved_upgrade_types }
+	remove_variable = cm_should_construct
+	remove_variable = cm_q_fire_approved
+}
+
 # Per-cycle construction queue. The monthly dispatcher enqueues candidates in
 # priority-feature then max_control order: a country list of locations, each carrying
 # a location list of building types. The queue window drains it in that order, grabs
 # the engine cost/income GUI bindings, and constructs.
 # Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_stage_candidate = {
-	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_locations LOCATION_LIST = cm_q_building_types }
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_locations LOCATION_LIST = cm_q_building_types DONE_LIST = cm_q_done_build_types }
 }
 
 # RGO upgrade candidate for the unified queue. Drained per location by the queue window,
 # which re-checks eligibility and gold at drain time before upgrading the RGO.
 # Expects scope:cm_country, scope:cm_location.
 cm_stage_rgo_candidate = {
-	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_rgo_locations }
+	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_rgo_locations DONE_VAR = cm_q_done_rgo }
 }
 
 # Ungated auto-build and capital building candidate for the unified queue. Drained per
 # location by the queue window with the engine cost; the executor re-checks build-queue
 # slots and affordability, then builds. Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_stage_ungated_candidate = {
-	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_ungated_locations LOCATION_LIST = cm_q_ungated_building_types }
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_ungated_locations LOCATION_LIST = cm_q_ungated_building_types DONE_LIST = cm_q_done_ungated_types }
 }
 
 # Urbanize rank-upgrade candidate for the unified queue. The fixed upgrade building type
@@ -71,20 +86,20 @@ cm_stage_ungated_candidate = {
 # the engine cost before building. Expects scope:cm_country, scope:cm_location. $bt$ = upgrade building type key.
 cm_stage_urbanize_candidate = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
-	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_urbanize_locations LOCATION_LIST = cm_q_urbanize_building_types }
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_urbanize_locations LOCATION_LIST = cm_q_urbanize_building_types DONE_LIST = cm_q_done_urbanize_types }
 }
 
 # Food building candidate for the unified queue; the marginal comparison already picked the
 # winning building type. The executor re-checks build-queue slots and the food gold reserve
 # before building. Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_stage_food_building_candidate = {
-	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_food_locations LOCATION_LIST = cm_q_food_building_types }
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_food_locations LOCATION_LIST = cm_q_food_building_types DONE_LIST = cm_q_done_food_types }
 }
 
 # Food RGO candidate for the unified queue; the marginal comparison picked an RGO expand.
 # The executor re-checks build-queue slots and the food gold reserve. Expects scope:cm_country, scope:cm_location.
 cm_stage_food_rgo_candidate = {
-	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_food_rgo_locations }
+	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_food_rgo_locations DONE_VAR = cm_q_done_food_rgo }
 }
 
 # Gated upgrade candidate for the unified queue, keyed by the standing obsolete type.
@@ -113,6 +128,7 @@ cm_stage_upgrade_candidate = {
 				limit = { NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_ae_staged_type } } }
 				add_to_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_ae_staged_type }
 				add_to_variable_list = { name = cm_q_upgrade_gated_types target = scope:cm_ae_staged_type }
+				scope:cm_country = { change_variable = { name = cm_q_staged add = 1 } }
 			}
 			if = {
 				limit = { NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type } } }
@@ -123,6 +139,7 @@ cm_stage_upgrade_candidate = {
 			if = {
 				limit = { NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_locations target = scope:cm_location } } }
 				add_to_variable_list = { name = cm_gui_upgrade_locations target = scope:cm_location }
+				scope:cm_location = { clear_variable_list = cm_q_done_upgrade_types }
 			}
 		}
 	}
@@ -187,6 +204,7 @@ cm_approve_gui_build = {
 			if = {
 				limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_build_locations target = scope:cm_approved_location } } }
 				add_to_variable_list = { name = cm_q_approved_build_locations target = scope:cm_approved_location }
+				scope:cm_approved_location = { clear_variable_list = cm_q_seen_build_types }
 			}
 			change_variable = { name = cm_q_planned_spend add = scope:cm_cost }
 		}
@@ -526,12 +544,14 @@ cm_run_upgrade_all_buildings = {
 						if = {
 							limit = { NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_building_type } } }
 							add_to_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_building_type }
+							scope:cm_country = { change_variable = { name = cm_q_staged add = 1 } }
 						}
 					}
 					scope:cm_country = {
 						if = {
 							limit = { NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_locations target = scope:cm_location } } }
 							add_to_variable_list = { name = cm_gui_upgrade_locations target = scope:cm_location }
+							scope:cm_location = { clear_variable_list = cm_q_done_upgrade_types }
 						}
 					}
 				}

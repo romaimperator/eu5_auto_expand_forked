@@ -38,8 +38,8 @@ cm_on_init_human_country = {
 		cm_update_auto_town_rights_list_visibility = yes
 		cm_update_auto_food_list_visibility = yes
 		cm_update_auto_urbanize_ignore_list_visibility = yes
-		# A loaded save can have this flag stuck on, which stops auto-construction.
-		remove_variable = cm_should_construct
+		# A loaded save can have a cycle's flags stuck on, which stops auto-construction.
+		cm_q_reset_cycle_state = yes
 		set_variable = { name = cm_q_planned_spend value = 0 }
 		cm_reset_market_committed_demand = yes
 	}
@@ -58,5 +58,7 @@ cm_on_country_transfer = {
 		cm_copy_expand_thresholds = { m = 2 }
 		cm_copy_expand_thresholds = { m = 3 }
 		cm_copy_expand_thresholds = { m = 4 }
+		# An interrupted cycle on this country must not resume with stale approvals.
+		cm_q_reset_cycle_state = yes
 	}
 }
