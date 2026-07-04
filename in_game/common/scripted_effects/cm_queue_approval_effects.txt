@@ -1,0 +1,584 @@
+﻿# Score-then-approve drain for the construction queue. The queue-window executors score
+# staged items, capturing the GUI-only engine values; cm_q_approval_pass then approves in
+# the player's priority-list feature order, best metric first inside the two auto-expand
+# features.
+
+# Unified metric score, bigger = better: Tax Income and Profit store the value itself; the
+# ROI metrics store negated years-to-recoup so a faster payback sorts first.
+# Root is the item's location. Expects scope:cm_country, scope:cm_income, scope:cm_profit,
+# scope:cm_q_score_cost. Result exported as scope:cm_q_score_val.
+cm_q_compute_metric_score = {
+	if = {
+		limit = { cm_expand_metric_is_tax_income = yes }
+		save_temporary_scope_value_as = { name = cm_q_score_val value = scope:cm_income }
+	} else_if = {
+		limit = { cm_expand_metric_is = { metric = 2 } }
+		save_temporary_scope_value_as = { name = cm_q_score_val value = scope:cm_profit }
+	} else_if = {
+		limit = { cm_expand_metric_is = { metric = 3 } }
+		if = {
+			limit = { scope:cm_income > 0 }
+			# The 12 converts monthly income to yearly, matching the metric gate's ROI formula.
+			set_local_variable = { name = cm_q_tmp_denom value = scope:cm_income }
+			change_local_variable = { name = cm_q_tmp_denom multiply = 12 }
+			set_local_variable = { name = cm_q_tmp_score value = scope:cm_q_score_cost }
+			change_local_variable = { name = cm_q_tmp_score divide = local_var:cm_q_tmp_denom }
+			change_local_variable = { name = cm_q_tmp_score multiply = -1 }
+			# Floor at the unmeasurable sentinel so every stored score stays above the pick
+			# loop's -2000000 empty-domain marker.
+			change_local_variable = { name = cm_q_tmp_score min = -99999 }
+			save_temporary_scope_value_as = { name = cm_q_score_val value = local_var:cm_q_tmp_score }
+		} else = {
+			# No measurable payback sorts behind every measured candidate.
+			save_temporary_scope_value_as = { name = cm_q_score_val value = -99999 }
+		}
+	} else = {
+		if = {
+			limit = { scope:cm_profit > 0 }
+			set_local_variable = { name = cm_q_tmp_denom value = scope:cm_profit }
+			change_local_variable = { name = cm_q_tmp_denom multiply = 12 }
+			set_local_variable = { name = cm_q_tmp_score value = scope:cm_q_score_cost }
+			change_local_variable = { name = cm_q_tmp_score divide = local_var:cm_q_tmp_denom }
+			change_local_variable = { name = cm_q_tmp_score multiply = -1 }
+			change_local_variable = { name = cm_q_tmp_score min = -99999 }
+			save_temporary_scope_value_as = { name = cm_q_score_val value = local_var:cm_q_tmp_score }
+		} else = {
+			save_temporary_scope_value_as = { name = cm_q_score_val value = -99999 }
+		}
+	}
+}
+
+# Per-location scoring-state teardown, one effect per queue, called by cm_q_reset_cycle_state
+# so no cycle's scores survive into the next. Root is the location.
+cm_q_loc_reset_build_scoring = {
+	clear_variable_map = cm_q_scores
+	clear_variable_map = cm_q_costs
+	clear_variable_map = cm_q_conv_types
+	remove_variable = cm_q_best
+}
+
+cm_q_loc_reset_upgrade_scoring = {
+	clear_variable_map = cm_q_upg_scores
+	clear_variable_map = cm_q_upg_costs
+	clear_variable_map = cm_q_upgall_costs
+	clear_variable_map = cm_q_upg_new_types
+	remove_variable = cm_q_upg_best
+}
+
+cm_q_loc_reset_rgo_scoring = {
+	remove_variable = cm_q_rgo_score
+}
+
+cm_q_loc_reset_ungated_scoring = {
+	clear_variable_map = cm_q_ungated_costs
+}
+
+cm_q_loc_reset_urbanize_scoring = {
+	clear_variable_map = cm_q_urb_costs
+}
+
+cm_q_loc_reset_food_scoring = {
+	clear_variable_map = cm_q_food_costs
+}
+
+cm_q_loc_reset_food_rgo_scoring = {
+	remove_variable = cm_q_food_rgo_ok
+}
+
+# Approves this cycle's scored items. Runs once per cycle from cm_q_sync_check after every
+# executor has scored (processed >= staged). Features drain in the player's priority-list
+# order, so earlier features claim gold, build slots, and market goods first.
+# Root is the player country.
+cm_q_approval_pass = {
+	save_scope_as = cm_country
+	if = {
+		limit = { has_variable_list = cm_priority_features_list }
+		every_in_list = {
+			variable = cm_priority_features_list
+			save_scope_as = cm_q_pass_feature
+			if = {
+				limit = { scope:cm_country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = scope:cm_q_pass_feature } } }
+				switch = {
+					trigger = scope:cm_q_pass_feature
+					flag:cm_feature_auto_expand_buildings = { scope:cm_country = { cm_q_pass_auto_expand_buildings = yes } }
+					flag:cm_feature_auto_expand_rgos = { scope:cm_country = { cm_q_pass_auto_expand_rgos = yes } }
+					flag:cm_feature_upgrade_all_buildings = { scope:cm_country = { cm_q_pass_upgrade_all = yes } }
+					flag:cm_feature_auto_build = { scope:cm_country = { cm_q_pass_auto_build = yes } }
+					flag:cm_feature_auto_food = { scope:cm_country = { cm_q_pass_auto_food = yes } }
+					flag:cm_feature_auto_urbanize = { scope:cm_country = { cm_q_pass_auto_urbanize = yes } }
+					flag:cm_feature_auto_build_capital = { scope:cm_country = { cm_q_pass_auto_build_capital = yes } }
+				}
+			}
+		}
+	}
+}
+
+# Exact best-first drain for auto-expand buildings: repeatedly approves the single
+# highest-scored item across the expand and gated-upgrade domains. Root is the country.
+cm_q_pass_auto_expand_buildings = {
+	set_local_variable = { name = cm_q_pick_guard value = 0 }
+	while = {
+		limit = {
+			# 999 stays under the engine's 1000-iteration while abort; anything past it waits
+			# for next month's staging.
+			local_var:cm_q_pick_guard < 999
+			OR = {
+				AND = {
+					has_variable_list = cm_q_cand_locations
+					variable_list_size = { name = cm_q_cand_locations value >= 1 }
+				}
+				AND = {
+					has_variable_list = cm_q_upg_cand_locations
+					variable_list_size = { name = cm_q_upg_cand_locations value >= 1 }
+				}
+			}
+		}
+		change_local_variable = { name = cm_q_pick_guard add = 1 }
+		# -2000000 marks an empty domain: strictly below every stored score, which the
+		# scorer floors at -99999.
+		save_temporary_scope_value_as = { name = cm_q_dom_build_best value = -2000000 }
+		save_temporary_scope_value_as = { name = cm_q_dom_upg_best value = -2000000 }
+		ordered_in_list = {
+			variable = cm_q_cand_locations
+			order_by = { value = var:cm_q_best }
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_q_pick_build_loc
+			save_temporary_scope_value_as = { name = cm_q_dom_build_best value = var:cm_q_best }
+		}
+		ordered_in_list = {
+			variable = cm_q_upg_cand_locations
+			order_by = { value = var:cm_q_upg_best }
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_q_pick_upg_loc
+			save_temporary_scope_value_as = { name = cm_q_dom_upg_best value = var:cm_q_upg_best }
+		}
+		if = {
+			# Ties go to the expand domain.
+			limit = { scope:cm_q_dom_build_best >= { value = scope:cm_q_dom_upg_best } }
+			scope:cm_q_pick_build_loc = { cm_q_pick_best_build_item = yes }
+		} else = {
+			scope:cm_q_pick_upg_loc = { cm_q_pick_best_upgrade_item = yes }
+		}
+	}
+}
+
+# Approves the highest-scored expand item at this location, then consumes it. The key is
+# removed even when the gates fail: one shot per item per cycle, and the pick loop only
+# terminates because every pick shrinks a map. Root is the location.
+cm_q_pick_best_build_item = {
+	save_temporary_scope_as = cm_q_pick_loc
+	ordered_key_in_variable_map = {
+		variable = cm_q_scores
+		order_by = {
+			save_temporary_scope_as = cm_q_try_type
+			value = "scope:cm_q_pick_loc.variable_map(cm_q_scores|scope:cm_q_try_type)"
+		}
+		position = 0
+		check_range_bounds = no
+		save_temporary_scope_as = cm_q_pick_type
+	}
+	scope:cm_q_pick_type = { save_scope_as = cm_building_type }
+	save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_q_costs|scope:cm_q_pick_type)" }
+	# cm_commit_market_demand leaves the previous item's market in scope:cm_market.
+	market = { save_temporary_scope_as = cm_market }
+	if = {
+		limit = {
+			cm_country_can_afford_staged_cost = yes
+			cm_market_has_construction_goods_for_building = yes
+		}
+		cm_approve_gui_build = yes
+		# The engine converts this build into the standing obsolete predecessor's upgrade.
+		if = {
+			limit = {
+				has_variable_map = cm_q_conv_types
+				is_key_in_variable_map = { name = cm_q_conv_types target = scope:cm_q_pick_type }
+			}
+			"variable_map(cm_q_conv_types|scope:cm_q_pick_type)" = { save_temporary_scope_as = cm_build_obsolete_type }
+			if = {
+				limit = { NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_build_obsolete_type } } }
+				add_to_variable_list = { name = cm_upgrade_in_progress target = scope:cm_build_obsolete_type }
+			}
+			remove_from_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_build_obsolete_type }
+			add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_build_obsolete_type value = scope:cm_building_type }
+		}
+	}
+	remove_from_variable_map = { name = cm_q_scores key = scope:cm_q_pick_type }
+	remove_from_variable_map = { name = cm_q_costs key = scope:cm_q_pick_type }
+	remove_from_variable_map = { name = cm_q_conv_types key = scope:cm_q_pick_type }
+	cm_q_refresh_build_best = yes
+}
+
+# Recomputes this location's best expand score after a pick, or retires the location from
+# the candidate list once its map is empty. Root is the location.
+cm_q_refresh_build_best = {
+	save_temporary_scope_as = cm_q_refresh_loc
+	remove_variable = cm_q_best
+	if = {
+		limit = {
+			has_variable_map = cm_q_scores
+			variable_map_size = { name = cm_q_scores value >= 1 }
+		}
+		ordered_key_in_variable_map = {
+			variable = cm_q_scores
+			order_by = {
+				save_temporary_scope_as = cm_q_try_type
+				value = "scope:cm_q_refresh_loc.variable_map(cm_q_scores|scope:cm_q_try_type)"
+			}
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_q_next_type
+		}
+		set_variable = { name = cm_q_best value = "variable_map(cm_q_scores|scope:cm_q_next_type)" }
+	} else = {
+		scope:cm_country = { remove_list_variable = { name = cm_q_cand_locations target = scope:cm_q_refresh_loc } }
+	}
+}
+
+# Gated-upgrade twin of cm_q_pick_best_build_item. Root is the location.
+cm_q_pick_best_upgrade_item = {
+	save_temporary_scope_as = cm_q_pick_loc
+	ordered_key_in_variable_map = {
+		variable = cm_q_upg_scores
+		order_by = {
+			save_temporary_scope_as = cm_q_try_type
+			value = "scope:cm_q_pick_loc.variable_map(cm_q_upg_scores|scope:cm_q_try_type)"
+		}
+		position = 0
+		check_range_bounds = no
+		save_temporary_scope_as = cm_q_pick_type
+	}
+	cm_q_pass_approve_upgrade_item = yes
+	remove_from_variable_map = { name = cm_q_upg_scores key = scope:cm_q_pick_type }
+	remove_from_variable_map = { name = cm_q_upg_costs key = scope:cm_q_pick_type }
+	cm_q_refresh_upg_best = yes
+}
+
+# Gated-upgrade twin of cm_q_refresh_build_best. Root is the location.
+cm_q_refresh_upg_best = {
+	save_temporary_scope_as = cm_q_refresh_loc
+	remove_variable = cm_q_upg_best
+	if = {
+		limit = {
+			has_variable_map = cm_q_upg_scores
+			variable_map_size = { name = cm_q_upg_scores value >= 1 }
+		}
+		ordered_key_in_variable_map = {
+			variable = cm_q_upg_scores
+			order_by = {
+				save_temporary_scope_as = cm_q_try_type
+				value = "scope:cm_q_refresh_loc.variable_map(cm_q_upg_scores|scope:cm_q_try_type)"
+			}
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_q_next_type
+		}
+		set_variable = { name = cm_q_upg_best value = "variable_map(cm_q_upg_scores|scope:cm_q_next_type)" }
+	} else = {
+		scope:cm_country = { remove_list_variable = { name = cm_q_upg_cand_locations target = scope:cm_q_refresh_loc } }
+	}
+}
+
+# Approves one staged upgrade with the order-dependent gates, reproducing the approval side
+# effects the executor performed before the score-then-approve split: approved lists,
+# planned spend, market commit, the auto-expand registration swap, and the in-progress
+# records. Root is the location. Expects scope:cm_q_pick_type = the obsolete type,
+# scope:cm_country.
+cm_q_pass_approve_upgrade_item = {
+	if = {
+		limit = {
+			has_variable_map = cm_q_upg_new_types
+			is_key_in_variable_map = { name = cm_q_upg_new_types target = scope:cm_q_pick_type }
+		}
+		scope:cm_q_pick_type = { save_scope_as = cm_old_building_type }
+		"variable_map(cm_q_upg_new_types|scope:cm_q_pick_type)" = { save_scope_as = cm_new_building_type }
+		scope:cm_new_building_type = { save_scope_as = cm_building_type }
+		if = {
+			limit = {
+				has_variable_map = cm_q_upg_costs
+				is_key_in_variable_map = { name = cm_q_upg_costs target = scope:cm_q_pick_type }
+			}
+			save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_q_upg_costs|scope:cm_q_pick_type)" }
+		} else = {
+			save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_q_upgall_costs|scope:cm_q_pick_type)" }
+		}
+		market = { save_temporary_scope_as = cm_market }
+		if = {
+			limit = {
+				cm_country_can_afford_staged_cost = yes
+				cm_market_has_construction_goods_for_building = yes
+			}
+			if = {
+				limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_upgrade_types target = scope:cm_old_building_type } } }
+				add_to_variable_list = { name = cm_q_approved_upgrade_types target = scope:cm_old_building_type }
+				save_temporary_scope_as = cm_approved_location
+				scope:cm_country = {
+					if = {
+						limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_upgrade_locations target = scope:cm_approved_location } } }
+						add_to_variable_list = { name = cm_q_approved_upgrade_locations target = scope:cm_approved_location }
+						scope:cm_approved_location = { clear_variable_list = cm_q_seen_upgrade_types }
+					}
+					change_variable = { name = cm_q_planned_spend add = scope:cm_cost }
+				}
+				cm_commit_market_demand = yes
+			}
+			# Swap auto-expand tracking from old to new
+			if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_old_building_type } } }
+				# Mass mode: add new type to country mass list and swap exclusion entries
+				owner = {
+					if = { limit = { NOT = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_new_building_type } } }
+						add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_new_building_type }
+					}
+				}
+				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_old_building_type } }
+					remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_old_building_type }
+					if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_new_building_type } } }
+						add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_new_building_type }
+					}
+				}
+			} else = {
+				# Normal mode: swap registration entries, only if old type was registered.
+				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_old_building_type } }
+					remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_old_building_type }
+					if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_new_building_type } } }
+						add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_new_building_type }
+					}
+				}
+			}
+			# Track that this building type has an upgrade queued so the monthly script won't re-flag it
+			if = { limit = { NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_old_building_type } } }
+				add_to_variable_list = { name = cm_upgrade_in_progress target = scope:cm_old_building_type }
+			}
+			# Record the constructed target for the finished-upgrade check
+			remove_from_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_old_building_type }
+			add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_old_building_type value = scope:cm_new_building_type }
+		}
+	}
+}
+
+# Exact best-first drain for auto-expand RGOs: one ordered pass, best stored score first,
+# with the gold gate applied live per item. Root is the country.
+cm_q_pass_auto_expand_rgos = {
+	if = {
+		limit = { has_variable_list = cm_q_rgo_locations }
+		ordered_in_list = {
+			variable = cm_q_rgo_locations
+			order_by = { value = var:cm_q_rgo_score }
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			limit = { has_variable = cm_q_rgo_score }
+			save_temporary_scope_as = cm_location
+			remove_variable = cm_q_rgo_score
+			if = {
+				limit = { cm_check_country_gold_above = { threshold = cm_expected_gold_available_for_rgo_auto_expand_plus_planned_spend } }
+				construct_rgo_upgrade = { }
+			}
+		}
+	}
+}
+
+# List-order drain for Upgrade All Buildings entries. Root is the country.
+cm_q_pass_upgrade_all = {
+	if = {
+		limit = { has_variable_list = cm_gui_upgrade_locations }
+		every_in_list = {
+			variable = cm_gui_upgrade_locations
+			save_temporary_scope_as = cm_q_pass_loc
+			every_in_list = {
+				variable = cm_gui_upgrade_building_types
+				save_temporary_scope_as = cm_q_pick_type
+				scope:cm_q_pass_loc = {
+					if = {
+						limit = {
+							has_variable_map = cm_q_upgall_costs
+							is_key_in_variable_map = { name = cm_q_upgall_costs target = scope:cm_q_pick_type }
+						}
+						cm_q_pass_approve_upgrade_item = yes
+						remove_from_variable_map = { name = cm_q_upgall_costs key = scope:cm_q_pick_type }
+					}
+				}
+			}
+		}
+	}
+}
+
+# Drains one resolved building type's ungated items across the staged locations, in list
+# order, with the order-dependent gates the executor previously applied. Root is the
+# country. Expects scope:cm_country, scope:cm_building_type.
+cm_q_drain_ungated_type = {
+	if = {
+		limit = { has_variable_list = cm_q_ungated_locations }
+		every_in_list = {
+			variable = cm_q_ungated_locations
+			if = {
+				limit = {
+					has_variable_map = cm_q_ungated_costs
+					is_key_in_variable_map = { name = cm_q_ungated_costs target = scope:cm_building_type }
+				}
+				save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_q_ungated_costs|scope:cm_building_type)" }
+				market = { save_temporary_scope_as = cm_market }
+				if = {
+					limit = {
+						cm_get_open_build_queue_slots > 0
+						cm_country_can_afford_staged_cost = yes
+						cm_market_has_construction_goods_for_building = yes
+					}
+					if = {
+						limit = { owner = scope:cm_country }
+						cm_approve_gui_build = yes
+					} else = {
+						construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
+						cm_commit_market_demand = yes
+					}
+				}
+				remove_from_variable_map = { name = cm_q_ungated_costs key = scope:cm_building_type }
+			}
+		}
+	}
+}
+
+# Auto-build drain: the same type list, enabled checks, and resolution as staging, so the
+# player's per-building order decides who claims gold first. Root is the country.
+cm_q_pass_auto_build = {
+	if = {
+		limit = { has_variable_list = cm_auto_build_building_types_list }
+		every_in_list = {
+			variable = cm_auto_build_building_types_list
+			save_scope_as = cm_building_type
+			scope:cm_country = {
+				if = {
+					limit = { is_target_in_variable_list = { name = cm_auto_build_building_types_enabled target = scope:cm_building_type } }
+					# Resolve obsolete building type to current non-obsolete upgrade, e.g. dock -> dry_dock
+					cm_auto_build_resolve_building_type = yes
+					cm_q_drain_ungated_type = yes
+				}
+			}
+		}
+	}
+}
+
+# Capital drain: the same fixed building order as staging. Root is the country.
+cm_q_pass_auto_build_capital = {
+	cm_q_drain_capital_type = { building_type_text = royal_court }
+	cm_q_drain_capital_type = { building_type_text = house_of_parliament }
+	cm_q_drain_capital_type = { building_type_text = order_headquarters }
+	cm_q_drain_capital_type = { building_type_text = admiralty }
+	cm_q_drain_capital_type = { building_type_text = war_college }
+	cm_q_drain_capital_type = { building_type_text = tax_assessor }
+	cm_q_drain_capital_type = { building_type_text = supreme_court }
+	cm_q_drain_capital_type = { building_type_text = chancery }
+	cm_q_drain_capital_type = { building_type_text = republican_assembly }
+	cm_q_drain_capital_type = { building_type_text = royal_garden }
+	cm_q_drain_capital_type = { building_type_text = pirate_stronghold }
+}
+
+cm_q_drain_capital_type = {
+	building_type:$building_type_text$ = { save_scope_as = cm_building_type }
+	cm_q_drain_ungated_type = yes
+}
+
+# Auto-food drain: staged food buildings, then food RGO upgrades, in list order. Root is
+# the country.
+cm_q_pass_auto_food = {
+	if = {
+		limit = { has_variable_list = cm_q_food_locations }
+		every_in_list = {
+			variable = cm_q_food_locations
+			save_temporary_scope_as = cm_q_pass_loc
+			every_in_list = {
+				variable = cm_q_food_building_types
+				save_scope_as = cm_building_type
+				scope:cm_q_pass_loc = {
+					if = {
+						limit = {
+							has_variable_map = cm_q_food_costs
+							is_key_in_variable_map = { name = cm_q_food_costs target = scope:cm_building_type }
+						}
+						save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_q_food_costs|scope:cm_building_type)" }
+						market = { save_temporary_scope_as = cm_market }
+						if = {
+							limit = {
+								cm_get_open_build_queue_slots > 0
+								cm_check_country_gold_above = { threshold = cm_food_gold_threshold_plus_planned_spend }
+								cm_market_has_construction_goods_for_building = yes
+							}
+							if = {
+								limit = { owner = scope:cm_country }
+								cm_approve_gui_build = yes
+							} else = {
+								construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
+								cm_commit_market_demand = yes
+							}
+						}
+						remove_from_variable_map = { name = cm_q_food_costs key = scope:cm_building_type }
+					}
+				}
+			}
+		}
+	}
+	if = {
+		limit = { has_variable_list = cm_q_food_rgo_locations }
+		every_in_list = {
+			variable = cm_q_food_rgo_locations
+			if = {
+				limit = { has_variable = cm_q_food_rgo_ok }
+				remove_variable = cm_q_food_rgo_ok
+				if = {
+					limit = {
+						cm_get_open_build_queue_slots > 0
+						cm_check_country_gold_above = { threshold = cm_food_gold_threshold_plus_planned_spend }
+					}
+					construct_rgo_upgrade = { }
+				}
+			}
+		}
+	}
+}
+
+# Urbanize drain: staged rank upgrades in list order, with rank eligibility re-checked at
+# approval time as the executor previously did. Root is the country.
+cm_q_pass_auto_urbanize = {
+	if = {
+		limit = { has_variable_list = cm_q_urbanize_locations }
+		every_in_list = {
+			variable = cm_q_urbanize_locations
+			save_temporary_scope_as = cm_q_pass_loc
+			every_in_list = {
+				variable = cm_q_urbanize_building_types
+				save_scope_as = cm_building_type
+				scope:cm_q_pass_loc = {
+					if = {
+						limit = {
+							has_variable_map = cm_q_urb_costs
+							is_key_in_variable_map = { name = cm_q_urb_costs target = scope:cm_building_type }
+						}
+						save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_q_urb_costs|scope:cm_building_type)" }
+						market = { save_temporary_scope_as = cm_market }
+						if = {
+							limit = {
+								scope:cm_building_type = building_type:cm_upgrade_town_to_city_building
+								cm_location_can_mass_upgrade_to_city = yes
+								cm_country_can_afford_staged_cost = yes
+								cm_market_has_construction_goods_for_building = yes
+							}
+							construct_building = { building_type = building_type:cm_upgrade_town_to_city_building }
+							cm_commit_market_demand = yes
+						}
+						if = {
+							limit = {
+								scope:cm_building_type = building_type:cm_upgrade_rural_to_town_building
+								cm_location_can_mass_upgrade_to_town = yes
+								cm_country_can_afford_staged_cost = yes
+								cm_market_has_construction_goods_for_building = yes
+							}
+							construct_building = { building_type = building_type:cm_upgrade_rural_to_town_building }
+							cm_commit_market_demand = yes
+						}
+						remove_from_variable_map = { name = cm_q_urb_costs key = scope:cm_building_type }
+					}
+				}
+			}
+		}
+	}
+}

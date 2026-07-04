@@ -50,9 +50,10 @@ cm_q_probe_upgrade = {
 }
 
 # Per-round completion check for the construct window's loop. Root is the player.
-# Arms the fire pass once every executor has run (processed >= staged) and every approved
-# entry's widget is verified by its probe mark. A cycle making no instantiation progress
-# for 8 straight rounds fires whatever is verified instead of dropping the month.
+# Once every executor has scored (processed >= staged), runs cm_q_approval_pass, then arms
+# the fire pass when every approved entry's widget is verified by its probe mark. A cycle
+# making no instantiation progress for 8 straight rounds fires whatever is verified instead
+# of dropping the month.
 cm_q_sync_check = {
 	is_valid = {
 		always = yes
@@ -64,6 +65,14 @@ cm_q_sync_check = {
 			set_local_variable = { name = cm_q_chk_all_seen value = 1 }
 			set_local_variable = { name = cm_q_chk_any value = 0 }
 			set_variable = { name = cm_q_seen_count value = 0 }
+			if = {
+				limit = {
+					var:cm_q_processed >= var:cm_q_staged
+					NOT = { exists = var:cm_q_pass_done }
+				}
+				set_variable = { name = cm_q_pass_done value = yes }
+				cm_q_approval_pass = yes
+			}
 			if = {
 				limit = { var:cm_q_processed >= var:cm_q_staged }
 				every_in_list = {
@@ -126,6 +135,13 @@ cm_q_sync_check = {
 						# 8 stalled rounds is about 2.4s with zero instantiation progress.
 						limit = { var:cm_q_stall_rounds >= 8 }
 						cmf_log = { action = cm_log_cycle_gave_up }
+						# A stalled cycle can give up before reaching the approval pass; approve
+						# whatever scored so the month is not dropped outright.
+						if = {
+							limit = { NOT = { exists = var:cm_q_pass_done } }
+							set_variable = { name = cm_q_pass_done value = yes }
+							cm_q_approval_pass = yes
+						}
 						# The fire pass cannot reach an unverified upgrade; unwind its in-progress
 						# markers or a fort would stay blocked from re-staging.
 						every_in_list = {
