@@ -169,3 +169,65 @@ cm_location_food_potential = {
 	}
 	multiply = cm_location_food_potential_food_multiplier
 }
+
+# Net terrain proximity penalty for the proximity map mode, scaled by the owner's per-topography proximity impact modifiers.
+cm_location_proximity_modifier = {
+	value = 0
+	if = {
+		limit = { topography = mountains }
+		add = {
+			value = -0.5 # Mirrors vanilla mountains proximity: in_game/common/topography/00_default.txt:22
+			if = {
+				limit = { exists = owner }
+				multiply = {
+					value = 1
+					add = owner.modifier:mountains_proximity_impact
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = { topography = hills }
+		add = {
+			value = -0.25 # Mirrors vanilla hills proximity: in_game/common/topography/00_default.txt:54
+			if = {
+				limit = { exists = owner }
+				multiply = {
+					value = 1
+					add = owner.modifier:hills_proximity_impact
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = { topography = wetlands }
+		add = {
+			value = -0.25 # Mirrors vanilla wetlands proximity: in_game/common/topography/00_default.txt:104
+			if = {
+				limit = { exists = owner }
+				multiply = {
+					value = 1
+					add = owner.modifier:wetlands_proximity_impact
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = { topography = plateau }
+		add = {
+			value = -0.125 # Mirrors vanilla plateau proximity: in_game/common/topography/00_default.txt:82
+			if = {
+				limit = { exists = owner }
+				multiply = {
+					value = 1
+					add = owner.modifier:plateau_proximity_impact
+				}
+			}
+		}
+	}
+	if = { limit = { vegetation = jungle } add = -0.5 } # Mirrors vanilla jungle proximity: in_game/common/vegetation/00_default.txt:125
+	else_if = { limit = { vegetation = forest } add = -0.25 } # Mirrors vanilla forest proximity: in_game/common/vegetation/00_default.txt:101
+	else_if = { limit = { vegetation = woods } add = -0.125 } # Mirrors vanilla woods proximity: in_game/common/vegetation/00_default.txt:79
+	else_if = { limit = { vegetation = desert } add = -0.05 } # Mirrors vanilla desert proximity: in_game/common/vegetation/00_default.txt:4
+	else_if = { limit = { vegetation = farmland } add = -0.05 } # Mirrors vanilla farmland proximity: in_game/common/vegetation/00_default.txt:58
+}
