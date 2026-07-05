@@ -7,8 +7,10 @@ emits the map mode that colors provinces by the best right and the tooltip
 machinery that ranks every option.
 
 Reads vanilla town_rights (which goods each right boosts, right colors),
-building_types (production methods: inputs, produced good, output), goods
-(raw_material vs produced category), and named_colors. Emits:
+building_types (production method slots: inline unique_production_methods plus
+possible_production_methods references resolved against
+common/production_methods), goods (raw_material vs produced category), and
+named_colors. Emits:
 
   in_game/common/script_values/cm_town_right_map_mode_script_values.txt
   in_game/common/scripted_triggers/cm_town_right_map_mode_triggers.txt
@@ -27,8 +29,8 @@ there. The map mode and tooltip only read stored variables plus that one
 raw-material check.
 
 Scoring model:
-  - A building's main production slot is its unique_production_methods block
-    with the highest output; other blocks are enhancement slots and are ignored.
+  - A building's main production slot is its slot with the highest output;
+    other slots are enhancement slots and are ignored.
   - Worth-using production methods are those in the main slot with output at
     least PM_OUTPUT_THRESHOLD of the slot's best output.
   - A production method's coverage in a province is the sum of its input-amount
@@ -40,6 +42,7 @@ Scoring model:
   - A boosted good that is itself a raw material gets the RGO averaged in as
     one more fully covered producer on the RGO's own location (the output
     modifier boosts that RGO too), so scores differ per location there.
+  - allow/potential gates on production methods are ignored.
 
 Usage:
     python tools/cm_generate_town_rights_map_mode.py [--game-dir PATH]
@@ -76,6 +79,8 @@ STEAM_GAME_PATHS = [
 
 TOWN_RIGHTS_SUBDIR = os.path.join("in_game", "common", "town_rights")
 BUILDING_TYPES_SUBDIR = os.path.join("in_game", "common", "building_types")
+PRODUCTION_METHODS_SUBDIR = os.path.join(
+    "in_game", "common", "production_methods")
 GOODS_SUBDIR = os.path.join("in_game", "common", "goods")
 NAMED_COLORS_SUBDIRS = [
     os.path.join("main_menu", "common", "named_colors"),
@@ -308,49 +313,77 @@ def parse_town_rights(town_rights_dir, goods_categories):
     return rights
 
 
-def parse_buildings(building_types_dir, goods_categories):
-    """Return [(building, file, line, [slot, ...])] where each slot is a list
-    of PM dicts: {name, line, inputs {good: amount}, produced, output}."""
+def parse_pm_body(pm_body, goods_categories):
+    """Return {inputs {good: amount}, produced, output} from a PM block body."""
+    produced = None
+    output = None
+    inputs = {}
+    for key, value in scalar_assignments(pm_body):
+        if key == "produced":
+            produced = value
+        elif key == "output":
+            try:
+                output = float(value)
+            except ValueError:
+                output = None
+        elif key in goods_categories:
+            try:
+                amount = float(value)
+            except ValueError:
+                continue
+            inputs[key] = inputs.get(key, 0.0) + amount
+    return {"inputs": inputs, "produced": produced, "output": output}
+
+
+def parse_production_methods(game_dir, goods_categories):
+    """Return {pm_name: {inputs, produced, output, ref}} from the external
+    production method files."""
+    methods = {}
+    directory = os.path.join(game_dir, PRODUCTION_METHODS_SUBDIR)
+    for name, path in iter_db_files(directory):
+        rel = os.path.join(PRODUCTION_METHODS_SUBDIR, name).replace(os.sep, "/")
+        for pm, pm_body, line in child_blocks(read_pdx(path)):
+            data = parse_pm_body(pm_body, goods_categories)
+            data["ref"] = f"{rel}:{line}"
+            methods[pm] = data
+    return methods
+
+
+def parse_buildings(building_types_dir, goods_categories, external_pms):
+    """Return ([(building, [slot, ...])], dangling) where each slot is a list
+    of PM dicts {name, ref, inputs, produced, output} and dangling is the set
+    of possible_production_methods names with no external definition."""
     buildings = []
+    dangling = set()
     for name, path in iter_db_files(building_types_dir):
         rel = os.path.join(BUILDING_TYPES_SUBDIR, name).replace(os.sep, "/")
         text = read_pdx(path)
         for building, body, b_line in child_blocks(text):
             slots = []
             for child, inner, c_line in child_blocks(body):
-                if child != "unique_production_methods":
-                    continue
-                slot = []
-                for pm, pm_body, pm_line in child_blocks(inner):
-                    produced = None
-                    output = None
-                    inputs = {}
-                    for key, value in scalar_assignments(pm_body):
-                        if key == "produced":
-                            produced = value
-                        elif key == "output":
-                            try:
-                                output = float(value)
-                            except ValueError:
-                                output = None
-                        elif key in goods_categories:
-                            try:
-                                amount = float(value)
-                            except ValueError:
-                                continue
-                            inputs[key] = inputs.get(key, 0.0) + amount
-                    slot.append({
-                        "name": pm,
-                        "line": b_line + c_line + pm_line - 2,
-                        "inputs": inputs,
-                        "produced": produced,
-                        "output": output,
-                    })
-                if slot:
-                    slots.append(slot)
+                if child == "unique_production_methods":
+                    slot = []
+                    for pm, pm_body, pm_line in child_blocks(inner):
+                        data = parse_pm_body(pm_body, goods_categories)
+                        data["name"] = pm
+                        data["ref"] = f"{rel}:{b_line + c_line + pm_line - 2}"
+                        slot.append(data)
+                    if slot:
+                        slots.append(slot)
+                elif child == "possible_production_methods":
+                    slot = []
+                    for pm in inner.split():
+                        if pm not in external_pms:
+                            dangling.add(pm)
+                            continue
+                        data = dict(external_pms[pm])
+                        data["name"] = pm
+                        slot.append(data)
+                    if slot:
+                        slots.append(slot)
             if slots:
-                buildings.append((building, rel, b_line, slots))
-    return buildings
+                buildings.append((building, slots))
+    return buildings, dangling
 
 
 def short_alias(right):
@@ -377,7 +410,7 @@ def collect_options(buildings, boosted_goods, goods_categories):
     """Return {good: [option]}, option = {shares {good: share_str}, comment}."""
     options = {good: [] for good in boosted_goods}
     seen = {good: set() for good in boosted_goods}
-    for building, rel, _b_line, slots in buildings:
+    for building, slots in buildings:
         main_slot = max(
             slots,
             key=lambda slot: max((pm["output"] or 0.0) for pm in slot))
@@ -408,7 +441,7 @@ def collect_options(buildings, boosted_goods, goods_categories):
                             for g, a in sorted(pm["inputs"].items()))
             options[good].append({
                 "shares": shares,
-                "comment": (f"{pm['name']} ({building}), {rel}:{pm['line']} - "
+                "comment": (f"{pm['name']} ({building}), {pm['ref']} - "
                             f"{mix} of {fmt_amount(total)} total input"),
             })
     for good, opts in options.items():
@@ -855,8 +888,10 @@ def main():
             if good not in boosted_goods:
                 boosted_goods.append(good)
 
-    buildings = parse_buildings(
-        os.path.join(game_dir, BUILDING_TYPES_SUBDIR), goods_categories)
+    external_pms = parse_production_methods(game_dir, goods_categories)
+    buildings, dangling = parse_buildings(
+        os.path.join(game_dir, BUILDING_TYPES_SUBDIR), goods_categories,
+        external_pms)
     options = collect_options(buildings, boosted_goods, goods_categories)
     for good in boosted_goods:
         if not options[good]:
@@ -893,6 +928,10 @@ def main():
         print(f"  {right}: {goods_list}")
     print(f"  relevant raw materials: {', '.join(relevant)}")
     print(f"  RGO-self boosted goods: {', '.join(sorted(self_goods))}")
+    if dangling:
+        rel_pm = PRODUCTION_METHODS_SUBDIR.replace(os.sep, "/")
+        print("  WARNING: possible_production_methods entries with no definition "
+              f"in {rel_pm}, skipped: {', '.join(sorted(dangling))}")
 
 
 if __name__ == "__main__":
