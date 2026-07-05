@@ -727,7 +727,7 @@ def emit_map_mode(rights, aliases, right_colors):
 	use_fow = no
 
 	category = economy
-	index = 2
+	index = 1
 
 	map_markers = {
 		fort_marker = no
