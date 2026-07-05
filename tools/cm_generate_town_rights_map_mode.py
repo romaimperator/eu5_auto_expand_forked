@@ -776,8 +776,7 @@ def emit_loc(rights, aliases, boosted_goods):
     for header_line in GENERATED_HEADER.splitlines():
         lines.append(f" {header_line}")
     lines.append(
-        " MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND: \"#T [ROOT.GetLocation.GetProvince.GetName]#!"
-        f"\\nSpecialization options, best to worst:{slot_calls}"
+        f" MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND: \"Specialization options, best to worst:{slot_calls}"
         f"\\n\\nBreakdown:{bd_calls}"
         f"\\n\\nBest industries:{ind_calls}\"")
     for right in ROYAL_RIGHTS:
