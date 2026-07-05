@@ -38,6 +38,14 @@ cm_get_max_constructions_at_same_time = {
 cm_get_open_build_queue_slots = {
 	value = cm_get_max_constructions_at_same_time
 	subtract = num_civil_constructions
+	# Approved builds claim their slot before the fire pass runs; the owner gate skips counters a dead country never reset.
+	if = {
+		limit = {
+			exists = var:cm_q_slots_used
+			owner = { exists = var:cm_should_construct }
+		}
+		subtract = var:cm_q_slots_used
+	}
 }
 
 # Root scope is the location

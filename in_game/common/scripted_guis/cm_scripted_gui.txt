@@ -419,9 +419,12 @@ cm_is_building_able_to_auto_expand = {
 		is_opened = yes
 		cm_is_building_fully_employed = yes
 		is_lacking_goods = no
-		cm_is_not_under_construction = yes
 		location = { cm_location_has_enough_pops_available = yes }
 		location = { cm_is_location_under_building_limit = yes }
+		# Upgrades are not slot-gated.
+		trigger_if = { limit = { owner = { NOT = { building_type_is_obsolete = scope:cm_building_type } } }
+			location = { cm_get_open_build_queue_slots > 0 }
+		}
 		cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_expand_buildings }
 		cm_country_can_afford_predicted_cost = yes
 		cm_is_building_not_max_level_and_not_obsolete_or_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes
@@ -516,23 +519,26 @@ cm_is_location_under_building_limit = {
 }
 
 # Root is the location
+cm_location_has_open_build_slot = {
+	is_shown = {
+		cm_get_open_build_queue_slots > 0
+	}
+}
+
+# Root is the building. Obsolete buildings pass because their upgrade is not slot-gated.
+cm_building_expand_has_open_slot = {
+	is_shown = {
+		building_type = { save_temporary_scope_as = cm_building_type }
+		trigger_if = { limit = { owner = { NOT = { building_type_is_obsolete = scope:cm_building_type } } }
+			location = { cm_get_open_build_queue_slots > 0 }
+		}
+	}
+}
+
+# Root is the location
 cm_is_location_not_conquered = {
 	is_shown = {
 		NOT = { integration_level = conquered }
-	}
-}
-
-# Root is the building
-cm_is_building_not_under_construction = {
-	is_shown = {
-		cm_is_not_under_construction = yes
-	}
-}
-
-# Tooltip wrapper: root is the location, expects scope:cm_building_type.
-cm_location_building_type_not_under_construction = {
-	is_shown = {
-		cm_location_building_type_not_under_construction = yes
 	}
 }
 

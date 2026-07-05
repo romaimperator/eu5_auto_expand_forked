@@ -53,6 +53,11 @@ cm_clear_queue_pair = {
 # outliving their cycle, and clearing the per-location scoring state keeps an aborted
 # cycle's scores out of the next approval pass. Root is the country.
 cm_q_reset_cycle_state = {
+	every_in_list = {
+		variable = cm_q_approved_build_locations
+		save_scope_as = cm_q_reset_loc
+		scope:cm_q_reset_loc = { cm_q_loc_clear_build_ranks = yes }
+	}
 	cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_build_locations LOCATION_LIST = cm_q_approved_build_types }
 	cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_upgrade_locations LOCATION_LIST = cm_q_approved_upgrade_types }
 	every_in_list = {
@@ -214,10 +219,10 @@ cm_stage_expand_or_upgrade_candidate = {
 				scope:cm_building = {
 					cm_building_can_auto_expand_other_than_checking_for_upgrades = yes
 					is_at_max_level = no
-					cm_is_not_under_construction = yes
 				}
 				# A staged upgrade already constructs this type here this pulse
 				NOT = { scope:cm_location = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } } }
+				scope:cm_location = { cm_get_open_build_queue_slots > 0 }
 			}
 			cm_stage_candidate = yes
 		}
@@ -237,18 +242,40 @@ cm_stage_expand_or_upgrade_candidate = {
 cm_approve_gui_build = {
 	if = {
 		limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } } }
-		add_to_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type }
-		save_temporary_scope_as = cm_approved_location
-		scope:cm_country = {
-			if = {
-				limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_build_locations target = scope:cm_approved_location } } }
-				add_to_variable_list = { name = cm_q_approved_build_locations target = scope:cm_approved_location }
-				scope:cm_approved_location = { clear_variable_list = cm_q_seen_build_types }
-			}
-			change_variable = { name = cm_q_planned_spend add = scope:cm_cost }
-		}
-		cm_commit_market_demand = yes
+		cm_q_approve_build_copy = yes
 	}
+}
+
+# Base approved entry; extra levels of the same type go to the rank lists.
+# Root is the location. Expects scope:cm_country, scope:cm_building_type, scope:cm_cost.
+cm_q_approve_build_copy = {
+	add_to_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type }
+	save_temporary_scope_as = cm_approved_location
+	scope:cm_country = {
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_build_locations target = scope:cm_approved_location } } }
+			add_to_variable_list = { name = cm_q_approved_build_locations target = scope:cm_approved_location }
+			scope:cm_approved_location = { clear_variable_list = cm_q_seen_build_types }
+		}
+	}
+	cm_q_claim_build_copy = yes
+}
+
+# Per-level claims shared by the base copy and the rank copies.
+# Root is the location. Expects scope:cm_country, scope:cm_cost.
+cm_q_claim_build_copy = {
+	scope:cm_country = { change_variable = { name = cm_q_planned_spend add = scope:cm_cost } }
+	if = {
+		limit = { NOT = { has_variable = cm_q_slots_used } }
+		set_variable = { name = cm_q_slots_used value = 0 }
+	}
+	change_variable = { name = cm_q_slots_used add = 1 }
+	if = {
+		limit = { NOT = { has_variable = cm_q_levels_used } }
+		set_variable = { name = cm_q_levels_used value = 0 }
+	}
+	change_variable = { name = cm_q_levels_used add = 1 }
+	cm_commit_market_demand = yes
 }
 
 # --- Auto Expand Buildings ---
