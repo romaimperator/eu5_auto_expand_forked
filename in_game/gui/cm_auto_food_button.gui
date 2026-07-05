@@ -61,6 +61,7 @@
 			parentanchor = center
 			widgetanchor = center
 			enabled = "[ObjectsEqual(Location.GetOwner, GetPlayer)]"
+			onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('cm_location_food_potential')]"
 			tooltipwidget = { using = cm_Autofood_Tooltip }
 
 			blockoverride "check_texture" {
@@ -105,6 +106,12 @@ template cm_Autofood_Tooltip {
 
 		blockoverride "title_text" {
 			text = "CM_AUTO_FOOD_TT_TITLE"
+		}
+
+		blockoverride "title_button" {
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('cm_location_food_potential')]"
+			}
 		}
 
 		blockoverride "tooltip_content" {
