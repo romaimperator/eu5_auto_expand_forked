@@ -231,3 +231,35 @@ cm_location_proximity_modifier = {
 	else_if = { limit = { vegetation = desert } add = -0.05 } # Mirrors vanilla desert proximity: in_game/common/vegetation/00_default.txt:4
 	else_if = { limit = { vegetation = farmland } add = -0.05 } # Mirrors vanilla farmland proximity: in_game/common/vegetation/00_default.txt:58
 }
+
+# Local Access to Raw Materials bonus for the building type: best worth-using production
+# method's share of inputs available as province raw materials, times the modifier value.
+cm_building_rgo_bonus = {
+	value = cm_rgob_coverage
+	multiply = cm_rgob_modifier
+}
+
+# Country value plus location-level grants (local_quality_standards_modifier,
+# main_menu/common/static_modifiers/location.txt:3804).
+cm_rgob_modifier = {
+	value = 0
+	location = { add = modifier:raw_material_in_province_impact }
+	owner = { add = modifier:raw_material_in_province_impact }
+}
+
+# Location-scope R.G.O. Bonus for the build-location list: the viewed building type's
+# coverage times the modifier value.
+cm_rgob_location_bonus = {
+	value = cm_rgob_coverage_selected
+	multiply = cm_rgob_modifier_at_location
+}
+
+# Country value plus location-level grants (local_quality_standards_modifier,
+# main_menu/common/static_modifiers/location.txt:3804).
+cm_rgob_modifier_at_location = {
+	value = modifier:raw_material_in_province_impact
+	if = {
+		limit = { exists = owner }
+		owner = { add = modifier:raw_material_in_province_impact }
+	}
+}
