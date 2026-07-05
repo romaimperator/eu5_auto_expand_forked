@@ -1,0 +1,182 @@
+﻿cm_location_proximity_modifier = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			limit = { cm_location_proximity_modifier >= 0 }
+			value = rgb { 83 184 83 }
+		}
+		else_if = {
+			limit = { cm_location_proximity_modifier >= -0.25 }
+			lerp = {
+				max_color = rgb { 83 184 83 }
+				min_color = rgb { 217 207 98 }
+				factor = {
+					value = cm_location_proximity_modifier
+					add = 0.25
+					divide = 0.25
+				}
+			}
+		}
+		else_if = {
+			limit = { cm_location_proximity_modifier >= -0.35 }
+			lerp = {
+				max_color = rgb { 217 207 98 }
+				min_color = rgb { 217 178 87 }
+				factor = {
+					value = cm_location_proximity_modifier
+					add = 0.35
+					divide = 0.1
+				}
+			}
+		}
+		else_if = {
+			limit = { cm_location_proximity_modifier >= -0.5 }
+			lerp = {
+				max_color = rgb { 217 178 87 }
+				min_color = rgb { 209 133 79 }
+				factor = {
+					value = cm_location_proximity_modifier
+					add = 0.5
+					divide = 0.15
+				}
+			}
+		}
+		else_if = {
+			limit = { cm_location_proximity_modifier >= -0.65 }
+			lerp = {
+				max_color = rgb { 209 133 79 }
+				min_color = rgb { 199 87 70 }
+				factor = {
+					value = cm_location_proximity_modifier
+					add = 0.65
+					divide = 0.15
+				}
+			}
+		}
+		else_if = {
+			limit = { cm_location_proximity_modifier >= -0.75 }
+			lerp = {
+				max_color = rgb { 199 87 70 }
+				min_color = rgb { 158 55 55 }
+				factor = {
+					value = cm_location_proximity_modifier
+					add = 0.75
+					divide = 0.1
+				}
+			}
+		}
+		else_if = {
+			limit = { cm_location_proximity_modifier >= -1.0 }
+			lerp = {
+				max_color = rgb { 158 55 55 }
+				min_color = rgb { 61 28 28 }
+				factor = {
+					value = cm_location_proximity_modifier
+					add = 1.0
+					divide = 0.25
+				}
+			}
+		}
+		else = {
+			value = rgb { 61 28 28 }
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				modifier:natural_harbor_suitability > 0
+			}
+			if = {
+				limit = { modifier:natural_harbor_suitability >= 0.5 }
+				lerp = {
+					max_color = define:NMapColors|MAP_COLOR_HIGH
+					min_color = define:NMapColors|MAP_COLOR_MID
+					factor = {
+						value = modifier:natural_harbor_suitability
+						subtract = 0.5
+						multiply = 2
+					}
+				}
+			}
+			else = {
+				lerp = {
+					max_color = define:NMapColors|MAP_COLOR_MID
+					min_color = define:NMapColors|MAP_COLOR_LOW
+					factor = {
+						value = modifier:natural_harbor_suitability
+						multiply = 2
+					}
+				}
+			}
+		}
+	}
+
+	tooltip_key = {
+		if = {
+			limit = {
+				is_land = yes
+				modifier:natural_harbor_suitability > 0
+			}
+			value = MAPMODE_CM_LOCATION_PROXIMITY_MODIFIER_TT_LAND_HARBOR
+		}
+		else_if = {
+			limit = { is_land = yes }
+			value = MAPMODE_CM_LOCATION_PROXIMITY_MODIFIER_TT_LAND
+		}
+		else = {
+			value = MAPMODE_CM_LOCATION_PROXIMITY_MODIFIER_TT_WATER
+		}
+	}
+
+	legend_key = { desc = "cm_location_proximity_modifier_none_legend_key"       color = rgb { 83 184 83 } }
+	legend_key = { desc = "cm_location_proximity_modifier_light_legend_key"      color = rgb { 217 207 98 } }
+	legend_key = { desc = "cm_location_proximity_modifier_noticeable_legend_key" color = rgb { 217 178 87 } }
+	legend_key = { desc = "cm_location_proximity_modifier_moderate_legend_key"   color = rgb { 209 133 79 } }
+	legend_key = { desc = "cm_location_proximity_modifier_heavy_legend_key"      color = rgb { 199 87 70 } }
+	legend_key = { desc = "cm_location_proximity_modifier_severe_legend_key"     color = rgb { 158 55 55 } }
+	legend_key = { desc = "cm_location_proximity_modifier_worst_legend_key"      color = rgb { 61 28 28 } }
+	legend_key = { desc = "cm_location_proximity_modifier_harbor_legend_key"     color = define:NMapColors|MAP_COLOR_HIGH }
+
+	small_map_names = location
+	medium_map_names = country
+	large_map_names = country
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	flatmap_behaviour = always
+	use_fow = no
+	enable_rivers = no
+
+	category = economy
+	index = 2
+
+	map_markers = {
+		all = no
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	color_refresh_counters = { Advances }
+	color_and_names_refresh_counters = { LocationOwnerChanged }
+}
