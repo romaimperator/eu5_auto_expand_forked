@@ -256,10 +256,12 @@ cm_q_approve_extra_build_copies = {
 			local_var:cm_q_copy_guard < 7
 			cm_get_open_build_queue_slots > 0
 			var:cm_q_levels_used < { value = cm_get_remaining_free_building_levels_allowed ceiling = yes }
-			# max_levels of 0 or less reads as uncapped.
+			# max_levels of 0 or less reads as uncapped. building_type_max_level logs a
+			# heuristics warning when its params read saved scopes; the location's owner is
+			# scope:cm_country here.
 			OR = {
-				building_type_max_level = { building_type = scope:cm_building_type owner = scope:cm_country value <= 0 }
-				building_type_max_level = { building_type = scope:cm_building_type owner = scope:cm_country value > local_var:cm_q_copy_type_levels }
+				building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
+				building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_q_copy_type_levels }
 			}
 			# Each extra copy needs the pop room the copies before it left free.
 			OR = {

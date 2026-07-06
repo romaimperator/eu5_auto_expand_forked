@@ -1,0 +1,99 @@
+﻿# Runtime R.G.O. Bonus coverage: the hidden window's rgob waves classify every building
+# type's worth-using production methods into global pair and row maps, then the
+# classification completion branch calls cm_rgob_recompute_all to precompute per-province
+# coverage. The filters read only the province cm_rgob_cov map afterwards.
+
+# Clears every classification intermediate. Called when classification arms and again
+# after the sweep, so saves carry only cm_rgob_cov and the zeroed counters.
+cm_rgob_reset_classification = {
+	clear_global_variable_map = cm_rgob_best
+	clear_global_variable_map = cm_rgob_total
+	clear_global_variable_map = cm_rgob_total_claim
+	clear_global_variable_map = cm_rgob_row_claim
+	clear_global_variable_map = cm_rgob_row_pm
+	clear_global_variable_map = cm_rgob_row_good
+	clear_global_variable_map = cm_rgob_row_share
+	clear_global_variable_map = cm_rgob_pair_bt
+	clear_global_variable_map = cm_rgob_pair_pm
+	set_global_variable = { name = cm_rgob_row_count value = 0 }
+	set_global_variable = { name = cm_rgob_pair_count value = 0 }
+}
+
+# Province scope. Coverage per building type: sum of each worth-using production method's
+# raw-input shares whose good is an RGO in this province, max over the type's methods.
+# Only nonzero coverages are stored.
+cm_rgob_recompute_province = {
+	clear_variable_map = cm_rgob_cov
+	save_scope_as = cm_rgob_prov
+	set_local_variable = { name = cm_rgob_any value = 0 }
+	every_location_in_province = {
+		limit = { exists = raw_material }
+		raw_material = { save_scope_as = cm_rgob_g }
+		scope:cm_rgob_prov = {
+			add_to_local_variable_list = { name = cm_rgob_present target = scope:cm_rgob_g }
+			set_local_variable = { name = cm_rgob_any value = 1 }
+		}
+	}
+	if = {
+		limit = { local_var:cm_rgob_any = 1 }
+		# Per-method sums of the shares whose good is present.
+		every_key_in_global_variable_map = {
+			variable = cm_rgob_row_pm
+			save_scope_as = cm_rgob_i
+			"global_variable_map(cm_rgob_row_good|scope:cm_rgob_i)" = { save_scope_as = cm_rgob_g }
+			if = {
+				limit = { scope:cm_rgob_prov = { is_target_in_local_variable_list = { name = cm_rgob_present target = scope:cm_rgob_g } } }
+				"global_variable_map(cm_rgob_row_pm|scope:cm_rgob_i)" = { save_scope_as = cm_rgob_p }
+				set_local_variable = { name = cm_rgob_s value = 0 }
+				if = {
+					limit = { scope:cm_rgob_prov = { is_key_in_variable_map = { name = cm_rgob_sum target = scope:cm_rgob_p } } }
+					set_local_variable = { name = cm_rgob_s value = "scope:cm_rgob_prov.variable_map(cm_rgob_sum|scope:cm_rgob_p)" }
+				}
+				set_local_variable = { name = cm_rgob_s2 value = { value = local_var:cm_rgob_s add = "global_variable_map(cm_rgob_row_share|scope:cm_rgob_i)" } }
+				scope:cm_rgob_prov = {
+					remove_from_variable_map = { name = cm_rgob_sum key = scope:cm_rgob_p }
+					add_to_variable_map = { name = cm_rgob_sum key = scope:cm_rgob_p value = local_var:cm_rgob_s2 }
+				}
+			}
+		}
+		# Fold each pair's method sum into the building type's running max.
+		every_key_in_global_variable_map = {
+			variable = cm_rgob_pair_bt
+			save_scope_as = cm_rgob_j
+			"global_variable_map(cm_rgob_pair_pm|scope:cm_rgob_j)" = { save_scope_as = cm_rgob_p }
+			if = {
+				limit = { scope:cm_rgob_prov = { is_key_in_variable_map = { name = cm_rgob_sum target = scope:cm_rgob_p } } }
+				"global_variable_map(cm_rgob_pair_bt|scope:cm_rgob_j)" = { save_scope_as = cm_rgob_b }
+				set_local_variable = { name = cm_rgob_c value = "scope:cm_rgob_prov.variable_map(cm_rgob_sum|scope:cm_rgob_p)" }
+				set_local_variable = { name = cm_rgob_prev value = 0 }
+				if = {
+					limit = { scope:cm_rgob_prov = { is_key_in_variable_map = { name = cm_rgob_cov target = scope:cm_rgob_b } } }
+					set_local_variable = { name = cm_rgob_prev value = "scope:cm_rgob_prov.variable_map(cm_rgob_cov|scope:cm_rgob_b)" }
+				}
+				if = {
+					limit = { local_var:cm_rgob_c > local_var:cm_rgob_prev }
+					scope:cm_rgob_prov = {
+						remove_from_variable_map = { name = cm_rgob_cov key = scope:cm_rgob_b }
+						add_to_variable_map = { name = cm_rgob_cov key = scope:cm_rgob_b value = local_var:cm_rgob_c }
+					}
+				}
+			}
+		}
+		scope:cm_rgob_prov = {
+			clear_variable_map = cm_rgob_sum
+			clear_local_variable_list = cm_rgob_present
+		}
+	}
+}
+
+# Chained from the classification completion branch because the rgob waves must finish
+# first, so this cannot run from cm_on_init_lobby_globals like the trmm sweep. Runs once
+# per lobby; mid-session raw material changes stay stale until the next lobby load.
+cm_rgob_recompute_all = {
+	every_province_definition = {
+		every_province_in_province_definition = {
+			cm_rgob_recompute_province = yes
+		}
+	}
+	cm_rgob_reset_classification = yes
+}

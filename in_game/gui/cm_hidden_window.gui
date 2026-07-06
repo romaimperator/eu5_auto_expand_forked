@@ -7,7 +7,9 @@ widget = {
 	visible = "[EqualTo_CFixedPoint('(CFixedPoint)0', '(CFixedPoint)0')]"
 	position = { -10000 1 }
 	widget = {
-		# Classification driver. Demand before produced because cm_produced_good reads the demand maps.
+		# Classification driver. Demand before produced because cm_produced_good reads the demand maps;
+		# rgob scan before collect because collect reads the scan maps; init last because its completion
+		# branch sweeps the collect data.
 		# visible_at_creation = no pins it hidden at creation so a loaded save (gate already true when the
 		# window builds) still gets a hidden->shown first-show that fires _show.
 		widget = {
@@ -23,11 +25,24 @@ widget = {
 			state = {
 				name = cm_building_type_pass_produced
 				duration = 0.5
-				next = cm_building_type_pass_init
+				next = cm_building_type_pass_rgob_scan
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_building_type_section_produced_good_state')]"
 			}
 			state = {
+				name = cm_building_type_pass_rgob_scan
+				duration = 0.5
+				next = cm_building_type_pass_rgob_collect
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_building_type_section_rgob_scan_state')]"
+			}
+			state = {
+				name = cm_building_type_pass_rgob_collect
+				duration = 0.5
+				next = cm_building_type_pass_init
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_building_type_section_rgob_collect_state')]"
+			}
+			state = {
 				name = cm_building_type_pass_init
+				duration = 0.5
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_building_type_section_buildings_init_state')]"
 			}
 		}
@@ -62,11 +77,36 @@ widget = {
 							vbox = {
 								datamodel = "[PossibleProductionMethods.GetMethods]"
 								item = {
-									widget = {
+									vbox = {
 										visible = "[ProductionMethod.IsProducing]"
-										state = {
-											name = cm_building_type_section_produced_good_state
-											on_finish = "[GetScriptedGui('cm_produced_good').Execute(GuiScope.AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_produced_good', ProductionMethod.GetProduced.MakeScope).End)]"
+										widget = {
+											state = {
+												name = cm_building_type_section_produced_good_state
+												on_finish = "[GetScriptedGui('cm_produced_good').Execute(GuiScope.AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_produced_good', ProductionMethod.GetProduced.MakeScope).End)]"
+											}
+											state = {
+												name = cm_building_type_section_rgob_scan_state
+												on_finish = "[GetScriptedGui('cm_rgob_scan_pm').Execute(GuiScope.AddScope('cm_rgob_bt', BuildingType.MakeScope).AddScope('cm_rgob_out', MakeScopeValue(ProductionMethod.GetOutput)).End)]"
+											}
+											state = {
+												name = cm_building_type_section_rgob_collect_state
+												on_finish = "[GetScriptedGui('cm_rgob_collect_pm').Execute(GuiScope.AddScope('cm_rgob_bt', BuildingType.MakeScope).AddScope('cm_rgob_pm', ProductionMethod.MakeScope).AddScope('cm_rgob_out', MakeScopeValue(ProductionMethod.GetOutput)).End)]"
+											}
+										}
+										vbox = {
+											datamodel = "[ProductionMethod.GetGoodsDemand.GetEntries]"
+											item = {
+												widget = {
+													state = {
+														name = cm_building_type_section_rgob_scan_state
+														on_finish = "[GetScriptedGui('cm_rgob_scan_entry').Execute(GuiScope.AddScope('cm_rgob_bt', BuildingType.MakeScope).AddScope('cm_rgob_pm', ProductionMethod.MakeScope).AddScope('cm_rgob_amount', MakeScopeValue(GoodsDemandEntry.GetValue)).End)]"
+													}
+													state = {
+														name = cm_building_type_section_rgob_collect_state
+														on_finish = "[GetScriptedGui('cm_rgob_collect_entry').Execute(GuiScope.AddScope('cm_rgob_bt', BuildingType.MakeScope).AddScope('cm_rgob_pm', ProductionMethod.MakeScope).AddScope('cm_rgob_out', MakeScopeValue(ProductionMethod.GetOutput)).AddScope('cm_rgob_good', GoodsDemandEntry.GetGoods.MakeScope).AddScope('cm_rgob_amount', MakeScopeValue(GoodsDemandEntry.GetValue)).End)]"
+													}
+												}
+											}
 										}
 									}
 								}

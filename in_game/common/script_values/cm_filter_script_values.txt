@@ -239,11 +239,8 @@ cm_building_rgo_bonus = {
 	multiply = cm_rgob_modifier
 }
 
-# Country value plus location-level grants (local_quality_standards_modifier,
-# main_menu/common/static_modifiers/location.txt:3804).
 cm_rgob_modifier = {
 	value = 0
-	location = { add = modifier:raw_material_in_province_impact }
 	owner = { add = modifier:raw_material_in_province_impact }
 }
 
@@ -254,12 +251,46 @@ cm_rgob_location_bonus = {
 	multiply = cm_rgob_modifier_at_location
 }
 
-# Country value plus location-level grants (local_quality_standards_modifier,
-# main_menu/common/static_modifiers/location.txt:3804).
 cm_rgob_modifier_at_location = {
-	value = modifier:raw_material_in_province_impact
+	value = 0
 	if = {
 		limit = { exists = owner }
 		owner = { add = modifier:raw_material_in_province_impact }
+	}
+}
+
+# Building scope. Coverage precomputed per province by cm_rgob_recompute_all from the
+# hidden window's rgob classification; types without an entry read 0.
+cm_rgob_coverage = {
+	value = 0
+	building_type = { save_temporary_scope_as = cm_rgob_bt }
+	location = {
+		province = {
+			if = {
+				limit = {
+					has_variable_map = cm_rgob_cov
+					is_key_in_variable_map = { name = cm_rgob_cov target = scope:cm_rgob_bt }
+				}
+				add = "variable_map(cm_rgob_cov|scope:cm_rgob_bt)"
+			}
+		}
+	}
+}
+
+# Location scope. Same coverage keyed by the build-location list's viewed building type.
+cm_rgob_coverage_selected = {
+	value = 0
+	if = {
+		limit = { scope:target = { exists = var:cm_rgob_selected_type } }
+		scope:target = { var:cm_rgob_selected_type = { save_temporary_scope_as = cm_rgob_bt } }
+		province = {
+			if = {
+				limit = {
+					has_variable_map = cm_rgob_cov
+					is_key_in_variable_map = { name = cm_rgob_cov target = scope:cm_rgob_bt }
+				}
+				add = "variable_map(cm_rgob_cov|scope:cm_rgob_bt)"
+			}
+		}
 	}
 }

@@ -226,6 +226,8 @@ cm_building_type_section_buildings_init = {
 			global_variable_map_size = { name = cm_building_type_processed value >= global_var:cm_building_types_to_process_count }
 		} }
 			remove_global_variable = cm_process_buildings
+			# The rgob collect data is complete; precompute per-province coverage for the R.G.O. Bonus filters.
+			cm_rgob_recompute_all = yes
 		}
 	}
 }
@@ -494,6 +496,111 @@ cm_produced_good = {
 			goods:wool = {
 				if = { limit = { has_global_variable_map = cm_construction_demand_wool is_key_in_global_variable_map = { name = cm_construction_demand_wool target = scope:cm_building_type } }
 					add_to_global_variable_map = { name = cm_building_type_produces_own_construction_good key = scope:cm_building_type value = 1 }
+				}
+			}
+		}
+	}
+}
+
+# R.G.O. Bonus scan wave, fired once per producing production method item.
+# Records each building type's best output. A type with no producing method never
+# gets a best entry and is skipped by the collect wave.
+cm_rgob_scan_pm = {
+	saved_scopes = { cm_rgob_bt cm_rgob_out }
+	effect = {
+		if = {
+			limit = { scope:cm_rgob_out > 0 }
+			if = {
+				limit = { NOT = { is_key_in_global_variable_map = { name = cm_rgob_best target = scope:cm_rgob_bt } } }
+				add_to_global_variable_map = { name = cm_rgob_best key = scope:cm_rgob_bt value = scope:cm_rgob_out }
+			}
+			else_if = {
+				limit = { scope:cm_rgob_out > "global_variable_map(cm_rgob_best|scope:cm_rgob_bt)" }
+				remove_from_global_variable_map = { name = cm_rgob_best key = scope:cm_rgob_bt }
+				add_to_global_variable_map = { name = cm_rgob_best key = scope:cm_rgob_bt value = scope:cm_rgob_out }
+			}
+		}
+	}
+}
+
+# Scan wave, fired once per goods demand entry of a producing method. Accumulates the
+# method's total input amount. The claim map makes the first building type to fire own
+# a shared method's total, so a method referenced by several types is summed exactly
+# once (their entry sets are identical).
+cm_rgob_scan_entry = {
+	saved_scopes = { cm_rgob_bt cm_rgob_pm cm_rgob_amount }
+	effect = {
+		if = {
+			limit = { NOT = { is_key_in_global_variable_map = { name = cm_rgob_total_claim target = scope:cm_rgob_pm } } }
+			add_to_global_variable_map = { name = cm_rgob_total_claim key = scope:cm_rgob_pm value = scope:cm_rgob_bt }
+		}
+		if = {
+			limit = { "global_variable_map(cm_rgob_total_claim|scope:cm_rgob_pm)" = scope:cm_rgob_bt }
+			if = {
+				limit = { is_key_in_global_variable_map = { name = cm_rgob_total target = scope:cm_rgob_pm } }
+				set_local_variable = { name = cm_rgob_t value = { value = "global_variable_map(cm_rgob_total|scope:cm_rgob_pm)" add = scope:cm_rgob_amount } }
+				remove_from_global_variable_map = { name = cm_rgob_total key = scope:cm_rgob_pm }
+				add_to_global_variable_map = { name = cm_rgob_total key = scope:cm_rgob_pm value = local_var:cm_rgob_t }
+			}
+			else = {
+				add_to_global_variable_map = { name = cm_rgob_total key = scope:cm_rgob_pm value = scope:cm_rgob_amount }
+			}
+		}
+	}
+}
+
+# Collect wave, fired once per producing production method item. Appends a
+# (building type, method) pair for every worth-using method: output at least half
+# the type's best output.
+cm_rgob_collect_pm = {
+	saved_scopes = { cm_rgob_bt cm_rgob_pm cm_rgob_out }
+	effect = {
+		if = {
+			limit = { is_key_in_global_variable_map = { name = cm_rgob_best target = scope:cm_rgob_bt } }
+			set_local_variable = { name = cm_rgob_thr value = { value = "global_variable_map(cm_rgob_best|scope:cm_rgob_bt)" multiply = 0.5 } }
+			if = {
+				limit = { scope:cm_rgob_out >= local_var:cm_rgob_thr }
+				change_global_variable = { name = cm_rgob_pair_count add = 1 }
+				add_to_global_variable_map = { name = cm_rgob_pair_bt key = global_var:cm_rgob_pair_count value = scope:cm_rgob_bt }
+				add_to_global_variable_map = { name = cm_rgob_pair_pm key = global_var:cm_rgob_pair_count value = scope:cm_rgob_pm }
+			}
+		}
+	}
+}
+
+# Collect wave, fired once per goods demand entry. Appends one row (method, good,
+# input share) per raw-material input of a worth-using method. Rows are
+# method-intrinsic: the claim map writes a shared method's rows once, and only a
+# building type the method is worth-using for can claim, so the rows always exist
+# when a pair references them.
+cm_rgob_collect_entry = {
+	saved_scopes = { cm_rgob_bt cm_rgob_pm cm_rgob_out cm_rgob_good cm_rgob_amount }
+	effect = {
+		if = {
+			limit = { is_key_in_global_variable_map = { name = cm_rgob_best target = scope:cm_rgob_bt } }
+			set_local_variable = { name = cm_rgob_thr value = { value = "global_variable_map(cm_rgob_best|scope:cm_rgob_bt)" multiply = 0.5 } }
+			if = {
+				limit = { scope:cm_rgob_out >= local_var:cm_rgob_thr }
+				if = {
+					limit = { NOT = { is_key_in_global_variable_map = { name = cm_rgob_row_claim target = scope:cm_rgob_pm } } }
+					add_to_global_variable_map = { name = cm_rgob_row_claim key = scope:cm_rgob_pm value = scope:cm_rgob_bt }
+				}
+				if = {
+					limit = {
+						"global_variable_map(cm_rgob_row_claim|scope:cm_rgob_pm)" = scope:cm_rgob_bt
+						scope:cm_rgob_good = { goods_category = raw_material }
+						scope:cm_rgob_amount > 0
+						is_key_in_global_variable_map = { name = cm_rgob_total target = scope:cm_rgob_pm }
+					}
+					set_local_variable = { name = cm_rgob_tot value = "global_variable_map(cm_rgob_total|scope:cm_rgob_pm)" }
+					if = {
+						limit = { local_var:cm_rgob_tot > 0 }
+						set_local_variable = { name = cm_rgob_share value = { value = scope:cm_rgob_amount divide = local_var:cm_rgob_tot } }
+						change_global_variable = { name = cm_rgob_row_count add = 1 }
+						add_to_global_variable_map = { name = cm_rgob_row_pm key = global_var:cm_rgob_row_count value = scope:cm_rgob_pm }
+						add_to_global_variable_map = { name = cm_rgob_row_good key = global_var:cm_rgob_row_count value = scope:cm_rgob_good }
+						add_to_global_variable_map = { name = cm_rgob_row_share key = global_var:cm_rgob_row_count value = local_var:cm_rgob_share }
+					}
 				}
 			}
 		}

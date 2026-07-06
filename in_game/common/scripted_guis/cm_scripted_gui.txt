@@ -647,19 +647,12 @@ cm_toggle_mass_auto_expand_for_building_type = {
 	}
 }
 
-# Stores the build-location list's viewed building type as the dispatch index the
-# R.G.O. Bonus location filter reads (cm_rgob_coverage_selected).
+# Stores the build-location list's viewed building type for the R.G.O. Bonus location
+# filter (cm_rgob_coverage_selected reads it as the coverage map key).
 # Root = player country, scope:cm_rgob_type = the viewed building type.
 cm_rgob_store_selected_type = {
 	effect = {
-		if = {
-			limit = { is_key_in_global_variable_map = { name = cm_rgob_type_index target = scope:cm_rgob_type } }
-			set_local_variable = { name = cm_rgob_idx value = "global_variable_map(cm_rgob_type_index|scope:cm_rgob_type)" }
-			set_variable = { name = cm_rgob_selected_idx value = local_var:cm_rgob_idx }
-		}
-		else = {
-			set_variable = { name = cm_rgob_selected_idx value = 0 }
-		}
+		set_variable = { name = cm_rgob_selected_type value = scope:cm_rgob_type }
 	}
 }
 
