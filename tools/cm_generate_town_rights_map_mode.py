@@ -747,11 +747,11 @@ def emit_map_mode(rights, aliases, right_colors):
     lines.append("""
 	small_map_names = raw_material
 	medium_map_names = raw_material
-	large_map_names = market
+	large_map_names = raw_material
 
 	small_tooltip_context = location
 	medium_tooltip_context = location
-	large_tooltip_context = market
+	large_tooltip_context = location
 
 	fill_in_impassable = yes
 	enable_snow = no
@@ -809,7 +809,7 @@ def emit_loc(rights, aliases, boosted_goods):
     for header_line in GENERATED_HEADER.splitlines():
         lines.append(f" {header_line}")
     lines.append(
-        f" MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND: \"Specialization options, best to worst:{slot_calls}"
+        f" MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND: \"Specialization options:{slot_calls}"
         f"\\n\\nBreakdown:{bd_calls}"
         f"\\n\\nBest industries:{ind_calls}\"")
     for right in ROYAL_RIGHTS:
