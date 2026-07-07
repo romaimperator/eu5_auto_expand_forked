@@ -676,6 +676,25 @@ cm_pf_try_relax = {
 		}
 		set_variable = { name = cm_pf_d value = local_var:$ND$ }
 		change_local_variable = { name = cm_pf_changed add = 1 }
+		# Record the path only during the capital diagnostic spread; cm_pf_rec is armed only there.
+		if = {
+			limit = { scope:cm_pf_c = { has_variable = cm_pf_rec } }
+			set_variable = { name = cm_pf_prev value = scope:cm_pf_a }
+			set_variable = {
+				name = cm_pf_hop
+				value = {
+					value = local_var:$ND$
+					subtract = scope:cm_pf_a.var:cm_pf_d
+				}
+			}
+			set_variable = {
+				name = cm_pf_dep
+				value = {
+					value = scope:cm_pf_a.var:cm_pf_dep
+					add = 1
+				}
+			}
+		}
 	}
 }
 
@@ -837,6 +856,30 @@ cm_pf_finalize = {
 				has_variable = cm_pf_cl_g
 			}
 		}
+		# Arm path recording for this spread when debugging. The path can cross shared sea zones,
+		# so clear stale path vars on the water set too, not just owned land.
+		if = {
+			limit = {
+				debug_only = yes
+				scope:cm_pf_c = { exists = var:cm_placement_finder_debug_path }
+			}
+			every_owned_location = {
+				remove_variable = cm_pf_prev
+				remove_variable = cm_pf_hop
+				remove_variable = cm_pf_dep
+			}
+			every_in_list = {
+				variable = cm_pf_water_set
+				remove_variable = cm_pf_prev
+				remove_variable = cm_pf_hop
+				remove_variable = cm_pf_dep
+			}
+			scope:cm_pf_c = { set_variable = { name = cm_pf_rec value = 1 } }
+			capital = {
+				set_variable = { name = cm_pf_dep value = 0 }
+				set_variable = { name = cm_pf_hop value = 0 }
+			}
+		}
 		capital = { set_variable = { name = cm_pf_d value = 0 } }
 		cm_pf_bellman_g = { BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
 		every_owned_location = {
@@ -860,6 +903,7 @@ cm_pf_finalize = {
 			variable = cm_pf_water_set
 			remove_variable = cm_pf_d
 		}
+		scope:cm_pf_c = { remove_variable = cm_pf_rec }
 	}
 	else = {
 		every_owned_location = { remove_variable = cm_pf_pred }
