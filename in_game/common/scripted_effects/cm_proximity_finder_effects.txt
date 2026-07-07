@@ -62,6 +62,13 @@ cm_pf_prep_core = {
 	}
 	clear_variable_list = cm_pf_water_set
 	cm_pf_clean_country = yes
+	if = {
+		limit = { cm_pf_roads_is_current = yes }
+		set_variable = { name = cm_pf_roads_current value = 1 }
+	}
+	else = {
+		set_variable = { name = cm_pf_roads_current value = 0 }
+	}
 	set_variable = { name = cm_pf_land_cost value = cm_pf_land_cost_value }
 	set_variable = { name = cm_pf_river_cost value = cm_pf_river_cost_value }
 	set_variable = { name = cm_pf_sea_cost value = cm_pf_sea_cost_value }
@@ -186,6 +193,45 @@ cm_pf_prime_land_location = {
 		limit = { is_port = yes }
 		sea_zone = { save_temporary_scope_as = cm_pf_sz }
 		set_variable = { name = cm_pf_cp value = cm_pf_cp_value }
+	}
+	# Current roads: store this tile's per-edge channel numerator (its actual road cost, or the river
+	# cost on a shared-river edge when cheaper), keyed by neighbor, plus the per-tile divisors the
+	# relaxation divides those numerators by.
+	if = {
+		limit = { scope:cm_pf_c.var:cm_pf_roads_current = 1 }
+		save_temporary_scope_as = cm_pf_u
+		set_variable = { name = cm_pf_div_g value = cm_pf_div_g_value }
+		set_variable = { name = cm_pf_div_c value = cm_pf_div_c_value }
+		set_variable = { name = cm_pf_div_cb value = cm_pf_div_cb_value }
+		every_neighbor_location = {
+			limit = {
+				is_land = yes
+				owner ?= scope:cm_pf_c
+			}
+			save_temporary_scope_as = cm_pf_nb
+			scope:cm_pf_u = {
+				set_local_variable = { name = cm_pf_edge_red value = cm_pf_edge_road_reduction_value }
+			}
+			set_local_variable = {
+				name = cm_pf_edge_num
+				value = {
+					value = scope:cm_pf_c.var:cm_pf_land_cost
+					subtract = local_var:cm_pf_edge_red
+					min = 1
+				}
+			}
+			if = {
+				limit = {
+					has_river = yes
+					scope:cm_pf_u = { has_river = yes }
+					scope:cm_pf_c.var:cm_pf_river_cost < local_var:cm_pf_edge_num
+				}
+				set_local_variable = { name = cm_pf_edge_num value = scope:cm_pf_c.var:cm_pf_river_cost }
+			}
+			scope:cm_pf_u = {
+				add_to_variable_map = { name = cm_pf_en key = scope:cm_pf_nb value = local_var:cm_pf_edge_num }
+			}
+		}
 	}
 }
 
@@ -360,38 +406,65 @@ cm_pf_bellman_cap = {
 # neighbor with this tile's outgoing real (governor-cost) costs. $BUDGET$ = the search cap.
 cm_pf_relax_from_land_g = {
 	save_temporary_scope_as = cm_pf_a
-	set_local_variable = {
-		name = cm_pf_nd_land
-		value = {
-			value = var:cm_pf_d
-			add = var:cm_pf_cl_g
+	if = {
+		limit = { scope:cm_pf_c.var:cm_pf_roads_current = 1 }
+		# Current roads: each edge's own numerator (min road/river, from priming) over the governor divisor.
+		set_local_variable = { name = cm_pf_d_from value = var:cm_pf_d }
+		every_neighbor_location = {
+			limit = {
+				is_land = yes
+				owner ?= scope:cm_pf_c
+				has_variable = cm_pf_cl_g
+			}
+			save_temporary_scope_as = cm_pf_nb
+			set_local_variable = { name = cm_pf_en_v value = "scope:cm_pf_a.variable_map(cm_pf_en|scope:cm_pf_nb)" }
+			set_local_variable = {
+				name = cm_pf_nd_edge
+				value = {
+					value = local_var:cm_pf_d_from
+					add = {
+						value = local_var:cm_pf_en_v
+						divide = scope:cm_pf_a.var:cm_pf_div_g
+					}
+				}
+			}
+			cm_pf_try_relax = { ND = cm_pf_nd_edge BUDGET = $BUDGET$ }
 		}
 	}
-	if = {
-		limit = { has_variable = cm_pf_cr_g }
+	else = {
 		set_local_variable = {
-			name = cm_pf_nd_river
+			name = cm_pf_nd_land
 			value = {
 				value = var:cm_pf_d
-				add = var:cm_pf_cr_g
+				add = var:cm_pf_cl_g
 			}
-		}
-	}
-	every_neighbor_location = {
-		limit = {
-			is_land = yes
-			owner ?= scope:cm_pf_c
-			has_variable = cm_pf_cl_g
 		}
 		if = {
-			limit = {
-				has_variable = cm_pf_cr_g
-				scope:cm_pf_a = { has_variable = cm_pf_cr_g }
+			limit = { has_variable = cm_pf_cr_g }
+			set_local_variable = {
+				name = cm_pf_nd_river
+				value = {
+					value = var:cm_pf_d
+					add = var:cm_pf_cr_g
+				}
 			}
-			cm_pf_try_relax = { ND = cm_pf_nd_river BUDGET = $BUDGET$ }
 		}
-		else = {
-			cm_pf_try_relax = { ND = cm_pf_nd_land BUDGET = $BUDGET$ }
+		every_neighbor_location = {
+			limit = {
+				is_land = yes
+				owner ?= scope:cm_pf_c
+				has_variable = cm_pf_cl_g
+			}
+			if = {
+				limit = {
+					has_variable = cm_pf_cr_g
+					scope:cm_pf_a = { has_variable = cm_pf_cr_g }
+				}
+				cm_pf_try_relax = { ND = cm_pf_nd_river BUDGET = $BUDGET$ }
+			}
+			else = {
+				cm_pf_try_relax = { ND = cm_pf_nd_land BUDGET = $BUDGET$ }
+			}
 		}
 	}
 	if = {
@@ -461,62 +534,99 @@ cm_pf_relax_from_water = {
 cm_pf_relax_from_land_cap = {
 	save_temporary_scope_as = cm_pf_a
 	if = {
-		limit = {
-			var:cm_pf_topo > 0
-			var:cm_pf_topo = scope:cm_pf_c.var:cm_pf_cand_topo
-		}
-		set_local_variable = {
-			name = cm_pf_nd_land
-			value = {
-				value = var:cm_pf_d
-				add = var:cm_pf_cl_cb
-			}
-		}
+		limit = { scope:cm_pf_c.var:cm_pf_roads_current = 1 }
+		# Current roads: each edge's numerator over this tile's capital divisor (boosted when it shares the candidate's topography).
+		set_local_variable = { name = cm_pf_d_from value = var:cm_pf_d }
 		if = {
-			limit = { has_variable = cm_pf_cr_cb }
+			limit = {
+				var:cm_pf_topo > 0
+				var:cm_pf_topo = scope:cm_pf_c.var:cm_pf_cand_topo
+			}
+			set_local_variable = { name = cm_pf_div_use value = var:cm_pf_div_cb }
+		}
+		else = {
+			set_local_variable = { name = cm_pf_div_use value = var:cm_pf_div_c }
+		}
+		every_neighbor_location = {
+			limit = {
+				is_land = yes
+				owner ?= scope:cm_pf_c
+				has_variable = cm_pf_cl_c
+			}
+			save_temporary_scope_as = cm_pf_nb
+			set_local_variable = { name = cm_pf_en_v value = "scope:cm_pf_a.variable_map(cm_pf_en|scope:cm_pf_nb)" }
 			set_local_variable = {
-				name = cm_pf_nd_river
+				name = cm_pf_nd_edge
 				value = {
-					value = var:cm_pf_d
-					add = var:cm_pf_cr_cb
+					value = local_var:cm_pf_d_from
+					add = {
+						value = local_var:cm_pf_en_v
+						divide = local_var:cm_pf_div_use
+					}
 				}
 			}
+			cm_pf_try_relax = { ND = cm_pf_nd_edge BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
 		}
 	}
 	else = {
-		set_local_variable = {
-			name = cm_pf_nd_land
-			value = {
-				value = var:cm_pf_d
-				add = var:cm_pf_cl_c
-			}
-		}
 		if = {
-			limit = { has_variable = cm_pf_cr_c }
+			limit = {
+				var:cm_pf_topo > 0
+				var:cm_pf_topo = scope:cm_pf_c.var:cm_pf_cand_topo
+			}
 			set_local_variable = {
-				name = cm_pf_nd_river
+				name = cm_pf_nd_land
 				value = {
 					value = var:cm_pf_d
-					add = var:cm_pf_cr_c
+					add = var:cm_pf_cl_cb
+				}
+			}
+			if = {
+				limit = { has_variable = cm_pf_cr_cb }
+				set_local_variable = {
+					name = cm_pf_nd_river
+					value = {
+						value = var:cm_pf_d
+						add = var:cm_pf_cr_cb
+					}
 				}
 			}
 		}
-	}
-	every_neighbor_location = {
-		limit = {
-			is_land = yes
-			owner ?= scope:cm_pf_c
-			has_variable = cm_pf_cl_c
-		}
-		if = {
-			limit = {
-				has_variable = cm_pf_cr_c
-				scope:cm_pf_a = { has_variable = cm_pf_cr_c }
-			}
-			cm_pf_try_relax = { ND = cm_pf_nd_river BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
-		}
 		else = {
-			cm_pf_try_relax = { ND = cm_pf_nd_land BUDGET = 100 }
+			set_local_variable = {
+				name = cm_pf_nd_land
+				value = {
+					value = var:cm_pf_d
+					add = var:cm_pf_cl_c
+				}
+			}
+			if = {
+				limit = { has_variable = cm_pf_cr_c }
+				set_local_variable = {
+					name = cm_pf_nd_river
+					value = {
+						value = var:cm_pf_d
+						add = var:cm_pf_cr_c
+					}
+				}
+			}
+		}
+		every_neighbor_location = {
+			limit = {
+				is_land = yes
+				owner ?= scope:cm_pf_c
+				has_variable = cm_pf_cl_c
+			}
+			if = {
+				limit = {
+					has_variable = cm_pf_cr_c
+					scope:cm_pf_a = { has_variable = cm_pf_cr_c }
+				}
+				cm_pf_try_relax = { ND = cm_pf_nd_river BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
+			}
+			else = {
+				cm_pf_try_relax = { ND = cm_pf_nd_land BUDGET = 100 }
+			}
 		}
 	}
 	if = {
@@ -771,6 +881,10 @@ cm_pf_clean_location = {
 	remove_variable = cm_pf_gf_raw_p
 	remove_variable = cm_pf_cf_raw
 	remove_variable = cm_pf_cf_raw_p
+	remove_variable = cm_pf_div_g
+	remove_variable = cm_pf_div_c
+	remove_variable = cm_pf_div_cb
+	clear_variable_map = cm_pf_en
 }
 
 # Country scope.
@@ -787,4 +901,5 @@ cm_pf_clean_country = {
 	remove_variable = cm_pf_cf_max
 	remove_variable = cm_pf_all_done
 	remove_variable = cm_pf_repaint
+	remove_variable = cm_pf_roads_current
 }
