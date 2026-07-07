@@ -18,7 +18,9 @@ cm_pf_prep_gated = {
 		limit = { exists = var:cm_pf_fresh }
 		set_variable = { name = cm_pf_all_done value = 1 }
 	}
-	else = {
+	else_if = {
+		# In multiplayer, compute only on the manual refresh button, never on open.
+		limit = { is_multiplayer_session = no }
 		cm_pf_prep_core = yes
 	}
 }
@@ -30,11 +32,15 @@ cm_pf_force_refresh = {
 	cm_pf_prep_core = yes
 }
 
-# Country scope. Forced synchronous recompute for the lobby init; still skips while cached.
+# Country scope. Forced synchronous recompute for the lobby init; skips while cached, and in
+# multiplayer, where the manual refresh button computes on demand instead.
 cm_pf_recompute_now = {
 	save_scope_as = cm_pf_c
 	if = {
-		limit = { NOT = { exists = var:cm_pf_fresh } }
+		limit = {
+			NOT = { exists = var:cm_pf_fresh }
+			is_multiplayer_session = no
+		}
 		cm_pf_prep_core = yes
 		every_owned_location = {
 			limit = { has_variable = cm_pf_cl_g }
