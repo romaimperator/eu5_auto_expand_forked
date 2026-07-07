@@ -1,0 +1,479 @@
+# vanilla: in_game/gui/town_rights.gui
+# mod: in_game/gui/town_rights.gui
+
+lateralview = {
+	name = "town_rights"
+
+	blockoverride "lateralview_topbuttons_extra" {
+		widget = {
+			parentanchor = vcenter
+			size = { 40 40 }
+			position = { 30 0 }
+			button_automation_shortcut = {
+				parentanchor = vcenter
+				size = { 25 25 }
+				action_tooltip = {
+					title = "OPEN_AUTOMATION_PANEL_FILTER"
+					on_action = "[OpenLateralViewWithFilter('automation', 'automation_filter_production')]"
+				}
+				tooltipwidget = { BasicFunctionalTooltip = {} }
+			}
+		}
+	}
+
+	blockoverride "panel_header" {
+		window_header_alt = {
+			blockoverride "header_text" {
+				text = "THE_PRODUCTION_OVERVIEW_TITLE"
+			}
+			blockoverride "window_header_alt_color_texture"{
+				using = color_production_texture
+			}
+		}
+	}
+
+	blockoverride "panel_content" {
+		header_main_tabs = { #TABS
+			blockoverride "content" {
+				using = production_main_tabs
+			}
+		}
+	
+	
+		vbox = {
+			using = layoutpolicy_expanding
+			using = bg_main_inner_alt
+			using = bg_main_inner_image_alt
+			blockoverride "image" {
+				texture = "gfx/interface/illustrations/bg/bg_production.dds"
+			}
+			using = window_main_tabs_margin_alt
+
+			vbox = { # Central Data
+				using = layoutpolicy_expanding
+				margin = { 4 4 }
+
+				# hbox = {
+				# 	margin_top = 8
+				# 	layoutpolicy_horizontal = expanding
+				# 	subheader_unified_icon = {
+				# 		blockoverride "subheader_unified_icon_texture" {
+				# 			texture = "[GetConceptTexture('town_rights')]"
+				# 			glow = {
+				# 				name = "drop_shadow"
+				# 				glow_radius = 3
+				# 				color = {0.0 0.0 0.0 1.0}
+				# 				alpha = 0.5
+				# 			}
+				# 		}
+				# 		blockoverride "subheader_unified_text_maxsize" { maximumsize = { 130 20 } }
+				# 		blockoverride "subheader_unified_top_text" {
+				# 			text = "CURRENT_TOWN_RIGHTS"
+				# 			align = nobaseline
+				# 		}
+				# 		blockoverride "unified_icon_bottom_content"{
+				# 			spacing = 7
+				# 			text_single = {
+				# 				minimumsize = { -1 20 }
+				# 				maximumsize = { 150 20 }
+				# 				fontsize = 13
+				# 				autoresize = yes
+				# 				raw_text = "[GetDataModelSize(TownRightsLateralView.GetPlayer.GetTownRights)]/[Player.GetNumTownRights]"
+				# 				align = nobaseline	
+				# 			}
+				# 		}
+				# 		tooltipwidget = {
+				# 			ContextualTooltipType = {
+				# 				blockoverride "title_text" {
+				# 					text = "MODIFIER_TYPE_NAME_num_possible_town_rights"
+				# 				}
+							
+				# 				blockoverride "title_icon" {
+				# 					icon = {
+				# 						using = tooltip_title_icon_size
+				# 						texture = "[GetConceptTexture('town_rights')]"
+				# 					}
+				# 				}
+
+				# 				blockoverride "concept_link" {
+				# 					text = [town_rights|e]
+				# 				}
+
+				# 				blockoverride "tooltip_content" {
+				# 					TooltipStringPairList = {
+				# 						blockoverride "block_title" {
+				# 							text = "LIST_TITLE_SOURCES"
+				# 						}
+				# 						textcontext = "[Player.GetDescriptionFor('num_possible_town_rights')]"
+				# 					}
+				# 				}
+				# 			}
+				# 		}
+				# 	}
+				# 	expand = {}
+				# }
+
+				vbox = {
+					using = layoutpolicy_expanding
+					# using = bg_secondary_inner_alt
+					# All town rights
+					# vbox = {
+					# 	layoutpolicy_horizontal = expanding
+					# 	datamodel = "[TownRightsLateralView.GetPlayer.GetTownRights]"
+					# 	item = {
+					# 		card_header_action_button_01 = {
+					# 			size = { 400 40 }
+								
+					# 			tooltipwidget = {
+					# 				using = TownRights_tooltip
+					# 			}
+
+					# 			hbox = {
+					# 				margin = { 10 0 }
+					# 				spacing = 5
+					# 				icon = {
+					# 					size = { 29 29 }
+					# 					texture = "[TownRights.GetType.GetIcon]"
+					# 					texture_density = 2
+					# 				}
+									
+					# 				text_single = {
+					# 					using = layoutpolicy_expanding
+					# 					size =  { 300 20 }
+					# 					autoresize = no
+					# 					text = "[TownRights.GetName]"
+					# 					align = nobaseline
+					# 				}
+					# 			}
+								
+					# 			right_click_and_hold_action = {
+					# 				action_name = "revoke_town_rights"
+					# 				actor = "[TownRightsLateralView.GetPlayer]"
+					# 				parameter = {
+					# 					parameter_name = "target"
+					# 					parameter_value = "[TownRights.MakeScope]"
+					# 				}
+					# 			}
+					# 		}
+					# 	}
+					# }
+
+					vbox = {
+						layoutpolicy_horizontal = expanding
+						margin = { 10 5 }
+						margin_bottom = 0
+						vbox = {
+							datacontext = "[Player]"
+							datacontext = "[Player.GetGovernment.GetEstateFromKey('crown_estate')]"
+							layoutpolicy_horizontal = expanding
+							size = { -1 105 }
+							using = bg_townrights_card
+				 
+							hbox = {
+								layoutpolicy_horizontal = expanding
+								margin = { 5 0 }
+								subheader_unified_icon = {
+									blockoverride "subheader_unified_icon_texture" {
+										background = {
+											margin = {2 2}
+											texture = "gfx/interface/component_tiles/town_rights_pinned_paper_background.dds"
+										}
+										texture = "[GetConceptTexture('town_rights')]"
+										glow = {
+											name = "drop_shadow"
+											glow_radius = 3
+											color = {0.0 0.0 0.0 1.0}
+											alpha = 0.5
+										}
+									}
+									blockoverride "subheader_unified_text_maxsize" { maximumsize = { 130 20 } }
+									blockoverride "subheader_unified_top_text" {
+										text = "CURRENT_TOWN_RIGHTS"
+										align = nobaseline
+									}
+									blockoverride "unified_icon_bottom_content"{
+										spacing = 7
+										text_single = {
+											minimumsize = { -1 20 }
+											maximumsize = { 150 20 }
+											fontsize = 13
+											autoresize = yes
+											raw_text = "[GetDataModelSize(TownRightsLateralView.GetPlayer.GetTownRights)]"
+											align = nobaseline
+										}
+									}
+								}
+
+								expand = {}
+							}
+							
+							hbox = {
+								spacing = 5
+								using = layoutpolicy_expanding
+								margin = { 10 9 }
+								hbox = {
+									spacing = 5
+									datamodel = "[DataModelFirst(TownRightsLateralView.GetTownRightsTypes, '(int32)8')]"
+									item = {
+										using = town_rights_type_item
+									}
+								}
+
+								text_single = {
+									margin = { 6 11 }
+									using = Font_Type_Headers
+									raw_text = "+[Subtract_int32(GetDataModelSize(TownRightsLateralView.GetTownRightsTypes), '(int32)8')]"
+									align = nobaseline
+									visible = "[GreaterThan_int32(GetDataModelSize(TownRightsLateralView.GetTownRightsTypes), '(int32)8')]"
+									using = bg_number_container_bckg
+									tooltipwidget = {
+										ContextualTooltipType = {
+											blockoverride "title_text" {
+												text = "TOWN_RIGHTS_TEXT"
+											}
+
+											blockoverride "concept_link" {
+												text = [town_rights|E]
+											}
+
+											blockoverride "title_icon_texture" {
+												texture = "[GetConceptTexture('town_rights')]"
+											}
+
+											blockoverride "tooltip_layout_policy" { }
+
+											blockoverride "tooltip_content" {
+												TooltipListBase = {
+													TooltipScrolledContentSection = {
+														blockoverride "scrollarea_content" {
+															vbox = {
+																layoutpolicy_horizontal = expanding
+																datamodel = "[DataModelSkipFirst(TownRightsLateralView.GetTownRightsTypes, '(int32)8')]"
+																item = {
+																	TooltipManualTableField = {
+																		margin = { 0 0 }
+																		margin_left = 10
+																		tooltipwidget = {
+																			using = TownRightsItem_tooltip
+																		}
+
+																		widget = {
+																			size = { 60 60 }
+																			using = town_rights_type_item
+																			blockoverride "item_size" {
+																				size = { 50 45 }
+																				parentanchor = center
+																			}
+																		}
+																		
+																		vbox = {
+																			using = layoutpolicy_expanding
+																			text_single = {
+																				margin = { 10 0 }
+																				using = layoutpolicy_expanding
+																				text = "[TownRightsItem.GetType.GetNameWithNoTooltip]"
+																				default_format = "#L"
+																			}
+																			hbox = {
+																				using = layoutpolicy_expanding
+																				margin = { 10 0 }
+																				background = {
+																					using = text_mask_container_texture
+																					alpha = 0.2
+																					modify_texture = {
+																						using = color_black_texture
+																					}
+																				}
+
+																				text_single = {
+																					layoutpolicy_horizontal = expanding
+																					text = "TOWN_RIGHTS_ITEM_LOCATIONS_TITLE"
+																				}
+																				text_single = {
+																					autoresize = yes
+																					text = "[TownRightsItem.GetLocationsAmount]"
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}	
+											}
+										}
+									}
+									blockoverride "number_container_alpha" {
+										alpha = 0.5
+									}
+									blockoverride "number_container_color" {
+										modify_texture = {
+											using = color_bg_blue_texture
+											blend_mode = multiply
+										}
+									}
+								}
+
+								expand = {}
+
+								estate_add_reform_button = {
+									size = { 32 40 }
+									enabled = "[ShowGrantTownRights]"
+									blockoverride "estate_add_reform_button" {
+										card_header_button_04 = {
+											size = {100% 100%}
+											tooltipwidget = {
+												BasicFunctionalTooltip = {}
+											}
+							
+											action_tooltip = {
+												click_type = left
+												click_mode = single
+												title = "GRANT_NEW_TOWN_RIGHTS"
+												on_action = "[SelectTownRights]"
+												conditions = "[AddLocalizationIf(Not(ShowGrantTownRights), 'TWR_NOT_CAPABLE')]"
+												enabled = "[ShowGrantTownRights]"
+											}
+											enabled = "[ShowGrantTownRights]"
+										}
+									}
+								}
+							}
+						}
+					}
+
+					filtered_sorted_list = {
+						margin_top = 10
+						datacontext = "[TownRightsLateralView.GetLocationsSortSearch.WithFilterTags('town_rights')]"
+
+						blockoverride "sort_buttons_filtered_list" {
+							sort_by_key_button = {
+								name = "town_rights"
+								using = layoutpolicy_expanding
+							}
+							sort_by_key_button = {
+								name = "rank"
+								using = layoutpolicy_expanding
+							}
+							sort_by_key_button = {
+								name = "population"
+								using = layoutpolicy_expanding
+							}
+							sort_by_key_button = {
+								name = "name"
+								using = layoutpolicy_expanding
+							}
+							sort_by_key_button = {
+								name = "market"
+								using = layoutpolicy_expanding
+							}
+							sort_by_key_button = {
+								name = "control"
+								using = layoutpolicy_expanding
+							}
+							sort_by_key_button = {
+								name = "good"
+								using = layoutpolicy_expanding
+							}
+							sort_by_key_button = {
+								name = "income"
+								using = layoutpolicy_expanding
+							}
+							sort_by_key_button = {
+								name = "wealth"
+								using = layoutpolicy_expanding
+							}
+						}
+		
+						blockoverride "scroll_list_is_empty" {
+							visible = "[IsDataModelEmpty(TownRightsLateralView.GetLocations)]"
+						}
+		
+						blockoverride "scroll_list_is_empty_text" {
+							text = "LOCATIONS_SCROLL_LIST_EMPTY"
+						}
+					
+						blockoverride "scroll_list_layout" {
+							fixedgridbox = {
+								addcolumn = 100%
+								addrow = 76
+								datamodel_reuse_widgets = yes
+								datamodel = "[TownRightsLateralView.GetLocations]"
+								item = {
+									widget = {
+										size = { 100% 76 }
+										datacontext = "[LocationReference.GetLocation]"
+										widget = {
+											size = { 98% 73 }
+											parentanchor = center
+											hbox = {
+												using = bg_market_card
+												using = bg_cabinet_card_frame
+								
+												location_card = {
+													blockoverride "location_card_margins" {
+														margin = {0 5}
+														margin_left = 5
+													}
+													blockoverride "location_control_sort_highlight"
+													{
+														sort_by_highlight = {
+															name = "control"
+														}
+													}
+													blockoverride "location_population_sort_highlight"
+													{
+														sort_by_highlight = {
+															name = "population"
+														}
+													}
+													blockoverride "location_town_rights_sort_highlight"
+													{
+														sort_by_highlight = {
+															name = "town_rights"
+														}
+													}
+													blockoverride "location_rank_sort_highlight"
+													{
+														sort_by_highlight = {
+															name = "rank"
+														}
+													}
+													blockoverride "location_name_sort_highlight"
+													{
+														sort_by_highlight = {
+															name = "name"
+														}
+													}
+													blockoverride "location_raw_good_sort_highlight"
+													{
+														sort_by_highlight = {
+															name = "good"
+														}
+													}
+													blockoverride "location_income_sort_highlight"
+													{
+														sort_by_highlight = {
+															name = "income"
+														}
+													}
+													blockoverride "location_wealth_sort_highlight"
+													{
+														sort_by_highlight = {
+															name = "wealth"
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

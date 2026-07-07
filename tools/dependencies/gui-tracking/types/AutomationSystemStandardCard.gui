@@ -20,6 +20,11 @@
 				blockoverride "header_color" { using = color_government_texture }
 			}
 			background = {
+				visible = "[AutomatedSystemsItem.IsName('bureaucracy')]"
+				using = bg_card_header_01_default
+				blockoverride "header_color" { using = color_government_texture }
+			}
+			background = {
 				visible = "[AutomatedSystemsItem.IsName('governmentreforms')]"
 				using = bg_card_header_01_default
 				blockoverride "header_color" { using = color_government_texture }
@@ -240,6 +245,12 @@
 			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
+				visible = "[And(AutomatedSystemsItem.IsName('bureaucracy'), PlayerHasBureaucracies)]"
+				on_action = "[OpenLateralView('bureaucracies')]"
+			}
+			action_tooltip = {
+				click_type = right
+				title = "[AutomatedSystemsItem.GetClickAction]"
 				visible = "[AutomatedSystemsItem.IsName('cabinetmembers')]"
 				on_action = "[OpenLateralViewWithParams('government', 'tabcontent = cabinet')]"
 			}
@@ -393,6 +404,7 @@
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('trade')]" texture = "[GetConceptTexture('trade')]" }
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('productionmethods')]" texture = "[GetConceptTexture('production_method')]" }
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('laws')]" texture = "[GetConceptTexture('law')]" }
+							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('bureaucracy')]" texture = "[GetConceptTexture('bureaucracy')]" }
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('governmentreforms')]" texture = "[GetConceptTexture('government_reform')]" }
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('cabinetmembers')]" texture = "[GetConceptTexture('cabinet_member')]" }
 							ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('cabinet')]" texture = "[GetConceptTexture('cabinet_action')]" }
@@ -432,6 +444,7 @@
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('trade')]" text = "[trade|e]" }
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('productionmethods')]" text = "[production_method|e]" }
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('laws')]" text = "[law|e]" }
+							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('bureaucracy')]" text = "[bureaucracy|e]" }
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('governmentreforms')]" text = "[government_reform|e]" }
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('cabinetmembers')]" text = "[cabinet_member|e]" }
 							text_single = { size = { 100% 100% } using = Font_Type_Flavor autoresize = no align = left|nobaseline alwaystransparent = yes visible = "[AutomatedSystemsItem.IsName('cabinet')]" text = "[cabinet_action|e]" }
@@ -514,6 +527,7 @@
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('trade')]"                texture = "[GetConceptTexture('trade')]"              }
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('productionmethods')]"    texture = "[GetConceptTexture('production_method')]"  }
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('laws')]"                 texture = "[GetConceptTexture('law')]"                }
+					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('bureaucracy')]"          texture = "[GetConceptTexture('bureaucracy')]"        }
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('governmentreforms')]"    texture = "[GetConceptTexture('government_reform')]"  }
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('cabinetmembers')]"       texture = "[GetConceptTexture('cabinet_member')]"     }
 					ConceptIcon = { visible = "[AutomatedSystemsItem.IsName('cabinet')]"       texture = "[GetConceptTexture('cabinet_action')]"     }
@@ -596,6 +610,11 @@
 						title = "[AutomatedSystemsItem.GetClickAction]"
 						visible = "[AutomatedSystemsItem.IsName('laws')]"
 						on_action = "[OpenLateralViewWithParams('government', 'tabcontent = politics')]"
+					}
+					action_tooltip = {
+						title = "[AutomatedSystemsItem.GetClickAction]"
+						visible = "[And(AutomatedSystemsItem.IsName('bureaucracy'), PlayerHasBureaucracies)]"
+						on_action = "[OpenLateralView('bureaucracies')]"
 					}
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
