@@ -66,10 +66,48 @@ cm_pf_sea_cost_value = {
 	min = 1
 }
 
+# Country scope. Sea jump cost at zero maritime presence, the endpoint the Current naval option
+# blends toward per sea zone.
+cm_pf_sea_cost_no_presence_value = {
+	value = modifier:sea_cost_on_distance_from_capital # Base 30: in_game/common/auto_modifiers/country.txt:144
+	min = 1
+}
+
 # Country scope. Port embark cost before the harbor discount.
 cm_pf_port_cost_value = {
 	value = modifier:port_cost_distance_from_capital # Base 40: in_game/common/auto_modifiers/country.txt:147
 	min = 1
+}
+
+# Country scope. Sum of harbor_suitability from the best harbor buildings the country has unlocked.
+# The naval line obsoletes tier by tier, so only the best-unlocked tier counts; wharf and
+# protected_harbor are parallel and stack. Advances: in_game/common/advances/1_building_unlocks.txt.
+cm_pf_unlocked_harbor_buildings_value = {
+	value = 0.1 # wharf, no advance: in_game/common/building_types/town_buildings.txt:399
+	if = {
+		limit = { has_advance = naval_base_advance }
+		add = 0.3 # naval_base: in_game/common/building_types/port_buildings.txt:247
+	}
+	else_if = {
+		limit = { has_advance = grand_shipyard_advance }
+		add = 0.25 # grand_shipyard: in_game/common/building_types/port_buildings.txt:196
+	}
+	else_if = {
+		limit = { has_advance = shipyard_advance }
+		add = 0.2 # shipyard: in_game/common/building_types/port_buildings.txt:145
+	}
+	else_if = {
+		limit = { has_advance = dry_dock_advance }
+		add = 0.15 # dry_dock: in_game/common/building_types/port_buildings.txt:94
+	}
+	else_if = {
+		limit = { has_advance = dock_advance }
+		add = 0.1 # dock: in_game/common/building_types/port_buildings.txt:42
+	}
+	if = {
+		limit = { has_advance = protected_harbor_advance }
+		add = 0.1 # protected_harbor: in_game/common/building_types/port_buildings.txt:292
+	}
 }
 
 # Country scope. Proximity efficiency for sea and port jumps.
@@ -235,6 +273,22 @@ cm_pf_div_cb_value = {
 	}
 }
 
+# Location scope, ports. Expects scope:cm_pf_c. Optimal-harbor discount: the port's live impact
+# improved by the harbor buildings the country has unlocked but this location has not built yet
+# (min = 0 so it never reduces an already-larger discount).
+cm_pf_optimal_port_impact_value = {
+	value = modifier:local_port_cost_distance_impact
+	subtract = {
+		value = 0.5 # -0.5 harbor_suitability coefficient: main_menu/common/static_modifiers/location.txt:139
+		multiply = {
+			value = scope:cm_pf_c.var:cm_pf_harbor_unlocked
+			subtract = modifier:harbor_suitability
+			add = modifier:natural_harbor_suitability
+			min = 0
+		}
+	}
+}
+
 # Location scope, ports. Expects scope:cm_pf_c and scope:cm_pf_sz (the port's sea zone).
 # Cost of the hop between this port and its sea zone, either direction; the efficiency
 # divisor reads the sea side, and no terrain applies.
@@ -242,7 +296,13 @@ cm_pf_cp_value = {
 	value = scope:cm_pf_c.var:cm_pf_port_cost
 	multiply = {
 		value = 1
-		add = modifier:local_port_cost_distance_impact # Harbor discount, -0.5 at full suitability: main_menu/common/static_modifiers/location.txt:139
+		if = {
+			limit = { scope:cm_pf_c.var:cm_pf_naval_opt_harbor = 1 }
+			add = cm_pf_optimal_port_impact_value
+		}
+		else = {
+			add = modifier:local_port_cost_distance_impact # Harbor discount, -0.5 at full suitability: main_menu/common/static_modifiers/location.txt:139
+		}
 		min = 0
 	}
 	divide = {
@@ -253,9 +313,25 @@ cm_pf_cp_value = {
 	}
 }
 
-# Water location scope. Expects scope:cm_pf_c. Cost of leaving this sea zone.
+# Water location scope. Expects scope:cm_pf_c. Cost of leaving this sea zone. The Current naval
+# option raises the numerator from full presence (5) toward zero presence (30) as this location's
+# live maritime presence drops.
 cm_pf_cs_value = {
 	value = scope:cm_pf_c.var:cm_pf_sea_cost
+	if = {
+		limit = { scope:cm_pf_c.var:cm_pf_naval_cur_presence = 1 }
+		add = {
+			value = scope:cm_pf_c.var:cm_pf_sea_cost_no_presence
+			subtract = scope:cm_pf_c.var:cm_pf_sea_cost
+			multiply = {
+				value = 1
+				subtract = {
+					value = "location_maritime_presence_power(scope:cm_pf_c)"
+					divide = 100
+				}
+			}
+		}
+	}
 	divide = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff

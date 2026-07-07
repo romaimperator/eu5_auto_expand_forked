@@ -69,10 +69,26 @@ cm_pf_prep_core = {
 	else = {
 		set_variable = { name = cm_pf_roads_current value = 0 }
 	}
+	if = {
+		limit = { cm_pf_naval_is_current_presence = yes }
+		set_variable = { name = cm_pf_naval_cur_presence value = 1 }
+	}
+	else = {
+		set_variable = { name = cm_pf_naval_cur_presence value = 0 }
+	}
+	if = {
+		limit = { cm_pf_naval_is_optimal_harbor = yes }
+		set_variable = { name = cm_pf_naval_opt_harbor value = 1 }
+	}
+	else = {
+		set_variable = { name = cm_pf_naval_opt_harbor value = 0 }
+	}
 	set_variable = { name = cm_pf_land_cost value = cm_pf_land_cost_value }
 	set_variable = { name = cm_pf_river_cost value = cm_pf_river_cost_value }
 	set_variable = { name = cm_pf_sea_cost value = cm_pf_sea_cost_value }
+	set_variable = { name = cm_pf_sea_cost_no_presence value = cm_pf_sea_cost_no_presence_value }
 	set_variable = { name = cm_pf_port_cost value = cm_pf_port_cost_value }
+	set_variable = { name = cm_pf_harbor_unlocked value = cm_pf_unlocked_harbor_buildings_value }
 	set_variable = { name = cm_pf_eff value = cm_pf_eff_value }
 	set_variable = { name = cm_pf_eff_land value = cm_pf_eff_land_value }
 	# Read by cm_pf_cap_adj_value so capital candidates drop the current capital's terrain bonus.
@@ -892,7 +908,9 @@ cm_pf_clean_country = {
 	remove_variable = cm_pf_land_cost
 	remove_variable = cm_pf_river_cost
 	remove_variable = cm_pf_sea_cost
+	remove_variable = cm_pf_sea_cost_no_presence
 	remove_variable = cm_pf_port_cost
+	remove_variable = cm_pf_harbor_unlocked
 	remove_variable = cm_pf_eff
 	remove_variable = cm_pf_eff_land
 	remove_variable = cm_pf_cand_topo
@@ -902,4 +920,6 @@ cm_pf_clean_country = {
 	remove_variable = cm_pf_all_done
 	remove_variable = cm_pf_repaint
 	remove_variable = cm_pf_roads_current
+	remove_variable = cm_pf_naval_cur_presence
+	remove_variable = cm_pf_naval_opt_harbor
 }
