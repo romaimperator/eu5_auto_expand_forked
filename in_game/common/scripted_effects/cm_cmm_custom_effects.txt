@@ -288,6 +288,23 @@ cm_apply_expand_metric_change = {
 	}
 }
 
+# Invalidate the finder cache on method change: re-prime now if a mode is open (so the ticking
+# driver recomputes), otherwise just drop the cache and let the next open recompute.
+# Scope: country
+cm_apply_placement_finder_method_change = {
+	cmm_sync_setting_alias = {
+		setting = cm__placement_finder_method
+		alias = cm_placement_finder_method
+	}
+	if = {
+		limit = { exists = var:cm_pf_mode_open }
+		cm_pf_force_refresh = yes
+	}
+	else = {
+		remove_variable = cm_pf_fresh
+	}
+}
+
 cm_toggle_priority_feature = {
 	clear_variable_list = cm_priority_desired_enabled
 	every_in_list = {

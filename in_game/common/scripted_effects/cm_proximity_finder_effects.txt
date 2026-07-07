@@ -1,0 +1,784 @@
+﻿# Exact placement search for the governor and capital finder map modes. Opening a finder mode
+# runs cm_pf_prep_gated (which reuses a year-fresh result or preps a new run), then
+# cm_pf_run_batch_all every driver tick scores a batch of candidate locations by cheapest-path
+# search until all are done; finalize bakes the per-location cm_gf_score / cm_cf_score /
+# cm_gf_avg / cm_cf_avg / cm_gf_top / cm_cf_top / cm_pf_pred the modes and tooltips read. The
+# lobby init runs the same search synchronously via cm_pf_recompute_now.
+
+# Runaway guard on relaxation passes; the changed check ends them as soon as nothing improves.
+@cm_pf_max_passes = 100
+# Candidates scored per driver tick.
+@cm_pf_batch_size = 8
+
+# Country scope. GUI entry fired on map-mode open. Reuses cached scores while cm_pf_fresh is
+# live (set for a year at each compute); otherwise sets up a fresh run for the tick loop.
+cm_pf_prep_gated = {
+	save_scope_as = cm_pf_c
+	if = {
+		limit = { exists = var:cm_pf_fresh }
+		set_variable = { name = cm_pf_all_done value = 1 }
+	}
+	else = {
+		cm_pf_prep_core = yes
+	}
+}
+
+# Country scope. Manual refresh (action bar button). The finder driver, ticking while the mode is
+# open, rebatches and refinalizes once the cache is dropped and the run re-primed.
+cm_pf_force_refresh = {
+	remove_variable = cm_pf_fresh
+	cm_pf_prep_core = yes
+}
+
+# Country scope. Forced synchronous recompute for the lobby init; still skips while cached.
+cm_pf_recompute_now = {
+	save_scope_as = cm_pf_c
+	if = {
+		limit = { NOT = { exists = var:cm_pf_fresh } }
+		cm_pf_prep_core = yes
+		every_owned_location = {
+			limit = { has_variable = cm_pf_cl_g }
+			cm_pf_score_candidate = yes
+		}
+		cm_pf_finalize = yes
+		remove_variable = cm_pf_repaint
+	}
+}
+
+# Country scope. One-time setup for a scoring run.
+cm_pf_prep_core = {
+	save_scope_as = cm_pf_c
+	# Strip any interrupted run before rebuilding.
+	every_owned_location = { cm_pf_clean_location = yes }
+	every_in_list = {
+		variable = cm_pf_water_set
+		cm_pf_clean_location = yes
+	}
+	clear_variable_list = cm_pf_water_set
+	cm_pf_clean_country = yes
+	set_variable = { name = cm_pf_land_cost value = cm_pf_land_cost_value }
+	set_variable = { name = cm_pf_river_cost value = cm_pf_river_cost_value }
+	set_variable = { name = cm_pf_sea_cost value = cm_pf_sea_cost_value }
+	set_variable = { name = cm_pf_port_cost value = cm_pf_port_cost_value }
+	set_variable = { name = cm_pf_eff value = cm_pf_eff_value }
+	set_variable = { name = cm_pf_eff_land value = cm_pf_eff_land_value }
+	# Read by cm_pf_cap_adj_value so capital candidates drop the current capital's terrain bonus.
+	if = {
+		limit = { exists = capital }
+		capital = { save_temporary_scope_as = cm_pf_capital }
+	}
+	cm_pf_build_water_set = yes
+	set_variable = { name = cm_pf_n value = 0 }
+	every_owned_location = { cm_pf_prime_land_location = yes }
+}
+
+# Country scope. Collects every water location a sea route from an owned port can reach
+# within the proximity budget. Seeded free at the ports so no potentially useful tile is excluded.
+cm_pf_build_water_set = {
+	clear_variable_list = cm_pf_water_set
+	every_owned_location = {
+		limit = { is_port = yes }
+		sea_zone = {
+			if = {
+				limit = { NOT = { has_variable = cm_pf_wd } }
+				set_variable = { name = cm_pf_wd value = 0 }
+				set_variable = { name = cm_pf_cs value = cm_pf_cs_value }
+				scope:cm_pf_c = {
+					add_to_variable_list = { name = cm_pf_water_set target = prev }
+				}
+			}
+		}
+	}
+	set_local_variable = { name = cm_pf_changed value = 1 }
+	set_local_variable = { name = cm_pf_pass value = 0 }
+	while = {
+		limit = {
+			local_var:cm_pf_changed > 0
+			local_var:cm_pf_pass < @cm_pf_max_passes
+		}
+		change_local_variable = { name = cm_pf_pass add = 1 }
+		set_local_variable = { name = cm_pf_changed value = 0 }
+		every_in_list = {
+			variable = cm_pf_water_set
+			cm_pf_expand_water = yes
+		}
+	}
+}
+
+# Water location scope (listed, with cm_pf_wd). Expects scope:cm_pf_c. Expands with this
+# tile's outgoing cost.
+cm_pf_expand_water = {
+	save_temporary_scope_as = cm_pf_a
+	set_local_variable = {
+		name = cm_pf_nd
+		value = {
+			value = var:cm_pf_wd
+			add = var:cm_pf_cs
+		}
+	}
+	every_neighbor_location = {
+		limit = { is_land = no }
+		if = {
+			limit = {
+				local_var:cm_pf_nd < 100 # Capital source value, the larger budget: main_menu/common/static_modifiers/location.txt:330
+				trigger_if = {
+					limit = { has_variable = cm_pf_wd }
+					var:cm_pf_wd > local_var:cm_pf_nd
+				}
+			}
+			if = {
+				limit = { NOT = { has_variable = cm_pf_cs } }
+				set_variable = { name = cm_pf_cs value = cm_pf_cs_value }
+				scope:cm_pf_c = {
+					add_to_variable_list = { name = cm_pf_water_set target = prev }
+				}
+			}
+			set_variable = { name = cm_pf_wd value = local_var:cm_pf_nd }
+			change_local_variable = { name = cm_pf_changed add = 1 }
+		}
+	}
+}
+
+# Location scope. Expects scope:cm_pf_c. Stores topography code, threshold, and entry costs.
+# The topography codes match a candidate against a tile's topography in cm_pf_relax_from_land_cap;
+# cover every topography cm_pf_capb_extra_value handles (see cm_proximity_finder_generated_values.txt).
+cm_pf_prime_land_location = {
+	scope:cm_pf_c = {
+		change_variable = { name = cm_pf_n add = 1 }
+	}
+	if = {
+		limit = { topography = mountains }
+		set_variable = { name = cm_pf_topo value = 1 }
+	}
+	else_if = {
+		limit = { topography = hills }
+		set_variable = { name = cm_pf_topo value = 2 }
+	}
+	else_if = {
+		limit = { topography = wetlands }
+		set_variable = { name = cm_pf_topo value = 3 }
+	}
+	else_if = {
+		limit = { topography = plateau }
+		set_variable = { name = cm_pf_topo value = 4 }
+	}
+	else = {
+		set_variable = { name = cm_pf_topo value = 0 }
+	}
+	set_variable = { name = cm_pf_t value = cm_pf_gf_seed_value }
+	set_variable = { name = cm_pf_cl_g value = cm_pf_cl_g_value }
+	set_variable = { name = cm_pf_cl_c value = cm_pf_cl_c_value }
+	set_variable = { name = cm_pf_cl_cb value = cm_pf_cl_cb_value }
+	set_variable = { name = cm_pf_w value = cm_location_raw_wealth }
+	if = {
+		limit = { has_river = yes }
+		set_variable = { name = cm_pf_cr_g value = cm_pf_cr_g_value }
+		set_variable = { name = cm_pf_cr_c value = cm_pf_cr_c_value }
+		set_variable = { name = cm_pf_cr_cb value = cm_pf_cr_cb_value }
+	}
+	if = {
+		limit = { is_port = yes }
+		sea_zone = { save_temporary_scope_as = cm_pf_sz }
+		set_variable = { name = cm_pf_cp value = cm_pf_cp_value }
+	}
+}
+
+# Country scope. Scores up to @cm_pf_batch_size pending candidates; finalizes when none remain.
+cm_pf_run_batch_all = {
+	save_scope_as = cm_pf_c
+	if = {
+		limit = {
+			NOT = { has_variable = cm_pf_all_done }
+			has_variable = cm_pf_n
+		}
+		set_local_variable = { name = cm_pf_batch_n value = 0 }
+		every_owned_location = {
+			limit = {
+				local_var:cm_pf_batch_n < @cm_pf_batch_size
+				NOT = { has_variable = cm_pf_done }
+				has_variable = cm_pf_cl_g
+			}
+			set_variable = { name = cm_pf_done value = 1 }
+			change_local_variable = { name = cm_pf_batch_n add = 1 }
+			add_to_local_variable_list = { name = cm_pf_batch target = this }
+		}
+		every_in_local_list = {
+			variable = cm_pf_batch
+			cm_pf_score_candidate = yes
+		}
+		if = {
+			limit = { local_var:cm_pf_batch_n = 0 }
+			cm_pf_finalize = yes
+		}
+	}
+}
+
+# Location scope (the candidate). Expects scope:cm_pf_c. Runs both searches and stores raw sums.
+cm_pf_score_candidate = {
+	save_temporary_scope_as = cm_pf_cand
+	set_variable = { name = cm_pf_d value = 0 }
+	cm_pf_bellman_g = { BUDGET = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+	# cm_pf_sum = wealth-weighted; cm_pf_sum_p = unweighted proximity.
+	set_local_variable = { name = cm_pf_sum value = 0 }
+	set_local_variable = { name = cm_pf_sum_p value = 0 }
+	scope:cm_pf_c = {
+		every_owned_location = {
+			limit = { has_variable = cm_pf_d }
+			if = {
+				limit = { var:cm_pf_t > var:cm_pf_d }
+				change_local_variable = {
+					name = cm_pf_sum_p
+					add = {
+						value = var:cm_pf_t
+						subtract = var:cm_pf_d
+					}
+				}
+				change_local_variable = {
+					name = cm_pf_sum
+					add = {
+						value = var:cm_pf_t
+						subtract = var:cm_pf_d
+						multiply = var:cm_pf_w
+					}
+				}
+			}
+			remove_variable = cm_pf_d
+		}
+		every_in_list = {
+			variable = cm_pf_water_set
+			remove_variable = cm_pf_d
+		}
+	}
+	scope:cm_pf_cand = {
+		set_variable = { name = cm_pf_gf_raw value = local_var:cm_pf_sum }
+		set_variable = { name = cm_pf_gf_raw_p value = local_var:cm_pf_sum_p }
+	}
+	scope:cm_pf_c = {
+		set_variable = { name = cm_pf_cand_topo value = scope:cm_pf_cand.var:cm_pf_topo }
+	}
+	set_variable = { name = cm_pf_d value = 0 }
+	cm_pf_bellman_cap = yes
+	set_local_variable = { name = cm_pf_sum value = 0 }
+	set_local_variable = { name = cm_pf_sum_p value = 0 }
+	scope:cm_pf_c = {
+		every_owned_location = {
+			limit = { has_variable = cm_pf_d }
+			if = {
+				limit = { var:cm_pf_d < 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
+				change_local_variable = {
+					name = cm_pf_sum_p
+					add = {
+						value = 100
+						subtract = var:cm_pf_d
+					}
+				}
+				change_local_variable = {
+					name = cm_pf_sum
+					add = {
+						value = 100
+						subtract = var:cm_pf_d
+						multiply = var:cm_pf_w
+					}
+				}
+			}
+			remove_variable = cm_pf_d
+		}
+		every_in_list = {
+			variable = cm_pf_water_set
+			remove_variable = cm_pf_d
+		}
+	}
+	scope:cm_pf_cand = {
+		set_variable = { name = cm_pf_cf_raw value = local_var:cm_pf_sum }
+		set_variable = { name = cm_pf_cf_raw_p value = local_var:cm_pf_sum_p }
+	}
+}
+
+# Some seed location holds cm_pf_d = 0. Expects scope:cm_pf_c. Cheapest-path relaxation
+# waves over the real (governor-cost) graph; $BUDGET$ = the source value paths spread from.
+cm_pf_bellman_g = {
+	set_local_variable = { name = cm_pf_changed value = 1 }
+	set_local_variable = { name = cm_pf_pass value = 0 }
+	while = {
+		limit = {
+			local_var:cm_pf_changed > 0
+			local_var:cm_pf_pass < @cm_pf_max_passes
+		}
+		change_local_variable = { name = cm_pf_pass add = 1 }
+		set_local_variable = { name = cm_pf_changed value = 0 }
+		scope:cm_pf_c = {
+			every_owned_location = {
+				limit = {
+					has_variable = cm_pf_d
+					has_variable = cm_pf_cl_g
+				}
+				cm_pf_relax_from_land_g = { BUDGET = $BUDGET$ }
+			}
+			every_in_list = {
+				variable = cm_pf_water_set
+				limit = { has_variable = cm_pf_d }
+				cm_pf_relax_from_water = { BUDGET = $BUDGET$ }
+			}
+		}
+	}
+}
+
+cm_pf_bellman_cap = {
+	set_local_variable = { name = cm_pf_changed value = 1 }
+	set_local_variable = { name = cm_pf_pass value = 0 }
+	while = {
+		limit = {
+			local_var:cm_pf_changed > 0
+			local_var:cm_pf_pass < @cm_pf_max_passes
+		}
+		change_local_variable = { name = cm_pf_pass add = 1 }
+		set_local_variable = { name = cm_pf_changed value = 0 }
+		scope:cm_pf_c = {
+			every_owned_location = {
+				limit = {
+					has_variable = cm_pf_d
+					has_variable = cm_pf_cl_c
+				}
+				cm_pf_relax_from_land_cap = yes
+			}
+			every_in_list = {
+				variable = cm_pf_water_set
+				limit = { has_variable = cm_pf_d }
+				cm_pf_relax_from_water = { BUDGET = 100 }
+			}
+		}
+	}
+}
+
+# Location scope (reached land location). Expects scope:cm_pf_c. Relaxes every in-set
+# neighbor with this tile's outgoing real (governor-cost) costs. $BUDGET$ = the search cap.
+cm_pf_relax_from_land_g = {
+	save_temporary_scope_as = cm_pf_a
+	set_local_variable = {
+		name = cm_pf_nd_land
+		value = {
+			value = var:cm_pf_d
+			add = var:cm_pf_cl_g
+		}
+	}
+	if = {
+		limit = { has_variable = cm_pf_cr_g }
+		set_local_variable = {
+			name = cm_pf_nd_river
+			value = {
+				value = var:cm_pf_d
+				add = var:cm_pf_cr_g
+			}
+		}
+	}
+	every_neighbor_location = {
+		limit = {
+			is_land = yes
+			owner ?= scope:cm_pf_c
+			has_variable = cm_pf_cl_g
+		}
+		if = {
+			limit = {
+				has_variable = cm_pf_cr_g
+				scope:cm_pf_a = { has_variable = cm_pf_cr_g }
+			}
+			cm_pf_try_relax = { ND = cm_pf_nd_river BUDGET = $BUDGET$ }
+		}
+		else = {
+			cm_pf_try_relax = { ND = cm_pf_nd_land BUDGET = $BUDGET$ }
+		}
+	}
+	if = {
+		limit = {
+			is_port = yes
+			sea_zone = { has_variable = cm_pf_cs }
+		}
+		set_local_variable = {
+			name = cm_pf_nd_port
+			value = {
+				value = var:cm_pf_d
+				add = var:cm_pf_cp
+			}
+		}
+		sea_zone = {
+			cm_pf_try_relax = { ND = cm_pf_nd_port BUDGET = $BUDGET$ }
+		}
+	}
+}
+
+# Water location scope (reached). Expects scope:cm_pf_c. $BUDGET$ = search cap.
+cm_pf_relax_from_water = {
+	save_temporary_scope_as = cm_pf_a
+	set_local_variable = {
+		name = cm_pf_nd_sea
+		value = {
+			value = var:cm_pf_d
+			add = var:cm_pf_cs
+		}
+	}
+	every_neighbor_location = {
+		limit = {
+			OR = {
+				AND = {
+					is_land = no
+					has_variable = cm_pf_cs
+				}
+				AND = {
+					is_land = yes
+					owner ?= scope:cm_pf_c
+					is_port = yes
+					has_variable = cm_pf_cp
+					sea_zone ?= scope:cm_pf_a
+				}
+			}
+		}
+		if = {
+			limit = { is_land = no }
+			cm_pf_try_relax = { ND = cm_pf_nd_sea BUDGET = $BUDGET$ }
+		}
+		else = {
+			# Disembark: the port's hop cost already carries this sea zone's efficiency.
+			set_local_variable = {
+				name = cm_pf_nd_port
+				value = {
+					value = scope:cm_pf_a.var:cm_pf_d
+					add = var:cm_pf_cp
+				}
+			}
+			cm_pf_try_relax = { ND = cm_pf_nd_port BUDGET = $BUDGET$ }
+		}
+	}
+}
+
+# Location scope (reached land location). Expects scope:cm_pf_c and cm_pf_cand_topo; a tile
+# sharing the candidate's topography leaves through its boosted costs.
+cm_pf_relax_from_land_cap = {
+	save_temporary_scope_as = cm_pf_a
+	if = {
+		limit = {
+			var:cm_pf_topo > 0
+			var:cm_pf_topo = scope:cm_pf_c.var:cm_pf_cand_topo
+		}
+		set_local_variable = {
+			name = cm_pf_nd_land
+			value = {
+				value = var:cm_pf_d
+				add = var:cm_pf_cl_cb
+			}
+		}
+		if = {
+			limit = { has_variable = cm_pf_cr_cb }
+			set_local_variable = {
+				name = cm_pf_nd_river
+				value = {
+					value = var:cm_pf_d
+					add = var:cm_pf_cr_cb
+				}
+			}
+		}
+	}
+	else = {
+		set_local_variable = {
+			name = cm_pf_nd_land
+			value = {
+				value = var:cm_pf_d
+				add = var:cm_pf_cl_c
+			}
+		}
+		if = {
+			limit = { has_variable = cm_pf_cr_c }
+			set_local_variable = {
+				name = cm_pf_nd_river
+				value = {
+					value = var:cm_pf_d
+					add = var:cm_pf_cr_c
+				}
+			}
+		}
+	}
+	every_neighbor_location = {
+		limit = {
+			is_land = yes
+			owner ?= scope:cm_pf_c
+			has_variable = cm_pf_cl_c
+		}
+		if = {
+			limit = {
+				has_variable = cm_pf_cr_c
+				scope:cm_pf_a = { has_variable = cm_pf_cr_c }
+			}
+			cm_pf_try_relax = { ND = cm_pf_nd_river BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
+		}
+		else = {
+			cm_pf_try_relax = { ND = cm_pf_nd_land BUDGET = 100 }
+		}
+	}
+	if = {
+		limit = {
+			is_port = yes
+			sea_zone = { has_variable = cm_pf_cs }
+		}
+		set_local_variable = {
+			name = cm_pf_nd_port
+			value = {
+				value = var:cm_pf_d
+				add = var:cm_pf_cp
+			}
+		}
+		sea_zone = {
+			cm_pf_try_relax = { ND = cm_pf_nd_port BUDGET = 100 }
+		}
+	}
+}
+
+# Scope: the location being entered. $ND$ = local variable holding the candidate distance;
+# $BUDGET$ = cap beyond which paths are useless.
+cm_pf_try_relax = {
+	if = {
+		limit = {
+			local_var:$ND$ < $BUDGET$
+			trigger_if = {
+				limit = { has_variable = cm_pf_d }
+				var:cm_pf_d > local_var:$ND$
+			}
+		}
+		set_variable = { name = cm_pf_d value = local_var:$ND$ }
+		change_local_variable = { name = cm_pf_changed add = 1 }
+	}
+}
+
+# Country scope. Expects scope:cm_pf_c. Bakes the persistent outputs, then strips every transient.
+cm_pf_finalize = {
+	set_variable = { name = cm_pf_gf_max value = 0 }
+	set_variable = { name = cm_pf_cf_max value = 0 }
+	# Predicted tax base gain: cm_pf_gf_raw is wealth-weighted proximity, times 0.0075 (control rises
+	# 0.75 per unit of proximity, and proximity is 0-100 in the search, so 0.75/100). Then in proximity
+	# mode retarget the score/rank basis from the weighted sum to the unweighted one.
+	every_owned_location = {
+		limit = { has_variable = cm_pf_gf_raw }
+		set_variable = { name = cm_gf_taxgain value = { value = var:cm_pf_gf_raw multiply = 0.0075 } }
+		set_variable = { name = cm_cf_taxgain value = { value = var:cm_pf_cf_raw multiply = 0.0075 } }
+		if = {
+			limit = { scope:cm_pf_c = { NOT = { cm_pf_method_is_tax_base = yes } } }
+			set_variable = { name = cm_pf_gf_raw value = var:cm_pf_gf_raw_p }
+			set_variable = { name = cm_pf_cf_raw value = var:cm_pf_cf_raw_p }
+		}
+	}
+	every_owned_location = {
+		save_temporary_scope_as = cm_pf_l
+		scope:cm_pf_c = {
+			change_variable = { name = cm_pf_gf_max max = scope:cm_pf_l.var:cm_pf_gf_raw }
+			change_variable = { name = cm_pf_cf_max max = scope:cm_pf_l.var:cm_pf_cf_raw }
+		}
+	}
+	every_owned_location = {
+		limit = { has_variable = cm_pf_gf_raw }
+		remove_variable = cm_gf_top
+		remove_variable = cm_cf_top
+		remove_variable = cm_gf_localmax
+		remove_variable = cm_cf_localmax
+		set_variable = {
+			name = cm_gf_score
+			value = {
+				value = var:cm_pf_gf_raw
+				multiply = 1000 # Scores are 0 to 1000; 1000 = the best location.
+				divide = {
+					value = scope:cm_pf_c.var:cm_pf_gf_max
+					min = 0.001 # Floor covers a country with no shortfall anywhere.
+				}
+			}
+		}
+		set_variable = {
+			name = cm_cf_score
+			value = {
+				value = var:cm_pf_cf_raw
+				multiply = 1000
+				divide = {
+					value = scope:cm_pf_c.var:cm_pf_cf_max
+					min = 0.001
+				}
+			}
+		}
+		set_variable = {
+			name = cm_gf_avg
+			value = {
+				value = var:cm_pf_gf_raw_p
+				divide = {
+					value = scope:cm_pf_c.var:cm_pf_n
+					min = 1
+				}
+			}
+		}
+		set_variable = {
+			name = cm_cf_avg
+			value = {
+				value = var:cm_pf_cf_raw_p
+				divide = {
+					value = scope:cm_pf_c.var:cm_pf_n
+					min = 1
+				}
+			}
+		}
+	}
+	# Rank the three best locations in each mode: 1 gold, 2 silver, 3 bronze.
+	ordered_owned_location = {
+		limit = { has_variable = cm_pf_gf_raw }
+		order_by = { value = var:cm_pf_gf_raw }
+		position = 0
+		check_range_bounds = no
+		set_variable = { name = cm_gf_top value = 1 }
+	}
+	ordered_owned_location = {
+		limit = { has_variable = cm_pf_gf_raw }
+		order_by = { value = var:cm_pf_gf_raw }
+		position = 1
+		check_range_bounds = no
+		set_variable = { name = cm_gf_top value = 2 }
+	}
+	ordered_owned_location = {
+		limit = { has_variable = cm_pf_gf_raw }
+		order_by = { value = var:cm_pf_gf_raw }
+		position = 2
+		check_range_bounds = no
+		set_variable = { name = cm_gf_top value = 3 }
+	}
+	ordered_owned_location = {
+		limit = { has_variable = cm_pf_cf_raw }
+		order_by = { value = var:cm_pf_cf_raw }
+		position = 0
+		check_range_bounds = no
+		set_variable = { name = cm_cf_top value = 1 }
+	}
+	ordered_owned_location = {
+		limit = { has_variable = cm_pf_cf_raw }
+		order_by = { value = var:cm_pf_cf_raw }
+		position = 1
+		check_range_bounds = no
+		set_variable = { name = cm_cf_top value = 2 }
+	}
+	ordered_owned_location = {
+		limit = { has_variable = cm_pf_cf_raw }
+		order_by = { value = var:cm_pf_cf_raw }
+		position = 2
+		check_range_bounds = no
+		set_variable = { name = cm_cf_top value = 3 }
+	}
+	# Flag a local maximum for the secondary_map_color stripe: score at or above 70% of the best
+	# (700 on the 0-1000 scale) and strictly higher than every owned scored neighbor.
+	every_owned_location = {
+		limit = { has_variable = cm_gf_score }
+		save_temporary_scope_as = cm_pf_lm
+		if = {
+			limit = {
+				var:cm_gf_score >= 700
+				NOT = {
+					any_neighbor_location = {
+						owner ?= scope:cm_pf_c
+						has_variable = cm_gf_score
+						var:cm_gf_score >= scope:cm_pf_lm.var:cm_gf_score
+					}
+				}
+			}
+			set_variable = { name = cm_gf_localmax value = 1 }
+		}
+		if = {
+			limit = {
+				var:cm_cf_score >= 700
+				NOT = {
+					any_neighbor_location = {
+						owner ?= scope:cm_pf_c
+						has_variable = cm_cf_score
+						var:cm_cf_score >= scope:cm_pf_lm.var:cm_cf_score
+					}
+				}
+			}
+			set_variable = { name = cm_cf_localmax value = 1 }
+		}
+	}
+	# Diagnostic: the model's predicted proximity from the actual capital, for comparison
+	# against the game's real proximity in the tooltip.
+	if = {
+		limit = {
+			exists = capital
+			capital = {
+				owner ?= scope:cm_pf_c
+				has_variable = cm_pf_cl_g
+			}
+		}
+		capital = { set_variable = { name = cm_pf_d value = 0 } }
+		cm_pf_bellman_g = { BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
+		every_owned_location = {
+			if = {
+				limit = { has_variable = cm_pf_d }
+				set_variable = {
+					name = cm_pf_pred
+					value = {
+						value = 100
+						subtract = var:cm_pf_d
+						min = 0
+					}
+				}
+			}
+			else = {
+				set_variable = { name = cm_pf_pred value = 0 }
+			}
+			remove_variable = cm_pf_d
+		}
+		every_in_list = {
+			variable = cm_pf_water_set
+			remove_variable = cm_pf_d
+		}
+	}
+	else = {
+		every_owned_location = { remove_variable = cm_pf_pred }
+	}
+	every_owned_location = { cm_pf_clean_location = yes }
+	every_in_list = {
+		variable = cm_pf_water_set
+		cm_pf_clean_location = yes
+	}
+	clear_variable_list = cm_pf_water_set
+	cm_pf_clean_country = yes
+	set_variable = { name = cm_pf_all_done value = 1 }
+	set_variable = { name = cm_pf_repaint value = 1 }
+	# Cache the result for 4 years: reopening within that window reuses it instead of recomputing.
+	set_variable = { name = cm_pf_fresh value = 1 days = 1460 }
+}
+
+# Location scope.
+cm_pf_clean_location = {
+	remove_variable = cm_pf_d
+	remove_variable = cm_pf_done
+	remove_variable = cm_pf_topo
+	remove_variable = cm_pf_t
+	remove_variable = cm_pf_cl_g
+	remove_variable = cm_pf_cl_c
+	remove_variable = cm_pf_cl_cb
+	remove_variable = cm_pf_cr_g
+	remove_variable = cm_pf_cr_c
+	remove_variable = cm_pf_cr_cb
+	remove_variable = cm_pf_cp
+	remove_variable = cm_pf_cs
+	remove_variable = cm_pf_wd
+	remove_variable = cm_pf_w
+	remove_variable = cm_pf_gf_raw
+	remove_variable = cm_pf_gf_raw_p
+	remove_variable = cm_pf_cf_raw
+	remove_variable = cm_pf_cf_raw_p
+}
+
+# Country scope.
+cm_pf_clean_country = {
+	remove_variable = cm_pf_land_cost
+	remove_variable = cm_pf_river_cost
+	remove_variable = cm_pf_sea_cost
+	remove_variable = cm_pf_port_cost
+	remove_variable = cm_pf_eff
+	remove_variable = cm_pf_eff_land
+	remove_variable = cm_pf_cand_topo
+	remove_variable = cm_pf_n
+	remove_variable = cm_pf_gf_max
+	remove_variable = cm_pf_cf_max
+	remove_variable = cm_pf_all_done
+	remove_variable = cm_pf_repaint
+}

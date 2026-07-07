@@ -1,0 +1,1025 @@
+﻿# Governor and capital placement finder map modes. Scores are baked into location variables by
+# the placement search (cm_proximity_finder_effects.txt); the colors below only read them.
+# The three best locations carry cm_gf_top / cm_cf_top (1/2/3) for the rank fills; a local
+# maximum (score >= 70% of best and above every owned neighbor) carries cm_gf_localmax /
+# cm_cf_localmax for the stripe.
+
+# Rank fills: best, second, third.
+@cm_pf_first_r = 0
+@cm_pf_first_g = 203
+@cm_pf_first_b = 190
+@cm_pf_second_r = 42
+@cm_pf_second_g = 140
+@cm_pf_second_b = 6
+@cm_pf_third_r = 55
+@cm_pf_third_g = 166
+@cm_pf_third_b = 41
+
+# Scored gradient anchors, 100% of best (good) down to 0% (bad).
+@cm_pf_good_r = 80
+@cm_pf_good_g = 200
+@cm_pf_good_b = 80
+@cm_pf_moderate_r = 215
+@cm_pf_moderate_g = 205
+@cm_pf_moderate_b = 90
+@cm_pf_fair_r = 215
+@cm_pf_fair_g = 140
+@cm_pf_fair_b = 60
+@cm_pf_poor_r = 195
+@cm_pf_poor_g = 70
+@cm_pf_poor_b = 60
+@cm_pf_bad_r = 45
+@cm_pf_bad_g = 40
+@cm_pf_bad_b = 40
+
+# Fallback fills and the secondary stripes.
+@cm_pf_notscored_r = 140
+@cm_pf_notscored_g = 140
+@cm_pf_notscored_b = 140
+@cm_pf_foreign_r = 110
+@cm_pf_foreign_g = 100
+@cm_pf_foreign_b = 90
+@cm_pf_unowned_r = 90
+@cm_pf_unowned_g = 90
+@cm_pf_unowned_b = 90
+@cm_pf_stripe_r = 205
+@cm_pf_stripe_g = 206
+@cm_pf_stripe_b = 205
+@cm_pf_source_r = 255
+@cm_pf_source_g = 0
+@cm_pf_source_b = 255
+
+# Shared gradient_parameters block.
+@cm_pf_grad_zoom_step = 2
+@cm_pf_grad_alpha_inside = 1
+@cm_pf_grad_alpha_outside = 1
+@cm_pf_grad_width = 0.0375
+@cm_pf_grad_color_mult = 0.9
+@cm_pf_grad_edge_width = 0
+@cm_pf_grad_edge_sharpness = 0.01
+@cm_pf_grad_edge_alpha = 0
+@cm_pf_grad_edge_color_mult = 0
+@cm_pf_grad_before_lighting_blend = 0.5
+@cm_pf_grad_after_lighting_blend = 0.5
+
+cm_governor_finder = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = define:NMapColors|WATER_MAP_COLOR
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_top
+				var:cm_gf_top = 1
+			}
+			value = rgb { @cm_pf_first_r @cm_pf_first_g @cm_pf_first_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_top
+				var:cm_gf_top = 2
+			}
+			value = rgb { @cm_pf_second_r @cm_pf_second_g @cm_pf_second_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_top
+				var:cm_gf_top = 3
+			}
+			value = rgb { @cm_pf_third_r @cm_pf_third_g @cm_pf_third_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score >= 750
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_good_r @cm_pf_good_g @cm_pf_good_b }
+				min_color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b }
+				factor = {
+					value = var:cm_gf_score
+					subtract = 750
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score >= 500
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b }
+				min_color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b }
+				factor = {
+					value = var:cm_gf_score
+					subtract = 500
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score >= 250
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b }
+				min_color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b }
+				factor = {
+					value = var:cm_gf_score
+					subtract = 250
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b }
+				min_color = rgb { @cm_pf_bad_r @cm_pf_bad_g @cm_pf_bad_b }
+				factor = {
+					value = var:cm_gf_score
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = { owner ?= scope:actor }
+			value = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b }
+		}
+		else_if = {
+			limit = { exists = owner }
+			value = rgb { @cm_pf_foreign_r @cm_pf_foreign_g @cm_pf_foreign_b }
+		}
+		else = {
+			value = rgb { @cm_pf_unowned_r @cm_pf_unowned_g @cm_pf_unowned_b }
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				owner ?= scope:actor
+				has_variable = cm_gf_localmax
+			}
+			value = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b }
+		}
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_WATER
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score = 0
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_ZERO
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score >= 1000
+				debug_only = yes
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_BEST_DEBUG
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				debug_only = yes
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_SCORED_DEBUG
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score >= 1000
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_BEST
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_SCORED
+		}
+		else_if = {
+			limit = { owner ?= scope:actor }
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_NO_DATA
+		}
+		else = {
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_FOREIGN
+		}
+	}
+
+	legend_key = { desc = "cm_pf_first_legend_key"      color = rgb { @cm_pf_first_r @cm_pf_first_g @cm_pf_first_b } }
+	legend_key = { desc = "cm_pf_second_legend_key"     color = rgb { @cm_pf_second_r @cm_pf_second_g @cm_pf_second_b } }
+	legend_key = { desc = "cm_pf_third_legend_key"      color = rgb { @cm_pf_third_r @cm_pf_third_g @cm_pf_third_b } }
+	legend_key = { desc = "cm_pf_good_legend_key"       color = rgb { @cm_pf_good_r @cm_pf_good_g @cm_pf_good_b } }
+	legend_key = { desc = "cm_pf_moderate_legend_key"   color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b } }
+	legend_key = { desc = "cm_pf_fair_legend_key"       color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b } }
+	legend_key = { desc = "cm_pf_poor_legend_key"       color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b } }
+	legend_key = { desc = "cm_pf_bad_legend_key"        color = rgb { @cm_pf_bad_r @cm_pf_bad_g @cm_pf_bad_b } }
+	legend_key = { desc = "cm_pf_localmax_legend_key"   color = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b } }
+	legend_key = { desc = "cm_pf_not_scored_legend_key" color = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b } }
+
+	small_map_names = location
+	medium_map_names = country
+	large_map_names = country
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	flatmap_behaviour = always
+	use_fow = no
+	enable_rivers = yes
+	shader_id = 2 # Adds rivers
+
+	category = economy
+	index = 2
+
+	map_lines_mode = ToCapital
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = @cm_pf_grad_zoom_step
+
+		gradient_alpha_inside = @cm_pf_grad_alpha_inside
+		gradient_alpha_outside = @cm_pf_grad_alpha_outside
+		gradient_width = @cm_pf_grad_width
+		gradient_color_mult = @cm_pf_grad_color_mult
+		edge_width = @cm_pf_grad_edge_width
+		edge_sharpness = @cm_pf_grad_edge_sharpness
+		edge_alpha = @cm_pf_grad_edge_alpha
+		edge_color_mult = @cm_pf_grad_edge_color_mult
+		before_lighting_blend = @cm_pf_grad_before_lighting_blend
+		after_lighting_blend = @cm_pf_grad_after_lighting_blend
+	}
+
+	color_and_names_refresh_counters = { LocationOwnerChanged }
+}
+
+# Hidden duplicate of cm_governor_finder. Briefly activated to force a color refresh.
+cm_governor_finder_hidden = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = define:NMapColors|WATER_MAP_COLOR
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_top
+				var:cm_gf_top = 1
+			}
+			value = rgb { @cm_pf_first_r @cm_pf_first_g @cm_pf_first_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_top
+				var:cm_gf_top = 2
+			}
+			value = rgb { @cm_pf_second_r @cm_pf_second_g @cm_pf_second_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_top
+				var:cm_gf_top = 3
+			}
+			value = rgb { @cm_pf_third_r @cm_pf_third_g @cm_pf_third_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score >= 750
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_good_r @cm_pf_good_g @cm_pf_good_b }
+				min_color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b }
+				factor = {
+					value = var:cm_gf_score
+					subtract = 750
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score >= 500
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b }
+				min_color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b }
+				factor = {
+					value = var:cm_gf_score
+					subtract = 500
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score >= 250
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b }
+				min_color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b }
+				factor = {
+					value = var:cm_gf_score
+					subtract = 250
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b }
+				min_color = rgb { @cm_pf_bad_r @cm_pf_bad_g @cm_pf_bad_b }
+				factor = {
+					value = var:cm_gf_score
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = { owner ?= scope:actor }
+			value = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b }
+		}
+		else_if = {
+			limit = { exists = owner }
+			value = rgb { @cm_pf_foreign_r @cm_pf_foreign_g @cm_pf_foreign_b }
+		}
+		else = {
+			value = rgb { @cm_pf_unowned_r @cm_pf_unowned_g @cm_pf_unowned_b }
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				owner ?= scope:actor
+				has_variable = cm_gf_localmax
+			}
+			value = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b }
+		}
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_WATER
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score = 0
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_ZERO
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score >= 1000
+				debug_only = yes
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_BEST_DEBUG
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				debug_only = yes
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_SCORED_DEBUG
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+				var:cm_gf_score >= 1000
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_BEST
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_score
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_SCORED
+		}
+		else_if = {
+			limit = { owner ?= scope:actor }
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_NO_DATA
+		}
+		else = {
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_FOREIGN
+		}
+	}
+
+	legend_key = { desc = "cm_pf_first_legend_key"      color = rgb { @cm_pf_first_r @cm_pf_first_g @cm_pf_first_b } }
+	legend_key = { desc = "cm_pf_second_legend_key"     color = rgb { @cm_pf_second_r @cm_pf_second_g @cm_pf_second_b } }
+	legend_key = { desc = "cm_pf_third_legend_key"      color = rgb { @cm_pf_third_r @cm_pf_third_g @cm_pf_third_b } }
+	legend_key = { desc = "cm_pf_good_legend_key"       color = rgb { @cm_pf_good_r @cm_pf_good_g @cm_pf_good_b } }
+	legend_key = { desc = "cm_pf_moderate_legend_key"   color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b } }
+	legend_key = { desc = "cm_pf_fair_legend_key"       color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b } }
+	legend_key = { desc = "cm_pf_poor_legend_key"       color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b } }
+	legend_key = { desc = "cm_pf_bad_legend_key"        color = rgb { @cm_pf_bad_r @cm_pf_bad_g @cm_pf_bad_b } }
+	legend_key = { desc = "cm_pf_localmax_legend_key"   color = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b } }
+	legend_key = { desc = "cm_pf_not_scored_legend_key" color = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b } }
+
+	small_map_names = location
+	medium_map_names = country
+	large_map_names = country
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	flatmap_behaviour = always
+	use_fow = no
+	enable_rivers = yes
+	shader_id = 2 # Adds rivers
+
+	category = hidden
+	allow_allocate_hotkey = no
+
+	map_lines_mode = ToCapital
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = @cm_pf_grad_zoom_step
+
+		gradient_alpha_inside = @cm_pf_grad_alpha_inside
+		gradient_alpha_outside = @cm_pf_grad_alpha_outside
+		gradient_width = @cm_pf_grad_width
+		gradient_color_mult = @cm_pf_grad_color_mult
+		edge_width = @cm_pf_grad_edge_width
+		edge_sharpness = @cm_pf_grad_edge_sharpness
+		edge_alpha = @cm_pf_grad_edge_alpha
+		edge_color_mult = @cm_pf_grad_edge_color_mult
+		before_lighting_blend = @cm_pf_grad_before_lighting_blend
+		after_lighting_blend = @cm_pf_grad_after_lighting_blend
+	}
+
+	color_and_names_refresh_counters = { LocationOwnerChanged }
+}
+
+cm_capital_finder = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = define:NMapColors|WATER_MAP_COLOR
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_top
+				var:cm_cf_top = 1
+			}
+			value = rgb { @cm_pf_first_r @cm_pf_first_g @cm_pf_first_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_top
+				var:cm_cf_top = 2
+			}
+			value = rgb { @cm_pf_second_r @cm_pf_second_g @cm_pf_second_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_top
+				var:cm_cf_top = 3
+			}
+			value = rgb { @cm_pf_third_r @cm_pf_third_g @cm_pf_third_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				var:cm_cf_score >= 750
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_good_r @cm_pf_good_g @cm_pf_good_b }
+				min_color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b }
+				factor = {
+					value = var:cm_cf_score
+					subtract = 750
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				var:cm_cf_score >= 500
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b }
+				min_color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b }
+				factor = {
+					value = var:cm_cf_score
+					subtract = 500
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				var:cm_cf_score >= 250
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b }
+				min_color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b }
+				factor = {
+					value = var:cm_cf_score
+					subtract = 250
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b }
+				min_color = rgb { @cm_pf_bad_r @cm_pf_bad_g @cm_pf_bad_b }
+				factor = {
+					value = var:cm_cf_score
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = { owner ?= scope:actor }
+			value = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b }
+		}
+		else_if = {
+			limit = { exists = owner }
+			value = rgb { @cm_pf_foreign_r @cm_pf_foreign_g @cm_pf_foreign_b }
+		}
+		else = {
+			value = rgb { @cm_pf_unowned_r @cm_pf_unowned_g @cm_pf_unowned_b }
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				owner ?= scope:actor
+				modifier:local_proximity_source > 0
+			}
+			value = rgb { @cm_pf_source_r @cm_pf_source_g @cm_pf_source_b }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				owner ?= scope:actor
+				has_variable = cm_cf_localmax
+			}
+			value = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b }
+		}
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_WATER
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				var:cm_cf_score >= 1000
+				debug_only = yes
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_BEST_DEBUG
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				var:cm_cf_score >= 1000
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_BEST
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				modifier:local_proximity_source > 0
+				debug_only = yes
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_SOURCE_DEBUG
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				modifier:local_proximity_source > 0
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_SOURCE
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				debug_only = yes
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_SCORED_DEBUG
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_SCORED
+		}
+		else_if = {
+			limit = { owner ?= scope:actor }
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_NO_DATA
+		}
+		else = {
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_FOREIGN
+		}
+	}
+
+	legend_key = { desc = "cm_pf_first_legend_key"      color = rgb { @cm_pf_first_r @cm_pf_first_g @cm_pf_first_b } }
+	legend_key = { desc = "cm_pf_second_legend_key"     color = rgb { @cm_pf_second_r @cm_pf_second_g @cm_pf_second_b } }
+	legend_key = { desc = "cm_pf_third_legend_key"      color = rgb { @cm_pf_third_r @cm_pf_third_g @cm_pf_third_b } }
+	legend_key = { desc = "cm_pf_good_legend_key"       color = rgb { @cm_pf_good_r @cm_pf_good_g @cm_pf_good_b } }
+	legend_key = { desc = "cm_pf_moderate_legend_key"   color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b } }
+	legend_key = { desc = "cm_pf_fair_legend_key"       color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b } }
+	legend_key = { desc = "cm_pf_poor_legend_key"       color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b } }
+	legend_key = { desc = "cm_pf_bad_legend_key"        color = rgb { @cm_pf_bad_r @cm_pf_bad_g @cm_pf_bad_b } }
+	legend_key = { desc = "cm_pf_localmax_legend_key"   color = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b } }
+	legend_key = { desc = "cm_pf_cap_source_legend_key" color = rgb { @cm_pf_source_r @cm_pf_source_g @cm_pf_source_b } }
+	legend_key = { desc = "cm_pf_not_scored_legend_key" color = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b } }
+
+	small_map_names = location
+	medium_map_names = country
+	large_map_names = country
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	flatmap_behaviour = always
+	use_fow = no
+	enable_rivers = yes
+	shader_id = 2 # Adds rivers
+
+	category = economy
+	index = 2
+
+	map_lines_mode = ToCapital
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = @cm_pf_grad_zoom_step
+
+		gradient_alpha_inside = @cm_pf_grad_alpha_inside
+		gradient_alpha_outside = @cm_pf_grad_alpha_outside
+		gradient_width = @cm_pf_grad_width
+		gradient_color_mult = @cm_pf_grad_color_mult
+		edge_width = @cm_pf_grad_edge_width
+		edge_sharpness = @cm_pf_grad_edge_sharpness
+		edge_alpha = @cm_pf_grad_edge_alpha
+		edge_color_mult = @cm_pf_grad_edge_color_mult
+		before_lighting_blend = @cm_pf_grad_before_lighting_blend
+		after_lighting_blend = @cm_pf_grad_after_lighting_blend
+	}
+
+	color_and_names_refresh_counters = { LocationOwnerChanged }
+}
+
+# Hidden duplicate of cm_capital_finder. Briefly activated to force a color refresh.
+cm_capital_finder_hidden = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = define:NMapColors|WATER_MAP_COLOR
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_top
+				var:cm_cf_top = 1
+			}
+			value = rgb { @cm_pf_first_r @cm_pf_first_g @cm_pf_first_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_top
+				var:cm_cf_top = 2
+			}
+			value = rgb { @cm_pf_second_r @cm_pf_second_g @cm_pf_second_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_top
+				var:cm_cf_top = 3
+			}
+			value = rgb { @cm_pf_third_r @cm_pf_third_g @cm_pf_third_b }
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				var:cm_cf_score >= 750
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_good_r @cm_pf_good_g @cm_pf_good_b }
+				min_color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b }
+				factor = {
+					value = var:cm_cf_score
+					subtract = 750
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				var:cm_cf_score >= 500
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b }
+				min_color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b }
+				factor = {
+					value = var:cm_cf_score
+					subtract = 500
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				var:cm_cf_score >= 250
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b }
+				min_color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b }
+				factor = {
+					value = var:cm_cf_score
+					subtract = 250
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+			}
+			lerp = {
+				max_color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b }
+				min_color = rgb { @cm_pf_bad_r @cm_pf_bad_g @cm_pf_bad_b }
+				factor = {
+					value = var:cm_cf_score
+					divide = 250
+				}
+			}
+		}
+		else_if = {
+			limit = { owner ?= scope:actor }
+			value = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b }
+		}
+		else_if = {
+			limit = { exists = owner }
+			value = rgb { @cm_pf_foreign_r @cm_pf_foreign_g @cm_pf_foreign_b }
+		}
+		else = {
+			value = rgb { @cm_pf_unowned_r @cm_pf_unowned_g @cm_pf_unowned_b }
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				owner ?= scope:actor
+				modifier:local_proximity_source > 0
+			}
+			value = rgb { @cm_pf_source_r @cm_pf_source_g @cm_pf_source_b }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				owner ?= scope:actor
+				has_variable = cm_cf_localmax
+			}
+			value = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b }
+		}
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_WATER
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				var:cm_cf_score >= 1000
+				debug_only = yes
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_BEST_DEBUG
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				var:cm_cf_score >= 1000
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_BEST
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				modifier:local_proximity_source > 0
+				debug_only = yes
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_SOURCE_DEBUG
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				modifier:local_proximity_source > 0
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_SOURCE
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+				debug_only = yes
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_SCORED_DEBUG
+		}
+		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_score
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_SCORED
+		}
+		else_if = {
+			limit = { owner ?= scope:actor }
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_NO_DATA
+		}
+		else = {
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_FOREIGN
+		}
+	}
+
+	legend_key = { desc = "cm_pf_first_legend_key"      color = rgb { @cm_pf_first_r @cm_pf_first_g @cm_pf_first_b } }
+	legend_key = { desc = "cm_pf_second_legend_key"     color = rgb { @cm_pf_second_r @cm_pf_second_g @cm_pf_second_b } }
+	legend_key = { desc = "cm_pf_third_legend_key"      color = rgb { @cm_pf_third_r @cm_pf_third_g @cm_pf_third_b } }
+	legend_key = { desc = "cm_pf_good_legend_key"       color = rgb { @cm_pf_good_r @cm_pf_good_g @cm_pf_good_b } }
+	legend_key = { desc = "cm_pf_moderate_legend_key"   color = rgb { @cm_pf_moderate_r @cm_pf_moderate_g @cm_pf_moderate_b } }
+	legend_key = { desc = "cm_pf_fair_legend_key"       color = rgb { @cm_pf_fair_r @cm_pf_fair_g @cm_pf_fair_b } }
+	legend_key = { desc = "cm_pf_poor_legend_key"       color = rgb { @cm_pf_poor_r @cm_pf_poor_g @cm_pf_poor_b } }
+	legend_key = { desc = "cm_pf_bad_legend_key"        color = rgb { @cm_pf_bad_r @cm_pf_bad_g @cm_pf_bad_b } }
+	legend_key = { desc = "cm_pf_localmax_legend_key"   color = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b } }
+	legend_key = { desc = "cm_pf_cap_source_legend_key" color = rgb { @cm_pf_source_r @cm_pf_source_g @cm_pf_source_b } }
+	legend_key = { desc = "cm_pf_not_scored_legend_key" color = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b } }
+
+	small_map_names = location
+	medium_map_names = country
+	large_map_names = country
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	flatmap_behaviour = always
+	use_fow = no
+	enable_rivers = yes
+	shader_id = 2 # Adds rivers
+
+	category = hidden
+	allow_allocate_hotkey = no
+
+	map_lines_mode = ToCapital
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = @cm_pf_grad_zoom_step
+
+		gradient_alpha_inside = @cm_pf_grad_alpha_inside
+		gradient_alpha_outside = @cm_pf_grad_alpha_outside
+		gradient_width = @cm_pf_grad_width
+		gradient_color_mult = @cm_pf_grad_color_mult
+		edge_width = @cm_pf_grad_edge_width
+		edge_sharpness = @cm_pf_grad_edge_sharpness
+		edge_alpha = @cm_pf_grad_edge_alpha
+		edge_color_mult = @cm_pf_grad_edge_color_mult
+		before_lighting_blend = @cm_pf_grad_before_lighting_blend
+		after_lighting_blend = @cm_pf_grad_after_lighting_blend
+	}
+
+	color_and_names_refresh_counters = { LocationOwnerChanged }
+}

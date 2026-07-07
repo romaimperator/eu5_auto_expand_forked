@@ -664,6 +664,25 @@ cm_register_cmf_mod = {
 		field_id = enabled
 		default_value = 0
 	}
+
+	# Map Modes (map_modes) Tab
+	## Placement Finder (placement_finder) Group
+	cmm_register_dropdown_setting = {
+		mod_id = cm
+		setting_id = placement_finder_method
+		tab_id = map_modes
+		group_id = placement_finder
+		default_index = 1
+		option_count = 2
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__placement_finder_method
+		alias = cm_placement_finder_method
+	}
+
+	# Action bar
+	cmf_add_action_bar_element = { element = cm_pf_refresh }
+	cmf_register_scripted_gui = { element = cm_pf_refresh }
 }
 
 # Auto-Build (auto_build) Tab
@@ -696,6 +715,10 @@ cm_register_cmf_mod = {
 cm_handle_cmf_callback = {
 	switch = {
 		trigger = var:cmf_callback
+		# Action Bar
+		flag:cm_pf_refresh = {
+			cm_pf_force_refresh = yes
+		}
 		# Settings (settings) Tab
 		## Settings (settings) Group
 		flag:cm__pause_auto_expand = {
@@ -746,6 +769,11 @@ cm_handle_cmf_callback = {
 				setting = cm__town_rights_min_gov_power
 				alias = cm_town_rights_min_gov_power
 			}
+		}
+		# Map Modes (map_modes) Tab
+		## Placement Finder (placement_finder) Group
+		flag:cm__placement_finder_method = {
+			cm_apply_placement_finder_method_change = yes
 		}
 	}
 }

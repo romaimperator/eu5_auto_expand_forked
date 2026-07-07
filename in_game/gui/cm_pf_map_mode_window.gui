@@ -1,0 +1,111 @@
+# Runs the placement finder when a finder map mode is opened: _show preps the search,
+# the tick loop scores candidate batches until done, and the repaint driver swaps through
+# the mode's hidden duplicate to show the finished scores.
+widget = {
+	name = "cm_pf_map_mode_window"
+	# Keeps the descendant visibility gates re-evaluating each frame.
+	visible = "[EqualTo_CFixedPoint('(CFixedPoint)0', '(CFixedPoint)0')]"
+	position = { -10000 1 }
+
+	# Governor finder compute driver.
+	widget = {
+		size = { 0 0 }
+		# Pinned so a save made with the mode active still fires _show on load.
+		visible_at_creation = no
+		# The hidden duplicate keeps the gate up through the repaint swap.
+		visible = "[And(GetPlayer.Exists, Or(GetMapMode('cm_governor_finder').IsActive, GetMapMode('cm_governor_finder_hidden').IsActive))]"
+		state = {
+			name = _show
+			duration = 0.1
+			next = cm_pf_gf_tick_a
+			on_finish = "[GetScriptedGui('cm_pf_prep').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+		state = {
+			name = cm_pf_gf_tick_a
+			duration = 0.1
+			next = cm_pf_gf_tick_b
+			on_finish = "[GetScriptedGui('cm_pf_run_batch').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+		state = {
+			name = cm_pf_gf_tick_b
+			duration = 0.1
+			next = cm_pf_gf_tick_a
+			on_finish = "[GetScriptedGui('cm_pf_run_batch').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+	}
+
+	# Governor finder repaint driver: fires once per finished run while the mode is viewed.
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetPlayer.Exists, GetMapMode('cm_governor_finder').IsActive, GetScriptedGui('cm_pf_repaint_ready').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+		state = {
+			name = _show
+			duration = 0.1
+			next = cm_pf_gf_restore
+			on_finish = "[GetMapMode('cm_governor_finder_hidden').SetMapMode]"
+			on_finish = "[GetScriptedGui('cm_pf_repaint_ready').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+		state = {
+			name = cm_pf_gf_restore
+			duration = 0.1
+			on_finish = "[GetMapMode('cm_governor_finder').SetMapMode]"
+		}
+	}
+
+	# Capital finder compute driver.
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And(GetPlayer.Exists, Or(GetMapMode('cm_capital_finder').IsActive, GetMapMode('cm_capital_finder_hidden').IsActive))]"
+		state = {
+			name = _show
+			duration = 0.1
+			next = cm_pf_cf_tick_a
+			on_finish = "[GetScriptedGui('cm_pf_prep').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+		state = {
+			name = cm_pf_cf_tick_a
+			duration = 0.1
+			next = cm_pf_cf_tick_b
+			on_finish = "[GetScriptedGui('cm_pf_run_batch').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+		state = {
+			name = cm_pf_cf_tick_b
+			duration = 0.1
+			next = cm_pf_cf_tick_a
+			on_finish = "[GetScriptedGui('cm_pf_run_batch').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+	}
+
+	# Capital finder repaint driver.
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetPlayer.Exists, GetMapMode('cm_capital_finder').IsActive, GetScriptedGui('cm_pf_repaint_ready').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+		state = {
+			name = _show
+			duration = 0.1
+			next = cm_pf_cf_restore
+			on_finish = "[GetMapMode('cm_capital_finder_hidden').SetMapMode]"
+			on_finish = "[GetScriptedGui('cm_pf_repaint_ready').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+		state = {
+			name = cm_pf_cf_restore
+			duration = 0.1
+			on_finish = "[GetMapMode('cm_capital_finder').SetMapMode]"
+		}
+	}
+
+	# Clears cm_pf_mode_open when the last finder mode closes, hiding the action bar refresh button.
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetPlayer.Exists, Not(Or(Or(GetMapMode('cm_governor_finder').IsActive, GetMapMode('cm_governor_finder_hidden').IsActive), Or(GetMapMode('cm_capital_finder').IsActive, GetMapMode('cm_capital_finder_hidden').IsActive))), GetScriptedGui('cm_pf_refresh').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+		state = {
+			name = _show
+			duration = 0.1
+			on_finish = "[GetScriptedGui('cm_pf_clear_mode_open').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+	}
+}

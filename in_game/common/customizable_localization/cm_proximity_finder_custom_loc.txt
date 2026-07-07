@@ -1,0 +1,51 @@
+﻿# Governor/capital finder tooltip status line: names rank 2/3 or a local maximum. Appended to
+# the scored tooltip via [ROOT.GetLocation.Custom('cm_pf_gf_status' / 'cm_pf_cf_status')].
+cm_pf_gf_status = {
+	type = location
+	text = {
+		trigger = {
+			has_variable = cm_gf_top
+			var:cm_gf_top = 2
+		}
+		localization_key = cm_pf_status_second
+	}
+	text = {
+		trigger = {
+			has_variable = cm_gf_top
+			var:cm_gf_top = 3
+		}
+		localization_key = cm_pf_status_third
+	}
+	text = {
+		trigger = {
+			has_variable = cm_gf_localmax
+		}
+		localization_key = cm_pf_status_localmax
+	}
+}
+
+cm_pf_cf_status = {
+	type = location
+	text = {
+		trigger = {
+			has_variable = cm_cf_top
+			var:cm_cf_top = 2
+		}
+		localization_key = cm_pf_status_second
+	}
+	text = {
+		trigger = {
+			has_variable = cm_cf_top
+			var:cm_cf_top = 3
+		}
+		localization_key = cm_pf_status_third
+	}
+	text = {
+		# Skip source tiles: they show the magenta stripe, not the gray local-max one.
+		trigger = {
+			has_variable = cm_cf_localmax
+			NOT = { modifier:local_proximity_source > 0 }
+		}
+		localization_key = cm_pf_status_localmax
+	}
+}
