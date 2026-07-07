@@ -721,6 +721,17 @@ cm_run_auto_urbanize = {
 			cm_stage_urbanize_candidate = { bt = cm_upgrade_rural_to_town_building }
 		}
 	}
+	if = {
+		limit = { exists = var:cm_urbanize_city_to_megalopolis }
+		ordered_owned_location = {
+			order_by = max_control
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			save_scope_as = cm_location
+			limit = { NOT = { integration_level = conquered } cm_location_can_mass_upgrade_to_megalopolis = yes }
+			cm_stage_urbanize_candidate = { bt = cm_upgrade_city_to_megalopolis_building }
+		}
+	}
 }
 
 # --- Auto Build Capital ---

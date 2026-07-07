@@ -41,6 +41,24 @@ cm_location_can_mass_upgrade_to_town = {
 }
 
 # Root is the location, expects scope:cm_country.
+# Mirrors vanilla megalopolis rank allow (in_game/common/location_ranks/00_default.txt, megalopolis).
+cm_location_can_mass_upgrade_to_megalopolis = {
+	AND = {
+		location_rank = location_rank:city
+		population >= 400
+		modifier:cannot_upgrade_location = no
+		is_market_center = yes
+		is_capital = yes
+		owner ?= { is_subject = no }
+		NOT = { has_building = building_type:cm_upgrade_city_to_megalopolis_building }
+		NOT = { any_buildings_in_location = { building_type = building_type:cm_upgrade_city_to_megalopolis_building building_levels_under_construction > 0 } }
+		NOT = { integration_level = conquered }
+		cm_mass_upgrade_city_to_megalopolis_discount_check = yes
+		cm_location_allowed_to_build = { target = building_type:cm_upgrade_city_to_megalopolis_building }
+	}
+}
+
+# Root is the location, expects scope:cm_country.
 # True when the location's RGO good is not in the player-configured ignore list.
 cm_rural_to_town_rgo_not_ignored = {
 	raw_material = { save_temporary_scope_as = cm_rgo_good }
@@ -76,6 +94,17 @@ cm_mass_upgrade_rural_to_town_discount_check = {
 	trigger_if = {
 		limit = { NOT = { exists = scope:cm_building_type } }
 		building_type:cm_upgrade_rural_to_town_building = { save_temporary_scope_as = cm_building_type }
+	}
+	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_urbanize }
+}
+
+# Root is the location, expects scope:cm_country.
+# Checks that the market price impact of megalopolis upgrade construction demand is within the player's threshold.
+cm_mass_upgrade_city_to_megalopolis_discount_check = {
+	save_temporary_scope_as = cm_location
+	trigger_if = {
+		limit = { NOT = { exists = scope:cm_building_type } }
+		building_type:cm_upgrade_city_to_megalopolis_building = { save_temporary_scope_as = cm_building_type }
 	}
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_urbanize }
 }

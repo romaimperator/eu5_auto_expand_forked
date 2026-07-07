@@ -87,3 +87,52 @@ cm_upgrade_rural_to_town_building = {
 		}
 	}
 }
+
+cm_upgrade_city_to_megalopolis_building = {
+	is_foreign = no
+	pop_type = peasants
+	max_levels = 1
+
+	category = infrastructure_category
+	employment_size = rural_peasant_produce_employment
+
+	city = yes
+	price = cm_megalopolis_upgrade_price
+
+	forbidden_for_estates = yes
+
+	country_potential = {
+		is_ai = no
+		is_subject = no
+		exists = var:cm_urbanize_city_to_megalopolis
+	}
+	build_time = 1825
+	construction_demand = build_megalopolis_demand
+	allow = {
+		modifier:cannot_upgrade_location = no
+	}
+	location_potential = {
+		population >= 400
+		is_market_center = yes
+		is_capital = yes
+	}
+
+	unique_production_methods = {
+		cm_upgrade_city_to_megalopolis_maintenance = {
+			masonry = 0.01
+			category = building_maintenance
+		}
+	}
+
+	modifier = {
+	}
+
+	on_built = {
+		location = {
+			trigger_event_silently = {
+				on_action = cm_upgrade_location_rank_on_action
+				days = 1
+			}
+		}
+	}
+}
