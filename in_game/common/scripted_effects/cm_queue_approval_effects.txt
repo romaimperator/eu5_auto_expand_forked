@@ -89,6 +89,11 @@ cm_q_loc_reset_food_rgo_scoring = {
 	remove_variable = cm_q_food_rgo_ok
 }
 
+cm_q_loc_reset_rank_scoring = {
+	remove_variable = cm_q_rank_price
+	remove_variable = cm_q_seen_rank
+}
+
 # Within-cycle construction slot and level claims. Root is the location.
 cm_q_loc_reset_cycle_counters = {
 	remove_variable = cm_q_slots_used
@@ -690,20 +695,58 @@ cm_q_pass_auto_urbanize = {
 							construct_building = { building_type = building_type:cm_upgrade_rural_to_town_building }
 							cm_commit_market_demand = yes
 						}
-						if = {
-							limit = {
-								scope:cm_building_type = building_type:cm_upgrade_city_to_megalopolis_building
-								cm_location_can_mass_upgrade_to_megalopolis = yes
-								cm_country_can_afford_staged_cost = yes
-								cm_market_has_construction_goods_for_building = yes
-							}
-							construct_building = { building_type = building_type:cm_upgrade_city_to_megalopolis_building }
-							cm_commit_market_demand = yes
-						}
 						remove_from_variable_map = { name = cm_q_urb_costs key = scope:cm_building_type }
 					}
 				}
 			}
 		}
 	}
+	cm_q_pass_auto_rank = yes
+}
+
+# Megalopolis rank drain: engine-deferred rank upgrades approved into cm_q_approved_rank_locations
+# and fired once by the queue window. Affordability uses the general gold reserve; the min-discount
+# and market-goods gates use the Found building as a build_megalopolis_demand proxy. Root is the country.
+cm_q_pass_auto_rank = {
+	if = {
+		limit = { has_variable_list = cm_q_rank_locations }
+		building_type:cm_upgrade_city_to_megalopolis_building = { save_scope_as = cm_building_type }
+		every_in_list = {
+			variable = cm_q_rank_locations
+			save_temporary_scope_as = cm_q_pass_loc
+			scope:cm_q_pass_loc = {
+				if = {
+					limit = { has_variable = cm_q_rank_price }
+					save_temporary_scope_value_as = { name = cm_cost value = var:cm_q_rank_price }
+					market = { save_temporary_scope_as = cm_market }
+					if = {
+						limit = {
+							cm_mass_upgrade_city_to_megalopolis_discount_check = yes
+							cm_country_can_afford_staged_cost = yes
+							cm_market_has_construction_goods_for_building = yes
+						}
+						cm_q_approve_rank_location = yes
+					}
+					remove_variable = cm_q_rank_price
+				}
+			}
+		}
+	}
+}
+
+# Approves one rank upgrade: records the location, commits its price to planned spend so a second
+# megalopolis this cycle sees the reduced gold, and commits the proxy market demand. Root is the
+# location. Expects scope:cm_country, scope:cm_cost, scope:cm_building_type, scope:cm_market.
+cm_q_approve_rank_location = {
+	save_temporary_scope_as = cm_approved_rank_loc
+	scope:cm_country = {
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_rank_locations target = scope:cm_approved_rank_loc } } }
+			add_to_variable_list = { name = cm_q_approved_rank_locations target = scope:cm_approved_rank_loc }
+			scope:cm_approved_rank_loc = { remove_variable = cm_q_seen_rank }
+			change_variable = { name = cm_q_planned_spend add = scope:cm_cost }
+			cmf_log = { action = cm_log_rank_approved }
+		}
+	}
+	cm_commit_market_demand = yes
 }

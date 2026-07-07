@@ -60,6 +60,7 @@ cm_q_reset_cycle_state = {
 	}
 	cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_build_locations LOCATION_LIST = cm_q_approved_build_types }
 	cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_upgrade_locations LOCATION_LIST = cm_q_approved_upgrade_types }
+	clear_variable_list = cm_q_approved_rank_locations
 	every_in_list = {
 		variable = cm_q_locations
 		save_scope_as = cm_q_reset_loc
@@ -94,6 +95,11 @@ cm_q_reset_cycle_state = {
 		variable = cm_q_food_rgo_locations
 		save_scope_as = cm_q_reset_loc
 		scope:cm_q_reset_loc = { cm_q_loc_reset_food_rgo_scoring = yes }
+	}
+	every_in_list = {
+		variable = cm_q_rank_locations
+		save_scope_as = cm_q_reset_loc
+		scope:cm_q_reset_loc = { cm_q_loc_reset_rank_scoring = yes }
 	}
 	clear_variable_list = cm_q_cand_locations
 	clear_variable_list = cm_q_upg_cand_locations
@@ -144,6 +150,12 @@ cm_stage_food_building_candidate = {
 # cm_q_approval_pass re-checks build-queue slots and the food gold reserve. Expects scope:cm_country, scope:cm_location.
 cm_stage_food_rgo_candidate = {
 	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_food_rgo_locations DONE_VAR = cm_q_done_food_rgo }
+}
+
+# Megalopolis rank-upgrade candidate for the unified queue. Location-only: the GUI scorer reads the
+# engine CanUpgradeRank and price, so no building type is staged. Expects scope:cm_country, scope:cm_location.
+cm_stage_rank_candidate = {
+	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_rank_locations DONE_VAR = cm_q_done_rank }
 }
 
 # Gated upgrade candidate for the unified queue, keyed by the standing obsolete type.
@@ -722,14 +734,22 @@ cm_run_auto_urbanize = {
 		}
 	}
 	if = {
-		limit = { exists = var:cm_urbanize_city_to_megalopolis }
+		limit = {
+			exists = var:cm_urbanize_city_to_megalopolis
+			is_subject = no
+		}
 		ordered_owned_location = {
 			order_by = max_control
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_scope_as = cm_location
-			limit = { NOT = { integration_level = conquered } cm_location_can_mass_upgrade_to_megalopolis = yes }
-			cm_stage_urbanize_candidate = { bt = cm_upgrade_city_to_megalopolis_building }
+			limit = {
+				location_rank = location_rank:city
+				NOT = { integration_level = conquered }
+				modifier:cannot_upgrade_location = no
+				population >= cm_megalopolis_stage_min_population
+			}
+			cm_stage_rank_candidate = yes
 		}
 	}
 }

@@ -113,8 +113,14 @@ cm_upgrade_city_to_megalopolis_building = {
 	}
 	location_potential = {
 		population >= 400
-		is_market_center = yes
-		is_capital = yes
+		trigger_if = {
+			limit = { NOT = { owner = { exists = var:cm_megalopolis_ignore_market_center } } }
+			is_market_center = yes
+		}
+		trigger_if = {
+			limit = { NOT = { owner = { exists = var:cm_megalopolis_ignore_capital } } }
+			is_capital = yes
+		}
 	}
 
 	unique_production_methods = {

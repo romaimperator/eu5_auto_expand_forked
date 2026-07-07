@@ -49,6 +49,19 @@ cm_q_probe_upgrade = {
 	}
 }
 
+# Instantiation probe for an approved rank upgrade. Root is the location.
+cm_q_probe_rank = {
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		if = {
+			limit = { NOT = { has_variable = cm_q_seen_rank } }
+			set_variable = { name = cm_q_seen_rank value = yes }
+		}
+	}
+}
+
 # Per-round completion check for the construct window's loop. Root is the player.
 # Once every executor has scored (processed >= staged), runs cm_q_approval_pass, then arms
 # the fire pass when every approved entry's widget is verified by its probe mark. A cycle
@@ -108,6 +121,17 @@ cm_q_sync_check = {
 							}
 						}
 					}
+				}
+			}
+			every_in_list = {
+				variable = cm_q_approved_rank_locations
+				save_scope_as = cm_q_chk_loc
+				scope:cm_q_chk_country = { set_local_variable = { name = cm_q_chk_any value = 1 } }
+				if = {
+					limit = { scope:cm_q_chk_loc = { has_variable = cm_q_seen_rank } }
+					scope:cm_q_chk_country = { change_variable = { name = cm_q_seen_count add = 1 } }
+				} else = {
+					scope:cm_q_chk_country = { set_local_variable = { name = cm_q_chk_all_seen value = 0 } }
 				}
 			}
 			if = {

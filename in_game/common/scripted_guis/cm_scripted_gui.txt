@@ -309,6 +309,33 @@ cm_gui_try_food_rgo = {
 		}
 	}
 }
+
+# Megalopolis rank scorer. Root is the location. Stores the engine upgrade price (its presence is the
+# eligibility marker cm_q_pass_auto_rank drains) only when CanUpgradeRank passed, and always increments
+# cm_q_processed so an ineligible staged city cannot stall the handshake. Expects scopes: country,
+# can_upgrade_rank, cost.
+cm_gui_try_rank = {
+	saved_scopes = { cm_country cm_can_upgrade_rank cm_cost }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		if = {
+			limit = {
+				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
+				save_temporary_scope_as = cm_q_item_loc
+				scope:cm_country = { is_target_in_variable_list = { name = cm_q_rank_locations target = scope:cm_q_item_loc } }
+				NOT = { has_variable = cm_q_done_rank }
+			}
+			set_variable = { name = cm_q_done_rank value = yes }
+			scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
+			if = {
+				limit = { scope:cm_can_upgrade_rank = yes }
+				set_variable = { name = cm_q_rank_price value = scope:cm_cost }
+			}
+		}
+	}
+}
 cm_check_for_auto_expand_when_removing_building = {
 	effect = {
 		save_scope_as = cm_the_building
