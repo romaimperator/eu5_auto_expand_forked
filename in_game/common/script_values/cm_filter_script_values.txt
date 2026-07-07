@@ -170,7 +170,7 @@ cm_location_food_potential = {
 	multiply = cm_location_food_potential_food_multiplier
 }
 
-# Net terrain proximity penalty (topography + vegetation). The per-topography capital impact is gated by cm_pf_capital_topo_bonus_enabled.
+# Net terrain proximity penalty (topography + vegetation), topography scaled by the owner's per-topography proximity impact modifiers.
 cm_location_proximity_modifier = {
 	value = 0
 	if = {
@@ -181,7 +181,7 @@ cm_location_proximity_modifier = {
 				limit = { exists = owner }
 				multiply = {
 					value = 1
-					add = { value = owner.modifier:mountains_proximity_impact multiply = cm_pf_capital_topo_bonus_enabled }
+					add = owner.modifier:mountains_proximity_impact
 				}
 			}
 		}
@@ -194,7 +194,7 @@ cm_location_proximity_modifier = {
 				limit = { exists = owner }
 				multiply = {
 					value = 1
-					add = { value = owner.modifier:hills_proximity_impact multiply = cm_pf_capital_topo_bonus_enabled }
+					add = owner.modifier:hills_proximity_impact
 				}
 			}
 		}
@@ -207,7 +207,7 @@ cm_location_proximity_modifier = {
 				limit = { exists = owner }
 				multiply = {
 					value = 1
-					add = { value = owner.modifier:wetlands_proximity_impact multiply = cm_pf_capital_topo_bonus_enabled }
+					add = owner.modifier:wetlands_proximity_impact
 				}
 			}
 		}
@@ -220,7 +220,7 @@ cm_location_proximity_modifier = {
 				limit = { exists = owner }
 				multiply = {
 					value = 1
-					add = { value = owner.modifier:plateau_proximity_impact multiply = cm_pf_capital_topo_bonus_enabled }
+					add = owner.modifier:plateau_proximity_impact
 				}
 			}
 		}
