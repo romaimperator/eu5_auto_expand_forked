@@ -1,0 +1,90 @@
+﻿# vanilla: in_game/gui/shared/location_tooltips.gui
+# mod: in_game/gui/cm_location_rank_tooltip_types.gui
+
+template location_rank_tooltip {
+    ContextualTooltipType = {
+        blockoverride "title_icon" {
+            icon = {
+                using = tooltip_title_icon_size
+                texture = "[Location.GetRankIcon]"
+            }
+        }
+
+        blockoverride "title_text" {
+            text = "[Location.GetRankAndName]"
+        }
+
+        blockoverride "concept_link" {
+            text = "[location_rank|e]"
+        }
+
+        blockoverride "title_button" {
+            mapmode_tooltip_button = {
+                datacontext = "[GetMapMode('cities')]"
+            }
+            mapmode_tooltip_button = {
+                datacontext = "[GetMapMode('provinces')]"
+            }
+        }
+
+        blockoverride "tooltip_content" {
+            TooltipTextBlock = {
+                visible = "[Location.IsCapital]"
+                blockoverride "text" {
+                    text = "SIMPLE_PROVINCE_ICON_COUNTRY_CAPITAL_TOOLTIP"
+                }
+            }
+			TooltipStringPairList = {
+				visible = "[Location.IsCapital]"
+                blockoverride "block_title" {
+					datacontext = "[Location]"
+                    text = "LOCATION_CAPITAL_BONUS"
+                }
+                textcontext = "[Location.GetOwner.GetCapitalBonusInfo]"
+            }
+
+
+            TooltipTextBlock = {
+                visible = "[Location.IsProvinceCapital]"
+                blockoverride "text" {
+                    text = "SIMPLE_PROVINCE_ICON_STATE_CAPITAL_TOOLTIP"
+                }
+            }
+            TooltipTextBlock = {
+                blockoverride "text" {
+                    text = "LOCATIONRANK_TOOLTIP"
+                }
+            }
+
+            # TooltipBlockList = {
+            #     textcontext = "[Location.GetRank.GetRankTooltip]"
+            # }
+
+            # TooltipBlockList = {
+            #     visible = "[Not(StringIsEmpty(Location.GetUpgradeRankEffects))]"
+            #     textcontext = "[Location.GetUpgradeRankEffects]"
+            # }
+
+            TooltipFlavorTextBlock = {
+                blockoverride "text" {
+                    text = "[Location.GetRank.GetDescription]"
+                }
+            }
+
+            # CM: Auto-food upgrade lock warning
+            TooltipTextBlock = {
+                visible = "[Location.MakeScope.GetVariable('cm_auto_food_location_enabled').IsSet]"
+                blockoverride "textblock_background_tint" {
+                    modify_texture = {
+                        using = color_red_texture
+                    }
+                }
+                blockoverride "text" {
+                    text = "CM_RANK_UPGRADE_AUTO_FOOD_WARNING"
+                }
+            }
+
+            block "location_rank_tooltip_button" {}
+        }
+    }
+}

@@ -1,0 +1,58 @@
+﻿# vanilla: in_game/gui/shared/location_tooltips.gui
+# mod: in_game/gui/cm_town_rights_tooltip_types.gui
+
+template location_town_rights_tooltip {
+    ContextualTooltipType = {
+        blockoverride "title_icon" {
+            icon = {
+                using = tooltip_title_icon_size
+                texture = "[GetConceptTexture('town_rights')]"
+            }
+        }
+        
+        blockoverride "concept_link" {
+            text = "[town_rights|e]"
+        }
+        blockoverride "title_text" {
+            text = "LOCATION_TOWN_RIGHTS_TITLE"
+        }
+
+        # CM: best urban rights map mode button
+        blockoverride "title_button" {
+            mapmode_tooltip_button = {
+                datacontext = "[GetMapMode('cm_best_town_right')]"
+            }
+        }
+
+        blockoverride "tooltip_content" {
+			
+
+			TooltipScrolledContentSection = { 
+                blockoverride "block_scrollarea" {
+                    maximumsize = { -1 550 }
+                }
+                blockoverride "section_content"	{
+                    datamodel = "[Location.GetTownRights]"                
+                    item = {	
+                        vbox = {
+                            spacing = 5
+                            TooltipScrolledStringPairList = {
+                                blockoverride "block_scrollarea" { maximumsize = { -1 360 } }
+                                blockoverride "block_title" {
+                                    raw_text = "#subtle_name [TownRights.GetType.GetIcon] [TownRights.GetType.GetNameWithNoTooltip]#!"
+                                }
+                                textcontext = "[TownRights.GetType.GetTooltip][TownRights.GetType.GetDebugTooltip(Location.Self)]"
+                            }
+                            TooltipFlavorTextBlock = {
+                                visible = "[Not(StringIsEmpty(TownRights.GetType.GetDesc))]"
+                                blockoverride "text" {
+                                    text = "[TownRights.GetType.GetDesc]"
+                                }
+                            }
+                        }
+                    }
+                }                
+			}
+		}
+    }
+}
