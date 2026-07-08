@@ -814,14 +814,14 @@ cm_pf_finalize = {
 		check_range_bounds = no
 		set_variable = { name = cm_cf_top value = 3 }
 	}
-	# Flag a local maximum for the secondary_map_color stripe: score at or above 70% of the best
-	# (700 on the 0-1000 scale) and strictly higher than every owned scored neighbor.
+	# Flag a local maximum for the secondary_map_color stripe: score at or above 80% of the best
+	# (800 on the 0-1000 scale) and strictly higher than every owned scored neighbor.
 	every_owned_location = {
 		limit = { has_variable = cm_gf_score }
 		save_temporary_scope_as = cm_pf_lm
 		if = {
 			limit = {
-				var:cm_gf_score >= 700
+				var:cm_gf_score >= 800
 				NOT = {
 					any_neighbor_location = {
 						owner ?= scope:cm_pf_c
@@ -834,7 +834,7 @@ cm_pf_finalize = {
 		}
 		if = {
 			limit = {
-				var:cm_cf_score >= 700
+				var:cm_cf_score >= 800
 				NOT = {
 					any_neighbor_location = {
 						owner ?= scope:cm_pf_c
