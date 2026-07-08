@@ -4,7 +4,10 @@
 Scores each royal specialization town right per province by how much of its
 boosted buildings' input goods the province supplies as raw materials, then
 emits the map mode that colors provinces by the best right and the tooltip
-machinery that ranks every option.
+machinery that ranks every option. Alongside it, one hidden search map mode
+per right colors by that right's fit alone (with already-granted and
+best-right-here stripes), opened from the search panel and the urban right
+tooltips; the scripted GUI checks those tooltip buttons use are emitted too.
 
 Reads vanilla town_rights (which goods each right boosts, right colors),
 building_types (production method slots: inline unique_production_methods plus
@@ -16,6 +19,7 @@ named_colors. Emits:
   in_game/common/scripted_triggers/cm_town_right_map_mode_triggers.txt
   in_game/common/scripted_effects/cm_town_right_map_mode_effects.txt
   in_game/common/customizable_localization/cm_town_right_map_mode_custom_loc.txt
+  in_game/common/scripted_guis/cm_town_right_map_mode_scripted_guis.txt
   in_game/gfx/map/map_modes/cm_town_right_map_mode.txt
   main_menu/localization/english/cm_town_right_map_mode_l_english.yml
 
@@ -105,6 +109,9 @@ OUT_EFFECTS = os.path.join(
 OUT_LOC = os.path.join(
     ROOT_DIR, "main_menu", "localization", "english",
     "cm_town_right_map_mode_l_english.yml")
+OUT_SCRIPTED_GUIS = os.path.join(
+    ROOT_DIR, "in_game", "common", "scripted_guis",
+    "cm_town_right_map_mode_scripted_guis.txt")
 
 # The generic royal specialization rights, in vanilla 01_discovery.txt order.
 # The order is the tie-break priority for both map color and tooltip ranking.
@@ -129,6 +136,14 @@ SHARE_DECIMALS = 3
 
 WATER_COLOR = "hsv { 0.58 0.50 0.52 }"
 NO_MATCH_COLOR = "rgb { 90 90 90 }"
+
+# Search mode fill lerps from this low anchor up to the right's own color; the
+# anchor and the granted stripe reuse the placement finder palette
+# (in_game/gfx/map/map_modes/cm_proximity_finder_map_modes.txt:31,45).
+SEARCH_LOW_COLOR = "rgb { 45 40 40 }"
+SEARCH_GRANTED_STRIPE = "rgb { 205 206 205 }"
+# Best-right-here stripe, gold to stand apart from every right color.
+SEARCH_BEST_STRIPE = "rgb { 255 200 60 }"
 
 OUTPUT_MODIFIER = re.compile(r"^local_([a-z0-9_]+)_output_modifier$")
 ASSIGN_BLOCK = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*=\s*\{")
@@ -547,6 +562,14 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods):
         lines.append("}")
     lines.append("")
 
+    lines.append("# One-based rank displays for the search mode tooltips.")
+    for right in ROYAL_RIGHTS:
+        lines.append(f"cm_trmm_rankdisp_{aliases[right]} = {{")
+        lines.append(f"\tvalue = cm_trmm_rank_{aliases[right]}")
+        lines.append("\tadd = 1")
+        lines.append("}")
+    lines.append("")
+
     lines.append(
         "# Same ranking machinery for the industries themselves, for the best-industries\n"
         "# tooltip list.")
@@ -697,6 +720,55 @@ def emit_custom_loc(aliases, boosted_goods):
     return "\n".join(lines) + "\n"
 
 
+# Trailing mode fields shared by the best-right and search modes.
+MODE_TAIL_HEAD = """
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = raw_material
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+"""
+
+MODE_TAIL_BLOCKS = """
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = no"""
+
+
 def emit_map_mode(rights, aliases, right_colors):
     n = len(ROYAL_RIGHTS)
     lines = [GENERATED_HEADER]
@@ -744,54 +816,102 @@ def emit_map_mode(rights, aliases, right_colors):
     lines.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND")
     lines.append("\t\t}")
     lines.append("\t}")
-    lines.append("""
-	small_map_names = raw_material
-	medium_map_names = raw_material
-	large_map_names = raw_material
+    lines.append(MODE_TAIL_HEAD)
+    lines.append("\tcategory = economy")
+    lines.append("\tindex = 1")
+    lines.append(MODE_TAIL_BLOCKS)
+    lines.append("}")
+    return "\n".join(lines) + "\n"
 
-	small_tooltip_context = location
-	medium_tooltip_context = location
-	large_tooltip_context = location
 
-	fill_in_impassable = yes
-	enable_snow = no
-
-	flatmap_behaviour = always
-	use_fow = no
-
-	category = economy
-	index = 1
-
-	map_markers = {
-		fort_marker = no
-		port_marker = no
-		unit_marker = no
-		combat_marker = no
-		combat_imminent_marker = no
-		supply_depot_marker = no
-		market_marker = yes
-		toll_marker = no
-		dynasty_marker = no
-		raw_goods_marker = yes
-	}
-
-	gradient_parameters = {
-		zoom_step = 2
-
-		gradient_alpha_inside = 1
-		gradient_alpha_outside = 1
-		gradient_width = 0.0375
-		gradient_color_mult = 0.9
-		edge_width = 0
-		edge_sharpness = 0.01
-		edge_alpha = 0
-		edge_color_mult = 0
-		before_lighting_blend = 0.5
-		after_lighting_blend = 0.5
-	}
-
-	refresh_colors_on_selection_change = no
-}""")
+def emit_search_map_modes(rights, aliases, right_colors):
+    n = len(ROYAL_RIGHTS)
+    lines = [
+        "# Per-right search variants of cm_best_town_right, hidden from the flyout",
+        "# (opened from the search panel and the urban right tooltips). The fill lerps",
+        "# from the low anchor to the right's own color by its fit score; stripes mark",
+        "# already-granted and best-right-here locations. The Day refresh counter",
+        "# (vanilla in_game/gfx/map/map_modes/map_modes.txt:1099) keeps the granted",
+        "# stripe current after grants.",
+    ]
+    for pos, right in enumerate(ROYAL_RIGHTS):
+        alias = aliases[right]
+        upper = alias.upper()
+        idx = n - pos
+        color, source = right_colors[right]
+        lines.append("")
+        lines.append(f"cm_trmm_search_{alias} = {{")
+        lines.append("\tmap_color = {")
+        lines.append("\t\tif = {")
+        lines.append("\t\t\tlimit = { is_land = no }")
+        lines.append(f"\t\t\tvalue = {WATER_COLOR}")
+        lines.append("\t\t}")
+        lines.append("\t\telse_if = {")
+        lines.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
+        lines.append(f"\t\t\tvalue = {NO_MATCH_COLOR}")
+        lines.append("\t\t}")
+        lines.append("\t\telse = {")
+        lines.append("\t\t\tlerp = {")
+        lines.append(f"\t\t\t\tmin_color = {SEARCH_LOW_COLOR}")
+        lines.append(f"\t\t\t\t# {right} color: {source}")
+        lines.append(f"\t\t\t\tmax_color = {color}")
+        lines.append(f"\t\t\t\tfactor = {{ value = cm_trmm_right_{alias} }}")
+        lines.append("\t\t\t}")
+        lines.append("\t\t}")
+        lines.append("\t}")
+        lines.append("")
+        lines.append("\tsecondary_map_color = {")
+        lines.append("\t\tif = {")
+        lines.append("\t\t\tlimit = {")
+        lines.append("\t\t\t\tis_land = yes")
+        lines.append(f"\t\t\t\thas_town_rights = town_rights_type:{right}")
+        lines.append("\t\t\t}")
+        lines.append(f"\t\t\tvalue = {SEARCH_GRANTED_STRIPE}")
+        lines.append("\t\t}")
+        lines.append("\t\telse_if = {")
+        lines.append("\t\t\tlimit = {")
+        lines.append("\t\t\t\tis_land = yes")
+        lines.append("\t\t\t\thas_variable = cm_trmm_best_idx")
+        lines.append(f"\t\t\t\tvar:cm_trmm_best_idx = {idx}")
+        lines.append("\t\t\t}")
+        lines.append(f"\t\t\tvalue = {SEARCH_BEST_STRIPE}")
+        lines.append("\t\t}")
+        lines.append("\t}")
+        lines.append("")
+        for desc, key_color in (
+                ("cm_trmm_search_legend_100", color),
+                ("cm_trmm_search_legend_0", SEARCH_LOW_COLOR),
+                ("cm_trmm_legend_none", NO_MATCH_COLOR),
+                ("cm_trmm_search_legend_granted", SEARCH_GRANTED_STRIPE),
+                ("cm_trmm_search_legend_best", SEARCH_BEST_STRIPE)):
+            lines.append("\tlegend_key = {")
+            lines.append(f"\t\tdesc = \"{desc}\"")
+            lines.append(f"\t\tcolor = {key_color}")
+            lines.append("\t}")
+        lines.append("")
+        lines.append("\ttooltip_key = {")
+        lines.append("\t\tif = {")
+        lines.append("\t\t\tlimit = { is_land = no }")
+        lines.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER")
+        lines.append("\t\t}")
+        lines.append("\t\telse_if = {")
+        lines.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
+        lines.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE")
+        lines.append("\t\t}")
+        lines.append("\t\telse_if = {")
+        lines.append(f"\t\t\tlimit = {{ has_town_rights = town_rights_type:{right} }}")
+        lines.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_GRANTED")
+        lines.append("\t\t}")
+        lines.append("\t\telse = {")
+        lines.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_LAND")
+        lines.append("\t\t}")
+        lines.append("\t}")
+        lines.append(MODE_TAIL_HEAD)
+        lines.append("\tcategory = hidden")
+        lines.append("\tallow_allocate_hotkey = no")
+        lines.append(MODE_TAIL_BLOCKS)
+        lines.append("\tcolor_refresh_counters = { Day }")
+        lines.append("}")
     return "\n".join(lines) + "\n"
 
 
@@ -812,17 +932,19 @@ def emit_loc(rights, aliases, boosted_goods):
         f" MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND: \"Specialization options:{slot_calls}"
         f"\\n\\nBreakdown:{bd_calls}"
         f"\\n\\nBest industries:{ind_calls}\"")
+    search_cores = {}
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
-        right_line = (
-            f"\\n@{right}! [ShowTownRightsName('{right}')]: "
+        right_core = (
+            f"@{right}! [ShowTownRightsName('{right}')]: "
             f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_right_{alias}')|%1]")
-        lines.append(f" cm_trmm_tt_line_{alias}: \"{right_line}\"")
+        lines.append(f" cm_trmm_tt_line_{alias}: \"\\n{right_core}\"")
         sub_lines = "".join(
             f"\\n  @{good}! [ShowGoodsName('{good}')]: "
             f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_cov_{good}')|%1]"
             for good in rights[right]["goods"])
-        lines.append(f" cm_trmm_bd_line_{alias}: \"{right_line}{sub_lines}\"")
+        lines.append(f" cm_trmm_bd_line_{alias}: \"\\n{right_core}{sub_lines}\"")
+        search_cores[alias] = right_core + sub_lines
     for good in boosted_goods:
         lines.append(
             f" cm_trmm_ind_line_{good}: \"\\n@{good}! [ShowGoodsName('{good}')]: "
@@ -831,6 +953,55 @@ def emit_loc(rights, aliases, boosted_goods):
     for right in ROYAL_RIGHTS:
         lines.append(
             f" cm_trmm_legend_{aliases[right]}: \"@{right}! [ShowTownRightsName('{right}')]\"")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        upper = alias.upper()
+        boosted = ", ".join(
+            f"@{good}! [ShowGoodsName('{good}')]"
+            for good in rights[right]["goods"])
+        lines.append(
+            f" mapmode_cm_trmm_search_{alias}_name: "
+            f"\"Urban Right Search: [ShowTownRightsName('{right}')]\"")
+        lines.append(
+            f" MAPMODE_CM_TRMM_SEARCH_{upper}: "
+            f"\"#T $mapmode_cm_trmm_search_{alias}_name$#!"
+            f"\\nColors each [location|e] by the share of input [goods|e] that the "
+            f"buildings boosted by @{right}! [ShowTownRightsName('{right}')] can "
+            f"source from the [province|e]'s [rgo|e]s. Light stripes mark "
+            f"where the right is already granted; gold stripes mark where it is the "
+            f"best specialization option.\\nBoosted industries: {boosted}\"")
+        lines.append(
+            f" MAPMODE_CM_TRMM_SEARCH_{upper}_TT_LAND: \"{search_cores[alias]}"
+            f"\\nRank among specializations here: "
+            f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_rankdisp_{alias}')|0] "
+            f"of {len(ROYAL_RIGHTS)}\"")
+        lines.append(
+            f" MAPMODE_CM_TRMM_SEARCH_{upper}_TT_GRANTED: "
+            f"\"$MAPMODE_CM_TRMM_SEARCH_{upper}_TT_LAND$"
+            f"$cm_trmm_search_granted_line$\"")
+    return "\n".join(lines) + "\n"
+
+
+def emit_scripted_guis(aliases):
+    lines = [GENERATED_HEADER]
+    lines.append(
+        "# Right-identity checks for the urban right tooltip search buttons. Root is\n"
+        "# a town_rights_type scope pushed from the GUI (TownRightsType.MakeScope).")
+    for right in ROYAL_RIGHTS:
+        lines.append(f"cm_trmm_is_search_{aliases[right]} = {{")
+        lines.append("\tis_shown = {")
+        lines.append(f"\t\tthis = town_rights_type:{right}")
+        lines.append("\t}")
+        lines.append("}")
+    lines.append("")
+    lines.append("cm_trmm_is_search_any = {")
+    lines.append("\tis_shown = {")
+    lines.append("\t\tOR = {")
+    for right in ROYAL_RIGHTS:
+        lines.append(f"\t\t\tthis = town_rights_type:{right}")
+    lines.append("\t\t}")
+    lines.append("\t}")
+    lines.append("}")
     return "\n".join(lines) + "\n"
 
 
@@ -915,11 +1086,14 @@ def main():
     write_output(OUT_TRIGGERS, emit_triggers(relevant))
     write_output(OUT_EFFECTS, emit_effects(options, aliases, boosted_goods))
     write_output(OUT_CUSTOM_LOC, emit_custom_loc(aliases, boosted_goods))
-    write_output(OUT_MAP_MODE, emit_map_mode(rights, aliases, right_colors))
+    write_output(OUT_MAP_MODE,
+                 emit_map_mode(rights, aliases, right_colors) + "\n"
+                 + emit_search_map_modes(rights, aliases, right_colors))
     write_output(OUT_LOC, emit_loc(rights, aliases, boosted_goods))
+    write_output(OUT_SCRIPTED_GUIS, emit_scripted_guis(aliases))
 
     for path in (OUT_SCRIPT_VALUES, OUT_TRIGGERS, OUT_EFFECTS, OUT_CUSTOM_LOC,
-                 OUT_MAP_MODE, OUT_LOC):
+                 OUT_MAP_MODE, OUT_LOC, OUT_SCRIPTED_GUIS):
         print(f"Wrote {os.path.relpath(path, ROOT_DIR).replace(os.sep, '/')}")
     for right in ROYAL_RIGHTS:
         goods_list = ", ".join(

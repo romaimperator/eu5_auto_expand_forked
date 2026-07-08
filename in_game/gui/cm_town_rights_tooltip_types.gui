@@ -55,3 +55,223 @@ template location_town_rights_tooltip {
 		}
     }
 }
+
+types cm_town_rights_tooltip_types {
+	# Search map mode buttons for an urban right's tooltips; the one matching the
+	# TownRightsType in context shows.
+	type cm_trmm_search_title_buttons = widget {
+		size = { 40 40 }
+		visible = "[GetScriptedGui('cm_trmm_is_search_any').IsShown(GuiScope.SetRoot(TownRightsType.MakeScope).End)]"
+
+		mapmode_tooltip_button = {
+			visible = "[And(CanChangeMapMode, GetScriptedGui('cm_trmm_is_search_tooling').IsShown(GuiScope.SetRoot(TownRightsType.MakeScope).End))]"
+			datacontext = "[GetMapMode('cm_trmm_search_tooling')]"
+			icon = {
+				size = { 75% 75% }
+				parentanchor = center
+				texture = "[TownRightsType.GetIcon]"
+			}
+		}
+
+		mapmode_tooltip_button = {
+			visible = "[And(CanChangeMapMode, GetScriptedGui('cm_trmm_is_search_jewelry').IsShown(GuiScope.SetRoot(TownRightsType.MakeScope).End))]"
+			datacontext = "[GetMapMode('cm_trmm_search_jewelry')]"
+			icon = {
+				size = { 75% 75% }
+				parentanchor = center
+				texture = "[TownRightsType.GetIcon]"
+			}
+		}
+
+		mapmode_tooltip_button = {
+			visible = "[And(CanChangeMapMode, GetScriptedGui('cm_trmm_is_search_naval').IsShown(GuiScope.SetRoot(TownRightsType.MakeScope).End))]"
+			datacontext = "[GetMapMode('cm_trmm_search_naval')]"
+			icon = {
+				size = { 75% 75% }
+				parentanchor = center
+				texture = "[TownRightsType.GetIcon]"
+			}
+		}
+
+		mapmode_tooltip_button = {
+			visible = "[And(CanChangeMapMode, GetScriptedGui('cm_trmm_is_search_textile').IsShown(GuiScope.SetRoot(TownRightsType.MakeScope).End))]"
+			datacontext = "[GetMapMode('cm_trmm_search_textile')]"
+			icon = {
+				size = { 75% 75% }
+				parentanchor = center
+				texture = "[TownRightsType.GetIcon]"
+			}
+		}
+
+		mapmode_tooltip_button = {
+			visible = "[And(CanChangeMapMode, GetScriptedGui('cm_trmm_is_search_weaponry').IsShown(GuiScope.SetRoot(TownRightsType.MakeScope).End))]"
+			datacontext = "[GetMapMode('cm_trmm_search_weaponry')]"
+			icon = {
+				size = { 75% 75% }
+				parentanchor = center
+				texture = "[TownRightsType.GetIcon]"
+			}
+		}
+
+		mapmode_tooltip_button = {
+			visible = "[And(CanChangeMapMode, GetScriptedGui('cm_trmm_is_search_book').IsShown(GuiScope.SetRoot(TownRightsType.MakeScope).End))]"
+			datacontext = "[GetMapMode('cm_trmm_search_book')]"
+			icon = {
+				size = { 75% 75% }
+				parentanchor = center
+				texture = "[TownRightsType.GetIcon]"
+			}
+		}
+
+		mapmode_tooltip_button = {
+			visible = "[And(CanChangeMapMode, GetScriptedGui('cm_trmm_is_search_artisan').IsShown(GuiScope.SetRoot(TownRightsType.MakeScope).End))]"
+			datacontext = "[GetMapMode('cm_trmm_search_artisan')]"
+			icon = {
+				size = { 75% 75% }
+				parentanchor = center
+				texture = "[TownRightsType.GetIcon]"
+			}
+		}
+
+		mapmode_tooltip_button = {
+			visible = "[And(CanChangeMapMode, GetScriptedGui('cm_trmm_is_search_brewing').IsShown(GuiScope.SetRoot(TownRightsType.MakeScope).End))]"
+			datacontext = "[GetMapMode('cm_trmm_search_brewing')]"
+			icon = {
+				size = { 75% 75% }
+				parentanchor = center
+				texture = "[TownRightsType.GetIcon]"
+			}
+		}
+
+		mapmode_tooltip_button = {
+			visible = "[And(CanChangeMapMode, GetScriptedGui('cm_trmm_is_search_masonry').IsShown(GuiScope.SetRoot(TownRightsType.MakeScope).End))]"
+			datacontext = "[GetMapMode('cm_trmm_search_masonry')]"
+			icon = {
+				size = { 75% 75% }
+				parentanchor = center
+				texture = "[TownRightsType.GetIcon]"
+			}
+		}
+	}
+}
+
+# Vanilla TownRightsType_tooltip (in_game/gui/shared/location_tooltips.gui:6995) with the per-right search map mode button added.
+template TownRightsType_tooltip {
+	ContextualTooltipType = {
+		blockoverride "title_text" {
+			text = "[TownRightsType.GetNameWithNoTooltip]"
+		}
+		blockoverride "title_icon" {
+			icon = {
+				using = tooltip_title_icon_size
+				texture = "[TownRightsType.GetIcon]"
+			}
+		}
+
+        blockoverride "title_button" {
+            mapmode_tooltip_button = {
+                datacontext = "[GetMapMode('town_rights')]"
+            }
+
+            # CM: per-right search map mode button
+            cm_trmm_search_title_buttons = {}
+
+            hint_button = {
+                action_tooltip = {
+                    title = "OPEN_HINT"
+                    on_action = "[OpenLateralViewWithParams('hints', 'selected_hint = hint_town_rights')]"
+                }
+            }
+        }
+
+		blockoverride "concept_link" {
+			text = [town_rights|E]
+		}
+		blockoverride "tooltip_content" {
+			TooltipDebugTextBlock = {
+				blockoverride "text" {
+					debug_text = "[TownRightsType.GetDebugText]"
+				}
+			}
+
+			TooltipStringPairList = {
+				textcontext = "[TownRightsType.GetTooltip]"
+			}
+
+			TooltipFlavorTextBlock = {
+				blockoverride "text" {
+					text = "[TownRightsType.GetDesc]"
+				}
+			}
+		}
+		blockoverride "extra_tooltip_content" {
+			TooltipScrolledRequirementsList = {
+				blockoverride "block_scrollarea" { maximumsize = { -1 300 } }
+				blockoverride "block_title" {
+					text = "game_concept_conditions"
+					visible = "[DataModelHasItems(RequirementsList.GetLines)]"
+				}
+				blockoverride "requirementslist_datamodel_is_empty" { visible = no }
+				visible = "[UIAction.IsLeftClickAndConfirmEnabled]"
+				textcontext = "[UIAction.GetConditions]"
+			}
+		}
+	}
+}
+
+# Vanilla TownRightsItem_tooltip (in_game/gui/shared/location_tooltips.gui:7055) with the per-right search map mode button added.
+template TownRightsItem_tooltip {
+	ContextualTooltipType = {
+		blockoverride "title_text" {
+			text = "[TownRightsItem.GetType.GetNameWithNoTooltip]"
+		}
+		blockoverride "title_icon" {
+			icon = {
+				using = tooltip_title_icon_size
+				texture = "[TownRightsItem.GetType.GetIcon]"
+			}
+		}
+		blockoverride "title_button" {
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('town_rights')]"
+			}
+
+			# CM: per-right search map mode button
+			cm_trmm_search_title_buttons = {
+				datacontext = "[TownRightsItem.GetType]"
+			}
+
+			hint_button = {
+				action_tooltip = {
+					title = "OPEN_HINT"
+					on_action = "[OpenLateralViewWithParams('hints', 'selected_hint = hint_town_rights')]"
+				}
+			}
+		}
+		blockoverride "concept_link" {
+			text = [town_rights|E]
+		}
+		blockoverride "tooltip_content" {
+			TooltipStringPairList = {
+				textcontext = "[TownRightsItem.GetType.GetTooltip]"
+			}
+			TooltipFlavorTextBlock = {
+				blockoverride "text" {
+					text = "[TownRightsItem.GetType.GetDesc]"
+				}
+			}
+
+            TooltipScrolledRowList = {
+                blockoverride "block_scrollarea" { maximumsize = { -1 420 }}
+                blockoverride "block_title" {
+					text = "TOWN_RIGHTS_ITEM_LOCATIONS_TITLE"
+					default_format = "#color_white"
+				}
+                blockoverride "rowlist_datamodel_is_empty" { visible = "[IsDataModelEmpty(TownRightsItem.GetLocations)]"}
+                blockoverride "rowlist_datamodel_has_items" { visible = "[DataModelHasItems(TownRightsItem.GetLocations)]"}
+                blockoverride "rowlist_datamodel" { datamodel = "[TownRightsItem.GetLocations]" }
+                blockoverride "rowlist_item" { text = "[LocationReference.GetLocation.GetName]" }
+            }
+		}
+	}
+}

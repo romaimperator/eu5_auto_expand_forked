@@ -160,3 +160,1144 @@ cm_best_town_right = {
 
 	refresh_colors_on_selection_change = no
 }
+
+# Per-right search variants of cm_best_town_right, hidden from the flyout
+# (opened from the search panel and the urban right tooltips). The fill lerps
+# from the low anchor to the right's own color by its fit score; stripes mark
+# already-granted and best-right-here locations. The Day refresh counter
+# (vanilla in_game/gfx/map/map_modes/map_modes.txt:1099) keeps the granted
+# stripe current after grants.
+
+cm_trmm_search_tooling = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = rgb { 90 90 90 }
+		}
+		else = {
+			lerp = {
+				min_color = rgb { 45 40 40 }
+				# royal_tooling_rights color: named color goods_tools, main_menu/common/named_colors/02_map.txt:4161
+				max_color = hsv { 0.62 0.3 0.08 }
+				factor = { value = cm_trmm_right_tooling }
+			}
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				has_town_rights = town_rights_type:royal_tooling_rights
+			}
+			value = rgb { 205 206 205 }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_variable = cm_trmm_best_idx
+				var:cm_trmm_best_idx = 9
+			}
+			value = rgb { 255 200 60 }
+		}
+	}
+
+	legend_key = {
+		desc = "cm_trmm_search_legend_100"
+		color = hsv { 0.62 0.3 0.08 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_0"
+		color = rgb { 45 40 40 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_none"
+		color = rgb { 90 90 90 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted"
+		color = rgb { 205 206 205 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_best"
+		color = rgb { 255 200 60 }
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE
+		}
+		else_if = {
+			limit = { has_town_rights = town_rights_type:royal_tooling_rights }
+			value = MAPMODE_CM_TRMM_SEARCH_TOOLING_TT_GRANTED
+		}
+		else = {
+			value = MAPMODE_CM_TRMM_SEARCH_TOOLING_TT_LAND
+		}
+	}
+
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = raw_material
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+
+	category = hidden
+	allow_allocate_hotkey = no
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = no
+	color_refresh_counters = { Day }
+}
+
+cm_trmm_search_jewelry = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = rgb { 90 90 90 }
+		}
+		else = {
+			lerp = {
+				min_color = rgb { 45 40 40 }
+				# royal_jewelry_rights color: named color goods_jewelry, main_menu/common/named_colors/02_map.txt:4159
+				max_color = hsv { 0.085 0.95 1 }
+				factor = { value = cm_trmm_right_jewelry }
+			}
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				has_town_rights = town_rights_type:royal_jewelry_rights
+			}
+			value = rgb { 205 206 205 }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_variable = cm_trmm_best_idx
+				var:cm_trmm_best_idx = 8
+			}
+			value = rgb { 255 200 60 }
+		}
+	}
+
+	legend_key = {
+		desc = "cm_trmm_search_legend_100"
+		color = hsv { 0.085 0.95 1 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_0"
+		color = rgb { 45 40 40 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_none"
+		color = rgb { 90 90 90 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted"
+		color = rgb { 205 206 205 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_best"
+		color = rgb { 255 200 60 }
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE
+		}
+		else_if = {
+			limit = { has_town_rights = town_rights_type:royal_jewelry_rights }
+			value = MAPMODE_CM_TRMM_SEARCH_JEWELRY_TT_GRANTED
+		}
+		else = {
+			value = MAPMODE_CM_TRMM_SEARCH_JEWELRY_TT_LAND
+		}
+	}
+
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = raw_material
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+
+	category = hidden
+	allow_allocate_hotkey = no
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = no
+	color_refresh_counters = { Day }
+}
+
+cm_trmm_search_naval = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = rgb { 90 90 90 }
+		}
+		else = {
+			lerp = {
+				min_color = rgb { 45 40 40 }
+				# royal_naval_rights color: named color goods_naval_supplies, main_menu/common/named_colors/02_map.txt:4126
+				max_color = rgb { 0.11 0.17 0.4 }
+				factor = { value = cm_trmm_right_naval }
+			}
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				has_town_rights = town_rights_type:royal_naval_rights
+			}
+			value = rgb { 205 206 205 }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_variable = cm_trmm_best_idx
+				var:cm_trmm_best_idx = 7
+			}
+			value = rgb { 255 200 60 }
+		}
+	}
+
+	legend_key = {
+		desc = "cm_trmm_search_legend_100"
+		color = rgb { 0.11 0.17 0.4 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_0"
+		color = rgb { 45 40 40 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_none"
+		color = rgb { 90 90 90 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted"
+		color = rgb { 205 206 205 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_best"
+		color = rgb { 255 200 60 }
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE
+		}
+		else_if = {
+			limit = { has_town_rights = town_rights_type:royal_naval_rights }
+			value = MAPMODE_CM_TRMM_SEARCH_NAVAL_TT_GRANTED
+		}
+		else = {
+			value = MAPMODE_CM_TRMM_SEARCH_NAVAL_TT_LAND
+		}
+	}
+
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = raw_material
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+
+	category = hidden
+	allow_allocate_hotkey = no
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = no
+	color_refresh_counters = { Day }
+}
+
+cm_trmm_search_textile = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = rgb { 90 90 90 }
+		}
+		else = {
+			lerp = {
+				min_color = rgb { 45 40 40 }
+				# royal_textile_rights color: named color goods_fine_cloth, main_menu/common/named_colors/02_map.txt:4184
+				max_color = rgb { 183 169 155 }
+				factor = { value = cm_trmm_right_textile }
+			}
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				has_town_rights = town_rights_type:royal_textile_rights
+			}
+			value = rgb { 205 206 205 }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_variable = cm_trmm_best_idx
+				var:cm_trmm_best_idx = 6
+			}
+			value = rgb { 255 200 60 }
+		}
+	}
+
+	legend_key = {
+		desc = "cm_trmm_search_legend_100"
+		color = rgb { 183 169 155 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_0"
+		color = rgb { 45 40 40 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_none"
+		color = rgb { 90 90 90 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted"
+		color = rgb { 205 206 205 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_best"
+		color = rgb { 255 200 60 }
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE
+		}
+		else_if = {
+			limit = { has_town_rights = town_rights_type:royal_textile_rights }
+			value = MAPMODE_CM_TRMM_SEARCH_TEXTILE_TT_GRANTED
+		}
+		else = {
+			value = MAPMODE_CM_TRMM_SEARCH_TEXTILE_TT_LAND
+		}
+	}
+
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = raw_material
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+
+	category = hidden
+	allow_allocate_hotkey = no
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = no
+	color_refresh_counters = { Day }
+}
+
+cm_trmm_search_weaponry = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = rgb { 90 90 90 }
+		}
+		else = {
+			lerp = {
+				min_color = rgb { 45 40 40 }
+				# royal_weaponry_rights color: named color goods_weaponry, main_menu/common/named_colors/02_map.txt:4183
+				max_color = rgb { 202 204 206 }
+				factor = { value = cm_trmm_right_weaponry }
+			}
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				has_town_rights = town_rights_type:royal_weaponry_rights
+			}
+			value = rgb { 205 206 205 }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_variable = cm_trmm_best_idx
+				var:cm_trmm_best_idx = 5
+			}
+			value = rgb { 255 200 60 }
+		}
+	}
+
+	legend_key = {
+		desc = "cm_trmm_search_legend_100"
+		color = rgb { 202 204 206 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_0"
+		color = rgb { 45 40 40 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_none"
+		color = rgb { 90 90 90 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted"
+		color = rgb { 205 206 205 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_best"
+		color = rgb { 255 200 60 }
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE
+		}
+		else_if = {
+			limit = { has_town_rights = town_rights_type:royal_weaponry_rights }
+			value = MAPMODE_CM_TRMM_SEARCH_WEAPONRY_TT_GRANTED
+		}
+		else = {
+			value = MAPMODE_CM_TRMM_SEARCH_WEAPONRY_TT_LAND
+		}
+	}
+
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = raw_material
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+
+	category = hidden
+	allow_allocate_hotkey = no
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = no
+	color_refresh_counters = { Day }
+}
+
+cm_trmm_search_book = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = rgb { 90 90 90 }
+		}
+		else = {
+			lerp = {
+				min_color = rgb { 45 40 40 }
+				# royal_book_rights color: named color goods_paper, main_menu/common/named_colors/02_map.txt:4143
+				max_color = rgb { 0.9 0.86 0.71 }
+				factor = { value = cm_trmm_right_book }
+			}
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				has_town_rights = town_rights_type:royal_book_rights
+			}
+			value = rgb { 205 206 205 }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_variable = cm_trmm_best_idx
+				var:cm_trmm_best_idx = 4
+			}
+			value = rgb { 255 200 60 }
+		}
+	}
+
+	legend_key = {
+		desc = "cm_trmm_search_legend_100"
+		color = rgb { 0.9 0.86 0.71 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_0"
+		color = rgb { 45 40 40 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_none"
+		color = rgb { 90 90 90 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted"
+		color = rgb { 205 206 205 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_best"
+		color = rgb { 255 200 60 }
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE
+		}
+		else_if = {
+			limit = { has_town_rights = town_rights_type:royal_book_rights }
+			value = MAPMODE_CM_TRMM_SEARCH_BOOK_TT_GRANTED
+		}
+		else = {
+			value = MAPMODE_CM_TRMM_SEARCH_BOOK_TT_LAND
+		}
+	}
+
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = raw_material
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+
+	category = hidden
+	allow_allocate_hotkey = no
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = no
+	color_refresh_counters = { Day }
+}
+
+cm_trmm_search_artisan = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = rgb { 90 90 90 }
+		}
+		else = {
+			lerp = {
+				min_color = rgb { 45 40 40 }
+				# royal_artisan_rights color: named color goods_pottery, main_menu/common/named_colors/02_map.txt:4198
+				max_color = rgb { 160 192 192 }
+				factor = { value = cm_trmm_right_artisan }
+			}
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				has_town_rights = town_rights_type:royal_artisan_rights
+			}
+			value = rgb { 205 206 205 }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_variable = cm_trmm_best_idx
+				var:cm_trmm_best_idx = 3
+			}
+			value = rgb { 255 200 60 }
+		}
+	}
+
+	legend_key = {
+		desc = "cm_trmm_search_legend_100"
+		color = rgb { 160 192 192 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_0"
+		color = rgb { 45 40 40 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_none"
+		color = rgb { 90 90 90 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted"
+		color = rgb { 205 206 205 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_best"
+		color = rgb { 255 200 60 }
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE
+		}
+		else_if = {
+			limit = { has_town_rights = town_rights_type:royal_artisan_rights }
+			value = MAPMODE_CM_TRMM_SEARCH_ARTISAN_TT_GRANTED
+		}
+		else = {
+			value = MAPMODE_CM_TRMM_SEARCH_ARTISAN_TT_LAND
+		}
+	}
+
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = raw_material
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+
+	category = hidden
+	allow_allocate_hotkey = no
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = no
+	color_refresh_counters = { Day }
+}
+
+cm_trmm_search_brewing = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = rgb { 90 90 90 }
+		}
+		else = {
+			lerp = {
+				min_color = rgb { 45 40 40 }
+				# royal_brewing_rights color: named color goods_liquor, main_menu/common/named_colors/02_map.txt:4157
+				max_color = hsv { 0.9 0.8 0.2 }
+				factor = { value = cm_trmm_right_brewing }
+			}
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				has_town_rights = town_rights_type:royal_brewing_rights
+			}
+			value = rgb { 205 206 205 }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_variable = cm_trmm_best_idx
+				var:cm_trmm_best_idx = 2
+			}
+			value = rgb { 255 200 60 }
+		}
+	}
+
+	legend_key = {
+		desc = "cm_trmm_search_legend_100"
+		color = hsv { 0.9 0.8 0.2 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_0"
+		color = rgb { 45 40 40 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_none"
+		color = rgb { 90 90 90 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted"
+		color = rgb { 205 206 205 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_best"
+		color = rgb { 255 200 60 }
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE
+		}
+		else_if = {
+			limit = { has_town_rights = town_rights_type:royal_brewing_rights }
+			value = MAPMODE_CM_TRMM_SEARCH_BREWING_TT_GRANTED
+		}
+		else = {
+			value = MAPMODE_CM_TRMM_SEARCH_BREWING_TT_LAND
+		}
+	}
+
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = raw_material
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+
+	category = hidden
+	allow_allocate_hotkey = no
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = no
+	color_refresh_counters = { Day }
+}
+
+cm_trmm_search_masonry = {
+	map_color = {
+		if = {
+			limit = { is_land = no }
+			value = hsv { 0.58 0.50 0.52 }
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = rgb { 90 90 90 }
+		}
+		else = {
+			lerp = {
+				min_color = rgb { 45 40 40 }
+				# royal_masonry_rights color: named color goods_masonry, main_menu/common/named_colors/02_map.txt:4191
+				max_color = hsv360 { 26 70 25 }
+				factor = { value = cm_trmm_right_masonry }
+			}
+		}
+	}
+
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				has_town_rights = town_rights_type:royal_masonry_rights
+			}
+			value = rgb { 205 206 205 }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_variable = cm_trmm_best_idx
+				var:cm_trmm_best_idx = 1
+			}
+			value = rgb { 255 200 60 }
+		}
+	}
+
+	legend_key = {
+		desc = "cm_trmm_search_legend_100"
+		color = hsv360 { 26 70 25 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_0"
+		color = rgb { 45 40 40 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_none"
+		color = rgb { 90 90 90 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted"
+		color = rgb { 205 206 205 }
+	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_best"
+		color = rgb { 255 200 60 }
+	}
+
+	tooltip_key = {
+		if = {
+			limit = { is_land = no }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER
+		}
+		else_if = {
+			limit = { NOT = { has_variable = cm_trmm_best_idx } }
+			value = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE
+		}
+		else_if = {
+			limit = { has_town_rights = town_rights_type:royal_masonry_rights }
+			value = MAPMODE_CM_TRMM_SEARCH_MASONRY_TT_GRANTED
+		}
+		else = {
+			value = MAPMODE_CM_TRMM_SEARCH_MASONRY_TT_LAND
+		}
+	}
+
+	small_map_names = raw_material
+	medium_map_names = raw_material
+	large_map_names = raw_material
+
+	small_tooltip_context = location
+	medium_tooltip_context = location
+	large_tooltip_context = location
+
+	fill_in_impassable = yes
+	enable_snow = no
+
+	flatmap_behaviour = always
+	use_fow = no
+
+	category = hidden
+	allow_allocate_hotkey = no
+
+	map_markers = {
+		fort_marker = no
+		port_marker = no
+		unit_marker = no
+		combat_marker = no
+		combat_imminent_marker = no
+		supply_depot_marker = no
+		market_marker = yes
+		toll_marker = no
+		dynasty_marker = no
+		raw_goods_marker = yes
+	}
+
+	gradient_parameters = {
+		zoom_step = 2
+
+		gradient_alpha_inside = 1
+		gradient_alpha_outside = 1
+		gradient_width = 0.0375
+		gradient_color_mult = 0.9
+		edge_width = 0
+		edge_sharpness = 0.01
+		edge_alpha = 0
+		edge_color_mult = 0
+		before_lighting_blend = 0.5
+		after_lighting_blend = 0.5
+	}
+
+	refresh_colors_on_selection_change = no
+	color_refresh_counters = { Day }
+}

@@ -1,0 +1,122 @@
+# Urban right search panel: shown while the recommended urban rights map mode
+# family is active. The best-rights button plus one search button per royal
+# right; hovering previews the mode, clicking sets it.
+widget = {
+	name = "cm_town_rights_search_panel"
+	size = { 100% 100% }
+	alwaystransparent = yes
+	# Keeps the descendant visibility gates re-evaluating each frame.
+	visible = "[EqualTo_CFixedPoint('(CFixedPoint)0', '(CFixedPoint)0')]"
+	layer = top
+
+	widget = {
+		parentanchor = hcenter|bottom
+		widgetanchor = hcenter|bottom
+		position = { 0 -110 }
+		# 10 buttons at 40 wide plus spacing and margins.
+		size = { 452 56 }
+		alwaystransparent = no
+		using = bg_paper_card
+		visible = "[And(GetPlayer.Exists, Or(Or5(GetMapMode('cm_best_town_right').IsActive, GetMapMode('cm_trmm_search_tooling').IsActive, GetMapMode('cm_trmm_search_jewelry').IsActive, GetMapMode('cm_trmm_search_naval').IsActive, GetMapMode('cm_trmm_search_textile').IsActive), Or5(GetMapMode('cm_trmm_search_weaponry').IsActive, GetMapMode('cm_trmm_search_book').IsActive, GetMapMode('cm_trmm_search_artisan').IsActive, GetMapMode('cm_trmm_search_brewing').IsActive, GetMapMode('cm_trmm_search_masonry').IsActive)))]"
+
+		hbox = {
+			spacing = 4
+			margin = { 8 8 }
+
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('cm_best_town_right')]"
+				onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('cm_best_town_right')]"
+			}
+
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('cm_trmm_search_tooling')]"
+				onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('cm_trmm_search_tooling')]"
+				icon = {
+					size = { 75% 75% }
+					parentanchor = center
+					texture = "gfx/interface/icons/town_rights/royal_tooling_rights.dds"
+				}
+			}
+
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('cm_trmm_search_jewelry')]"
+				onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('cm_trmm_search_jewelry')]"
+				icon = {
+					size = { 75% 75% }
+					parentanchor = center
+					texture = "gfx/interface/icons/town_rights/royal_jewelry_rights.dds"
+				}
+			}
+
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('cm_trmm_search_naval')]"
+				onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('cm_trmm_search_naval')]"
+				icon = {
+					size = { 75% 75% }
+					parentanchor = center
+					texture = "gfx/interface/icons/town_rights/_default.dds"
+				}
+			}
+
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('cm_trmm_search_textile')]"
+				onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('cm_trmm_search_textile')]"
+				icon = {
+					size = { 75% 75% }
+					parentanchor = center
+					texture = "gfx/interface/icons/town_rights/_default.dds"
+				}
+			}
+
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('cm_trmm_search_weaponry')]"
+				onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('cm_trmm_search_weaponry')]"
+				icon = {
+					size = { 75% 75% }
+					parentanchor = center
+					texture = "gfx/interface/icons/town_rights/royal_weaponry_rights.dds"
+				}
+			}
+
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('cm_trmm_search_book')]"
+				onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('cm_trmm_search_book')]"
+				icon = {
+					size = { 75% 75% }
+					parentanchor = center
+					texture = "gfx/interface/icons/town_rights/royal_book_rights.dds"
+				}
+			}
+
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('cm_trmm_search_artisan')]"
+				onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('cm_trmm_search_artisan')]"
+				icon = {
+					size = { 75% 75% }
+					parentanchor = center
+					texture = "gfx/interface/icons/town_rights/_default.dds"
+				}
+			}
+
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('cm_trmm_search_brewing')]"
+				onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('cm_trmm_search_brewing')]"
+				icon = {
+					size = { 75% 75% }
+					parentanchor = center
+					texture = "gfx/interface/icons/town_rights/_default.dds"
+				}
+			}
+
+			mapmode_tooltip_button = {
+				datacontext = "[GetMapMode('cm_trmm_search_masonry')]"
+				onmousehierarchyenter = "[PdxGuiWidget.PushMapModeOverride('cm_trmm_search_masonry')]"
+				icon = {
+					size = { 75% 75% }
+					parentanchor = center
+					texture = "gfx/interface/icons/town_rights/_default.dds"
+				}
+			}
+		}
+	}
+}
