@@ -142,10 +142,10 @@ WATER_COLOR = "hsv { 0.58 0.50 0.52 }"
 # (in_game/gfx/map/map_modes/cm_food_map_modes.txt:193).
 NO_MATCH_COLOR = "rgb { 0 0 0 }"
 
-# Search mode fill lerps from this low anchor up to the right's own color; the
-# anchor and the granted stripe reuse the placement finder palette
-# (in_game/gfx/map/map_modes/cm_proximity_finder_map_modes.txt:31,45).
-SEARCH_LOW_COLOR = "rgb { 45 40 40 }"
+# Search mode fill lerps from NO_MATCH_COLOR up to the right's own color, so
+# the gradient's dark end is the same black as a genuine no-match location.
+# The granted stripe reuses the placement finder palette
+# (in_game/gfx/map/map_modes/cm_proximity_finder_map_modes.txt:45).
 SEARCH_GRANTED_STRIPE = "rgb { 205 206 205 }"
 # Best-right-here stripe, gold to stand apart from every right color.
 SEARCH_BEST_STRIPE = "rgb { 255 200 60 }"
@@ -482,6 +482,29 @@ def province_check(good):
     return f"any_location_in_province_definition = {{ raw_material ?= goods:{good} }}"
 
 
+def _diff_var(x, y, aliases):
+    """Name of the stored pairwise diff for the pair (x, y) and whether it
+    already reads as score(x) - score(y): cm_trmm_diff_a__b is only stored
+    for a appearing before b in ROYAL_RIGHTS, so the opposite order reads the
+    negated value."""
+    px, py = ROYAL_RIGHTS.index(x), ROYAL_RIGHTS.index(y)
+    if px < py:
+        return f"cm_trmm_diff_{aliases[x]}__{aliases[y]}", True
+    return f"cm_trmm_diff_{aliases[y]}__{aliases[x]}", False
+
+
+def tied_trigger(x, y, aliases):
+    """Trigger fragment testing score(x) == score(y)."""
+    name, _ = _diff_var(x, y, aliases)
+    return f"{name} = 0"
+
+
+def greater_trigger(x, y, aliases):
+    """Trigger fragment testing score(x) > score(y)."""
+    name, positive = _diff_var(x, y, aliases)
+    return f"{name} {'> 0' if positive else '< 0'}"
+
+
 def emit_script_values(rights, options, aliases, boosted_goods, self_goods):
     lines = [GENERATED_HEADER]
     lines.append(
@@ -570,11 +593,66 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods):
         lines.append("}")
     lines.append("")
 
-    lines.append("# One-based rank displays for the search mode tooltips.")
+    lines.append(
+        "# Tie-aware dense tier for the search mode tooltips: is_leader marks the\n"
+        "# earliest-priority right at each distinct score, tier counts distinct scores\n"
+        "# strictly above (0 = best, so tierdisp is 1-based), tier_total is the number\n"
+        "# of distinct scores at this location, and tie_count is how many other rights\n"
+        "# share this exact score.")
+    for pos, right in enumerate(ROYAL_RIGHTS):
+        alias = aliases[right]
+        earlier = ROYAL_RIGHTS[:pos]
+        lines.append(f"cm_trmm_is_leader_{alias} = {{")
+        lines.append("\tvalue = 1")
+        if earlier:
+            lines.append("\tif = {")
+            lines.append("\t\tlimit = {")
+            lines.append("\t\t\tOR = {")
+            for e in earlier:
+                lines.append(f"\t\t\t\t{tied_trigger(e, right, aliases)}")
+            lines.append("\t\t\t}")
+            lines.append("\t\t}")
+            lines.append("\t\tvalue = 0")
+            lines.append("\t}")
+        lines.append("}")
+    lines.append("")
     for right in ROYAL_RIGHTS:
-        lines.append(f"cm_trmm_rankdisp_{aliases[right]} = {{")
-        lines.append(f"\tvalue = cm_trmm_rank_{aliases[right]}")
+        alias = aliases[right]
+        lines.append(f"cm_trmm_tier_{alias} = {{")
+        lines.append("\tvalue = 0")
+        for other in ROYAL_RIGHTS:
+            if other == right:
+                continue
+            lines.append("\tif = {")
+            lines.append("\t\tlimit = {")
+            lines.append(f"\t\t\tcm_trmm_is_leader_{aliases[other]} = 1")
+            lines.append(f"\t\t\t{greater_trigger(other, right, aliases)}")
+            lines.append("\t\t}")
+            lines.append("\t\tadd = 1")
+            lines.append("\t}")
+        lines.append("}")
+        lines.append(f"cm_trmm_tierdisp_{alias} = {{")
+        lines.append(f"\tvalue = cm_trmm_tier_{alias}")
         lines.append("\tadd = 1")
+        lines.append("}")
+    lines.append("")
+    lines.append("cm_trmm_tier_total = {")
+    lines.append(f"\tvalue = cm_trmm_is_leader_{aliases[ROYAL_RIGHTS[0]]}")
+    for right in ROYAL_RIGHTS[1:]:
+        lines.append(f"\tadd = cm_trmm_is_leader_{aliases[right]}")
+    lines.append("}")
+    lines.append("")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        lines.append(f"cm_trmm_tie_count_{alias} = {{")
+        lines.append("\tvalue = 0")
+        for other in ROYAL_RIGHTS:
+            if other == right:
+                continue
+            lines.append("\tif = {")
+            lines.append(f"\t\tlimit = {{ {tied_trigger(other, right, aliases)} }}")
+            lines.append("\t\tadd = 1")
+            lines.append("\t}")
         lines.append("}")
     lines.append("")
 
@@ -735,6 +813,62 @@ def emit_custom_loc(aliases, boosted_goods):
         lines.append("\t\tfallback = yes")
         lines.append("\t}")
         lines.append("}")
+
+    lines.append(
+        "# Comma-joined \"tied with\" list per right: cm_trmm_tie_prefix_* shows the\n"
+        "# shared static label when at least one other right ties, and\n"
+        "# cm_trmm_tie_item_<right>_<other> resolves to that other right's name (with a\n"
+        "# leading comma unless it is the first tied item in priority order), or nothing.")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        lines.append(f"cm_trmm_tie_prefix_{alias} = {{")
+        lines.append("\ttype = location")
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append(f"\t\t\tcm_trmm_tie_count_{alias} > 0")
+        lines.append("\t\t}")
+        lines.append("\t\tlocalization_key = cm_trmm_tied_with_prefix")
+        lines.append("\t}")
+        lines.append("\ttext = {")
+        lines.append("\t\tlocalization_key = cm_trmm_blank")
+        lines.append("\t\tfallback = yes")
+        lines.append("\t}")
+        lines.append("}")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        for other in ROYAL_RIGHTS:
+            if other == right:
+                continue
+            other_alias = aliases[other]
+            other_pos = ROYAL_RIGHTS.index(other)
+            earlier_others = [o for o in ROYAL_RIGHTS[:other_pos] if o != right]
+            lines.append(f"cm_trmm_tie_item_{alias}_{other_alias} = {{")
+            lines.append("\ttype = location")
+            lines.append("\ttext = {")
+            lines.append("\t\ttrigger = {")
+            lines.append(f"\t\t\t{tied_trigger(other, right, aliases)}")
+            if earlier_others:
+                lines.append("\t\t\tNOT = {")
+                lines.append("\t\t\t\tOR = {")
+                for e in earlier_others:
+                    lines.append(f"\t\t\t\t\t{tied_trigger(e, right, aliases)}")
+                lines.append("\t\t\t\t}")
+                lines.append("\t\t\t}")
+            lines.append("\t\t}")
+            lines.append(f"\t\tlocalization_key = cm_trmm_tie_name_only_{other_alias}")
+            lines.append("\t}")
+            lines.append("\ttext = {")
+            lines.append("\t\ttrigger = {")
+            lines.append(f"\t\t\t{tied_trigger(other, right, aliases)}")
+            lines.append("\t\t}")
+            lines.append(f"\t\tlocalization_key = cm_trmm_tie_name_comma_{other_alias}")
+            lines.append("\t}")
+            lines.append("\ttext = {")
+            lines.append("\t\tlocalization_key = cm_trmm_blank")
+            lines.append("\t\tfallback = yes")
+            lines.append("\t}")
+            lines.append("}")
+
     return "\n".join(lines) + "\n"
 
 
@@ -876,7 +1010,7 @@ def emit_search_map_modes(rights, aliases, right_colors):
         lines.append("\t\t}")
         lines.append("\t\telse = {")
         lines.append("\t\t\tlerp = {")
-        lines.append(f"\t\t\t\tmin_color = {SEARCH_LOW_COLOR}")
+        lines.append(f"\t\t\t\tmin_color = {NO_MATCH_COLOR}")
         lines.append(f"\t\t\t\t# {right} color: {source}")
         lines.append(f"\t\t\t\tmax_color = {color}")
         lines.append(f"\t\t\t\tfactor = {{ value = cm_trmm_right_{alias} }}")
@@ -904,7 +1038,6 @@ def emit_search_map_modes(rights, aliases, right_colors):
         lines.append("")
         for desc, key_color in (
                 ("cm_trmm_search_legend_100", color),
-                ("cm_trmm_search_legend_0", SEARCH_LOW_COLOR),
                 ("cm_trmm_search_legend_none", NO_MATCH_COLOR),
                 ("cm_trmm_search_legend_granted", SEARCH_GRANTED_STRIPE),
                 ("cm_trmm_search_legend_best", SEARCH_BEST_STRIPE)):
@@ -983,6 +1116,14 @@ def emit_loc(rights, aliases, boosted_goods):
             f" cm_trmm_legend_{aliases[right]}: \"@{right}! [ShowTownRightsName('{right}')]\"")
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
+        lines.append(
+            f" cm_trmm_tie_name_only_{alias}: "
+            f"\"@{right}! [ShowTownRightsName('{right}')]\"")
+        lines.append(
+            f" cm_trmm_tie_name_comma_{alias}: "
+            f"\", @{right}! [ShowTownRightsName('{right}')]\"")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
         upper = alias.upper()
         boosted = ", ".join(
             f"@{good}! [ShowGoodsName('{good}')]"
@@ -998,11 +1139,15 @@ def emit_loc(rights, aliases, boosted_goods):
             f"source from the [province|e]'s [rgo|e]s. Light stripes mark "
             f"where the right is already granted; gold stripes mark where it is the "
             f"best specialization option.\\nBoosted industries: {boosted}\"")
+        tie_items = "".join(
+            f"[ROOT.GetLocation.Custom('cm_trmm_tie_item_{alias}_{aliases[other]}')]"
+            for other in ROYAL_RIGHTS if other != right)
         lines.append(
             f" MAPMODE_CM_TRMM_SEARCH_{upper}_TT_LAND: \"{search_cores[alias]}"
             f"\\nRank among specializations here: "
-            f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_rankdisp_{alias}')|0] "
-            f"of {len(ROYAL_RIGHTS)}\"")
+            f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_tierdisp_{alias}')|0] "
+            f"of [ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_tier_total')|0]"
+            f"[ROOT.GetLocation.Custom('cm_trmm_tie_prefix_{alias}')]{tie_items}\"")
         lines.append(
             f" MAPMODE_CM_TRMM_SEARCH_{upper}_TT_GRANTED: "
             f"\"$MAPMODE_CM_TRMM_SEARCH_{upper}_TT_LAND$"

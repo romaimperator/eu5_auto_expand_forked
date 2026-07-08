@@ -1724,42 +1724,1025 @@ cm_trmm_rank_masonry = {
 	}
 }
 
-# One-based rank displays for the search mode tooltips.
-cm_trmm_rankdisp_tooling = {
-	value = cm_trmm_rank_tooling
+# Tie-aware dense tier for the search mode tooltips: is_leader marks the
+# earliest-priority right at each distinct score, tier counts distinct scores
+# strictly above (0 = best, so tierdisp is 1-based), tier_total is the number
+# of distinct scores at this location, and tie_count is how many other rights
+# share this exact score.
+cm_trmm_is_leader_tooling = {
+	value = 1
+}
+cm_trmm_is_leader_jewelry = {
+	value = 1
+	if = {
+		limit = {
+			OR = {
+				cm_trmm_diff_tooling__jewelry = 0
+			}
+		}
+		value = 0
+	}
+}
+cm_trmm_is_leader_naval = {
+	value = 1
+	if = {
+		limit = {
+			OR = {
+				cm_trmm_diff_tooling__naval = 0
+				cm_trmm_diff_jewelry__naval = 0
+			}
+		}
+		value = 0
+	}
+}
+cm_trmm_is_leader_textile = {
+	value = 1
+	if = {
+		limit = {
+			OR = {
+				cm_trmm_diff_tooling__textile = 0
+				cm_trmm_diff_jewelry__textile = 0
+				cm_trmm_diff_naval__textile = 0
+			}
+		}
+		value = 0
+	}
+}
+cm_trmm_is_leader_weaponry = {
+	value = 1
+	if = {
+		limit = {
+			OR = {
+				cm_trmm_diff_tooling__weaponry = 0
+				cm_trmm_diff_jewelry__weaponry = 0
+				cm_trmm_diff_naval__weaponry = 0
+				cm_trmm_diff_textile__weaponry = 0
+			}
+		}
+		value = 0
+	}
+}
+cm_trmm_is_leader_book = {
+	value = 1
+	if = {
+		limit = {
+			OR = {
+				cm_trmm_diff_tooling__book = 0
+				cm_trmm_diff_jewelry__book = 0
+				cm_trmm_diff_naval__book = 0
+				cm_trmm_diff_textile__book = 0
+				cm_trmm_diff_weaponry__book = 0
+			}
+		}
+		value = 0
+	}
+}
+cm_trmm_is_leader_artisan = {
+	value = 1
+	if = {
+		limit = {
+			OR = {
+				cm_trmm_diff_tooling__artisan = 0
+				cm_trmm_diff_jewelry__artisan = 0
+				cm_trmm_diff_naval__artisan = 0
+				cm_trmm_diff_textile__artisan = 0
+				cm_trmm_diff_weaponry__artisan = 0
+				cm_trmm_diff_book__artisan = 0
+			}
+		}
+		value = 0
+	}
+}
+cm_trmm_is_leader_brewing = {
+	value = 1
+	if = {
+		limit = {
+			OR = {
+				cm_trmm_diff_tooling__brewing = 0
+				cm_trmm_diff_jewelry__brewing = 0
+				cm_trmm_diff_naval__brewing = 0
+				cm_trmm_diff_textile__brewing = 0
+				cm_trmm_diff_weaponry__brewing = 0
+				cm_trmm_diff_book__brewing = 0
+				cm_trmm_diff_artisan__brewing = 0
+			}
+		}
+		value = 0
+	}
+}
+cm_trmm_is_leader_masonry = {
+	value = 1
+	if = {
+		limit = {
+			OR = {
+				cm_trmm_diff_tooling__masonry = 0
+				cm_trmm_diff_jewelry__masonry = 0
+				cm_trmm_diff_naval__masonry = 0
+				cm_trmm_diff_textile__masonry = 0
+				cm_trmm_diff_weaponry__masonry = 0
+				cm_trmm_diff_book__masonry = 0
+				cm_trmm_diff_artisan__masonry = 0
+				cm_trmm_diff_brewing__masonry = 0
+			}
+		}
+		value = 0
+	}
+}
+
+cm_trmm_tier_tooling = {
+	value = 0
+	if = {
+		limit = {
+			cm_trmm_is_leader_jewelry = 1
+			cm_trmm_diff_tooling__jewelry < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_naval = 1
+			cm_trmm_diff_tooling__naval < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_textile = 1
+			cm_trmm_diff_tooling__textile < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_weaponry = 1
+			cm_trmm_diff_tooling__weaponry < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_book = 1
+			cm_trmm_diff_tooling__book < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_artisan = 1
+			cm_trmm_diff_tooling__artisan < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_brewing = 1
+			cm_trmm_diff_tooling__brewing < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_masonry = 1
+			cm_trmm_diff_tooling__masonry < 0
+		}
+		add = 1
+	}
+}
+cm_trmm_tierdisp_tooling = {
+	value = cm_trmm_tier_tooling
 	add = 1
 }
-cm_trmm_rankdisp_jewelry = {
-	value = cm_trmm_rank_jewelry
+cm_trmm_tier_jewelry = {
+	value = 0
+	if = {
+		limit = {
+			cm_trmm_is_leader_tooling = 1
+			cm_trmm_diff_tooling__jewelry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_naval = 1
+			cm_trmm_diff_jewelry__naval < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_textile = 1
+			cm_trmm_diff_jewelry__textile < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_weaponry = 1
+			cm_trmm_diff_jewelry__weaponry < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_book = 1
+			cm_trmm_diff_jewelry__book < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_artisan = 1
+			cm_trmm_diff_jewelry__artisan < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_brewing = 1
+			cm_trmm_diff_jewelry__brewing < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_masonry = 1
+			cm_trmm_diff_jewelry__masonry < 0
+		}
+		add = 1
+	}
+}
+cm_trmm_tierdisp_jewelry = {
+	value = cm_trmm_tier_jewelry
 	add = 1
 }
-cm_trmm_rankdisp_naval = {
-	value = cm_trmm_rank_naval
+cm_trmm_tier_naval = {
+	value = 0
+	if = {
+		limit = {
+			cm_trmm_is_leader_tooling = 1
+			cm_trmm_diff_tooling__naval > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_jewelry = 1
+			cm_trmm_diff_jewelry__naval > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_textile = 1
+			cm_trmm_diff_naval__textile < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_weaponry = 1
+			cm_trmm_diff_naval__weaponry < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_book = 1
+			cm_trmm_diff_naval__book < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_artisan = 1
+			cm_trmm_diff_naval__artisan < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_brewing = 1
+			cm_trmm_diff_naval__brewing < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_masonry = 1
+			cm_trmm_diff_naval__masonry < 0
+		}
+		add = 1
+	}
+}
+cm_trmm_tierdisp_naval = {
+	value = cm_trmm_tier_naval
 	add = 1
 }
-cm_trmm_rankdisp_textile = {
-	value = cm_trmm_rank_textile
+cm_trmm_tier_textile = {
+	value = 0
+	if = {
+		limit = {
+			cm_trmm_is_leader_tooling = 1
+			cm_trmm_diff_tooling__textile > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_jewelry = 1
+			cm_trmm_diff_jewelry__textile > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_naval = 1
+			cm_trmm_diff_naval__textile > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_weaponry = 1
+			cm_trmm_diff_textile__weaponry < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_book = 1
+			cm_trmm_diff_textile__book < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_artisan = 1
+			cm_trmm_diff_textile__artisan < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_brewing = 1
+			cm_trmm_diff_textile__brewing < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_masonry = 1
+			cm_trmm_diff_textile__masonry < 0
+		}
+		add = 1
+	}
+}
+cm_trmm_tierdisp_textile = {
+	value = cm_trmm_tier_textile
 	add = 1
 }
-cm_trmm_rankdisp_weaponry = {
-	value = cm_trmm_rank_weaponry
+cm_trmm_tier_weaponry = {
+	value = 0
+	if = {
+		limit = {
+			cm_trmm_is_leader_tooling = 1
+			cm_trmm_diff_tooling__weaponry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_jewelry = 1
+			cm_trmm_diff_jewelry__weaponry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_naval = 1
+			cm_trmm_diff_naval__weaponry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_textile = 1
+			cm_trmm_diff_textile__weaponry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_book = 1
+			cm_trmm_diff_weaponry__book < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_artisan = 1
+			cm_trmm_diff_weaponry__artisan < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_brewing = 1
+			cm_trmm_diff_weaponry__brewing < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_masonry = 1
+			cm_trmm_diff_weaponry__masonry < 0
+		}
+		add = 1
+	}
+}
+cm_trmm_tierdisp_weaponry = {
+	value = cm_trmm_tier_weaponry
 	add = 1
 }
-cm_trmm_rankdisp_book = {
-	value = cm_trmm_rank_book
+cm_trmm_tier_book = {
+	value = 0
+	if = {
+		limit = {
+			cm_trmm_is_leader_tooling = 1
+			cm_trmm_diff_tooling__book > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_jewelry = 1
+			cm_trmm_diff_jewelry__book > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_naval = 1
+			cm_trmm_diff_naval__book > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_textile = 1
+			cm_trmm_diff_textile__book > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_weaponry = 1
+			cm_trmm_diff_weaponry__book > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_artisan = 1
+			cm_trmm_diff_book__artisan < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_brewing = 1
+			cm_trmm_diff_book__brewing < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_masonry = 1
+			cm_trmm_diff_book__masonry < 0
+		}
+		add = 1
+	}
+}
+cm_trmm_tierdisp_book = {
+	value = cm_trmm_tier_book
 	add = 1
 }
-cm_trmm_rankdisp_artisan = {
-	value = cm_trmm_rank_artisan
+cm_trmm_tier_artisan = {
+	value = 0
+	if = {
+		limit = {
+			cm_trmm_is_leader_tooling = 1
+			cm_trmm_diff_tooling__artisan > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_jewelry = 1
+			cm_trmm_diff_jewelry__artisan > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_naval = 1
+			cm_trmm_diff_naval__artisan > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_textile = 1
+			cm_trmm_diff_textile__artisan > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_weaponry = 1
+			cm_trmm_diff_weaponry__artisan > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_book = 1
+			cm_trmm_diff_book__artisan > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_brewing = 1
+			cm_trmm_diff_artisan__brewing < 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_masonry = 1
+			cm_trmm_diff_artisan__masonry < 0
+		}
+		add = 1
+	}
+}
+cm_trmm_tierdisp_artisan = {
+	value = cm_trmm_tier_artisan
 	add = 1
 }
-cm_trmm_rankdisp_brewing = {
-	value = cm_trmm_rank_brewing
+cm_trmm_tier_brewing = {
+	value = 0
+	if = {
+		limit = {
+			cm_trmm_is_leader_tooling = 1
+			cm_trmm_diff_tooling__brewing > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_jewelry = 1
+			cm_trmm_diff_jewelry__brewing > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_naval = 1
+			cm_trmm_diff_naval__brewing > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_textile = 1
+			cm_trmm_diff_textile__brewing > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_weaponry = 1
+			cm_trmm_diff_weaponry__brewing > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_book = 1
+			cm_trmm_diff_book__brewing > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_artisan = 1
+			cm_trmm_diff_artisan__brewing > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_masonry = 1
+			cm_trmm_diff_brewing__masonry < 0
+		}
+		add = 1
+	}
+}
+cm_trmm_tierdisp_brewing = {
+	value = cm_trmm_tier_brewing
 	add = 1
 }
-cm_trmm_rankdisp_masonry = {
-	value = cm_trmm_rank_masonry
+cm_trmm_tier_masonry = {
+	value = 0
+	if = {
+		limit = {
+			cm_trmm_is_leader_tooling = 1
+			cm_trmm_diff_tooling__masonry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_jewelry = 1
+			cm_trmm_diff_jewelry__masonry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_naval = 1
+			cm_trmm_diff_naval__masonry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_textile = 1
+			cm_trmm_diff_textile__masonry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_weaponry = 1
+			cm_trmm_diff_weaponry__masonry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_book = 1
+			cm_trmm_diff_book__masonry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_artisan = 1
+			cm_trmm_diff_artisan__masonry > 0
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			cm_trmm_is_leader_brewing = 1
+			cm_trmm_diff_brewing__masonry > 0
+		}
+		add = 1
+	}
+}
+cm_trmm_tierdisp_masonry = {
+	value = cm_trmm_tier_masonry
 	add = 1
+}
+
+cm_trmm_tier_total = {
+	value = cm_trmm_is_leader_tooling
+	add = cm_trmm_is_leader_jewelry
+	add = cm_trmm_is_leader_naval
+	add = cm_trmm_is_leader_textile
+	add = cm_trmm_is_leader_weaponry
+	add = cm_trmm_is_leader_book
+	add = cm_trmm_is_leader_artisan
+	add = cm_trmm_is_leader_brewing
+	add = cm_trmm_is_leader_masonry
+}
+
+cm_trmm_tie_count_tooling = {
+	value = 0
+	if = {
+		limit = { cm_trmm_diff_tooling__jewelry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_tooling__naval = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_tooling__textile = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_tooling__weaponry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_tooling__book = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_tooling__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_tooling__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_tooling__masonry = 0 }
+		add = 1
+	}
+}
+cm_trmm_tie_count_jewelry = {
+	value = 0
+	if = {
+		limit = { cm_trmm_diff_tooling__jewelry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__naval = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__textile = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__weaponry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__book = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__masonry = 0 }
+		add = 1
+	}
+}
+cm_trmm_tie_count_naval = {
+	value = 0
+	if = {
+		limit = { cm_trmm_diff_tooling__naval = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__naval = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__textile = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__weaponry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__book = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__masonry = 0 }
+		add = 1
+	}
+}
+cm_trmm_tie_count_textile = {
+	value = 0
+	if = {
+		limit = { cm_trmm_diff_tooling__textile = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__textile = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__textile = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_textile__weaponry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_textile__book = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_textile__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_textile__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_textile__masonry = 0 }
+		add = 1
+	}
+}
+cm_trmm_tie_count_weaponry = {
+	value = 0
+	if = {
+		limit = { cm_trmm_diff_tooling__weaponry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__weaponry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__weaponry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_textile__weaponry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_weaponry__book = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_weaponry__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_weaponry__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_weaponry__masonry = 0 }
+		add = 1
+	}
+}
+cm_trmm_tie_count_book = {
+	value = 0
+	if = {
+		limit = { cm_trmm_diff_tooling__book = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__book = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__book = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_textile__book = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_weaponry__book = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_book__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_book__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_book__masonry = 0 }
+		add = 1
+	}
+}
+cm_trmm_tie_count_artisan = {
+	value = 0
+	if = {
+		limit = { cm_trmm_diff_tooling__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_textile__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_weaponry__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_book__artisan = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_artisan__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_artisan__masonry = 0 }
+		add = 1
+	}
+}
+cm_trmm_tie_count_brewing = {
+	value = 0
+	if = {
+		limit = { cm_trmm_diff_tooling__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_textile__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_weaponry__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_book__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_artisan__brewing = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_brewing__masonry = 0 }
+		add = 1
+	}
+}
+cm_trmm_tie_count_masonry = {
+	value = 0
+	if = {
+		limit = { cm_trmm_diff_tooling__masonry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_jewelry__masonry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_naval__masonry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_textile__masonry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_weaponry__masonry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_book__masonry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_artisan__masonry = 0 }
+		add = 1
+	}
+	if = {
+		limit = { cm_trmm_diff_brewing__masonry = 0 }
+		add = 1
+	}
 }
 
 # Same ranking machinery for the industries themselves, for the best-industries
