@@ -24,8 +24,11 @@ named_colors. Emits:
   main_menu/localization/english/cm_town_right_map_mode_l_english.yml
 
 The scoring math runs once per lobby: cm_trmm_recompute_all sweeps every
-province, stores each qualifying province's industry coverages as province
-variables, and stores each location's best right index as a location variable.
+province definition, computes each qualifying definition's industry coverages
+definition-wide, stores them on every province slice in the definition (so
+ownership splits never divide a province's coverage between owners; variables
+on the province_definition itself do not read back), and stores each
+location's best right index as a location variable.
 A boosted good that is itself a raw material (dyes, wine) gets the RGO averaged
 in as one more fully covered producer on the RGO's own location, since the
 right's output modifier boosts that RGO too - so scores differ per location
@@ -135,7 +138,9 @@ PM_OUTPUT_THRESHOLD = 0.5
 SHARE_DECIMALS = 3
 
 WATER_COLOR = "hsv { 0.58 0.50 0.52 }"
-NO_MATCH_COLOR = "rgb { 90 90 90 }"
+# Pure black, matching the 0-score floor of cm_location_food_potential
+# (in_game/gfx/map/map_modes/cm_food_map_modes.txt:193).
+NO_MATCH_COLOR = "rgb { 0 0 0 }"
 
 # Search mode fill lerps from this low anchor up to the right's own color; the
 # anchor and the granted stripe reuse the placement finder palette
@@ -472,17 +477,20 @@ def dominates(a, b):
 
 
 def province_check(good):
-    return f"any_location_in_province = {{ raw_material = goods:{good} }}"
+    # ?= : definitions include water and wasteland locations whose raw_material
+    # link is invalid and error-logs on a plain compare.
+    return f"any_location_in_province_definition = {{ raw_material ?= goods:{good} }}"
 
 
 def emit_script_values(rights, options, aliases, boosted_goods, self_goods):
     lines = [GENERATED_HEADER]
     lines.append(
-        "# Province-scoped option values consumed by cm_trmm_recompute_province (each\n"
-        "# is one worth-using production method's locally-available input share), plus\n"
-        "# the location-scoped readers of the stored province variables that the map\n"
-        "# mode tooltip machinery uses. Readers are only evaluated on locations the\n"
-        "# recompute pass marked (has_variable cm_trmm_best_idx).\n")
+        "# Province-definition-scoped option values consumed by\n"
+        "# cm_trmm_recompute_province_definition (each is one worth-using production\n"
+        "# method's locally-available input share), plus the location-scoped readers of\n"
+        "# the stored province variables that the map mode tooltip machinery uses.\n"
+        "# Readers are only evaluated on locations the recompute pass marked\n"
+        "# (has_variable cm_trmm_best_idx).\n")
 
     for good in boosted_goods:
         for k, option in enumerate(options[good], start=1):
@@ -602,14 +610,14 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods):
 def emit_triggers(relevant_goods):
     lines = [GENERATED_HEADER]
     lines.append(
-        "# Province trigger. True when the province produces any raw material consumed\n"
-        "# by a worth-using production method of a building a royal specialization town\n"
-        "# right boosts. Gates the recompute pass.")
-    lines.append("cm_trmm_province_has_any_input = {")
-    lines.append("\tany_location_in_province = {")
+        "# Province definition trigger. True when the province definition produces any\n"
+        "# raw material consumed by a worth-using production method of a building a\n"
+        "# royal specialization town right boosts. Gates the recompute pass.")
+    lines.append("cm_trmm_province_definition_has_any_input = {")
+    lines.append("\tany_location_in_province_definition = {")
     lines.append("\t\tOR = {")
     for good in relevant_goods:
-        lines.append(f"\t\t\traw_material = goods:{good}")
+        lines.append(f"\t\t\traw_material ?= goods:{good}")
     lines.append("\t\t}")
     lines.append("\t}")
     lines.append("}")
@@ -619,58 +627,68 @@ def emit_triggers(relevant_goods):
 def emit_effects(options, aliases, boosted_goods):
     lines = [GENERATED_HEADER]
     lines.append(
-        "# Once-per-lobby precompute: stores every qualifying province's industry\n"
-        "# coverages as province variables and each of its locations' best right index\n"
-        "# as a location variable, so the map mode and tooltip only read stored values.\n")
-    lines.append("# Province scope.")
-    lines.append("cm_trmm_recompute_province = {")
+        "# Once-per-lobby precompute: computes each qualifying province definition's\n"
+        "# industry coverages definition-wide, stores them on every province slice in\n"
+        "# the definition, and stores each location's best right index as a location\n"
+        "# variable, so the map mode and tooltip only read stored values. Variables\n"
+        "# stored on the province_definition itself do not read back, so coverage is\n"
+        "# staged in locals and written to every slice.\n")
+    lines.append("# Province definition scope.")
+    lines.append("cm_trmm_recompute_province_definition = {")
     lines.append("\tif = {")
-    lines.append("\t\tlimit = { cm_trmm_province_has_any_input = yes }")
+    lines.append("\t\tlimit = { cm_trmm_province_definition_has_any_input = yes }")
     for good in boosted_goods:
-        lines.append("\t\tset_variable = {")
-        lines.append(f"\t\t\tname = cm_trmm_cov_{good}")
+        lines.append("\t\tset_local_variable = {")
+        lines.append(f"\t\t\tname = cm_trmm_l_cov_{good}")
         lines.append("\t\t\tvalue = {")
         lines.append("\t\t\t\tvalue = 0")
         for k in range(1, len(options[good]) + 1):
             lines.append(f"\t\t\t\tmin = cm_trmm_opt_{good}_{k}")
         lines.append("\t\t\t}")
         lines.append("\t\t}")
+    lines.append("\t\tevery_province_in_province_definition = {")
+    for good in boosted_goods:
+        lines.append("\t\t\tset_variable = {")
+        lines.append(f"\t\t\t\tname = cm_trmm_cov_{good}")
+        lines.append(f"\t\t\t\tvalue = local_var:cm_trmm_l_cov_{good}")
+        lines.append("\t\t\t}")
     lines.append(
-        "\t\t# Best right per location, encoded as round(score * 1000) * 10 + index so\n"
-        "\t\t# the chained min = (raise-to-at-least) running maximum keeps both the score\n"
-        "\t\t# and which right holds it. Higher index wins score ties, so index order is\n"
-        "\t\t# the reverse of the priority order.")
-    lines.append("\t\tevery_location_in_province = {")
-    lines.append("\t\t\tset_local_variable = {")
-    lines.append("\t\t\t\tname = cm_trmm_enc")
-    lines.append("\t\t\t\tvalue = {")
-    lines.append("\t\t\t\t\tvalue = 0")
+        "\t\t\t# Best right per location, encoded as round(score * 1000) * 10 + index so\n"
+        "\t\t\t# the chained min = (raise-to-at-least) running maximum keeps both the score\n"
+        "\t\t\t# and which right holds it. Higher index wins score ties, so index order is\n"
+        "\t\t\t# the reverse of the priority order.")
+    lines.append("\t\t\tevery_location_in_province = {")
+    lines.append("\t\t\t\tset_local_variable = {")
+    lines.append("\t\t\t\t\tname = cm_trmm_enc")
+    lines.append("\t\t\t\t\tvalue = {")
+    lines.append("\t\t\t\t\t\tvalue = 0")
     for right in ROYAL_RIGHTS:
-        lines.append(f"\t\t\t\t\tmin = cm_trmm_enc_{aliases[right]}")
+        lines.append(f"\t\t\t\t\t\tmin = cm_trmm_enc_{aliases[right]}")
+    lines.append("\t\t\t\t\t}")
     lines.append("\t\t\t\t}")
-    lines.append("\t\t\t}")
-    lines.append("\t\t\tset_variable = {")
-    lines.append("\t\t\t\tname = cm_trmm_best_idx")
-    lines.append("\t\t\t\tvalue = {")
-    lines.append("\t\t\t\t\tvalue = local_var:cm_trmm_enc")
-    lines.append("\t\t\t\t\tmodulo = 10")
+    lines.append("\t\t\t\tset_variable = {")
+    lines.append("\t\t\t\t\tname = cm_trmm_best_idx")
+    lines.append("\t\t\t\t\tvalue = {")
+    lines.append("\t\t\t\t\t\tvalue = local_var:cm_trmm_enc")
+    lines.append("\t\t\t\t\t\tmodulo = 10")
+    lines.append("\t\t\t\t\t}")
     lines.append("\t\t\t\t}")
     lines.append("\t\t\t}")
     lines.append("\t\t}")
     lines.append("\t}")
     lines.append("\telse = {")
-    lines.append("\t\tevery_location_in_province = {")
-    lines.append("\t\t\tlimit = { has_variable = cm_trmm_best_idx }")
-    lines.append("\t\t\tremove_variable = cm_trmm_best_idx")
+    lines.append("\t\tevery_province_in_province_definition = {")
+    lines.append("\t\t\tevery_location_in_province = {")
+    lines.append("\t\t\t\tlimit = { has_variable = cm_trmm_best_idx }")
+    lines.append("\t\t\t\tremove_variable = cm_trmm_best_idx")
+    lines.append("\t\t\t}")
     lines.append("\t\t}")
     lines.append("\t}")
     lines.append("}")
     lines.append("")
     lines.append("cm_trmm_recompute_all = {")
     lines.append("\tevery_province_definition = {")
-    lines.append("\t\tevery_province_in_province_definition = {")
-    lines.append("\t\t\tcm_trmm_recompute_province = yes")
-    lines.append("\t\t}")
+    lines.append("\t\tcm_trmm_recompute_province_definition = yes")
     lines.append("\t}")
     lines.append("}")
     return "\n".join(lines) + "\n"
@@ -745,10 +763,10 @@ MODE_TAIL_BLOCKS = """
 		combat_marker = no
 		combat_imminent_marker = no
 		supply_depot_marker = no
-		market_marker = yes
+		market_marker = no
 		toll_marker = no
 		dynasty_marker = no
-		raw_goods_marker = yes
+		raw_goods_marker = no
 	}
 
 	gradient_parameters = {
@@ -850,6 +868,12 @@ def emit_search_map_modes(rights, aliases, right_colors):
         lines.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
         lines.append(f"\t\t\tvalue = {NO_MATCH_COLOR}")
         lines.append("\t\t}")
+        # Kept after the has_variable branch so the score never reads unset
+        # province variables.
+        lines.append("\t\telse_if = {")
+        lines.append(f"\t\t\tlimit = {{ cm_trmm_right_{alias} <= 0 }}")
+        lines.append(f"\t\t\tvalue = {NO_MATCH_COLOR}")
+        lines.append("\t\t}")
         lines.append("\t\telse = {")
         lines.append("\t\t\tlerp = {")
         lines.append(f"\t\t\t\tmin_color = {SEARCH_LOW_COLOR}")
@@ -881,7 +905,7 @@ def emit_search_map_modes(rights, aliases, right_colors):
         for desc, key_color in (
                 ("cm_trmm_search_legend_100", color),
                 ("cm_trmm_search_legend_0", SEARCH_LOW_COLOR),
-                ("cm_trmm_legend_none", NO_MATCH_COLOR),
+                ("cm_trmm_search_legend_none", NO_MATCH_COLOR),
                 ("cm_trmm_search_legend_granted", SEARCH_GRANTED_STRIPE),
                 ("cm_trmm_search_legend_best", SEARCH_BEST_STRIPE)):
             lines.append("\tlegend_key = {")
@@ -896,7 +920,11 @@ def emit_search_map_modes(rights, aliases, right_colors):
         lines.append("\t\t}")
         lines.append("\t\telse_if = {")
         lines.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
-        lines.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE")
+        lines.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_NONE")
+        lines.append("\t\t}")
+        lines.append("\t\telse_if = {")
+        lines.append(f"\t\t\tlimit = {{ cm_trmm_right_{alias} <= 0 }}")
+        lines.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_NONE")
         lines.append("\t\t}")
         lines.append("\t\telse_if = {")
         lines.append(f"\t\t\tlimit = {{ has_town_rights = town_rights_type:{right} }}")
@@ -979,6 +1007,11 @@ def emit_loc(rights, aliases, boosted_goods):
             f" MAPMODE_CM_TRMM_SEARCH_{upper}_TT_GRANTED: "
             f"\"$MAPMODE_CM_TRMM_SEARCH_{upper}_TT_LAND$"
             f"$cm_trmm_search_granted_line$\"")
+        lines.append(
+            f" MAPMODE_CM_TRMM_SEARCH_{upper}_TT_NONE: "
+            f"\"[ROOT.GetLocation.GetProvince.GetName] has no [raw_material|e] "
+            f"used by the industries @{right}! [ShowTownRightsName('{right}')] "
+            f"boosts.\"")
     return "\n".join(lines) + "\n"
 
 
