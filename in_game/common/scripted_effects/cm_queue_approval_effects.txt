@@ -26,7 +26,7 @@ cm_q_compute_metric_score = {
 			change_local_variable = { name = cm_q_tmp_score multiply = -1 }
 			# Floor at the unmeasurable sentinel so every stored score stays above the pick
 			# loop's -2000000 empty-domain marker.
-			change_local_variable = { name = cm_q_tmp_score min = -99999 }
+			change_local_variable = { name = cm_q_tmp_score max = -99999 }
 			save_temporary_scope_value_as = { name = cm_q_score_val value = local_var:cm_q_tmp_score }
 		} else = {
 			# No measurable payback sorts behind every measured candidate.
@@ -40,7 +40,7 @@ cm_q_compute_metric_score = {
 			set_local_variable = { name = cm_q_tmp_score value = scope:cm_q_score_cost }
 			change_local_variable = { name = cm_q_tmp_score divide = local_var:cm_q_tmp_denom }
 			change_local_variable = { name = cm_q_tmp_score multiply = -1 }
-			change_local_variable = { name = cm_q_tmp_score min = -99999 }
+			change_local_variable = { name = cm_q_tmp_score max = -99999 }
 			save_temporary_scope_value_as = { name = cm_q_score_val value = local_var:cm_q_tmp_score }
 		} else = {
 			save_temporary_scope_value_as = { name = cm_q_score_val value = -99999 }
