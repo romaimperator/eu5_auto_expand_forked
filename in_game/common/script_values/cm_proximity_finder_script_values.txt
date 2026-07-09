@@ -119,6 +119,79 @@ cm_pf_eff_value = {
 cm_pf_eff_land_value = {
 	value = modifier:global_distance_from_capital_speed_propagation
 	add = modifier:land_cost_on_distance_from_capital_speed_propagation
+	if = {
+		limit = {
+			var:cm_pf_roads_best_possible = 1
+			has_advance = supreme_court_advance
+			capital = {
+				OR = {
+					location_rank = location_rank:town
+					location_rank = location_rank:city
+					location_rank = location_rank:megalopolis
+				}
+				NOT = { has_building = building_type:supreme_court }
+			}
+		}
+		# supreme_court capital_country_modifier: in_game/common/building_types/capital_buildings.txt:330-376.
+		# supreme_court_advance: in_game/common/advances/1_building_unlocks.txt:1123-1129.
+		add = 0.1
+	}
+}
+
+# Location scope. Expects scope:cm_pf_c. The local land-infrastructure speed-propagation bonus:
+# the live modifier, plus (Best Possible only, roads option 3) each vanilla building that grants
+# it, when the country has unlocked it, this location is eligible, and it has not been built yet.
+# Current and Max Roads leave cm_pf_roads_best_possible at 0, a transparent passthrough of the
+# bare modifier there, identical to today's behavior. Buildings stack additively (not an
+# obsoleting ladder like naval's harbor tiers), matching "assume everything is built".
+cm_pf_land_infra_value = {
+	value = modifier:local_distance_from_capital_speed_propagation
+	if = {
+		limit = { scope:cm_pf_c.var:cm_pf_roads_best_possible = 1 }
+		if = {
+			limit = {
+				has_river = yes
+				NOT = { has_building = building_type:bridge_infrastructure }
+			}
+			# bridge_infrastructure, no advance gate, every location rank:
+			# in_game/common/building_types/common_buildings.txt:41-75. num_roads > 0 waived: Best
+			# Possible already assumes a road on every connection.
+			add = 0.1
+		}
+		if = {
+			limit = {
+				OR = { location_rank = location_rank:city location_rank = location_rank:megalopolis }
+				OR = { is_coastal = yes  has_river = yes  is_adjacent_to_lake = yes }
+				development >= 20
+				scope:cm_pf_c = { has_advance = pound_lock_canals_advance }
+				NOT = { has_building = building_type:pound_lock_canal_infrastructure }
+			}
+			# pound_lock_canal_infrastructure, city/megalopolis only:
+			# in_game/common/building_types/common_buildings.txt:77-113.
+			# pound_lock_canals_advance: in_game/common/advances/0_age_of_renaissance.txt:226-233.
+			add = 0.1
+		}
+		if = {
+			limit = {
+				is_capital = no
+				has_river = yes
+				OR = {
+					region = region:russian_region
+					region = region:ural_region
+					region = region:west_siberia_region
+					region = region:east_siberia_region
+				}
+				scope:cm_pf_c = {
+					has_advance = ostrog_advance
+					culture = { has_culture_group = culture_group:russian_group }
+				}
+				NOT = { has_building = building_type:ostrog }
+			}
+			# ostrog, Russian-culture-group only: in_game/common/building_types/unique_buildings.txt:1403-1437.
+			# ostrog_advance: in_game/common/advances/culture_russian.txt:85-91.
+			add = 0.1
+		}
+	}
 }
 
 # Location scope. Expects scope:cm_pf_c. Cost of leaving this location per channel: the raw
@@ -131,7 +204,7 @@ cm_pf_cl_g_value = {
 	divide = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1 # Floor keeps stacked maluses from flipping the sign.
 	}
 	divide = {
@@ -146,7 +219,7 @@ cm_pf_cl_c_value = {
 	divide = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1
 	}
 	divide = {
@@ -162,7 +235,7 @@ cm_pf_cl_cb_value = {
 	divide = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1
 	}
 	divide = {
@@ -179,7 +252,7 @@ cm_pf_cr_g_value = {
 	divide = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1
 	}
 	divide = {
@@ -194,7 +267,7 @@ cm_pf_cr_c_value = {
 	divide = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1
 	}
 	divide = {
@@ -210,7 +283,7 @@ cm_pf_cr_cb_value = {
 	divide = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1
 	}
 	divide = {
@@ -236,7 +309,7 @@ cm_pf_div_g_value = {
 	multiply = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1
 	}
 	multiply = {
@@ -252,7 +325,7 @@ cm_pf_div_c_value = {
 	multiply = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1
 	}
 	multiply = {
@@ -269,7 +342,7 @@ cm_pf_div_cb_value = {
 	multiply = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1
 	}
 	multiply = {
@@ -291,7 +364,7 @@ cm_pf_div_g_nv_value = {
 	multiply = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1
 	}
 	multiply = {
@@ -306,7 +379,7 @@ cm_pf_div_c_nv_value = {
 	multiply = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1
 	}
 	multiply = {
@@ -322,7 +395,7 @@ cm_pf_div_cb_nv_value = {
 	multiply = {
 		value = 1
 		add = scope:cm_pf_c.var:cm_pf_eff_land
-		add = modifier:local_distance_from_capital_speed_propagation
+		add = cm_pf_land_infra_value
 		min = 0.1
 	}
 	multiply = {

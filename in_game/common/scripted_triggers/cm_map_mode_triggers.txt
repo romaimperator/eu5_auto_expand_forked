@@ -27,12 +27,20 @@ cm_pf_method_is_tax_base = {
 	}
 }
 
-# Root is country. Current-roads placement scoring (the default; option 2 is optimal roads).
+# Root is country. Current-roads placement scoring (the default; option 2 is Max Roads, option 3 is Best Possible).
 cm_pf_roads_is_current = {
 	OR = {
 		NOT = { exists = var:cm_placement_finder_roads }
 		var:cm_placement_finder_roads = 1
 	}
+}
+
+# Root is country. Best-possible land infrastructure placement scoring (roads option 3): assumes
+# the best roads everywhere (as option 2, Max Roads) plus unlocked, not-yet-built land
+# infrastructure buildings.
+cm_pf_roads_is_best_possible = {
+	exists = var:cm_placement_finder_roads
+	var:cm_placement_finder_roads = 3
 }
 
 # Root is country. Current naval presence in the sea legs (naval option 1, the default); options 2-3 assume max.
