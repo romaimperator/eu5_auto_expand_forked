@@ -28,6 +28,18 @@ cm_is_building_type_obsolete = {
 	scope:cm_country = { building_type_is_obsolete = scope:cm_building_type }
 }
 
+# Root is the location, expects scope:cm_building_type. Plain-script mirror of the GUI-only
+# cm_is_auto_expand_active_for_building_type, for use in effect/trigger context.
+cm_location_is_auto_expand_active_for_building_type = {
+	OR = {
+		is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+		AND = {
+			owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } }
+			NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type } }
+		}
+	}
+}
+
 # Root is the building
 cm_is_building_upgradeable = {
 	building_type = { is_upgradeable = yes }
