@@ -225,15 +225,38 @@ cm_pf_river_record = {
 	}
 }
 
-# Root is the player. Ends the river-adjacency precompute after the record passes: clears the source
-# list so its datamodel tears down (freeing the per-frame widget cost), then rebuilds the finder scores
-# the synchronous lobby init computed without river data.
-cm_pf_river_finalize = {
+# Root is the player. Advances the batched river precompute one tick: queues the next batch of source
+# locations for the datamodel to instantiate, or, once every location has been queued, tears down the
+# source lists (freeing the per-frame widget cost) and rebuilds the finder scores the synchronous lobby
+# init computed without river data. 150 sources per tick keeps the record volume under the flood threshold.
+cm_pf_river_fill_batch = {
 	effect = {
-		clear_global_variable_list = cm_pf_river_locations
-		remove_global_variable = cm_pf_river_process
-		remove_variable = cm_pf_fresh
-		cm_pf_recompute_now = yes
+		if = {
+			limit = { global_var:cm_pf_river_idx < global_var:cm_pf_river_count }
+			clear_global_variable_list = cm_pf_river_batch
+			set_local_variable = { name = cm_pf_river_hi value = { value = global_var:cm_pf_river_idx add = 150 } }
+			set_local_variable = { name = cm_pf_river_i value = 0 }
+			every_in_global_list = {
+				variable = cm_pf_river_locations
+				if = {
+					limit = {
+						local_var:cm_pf_river_i >= global_var:cm_pf_river_idx
+						local_var:cm_pf_river_i < local_var:cm_pf_river_hi
+					}
+					add_to_global_variable_list = { name = cm_pf_river_batch target = this }
+				}
+				change_local_variable = { name = cm_pf_river_i add = 1 }
+			}
+			change_global_variable = { name = cm_pf_river_idx add = 150 }
+		}
+		else_if = {
+			limit = { has_global_variable = cm_pf_river_process }
+			clear_global_variable_list = cm_pf_river_locations
+			clear_global_variable_list = cm_pf_river_batch
+			remove_global_variable = cm_pf_river_process
+			remove_variable = cm_pf_fresh
+			cm_pf_recompute_now = yes
+		}
 	}
 }
 

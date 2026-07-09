@@ -251,41 +251,41 @@ cm_location_peasants_promotion_source_pool = {
   value = "unemployed_pops_of_pop_type_in_location(pop_type:tribesmen)"
 }
 
-# Projected one-year pop slack for the building pop type: location surplus plus a year at the current
+# Projected three-year pop slack for the building pop type: location surplus plus three years at the current
 # monthly promotion rate (that rate capped by the unemployed source pool). Negative means the deficit will
-# not fill within a year. Root is the location, expects scope:cm_building_type.
+# not fill within three years. Root is the location, expects scope:cm_building_type.
 cm_location_promotion_buffer_slack = {
   value = 0
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:nobles }
     add = cm_location_nobles_available
-    add = { value = cm_combined_pop_promotion_speed_for_nobles max = cm_location_nobles_promotion_source_pool multiply = 12 min = 0 }
+    add = { value = cm_combined_pop_promotion_speed_for_nobles max = cm_location_nobles_promotion_source_pool multiply = 36 min = 0 }
   }
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:clergy }
     add = cm_location_clergy_available
-    add = { value = cm_combined_pop_promotion_speed_for_clergy max = cm_location_clergy_promotion_source_pool multiply = 12 min = 0 }
+    add = { value = cm_combined_pop_promotion_speed_for_clergy max = cm_location_clergy_promotion_source_pool multiply = 36 min = 0 }
   }
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:burghers }
     add = cm_location_burghers_available
-    add = { value = cm_combined_pop_promotion_speed_for_burghers max = cm_location_burghers_promotion_source_pool multiply = 12 min = 0 }
+    add = { value = cm_combined_pop_promotion_speed_for_burghers max = cm_location_burghers_promotion_source_pool multiply = 36 min = 0 }
   }
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:laborers }
     add = cm_location_laborers_available
-    add = { value = cm_combined_pop_promotion_speed_for_laborers max = cm_location_laborers_promotion_source_pool multiply = 12 min = 0 }
+    add = { value = cm_combined_pop_promotion_speed_for_laborers max = cm_location_laborers_promotion_source_pool multiply = 36 min = 0 }
   }
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:soldiers }
     add = cm_location_soldiers_available
-    add = { value = cm_combined_pop_promotion_speed_for_soldiers max = cm_location_soldiers_promotion_source_pool multiply = 12 min = 0 }
+    add = { value = cm_combined_pop_promotion_speed_for_soldiers max = cm_location_soldiers_promotion_source_pool multiply = 36 min = 0 }
   }
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:peasants }
     add = cm_location_peasants_available
-    add = { value = cm_combined_pop_promotion_speed_for_peasants max = cm_location_peasants_promotion_source_pool multiply = 12 min = 0 }
+    add = { value = cm_combined_pop_promotion_speed_for_peasants max = cm_location_peasants_promotion_source_pool multiply = 36 min = 0 }
   }
 }
 
-# Projected one-year laborers/slaves slack for RGO expansion: surplus plus a year at the current monthly
+# Projected three-year laborers/slaves slack for RGO expansion: surplus plus three years at the current monthly
 # laborers promotion rate (capped by the source pool; slaves count toward the surplus but do not promote).
 # Root is the location.
 cm_location_rgo_promotion_buffer_slack = {
   value = cm_location_laborers_or_slaves_available
-  add = { value = cm_combined_pop_promotion_speed_for_laborers max = cm_location_laborers_promotion_source_pool multiply = 12 min = 0 }
+  add = { value = cm_combined_pop_promotion_speed_for_laborers max = cm_location_laborers_promotion_source_pool multiply = 36 min = 0 }
 }

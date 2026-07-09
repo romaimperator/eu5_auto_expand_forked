@@ -123,34 +123,36 @@ widget = {
 		# reads only in GUI, so record each river location's genuinely river-connected neighbors into
 		# the per-location cm_pf_river_neighbors list the path search reads.
 		# visible_at_creation = no pins it hidden at creation so a loaded save still gets a
-		# hidden->shown first-show that fires _show. Two record passes populate the lists, then the done
-		# state clears the source list so this datamodel tears down instead of costing FPS every frame.
+		# hidden->shown first-show that fires _show. The tick loop records one small batch of source
+		# locations per fire so scripted_gui_command volume stays under the flood threshold; each fill rebinds
+		# this datamodel to the next batch, and cm_pf_river_fill_batch tears down and recomputes once done.
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
 			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_pf_river_should_process').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 			state = {
 				name = _show
-				duration = 1.0
-				next = cm_pf_river_pass_r2
+				duration = 0.1
+				next = cm_pf_river_fire
+				on_finish = "[GetScriptedGui('cm_pf_river_fill_batch').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+			state = {
+				name = cm_pf_river_fire
+				duration = 0.3
+				next = cm_pf_river_next
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_pf_river_record_state')]"
 			}
 			state = {
-				name = cm_pf_river_pass_r2
-				duration = 0.5
-				next = cm_pf_river_pass_done
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_pf_river_record_state')]"
-			}
-			state = {
-				name = cm_pf_river_pass_done
-				duration = 0.5
-				on_finish = "[GetScriptedGui('cm_pf_river_finalize').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				name = cm_pf_river_next
+				duration = 0.1
+				next = cm_pf_river_fire
+				on_finish = "[GetScriptedGui('cm_pf_river_fill_batch').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 		}
 
-		# Statically visible so each source's nested neighbor datamodel instantiates before the driver fires the passes.
+		# Statically visible so each freshly-filled batch's nested neighbor datamodels instantiate before the fire state.
 		widget = {
-			datamodel = "[GetGlobalList('cm_pf_river_locations')]"
+			datamodel = "[GetGlobalList('cm_pf_river_batch')]"
 			item = {
 				widget = {
 					datacontext = "[Scope.GetLocation]"
