@@ -123,34 +123,28 @@ widget = {
 		# reads only in GUI, so record each river location's genuinely river-connected neighbors into
 		# the per-location cm_pf_river_neighbors list the path search reads.
 		# visible_at_creation = no pins it hidden at creation so a loaded save still gets a
-		# hidden->shown first-show that fires _show. Several record passes run before the mark pass
-		# so a large datamodel's slow-instantiating neighbors are stored before their source is counted done.
+		# hidden->shown first-show that fires _show. Two record passes populate the lists, then the done
+		# state clears the source list so this datamodel tears down instead of costing FPS every frame.
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
 			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_pf_river_should_process').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 			state = {
 				name = _show
-				duration = 0.5
+				duration = 1.0
 				next = cm_pf_river_pass_r2
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_pf_river_record_state')]"
 			}
 			state = {
 				name = cm_pf_river_pass_r2
 				duration = 0.5
-				next = cm_pf_river_pass_r3
+				next = cm_pf_river_pass_done
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_pf_river_record_state')]"
 			}
 			state = {
-				name = cm_pf_river_pass_r3
+				name = cm_pf_river_pass_done
 				duration = 0.5
-				next = cm_pf_river_pass_mark
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_pf_river_record_state')]"
-			}
-			state = {
-				name = cm_pf_river_pass_mark
-				duration = 0.5
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_pf_river_src_state')]"
+				on_finish = "[GetScriptedGui('cm_pf_river_finalize').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 		}
 
@@ -160,10 +154,6 @@ widget = {
 			item = {
 				widget = {
 					datacontext = "[Scope.GetLocation]"
-					state = {
-						name = cm_pf_river_src_state
-						on_finish = "[GetScriptedGui('cm_pf_river_mark_src').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_pf_river_src', Location.MakeScope).End)]"
-					}
 					widget = {
 						datamodel = "[Location.GetRiverProximityLocations]"
 						item = {

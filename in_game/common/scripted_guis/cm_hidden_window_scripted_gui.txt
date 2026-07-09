@@ -207,18 +207,10 @@ cm_should_building_type_section_show = {
 	}
 }
 
-# Root is the player. Gates the hidden window's river-adjacency precompute driver until every source
-# location is marked processed.
+# Root is the player. Gates the hidden window's river-adjacency precompute driver while it runs.
 cm_pf_river_should_process = {
 	is_shown = {
 		has_global_variable = cm_pf_river_process
-		OR = {
-			NOT = { has_global_variable_map = cm_pf_river_processed }
-			AND = {
-				has_global_variable_map = cm_pf_river_processed
-				global_variable_map_size = { name = cm_pf_river_processed value < global_var:cm_pf_river_locations_count }
-			}
-		}
 	}
 }
 
@@ -233,26 +225,15 @@ cm_pf_river_record = {
 	}
 }
 
-# Root is the player. Marks a source processed; when every source is marked the river lists are
-# complete, so drop the year cache and rebuild the finder scores the synchronous lobby init computed
-# without river data.
-cm_pf_river_mark_src = {
-	saved_scopes = { cm_pf_river_src }
+# Root is the player. Ends the river-adjacency precompute after the record passes: clears the source
+# list so its datamodel tears down (freeing the per-frame widget cost), then rebuilds the finder scores
+# the synchronous lobby init computed without river data.
+cm_pf_river_finalize = {
 	effect = {
-		if = {
-			limit = { NOT = { is_key_in_global_variable_map = { name = cm_pf_river_processed target = scope:cm_pf_river_src } } }
-			add_to_global_variable_map = { name = cm_pf_river_processed key = scope:cm_pf_river_src value = 1 }
-		}
-		if = {
-			limit = {
-				has_global_variable = cm_pf_river_process
-				has_global_variable_map = cm_pf_river_processed
-				global_variable_map_size = { name = cm_pf_river_processed value >= global_var:cm_pf_river_locations_count }
-			}
-			remove_global_variable = cm_pf_river_process
-			remove_variable = cm_pf_fresh
-			cm_pf_recompute_now = yes
-		}
+		clear_global_variable_list = cm_pf_river_locations
+		remove_global_variable = cm_pf_river_process
+		remove_variable = cm_pf_fresh
+		cm_pf_recompute_now = yes
 	}
 }
 

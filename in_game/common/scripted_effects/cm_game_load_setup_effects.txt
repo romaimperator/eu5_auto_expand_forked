@@ -19,14 +19,11 @@ cm_populate_building_types_to_process = {
 # Stateless: always rebuilds from scratch so no version tracking or migration is needed.
 cm_pf_populate_river_locations = {
   clear_global_variable_list = cm_pf_river_locations
-  set_global_variable = { name = cm_pf_river_locations_count value = 0 }
-  clear_global_variable_map = cm_pf_river_processed
   every_province_definition = {
     every_location_in_province_definition = {
       limit = { has_river = yes }
       clear_variable_list = cm_pf_river_neighbors
       add_to_global_variable_list = { name = cm_pf_river_locations target = this }
-      change_global_variable = { name = cm_pf_river_locations_count add = 1 }
     }
   }
   # Trigger the river-adjacency precompute in the hidden window GUI.
