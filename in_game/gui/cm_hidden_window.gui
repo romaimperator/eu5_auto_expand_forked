@@ -117,4 +117,67 @@ widget = {
 			}
 		}
 	}
+
+	widget = {
+		# River-adjacency precompute for the placement finder. Location.GetRiverProximityLocations
+		# reads only in GUI, so record each river location's genuinely river-connected neighbors into
+		# the per-location cm_pf_river_neighbors list the path search reads.
+		# visible_at_creation = no pins it hidden at creation so a loaded save still gets a
+		# hidden->shown first-show that fires _show. Several record passes run before the mark pass
+		# so a large datamodel's slow-instantiating neighbors are stored before their source is counted done.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_pf_river_should_process').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			state = {
+				name = _show
+				duration = 0.5
+				next = cm_pf_river_pass_r2
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_pf_river_record_state')]"
+			}
+			state = {
+				name = cm_pf_river_pass_r2
+				duration = 0.5
+				next = cm_pf_river_pass_r3
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_pf_river_record_state')]"
+			}
+			state = {
+				name = cm_pf_river_pass_r3
+				duration = 0.5
+				next = cm_pf_river_pass_mark
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_pf_river_record_state')]"
+			}
+			state = {
+				name = cm_pf_river_pass_mark
+				duration = 0.5
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_pf_river_src_state')]"
+			}
+		}
+
+		# Statically visible so each source's nested neighbor datamodel instantiates before the driver fires the passes.
+		widget = {
+			datamodel = "[GetGlobalList('cm_pf_river_locations')]"
+			item = {
+				widget = {
+					datacontext = "[Scope.GetLocation]"
+					state = {
+						name = cm_pf_river_src_state
+						on_finish = "[GetScriptedGui('cm_pf_river_mark_src').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_pf_river_src', Location.MakeScope).End)]"
+					}
+					widget = {
+						datamodel = "[Location.GetRiverProximityLocations]"
+						item = {
+							widget = {
+								size = { 0 0 }
+								state = {
+									name = cm_pf_river_record_state
+									on_finish = "[GetScriptedGui('cm_pf_river_record').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_pf_river_src', Scope.GetLocation.MakeScope).AddScope('cm_pf_river_nb', Location.MakeScope).End)]"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }

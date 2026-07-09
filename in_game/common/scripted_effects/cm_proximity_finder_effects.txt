@@ -32,13 +32,16 @@ cm_pf_force_refresh = {
 	cm_pf_prep_core = yes
 }
 
-# Country scope. Forced synchronous recompute for the lobby init; skips while cached, and in
+# Country scope. Forced synchronous recompute for the lobby init; skips while cached, while the
+# river-adjacency precompute is still running (its completion branch re-runs this), and in
 # multiplayer, where the manual refresh button computes on demand instead.
 cm_pf_recompute_now = {
 	save_scope_as = cm_pf_c
 	if = {
 		limit = {
 			NOT = { exists = var:cm_pf_fresh }
+			# Skip while the river precompute runs; its completion branch re-runs this once the lists exist.
+			NOT = { has_global_variable = cm_pf_river_process }
 			is_multiplayer_session = no
 		}
 		cm_pf_prep_core = yes
@@ -248,8 +251,7 @@ cm_pf_prime_land_location = {
 			}
 			if = {
 				limit = {
-					has_river = yes
-					scope:cm_pf_u = { has_river = yes }
+					scope:cm_pf_u = { is_target_in_variable_list = { name = cm_pf_river_neighbors target = scope:cm_pf_nb } }
 					scope:cm_pf_c.var:cm_pf_river_cost < local_var:cm_pf_edge_num
 				}
 				set_local_variable = { name = cm_pf_edge_num value = scope:cm_pf_c.var:cm_pf_river_cost }
@@ -259,17 +261,14 @@ cm_pf_prime_land_location = {
 			}
 			# Vegetation-cancel flag for this specific edge: a road of any type (cm_pf_edge_red > 0
 			# covers all 4 vanilla tiers, see cm_pf_edge_road_reduction_value) or a river shared with
-			# this neighbor (the same both-has_river proxy used for the numerator above) connects
+			# this neighbor (cm_pf_river_neighbors, the same check the numerator above uses) connects
 			# this tile to this neighbor. Read by cm_pf_relax_from_land_g/_cap to pick the _nv
 			# divisor per edge.
 			if = {
 				limit = {
 					OR = {
 						local_var:cm_pf_edge_red > 0
-						AND = {
-							has_river = yes
-							scope:cm_pf_u = { has_river = yes }
-						}
+						scope:cm_pf_u = { is_target_in_variable_list = { name = cm_pf_river_neighbors target = scope:cm_pf_nb } }
 					}
 				}
 				scope:cm_pf_u = {
@@ -513,10 +512,10 @@ cm_pf_relax_from_land_g = {
 				owner ?= scope:cm_pf_c
 				has_variable = cm_pf_cl_g
 			}
+			save_temporary_scope_as = cm_pf_nb
 			if = {
 				limit = {
-					has_variable = cm_pf_cr_g
-					scope:cm_pf_a = { has_variable = cm_pf_cr_g }
+					scope:cm_pf_a = { is_target_in_variable_list = { name = cm_pf_river_neighbors target = scope:cm_pf_nb } }
 				}
 				cm_pf_try_relax = { ND = cm_pf_nd_river BUDGET = $BUDGET$ }
 			}
@@ -693,10 +692,10 @@ cm_pf_relax_from_land_cap = {
 				owner ?= scope:cm_pf_c
 				has_variable = cm_pf_cl_c
 			}
+			save_temporary_scope_as = cm_pf_nb
 			if = {
 				limit = {
-					has_variable = cm_pf_cr_c
-					scope:cm_pf_a = { has_variable = cm_pf_cr_c }
+					scope:cm_pf_a = { is_target_in_variable_list = { name = cm_pf_river_neighbors target = scope:cm_pf_nb } }
 				}
 				cm_pf_try_relax = { ND = cm_pf_nd_river BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
 			}

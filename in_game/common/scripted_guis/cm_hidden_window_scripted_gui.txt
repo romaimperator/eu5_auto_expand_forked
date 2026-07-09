@@ -207,6 +207,55 @@ cm_should_building_type_section_show = {
 	}
 }
 
+# Root is the player. Gates the hidden window's river-adjacency precompute driver until every source
+# location is marked processed.
+cm_pf_river_should_process = {
+	is_shown = {
+		has_global_variable = cm_pf_river_process
+		OR = {
+			NOT = { has_global_variable_map = cm_pf_river_processed }
+			AND = {
+				has_global_variable_map = cm_pf_river_processed
+				global_variable_map_size = { name = cm_pf_river_processed value < global_var:cm_pf_river_locations_count }
+			}
+		}
+	}
+}
+
+# Root is the player. Adds a real river-connected neighbor to the source's cm_pf_river_neighbors list,
+# read per edge by the placement finder path search to gate the river channel.
+cm_pf_river_record = {
+	saved_scopes = { cm_pf_river_src cm_pf_river_nb }
+	effect = {
+		scope:cm_pf_river_src = {
+			add_to_variable_list = { name = cm_pf_river_neighbors target = scope:cm_pf_river_nb }
+		}
+	}
+}
+
+# Root is the player. Marks a source processed; when every source is marked the river lists are
+# complete, so drop the year cache and rebuild the finder scores the synchronous lobby init computed
+# without river data.
+cm_pf_river_mark_src = {
+	saved_scopes = { cm_pf_river_src }
+	effect = {
+		if = {
+			limit = { NOT = { is_key_in_global_variable_map = { name = cm_pf_river_processed target = scope:cm_pf_river_src } } }
+			add_to_global_variable_map = { name = cm_pf_river_processed key = scope:cm_pf_river_src value = 1 }
+		}
+		if = {
+			limit = {
+				has_global_variable = cm_pf_river_process
+				has_global_variable_map = cm_pf_river_processed
+				global_variable_map_size = { name = cm_pf_river_processed value >= global_var:cm_pf_river_locations_count }
+			}
+			remove_global_variable = cm_pf_river_process
+			remove_variable = cm_pf_fresh
+			cm_pf_recompute_now = yes
+		}
+	}
+}
+
 # Root is the country
 cm_building_type_section_buildings_init = {
 	saved_scopes = { cm_building_type is_producing is_multiple_levels is_fort pop_type upgrade_type }
