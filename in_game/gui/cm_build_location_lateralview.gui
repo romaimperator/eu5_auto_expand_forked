@@ -275,6 +275,46 @@
 												datacontext = "[LocationToBuildItem.GetLocation.GetMarket]"
 												tooltipwidget = { using = SpecificGoodsMarket_tooltip }
 											}
+											hbox = {
+												# GlorpUI: Construction Manager specialization urban right
+												visible = "[GetScriptedGui('glorpui_is_cm_active').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+
+												hbox = {
+													visible = "[GreaterThan_CFixedPoint(Location.MakeScope.ScriptValue('cm_uright_assigned_count'), '(CFixedPoint)1')]"
+													spacing = 1
+													tooltip = "CM_URIGHT_ASSIGNED_LIST_TT"
+													text_single = {
+														autoresize = yes
+														align = center|nobaseline
+														fontsize = 13
+														raw_text = "[Location.MakeScope.ScriptValue('cm_uright_assigned_count')|0]"
+													}
+													icon = {
+														size = { 16 16 }
+														texture = "[GetConceptTexture('town_rights')]"
+													}
+												}
+
+												text_single = {
+													visible = "[EqualTo_CFixedPoint(Location.MakeScope.ScriptValue('cm_uright_assigned_count'), '(CFixedPoint)1')]"
+													size = { 20 20 }
+													autoresize = no
+													align = center|nobaseline
+													raw_text = "[Location.Custom('cm_uright_assigned_icon')]"
+													tooltip = "CM_URIGHT_RANKING_TT"
+												}
+
+												text_single = {
+													visible = "[And(EqualTo_CFixedPoint(Location.MakeScope.ScriptValue('cm_uright_assigned_count'), '(CFixedPoint)0'), Location.MakeScope.GetVariable('cm_trmm_best_idx').IsSet)]"
+													size = { 20 20 }
+													autoresize = no
+													align = center|nobaseline
+													alpha = 0.45
+													# Faded to read as a suggestion rather than a granted right
+													raw_text = "[Location.Custom('cm_uright_rec_icon')]"
+													tooltip = "CM_URIGHT_RANKING_TT"
+												}
+											}
 											button = {
 												size = { 20 20 }
 												icon = {
@@ -327,8 +367,8 @@
 													maximumsize = { 60 -1 }
 													align = center|nobaseline
 													autoresize = yes
-													fontsize = 15 # GlorpUI: 13->15
-													text = "[Location.GetExpectedUnEmployed(PopType.Self)]"
+													fontsize = 13
+													text = "GLORP_UI_BL_POP_K_VALUE" # GlorpUI: thousands format
 													sort_by_highlight = {
 														size = { 105% 200% }
 														name = "employment"
@@ -355,9 +395,9 @@
 												layoutpolicy_vertical = expanding
 												maximumsize = { 60 -1 }
 												align = center|nobaseline
-												fontsize = 15 # GlorpUI: 13->15
+												fontsize = 13
 												autoresize = yes
-												text = "[GetUnEmployedPeasantsFromLocation(LocationToBuildItem.GetLocation)]"
+												text = "GLORP_UI_BL_PEASANTS_K_VALUE" # GlorpUI: thousands format
 												sort_by_highlight = {
 													size = { 105% 200% }
 													name = "population"

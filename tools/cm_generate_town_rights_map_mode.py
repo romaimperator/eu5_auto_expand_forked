@@ -682,6 +682,19 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods):
             lines.append("\t}")
         lines.append("}")
 
+    lines.append("")
+    lines.append(
+        "# Count of royal specialization rights granted at this location. Read live\n"
+        "# by the build-location urban-right marker to pick its display state.")
+    lines.append("cm_uright_assigned_count = {")
+    lines.append("\tvalue = 0")
+    for right in ROYAL_RIGHTS:
+        lines.append("\tif = {")
+        lines.append(f"\t\tlimit = {{ has_town_rights = town_rights_type:{right} }}")
+        lines.append("\t\tadd = 1")
+        lines.append("\t}")
+    lines.append("}")
+
     return "\n".join(lines) + "\n"
 
 
@@ -777,9 +790,14 @@ def emit_custom_loc(aliases, boosted_goods):
     lines.append(
         "# Slot entries resolve rank k to a line, or to nothing: cm_trmm_slot_* for the\n"
         "# ranked rights list, cm_trmm_bd_slot_* for the same ranking with per-industry\n"
-        "# sub-lines, cm_trmm_ind_slot_* for the industries ranked by coverage.")
+        "# sub-lines, cm_trmm_ind_slot_* for the industries ranked by coverage.\n"
+        "# The cm_uright_rank_* copies are identical but point at line keys that read the\n"
+        "# location from the customizable-loc target, so the build-location marker can\n"
+        "# reuse the ranking tooltip where the window root is not the row's location.")
     for prefix, line_prefix in (("cm_trmm_slot", "cm_trmm_tt_line"),
-                                ("cm_trmm_bd_slot", "cm_trmm_bd_line")):
+                                ("cm_trmm_bd_slot", "cm_trmm_bd_line"),
+                                ("cm_uright_rank_slot", "cm_uright_rank_line"),
+                                ("cm_uright_rank_bd_slot", "cm_uright_rank_bd_line")):
         for slot in range(1, len(ROYAL_RIGHTS) + 1):
             lines.append(f"{prefix}_{slot} = {{")
             lines.append("\ttype = location")
@@ -797,22 +815,25 @@ def emit_custom_loc(aliases, boosted_goods):
             lines.append("\t\tfallback = yes")
             lines.append("\t}")
             lines.append("}")
-    for slot in range(1, len(boosted_goods) + 1):
-        lines.append(f"cm_trmm_ind_slot_{slot} = {{")
-        lines.append("\ttype = location")
-        for good in boosted_goods:
+    for ind_prefix, ind_line_prefix in (
+            ("cm_trmm_ind_slot", "cm_trmm_ind_line"),
+            ("cm_uright_rank_ind_slot", "cm_uright_rank_ind_line")):
+        for slot in range(1, len(boosted_goods) + 1):
+            lines.append(f"{ind_prefix}_{slot} = {{")
+            lines.append("\ttype = location")
+            for good in boosted_goods:
+                lines.append("\ttext = {")
+                lines.append("\t\ttrigger = {")
+                lines.append(f"\t\t\tcm_trmm_ind_rank_{good} = {slot - 1}")
+                lines.append(f"\t\t\tcm_trmm_cov_{good} > 0")
+                lines.append("\t\t}")
+                lines.append(f"\t\tlocalization_key = {ind_line_prefix}_{good}")
+                lines.append("\t}")
             lines.append("\ttext = {")
-            lines.append("\t\ttrigger = {")
-            lines.append(f"\t\t\tcm_trmm_ind_rank_{good} = {slot - 1}")
-            lines.append(f"\t\t\tcm_trmm_cov_{good} > 0")
-            lines.append("\t\t}")
-            lines.append(f"\t\tlocalization_key = cm_trmm_ind_line_{good}")
+            lines.append("\t\tlocalization_key = cm_trmm_blank")
+            lines.append("\t\tfallback = yes")
             lines.append("\t}")
-        lines.append("\ttext = {")
-        lines.append("\t\tlocalization_key = cm_trmm_blank")
-        lines.append("\t\tfallback = yes")
-        lines.append("\t}")
-        lines.append("}")
+            lines.append("}")
 
     lines.append(
         "# Comma-joined \"tied with\" list per right: cm_trmm_tie_prefix_* shows the\n"
@@ -868,6 +889,47 @@ def emit_custom_loc(aliases, boosted_goods):
             lines.append("\t\tfallback = yes")
             lines.append("\t}")
             lines.append("}")
+
+    lines.append(
+        "# Build-location urban-right marker icons: cm_uright_rec_icon resolves the\n"
+        "# recommended right (rank 0), cm_uright_assigned_icon the single granted royal\n"
+        "# right, each to that right's texticon. cm_uright_assigned_item_* is the\n"
+        "# per-right granted-or-blank line the multi-right hover list concatenates.")
+    for name in ("cm_uright_rec_icon", "cm_uright_assigned_icon"):
+        lines.append(f"{name} = {{")
+        lines.append("\ttype = location")
+        for right in ROYAL_RIGHTS:
+            alias = aliases[right]
+            lines.append("\ttext = {")
+            lines.append("\t\ttrigger = {")
+            if name == "cm_uright_rec_icon":
+                lines.append(f"\t\t\tcm_trmm_rank_{alias} = 0")
+                lines.append(f"\t\t\tcm_trmm_right_{alias} > 0")
+            else:
+                lines.append(f"\t\t\thas_town_rights = town_rights_type:{right}")
+            lines.append("\t\t}")
+            lines.append(f"\t\tlocalization_key = cm_uright_icon_line_{alias}")
+            lines.append("\t}")
+        lines.append("\ttext = {")
+        lines.append("\t\tlocalization_key = cm_trmm_blank")
+        lines.append("\t\tfallback = yes")
+        lines.append("\t}")
+        lines.append("}")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        lines.append(f"cm_uright_assigned_item_{alias} = {{")
+        lines.append("\ttype = location")
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append(f"\t\t\thas_town_rights = town_rights_type:{right}")
+        lines.append("\t\t}")
+        lines.append(f"\t\tlocalization_key = cm_uright_assigned_line_{alias}")
+        lines.append("\t}")
+        lines.append("\ttext = {")
+        lines.append("\t\tlocalization_key = cm_trmm_blank")
+        lines.append("\t\tfallback = yes")
+        lines.append("\t}")
+        lines.append("}")
 
     return "\n".join(lines) + "\n"
 
@@ -1111,6 +1173,51 @@ def emit_loc(rights, aliases, boosted_goods):
             f" cm_trmm_ind_line_{good}: \"\\n@{good}! [ShowGoodsName('{good}')]: "
             f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_cov_{good}')|%1]\"")
     lines.append(" cm_trmm_blank: \"\"")
+
+    # Build-location marker strings. The ranking tooltip is reused here where the
+    # window root is not the row's location, so these copies read the location from
+    # the customizable-loc target (Location) instead of ROOT.GetLocation.
+    u_slot_calls = "".join(
+        f"[Location.Custom('cm_uright_rank_slot_{slot}')]"
+        for slot in range(1, len(ROYAL_RIGHTS) + 1))
+    u_bd_calls = "".join(
+        f"[Location.Custom('cm_uright_rank_bd_slot_{slot}')]"
+        for slot in range(1, len(ROYAL_RIGHTS) + 1))
+    u_ind_calls = "".join(
+        f"[Location.Custom('cm_uright_rank_ind_slot_{slot}')]"
+        for slot in range(1, len(boosted_goods) + 1))
+    lines.append(
+        f" CM_URIGHT_RANKING_TT: \"Specialization options:{u_slot_calls}"
+        f"\\n\\nDetails:{u_bd_calls}"
+        f"\\n\\nBest industries:{u_ind_calls}\"")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        u_core = (
+            f"@{right}! [ShowTownRightsName('{right}')]: "
+            f"[Location.MakeScope.ScriptValue('cm_trmm_right_{alias}')|%1]")
+        lines.append(f" cm_uright_rank_line_{alias}: \"\\n{u_core}\"")
+        u_sub = "".join(
+            f"\\n  @{good}! [ShowGoodsName('{good}')]: "
+            f"[Location.MakeScope.ScriptValue('cm_trmm_cov_{good}')|%1]"
+            for good in rights[right]["goods"])
+        lines.append(f" cm_uright_rank_bd_line_{alias}: \"\\n{u_core}{u_sub}\"")
+    for good in boosted_goods:
+        lines.append(
+            f" cm_uright_rank_ind_line_{good}: \"\\n@{good}! [ShowGoodsName('{good}')]: "
+            f"[Location.MakeScope.ScriptValue('cm_trmm_cov_{good}')|%1]\"")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        lines.append(f" cm_uright_icon_line_{alias}: \"@{right}!\"")
+        lines.append(
+            f" cm_uright_assigned_line_{alias}: "
+            f"\"\\n@{right}! [ShowTownRightsName('{right}')]\"")
+    assigned_items = "".join(
+        f"[Location.Custom('cm_uright_assigned_item_{aliases[right]}')]"
+        for right in ROYAL_RIGHTS)
+    lines.append(
+        f" CM_URIGHT_ASSIGNED_LIST_TT: "
+        f"\"#T Assigned Specialization Rights#!{assigned_items}\"")
+
     for right in ROYAL_RIGHTS:
         lines.append(
             f" cm_trmm_legend_{aliases[right]}: \"@{right}! [ShowTownRightsName('{right}')]\"")
