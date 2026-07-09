@@ -8,6 +8,17 @@
 	}
 }
 
+# Ctrl-click bulk enable from an existing building's button. Root = Building.
+cm_set_auto_expand_for_building_province = {
+	effect = {
+		save_scope_as = cm_the_building
+		building_type = { save_scope_as = cm_building_type }
+		location = {
+			cm_enable_auto_expand_for_building_type_in_province = yes
+		}
+	}
+}
+
 # Manual-upgrade auto-expand swap. Root is the obsolete building being upgraded;
 # scope:cm_new_building_type is its engine replacement tier from the call site, unset when none.
 cm_check_for_auto_expand_when_upgrading_building = {
@@ -390,6 +401,17 @@ cm_set_auto_expand_for_building_type = {
 		save_scope_as = cm_building_type
 		scope:cm_location = {
 			cm_apply_auto_expand_toggle = yes
+		}
+	}
+}
+
+# Ctrl-click bulk enable from a not-yet-built location's button. Root = BuildingType,
+# expects scope:cm_location.
+cm_set_auto_expand_for_building_type_province = {
+	effect = {
+		save_scope_as = cm_building_type
+		scope:cm_location = {
+			cm_enable_auto_expand_for_building_type_in_province = yes
 		}
 	}
 }

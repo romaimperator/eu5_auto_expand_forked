@@ -294,6 +294,16 @@ cm_q_claim_build_copy = {
 # Expands multi-level buildings that are profitable and have pops available.
 # Flags obsolete buildings for GUI-driven upgrade processing.
 
+# Force-enables scope:cm_building_type at the root location without toggling. Root = location,
+# expects scope:cm_building_type.
+cm_enable_auto_expand_for_building_type = {
+	if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } } }
+		remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
+	} else = {
+		add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+	}
+}
+
 # Toggles auto-expand for scope:cm_building_type at the root location.
 # Optional scope:cm_set_off forces the direction instead of toggling.
 cm_apply_auto_expand_toggle = {
@@ -311,7 +321,7 @@ cm_apply_auto_expand_toggle = {
 					add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
 				}
 			} else = {
-				remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
+				cm_enable_auto_expand_for_building_type = yes
 			}
 		}
 	} else = {
@@ -326,7 +336,26 @@ cm_apply_auto_expand_toggle = {
 			if = { limit = { scope:cm_set_off = yes }
 				remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
 			} else = {
-				add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+				cm_enable_auto_expand_for_building_type = yes
+			}
+		}
+	}
+}
+
+# Ctrl-click bulk-enable driver. Root = location (the clicked location). Expects
+# scope:cm_building_type. Force-enables every eligible same-owner location in the root
+# location's province, including locations without this building yet.
+cm_enable_auto_expand_for_building_type_in_province = {
+	save_scope_as = cm_the_location
+	owner = { save_scope_as = cm_country }
+	if = { limit = { NOT = { cm_is_building_type_obsolete = yes } }
+		province = {
+			every_location_in_province = {
+				limit = {
+					owner = scope:cm_country
+					NOT = { integration_level = conquered }
+				}
+				cm_enable_auto_expand_for_building_type = yes
 			}
 		}
 	}
