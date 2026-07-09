@@ -1091,7 +1091,7 @@ def emit_loc(rights, aliases, boosted_goods):
         lines.append(f" {header_line}")
     lines.append(
         f" MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND: \"Specialization options:{slot_calls}"
-        f"\\n\\nBreakdown:{bd_calls}"
+        f"\\n\\nDetails:{bd_calls}"
         f"\\n\\nBest industries:{ind_calls}\"")
     search_cores = {}
     for right in ROYAL_RIGHTS:
