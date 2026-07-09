@@ -136,7 +136,7 @@ cm_pf_cl_g_value = {
 	}
 	divide = {
 		value = 1
-		add = cm_location_proximity_modifier
+		add = cm_location_topography_proximity_modifier # Optimal-roads mode: a road is assumed on every edge, so vegetation is always cancelled - see cm_location_has_road_or_river.
 		min = 0.1
 	}
 }
@@ -151,7 +151,7 @@ cm_pf_cl_c_value = {
 	}
 	divide = {
 		value = 1
-		add = cm_location_proximity_modifier
+		add = cm_location_topography_proximity_modifier
 		add = cm_pf_cap_adj_value
 		min = 0.1
 	}
@@ -167,7 +167,7 @@ cm_pf_cl_cb_value = {
 	}
 	divide = {
 		value = 1
-		add = cm_location_proximity_modifier
+		add = cm_location_topography_proximity_modifier
 		add = cm_pf_cap_adj_value
 		add = cm_pf_capb_extra_value
 		min = 0.1
@@ -184,7 +184,7 @@ cm_pf_cr_g_value = {
 	}
 	divide = {
 		value = 1
-		add = cm_location_proximity_modifier
+		add = cm_location_topography_proximity_modifier
 		min = 0.1
 	}
 }
@@ -199,7 +199,7 @@ cm_pf_cr_c_value = {
 	}
 	divide = {
 		value = 1
-		add = cm_location_proximity_modifier
+		add = cm_location_topography_proximity_modifier
 		add = cm_pf_cap_adj_value
 		min = 0.1
 	}
@@ -215,7 +215,7 @@ cm_pf_cr_cb_value = {
 	}
 	divide = {
 		value = 1
-		add = cm_location_proximity_modifier
+		add = cm_location_topography_proximity_modifier
 		add = cm_pf_cap_adj_value
 		add = cm_pf_capb_extra_value
 		min = 0.1
@@ -224,7 +224,13 @@ cm_pf_cr_cb_value = {
 
 # Location scope. Expects scope:cm_pf_c. Per-tile cost divisor (efficiency times terrain) that
 # Current-roads scoring divides each edge's channel numerator by, mirroring the cm_pf_cl_g/_c/_cb
-# denominators; only the numerator (min road/river) varies per edge, the divisor stays per-tile.
+# denominators; only the numerator (min road/river) varies per edge. cm_pf_div_g/_c/_cb are the
+# default divisor (topography + vegetation, this tile's full penalty), used for edges with no
+# qualifying road/river; the _nv ("no vegetation") siblings below are used instead for edges
+# cm_pf_prime_land_location marks in cm_pf_ev. Both add the two terrain components explicitly
+# rather than through cm_location_proximity_modifier, since that value's road/river cancellation
+# is a location-aggregate approximation the finder must not inherit - it already has precise
+# per-edge data (see cm_pf_relax_from_land_g/_cap).
 cm_pf_div_g_value = {
 	value = 1
 	multiply = {
@@ -235,7 +241,8 @@ cm_pf_div_g_value = {
 	}
 	multiply = {
 		value = 1
-		add = cm_location_proximity_modifier
+		add = cm_location_topography_proximity_modifier
+		add = cm_location_vegetation_proximity_modifier
 		min = 0.1
 	}
 }
@@ -250,7 +257,8 @@ cm_pf_div_c_value = {
 	}
 	multiply = {
 		value = 1
-		add = cm_location_proximity_modifier
+		add = cm_location_topography_proximity_modifier
+		add = cm_location_vegetation_proximity_modifier
 		add = cm_pf_cap_adj_value
 		min = 0.1
 	}
@@ -266,7 +274,60 @@ cm_pf_div_cb_value = {
 	}
 	multiply = {
 		value = 1
-		add = cm_location_proximity_modifier
+		add = cm_location_topography_proximity_modifier
+		add = cm_location_vegetation_proximity_modifier
+		add = cm_pf_cap_adj_value
+		add = cm_pf_capb_extra_value
+		min = 0.1
+	}
+}
+
+# Location scope. Expects scope:cm_pf_c. The _nv ("no vegetation") siblings of cm_pf_div_g/_c/_cb
+# above: topography only, for edges cm_pf_prime_land_location marks as road- or river-connected
+# in cm_pf_ev. cm_pf_cap_adj_value / cm_pf_capb_extra_value are kept - an unrelated
+# topography-only mechanic, not vegetation.
+cm_pf_div_g_nv_value = {
+	value = 1
+	multiply = {
+		value = 1
+		add = scope:cm_pf_c.var:cm_pf_eff_land
+		add = modifier:local_distance_from_capital_speed_propagation
+		min = 0.1
+	}
+	multiply = {
+		value = 1
+		add = cm_location_topography_proximity_modifier
+		min = 0.1
+	}
+}
+
+cm_pf_div_c_nv_value = {
+	value = 1
+	multiply = {
+		value = 1
+		add = scope:cm_pf_c.var:cm_pf_eff_land
+		add = modifier:local_distance_from_capital_speed_propagation
+		min = 0.1
+	}
+	multiply = {
+		value = 1
+		add = cm_location_topography_proximity_modifier
+		add = cm_pf_cap_adj_value
+		min = 0.1
+	}
+}
+
+cm_pf_div_cb_nv_value = {
+	value = 1
+	multiply = {
+		value = 1
+		add = scope:cm_pf_c.var:cm_pf_eff_land
+		add = modifier:local_distance_from_capital_speed_propagation
+		min = 0.1
+	}
+	multiply = {
+		value = 1
+		add = cm_location_topography_proximity_modifier
 		add = cm_pf_cap_adj_value
 		add = cm_pf_capb_extra_value
 		min = 0.1

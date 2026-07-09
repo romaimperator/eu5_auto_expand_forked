@@ -212,13 +212,16 @@ cm_pf_prime_land_location = {
 	}
 	# Current roads: store this tile's per-edge channel numerator (its actual road cost, or the river
 	# cost on a shared-river edge when cheaper), keyed by neighbor, plus the per-tile divisors the
-	# relaxation divides those numerators by.
+	# relaxation divides those numerators by (both the default and the vegetation-cancelled variant).
 	if = {
 		limit = { scope:cm_pf_c.var:cm_pf_roads_current = 1 }
 		save_temporary_scope_as = cm_pf_u
 		set_variable = { name = cm_pf_div_g value = cm_pf_div_g_value }
 		set_variable = { name = cm_pf_div_c value = cm_pf_div_c_value }
 		set_variable = { name = cm_pf_div_cb value = cm_pf_div_cb_value }
+		set_variable = { name = cm_pf_div_g_nv value = cm_pf_div_g_nv_value }
+		set_variable = { name = cm_pf_div_c_nv value = cm_pf_div_c_nv_value }
+		set_variable = { name = cm_pf_div_cb_nv value = cm_pf_div_cb_nv_value }
 		every_neighbor_location = {
 			limit = {
 				is_land = yes
@@ -246,6 +249,25 @@ cm_pf_prime_land_location = {
 			}
 			scope:cm_pf_u = {
 				add_to_variable_map = { name = cm_pf_en key = scope:cm_pf_nb value = local_var:cm_pf_edge_num }
+			}
+			# Vegetation-cancel flag for this specific edge: a road of any type (cm_pf_edge_red > 0
+			# covers all 4 vanilla tiers, see cm_pf_edge_road_reduction_value) or a river shared with
+			# this neighbor (the same both-has_river proxy used for the numerator above) connects
+			# this tile to this neighbor. Read by cm_pf_relax_from_land_g/_cap to pick the _nv
+			# divisor per edge.
+			if = {
+				limit = {
+					OR = {
+						local_var:cm_pf_edge_red > 0
+						AND = {
+							has_river = yes
+							scope:cm_pf_u = { has_river = yes }
+						}
+					}
+				}
+				scope:cm_pf_u = {
+					add_to_variable_map = { name = cm_pf_ev key = scope:cm_pf_nb value = 1 }
+				}
 			}
 		}
 	}
@@ -424,7 +446,8 @@ cm_pf_relax_from_land_g = {
 	save_temporary_scope_as = cm_pf_a
 	if = {
 		limit = { scope:cm_pf_c.var:cm_pf_roads_current = 1 }
-		# Current roads: each edge's own numerator (min road/river, from priming) over the governor divisor.
+		# Current roads: each edge's own numerator (min road/river, from priming) over the governor
+		# divisor, dropping vegetation on edges cm_pf_ev marks as road- or river-connected.
 		set_local_variable = { name = cm_pf_d_from value = var:cm_pf_d }
 		every_neighbor_location = {
 			limit = {
@@ -434,13 +457,25 @@ cm_pf_relax_from_land_g = {
 			}
 			save_temporary_scope_as = cm_pf_nb
 			set_local_variable = { name = cm_pf_en_v value = "scope:cm_pf_a.variable_map(cm_pf_en|scope:cm_pf_nb)" }
+			if = {
+				limit = {
+					scope:cm_pf_a = {
+						has_variable_map = cm_pf_ev
+						is_key_in_variable_map = { name = cm_pf_ev target = scope:cm_pf_nb }
+					}
+				}
+				set_local_variable = { name = cm_pf_div_edge value = scope:cm_pf_a.var:cm_pf_div_g_nv }
+			}
+			else = {
+				set_local_variable = { name = cm_pf_div_edge value = scope:cm_pf_a.var:cm_pf_div_g }
+			}
 			set_local_variable = {
 				name = cm_pf_nd_edge
 				value = {
 					value = local_var:cm_pf_d_from
 					add = {
 						value = local_var:cm_pf_en_v
-						divide = scope:cm_pf_a.var:cm_pf_div_g
+						divide = local_var:cm_pf_div_edge
 					}
 				}
 			}
@@ -551,7 +586,11 @@ cm_pf_relax_from_land_cap = {
 	save_temporary_scope_as = cm_pf_a
 	if = {
 		limit = { scope:cm_pf_c.var:cm_pf_roads_current = 1 }
-		# Current roads: each edge's numerator over this tile's capital divisor (boosted when it shares the candidate's topography).
+		# Current roads: each edge's numerator over this tile's capital divisor (boosted when it
+		# shares the candidate's topography), dropping vegetation on edges cm_pf_ev marks as road-
+		# or river-connected. cm_pf_div_use/_use_nv are the topo-match selection (unchanged from
+		# before); the neighbor loop below picks between those two per edge - two independent
+		# selections, not a four-way branch.
 		set_local_variable = { name = cm_pf_d_from value = var:cm_pf_d }
 		if = {
 			limit = {
@@ -559,9 +598,11 @@ cm_pf_relax_from_land_cap = {
 				var:cm_pf_topo = scope:cm_pf_c.var:cm_pf_cand_topo
 			}
 			set_local_variable = { name = cm_pf_div_use value = var:cm_pf_div_cb }
+			set_local_variable = { name = cm_pf_div_use_nv value = var:cm_pf_div_cb_nv }
 		}
 		else = {
 			set_local_variable = { name = cm_pf_div_use value = var:cm_pf_div_c }
+			set_local_variable = { name = cm_pf_div_use_nv value = var:cm_pf_div_c_nv }
 		}
 		every_neighbor_location = {
 			limit = {
@@ -571,13 +612,25 @@ cm_pf_relax_from_land_cap = {
 			}
 			save_temporary_scope_as = cm_pf_nb
 			set_local_variable = { name = cm_pf_en_v value = "scope:cm_pf_a.variable_map(cm_pf_en|scope:cm_pf_nb)" }
+			if = {
+				limit = {
+					scope:cm_pf_a = {
+						has_variable_map = cm_pf_ev
+						is_key_in_variable_map = { name = cm_pf_ev target = scope:cm_pf_nb }
+					}
+				}
+				set_local_variable = { name = cm_pf_div_edge value = local_var:cm_pf_div_use_nv }
+			}
+			else = {
+				set_local_variable = { name = cm_pf_div_edge value = local_var:cm_pf_div_use }
+			}
 			set_local_variable = {
 				name = cm_pf_nd_edge
 				value = {
 					value = local_var:cm_pf_d_from
 					add = {
 						value = local_var:cm_pf_en_v
-						divide = local_var:cm_pf_div_use
+						divide = local_var:cm_pf_div_edge
 					}
 				}
 			}
@@ -944,7 +997,11 @@ cm_pf_clean_location = {
 	remove_variable = cm_pf_div_g
 	remove_variable = cm_pf_div_c
 	remove_variable = cm_pf_div_cb
+	remove_variable = cm_pf_div_g_nv
+	remove_variable = cm_pf_div_c_nv
+	remove_variable = cm_pf_div_cb_nv
 	clear_variable_map = cm_pf_en
+	clear_variable_map = cm_pf_ev
 }
 
 # Country scope.

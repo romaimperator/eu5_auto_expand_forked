@@ -170,8 +170,11 @@ cm_location_food_potential = {
 	multiply = cm_location_food_potential_food_multiplier
 }
 
-# Net terrain proximity penalty (topography + vegetation), topography scaled by the owner's per-topography proximity impact modifiers.
-cm_location_proximity_modifier = {
+# Topography component of the net terrain proximity penalty, scaled by the owner's
+# per-topography proximity impact modifiers. Split out of cm_location_proximity_modifier so the
+# vegetation component can be selectively dropped where a road or river connects the two
+# locations being traveled between; topography is never affected by roads or rivers.
+cm_location_topography_proximity_modifier = {
 	value = 0
 	if = {
 		limit = { topography = mountains }
@@ -225,11 +228,31 @@ cm_location_proximity_modifier = {
 			}
 		}
 	}
+}
+
+# Vegetation component of the net terrain proximity penalty. Never scaled by any owner modifier.
+cm_location_vegetation_proximity_modifier = {
+	value = 0
 	if = { limit = { vegetation = jungle } add = -0.5 } # Mirrors vanilla jungle proximity: in_game/common/vegetation/00_default.txt:125
 	else_if = { limit = { vegetation = forest } add = -0.25 } # Mirrors vanilla forest proximity: in_game/common/vegetation/00_default.txt:101
 	else_if = { limit = { vegetation = woods } add = -0.125 } # Mirrors vanilla woods proximity: in_game/common/vegetation/00_default.txt:79
 	else_if = { limit = { vegetation = desert } add = -0.05 } # Mirrors vanilla desert proximity: in_game/common/vegetation/00_default.txt:4
 	else_if = { limit = { vegetation = farmland } add = -0.05 } # Mirrors vanilla farmland proximity: in_game/common/vegetation/00_default.txt:58
+}
+
+# Net terrain proximity penalty (topography always; vegetation only when this location has no
+# road or river - see cm_location_has_road_or_river, an aggregate, direction-unaware
+# approximation). Used by the standalone Proximity Efficiency Impact map mode. The placement
+# finder does NOT use this value: it has real per-edge direction information and reads
+# cm_location_topography_proximity_modifier / cm_location_vegetation_proximity_modifier directly
+# (cm_proximity_finder_script_values.txt), so its Current-roads model stays edge-precise instead
+# of inheriting this location-level approximation.
+cm_location_proximity_modifier = {
+	value = cm_location_topography_proximity_modifier
+	if = {
+		limit = { NOT = { cm_location_has_road_or_river = yes } }
+		add = cm_location_vegetation_proximity_modifier
+	}
 }
 
 # Local Access to Raw Materials bonus for the building type: best worth-using production

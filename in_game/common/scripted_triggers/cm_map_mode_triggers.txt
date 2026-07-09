@@ -48,3 +48,17 @@ cm_pf_naval_is_optimal_harbor = {
 	exists = var:cm_placement_finder_naval
 	var:cm_placement_finder_naval = 3
 }
+
+# Root is location. True if this location has a road (any type - gravel/paved/modern/railroad
+# all count equally, see cm_pf_edge_road_reduction_value) or a river. The road-or-river
+# vegetation-cancel rule's location-only proxy for cm_location_proximity_modifier: a bare
+# location has no path-search direction to check a specific edge against, so num_roads/has_river
+# (both direction-agnostic) are used as-is, assuming any road or river on this location runs the
+# right way. The placement finder does NOT use this trigger - cm_pf_prime_land_location checks
+# each specific edge instead, since it knows the real hop-by-hop direction of travel.
+cm_location_has_road_or_river = {
+	OR = {
+		num_roads >= 1
+		has_river = yes
+	}
+}
