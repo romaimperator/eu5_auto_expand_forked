@@ -474,6 +474,31 @@ cm_pf_cs_value = {
 	}
 }
 
+# Water location scope (lakes). Expects scope:cm_pf_c. Cost of leaving a lake tile; lakes
+# always count as maximum maritime presence, whatever the naval option.
+cm_pf_cs_lake_value = {
+	value = scope:cm_pf_c.var:cm_pf_sea_cost
+	divide = {
+		value = 1
+		add = scope:cm_pf_c.var:cm_pf_eff
+		add = modifier:local_distance_from_capital_speed_propagation
+		min = 0.1
+	}
+}
+
+# Location scope (lake shores). Expects scope:cm_pf_c. Cost of the hop from this tile into an
+# adjacent lake: the full-presence sea channel over this tile's efficiency (the shore's local
+# applies, verified against the game's segment costs), and no harbor discount or terrain.
+cm_pf_ce_value = {
+	value = scope:cm_pf_c.var:cm_pf_sea_cost
+	divide = {
+		value = 1
+		add = scope:cm_pf_c.var:cm_pf_eff
+		add = cm_pf_land_infra_value
+		min = 0.1
+	}
+}
+
 # Location scope. Baked tooltip reads.
 cm_pf_gf_avg_value = {
 	value = var:cm_gf_avg

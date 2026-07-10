@@ -112,7 +112,9 @@ cm_pf_prep_core = {
 }
 
 # Country scope. Collects every water location a sea route from an owned port can reach
-# within the proximity budget. Seeded free at the ports so no potentially useful tile is excluded.
+# within the proximity budget, plus lakes bordering owned land (a lake is open to every
+# bordering location, port or not). Seeded free at the entry points so no potentially
+# useful tile is excluded.
 cm_pf_build_water_set = {
 	clear_variable_list = cm_pf_water_set
 	every_owned_location = {
@@ -125,6 +127,20 @@ cm_pf_build_water_set = {
 				scope:cm_pf_c = {
 					add_to_variable_list = { name = cm_pf_water_set target = prev }
 				}
+			}
+		}
+	}
+	every_owned_location = {
+		limit = { is_adjacent_to_lake = yes }
+		every_neighbor_location = {
+			limit = {
+				cm_pf_location_is_lake = yes
+				NOT = { has_variable = cm_pf_wd }
+			}
+			set_variable = { name = cm_pf_wd value = 0 }
+			set_variable = { name = cm_pf_cs value = cm_pf_cs_lake_value }
+			scope:cm_pf_c = {
+				add_to_variable_list = { name = cm_pf_water_set target = prev }
 			}
 		}
 	}
@@ -167,7 +183,13 @@ cm_pf_expand_water = {
 			}
 			if = {
 				limit = { NOT = { has_variable = cm_pf_cs } }
-				set_variable = { name = cm_pf_cs value = cm_pf_cs_value }
+				if = {
+					limit = { cm_pf_location_is_lake = yes }
+					set_variable = { name = cm_pf_cs value = cm_pf_cs_lake_value }
+				}
+				else = {
+					set_variable = { name = cm_pf_cs value = cm_pf_cs_value }
+				}
 				scope:cm_pf_c = {
 					add_to_variable_list = { name = cm_pf_water_set target = prev }
 				}
@@ -219,6 +241,10 @@ cm_pf_prime_land_location = {
 		limit = { is_port = yes }
 		sea_zone = { save_temporary_scope_as = cm_pf_sz }
 		set_variable = { name = cm_pf_cp value = cm_pf_cp_value }
+	}
+	if = {
+		limit = { is_adjacent_to_lake = yes }
+		set_variable = { name = cm_pf_ce value = cm_pf_ce_value }
 	}
 	# Current roads: store this tile's per-edge channel numerator (its actual road cost, or the river
 	# cost on a shared-river edge when cheaper), keyed by neighbor, plus the per-tile divisors the
@@ -540,6 +566,24 @@ cm_pf_relax_from_land_g = {
 			cm_pf_try_relax = { ND = cm_pf_nd_port BUDGET = $BUDGET$ }
 		}
 	}
+	if = {
+		limit = { has_variable = cm_pf_ce }
+		set_local_variable = {
+			name = cm_pf_nd_lake
+			value = {
+				value = var:cm_pf_d
+				add = var:cm_pf_ce
+			}
+		}
+		every_neighbor_location = {
+			limit = {
+				is_land = no
+				has_variable = cm_pf_cs
+				cm_pf_location_is_lake = yes
+			}
+			cm_pf_try_relax = { ND = cm_pf_nd_lake BUDGET = $BUDGET$ }
+		}
+	}
 }
 
 # Water location scope (reached). Expects scope:cm_pf_c. $BUDGET$ = search cap.
@@ -552,36 +596,57 @@ cm_pf_relax_from_water = {
 			add = var:cm_pf_cs
 		}
 	}
-	every_neighbor_location = {
-		limit = {
-			OR = {
-				AND = {
-					is_land = no
-					has_variable = cm_pf_cs
-				}
-				AND = {
-					is_land = yes
-					owner ?= scope:cm_pf_c
-					is_port = yes
-					has_variable = cm_pf_cp
-					sea_zone ?= scope:cm_pf_a
+	if = {
+		limit = { cm_pf_location_is_lake = yes }
+		# A lake exits into every owned bordering location, at the same leaving cost as its water hops.
+		every_neighbor_location = {
+			limit = {
+				OR = {
+					AND = {
+						is_land = no
+						has_variable = cm_pf_cs
+					}
+					AND = {
+						is_land = yes
+						owner ?= scope:cm_pf_c
+					}
 				}
 			}
-		}
-		if = {
-			limit = { is_land = no }
 			cm_pf_try_relax = { ND = cm_pf_nd_sea BUDGET = $BUDGET$ }
 		}
-		else = {
-			# Disembark: the port's hop cost already carries this sea zone's efficiency.
-			set_local_variable = {
-				name = cm_pf_nd_port
-				value = {
-					value = scope:cm_pf_a.var:cm_pf_d
-					add = var:cm_pf_cp
+	}
+	else = {
+		every_neighbor_location = {
+			limit = {
+				OR = {
+					AND = {
+						is_land = no
+						has_variable = cm_pf_cs
+					}
+					AND = {
+						is_land = yes
+						owner ?= scope:cm_pf_c
+						is_port = yes
+						has_variable = cm_pf_cp
+						sea_zone ?= scope:cm_pf_a
+					}
 				}
 			}
-			cm_pf_try_relax = { ND = cm_pf_nd_port BUDGET = $BUDGET$ }
+			if = {
+				limit = { is_land = no }
+				cm_pf_try_relax = { ND = cm_pf_nd_sea BUDGET = $BUDGET$ }
+			}
+			else = {
+				# Disembark: the port's hop cost already carries this sea zone's efficiency.
+				set_local_variable = {
+					name = cm_pf_nd_port
+					value = {
+						value = scope:cm_pf_a.var:cm_pf_d
+						add = var:cm_pf_cp
+					}
+				}
+				cm_pf_try_relax = { ND = cm_pf_nd_port BUDGET = $BUDGET$ }
+			}
 		}
 	}
 }
@@ -718,6 +783,24 @@ cm_pf_relax_from_land_cap = {
 		}
 		sea_zone = {
 			cm_pf_try_relax = { ND = cm_pf_nd_port BUDGET = 100 }
+		}
+	}
+	if = {
+		limit = { has_variable = cm_pf_ce }
+		set_local_variable = {
+			name = cm_pf_nd_lake
+			value = {
+				value = var:cm_pf_d
+				add = var:cm_pf_ce
+			}
+		}
+		every_neighbor_location = {
+			limit = {
+				is_land = no
+				has_variable = cm_pf_cs
+				cm_pf_location_is_lake = yes
+			}
+			cm_pf_try_relax = { ND = cm_pf_nd_lake BUDGET = 100 }
 		}
 	}
 }
@@ -993,6 +1076,7 @@ cm_pf_clean_location = {
 	remove_variable = cm_pf_cr_c
 	remove_variable = cm_pf_cr_cb
 	remove_variable = cm_pf_cp
+	remove_variable = cm_pf_ce
 	remove_variable = cm_pf_cs
 	remove_variable = cm_pf_wd
 	remove_variable = cm_pf_w
