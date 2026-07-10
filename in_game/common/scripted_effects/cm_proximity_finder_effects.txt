@@ -1,17 +1,45 @@
 ﻿# Exact placement search for the governor and capital finder mapmodes. Opening a finder mode
-# runs cm_pf_prep_gated (which reuses a year-fresh result or preps a new run), then
+# runs cm_pf_prep_gated (which reuses a cached result or preps a new run), then
 # cm_pf_run_batch_all every driver tick scores a batch of candidate locations by cheapest-path
 # search until all are done; finalize bakes the per-location cm_gf_score / cm_cf_score /
 # cm_gf_avg / cm_cf_avg / cm_gf_top / cm_cf_top / cm_pf_pred the modes and tooltips read. The
-# lobby init runs the same search synchronously via cm_pf_recompute_now.
+# lobby init runs the same search synchronously via cm_pf_recompute_now. The Search Accuracy
+# setting keeps accuracy 1 on this exact path; 2-6 route through the phased runner in the
+# accuracy-tiers section, which can leave locations unevaluated (cm_gf_skip / cm_cf_skip,
+# drawn black).
 
 # Runaway guard on relaxation passes; the changed check ends them as soon as nothing improves.
 @cm_pf_max_passes = 100
 # Candidates scored per driver tick.
 @cm_pf_batch_size = 8
+# Accuracy 2+ constants. The frontier search advances one hop wave per pass, so its guard is
+# sized to the deepest possible search: budget 250 over the cheapest edge (~0.4) is ~625 hops.
+@cm_pf_max_passes_fast = 999
+# Reference search cap: @cm_pf_ref_theta + the 100 search budget, so every location a covered
+# candidate can reach stays in range.
+@cm_pf_ref_budget = 250
+# Reference spread target: stop adding references once every candidate is within this cost of one.
+@cm_pf_ref_theta = 150
+# References per run.
+@cm_pf_ref_max = 10
+# Bound-table bucket range; larger keys clamp down to it (sound, just looser).
+@cm_pf_bucket_max = 250
+# Ordered-drain picks per tick; skipping a pick is far cheaper than evaluating it.
+@cm_pf_batch_picks = 64
+# Hill-climb refinement rounds (accuracy 5-6).
+@cm_pf_refine_rounds = 10
+# Accuracy 6 seed evaluations besides the capital.
+@cm_pf_seed_count = 24
+# Below this many owned locations the bound machinery costs more than it can skip.
+@cm_pf_min_n_prune = 30
+# Accuracy 6 search budgets: 75% of the governor source value 80
+# (in_game/common/building_types/capital_buildings.txt:681) and of the capital source value 100
+# (main_menu/common/static_modifiers/location.txt:330).
+@cm_pf_budget_g_fast = 60
+@cm_pf_budget_c_fast = 75
 
 # Country scope. GUI entry fired on mapmode open. Reuses cached scores while cm_pf_fresh is
-# live (set for a year at each compute); otherwise sets up a fresh run for the tick loop.
+# live (set for 4 years at each compute); otherwise sets up a fresh run for the tick loop.
 cm_pf_prep_gated = {
 	save_scope_as = cm_pf_c
 	if = {
@@ -45,11 +73,17 @@ cm_pf_recompute_now = {
 			is_multiplayer_session = no
 		}
 		cm_pf_prep_core = yes
-		every_owned_location = {
-			limit = { has_variable = cm_pf_cl_g }
-			cm_pf_score_candidate = yes
+		if = {
+			limit = { var:cm_pf_acc <= 1 }
+			every_owned_location = {
+				limit = { has_variable = cm_pf_cl_g }
+				cm_pf_score_candidate = yes
+			}
+			cm_pf_finalize = yes
 		}
-		cm_pf_finalize = yes
+		else = {
+			cm_pf_run_tiered_sync = yes
+		}
 		remove_variable = cm_pf_repaint
 	}
 }
@@ -93,6 +127,7 @@ cm_pf_prep_core = {
 	else = {
 		set_variable = { name = cm_pf_naval_opt_harbor value = 0 }
 	}
+	set_variable = { name = cm_pf_acc value = cm_pf_accuracy_value }
 	set_variable = { name = cm_pf_land_cost value = cm_pf_land_cost_value }
 	set_variable = { name = cm_pf_river_cost value = cm_pf_river_cost_value }
 	set_variable = { name = cm_pf_sea_cost value = cm_pf_sea_cost_value }
@@ -109,6 +144,10 @@ cm_pf_prep_core = {
 	cm_pf_build_water_set = yes
 	set_variable = { name = cm_pf_n value = 0 }
 	every_owned_location = { cm_pf_prime_land_location = yes }
+	if = {
+		limit = { var:cm_pf_acc >= 2 }
+		set_variable = { name = cm_pf_phase value = 1 }
+	}
 }
 
 # Country scope. Collects every water location a sea route from an owned port can reach
@@ -207,6 +246,9 @@ cm_pf_prime_land_location = {
 	scope:cm_pf_c = {
 		change_variable = { name = cm_pf_n add = 1 }
 	}
+	# Skip flags are persistent outputs; each fresh run re-decides them.
+	remove_variable = cm_gf_skip
+	remove_variable = cm_cf_skip
 	if = {
 		limit = { topography = mountains }
 		set_variable = { name = cm_pf_topo value = 1 }
@@ -306,6 +348,7 @@ cm_pf_prime_land_location = {
 }
 
 # Country scope. Scores up to @cm_pf_batch_size pending candidates; finalizes when none remain.
+# Accuracy 2+ dispatches to the phased runner instead.
 cm_pf_run_batch_all = {
 	save_scope_as = cm_pf_c
 	if = {
@@ -313,24 +356,30 @@ cm_pf_run_batch_all = {
 			NOT = { has_variable = cm_pf_all_done }
 			has_variable = cm_pf_n
 		}
-		set_local_variable = { name = cm_pf_batch_n value = 0 }
-		every_owned_location = {
-			limit = {
-				local_var:cm_pf_batch_n < @cm_pf_batch_size
-				NOT = { has_variable = cm_pf_done }
-				has_variable = cm_pf_cl_g
-			}
-			set_variable = { name = cm_pf_done value = 1 }
-			change_local_variable = { name = cm_pf_batch_n add = 1 }
-			add_to_local_variable_list = { name = cm_pf_batch target = this }
-		}
-		every_in_local_list = {
-			variable = cm_pf_batch
-			cm_pf_score_candidate = yes
-		}
 		if = {
-			limit = { local_var:cm_pf_batch_n = 0 }
-			cm_pf_finalize = yes
+			limit = { var:cm_pf_acc <= 1 }
+			set_local_variable = { name = cm_pf_batch_n value = 0 }
+			every_owned_location = {
+				limit = {
+					local_var:cm_pf_batch_n < @cm_pf_batch_size
+					NOT = { has_variable = cm_pf_done }
+					has_variable = cm_pf_cl_g
+				}
+				set_variable = { name = cm_pf_done value = 1 }
+				change_local_variable = { name = cm_pf_batch_n add = 1 }
+				add_to_local_variable_list = { name = cm_pf_batch target = this }
+			}
+			every_in_local_list = {
+				variable = cm_pf_batch
+				cm_pf_score_candidate = yes
+			}
+			if = {
+				limit = { local_var:cm_pf_batch_n = 0 }
+				cm_pf_finalize = yes
+			}
+		}
+		else = {
+			cm_pf_run_batch_tiered = yes
 		}
 	}
 }
@@ -340,7 +389,19 @@ cm_pf_score_candidate = {
 	save_temporary_scope_as = cm_pf_cand
 	set_variable = { name = cm_pf_d value = 0 }
 	cm_pf_bellman_g = { BUDGET = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
-	# cm_pf_sum = wealth-weighted; cm_pf_sum_p = unweighted proximity.
+	cm_pf_sweep_gov = yes
+	scope:cm_pf_c = {
+		set_variable = { name = cm_pf_cand_topo value = scope:cm_pf_cand.var:cm_pf_topo }
+	}
+	set_variable = { name = cm_pf_d value = 0 }
+	cm_pf_bellman_cap = yes
+	cm_pf_sweep_cap = yes
+}
+
+# Location scope (the candidate). Accumulates the governor sums over the reached set, clears
+# the search state, and stores the raw results. cm_pf_sum = wealth-weighted; cm_pf_sum_p =
+# unweighted proximity.
+cm_pf_sweep_gov = {
 	set_local_variable = { name = cm_pf_sum value = 0 }
 	set_local_variable = { name = cm_pf_sum_p value = 0 }
 	scope:cm_pf_c = {
@@ -365,21 +426,19 @@ cm_pf_score_candidate = {
 				}
 			}
 			remove_variable = cm_pf_d
+			remove_variable = cm_pf_rlx
 		}
 		every_in_list = {
 			variable = cm_pf_water_set
 			remove_variable = cm_pf_d
+			remove_variable = cm_pf_rlx
 		}
 	}
-	scope:cm_pf_cand = {
-		set_variable = { name = cm_pf_gf_raw value = local_var:cm_pf_sum }
-		set_variable = { name = cm_pf_gf_raw_p value = local_var:cm_pf_sum_p }
-	}
-	scope:cm_pf_c = {
-		set_variable = { name = cm_pf_cand_topo value = scope:cm_pf_cand.var:cm_pf_topo }
-	}
-	set_variable = { name = cm_pf_d value = 0 }
-	cm_pf_bellman_cap = yes
+	set_variable = { name = cm_pf_gf_raw value = local_var:cm_pf_sum }
+	set_variable = { name = cm_pf_gf_raw_p value = local_var:cm_pf_sum_p }
+}
+
+cm_pf_sweep_cap = {
 	set_local_variable = { name = cm_pf_sum value = 0 }
 	set_local_variable = { name = cm_pf_sum_p value = 0 }
 	scope:cm_pf_c = {
@@ -404,16 +463,16 @@ cm_pf_score_candidate = {
 				}
 			}
 			remove_variable = cm_pf_d
+			remove_variable = cm_pf_rlx
 		}
 		every_in_list = {
 			variable = cm_pf_water_set
 			remove_variable = cm_pf_d
+			remove_variable = cm_pf_rlx
 		}
 	}
-	scope:cm_pf_cand = {
-		set_variable = { name = cm_pf_cf_raw value = local_var:cm_pf_sum }
-		set_variable = { name = cm_pf_cf_raw_p value = local_var:cm_pf_sum_p }
-	}
+	set_variable = { name = cm_pf_cf_raw value = local_var:cm_pf_sum }
+	set_variable = { name = cm_pf_cf_raw_p value = local_var:cm_pf_sum_p }
 }
 
 # Some seed location holds cm_pf_d = 0. Expects scope:cm_pf_c. Cheapest-path relaxation
@@ -461,7 +520,7 @@ cm_pf_bellman_cap = {
 					has_variable = cm_pf_d
 					has_variable = cm_pf_cl_c
 				}
-				cm_pf_relax_from_land_cap = yes
+				cm_pf_relax_from_land_cap = { BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
 			}
 			every_in_list = {
 				variable = cm_pf_water_set
@@ -652,7 +711,8 @@ cm_pf_relax_from_water = {
 }
 
 # Location scope (reached land location). Expects scope:cm_pf_c and cm_pf_cand_topo; a tile
-# sharing the candidate's topography leaves through its boosted costs.
+# sharing the candidate's topography leaves through its boosted costs. $BUDGET$ = the search
+# cap. Local cm_pf_ref_all (reference searches) applies the boosted costs on every tile.
 cm_pf_relax_from_land_cap = {
 	save_temporary_scope_as = cm_pf_a
 	if = {
@@ -665,8 +725,13 @@ cm_pf_relax_from_land_cap = {
 		set_local_variable = { name = cm_pf_d_from value = var:cm_pf_d }
 		if = {
 			limit = {
-				var:cm_pf_topo > 0
-				var:cm_pf_topo = scope:cm_pf_c.var:cm_pf_cand_topo
+				OR = {
+					exists = local_var:cm_pf_ref_all
+					AND = {
+						var:cm_pf_topo > 0
+						var:cm_pf_topo = scope:cm_pf_c.var:cm_pf_cand_topo
+					}
+				}
 			}
 			set_local_variable = { name = cm_pf_div_use value = var:cm_pf_div_cb }
 			set_local_variable = { name = cm_pf_div_use_nv value = var:cm_pf_div_cb_nv }
@@ -705,14 +770,19 @@ cm_pf_relax_from_land_cap = {
 					}
 				}
 			}
-			cm_pf_try_relax = { ND = cm_pf_nd_edge BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
+			cm_pf_try_relax = { ND = cm_pf_nd_edge BUDGET = $BUDGET$ }
 		}
 	}
 	else = {
 		if = {
 			limit = {
-				var:cm_pf_topo > 0
-				var:cm_pf_topo = scope:cm_pf_c.var:cm_pf_cand_topo
+				OR = {
+					exists = local_var:cm_pf_ref_all
+					AND = {
+						var:cm_pf_topo > 0
+						var:cm_pf_topo = scope:cm_pf_c.var:cm_pf_cand_topo
+					}
+				}
 			}
 			set_local_variable = {
 				name = cm_pf_nd_land
@@ -762,10 +832,10 @@ cm_pf_relax_from_land_cap = {
 				limit = {
 					scope:cm_pf_a = { is_target_in_variable_list = { name = cm_pf_river_neighbors target = scope:cm_pf_nb } }
 				}
-				cm_pf_try_relax = { ND = cm_pf_nd_river BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
+				cm_pf_try_relax = { ND = cm_pf_nd_river BUDGET = $BUDGET$ }
 			}
 			else = {
-				cm_pf_try_relax = { ND = cm_pf_nd_land BUDGET = 100 }
+				cm_pf_try_relax = { ND = cm_pf_nd_land BUDGET = $BUDGET$ }
 			}
 		}
 	}
@@ -782,7 +852,7 @@ cm_pf_relax_from_land_cap = {
 			}
 		}
 		sea_zone = {
-			cm_pf_try_relax = { ND = cm_pf_nd_port BUDGET = 100 }
+			cm_pf_try_relax = { ND = cm_pf_nd_port BUDGET = $BUDGET$ }
 		}
 	}
 	if = {
@@ -800,7 +870,7 @@ cm_pf_relax_from_land_cap = {
 				has_variable = cm_pf_cs
 				cm_pf_location_is_lake = yes
 			}
-			cm_pf_try_relax = { ND = cm_pf_nd_lake BUDGET = 100 }
+			cm_pf_try_relax = { ND = cm_pf_nd_lake BUDGET = $BUDGET$ }
 		}
 	}
 }
@@ -818,6 +888,22 @@ cm_pf_try_relax = {
 		}
 		set_variable = { name = cm_pf_d value = local_var:$ND$ }
 		change_local_variable = { name = cm_pf_changed add = 1 }
+		# Frontier push, armed only by the fast search variants; cm_pf_rlx caps a node at one
+		# outward relaxation on greedy (accuracy 6) searches.
+		if = {
+			limit = {
+				exists = local_var:cm_pf_push_f
+				NOT = { has_variable = cm_pf_inf }
+				trigger_if = {
+					limit = { exists = local_var:cm_pf_greedy }
+					NOT = { has_variable = cm_pf_rlx }
+				}
+			}
+			set_variable = { name = cm_pf_inf value = 1 }
+			scope:cm_pf_c = {
+				add_to_variable_list = { name = cm_pf_front target = prev }
+			}
+		}
 		# Record the path only during the capital diagnostic spread; cm_pf_rec is armed only there.
 		if = {
 			limit = { scope:cm_pf_c = { has_variable = cm_pf_rec } }
@@ -840,36 +926,1155 @@ cm_pf_try_relax = {
 	}
 }
 
+# ============================== Accuracy tiers (2-6) ==============================
+# The Search Accuracy setting's phased runner. Phases (cm_pf_phase): 1 init, 2 reference
+# searches, 3 ordered drain (accuracy 2-4, and small countries at any tier), 4 seed marking,
+# 5 marked drain, 6 refinement marking, 7 mark the rest skipped (accuracy 5-6).
+# Accuracy 2-4 skip a candidate only when reference-derived score bounds prove it cannot make
+# that tier's guaranteed ranks; 5-6 evaluate seeds and hill-climb around the leaders. Every
+# search stays a true cheapest-path over the real cost graph.
+
+# Some seed location holds cm_pf_d = 0 and sits in cm_pf_front (cm_pf_inf marks membership).
+# Expects scope:cm_pf_c. Frontier form of the relaxation waves: each pass relaxes only the
+# locations whose distance improved during the previous pass (cm_pf_try_relax pushes them
+# while local cm_pf_push_f is armed), reaching the same distances as cm_pf_bellman_g/_cap.
+# $MODE$ = g or cap (the land relax variant); $BUDGET$ = the search cap.
+cm_pf_frontier_waves = {
+	set_local_variable = { name = cm_pf_changed value = 1 }
+	set_local_variable = { name = cm_pf_pass value = 0 }
+	while = {
+		limit = {
+			local_var:cm_pf_changed > 0
+			local_var:cm_pf_pass < @cm_pf_max_passes_fast
+		}
+		change_local_variable = { name = cm_pf_pass add = 1 }
+		set_local_variable = { name = cm_pf_changed value = 0 }
+		clear_local_variable_list = cm_pf_front_cur
+		scope:cm_pf_c = {
+			every_in_list = {
+				variable = cm_pf_front
+				remove_variable = cm_pf_inf
+				add_to_local_variable_list = { name = cm_pf_front_cur target = this }
+			}
+			clear_variable_list = cm_pf_front
+		}
+		every_in_local_list = {
+			variable = cm_pf_front_cur
+			if = {
+				limit = { exists = local_var:cm_pf_greedy }
+				set_variable = { name = cm_pf_rlx value = 1 }
+			}
+			if = {
+				limit = { is_land = yes }
+				cm_pf_relax_from_land_$MODE$ = { BUDGET = $BUDGET$ }
+			}
+			else = {
+				cm_pf_relax_from_water = { BUDGET = $BUDGET$ }
+			}
+		}
+	}
+}
+
+# Expects scope:cm_pf_c. A pass-cap exit leaves pushed nodes in cm_pf_front, and a stale
+# cm_pf_inf would block their next push.
+cm_pf_frontier_residue_clear = {
+	scope:cm_pf_c = {
+		every_in_list = {
+			variable = cm_pf_front
+			remove_variable = cm_pf_inf
+		}
+		clear_variable_list = cm_pf_front
+	}
+}
+
+# Location scope (the seeded candidate). Expects scope:cm_pf_c. Exact frontier searches:
+# identical distances to cm_pf_bellman_g/_cap, without re-scanning settled locations.
+cm_pf_bellman_g_fast = {
+	set_local_variable = { name = cm_pf_push_f value = 1 }
+	set_variable = { name = cm_pf_inf value = 1 }
+	scope:cm_pf_c = {
+		clear_variable_list = cm_pf_front
+		add_to_variable_list = { name = cm_pf_front target = prev }
+	}
+	cm_pf_frontier_waves = { MODE = g BUDGET = $BUDGET$ }
+	remove_local_variable = cm_pf_push_f
+	cm_pf_frontier_residue_clear = yes
+}
+
+cm_pf_bellman_cap_fast = {
+	set_local_variable = { name = cm_pf_push_f value = 1 }
+	set_variable = { name = cm_pf_inf value = 1 }
+	scope:cm_pf_c = {
+		clear_variable_list = cm_pf_front
+		add_to_variable_list = { name = cm_pf_front target = prev }
+	}
+	cm_pf_frontier_waves = { MODE = cap BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
+	remove_local_variable = cm_pf_push_f
+	cm_pf_frontier_residue_clear = yes
+}
+
+# Location scope (the seeded candidate). Expects scope:cm_pf_c. Accuracy 6 searches: each
+# node relaxes outward once (cm_pf_rlx blocks its re-push), then one correction pass
+# re-relaxes every reached node. Distances can end slightly above the true cheapest path.
+cm_pf_bellman_g_greedy = {
+	set_local_variable = { name = cm_pf_push_f value = 1 }
+	set_local_variable = { name = cm_pf_greedy value = 1 }
+	set_variable = { name = cm_pf_inf value = 1 }
+	scope:cm_pf_c = {
+		clear_variable_list = cm_pf_front
+		add_to_variable_list = { name = cm_pf_front target = prev }
+	}
+	cm_pf_frontier_waves = { MODE = g BUDGET = @cm_pf_budget_g_fast }
+	remove_local_variable = cm_pf_push_f
+	remove_local_variable = cm_pf_greedy
+	cm_pf_frontier_residue_clear = yes
+	scope:cm_pf_c = {
+		every_owned_location = {
+			limit = {
+				has_variable = cm_pf_d
+				has_variable = cm_pf_cl_g
+			}
+			cm_pf_relax_from_land_g = { BUDGET = @cm_pf_budget_g_fast }
+		}
+		every_in_list = {
+			variable = cm_pf_water_set
+			limit = { has_variable = cm_pf_d }
+			cm_pf_relax_from_water = { BUDGET = @cm_pf_budget_g_fast }
+		}
+	}
+}
+
+cm_pf_bellman_cap_greedy = {
+	set_local_variable = { name = cm_pf_push_f value = 1 }
+	set_local_variable = { name = cm_pf_greedy value = 1 }
+	set_variable = { name = cm_pf_inf value = 1 }
+	scope:cm_pf_c = {
+		clear_variable_list = cm_pf_front
+		add_to_variable_list = { name = cm_pf_front target = prev }
+	}
+	cm_pf_frontier_waves = { MODE = cap BUDGET = @cm_pf_budget_c_fast }
+	remove_local_variable = cm_pf_push_f
+	remove_local_variable = cm_pf_greedy
+	cm_pf_frontier_residue_clear = yes
+	scope:cm_pf_c = {
+		every_owned_location = {
+			limit = {
+				has_variable = cm_pf_d
+				has_variable = cm_pf_cl_c
+			}
+			cm_pf_relax_from_land_cap = { BUDGET = @cm_pf_budget_c_fast }
+		}
+		every_in_list = {
+			variable = cm_pf_water_set
+			limit = { has_variable = cm_pf_d }
+			cm_pf_relax_from_water = { BUDGET = @cm_pf_budget_c_fast }
+		}
+	}
+}
+
+# Location scope (the reference location). Expects scope:cm_pf_c. Reference search for the
+# candidate bounds: boosted capital costs on every tile, a per-edge lower bound of both real
+# searches (cm_pf_cap_adj_value <= 0 <= cm_pf_capb_extra_value, so the _cb divisors are the
+# largest), which makes the triangle inequality d_cand(L) >= d_ref(L) - d_ref(cand) hold. A
+# pass-cap exit leaves distances above the truth, which would break the bound, so it
+# invalidates skipping for the whole run instead.
+cm_pf_bellman_ref = {
+	set_variable = { name = cm_pf_d value = 0 }
+	set_local_variable = { name = cm_pf_push_f value = 1 }
+	set_local_variable = { name = cm_pf_ref_all value = 1 }
+	set_variable = { name = cm_pf_inf value = 1 }
+	scope:cm_pf_c = {
+		clear_variable_list = cm_pf_front
+		add_to_variable_list = { name = cm_pf_front target = prev }
+		# Keeps the topo-match clause's cand_topo read defined while cm_pf_ref_all overrides it.
+		set_variable = { name = cm_pf_cand_topo value = 0 }
+	}
+	cm_pf_frontier_waves = { MODE = cap BUDGET = @cm_pf_ref_budget }
+	if = {
+		limit = { local_var:cm_pf_changed > 0 }
+		scope:cm_pf_c = { set_variable = { name = cm_pf_ub_valid value = 0 } }
+	}
+	remove_local_variable = cm_pf_push_f
+	remove_local_variable = cm_pf_ref_all
+	cm_pf_frontier_residue_clear = yes
+}
+
+# Country scope. Arms the bound state; small countries skip the reference machinery and
+# drain everything.
+cm_pf_phase_init = {
+	set_variable = { name = cm_pf_ref_i value = 0 }
+	set_variable = { name = cm_pf_round value = 0 }
+	set_variable = { name = cm_pf_ub_valid value = 1 }
+	set_variable = { name = cm_pf_b1_gt value = 0 }
+	set_variable = { name = cm_pf_b2_gt value = 0 }
+	set_variable = { name = cm_pf_b3_gt value = 0 }
+	set_variable = { name = cm_pf_b1_gp value = 0 }
+	set_variable = { name = cm_pf_b2_gp value = 0 }
+	set_variable = { name = cm_pf_b3_gp value = 0 }
+	set_variable = { name = cm_pf_b1_ct value = 0 }
+	set_variable = { name = cm_pf_b2_ct value = 0 }
+	set_variable = { name = cm_pf_b3_ct value = 0 }
+	set_variable = { name = cm_pf_b1_cp value = 0 }
+	set_variable = { name = cm_pf_b2_cp value = 0 }
+	set_variable = { name = cm_pf_b3_cp value = 0 }
+	every_owned_location = {
+		limit = { has_variable = cm_pf_cl_g }
+		# Sentinel above any reachable bound, so an unbounded candidate is never skipped.
+		set_variable = { name = cm_pf_ub_gt value = 999999999 }
+		set_variable = { name = cm_pf_ub_gp value = 999999999 }
+		set_variable = { name = cm_pf_ub_ct value = 999999999 }
+		set_variable = { name = cm_pf_ub_cp value = 999999999 }
+		set_variable = { name = cm_pf_dref_min value = 9999 }
+	}
+	if = {
+		limit = { var:cm_pf_n < @cm_pf_min_n_prune }
+		set_variable = { name = cm_pf_ub_valid value = 0 }
+		every_owned_location = {
+			limit = { has_variable = cm_pf_cl_g }
+			set_variable = { name = cm_pf_ub_ord value = 0 }
+		}
+		set_variable = { name = cm_pf_phase value = 3 }
+	}
+	else = {
+		set_variable = { name = cm_pf_phase value = 2 }
+	}
+}
+
+# Country scope. One reference per call: the capital first, then the candidate farthest from
+# every reference so far, until the spread target or the cap; then hand over to the drain.
+cm_pf_phase_refs_step = {
+	set_local_variable = { name = cm_pf_ref_go value = 0 }
+	if = {
+		limit = { var:cm_pf_ub_valid = 1 }
+		if = {
+			limit = { var:cm_pf_ref_i = 0 }
+			if = {
+				limit = {
+					exists = capital
+					capital = {
+						owner ?= scope:cm_pf_c
+						has_variable = cm_pf_cl_g
+					}
+				}
+				capital = { save_temporary_scope_as = cm_pf_ref }
+				set_local_variable = { name = cm_pf_ref_go value = 1 }
+			}
+			else = {
+				ordered_owned_location = {
+					limit = { has_variable = cm_pf_cl_g }
+					order_by = { value = var:cm_pf_w }
+					position = 0
+					check_range_bounds = no
+					save_temporary_scope_as = cm_pf_ref
+					set_local_variable = { name = cm_pf_ref_go value = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { var:cm_pf_ref_i < @cm_pf_ref_max }
+			ordered_owned_location = {
+				limit = { has_variable = cm_pf_cl_g }
+				order_by = { value = var:cm_pf_dref_min }
+				position = 0
+				check_range_bounds = no
+				if = {
+					limit = { var:cm_pf_dref_min >= @cm_pf_ref_theta }
+					save_temporary_scope_as = cm_pf_ref
+					set_local_variable = { name = cm_pf_ref_go value = 1 }
+				}
+			}
+		}
+	}
+	if = {
+		limit = { local_var:cm_pf_ref_go = 1 }
+		change_variable = { name = cm_pf_ref_i add = 1 }
+		scope:cm_pf_ref = { cm_pf_bellman_ref = yes }
+		if = {
+			limit = { var:cm_pf_ub_valid = 1 }
+			cm_pf_build_ref_tables = yes
+			cm_pf_prefix_ref_tables = yes
+			cm_pf_apply_ref_bounds = yes
+		}
+		else = {
+			every_owned_location = { remove_variable = cm_pf_d }
+			every_in_list = {
+				variable = cm_pf_water_set
+				remove_variable = cm_pf_d
+			}
+		}
+	}
+	else = {
+		cm_pf_refs_done = yes
+	}
+}
+
+# Country scope. Bakes the drain/seed order key from the active metric's bounds and enters
+# the evaluation phase for the tier.
+cm_pf_refs_done = {
+	if = {
+		limit = { cm_pf_method_is_tax_base = yes }
+		every_owned_location = {
+			limit = { has_variable = cm_pf_cl_g }
+			set_variable = {
+				name = cm_pf_ub_ord
+				value = {
+					value = var:cm_pf_ub_gt
+					add = var:cm_pf_ub_ct
+				}
+			}
+		}
+	}
+	else = {
+		every_owned_location = {
+			limit = { has_variable = cm_pf_cl_g }
+			set_variable = {
+				name = cm_pf_ub_ord
+				value = {
+					value = var:cm_pf_ub_gp
+					add = var:cm_pf_ub_cp
+				}
+			}
+		}
+	}
+	if = {
+		limit = { var:cm_pf_acc <= 4 }
+		set_variable = { name = cm_pf_phase value = 3 }
+	}
+	else = {
+		set_variable = { name = cm_pf_phase value = 4 }
+	}
+}
+
+# Country scope. Folds one reference search's distances (cm_pf_d) into the bound tables:
+# bucket key = floor(d - T), T = the location's contribution threshold (cm_pf_t governor,
+# 100 capital), with count and key-sum tables both unweighted and wealth-weighted. Keys at or
+# below 0 and unreached locations fold their maximum possible contribution into the
+# cm_pf_cx_* constants instead: clamping a key up to 0 would under-bound and break the skip
+# guarantee.
+cm_pf_build_ref_tables = {
+	set_variable = { name = cm_pf_cx_gt value = 0 }
+	set_variable = { name = cm_pf_cx_gp value = 0 }
+	set_variable = { name = cm_pf_cx_ct value = 0 }
+	set_variable = { name = cm_pf_cx_cp value = 0 }
+	every_owned_location = {
+		limit = { has_variable = cm_pf_cl_g }
+		set_local_variable = { name = cm_pf_lw value = var:cm_pf_w }
+		set_local_variable = { name = cm_pf_lt value = var:cm_pf_t }
+		if = {
+			limit = { has_variable = cm_pf_d }
+			if = {
+				limit = { var:cm_pf_t > 0 }
+				set_local_variable = {
+					name = cm_pf_bk
+					value = {
+						value = var:cm_pf_d
+						subtract = var:cm_pf_t
+						floor = yes
+						max = @cm_pf_bucket_max
+					}
+				}
+				if = {
+					limit = { local_var:cm_pf_bk >= 1 }
+					scope:cm_pf_c = {
+						set_local_variable = { name = cm_pf_tv value = 0 }
+						if = {
+							limit = { is_key_in_variable_map = { name = cm_pf_tb_gc target = local_var:cm_pf_bk } }
+							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gc|local_var:cm_pf_bk)" }
+							remove_from_variable_map = { name = cm_pf_tb_gc key = local_var:cm_pf_bk }
+						}
+						change_local_variable = { name = cm_pf_tv add = 1 }
+						add_to_variable_map = { name = cm_pf_tb_gc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+						set_local_variable = { name = cm_pf_tv value = 0 }
+						if = {
+							limit = { is_key_in_variable_map = { name = cm_pf_tb_gk target = local_var:cm_pf_bk } }
+							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gk|local_var:cm_pf_bk)" }
+							remove_from_variable_map = { name = cm_pf_tb_gk key = local_var:cm_pf_bk }
+						}
+						change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_bk }
+						add_to_variable_map = { name = cm_pf_tb_gk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+						set_local_variable = { name = cm_pf_tv value = 0 }
+						if = {
+							limit = { is_key_in_variable_map = { name = cm_pf_tb_gwc target = local_var:cm_pf_bk } }
+							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gwc|local_var:cm_pf_bk)" }
+							remove_from_variable_map = { name = cm_pf_tb_gwc key = local_var:cm_pf_bk }
+						}
+						change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lw }
+						add_to_variable_map = { name = cm_pf_tb_gwc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+						set_local_variable = { name = cm_pf_tv value = 0 }
+						if = {
+							limit = { is_key_in_variable_map = { name = cm_pf_tb_gwk target = local_var:cm_pf_bk } }
+							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gwk|local_var:cm_pf_bk)" }
+							remove_from_variable_map = { name = cm_pf_tb_gwk key = local_var:cm_pf_bk }
+						}
+						change_local_variable = {
+							name = cm_pf_tv
+							add = {
+								value = local_var:cm_pf_bk
+								multiply = local_var:cm_pf_lw
+							}
+						}
+						add_to_variable_map = { name = cm_pf_tb_gwk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+					}
+				}
+				else = {
+					scope:cm_pf_c = {
+						change_variable = { name = cm_pf_cx_gp add = local_var:cm_pf_lt }
+						change_variable = {
+							name = cm_pf_cx_gt
+							add = {
+								value = local_var:cm_pf_lt
+								multiply = local_var:cm_pf_lw
+							}
+						}
+					}
+				}
+			}
+			set_local_variable = {
+				name = cm_pf_bk
+				value = {
+					value = var:cm_pf_d
+					subtract = 100 # Capital source value: main_menu/common/static_modifiers/location.txt:330
+					floor = yes
+					max = @cm_pf_bucket_max
+				}
+			}
+			if = {
+				limit = { local_var:cm_pf_bk >= 1 }
+				scope:cm_pf_c = {
+					set_local_variable = { name = cm_pf_tv value = 0 }
+					if = {
+						limit = { is_key_in_variable_map = { name = cm_pf_tb_cc target = local_var:cm_pf_bk } }
+						set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cc|local_var:cm_pf_bk)" }
+						remove_from_variable_map = { name = cm_pf_tb_cc key = local_var:cm_pf_bk }
+					}
+					change_local_variable = { name = cm_pf_tv add = 1 }
+					add_to_variable_map = { name = cm_pf_tb_cc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+					set_local_variable = { name = cm_pf_tv value = 0 }
+					if = {
+						limit = { is_key_in_variable_map = { name = cm_pf_tb_ck target = local_var:cm_pf_bk } }
+						set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_ck|local_var:cm_pf_bk)" }
+						remove_from_variable_map = { name = cm_pf_tb_ck key = local_var:cm_pf_bk }
+					}
+					change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_bk }
+					add_to_variable_map = { name = cm_pf_tb_ck key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+					set_local_variable = { name = cm_pf_tv value = 0 }
+					if = {
+						limit = { is_key_in_variable_map = { name = cm_pf_tb_cwc target = local_var:cm_pf_bk } }
+						set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cwc|local_var:cm_pf_bk)" }
+						remove_from_variable_map = { name = cm_pf_tb_cwc key = local_var:cm_pf_bk }
+					}
+					change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lw }
+					add_to_variable_map = { name = cm_pf_tb_cwc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+					set_local_variable = { name = cm_pf_tv value = 0 }
+					if = {
+						limit = { is_key_in_variable_map = { name = cm_pf_tb_cwk target = local_var:cm_pf_bk } }
+						set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cwk|local_var:cm_pf_bk)" }
+						remove_from_variable_map = { name = cm_pf_tb_cwk key = local_var:cm_pf_bk }
+					}
+					change_local_variable = {
+						name = cm_pf_tv
+						add = {
+							value = local_var:cm_pf_bk
+							multiply = local_var:cm_pf_lw
+						}
+					}
+					add_to_variable_map = { name = cm_pf_tb_cwk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+				}
+			}
+			else = {
+				scope:cm_pf_c = {
+					change_variable = { name = cm_pf_cx_cp add = 100 }
+					change_variable = {
+						name = cm_pf_cx_ct
+						add = {
+							value = 100
+							multiply = local_var:cm_pf_lw
+						}
+					}
+				}
+			}
+		}
+		else = {
+			if = {
+				limit = { var:cm_pf_t > 0 }
+				scope:cm_pf_c = {
+					change_variable = { name = cm_pf_cx_gp add = local_var:cm_pf_lt }
+					change_variable = {
+						name = cm_pf_cx_gt
+						add = {
+							value = local_var:cm_pf_lt
+							multiply = local_var:cm_pf_lw
+						}
+					}
+				}
+			}
+			scope:cm_pf_c = {
+				change_variable = { name = cm_pf_cx_cp add = 100 }
+				change_variable = {
+					name = cm_pf_cx_ct
+					add = {
+						value = 100
+						multiply = local_var:cm_pf_lw
+					}
+				}
+			}
+		}
+	}
+}
+
+# Country scope. In-place prefix sums over the 8 bound tables, writing every key 0 to
+# @cm_pf_bucket_max so candidate lookups read without key guards.
+cm_pf_prefix_ref_tables = {
+	set_local_variable = { name = cm_pf_k value = 0 }
+	set_local_variable = { name = cm_pf_r_gc value = 0 }
+	set_local_variable = { name = cm_pf_r_gk value = 0 }
+	set_local_variable = { name = cm_pf_r_gwc value = 0 }
+	set_local_variable = { name = cm_pf_r_gwk value = 0 }
+	set_local_variable = { name = cm_pf_r_cc value = 0 }
+	set_local_variable = { name = cm_pf_r_ck value = 0 }
+	set_local_variable = { name = cm_pf_r_cwc value = 0 }
+	set_local_variable = { name = cm_pf_r_cwk value = 0 }
+	while = {
+		limit = { local_var:cm_pf_k <= @cm_pf_bucket_max }
+		if = {
+			limit = { is_key_in_variable_map = { name = cm_pf_tb_gc target = local_var:cm_pf_k } }
+			set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gc|local_var:cm_pf_k)" }
+			change_local_variable = { name = cm_pf_r_gc add = local_var:cm_pf_tv }
+			remove_from_variable_map = { name = cm_pf_tb_gc key = local_var:cm_pf_k }
+		}
+		add_to_variable_map = { name = cm_pf_tb_gc key = local_var:cm_pf_k value = local_var:cm_pf_r_gc }
+		if = {
+			limit = { is_key_in_variable_map = { name = cm_pf_tb_gk target = local_var:cm_pf_k } }
+			set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gk|local_var:cm_pf_k)" }
+			change_local_variable = { name = cm_pf_r_gk add = local_var:cm_pf_tv }
+			remove_from_variable_map = { name = cm_pf_tb_gk key = local_var:cm_pf_k }
+		}
+		add_to_variable_map = { name = cm_pf_tb_gk key = local_var:cm_pf_k value = local_var:cm_pf_r_gk }
+		if = {
+			limit = { is_key_in_variable_map = { name = cm_pf_tb_gwc target = local_var:cm_pf_k } }
+			set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gwc|local_var:cm_pf_k)" }
+			change_local_variable = { name = cm_pf_r_gwc add = local_var:cm_pf_tv }
+			remove_from_variable_map = { name = cm_pf_tb_gwc key = local_var:cm_pf_k }
+		}
+		add_to_variable_map = { name = cm_pf_tb_gwc key = local_var:cm_pf_k value = local_var:cm_pf_r_gwc }
+		if = {
+			limit = { is_key_in_variable_map = { name = cm_pf_tb_gwk target = local_var:cm_pf_k } }
+			set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gwk|local_var:cm_pf_k)" }
+			change_local_variable = { name = cm_pf_r_gwk add = local_var:cm_pf_tv }
+			remove_from_variable_map = { name = cm_pf_tb_gwk key = local_var:cm_pf_k }
+		}
+		add_to_variable_map = { name = cm_pf_tb_gwk key = local_var:cm_pf_k value = local_var:cm_pf_r_gwk }
+		if = {
+			limit = { is_key_in_variable_map = { name = cm_pf_tb_cc target = local_var:cm_pf_k } }
+			set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cc|local_var:cm_pf_k)" }
+			change_local_variable = { name = cm_pf_r_cc add = local_var:cm_pf_tv }
+			remove_from_variable_map = { name = cm_pf_tb_cc key = local_var:cm_pf_k }
+		}
+		add_to_variable_map = { name = cm_pf_tb_cc key = local_var:cm_pf_k value = local_var:cm_pf_r_cc }
+		if = {
+			limit = { is_key_in_variable_map = { name = cm_pf_tb_ck target = local_var:cm_pf_k } }
+			set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_ck|local_var:cm_pf_k)" }
+			change_local_variable = { name = cm_pf_r_ck add = local_var:cm_pf_tv }
+			remove_from_variable_map = { name = cm_pf_tb_ck key = local_var:cm_pf_k }
+		}
+		add_to_variable_map = { name = cm_pf_tb_ck key = local_var:cm_pf_k value = local_var:cm_pf_r_ck }
+		if = {
+			limit = { is_key_in_variable_map = { name = cm_pf_tb_cwc target = local_var:cm_pf_k } }
+			set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cwc|local_var:cm_pf_k)" }
+			change_local_variable = { name = cm_pf_r_cwc add = local_var:cm_pf_tv }
+			remove_from_variable_map = { name = cm_pf_tb_cwc key = local_var:cm_pf_k }
+		}
+		add_to_variable_map = { name = cm_pf_tb_cwc key = local_var:cm_pf_k value = local_var:cm_pf_r_cwc }
+		if = {
+			limit = { is_key_in_variable_map = { name = cm_pf_tb_cwk target = local_var:cm_pf_k } }
+			set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cwk|local_var:cm_pf_k)" }
+			change_local_variable = { name = cm_pf_r_cwk add = local_var:cm_pf_tv }
+			remove_from_variable_map = { name = cm_pf_tb_cwk key = local_var:cm_pf_k }
+		}
+		add_to_variable_map = { name = cm_pf_tb_cwk key = local_var:cm_pf_k value = local_var:cm_pf_r_cwk }
+		change_local_variable = { name = cm_pf_k add = 1 }
+	}
+}
+
+# Country scope. Folds one reference's bounds into every reached candidate's running minima,
+# then clears the reference distances and tables. Per location L the bound on a candidate's
+# contribution is max(0, X - key_L) with X = ceiling(d_ref(candidate)): floor the stored key
+# and ceil the lookup, so rounding only ever overestimates. The prefix tables turn the sum
+# over all L into count and key-sum reads at X - 1, plus the cm_pf_cx_* constants.
+cm_pf_apply_ref_bounds = {
+	every_owned_location = {
+		limit = {
+			has_variable = cm_pf_cl_g
+			has_variable = cm_pf_d
+		}
+		change_variable = { name = cm_pf_dref_min min = var:cm_pf_d }
+		set_local_variable = {
+			name = cm_pf_x
+			value = {
+				value = var:cm_pf_d
+				ceiling = yes
+			}
+		}
+		set_local_variable = {
+			name = cm_pf_xi
+			value = {
+				value = local_var:cm_pf_x
+				subtract = 1
+				max = @cm_pf_bucket_max
+			}
+		}
+		if = {
+			limit = { local_var:cm_pf_xi >= 0 }
+			set_local_variable = { name = cm_pf_r_gc value = "scope:cm_pf_c.variable_map(cm_pf_tb_gc|local_var:cm_pf_xi)" }
+			set_local_variable = { name = cm_pf_r_gk value = "scope:cm_pf_c.variable_map(cm_pf_tb_gk|local_var:cm_pf_xi)" }
+			set_local_variable = { name = cm_pf_r_gwc value = "scope:cm_pf_c.variable_map(cm_pf_tb_gwc|local_var:cm_pf_xi)" }
+			set_local_variable = { name = cm_pf_r_gwk value = "scope:cm_pf_c.variable_map(cm_pf_tb_gwk|local_var:cm_pf_xi)" }
+			set_local_variable = { name = cm_pf_r_cc value = "scope:cm_pf_c.variable_map(cm_pf_tb_cc|local_var:cm_pf_xi)" }
+			set_local_variable = { name = cm_pf_r_ck value = "scope:cm_pf_c.variable_map(cm_pf_tb_ck|local_var:cm_pf_xi)" }
+			set_local_variable = { name = cm_pf_r_cwc value = "scope:cm_pf_c.variable_map(cm_pf_tb_cwc|local_var:cm_pf_xi)" }
+			set_local_variable = { name = cm_pf_r_cwk value = "scope:cm_pf_c.variable_map(cm_pf_tb_cwk|local_var:cm_pf_xi)" }
+		}
+		else = {
+			set_local_variable = { name = cm_pf_r_gc value = 0 }
+			set_local_variable = { name = cm_pf_r_gk value = 0 }
+			set_local_variable = { name = cm_pf_r_gwc value = 0 }
+			set_local_variable = { name = cm_pf_r_gwk value = 0 }
+			set_local_variable = { name = cm_pf_r_cc value = 0 }
+			set_local_variable = { name = cm_pf_r_ck value = 0 }
+			set_local_variable = { name = cm_pf_r_cwc value = 0 }
+			set_local_variable = { name = cm_pf_r_cwk value = 0 }
+		}
+		set_local_variable = {
+			name = cm_pf_ubv
+			value = {
+				value = local_var:cm_pf_x
+				multiply = local_var:cm_pf_r_gwc
+				subtract = local_var:cm_pf_r_gwk
+				add = scope:cm_pf_c.var:cm_pf_cx_gt
+			}
+		}
+		change_variable = { name = cm_pf_ub_gt min = local_var:cm_pf_ubv }
+		set_local_variable = {
+			name = cm_pf_ubv
+			value = {
+				value = local_var:cm_pf_x
+				multiply = local_var:cm_pf_r_gc
+				subtract = local_var:cm_pf_r_gk
+				add = scope:cm_pf_c.var:cm_pf_cx_gp
+			}
+		}
+		change_variable = { name = cm_pf_ub_gp min = local_var:cm_pf_ubv }
+		set_local_variable = {
+			name = cm_pf_ubv
+			value = {
+				value = local_var:cm_pf_x
+				multiply = local_var:cm_pf_r_cwc
+				subtract = local_var:cm_pf_r_cwk
+				add = scope:cm_pf_c.var:cm_pf_cx_ct
+			}
+		}
+		change_variable = { name = cm_pf_ub_ct min = local_var:cm_pf_ubv }
+		set_local_variable = {
+			name = cm_pf_ubv
+			value = {
+				value = local_var:cm_pf_x
+				multiply = local_var:cm_pf_r_cc
+				subtract = local_var:cm_pf_r_ck
+				add = scope:cm_pf_c.var:cm_pf_cx_cp
+			}
+		}
+		change_variable = { name = cm_pf_ub_cp min = local_var:cm_pf_ubv }
+		remove_variable = cm_pf_d
+	}
+	every_in_list = {
+		variable = cm_pf_water_set
+		remove_variable = cm_pf_d
+	}
+	clear_variable_map = cm_pf_tb_gc
+	clear_variable_map = cm_pf_tb_gk
+	clear_variable_map = cm_pf_tb_gwc
+	clear_variable_map = cm_pf_tb_gwk
+	clear_variable_map = cm_pf_tb_cc
+	clear_variable_map = cm_pf_tb_ck
+	clear_variable_map = cm_pf_tb_cwc
+	clear_variable_map = cm_pf_tb_cwk
+}
+
+# Country scope. Folds $V$ (a local) into the exact best-1/2/3 values for metric $C$.
+cm_pf_best3_fold = {
+	if = {
+		limit = { local_var:$V$ > var:cm_pf_b1_$C$ }
+		set_variable = { name = cm_pf_b3_$C$ value = var:cm_pf_b2_$C$ }
+		set_variable = { name = cm_pf_b2_$C$ value = var:cm_pf_b1_$C$ }
+		set_variable = { name = cm_pf_b1_$C$ value = local_var:$V$ }
+	}
+	else_if = {
+		limit = { local_var:$V$ > var:cm_pf_b2_$C$ }
+		set_variable = { name = cm_pf_b3_$C$ value = var:cm_pf_b2_$C$ }
+		set_variable = { name = cm_pf_b2_$C$ value = local_var:$V$ }
+	}
+	else_if = {
+		limit = { local_var:$V$ > var:cm_pf_b3_$C$ }
+		set_variable = { name = cm_pf_b3_$C$ value = local_var:$V$ }
+	}
+}
+
+# Location scope. Drops the mode's baked outputs so a skipped location renders black instead
+# of a stale gradient.
+cm_pf_drop_gov_outputs = {
+	set_variable = { name = cm_gf_skip value = 1 }
+	remove_variable = cm_gf_score
+	remove_variable = cm_gf_avg
+	remove_variable = cm_gf_taxgain
+	remove_variable = cm_gf_top
+	remove_variable = cm_gf_localmax
+}
+
+cm_pf_drop_cap_outputs = {
+	set_variable = { name = cm_cf_skip value = 1 }
+	remove_variable = cm_cf_score
+	remove_variable = cm_cf_avg
+	remove_variable = cm_cf_taxgain
+	remove_variable = cm_cf_top
+	remove_variable = cm_cf_localmax
+}
+
+# Location scope (a drained candidate). Expects scope:cm_pf_c. Accuracy 2-4 skip a mode when
+# its bounds prove the candidate cannot make that tier's guaranteed ranks (strict <, so a
+# possible tie always evaluates); accuracy 5-6 evaluate whatever the sample and refinement
+# phases marked. Bumps local cm_pf_evals when it ran at least one search.
+cm_pf_score_candidate_pruned = {
+	save_temporary_scope_as = cm_pf_cand
+	set_variable = { name = cm_pf_done value = 1 }
+	set_local_variable = { name = cm_pf_do_g value = 1 }
+	set_local_variable = { name = cm_pf_do_c value = 1 }
+	if = {
+		limit = {
+			scope:cm_pf_c = {
+				var:cm_pf_acc <= 4
+				var:cm_pf_ub_valid = 1
+			}
+		}
+		if = {
+			limit = { scope:cm_pf_c.var:cm_pf_acc = 2 }
+			set_local_variable = { name = cm_pf_th_gt value = scope:cm_pf_c.var:cm_pf_b3_gt }
+			set_local_variable = { name = cm_pf_th_gp value = scope:cm_pf_c.var:cm_pf_b3_gp }
+			set_local_variable = { name = cm_pf_th_ct value = scope:cm_pf_c.var:cm_pf_b3_ct }
+			set_local_variable = { name = cm_pf_th_cp value = scope:cm_pf_c.var:cm_pf_b3_cp }
+		}
+		else_if = {
+			limit = { scope:cm_pf_c.var:cm_pf_acc = 3 }
+			set_local_variable = { name = cm_pf_th_gt value = scope:cm_pf_c.var:cm_pf_b1_gt }
+			set_local_variable = { name = cm_pf_th_gp value = scope:cm_pf_c.var:cm_pf_b1_gp }
+			set_local_variable = { name = cm_pf_th_ct value = scope:cm_pf_c.var:cm_pf_b1_ct }
+			set_local_variable = { name = cm_pf_th_cp value = scope:cm_pf_c.var:cm_pf_b1_cp }
+		}
+		else = {
+			# 1.25: skips only what is provably below 125% of the found best, keeping the
+			# found best at or above 80% of the true best.
+			set_local_variable = {
+				name = cm_pf_th_gt
+				value = {
+					value = scope:cm_pf_c.var:cm_pf_b1_gt
+					multiply = 1.25
+				}
+			}
+			set_local_variable = {
+				name = cm_pf_th_gp
+				value = {
+					value = scope:cm_pf_c.var:cm_pf_b1_gp
+					multiply = 1.25
+				}
+			}
+			set_local_variable = {
+				name = cm_pf_th_ct
+				value = {
+					value = scope:cm_pf_c.var:cm_pf_b1_ct
+					multiply = 1.25
+				}
+			}
+			set_local_variable = {
+				name = cm_pf_th_cp
+				value = {
+					value = scope:cm_pf_c.var:cm_pf_b1_cp
+					multiply = 1.25
+				}
+			}
+		}
+		if = {
+			limit = {
+				var:cm_pf_ub_gt < local_var:cm_pf_th_gt
+				var:cm_pf_ub_gp < local_var:cm_pf_th_gp
+			}
+			set_local_variable = { name = cm_pf_do_g value = 0 }
+		}
+		if = {
+			limit = {
+				var:cm_pf_ub_ct < local_var:cm_pf_th_ct
+				var:cm_pf_ub_cp < local_var:cm_pf_th_cp
+			}
+			set_local_variable = { name = cm_pf_do_c value = 0 }
+		}
+	}
+	if = {
+		limit = { local_var:cm_pf_do_g = 1 }
+		set_variable = { name = cm_pf_d value = 0 }
+		if = {
+			limit = { scope:cm_pf_c.var:cm_pf_acc = 6 }
+			cm_pf_bellman_g_greedy = yes
+		}
+		else = {
+			cm_pf_bellman_g_fast = { BUDGET = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+		}
+		cm_pf_sweep_gov = yes
+		if = {
+			limit = { scope:cm_pf_c.var:cm_pf_acc <= 4 }
+			set_local_variable = { name = cm_pf_fv value = var:cm_pf_gf_raw }
+			set_local_variable = { name = cm_pf_fvp value = var:cm_pf_gf_raw_p }
+			scope:cm_pf_c = {
+				cm_pf_best3_fold = { C = gt V = cm_pf_fv }
+				cm_pf_best3_fold = { C = gp V = cm_pf_fvp }
+			}
+		}
+	}
+	else = {
+		cm_pf_drop_gov_outputs = yes
+	}
+	if = {
+		limit = { local_var:cm_pf_do_c = 1 }
+		scope:cm_pf_c = {
+			set_variable = { name = cm_pf_cand_topo value = scope:cm_pf_cand.var:cm_pf_topo }
+		}
+		set_variable = { name = cm_pf_d value = 0 }
+		if = {
+			limit = { scope:cm_pf_c.var:cm_pf_acc = 6 }
+			cm_pf_bellman_cap_greedy = yes
+		}
+		else = {
+			cm_pf_bellman_cap_fast = yes
+		}
+		cm_pf_sweep_cap = yes
+		if = {
+			limit = { scope:cm_pf_c.var:cm_pf_acc <= 4 }
+			set_local_variable = { name = cm_pf_fv value = var:cm_pf_cf_raw }
+			set_local_variable = { name = cm_pf_fvp value = var:cm_pf_cf_raw_p }
+			scope:cm_pf_c = {
+				cm_pf_best3_fold = { C = ct V = cm_pf_fv }
+				cm_pf_best3_fold = { C = cp V = cm_pf_fvp }
+			}
+		}
+	}
+	else = {
+		cm_pf_drop_cap_outputs = yes
+	}
+	if = {
+		limit = {
+			OR = {
+				local_var:cm_pf_do_g = 1
+				local_var:cm_pf_do_c = 1
+			}
+		}
+		change_local_variable = { name = cm_pf_evals add = 1 }
+	}
+}
+
+# Country scope. Ordered drain: up to @cm_pf_batch_size evaluations or @cm_pf_batch_picks
+# picks per tick, best bound first so the exact bests rise early and later picks skip.
+cm_pf_phase_drain_step = {
+	set_local_variable = { name = cm_pf_evals value = 0 }
+	set_local_variable = { name = cm_pf_picks value = 0 }
+	set_local_variable = { name = cm_pf_iter value = 0 }
+	while = {
+		limit = {
+			local_var:cm_pf_evals < @cm_pf_batch_size
+			local_var:cm_pf_iter < @cm_pf_batch_picks
+			local_var:cm_pf_picks >= local_var:cm_pf_iter
+		}
+		change_local_variable = { name = cm_pf_iter add = 1 }
+		ordered_owned_location = {
+			limit = {
+				NOT = { has_variable = cm_pf_done }
+				has_variable = cm_pf_cl_g
+			}
+			order_by = { value = var:cm_pf_ub_ord }
+			position = 0
+			check_range_bounds = no
+			change_local_variable = { name = cm_pf_picks add = 1 }
+			cm_pf_score_candidate_pruned = yes
+		}
+	}
+	if = {
+		limit = { local_var:cm_pf_picks < local_var:cm_pf_iter }
+		cm_pf_finalize = yes
+	}
+}
+
+# Country scope. Marks the seed evaluations: accuracy 5 the best-bound location of every
+# owned province, accuracy 6 the @cm_pf_seed_count best-bound locations; the capital always.
+cm_pf_phase_sample = {
+	if = {
+		limit = { var:cm_pf_acc = 5 }
+		every_province = {
+			ordered_location_in_province = {
+				limit = {
+					owner ?= scope:cm_pf_c
+					has_variable = cm_pf_cl_g
+				}
+				order_by = { value = var:cm_pf_ub_ord }
+				position = 0
+				check_range_bounds = no
+				set_variable = { name = cm_pf_samp value = 1 }
+			}
+		}
+	}
+	else = {
+		set_local_variable = { name = cm_pf_seed_i value = 0 }
+		while = {
+			limit = { local_var:cm_pf_seed_i < @cm_pf_seed_count }
+			change_local_variable = { name = cm_pf_seed_i add = 1 }
+			ordered_owned_location = {
+				limit = {
+					has_variable = cm_pf_cl_g
+					NOT = { has_variable = cm_pf_samp }
+				}
+				order_by = { value = var:cm_pf_ub_ord }
+				position = 0
+				check_range_bounds = no
+				set_variable = { name = cm_pf_samp value = 1 }
+			}
+		}
+	}
+	if = {
+		limit = {
+			exists = capital
+			capital = {
+				owner ?= scope:cm_pf_c
+				has_variable = cm_pf_cl_g
+			}
+		}
+		capital = { set_variable = { name = cm_pf_samp value = 1 } }
+	}
+	set_variable = { name = cm_pf_phase value = 5 }
+}
+
+# Country scope. Evaluates up to @cm_pf_batch_size marked locations per tick; empty hands
+# over to the refinement phase.
+cm_pf_phase_marked_drain_step = {
+	set_local_variable = { name = cm_pf_evals value = 0 }
+	set_local_variable = { name = cm_pf_batch_n value = 0 }
+	every_owned_location = {
+		limit = {
+			local_var:cm_pf_batch_n < @cm_pf_batch_size
+			has_variable = cm_pf_samp
+			NOT = { has_variable = cm_pf_done }
+			has_variable = cm_pf_cl_g
+		}
+		change_local_variable = { name = cm_pf_batch_n add = 1 }
+		add_to_local_variable_list = { name = cm_pf_mbatch target = this }
+	}
+	every_in_local_list = {
+		variable = cm_pf_mbatch
+		cm_pf_score_candidate_pruned = yes
+	}
+	if = {
+		limit = { local_var:cm_pf_batch_n = 0 }
+		set_variable = { name = cm_pf_phase value = 6 }
+	}
+}
+
+# Country scope. Marks the unevaluated owned neighbors of the position-$POS$ location by
+# raw metric $RAW$; local cm_pf_marks counts the new marks.
+cm_pf_refine_mark_top = {
+	ordered_owned_location = {
+		limit = { has_variable = cm_pf_$RAW$ }
+		order_by = { value = var:cm_pf_$RAW$ }
+		position = $POS$
+		check_range_bounds = no
+		every_neighbor_location = {
+			limit = {
+				is_land = yes
+				owner ?= scope:cm_pf_c
+				has_variable = cm_pf_cl_g
+				NOT = { has_variable = cm_pf_done }
+				NOT = { has_variable = cm_pf_samp }
+			}
+			set_variable = { name = cm_pf_samp value = 1 }
+			change_local_variable = { name = cm_pf_marks add = 1 }
+		}
+	}
+}
+
+# Country scope. One refinement round: mark every unevaluated neighbor of the current top 3
+# of each mode and metric into the sample. Leaves the count in local cm_pf_marks.
+cm_pf_refine_mark_round = {
+	set_local_variable = { name = cm_pf_marks value = 0 }
+	if = {
+		limit = { var:cm_pf_round < @cm_pf_refine_rounds }
+		change_variable = { name = cm_pf_round add = 1 }
+		cm_pf_refine_mark_top = { RAW = gf_raw POS = 0 }
+		cm_pf_refine_mark_top = { RAW = gf_raw POS = 1 }
+		cm_pf_refine_mark_top = { RAW = gf_raw POS = 2 }
+		cm_pf_refine_mark_top = { RAW = gf_raw_p POS = 0 }
+		cm_pf_refine_mark_top = { RAW = gf_raw_p POS = 1 }
+		cm_pf_refine_mark_top = { RAW = gf_raw_p POS = 2 }
+		cm_pf_refine_mark_top = { RAW = cf_raw POS = 0 }
+		cm_pf_refine_mark_top = { RAW = cf_raw POS = 1 }
+		cm_pf_refine_mark_top = { RAW = cf_raw POS = 2 }
+		cm_pf_refine_mark_top = { RAW = cf_raw_p POS = 0 }
+		cm_pf_refine_mark_top = { RAW = cf_raw_p POS = 1 }
+		cm_pf_refine_mark_top = { RAW = cf_raw_p POS = 2 }
+	}
+}
+
+# Country scope. Refinement tick: re-enter the marked drain while a round turns up new
+# neighbors, otherwise mark the rest skipped.
+cm_pf_phase_refine = {
+	cm_pf_refine_mark_round = yes
+	if = {
+		limit = { local_var:cm_pf_marks > 0 }
+		set_variable = { name = cm_pf_phase value = 5 }
+	}
+	else = {
+		set_variable = { name = cm_pf_phase value = 7 }
+	}
+}
+
+# Country scope. Everything the sample and refinement never reached is skipped for both
+# modes; finalize then bakes the outputs.
+cm_pf_phase_mark_skipped = {
+	every_owned_location = {
+		limit = {
+			has_variable = cm_pf_cl_g
+			NOT = { has_variable = cm_pf_done }
+		}
+		set_variable = { name = cm_pf_done value = 1 }
+		cm_pf_drop_gov_outputs = yes
+		cm_pf_drop_cap_outputs = yes
+	}
+	cm_pf_finalize = yes
+}
+
+# Country scope. The accuracy 2+ tick dispatcher; the driver fires it through the same
+# cm_pf_run_batch entry as accuracy 1.
+cm_pf_run_batch_tiered = {
+	switch = {
+		trigger = var:cm_pf_phase
+		1 = { cm_pf_phase_init = yes }
+		2 = { cm_pf_phase_refs_step = yes }
+		3 = { cm_pf_phase_drain_step = yes }
+		4 = { cm_pf_phase_sample = yes }
+		5 = { cm_pf_phase_marked_drain_step = yes }
+		6 = { cm_pf_phase_refine = yes }
+		7 = { cm_pf_phase_mark_skipped = yes }
+	}
+}
+
+# Country scope. The lobby-init form of the phased run: same phases, no ticks. The drain
+# seeds @cm_pf_batch_size top picks first so the skip thresholds start near their final
+# values, then sweeps the rest in map order.
+cm_pf_run_tiered_sync = {
+	cm_pf_phase_init = yes
+	while = {
+		limit = { var:cm_pf_phase = 2 }
+		cm_pf_phase_refs_step = yes
+	}
+	if = {
+		limit = { var:cm_pf_phase = 3 }
+		set_local_variable = { name = cm_pf_evals value = 0 }
+		set_local_variable = { name = cm_pf_seed_i value = 0 }
+		while = {
+			limit = { local_var:cm_pf_seed_i < @cm_pf_batch_size }
+			change_local_variable = { name = cm_pf_seed_i add = 1 }
+			ordered_owned_location = {
+				limit = {
+					NOT = { has_variable = cm_pf_done }
+					has_variable = cm_pf_cl_g
+				}
+				order_by = { value = var:cm_pf_ub_ord }
+				position = 0
+				check_range_bounds = no
+				cm_pf_score_candidate_pruned = yes
+			}
+		}
+		every_owned_location = {
+			limit = {
+				NOT = { has_variable = cm_pf_done }
+				has_variable = cm_pf_cl_g
+			}
+			cm_pf_score_candidate_pruned = yes
+		}
+		cm_pf_finalize = yes
+	}
+	else = {
+		set_local_variable = { name = cm_pf_evals value = 0 }
+		cm_pf_phase_sample = yes
+		every_owned_location = {
+			limit = {
+				has_variable = cm_pf_samp
+				NOT = { has_variable = cm_pf_done }
+				has_variable = cm_pf_cl_g
+			}
+			cm_pf_score_candidate_pruned = yes
+		}
+		cm_pf_refine_mark_round = yes
+		while = {
+			limit = { local_var:cm_pf_marks > 0 }
+			every_owned_location = {
+				limit = {
+					has_variable = cm_pf_samp
+					NOT = { has_variable = cm_pf_done }
+					has_variable = cm_pf_cl_g
+				}
+				cm_pf_score_candidate_pruned = yes
+			}
+			cm_pf_refine_mark_round = yes
+		}
+		cm_pf_phase_mark_skipped = yes
+	}
+}
+
 # Country scope. Expects scope:cm_pf_c. Bakes the persistent outputs, then strips every transient.
 cm_pf_finalize = {
 	set_variable = { name = cm_pf_gf_max value = 0 }
 	set_variable = { name = cm_pf_cf_max value = 0 }
 	# Predicted tax base gain: cm_pf_gf_raw is wealth-weighted proximity, times 0.0075 (control rises
 	# 0.75 per unit of proximity, and proximity is 0-100 in the search, so 0.75/100). Then in proximity
-	# mode retarget the score/rank basis from the weighted sum to the unweighted one.
+	# mode retarget the score/rank basis from the weighted sum to the unweighted one. Each mode's
+	# loops guard on its own raw: accuracy 2+ can evaluate a location for one mode and skip the other.
 	every_owned_location = {
 		limit = { has_variable = cm_pf_gf_raw }
 		set_variable = { name = cm_gf_taxgain value = { value = var:cm_pf_gf_raw multiply = 0.0075 } }
-		set_variable = { name = cm_cf_taxgain value = { value = var:cm_pf_cf_raw multiply = 0.0075 } }
 		if = {
 			limit = { scope:cm_pf_c = { NOT = { cm_pf_method_is_tax_base = yes } } }
 			set_variable = { name = cm_pf_gf_raw value = var:cm_pf_gf_raw_p }
+		}
+	}
+	every_owned_location = {
+		limit = { has_variable = cm_pf_cf_raw }
+		set_variable = { name = cm_cf_taxgain value = { value = var:cm_pf_cf_raw multiply = 0.0075 } }
+		if = {
+			limit = { scope:cm_pf_c = { NOT = { cm_pf_method_is_tax_base = yes } } }
 			set_variable = { name = cm_pf_cf_raw value = var:cm_pf_cf_raw_p }
 		}
 	}
 	every_owned_location = {
+		limit = { has_variable = cm_pf_gf_raw }
 		save_temporary_scope_as = cm_pf_l
 		scope:cm_pf_c = {
 			change_variable = { name = cm_pf_gf_max max = scope:cm_pf_l.var:cm_pf_gf_raw }
+		}
+	}
+	every_owned_location = {
+		limit = { has_variable = cm_pf_cf_raw }
+		save_temporary_scope_as = cm_pf_l
+		scope:cm_pf_c = {
 			change_variable = { name = cm_pf_cf_max max = scope:cm_pf_l.var:cm_pf_cf_raw }
 		}
 	}
 	every_owned_location = {
 		limit = { has_variable = cm_pf_gf_raw }
 		remove_variable = cm_gf_top
-		remove_variable = cm_cf_top
 		remove_variable = cm_gf_localmax
-		remove_variable = cm_cf_localmax
 		set_variable = {
 			name = cm_gf_score
 			value = {
@@ -882,6 +2087,21 @@ cm_pf_finalize = {
 			}
 		}
 		set_variable = {
+			name = cm_gf_avg
+			value = {
+				value = var:cm_pf_gf_raw_p
+				divide = {
+					value = scope:cm_pf_c.var:cm_pf_n
+					min = 1
+				}
+			}
+		}
+	}
+	every_owned_location = {
+		limit = { has_variable = cm_pf_cf_raw }
+		remove_variable = cm_cf_top
+		remove_variable = cm_cf_localmax
+		set_variable = {
 			name = cm_cf_score
 			value = {
 				value = var:cm_pf_cf_raw
@@ -889,16 +2109,6 @@ cm_pf_finalize = {
 				divide = {
 					value = scope:cm_pf_c.var:cm_pf_cf_max
 					min = 0.001
-				}
-			}
-		}
-		set_variable = {
-			name = cm_gf_avg
-			value = {
-				value = var:cm_pf_gf_raw_p
-				divide = {
-					value = scope:cm_pf_c.var:cm_pf_n
-					min = 1
 				}
 			}
 		}
@@ -974,6 +2184,10 @@ cm_pf_finalize = {
 			}
 			set_variable = { name = cm_gf_localmax value = 1 }
 		}
+	}
+	every_owned_location = {
+		limit = { has_variable = cm_cf_score }
+		save_temporary_scope_as = cm_pf_lm
 		if = {
 			limit = {
 				var:cm_cf_score >= 800
@@ -1090,6 +2304,15 @@ cm_pf_clean_location = {
 	remove_variable = cm_pf_div_g_nv
 	remove_variable = cm_pf_div_c_nv
 	remove_variable = cm_pf_div_cb_nv
+	remove_variable = cm_pf_ub_gt
+	remove_variable = cm_pf_ub_gp
+	remove_variable = cm_pf_ub_ct
+	remove_variable = cm_pf_ub_cp
+	remove_variable = cm_pf_ub_ord
+	remove_variable = cm_pf_dref_min
+	remove_variable = cm_pf_samp
+	remove_variable = cm_pf_inf
+	remove_variable = cm_pf_rlx
 	clear_variable_map = cm_pf_en
 	clear_variable_map = cm_pf_ev
 }
@@ -1114,4 +2337,34 @@ cm_pf_clean_country = {
 	remove_variable = cm_pf_roads_best_possible
 	remove_variable = cm_pf_naval_cur_presence
 	remove_variable = cm_pf_naval_opt_harbor
+	remove_variable = cm_pf_acc
+	remove_variable = cm_pf_phase
+	remove_variable = cm_pf_ref_i
+	remove_variable = cm_pf_round
+	remove_variable = cm_pf_ub_valid
+	remove_variable = cm_pf_b1_gt
+	remove_variable = cm_pf_b2_gt
+	remove_variable = cm_pf_b3_gt
+	remove_variable = cm_pf_b1_gp
+	remove_variable = cm_pf_b2_gp
+	remove_variable = cm_pf_b3_gp
+	remove_variable = cm_pf_b1_ct
+	remove_variable = cm_pf_b2_ct
+	remove_variable = cm_pf_b3_ct
+	remove_variable = cm_pf_b1_cp
+	remove_variable = cm_pf_b2_cp
+	remove_variable = cm_pf_b3_cp
+	remove_variable = cm_pf_cx_gt
+	remove_variable = cm_pf_cx_gp
+	remove_variable = cm_pf_cx_ct
+	remove_variable = cm_pf_cx_cp
+	clear_variable_list = cm_pf_front
+	clear_variable_map = cm_pf_tb_gc
+	clear_variable_map = cm_pf_tb_gk
+	clear_variable_map = cm_pf_tb_gwc
+	clear_variable_map = cm_pf_tb_gwk
+	clear_variable_map = cm_pf_tb_cc
+	clear_variable_map = cm_pf_tb_ck
+	clear_variable_map = cm_pf_tb_cwc
+	clear_variable_map = cm_pf_tb_cwk
 }

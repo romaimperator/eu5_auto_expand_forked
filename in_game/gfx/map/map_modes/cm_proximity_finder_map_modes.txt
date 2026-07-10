@@ -42,6 +42,10 @@
 @cm_pf_unowned_r = 90
 @cm_pf_unowned_g = 90
 @cm_pf_unowned_b = 90
+# Skipped by the Search Accuracy setting: never evaluated this run.
+@cm_pf_skipped_r = 0
+@cm_pf_skipped_g = 0
+@cm_pf_skipped_b = 0
 @cm_pf_stripe_r = 205
 @cm_pf_stripe_g = 206
 @cm_pf_stripe_b = 205
@@ -155,6 +159,13 @@ cm_governor_finder = {
 			}
 		}
 		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_skip
+			}
+			value = rgb { @cm_pf_skipped_r @cm_pf_skipped_g @cm_pf_skipped_b }
+		}
+		else_if = {
 			limit = { owner ?= scope:actor }
 			value = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b }
 		}
@@ -224,6 +235,13 @@ cm_governor_finder = {
 			value = MAPMODE_CM_GOVERNOR_FINDER_TT_SCORED
 		}
 		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_skip
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_SKIPPED
+		}
+		else_if = {
 			limit = { owner ?= scope:actor }
 			value = MAPMODE_CM_GOVERNOR_FINDER_TT_NO_DATA
 		}
@@ -242,6 +260,7 @@ cm_governor_finder = {
 	legend_key = { desc = "cm_pf_bad_legend_key"        color = rgb { @cm_pf_bad_r @cm_pf_bad_g @cm_pf_bad_b } }
 	legend_key = { desc = "cm_pf_localmax_legend_key"   color = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b } }
 	legend_key = { desc = "cm_pf_not_scored_legend_key" color = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b } }
+	legend_key = { desc = "cm_pf_skipped_legend_key"    color = rgb { @cm_pf_skipped_r @cm_pf_skipped_g @cm_pf_skipped_b } }
 
 	small_map_names = location
 	medium_map_names = country
@@ -387,6 +406,13 @@ cm_governor_finder_hidden = {
 			}
 		}
 		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_skip
+			}
+			value = rgb { @cm_pf_skipped_r @cm_pf_skipped_g @cm_pf_skipped_b }
+		}
+		else_if = {
 			limit = { owner ?= scope:actor }
 			value = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b }
 		}
@@ -456,6 +482,13 @@ cm_governor_finder_hidden = {
 			value = MAPMODE_CM_GOVERNOR_FINDER_TT_SCORED
 		}
 		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_gf_skip
+			}
+			value = MAPMODE_CM_GOVERNOR_FINDER_TT_SKIPPED
+		}
+		else_if = {
 			limit = { owner ?= scope:actor }
 			value = MAPMODE_CM_GOVERNOR_FINDER_TT_NO_DATA
 		}
@@ -474,6 +507,7 @@ cm_governor_finder_hidden = {
 	legend_key = { desc = "cm_pf_bad_legend_key"        color = rgb { @cm_pf_bad_r @cm_pf_bad_g @cm_pf_bad_b } }
 	legend_key = { desc = "cm_pf_localmax_legend_key"   color = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b } }
 	legend_key = { desc = "cm_pf_not_scored_legend_key" color = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b } }
+	legend_key = { desc = "cm_pf_skipped_legend_key"    color = rgb { @cm_pf_skipped_r @cm_pf_skipped_g @cm_pf_skipped_b } }
 
 	small_map_names = location
 	medium_map_names = country
@@ -618,6 +652,13 @@ cm_capital_finder = {
 			}
 		}
 		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_skip
+			}
+			value = rgb { @cm_pf_skipped_r @cm_pf_skipped_g @cm_pf_skipped_b }
+		}
+		else_if = {
 			limit = { owner ?= scope:actor }
 			value = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b }
 		}
@@ -704,6 +745,13 @@ cm_capital_finder = {
 			value = MAPMODE_CM_CAPITAL_FINDER_TT_SCORED
 		}
 		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_skip
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_SKIPPED
+		}
+		else_if = {
 			limit = { owner ?= scope:actor }
 			value = MAPMODE_CM_CAPITAL_FINDER_TT_NO_DATA
 		}
@@ -723,6 +771,7 @@ cm_capital_finder = {
 	legend_key = { desc = "cm_pf_localmax_legend_key"   color = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b } }
 	legend_key = { desc = "cm_pf_cap_source_legend_key" color = rgb { @cm_pf_source_r @cm_pf_source_g @cm_pf_source_b } }
 	legend_key = { desc = "cm_pf_not_scored_legend_key" color = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b } }
+	legend_key = { desc = "cm_pf_skipped_legend_key"    color = rgb { @cm_pf_skipped_r @cm_pf_skipped_g @cm_pf_skipped_b } }
 
 	small_map_names = location
 	medium_map_names = country
@@ -868,6 +917,13 @@ cm_capital_finder_hidden = {
 			}
 		}
 		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_skip
+			}
+			value = rgb { @cm_pf_skipped_r @cm_pf_skipped_g @cm_pf_skipped_b }
+		}
+		else_if = {
 			limit = { owner ?= scope:actor }
 			value = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b }
 		}
@@ -954,6 +1010,13 @@ cm_capital_finder_hidden = {
 			value = MAPMODE_CM_CAPITAL_FINDER_TT_SCORED
 		}
 		else_if = {
+			limit = {
+				owner ?= scope:actor
+				has_variable = cm_cf_skip
+			}
+			value = MAPMODE_CM_CAPITAL_FINDER_TT_SKIPPED
+		}
+		else_if = {
 			limit = { owner ?= scope:actor }
 			value = MAPMODE_CM_CAPITAL_FINDER_TT_NO_DATA
 		}
@@ -973,6 +1036,7 @@ cm_capital_finder_hidden = {
 	legend_key = { desc = "cm_pf_localmax_legend_key"   color = rgb { @cm_pf_stripe_r @cm_pf_stripe_g @cm_pf_stripe_b } }
 	legend_key = { desc = "cm_pf_cap_source_legend_key" color = rgb { @cm_pf_source_r @cm_pf_source_g @cm_pf_source_b } }
 	legend_key = { desc = "cm_pf_not_scored_legend_key" color = rgb { @cm_pf_notscored_r @cm_pf_notscored_g @cm_pf_notscored_b } }
+	legend_key = { desc = "cm_pf_skipped_legend_key"    color = rgb { @cm_pf_skipped_r @cm_pf_skipped_g @cm_pf_skipped_b } }
 
 	small_map_names = location
 	medium_map_names = country
