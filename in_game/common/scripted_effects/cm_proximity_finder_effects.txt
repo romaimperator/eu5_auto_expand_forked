@@ -26,12 +26,8 @@
 @cm_pf_ref_max = 20
 # Bound-table bucket range; larger keys clamp down to it (sound, just looser).
 @cm_pf_bucket_max = 250
-# Per-tick evaluation batches for the tiered drains, sized to the frame budget: a batch that
-# fits the frame idles out the rest of its 0.1s tick, so batch size is the wall-clock lever.
-@cm_pf_batch_size_tiered = 32
-@cm_pf_batch_size_marked = 32
 # Ordered-drain picks per tick; skipping a pick is far cheaper than evaluating it.
-@cm_pf_batch_picks = 256
+@cm_pf_batch_picks = 64
 # Hill-climb refinement rounds (accuracy 5-6).
 @cm_pf_refine_rounds = 10
 # Accuracy 6 seed evaluations besides the capital.
@@ -2079,7 +2075,7 @@ cm_pf_score_candidate_pruned = {
 	}
 }
 
-# Country scope. Ordered drain: up to @cm_pf_batch_size_tiered evaluations or @cm_pf_batch_picks
+# Country scope. Ordered drain: up to @cm_pf_batch_size evaluations or @cm_pf_batch_picks
 # picks per tick, best bound first so the exact bests rise early and later picks skip.
 cm_pf_phase_drain_step = {
 	set_local_variable = { name = cm_pf_evals value = 0 }
@@ -2087,7 +2083,7 @@ cm_pf_phase_drain_step = {
 	set_local_variable = { name = cm_pf_iter value = 0 }
 	while = {
 		limit = {
-			local_var:cm_pf_evals < @cm_pf_batch_size_tiered
+			local_var:cm_pf_evals < @cm_pf_batch_size
 			local_var:cm_pf_iter < @cm_pf_batch_picks
 			local_var:cm_pf_picks >= local_var:cm_pf_iter
 		}
@@ -2158,14 +2154,14 @@ cm_pf_phase_sample = {
 	set_variable = { name = cm_pf_phase value = 5 }
 }
 
-# Country scope. Evaluates up to @cm_pf_batch_size_marked marked locations per tick; empty hands
+# Country scope. Evaluates up to @cm_pf_batch_size marked locations per tick; empty hands
 # over to the refinement phase.
 cm_pf_phase_marked_drain_step = {
 	set_local_variable = { name = cm_pf_evals value = 0 }
 	set_local_variable = { name = cm_pf_batch_n value = 0 }
 	every_owned_location = {
 		limit = {
-			local_var:cm_pf_batch_n < @cm_pf_batch_size_marked
+			local_var:cm_pf_batch_n < @cm_pf_batch_size
 			has_variable = cm_pf_samp
 			NOT = { has_variable = cm_pf_done }
 			has_variable = cm_pf_cl_g
@@ -2267,17 +2263,7 @@ cm_pf_run_batch_tiered = {
 	switch = {
 		trigger = var:cm_pf_phase
 		1 = { cm_pf_phase_init = yes }
-		2 = {
-			# refs_done can advance the phase between the calls; refs_step never checks it.
-			if = {
-				limit = { var:cm_pf_phase = 2 }
-				cm_pf_phase_refs_step = yes
-			}
-			if = {
-				limit = { var:cm_pf_phase = 2 }
-				cm_pf_phase_refs_step = yes
-			}
-		}
+		2 = { cm_pf_phase_refs_step = yes }
 		3 = { cm_pf_phase_drain_step = yes }
 		4 = { cm_pf_phase_sample = yes }
 		5 = { cm_pf_phase_marked_drain_step = yes }
