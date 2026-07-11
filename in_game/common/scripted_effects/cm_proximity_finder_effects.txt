@@ -14,12 +14,12 @@
 @cm_pf_max_passes = 100
 # Candidates scored per driver tick.
 @cm_pf_batch_size = 8
-# Accuracy 2+ constants. The frontier search advances one hop wave per pass, so its guard is
-# sized to the deepest possible search: budget 250 over the cheapest edge (~0.4) is ~625 hops.
+# Accuracy 2+ constants. The frontier search advances one hop wave per pass and ends once
+# nothing improves, so passes are bounded by hop diameter; 999 is a runaway backstop.
 @cm_pf_max_passes_fast = 999
-# Reference search cap: @cm_pf_ref_theta + the 100 search budget, so every location a covered
-# candidate can reach stays in range.
-@cm_pf_ref_budget = 250
+# Reference search budget, sized above any real path cost: an unreached location folds its
+# maximum contribution into the cm_pf_cx_* constants, so references reach everything connected.
+@cm_pf_ref_budget = 100000
 # Reference spread target: stop adding references once every candidate is within this cost of one.
 @cm_pf_ref_theta = 150
 # References per run.
