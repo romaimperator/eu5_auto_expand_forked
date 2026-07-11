@@ -6,6 +6,19 @@
 cm_food_location_buildable_for_building_type = {
 	cm_location_allowed_to_build = { target = $target$ }
 	cm_location_building_type_is_not_at_max_level = { target = $target$ }
+	cm_food_building_type_is_staffed = { target = $target$ }
+}
+
+# Root is the location. Expects $target$ = a building_type.
+# True when the existing instance has filled all but one level's worth of its jobs; a village
+# that stopped hiring (unprofitable) would leave a new level just as empty.
+cm_food_building_type_is_staffed = {
+	$target$ = { save_temporary_scope_as = cm_food_staffed_check_type }
+	trigger_if = { limit = { has_building = $target$ }
+		"building(scope:cm_food_staffed_check_type|owner)" = {
+			building_employed_amount > { value = building_employment_size_amount subtract = building_type.employment_size }
+		}
+	}
 }
 
 # --- Location matching ---
@@ -31,25 +44,8 @@ cm_food_location_meets_river_filter = {
 # Root is the location. Expects scope:cm_country.
 # True when no pop-restricted food option is buildable.
 cm_food_location_pops_still_filling = {
-	OR = {
-		NOT = { cm_check_location_has_peasants_available_or_will_be = yes }
-		AND = {
-			NOT = { cm_check_location_has_laborers_available_or_will_be = yes }
-			NOT = { cm_food_pop_pool_fits_full_rgo_buildout = yes }
-		}
-	}
-}
-
-# Root is the location.
-# True when peasants_available + laborers_available can fill the RGO's remaining levels, or
-# the RGO is already at max.
-cm_food_pop_pool_fits_full_rgo_buildout = {
-	trigger_if = { limit = { cm_is_rgo_not_max_level_already = no }
-		always = yes
-	}
-	trigger_else = {
-		cm_food_pop_pool_after_rgo_buildout >= 0
-	}
+	NOT = { cm_check_location_has_peasants_available_or_will_be = yes }
+	NOT = { cm_check_location_has_laborers_available_or_will_be = yes }
 }
 
 # --- Can-build checks per option ---
@@ -63,7 +59,6 @@ cm_food_can_build_rgo = {
 		cm_is_rgo_not_max_level_already = yes
 		cm_is_rgo_under_construction = no
 		cm_check_location_has_laborers_available_or_will_be = yes
-		cm_check_location_has_peasants_available_or_will_be = yes
 	}
 }
 
@@ -85,7 +80,6 @@ cm_food_can_build_farming_village = {
 		}
 		cm_food_location_buildable_for_building_type = { target = building_type:farming_village }
 		cm_check_location_has_peasants_available_or_will_be = yes
-		cm_food_pop_pool_fits_full_rgo_buildout = yes
 	}
 }
 
@@ -102,7 +96,6 @@ cm_food_can_build_windmill = {
 		scope:cm_country = { has_advance = windmills_advance }
 		cm_food_location_buildable_for_building_type = { target = building_type:windmill }
 		cm_check_location_has_laborers_available_or_will_be = yes
-		cm_check_location_has_peasants_available_or_will_be = yes
 	}
 }
 
@@ -113,7 +106,6 @@ cm_food_can_build_irrigation = {
 		OR = { has_river = yes is_adjacent_to_lake = yes }
 		cm_food_location_buildable_for_building_type = { target = building_type:irrigation_systems }
 		cm_check_location_has_peasants_available_or_will_be = yes
-		cm_food_pop_pool_fits_full_rgo_buildout = yes
 	}
 }
 
@@ -125,7 +117,6 @@ cm_food_can_build_fishing_village = {
 		location_rank = location_rank:rural_settlement
 		cm_food_location_buildable_for_building_type = { target = building_type:fishing_village }
 		cm_check_location_has_peasants_available_or_will_be = yes
-		cm_food_pop_pool_fits_full_rgo_buildout = yes
 	}
 }
 
@@ -142,7 +133,6 @@ cm_food_can_build_forest_village = {
 		}
 		cm_food_location_buildable_for_building_type = { target = building_type:forest_village }
 		cm_check_location_has_peasants_available_or_will_be = yes
-		cm_food_pop_pool_fits_full_rgo_buildout = yes
 	}
 }
 
