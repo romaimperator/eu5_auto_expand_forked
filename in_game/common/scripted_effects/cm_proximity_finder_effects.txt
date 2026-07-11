@@ -6,7 +6,9 @@
 # lobby init runs the same search synchronously via cm_pf_recompute_now. The Search Accuracy
 # setting keeps accuracy 1 on this exact path; 2-6 route through the phased runner in the
 # accuracy-tiers section, which can leave locations unevaluated (cm_gf_skip / cm_cf_skip,
-# drawn black).
+# drawn black). Each mode caches separately (cm_pf_fresh_g / cm_pf_fresh_c) and an interactive
+# run computes only the viewed mode (cm_pf_view_g / cm_pf_view_c -> the cm_pf_run_g /
+# cm_pf_run_c run vars); the lobby init computes both.
 
 # Runaway guard on relaxation passes; the changed check ends them as soon as nothing improves.
 @cm_pf_max_passes = 100
@@ -38,12 +40,25 @@
 @cm_pf_budget_g_fast = 60
 @cm_pf_budget_c_fast = 75
 
-# Country scope. GUI entry fired on mapmode open. Reuses cached scores while cm_pf_fresh is
-# live (set for 4 years at each compute); otherwise sets up a fresh run for the tick loop.
+# Country scope. GUI entry fired on mapmode open (cm_pf_prep_gov / cm_pf_prep_cap set the
+# view flag first). Reuses the viewed mode's cached scores while its cm_pf_fresh_g /
+# cm_pf_fresh_c is live (set for 4 years at each compute); otherwise sets up a fresh run,
+# computing only the viewed mode.
 cm_pf_prep_gated = {
 	save_scope_as = cm_pf_c
 	if = {
-		limit = { exists = var:cm_pf_fresh }
+		limit = {
+			OR = {
+				AND = {
+					exists = var:cm_pf_view_g
+					exists = var:cm_pf_fresh_g
+				}
+				AND = {
+					exists = var:cm_pf_view_c
+					exists = var:cm_pf_fresh_c
+				}
+			}
+		}
 		set_variable = { name = cm_pf_all_done value = 1 }
 	}
 	else_if = {
@@ -54,9 +69,9 @@ cm_pf_prep_gated = {
 }
 
 # Country scope. Manual refresh (action bar button). The finder driver, ticking while the mode is
-# open, rebatches and refinalizes once the cache is dropped and the run re-primed.
+# open, rebatches and refinalizes once the run is re-primed (prep drops the fresh flags of the
+# modes it runs).
 cm_pf_force_refresh = {
-	remove_variable = cm_pf_fresh
 	cm_pf_prep_core = yes
 }
 
@@ -67,11 +82,17 @@ cm_pf_recompute_now = {
 	save_scope_as = cm_pf_c
 	if = {
 		limit = {
-			NOT = { exists = var:cm_pf_fresh }
+			OR = {
+				NOT = { exists = var:cm_pf_fresh_g }
+				NOT = { exists = var:cm_pf_fresh_c }
+			}
 			# Skip while the river precompute runs; its completion branch re-runs this once the lists exist.
 			NOT = { has_global_variable = cm_pf_river_process }
 			is_multiplayer_session = no
 		}
+		# A save can carry stale view flags; the lobby run computes both modes.
+		remove_variable = cm_pf_view_g
+		remove_variable = cm_pf_view_c
 		cm_pf_prep_core = yes
 		if = {
 			limit = { var:cm_pf_acc <= 1 }
@@ -128,6 +149,40 @@ cm_pf_prep_core = {
 		set_variable = { name = cm_pf_naval_opt_harbor value = 0 }
 	}
 	set_variable = { name = cm_pf_acc value = cm_pf_accuracy_value }
+	# Viewed-mode compute: no view flag (the lobby path) runs both modes. The fresh flag drops
+	# as a mode starts, so an interrupted run stays stale for the next open.
+	if = {
+		limit = {
+			NOT = { exists = var:cm_pf_view_g }
+			NOT = { exists = var:cm_pf_view_c }
+		}
+		set_variable = { name = cm_pf_run_g value = 1 }
+		set_variable = { name = cm_pf_run_c value = 1 }
+	}
+	else = {
+		if = {
+			limit = { exists = var:cm_pf_view_g }
+			set_variable = { name = cm_pf_run_g value = 1 }
+		}
+		else = {
+			set_variable = { name = cm_pf_run_g value = 0 }
+		}
+		if = {
+			limit = { exists = var:cm_pf_view_c }
+			set_variable = { name = cm_pf_run_c value = 1 }
+		}
+		else = {
+			set_variable = { name = cm_pf_run_c value = 0 }
+		}
+	}
+	if = {
+		limit = { var:cm_pf_run_g = 1 }
+		remove_variable = cm_pf_fresh_g
+	}
+	if = {
+		limit = { var:cm_pf_run_c = 1 }
+		remove_variable = cm_pf_fresh_c
+	}
 	set_variable = { name = cm_pf_land_cost value = cm_pf_land_cost_value }
 	set_variable = { name = cm_pf_river_cost value = cm_pf_river_cost_value }
 	set_variable = { name = cm_pf_sea_cost value = cm_pf_sea_cost_value }
@@ -246,9 +301,15 @@ cm_pf_prime_land_location = {
 	scope:cm_pf_c = {
 		change_variable = { name = cm_pf_n add = 1 }
 	}
-	# Skip flags are persistent outputs; each fresh run re-decides them.
-	remove_variable = cm_gf_skip
-	remove_variable = cm_cf_skip
+	# Skip flags are persistent outputs; a run re-decides them for the modes it computes.
+	if = {
+		limit = { scope:cm_pf_c.var:cm_pf_run_g = 1 }
+		remove_variable = cm_gf_skip
+	}
+	if = {
+		limit = { scope:cm_pf_c.var:cm_pf_run_c = 1 }
+		remove_variable = cm_cf_skip
+	}
 	if = {
 		limit = { topography = mountains }
 		set_variable = { name = cm_pf_topo value = 1 }
@@ -384,18 +445,25 @@ cm_pf_run_batch_all = {
 	}
 }
 
-# Location scope (the candidate). Expects scope:cm_pf_c. Runs both searches and stores raw sums.
+# Location scope (the candidate). Expects scope:cm_pf_c. Runs the search of each mode this
+# run computes and stores its raw sums.
 cm_pf_score_candidate = {
 	save_temporary_scope_as = cm_pf_cand
-	set_variable = { name = cm_pf_d value = 0 }
-	cm_pf_bellman_g = { BUDGET = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
-	cm_pf_sweep_gov = yes
-	scope:cm_pf_c = {
-		set_variable = { name = cm_pf_cand_topo value = scope:cm_pf_cand.var:cm_pf_topo }
+	if = {
+		limit = { scope:cm_pf_c.var:cm_pf_run_g = 1 }
+		set_variable = { name = cm_pf_d value = 0 }
+		cm_pf_bellman_g = { BUDGET = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+		cm_pf_sweep_gov = yes
 	}
-	set_variable = { name = cm_pf_d value = 0 }
-	cm_pf_bellman_cap = yes
-	cm_pf_sweep_cap = yes
+	if = {
+		limit = { scope:cm_pf_c.var:cm_pf_run_c = 1 }
+		scope:cm_pf_c = {
+			set_variable = { name = cm_pf_cand_topo value = scope:cm_pf_cand.var:cm_pf_topo }
+		}
+		set_variable = { name = cm_pf_d value = 0 }
+		cm_pf_bellman_cap = yes
+		cm_pf_sweep_cap = yes
+	}
 }
 
 # Location scope (the candidate). Accumulates the governor sums over the reached set, clears
@@ -1208,31 +1276,43 @@ cm_pf_phase_refs_step = {
 	}
 }
 
-# Country scope. Bakes the drain/seed order key from the active metric's bounds and enters
-# the evaluation phase for the tier.
+# Country scope. Bakes the drain/seed order key from the active metric's bounds, over the
+# modes this run computes, and enters the evaluation phase for the tier.
 cm_pf_refs_done = {
+	every_owned_location = {
+		limit = { has_variable = cm_pf_cl_g }
+		set_variable = { name = cm_pf_ub_ord value = 0 }
+	}
 	if = {
 		limit = { cm_pf_method_is_tax_base = yes }
-		every_owned_location = {
-			limit = { has_variable = cm_pf_cl_g }
-			set_variable = {
-				name = cm_pf_ub_ord
-				value = {
-					value = var:cm_pf_ub_gt
-					add = var:cm_pf_ub_ct
-				}
+		if = {
+			limit = { var:cm_pf_run_g = 1 }
+			every_owned_location = {
+				limit = { has_variable = cm_pf_cl_g }
+				change_variable = { name = cm_pf_ub_ord add = var:cm_pf_ub_gt }
+			}
+		}
+		if = {
+			limit = { var:cm_pf_run_c = 1 }
+			every_owned_location = {
+				limit = { has_variable = cm_pf_cl_g }
+				change_variable = { name = cm_pf_ub_ord add = var:cm_pf_ub_ct }
 			}
 		}
 	}
 	else = {
-		every_owned_location = {
-			limit = { has_variable = cm_pf_cl_g }
-			set_variable = {
-				name = cm_pf_ub_ord
-				value = {
-					value = var:cm_pf_ub_gp
-					add = var:cm_pf_ub_cp
-				}
+		if = {
+			limit = { var:cm_pf_run_g = 1 }
+			every_owned_location = {
+				limit = { has_variable = cm_pf_cl_g }
+				change_variable = { name = cm_pf_ub_ord add = var:cm_pf_ub_gp }
+			}
+		}
+		if = {
+			limit = { var:cm_pf_run_c = 1 }
+			every_owned_location = {
+				limit = { has_variable = cm_pf_cl_g }
+				change_variable = { name = cm_pf_ub_ord add = var:cm_pf_ub_cp }
 			}
 		}
 	}
@@ -1642,12 +1722,16 @@ cm_pf_drop_cap_outputs = {
 # Location scope (a drained candidate). Expects scope:cm_pf_c. Accuracy 2-4 skip a mode when
 # its bounds prove the candidate cannot make that tier's guaranteed ranks (strict <, so a
 # possible tie always evaluates); accuracy 5-6 evaluate whatever the sample and refinement
-# phases marked. Bumps local cm_pf_evals when it ran at least one search.
+# phases marked. A mode outside the run keeps its previous outputs untouched; only a
+# bound-skip (cm_pf_bskip_*) blacks a mode out. Bumps local cm_pf_evals when it ran at least
+# one search.
 cm_pf_score_candidate_pruned = {
 	save_temporary_scope_as = cm_pf_cand
 	set_variable = { name = cm_pf_done value = 1 }
-	set_local_variable = { name = cm_pf_do_g value = 1 }
-	set_local_variable = { name = cm_pf_do_c value = 1 }
+	set_local_variable = { name = cm_pf_do_g value = scope:cm_pf_c.var:cm_pf_run_g }
+	set_local_variable = { name = cm_pf_do_c value = scope:cm_pf_c.var:cm_pf_run_c }
+	set_local_variable = { name = cm_pf_bskip_g value = 0 }
+	set_local_variable = { name = cm_pf_bskip_c value = 0 }
 	if = {
 		limit = {
 			scope:cm_pf_c = {
@@ -1703,17 +1787,21 @@ cm_pf_score_candidate_pruned = {
 		}
 		if = {
 			limit = {
+				local_var:cm_pf_do_g = 1
 				var:cm_pf_ub_gt < local_var:cm_pf_th_gt
 				var:cm_pf_ub_gp < local_var:cm_pf_th_gp
 			}
 			set_local_variable = { name = cm_pf_do_g value = 0 }
+			set_local_variable = { name = cm_pf_bskip_g value = 1 }
 		}
 		if = {
 			limit = {
+				local_var:cm_pf_do_c = 1
 				var:cm_pf_ub_ct < local_var:cm_pf_th_ct
 				var:cm_pf_ub_cp < local_var:cm_pf_th_cp
 			}
 			set_local_variable = { name = cm_pf_do_c value = 0 }
+			set_local_variable = { name = cm_pf_bskip_c value = 1 }
 		}
 	}
 	if = {
@@ -1737,7 +1825,8 @@ cm_pf_score_candidate_pruned = {
 			}
 		}
 	}
-	else = {
+	else_if = {
+		limit = { local_var:cm_pf_bskip_g = 1 }
 		cm_pf_drop_gov_outputs = yes
 	}
 	if = {
@@ -1764,7 +1853,8 @@ cm_pf_score_candidate_pruned = {
 			}
 		}
 	}
-	else = {
+	else_if = {
+		limit = { local_var:cm_pf_bskip_c = 1 }
 		cm_pf_drop_cap_outputs = yes
 	}
 	if = {
@@ -1939,8 +2029,8 @@ cm_pf_phase_refine = {
 	}
 }
 
-# Country scope. Everything the sample and refinement never reached is skipped for both
-# modes; finalize then bakes the outputs.
+# Country scope. Everything the sample and refinement never reached is skipped for the modes
+# this run computes; finalize then bakes the outputs.
 cm_pf_phase_mark_skipped = {
 	every_owned_location = {
 		limit = {
@@ -1948,8 +2038,14 @@ cm_pf_phase_mark_skipped = {
 			NOT = { has_variable = cm_pf_done }
 		}
 		set_variable = { name = cm_pf_done value = 1 }
-		cm_pf_drop_gov_outputs = yes
-		cm_pf_drop_cap_outputs = yes
+		if = {
+			limit = { scope:cm_pf_c.var:cm_pf_run_g = 1 }
+			cm_pf_drop_gov_outputs = yes
+		}
+		if = {
+			limit = { scope:cm_pf_c.var:cm_pf_run_c = 1 }
+			cm_pf_drop_cap_outputs = yes
+		}
 	}
 	cm_pf_finalize = yes
 }
@@ -2035,6 +2131,9 @@ cm_pf_run_tiered_sync = {
 
 # Country scope. Expects scope:cm_pf_c. Bakes the persistent outputs, then strips every transient.
 cm_pf_finalize = {
+	# Run modes, read again after cleanup strips the run vars.
+	set_local_variable = { name = cm_pf_ran_g value = var:cm_pf_run_g }
+	set_local_variable = { name = cm_pf_ran_c value = var:cm_pf_run_c }
 	set_variable = { name = cm_pf_gf_max value = 0 }
 	set_variable = { name = cm_pf_cf_max value = 0 }
 	# Predicted tax base gain: cm_pf_gf_raw is wealth-weighted proximity, times 0.0075 (control rises
@@ -2167,39 +2266,46 @@ cm_pf_finalize = {
 		set_variable = { name = cm_cf_top value = 3 }
 	}
 	# Flag a local maximum for the secondary_map_color stripe: score at or above 80% of the best
-	# (800 on the 0-1000 scale) and strictly higher than every owned scored neighbor.
-	every_owned_location = {
-		limit = { has_variable = cm_gf_score }
-		save_temporary_scope_as = cm_pf_lm
-		if = {
-			limit = {
-				var:cm_gf_score >= 800
-				NOT = {
-					any_neighbor_location = {
-						owner ?= scope:cm_pf_c
-						has_variable = cm_gf_score
-						var:cm_gf_score >= scope:cm_pf_lm.var:cm_gf_score
+	# (800 on the 0-1000 scale) and strictly higher than every owned scored neighbor. Gated per
+	# run mode: an unrun mode's scores persist from its own last run and its flags stand as-is.
+	if = {
+		limit = { var:cm_pf_run_g = 1 }
+		every_owned_location = {
+			limit = { has_variable = cm_gf_score }
+			save_temporary_scope_as = cm_pf_lm
+			if = {
+				limit = {
+					var:cm_gf_score >= 800
+					NOT = {
+						any_neighbor_location = {
+							owner ?= scope:cm_pf_c
+							has_variable = cm_gf_score
+							var:cm_gf_score >= scope:cm_pf_lm.var:cm_gf_score
+						}
 					}
 				}
+				set_variable = { name = cm_gf_localmax value = 1 }
 			}
-			set_variable = { name = cm_gf_localmax value = 1 }
 		}
 	}
-	every_owned_location = {
-		limit = { has_variable = cm_cf_score }
-		save_temporary_scope_as = cm_pf_lm
-		if = {
-			limit = {
-				var:cm_cf_score >= 800
-				NOT = {
-					any_neighbor_location = {
-						owner ?= scope:cm_pf_c
-						has_variable = cm_cf_score
-						var:cm_cf_score >= scope:cm_pf_lm.var:cm_cf_score
+	if = {
+		limit = { var:cm_pf_run_c = 1 }
+		every_owned_location = {
+			limit = { has_variable = cm_cf_score }
+			save_temporary_scope_as = cm_pf_lm
+			if = {
+				limit = {
+					var:cm_cf_score >= 800
+					NOT = {
+						any_neighbor_location = {
+							owner ?= scope:cm_pf_c
+							has_variable = cm_cf_score
+							var:cm_cf_score >= scope:cm_pf_lm.var:cm_cf_score
+						}
 					}
 				}
+				set_variable = { name = cm_cf_localmax value = 1 }
 			}
-			set_variable = { name = cm_cf_localmax value = 1 }
 		}
 	}
 	# Diagnostic: the model's predicted proximity from the actual capital, for comparison
@@ -2273,8 +2379,16 @@ cm_pf_finalize = {
 	cm_pf_clean_country = yes
 	set_variable = { name = cm_pf_all_done value = 1 }
 	set_variable = { name = cm_pf_repaint value = 1 }
-	# Cache the result for 4 years: reopening within that window reuses it instead of recomputing.
-	set_variable = { name = cm_pf_fresh value = 1 days = 1460 }
+	# Cache each computed mode for 4 years: reopening within that window reuses it instead of
+	# recomputing.
+	if = {
+		limit = { local_var:cm_pf_ran_g = 1 }
+		set_variable = { name = cm_pf_fresh_g value = 1 days = 1460 }
+	}
+	if = {
+		limit = { local_var:cm_pf_ran_c = 1 }
+		set_variable = { name = cm_pf_fresh_c value = 1 days = 1460 }
+	}
 }
 
 # Location scope.
@@ -2342,6 +2456,8 @@ cm_pf_clean_country = {
 	remove_variable = cm_pf_ref_i
 	remove_variable = cm_pf_round
 	remove_variable = cm_pf_ub_valid
+	remove_variable = cm_pf_run_g
+	remove_variable = cm_pf_run_c
 	remove_variable = cm_pf_b1_gt
 	remove_variable = cm_pf_b2_gt
 	remove_variable = cm_pf_b3_gt

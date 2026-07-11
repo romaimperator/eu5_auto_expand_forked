@@ -1,8 +1,20 @@
-﻿# Placement finder controllers. Root is the player country for all four.
-cm_pf_prep = {
+﻿# Placement finder controllers. Root is the player country for all.
+cm_pf_prep_gov = {
 	effect = {
 		# Flags the finder mode open for the action bar refresh button (cm_pf_refresh) is_shown.
 		set_variable = { name = cm_pf_mode_open value = 1 }
+		# The viewed mode; the run computes only this one.
+		set_variable = { name = cm_pf_view_g value = 1 }
+		remove_variable = cm_pf_view_c
+		cm_pf_prep_gated = yes
+	}
+}
+
+cm_pf_prep_cap = {
+	effect = {
+		set_variable = { name = cm_pf_mode_open value = 1 }
+		set_variable = { name = cm_pf_view_c value = 1 }
+		remove_variable = cm_pf_view_g
 		cm_pf_prep_gated = yes
 	}
 }
@@ -32,9 +44,12 @@ cm_pf_refresh = {
 	}
 }
 
-# Clears the finder-mode-open flag; fired by the mapmode window when the last finder mode closes.
+# Clears the finder-mode-open and viewed-mode flags; fired by the mapmode window when the
+# last finder mode closes.
 cm_pf_clear_mode_open = {
 	effect = {
 		remove_variable = cm_pf_mode_open
+		remove_variable = cm_pf_view_g
+		remove_variable = cm_pf_view_c
 	}
 }
