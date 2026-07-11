@@ -20,7 +20,7 @@ cm_food_stage_building_option = {
 	}
 }
 
-# Main per-location effect. Computes marginal food for each buildable option, picks the highest, and builds it.
+# Main per-location effect. Computes each buildable option's food rank, picks the highest, and builds it.
 # Root is the location. Expects scopes: country, location, food_good.
 cm_food_auto_build_in_location = {
 	# Preconditions: pause, build queue, market access, gold reserve
@@ -32,7 +32,7 @@ cm_food_auto_build_in_location = {
 	# Skip the location when no pop-restricted option is buildable.
 	if = { limit = { NOT = { cm_food_location_pops_still_filling = yes } }
 
-		# Track best marginal and action: 0=none, 1=rgo, 2=farming_village, 3=windmill, 4=irrigation, 5=fishing_village, 6=forest_village
+		# Track best rank and action: 0=none, 1=rgo, 2=farming_village, 3=windmill, 4=irrigation, 5=fishing_village, 6=forest_village
 		set_local_variable = { name = cm_food_best value = 0 }
 		set_local_variable = { name = cm_food_action value = 0 }
 
@@ -41,8 +41,8 @@ cm_food_auto_build_in_location = {
 			cm_food_consider_option = { CAN = cm_food_can_build_rgo MARGINAL = cm_food_marginal_rgo ACTION = 1 }
 		}
 		cm_food_consider_option = { CAN = cm_food_can_build_farming_village MARGINAL = cm_food_marginal_farming_village ACTION = 2 }
-		cm_food_consider_option = { CAN = cm_food_can_build_windmill MARGINAL = cm_food_marginal_windmill ACTION = 3 }
-		cm_food_consider_option = { CAN = cm_food_can_build_irrigation MARGINAL = cm_food_marginal_irrigation ACTION = 4 }
+		cm_food_consider_option = { CAN = cm_food_can_build_windmill MARGINAL = cm_food_rank_windmill ACTION = 3 }
+		cm_food_consider_option = { CAN = cm_food_can_build_irrigation MARGINAL = cm_food_rank_irrigation ACTION = 4 }
 		cm_food_consider_option = { CAN = cm_food_can_build_fishing_village MARGINAL = cm_food_marginal_fishing_village ACTION = 5 }
 		cm_food_consider_option = { CAN = cm_food_can_build_forest_village MARGINAL = cm_food_marginal_forest_village ACTION = 6 }
 

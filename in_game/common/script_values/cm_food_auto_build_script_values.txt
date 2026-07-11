@@ -1,6 +1,8 @@
 ﻿# Food auto-build script values - marginal food calculations and building cost helpers.
 # All values are location-scoped unless noted otherwise.
 
+@cm_food_pop_rank_threshold = 40 # 40k pops; population values are in units of 1000.
+
 # --- Food value per RGO good ---
 # Reads food_value directly from the location's raw_material. Non-food RGOs return 0.
 cm_food_value_of_rgo = {
@@ -183,6 +185,26 @@ cm_food_marginal_forest_village = {
 	add = 1.0
 	multiply = cm_food_raw_material_output_mod
 	multiply = cm_food_one_plus_total_food_mod
+}
+
+# --- Pop-weighted ranking values ---
+# Below the threshold the location's pop pool binds before its supported building levels, so the
+# option comparison ranks by marginal food per pop: windmill and irrigation employ 0.25 pop-units
+# per level vs 1.0 for the RGO and villages, so their marginals scale by 4 = 1.0 / 0.25
+# (village_employment_size 1.0, rural_peasant_enhance_employment 0.25, generic_peasant_building_employment 0.25:
+# main_menu/common/script_values/default_values.txt:1035/:1037/:1032).
+cm_food_rank_windmill = {
+	value = cm_food_marginal_windmill
+	if = { limit = { population < @cm_food_pop_rank_threshold }
+		multiply = 4
+	}
+}
+
+cm_food_rank_irrigation = {
+	value = cm_food_marginal_irrigation
+	if = { limit = { population < @cm_food_pop_rank_threshold }
+		multiply = 4
+	}
 }
 
 # --- Building cost helpers ---
