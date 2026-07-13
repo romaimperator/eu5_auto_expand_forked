@@ -17,9 +17,12 @@
 # Accuracy 2+ constants. The frontier search advances one hop wave per pass and ends once
 # nothing improves, so passes are bounded by hop diameter; 999 is a runaway backstop.
 @cm_pf_max_passes_fast = 999
-# Reference search budget, sized above any real path cost: an unreached location folds its
-# maximum contribution into the cm_pf_cx_* constants, so references reach everything connected.
-@cm_pf_ref_budget = 100000
+# Reference search budget: @cm_pf_bucket_max + the capital threshold 100
+# (main_menu/common/static_modifiers/location.txt:330) + 1. Folds only happen for candidates
+# within @cm_pf_bucket_max of the reference, so by the triangle inequality an unreached
+# location sits over 100 cost from every folding candidate, above any T: it can contribute
+# nothing and folds nothing.
+@cm_pf_ref_budget = 351
 # Reference spread target: stop adding references once every candidate is within this cost of one.
 @cm_pf_ref_theta = 75
 # References per run; on big empires this cap, not the spread target, limits how much of
@@ -1336,9 +1339,10 @@ cm_pf_refs_done = {
 # growth past key2, capping the location's credit at key2 - key >= T. The rounding directions
 # (floor the key, ceil key2 and the lookup) keep every term an overestimate. key2 entries
 # beyond @cm_pf_bucket_max are not stored: folds only run at X <= @cm_pf_bucket_max, where
-# those terms are zero anyway. Keys at or below 0 and unreached locations fold their maximum
-# possible contribution into the cm_pf_cx_* constants instead: clamping a key up to 0 would
-# under-bound and break the skip guarantee.
+# those terms are zero anyway. Keys at or below 0 fold their maximum possible contribution
+# into the cm_pf_cx_* constants instead (clamping a key up to 0 would under-bound and break
+# the skip guarantee); unreached locations fold nothing, since @cm_pf_ref_budget puts them
+# beyond every folding candidate's reach.
 cm_pf_build_ref_tables = {
 	set_variable = { name = cm_pf_cx_gt value = 0 }
 	set_variable = { name = cm_pf_cx_gp value = 0 }
@@ -1346,10 +1350,10 @@ cm_pf_build_ref_tables = {
 	set_variable = { name = cm_pf_cx_cp value = 0 }
 	every_owned_location = {
 		limit = { has_variable = cm_pf_cl_g }
-		set_local_variable = { name = cm_pf_lw value = var:cm_pf_w }
-		set_local_variable = { name = cm_pf_lt value = var:cm_pf_t }
 		if = {
 			limit = { has_variable = cm_pf_d }
+			set_local_variable = { name = cm_pf_lw value = var:cm_pf_w }
+			set_local_variable = { name = cm_pf_lt value = var:cm_pf_t }
 			set_local_variable = {
 				name = cm_pf_bk2
 				value = {
@@ -1567,31 +1571,6 @@ cm_pf_build_ref_tables = {
 							value = 100
 							multiply = local_var:cm_pf_lw
 						}
-					}
-				}
-			}
-		}
-		else = {
-			if = {
-				limit = { var:cm_pf_t > 0 }
-				scope:cm_pf_c = {
-					change_variable = { name = cm_pf_cx_gp add = local_var:cm_pf_lt }
-					change_variable = {
-						name = cm_pf_cx_gt
-						add = {
-							value = local_var:cm_pf_lt
-							multiply = local_var:cm_pf_lw
-						}
-					}
-				}
-			}
-			scope:cm_pf_c = {
-				change_variable = { name = cm_pf_cx_cp add = 100 }
-				change_variable = {
-					name = cm_pf_cx_ct
-					add = {
-						value = 100
-						multiply = local_var:cm_pf_lw
 					}
 				}
 			}
