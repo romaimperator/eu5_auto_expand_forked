@@ -22,8 +22,9 @@
 @cm_pf_ref_budget = 100000
 # Reference spread target: stop adding references once every candidate is within this cost of one.
 @cm_pf_ref_theta = 75
-# References per run.
-@cm_pf_ref_max = 20
+# References per run; on big empires this cap, not the spread target, limits how much of
+# the interior sits within fold range (@cm_pf_bucket_max) of a reference.
+@cm_pf_ref_max = 40
 # Bound-table bucket range; larger keys clamp down to it (sound, just looser).
 @cm_pf_bucket_max = 250
 # Ordered-drain picks per tick; skipping a pick is far cheaper than evaluating it.
@@ -1160,7 +1161,10 @@ cm_pf_bellman_ref = {
 	cm_pf_frontier_waves = { MODE = cap BUDGET = @cm_pf_ref_budget }
 	if = {
 		limit = { local_var:cm_pf_changed > 0 }
-		scope:cm_pf_c = { set_variable = { name = cm_pf_ub_valid value = 0 } }
+		scope:cm_pf_c = {
+			set_variable = { name = cm_pf_ub_valid value = 0 }
+			cmf_log = { action = cm_log_pf_ref_nonconverged }
+		}
 	}
 	remove_local_variable = cm_pf_push_f
 	remove_local_variable = cm_pf_ref_all
@@ -1927,11 +1931,12 @@ cm_pf_drop_cap_outputs = {
 }
 
 # Location scope (a drained candidate). Expects scope:cm_pf_c. Accuracy 2-4 skip a mode when
-# its bounds prove the candidate cannot make that tier's guaranteed ranks (strict <, so a
-# possible tie always evaluates); accuracy 5-6 evaluate whatever the sample and refinement
-# phases marked. A mode outside the run keeps its previous outputs untouched; only a
-# bound-skip (cm_pf_bskip_*) blacks a mode out. Bumps local cm_pf_evals when it ran at least
-# one search.
+# the active method's metric bound proves the candidate cannot make that tier's guaranteed
+# ranks (strict <, so a possible tie always evaluates); the guarantee covers the viewed
+# ranking only, and a method switch invalidates the cache. Accuracy 5-6 evaluate whatever
+# the sample and refinement phases marked. A mode outside the run keeps its previous outputs
+# untouched; only a bound-skip (cm_pf_bskip_*) blacks a mode out. Bumps local cm_pf_evals
+# when it ran at least one search.
 cm_pf_score_candidate_pruned = {
 	save_temporary_scope_as = cm_pf_cand
 	set_variable = { name = cm_pf_done value = 1 }
@@ -1993,22 +1998,41 @@ cm_pf_score_candidate_pruned = {
 			}
 		}
 		if = {
-			limit = {
-				local_var:cm_pf_do_g = 1
-				var:cm_pf_ub_gt < local_var:cm_pf_th_gt
-				var:cm_pf_ub_gp < local_var:cm_pf_th_gp
+			limit = { scope:cm_pf_c = { cm_pf_method_is_tax_base = yes } }
+			if = {
+				limit = {
+					local_var:cm_pf_do_g = 1
+					var:cm_pf_ub_gt < local_var:cm_pf_th_gt
+				}
+				set_local_variable = { name = cm_pf_do_g value = 0 }
+				set_local_variable = { name = cm_pf_bskip_g value = 1 }
 			}
-			set_local_variable = { name = cm_pf_do_g value = 0 }
-			set_local_variable = { name = cm_pf_bskip_g value = 1 }
+			if = {
+				limit = {
+					local_var:cm_pf_do_c = 1
+					var:cm_pf_ub_ct < local_var:cm_pf_th_ct
+				}
+				set_local_variable = { name = cm_pf_do_c value = 0 }
+				set_local_variable = { name = cm_pf_bskip_c value = 1 }
+			}
 		}
-		if = {
-			limit = {
-				local_var:cm_pf_do_c = 1
-				var:cm_pf_ub_ct < local_var:cm_pf_th_ct
-				var:cm_pf_ub_cp < local_var:cm_pf_th_cp
+		else = {
+			if = {
+				limit = {
+					local_var:cm_pf_do_g = 1
+					var:cm_pf_ub_gp < local_var:cm_pf_th_gp
+				}
+				set_local_variable = { name = cm_pf_do_g value = 0 }
+				set_local_variable = { name = cm_pf_bskip_g value = 1 }
 			}
-			set_local_variable = { name = cm_pf_do_c value = 0 }
-			set_local_variable = { name = cm_pf_bskip_c value = 1 }
+			if = {
+				limit = {
+					local_var:cm_pf_do_c = 1
+					var:cm_pf_ub_cp < local_var:cm_pf_th_cp
+				}
+				set_local_variable = { name = cm_pf_do_c value = 0 }
+				set_local_variable = { name = cm_pf_bskip_c value = 1 }
+			}
 		}
 	}
 	if = {
@@ -2576,6 +2600,43 @@ cm_pf_finalize = {
 	}
 	else = {
 		every_owned_location = { remove_variable = cm_pf_pred }
+	}
+	# Diagnostic: keep the bound minima and skip thresholds readable in the debug tooltip.
+	if = {
+		limit = { exists = var:cm_pf_ub_valid }
+		set_variable = { name = cm_pf_dbg_ubvalid value = var:cm_pf_ub_valid }
+		set_variable = { name = cm_pf_dbg_b1_gt value = var:cm_pf_b1_gt }
+		set_variable = { name = cm_pf_dbg_b3_gt value = var:cm_pf_b3_gt }
+		set_variable = { name = cm_pf_dbg_b1_gp value = var:cm_pf_b1_gp }
+		set_variable = { name = cm_pf_dbg_b3_gp value = var:cm_pf_b3_gp }
+		set_variable = { name = cm_pf_dbg_b1_ct value = var:cm_pf_b1_ct }
+		set_variable = { name = cm_pf_dbg_b3_ct value = var:cm_pf_b3_ct }
+		set_variable = { name = cm_pf_dbg_b1_cp value = var:cm_pf_b1_cp }
+		set_variable = { name = cm_pf_dbg_b3_cp value = var:cm_pf_b3_cp }
+		every_owned_location = {
+			limit = { has_variable = cm_pf_ub_gt }
+			set_variable = { name = cm_pf_dbg_ubgt value = var:cm_pf_ub_gt }
+			set_variable = { name = cm_pf_dbg_ubgp value = var:cm_pf_ub_gp }
+			set_variable = { name = cm_pf_dbg_ubct value = var:cm_pf_ub_ct }
+			set_variable = { name = cm_pf_dbg_ubcp value = var:cm_pf_ub_cp }
+		}
+	}
+	else = {
+		remove_variable = cm_pf_dbg_ubvalid
+		remove_variable = cm_pf_dbg_b1_gt
+		remove_variable = cm_pf_dbg_b3_gt
+		remove_variable = cm_pf_dbg_b1_gp
+		remove_variable = cm_pf_dbg_b3_gp
+		remove_variable = cm_pf_dbg_b1_ct
+		remove_variable = cm_pf_dbg_b3_ct
+		remove_variable = cm_pf_dbg_b1_cp
+		remove_variable = cm_pf_dbg_b3_cp
+		every_owned_location = {
+			remove_variable = cm_pf_dbg_ubgt
+			remove_variable = cm_pf_dbg_ubgp
+			remove_variable = cm_pf_dbg_ubct
+			remove_variable = cm_pf_dbg_ubcp
+		}
 	}
 	every_owned_location = { cm_pf_clean_location = yes }
 	every_in_list = {
