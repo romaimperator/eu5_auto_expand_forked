@@ -4,7 +4,7 @@
 # search until all are done; finalize bakes the per-location cm_gf_score / cm_cf_score /
 # cm_gf_avg / cm_cf_avg / cm_gf_top / cm_cf_top / cm_pf_pred the modes and tooltips read. The
 # lobby init runs the same search synchronously via cm_pf_recompute_now. The Search Accuracy
-# setting keeps accuracy 1 on this exact path; 2-6 route through the phased runner in the
+# setting keeps accuracy 1 on this exact path; 2-5 route through the phased runner in the
 # accuracy-tiers section, which can leave locations unevaluated (cm_gf_skip / cm_cf_skip,
 # drawn black). Each mode caches separately (cm_pf_fresh_g / cm_pf_fresh_c) and an interactive
 # run computes only the viewed mode (cm_pf_view_g / cm_pf_view_c -> the cm_pf_run_g /
@@ -32,17 +32,10 @@
 @cm_pf_bucket_max = 250
 # Ordered-drain picks per tick; skipping a pick is far cheaper than evaluating it.
 @cm_pf_batch_picks = 64
-# Hill-climb refinement rounds (accuracy 5-6).
+# Hill-climb refinement rounds (accuracy 5).
 @cm_pf_refine_rounds = 10
-# Accuracy 6 seed evaluations besides the capital.
-@cm_pf_seed_count = 24
 # Below this many owned locations the bound machinery costs more than it can skip.
 @cm_pf_min_n_prune = 30
-# Accuracy 6 search budgets: 75% of the governor source value 80
-# (in_game/common/building_types/capital_buildings.txt:681) and of the capital source value 100
-# (main_menu/common/static_modifiers/location.txt:330).
-@cm_pf_budget_g_fast = 60
-@cm_pf_budget_c_fast = 75
 
 # Country scope. GUI entry fired on mapmode open (cm_pf_prep_gov / cm_pf_prep_cap set the
 # view flag first). Reuses the viewed mode's cached scores while its cm_pf_fresh_g /
@@ -498,12 +491,10 @@ cm_pf_sweep_gov = {
 				}
 			}
 			remove_variable = cm_pf_d
-			remove_variable = cm_pf_rlx
 		}
 		every_in_list = {
 			variable = cm_pf_water_set
 			remove_variable = cm_pf_d
-			remove_variable = cm_pf_rlx
 		}
 	}
 	set_variable = { name = cm_pf_gf_raw value = local_var:cm_pf_sum }
@@ -535,12 +526,10 @@ cm_pf_sweep_cap = {
 				}
 			}
 			remove_variable = cm_pf_d
-			remove_variable = cm_pf_rlx
 		}
 		every_in_list = {
 			variable = cm_pf_water_set
 			remove_variable = cm_pf_d
-			remove_variable = cm_pf_rlx
 		}
 	}
 	set_variable = { name = cm_pf_cf_raw value = local_var:cm_pf_sum }
@@ -960,16 +949,11 @@ cm_pf_try_relax = {
 		}
 		set_variable = { name = cm_pf_d value = local_var:$ND$ }
 		change_local_variable = { name = cm_pf_changed add = 1 }
-		# Frontier push, armed only by the fast search variants; cm_pf_rlx caps a node at one
-		# outward relaxation on greedy (accuracy 6) searches.
+		# Frontier push, armed only by the fast search variants.
 		if = {
 			limit = {
 				exists = local_var:cm_pf_push_f
 				NOT = { has_variable = cm_pf_inf }
-				trigger_if = {
-					limit = { exists = local_var:cm_pf_greedy }
-					NOT = { has_variable = cm_pf_rlx }
-				}
 			}
 			set_variable = { name = cm_pf_inf value = 1 }
 			scope:cm_pf_c = {
@@ -998,12 +982,12 @@ cm_pf_try_relax = {
 	}
 }
 
-# ============================== Accuracy tiers (2-6) ==============================
+# ============================== Accuracy tiers (2-5) ==============================
 # The Search Accuracy setting's phased runner. Phases (cm_pf_phase): 1 init, 2 reference
 # searches, 3 ordered drain (accuracy 2-4, and small countries at any tier), 4 seed marking,
-# 5 marked drain, 6 refinement marking, 7 mark the rest skipped (accuracy 5-6).
+# 5 marked drain, 6 refinement marking, 7 mark the rest skipped (accuracy 5).
 # Accuracy 2-4 skip a candidate only when reference-derived score bounds prove it cannot make
-# that tier's guaranteed ranks; 5-6 evaluate seeds and hill-climb around the leaders. Every
+# that tier's guaranteed ranks; 5 evaluates seeds and hill-climbs around the leaders. Every
 # search stays a true cheapest-path over the real cost graph.
 
 # Some seed location holds cm_pf_d = 0 and sits in cm_pf_front (cm_pf_inf marks membership).
@@ -1032,10 +1016,6 @@ cm_pf_frontier_waves = {
 		}
 		every_in_local_list = {
 			variable = cm_pf_front_cur
-			if = {
-				limit = { exists = local_var:cm_pf_greedy }
-				set_variable = { name = cm_pf_rlx value = 1 }
-			}
 			if = {
 				limit = { is_land = yes }
 				cm_pf_relax_from_land_$MODE$ = { BUDGET = $BUDGET$ }
@@ -1085,65 +1065,6 @@ cm_pf_bellman_cap_fast = {
 	cm_pf_frontier_residue_clear = yes
 }
 
-# Location scope (the seeded candidate). Expects scope:cm_pf_c. Accuracy 6 searches: each
-# node relaxes outward once (cm_pf_rlx blocks its re-push), then one correction pass
-# re-relaxes every reached node. Distances can end slightly above the true cheapest path.
-cm_pf_bellman_g_greedy = {
-	set_local_variable = { name = cm_pf_push_f value = 1 }
-	set_local_variable = { name = cm_pf_greedy value = 1 }
-	set_variable = { name = cm_pf_inf value = 1 }
-	scope:cm_pf_c = {
-		clear_variable_list = cm_pf_front
-		add_to_variable_list = { name = cm_pf_front target = prev }
-	}
-	cm_pf_frontier_waves = { MODE = g BUDGET = @cm_pf_budget_g_fast }
-	remove_local_variable = cm_pf_push_f
-	remove_local_variable = cm_pf_greedy
-	cm_pf_frontier_residue_clear = yes
-	scope:cm_pf_c = {
-		every_owned_location = {
-			limit = {
-				has_variable = cm_pf_d
-				has_variable = cm_pf_cl_g
-			}
-			cm_pf_relax_from_land_g = { BUDGET = @cm_pf_budget_g_fast }
-		}
-		every_in_list = {
-			variable = cm_pf_water_set
-			limit = { has_variable = cm_pf_d }
-			cm_pf_relax_from_water = { BUDGET = @cm_pf_budget_g_fast }
-		}
-	}
-}
-
-cm_pf_bellman_cap_greedy = {
-	set_local_variable = { name = cm_pf_push_f value = 1 }
-	set_local_variable = { name = cm_pf_greedy value = 1 }
-	set_variable = { name = cm_pf_inf value = 1 }
-	scope:cm_pf_c = {
-		clear_variable_list = cm_pf_front
-		add_to_variable_list = { name = cm_pf_front target = prev }
-	}
-	cm_pf_frontier_waves = { MODE = cap BUDGET = @cm_pf_budget_c_fast }
-	remove_local_variable = cm_pf_push_f
-	remove_local_variable = cm_pf_greedy
-	cm_pf_frontier_residue_clear = yes
-	scope:cm_pf_c = {
-		every_owned_location = {
-			limit = {
-				has_variable = cm_pf_d
-				has_variable = cm_pf_cl_c
-			}
-			cm_pf_relax_from_land_cap = { BUDGET = @cm_pf_budget_c_fast }
-		}
-		every_in_list = {
-			variable = cm_pf_water_set
-			limit = { has_variable = cm_pf_d }
-			cm_pf_relax_from_water = { BUDGET = @cm_pf_budget_c_fast }
-		}
-	}
-}
-
 # Location scope (the reference location). Expects scope:cm_pf_c. Reference search for the
 # candidate bounds: boosted capital costs on every tile, a per-edge lower bound of both real
 # searches (cm_pf_cap_adj_value <= 0 <= cm_pf_capb_extra_value, so the _cb divisors are the
@@ -1164,10 +1085,7 @@ cm_pf_bellman_ref = {
 	cm_pf_frontier_waves = { MODE = cap BUDGET = @cm_pf_ref_budget }
 	if = {
 		limit = { local_var:cm_pf_changed > 0 }
-		scope:cm_pf_c = {
-			set_variable = { name = cm_pf_ub_valid value = 0 }
-			cmf_log = { action = cm_log_pf_ref_nonconverged }
-		}
+		scope:cm_pf_c = { set_variable = { name = cm_pf_ub_valid value = 0 } }
 	}
 	remove_local_variable = cm_pf_push_f
 	remove_local_variable = cm_pf_ref_all
@@ -1912,7 +1830,7 @@ cm_pf_drop_cap_outputs = {
 # Location scope (a drained candidate). Expects scope:cm_pf_c. Accuracy 2-4 skip a mode when
 # the active method's metric bound proves the candidate cannot make that tier's guaranteed
 # ranks (strict <, so a possible tie always evaluates); the guarantee covers the viewed
-# ranking only, and a method switch invalidates the cache. Accuracy 5-6 evaluate whatever
+# ranking only, and a method switch invalidates the cache. Accuracy 5 evaluates whatever
 # the sample and refinement phases marked. A mode outside the run keeps its previous outputs
 # untouched; only a bound-skip (cm_pf_bskip_*) blacks a mode out. Bumps local cm_pf_evals
 # when it ran at least one search.
@@ -2017,13 +1935,7 @@ cm_pf_score_candidate_pruned = {
 	if = {
 		limit = { local_var:cm_pf_do_g = 1 }
 		set_variable = { name = cm_pf_d value = 0 }
-		if = {
-			limit = { scope:cm_pf_c.var:cm_pf_acc = 6 }
-			cm_pf_bellman_g_greedy = yes
-		}
-		else = {
-			cm_pf_bellman_g_fast = { BUDGET = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
-		}
+		cm_pf_bellman_g_fast = { BUDGET = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
 		cm_pf_sweep_gov = yes
 		if = {
 			limit = { scope:cm_pf_c.var:cm_pf_acc <= 4 }
@@ -2045,13 +1957,7 @@ cm_pf_score_candidate_pruned = {
 			set_variable = { name = cm_pf_cand_topo value = scope:cm_pf_cand.var:cm_pf_topo }
 		}
 		set_variable = { name = cm_pf_d value = 0 }
-		if = {
-			limit = { scope:cm_pf_c.var:cm_pf_acc = 6 }
-			cm_pf_bellman_cap_greedy = yes
-		}
-		else = {
-			cm_pf_bellman_cap_fast = yes
-		}
+		cm_pf_bellman_cap_fast = yes
 		cm_pf_sweep_cap = yes
 		if = {
 			limit = { scope:cm_pf_c.var:cm_pf_acc <= 4 }
@@ -2109,39 +2015,19 @@ cm_pf_phase_drain_step = {
 	}
 }
 
-# Country scope. Marks the seed evaluations: accuracy 5 the best-bound location of every
-# owned province, accuracy 6 the @cm_pf_seed_count best-bound locations; the capital always.
+# Country scope. Marks the seed evaluations: the best-bound location of every owned
+# province, and the capital always.
 cm_pf_phase_sample = {
-	if = {
-		limit = { var:cm_pf_acc = 5 }
-		every_province = {
-			ordered_location_in_province = {
-				limit = {
-					owner ?= scope:cm_pf_c
-					has_variable = cm_pf_cl_g
-				}
-				order_by = { value = var:cm_pf_ub_ord }
-				position = 0
-				check_range_bounds = no
-				set_variable = { name = cm_pf_samp value = 1 }
+	every_province = {
+		ordered_location_in_province = {
+			limit = {
+				owner ?= scope:cm_pf_c
+				has_variable = cm_pf_cl_g
 			}
-		}
-	}
-	else = {
-		set_local_variable = { name = cm_pf_seed_i value = 0 }
-		while = {
-			limit = { local_var:cm_pf_seed_i < @cm_pf_seed_count }
-			change_local_variable = { name = cm_pf_seed_i add = 1 }
-			ordered_owned_location = {
-				limit = {
-					has_variable = cm_pf_cl_g
-					NOT = { has_variable = cm_pf_samp }
-				}
-				order_by = { value = var:cm_pf_ub_ord }
-				position = 0
-				check_range_bounds = no
-				set_variable = { name = cm_pf_samp value = 1 }
-			}
+			order_by = { value = var:cm_pf_ub_ord }
+			position = 0
+			check_range_bounds = no
+			set_variable = { name = cm_pf_samp value = 1 }
 		}
 	}
 	if = {
@@ -2580,43 +2466,6 @@ cm_pf_finalize = {
 	else = {
 		every_owned_location = { remove_variable = cm_pf_pred }
 	}
-	# Diagnostic: keep the bound minima and skip thresholds readable in the debug tooltip.
-	if = {
-		limit = { exists = var:cm_pf_ub_valid }
-		set_variable = { name = cm_pf_dbg_ubvalid value = var:cm_pf_ub_valid }
-		set_variable = { name = cm_pf_dbg_b1_gt value = var:cm_pf_b1_gt }
-		set_variable = { name = cm_pf_dbg_b3_gt value = var:cm_pf_b3_gt }
-		set_variable = { name = cm_pf_dbg_b1_gp value = var:cm_pf_b1_gp }
-		set_variable = { name = cm_pf_dbg_b3_gp value = var:cm_pf_b3_gp }
-		set_variable = { name = cm_pf_dbg_b1_ct value = var:cm_pf_b1_ct }
-		set_variable = { name = cm_pf_dbg_b3_ct value = var:cm_pf_b3_ct }
-		set_variable = { name = cm_pf_dbg_b1_cp value = var:cm_pf_b1_cp }
-		set_variable = { name = cm_pf_dbg_b3_cp value = var:cm_pf_b3_cp }
-		every_owned_location = {
-			limit = { has_variable = cm_pf_ub_gt }
-			set_variable = { name = cm_pf_dbg_ubgt value = var:cm_pf_ub_gt }
-			set_variable = { name = cm_pf_dbg_ubgp value = var:cm_pf_ub_gp }
-			set_variable = { name = cm_pf_dbg_ubct value = var:cm_pf_ub_ct }
-			set_variable = { name = cm_pf_dbg_ubcp value = var:cm_pf_ub_cp }
-		}
-	}
-	else = {
-		remove_variable = cm_pf_dbg_ubvalid
-		remove_variable = cm_pf_dbg_b1_gt
-		remove_variable = cm_pf_dbg_b3_gt
-		remove_variable = cm_pf_dbg_b1_gp
-		remove_variable = cm_pf_dbg_b3_gp
-		remove_variable = cm_pf_dbg_b1_ct
-		remove_variable = cm_pf_dbg_b3_ct
-		remove_variable = cm_pf_dbg_b1_cp
-		remove_variable = cm_pf_dbg_b3_cp
-		every_owned_location = {
-			remove_variable = cm_pf_dbg_ubgt
-			remove_variable = cm_pf_dbg_ubgp
-			remove_variable = cm_pf_dbg_ubct
-			remove_variable = cm_pf_dbg_ubcp
-		}
-	}
 	every_owned_location = { cm_pf_clean_location = yes }
 	every_in_list = {
 		variable = cm_pf_water_set
@@ -2673,7 +2522,6 @@ cm_pf_clean_location = {
 	remove_variable = cm_pf_dref_min
 	remove_variable = cm_pf_samp
 	remove_variable = cm_pf_inf
-	remove_variable = cm_pf_rlx
 	clear_variable_map = cm_pf_en
 	clear_variable_map = cm_pf_ev
 }
