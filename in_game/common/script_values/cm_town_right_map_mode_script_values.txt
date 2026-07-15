@@ -5,6 +5,8 @@
 # cm_trmm_recompute_province_definition (each is one worth-using production
 # method's locally-available input share), plus the location-scoped readers of
 # the stored province variables that the map mode tooltip machinery uses.
+# Options from a building with a location_potential pool separately and only
+# count on locations where that gate holds.
 # Readers are only evaluated on locations the recompute pass marked
 # (has_variable cm_trmm_best_idx).
 
@@ -80,14 +82,6 @@ cm_trmm_opt_naval_supplies_2 = {
 	if = {
 		limit = { any_location_in_province_definition = { raw_material ?= goods:lumber } }
 		add = 0.381
-	}
-}
-# coastal_boatyard (fishing_village), in_game/common/production_methods/village_production_methods.txt:77 - lumber 0.5, tar 0.25 of 0.75 total input
-cm_trmm_opt_naval_supplies_3 = {
-	value = 0
-	if = {
-		limit = { any_location_in_province_definition = { raw_material ?= goods:lumber } }
-		add = 0.667
 	}
 }
 
@@ -748,18 +742,6 @@ cm_trmm_opt_beer_8 = {
 		add = 0.854
 	}
 }
-# rural_millet_brewery (market_village), in_game/common/production_methods/village_production_methods.txt:11 - lumber 0.097, millet 0.484, tools 0.068 of 0.649 total input
-cm_trmm_opt_beer_9 = {
-	value = 0
-	if = {
-		limit = { any_location_in_province_definition = { raw_material ?= goods:lumber } }
-		add = 0.149
-	}
-	if = {
-		limit = { any_location_in_province_definition = { raw_material ?= goods:millet } }
-		add = 0.746
-	}
-}
 
 # fruit_winery_maintenance (winery), in_game/common/building_types/production_wine.txt:21 - fruit 1.154, lumber 0.157, tools 0.092 of 1.403 total input
 cm_trmm_opt_wine_1 = {
@@ -851,40 +833,8 @@ cm_trmm_opt_masonry_2 = {
 	}
 }
 
-# glass_guild_maintenance (glass_guild), in_game/common/building_types/production_glass.txt:29 - lumber 0.1933, sand 0.9657, tools 0.3674 of 1.5264 total input
-cm_trmm_opt_glass_1 = {
-	value = 0
-	if = {
-		limit = { any_location_in_province_definition = { raw_material ?= goods:lumber } }
-		add = 0.127
-	}
-	if = {
-		limit = { any_location_in_province_definition = { raw_material ?= goods:sand } }
-		add = 0.633
-	}
-}
-# metal_glass_guild_maintenance (glass_guild), in_game/common/building_types/production_glass.txt:39 - alum 0.0408, lead 0.0805, lumber 0.3126, sand 1.0103, tools 0.4141 of 1.8583 total input
-cm_trmm_opt_glass_2 = {
-	value = 0
-	if = {
-		limit = { any_location_in_province_definition = { raw_material ?= goods:alum } }
-		add = 0.022
-	}
-	if = {
-		limit = { any_location_in_province_definition = { raw_material ?= goods:lead } }
-		add = 0.043
-	}
-	if = {
-		limit = { any_location_in_province_definition = { raw_material ?= goods:lumber } }
-		add = 0.168
-	}
-	if = {
-		limit = { any_location_in_province_definition = { raw_material ?= goods:sand } }
-		add = 0.544
-	}
-}
 # metal_glass_workshop_maintenance (glass_workshop), in_game/common/building_types/production_glass.txt:84 - alum 0.0422, lead 0.0947, lumber 0.3365, sand 1.0517, tools 0.4312 of 1.9563 total input
-cm_trmm_opt_glass_3 = {
+cm_trmm_opt_glass_1 = {
 	value = 0
 	if = {
 		limit = { any_location_in_province_definition = { raw_material ?= goods:alum } }
@@ -904,7 +854,7 @@ cm_trmm_opt_glass_3 = {
 	}
 }
 # glassworks_maintenance (glassworks), in_game/common/building_types/production_glass.txt:127 - alum 0.0431, coal 0.4039, lumber 0.4039, sand 2.1273, stone 0.1912, tools 0.6059 of 3.7753 total input
-cm_trmm_opt_glass_4 = {
+cm_trmm_opt_glass_2 = {
 	value = 0
 	if = {
 		limit = { any_location_in_province_definition = { raw_material ?= goods:alum } }
@@ -928,7 +878,7 @@ cm_trmm_opt_glass_4 = {
 	}
 }
 # glassmill_maintenance (glass_mill), in_game/common/building_types/production_glass.txt:173 - alum 0.1452, coal 0.8341, lumber 0.5556, sand 3.3378, stone 0.2785, tools 1.3348 of 6.486 total input
-cm_trmm_opt_glass_5 = {
+cm_trmm_opt_glass_3 = {
 	value = 0
 	if = {
 		limit = { any_location_in_province_definition = { raw_material ?= goods:alum } }
@@ -951,12 +901,36 @@ cm_trmm_opt_glass_5 = {
 		add = 0.043
 	}
 }
-# rural_glassmaker_maintenance (rural_glassmaker), in_game/common/building_types/rural_buildings.txt:301 - sand 1 of 1 total input
-cm_trmm_opt_glass_6 = {
+# glass_guild_maintenance (glass_guild), in_game/common/building_types/production_glass.txt:29 - lumber 0.1933, sand 0.9657, tools 0.3674 of 1.5264 total input
+cm_trmm_opt_glass_4 = {
 	value = 0
 	if = {
+		limit = { any_location_in_province_definition = { raw_material ?= goods:lumber } }
+		add = 0.127
+	}
+	if = {
 		limit = { any_location_in_province_definition = { raw_material ?= goods:sand } }
-		add = 1
+		add = 0.633
+	}
+}
+# metal_glass_guild_maintenance (glass_guild), in_game/common/building_types/production_glass.txt:39 - alum 0.0408, lead 0.0805, lumber 0.3126, sand 1.0103, tools 0.4141 of 1.8583 total input
+cm_trmm_opt_glass_5 = {
+	value = 0
+	if = {
+		limit = { any_location_in_province_definition = { raw_material ?= goods:alum } }
+		add = 0.022
+	}
+	if = {
+		limit = { any_location_in_province_definition = { raw_material ?= goods:lead } }
+		add = 0.043
+	}
+	if = {
+		limit = { any_location_in_province_definition = { raw_material ?= goods:lumber } }
+		add = 0.168
+	}
+	if = {
+		limit = { any_location_in_province_definition = { raw_material ?= goods:sand } }
+		add = 0.544
 	}
 }
 
@@ -974,7 +948,11 @@ cm_trmm_cov_naval_supplies = {
 }
 cm_trmm_cov_tar = {
 	value = 0
-	province = { add = var:cm_trmm_cov_tar }
+	# tar_kiln location_potential.
+	if = {
+		limit = { OR = { vegetation = woods vegetation = forest vegetation = jungle raw_material ?= goods:lumber } }
+		province = { add = var:cm_trmm_cov_tar }
+	}
 }
 cm_trmm_cov_cloth = {
 	value = 0
@@ -1050,9 +1028,18 @@ cm_trmm_cov_masonry = {
 	value = 0
 	province = { add = var:cm_trmm_cov_masonry }
 }
+cm_trmm_covp_glass_g2 = {
+	value = 0
+	province = { add = var:cm_trmm_cov_glass_g2 }
+}
 cm_trmm_cov_glass = {
 	value = 0
 	province = { add = var:cm_trmm_cov_glass }
+	# glass_guild location_potential.
+	if = {
+		limit = { is_produced_in_location_market = goods:sand }
+		min = cm_trmm_covp_glass_g2
+	}
 }
 # royal_tooling_rights: in_game/common/town_rights/01_discovery.txt:7
 cm_trmm_right_tooling = {

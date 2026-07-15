@@ -57,6 +57,13 @@ Scoring model:
     advances restricted the same way (transitively through requires chains).
     Content unlocked by universal advances (age and requires progression
     only) stays. Exclusions touching a boosted good are printed on each run.
+  - Buildings not buildable at town rank or above (the rural-only villages)
+    are excluded entirely: urban rights only exist on towns and cities, so
+    their production can never sit behind a granted right.
+  - A kept building's location_potential is carried as a per-location gate:
+    its options pool separately and only count on locations where the gate
+    holds (tar_kiln's woods/forest/jungle-or-lumber gate), evaluated live in
+    the coverage readers.
 
 Usage:
     python tools/cm_generate_town_rights_map_mode.py [--game-dir PATH]
@@ -142,6 +149,11 @@ ROYAL_RIGHTS = [
 # this fraction of the slot's best output (keeps bronze 0.6 vs iron 1.0 tools,
 # drops stone 0.25).
 PM_OUTPUT_THRESHOLD = 0.5
+
+# Rank flags a building must carry at least one of to sit behind a granted
+# urban right (rights only exist on towns and cities).
+URBAN_RANK_FLAGS = ("town", "city", "megalopolis")
+RANK_FLAGS = ("rural_settlement",) + URBAN_RANK_FLAGS
 
 SHARE_DECIMALS = 3
 
@@ -403,11 +415,12 @@ def parse_production_methods(game_dir, goods_categories):
 
 
 def parse_buildings(building_types_dir, goods_categories, external_pms):
-    """Return ([(building, [slot, ...], gates, ref)], dangling) where each
-    slot is a list of PM dicts {name, ref, inputs, produced, output, gates},
-    gates is the building's own restriction blocks as (kind, inner_text), and
-    dangling is the set of possible_production_methods names with no external
-    definition."""
+    """Return ([(building, [slot, ...], gates, rank_flags, ref)], dangling)
+    where each slot is a list of PM dicts {name, ref, inputs, produced,
+    output, gates}, gates is the building's own restriction blocks as
+    (kind, inner_text), rank_flags maps declared location-rank flags to their
+    values, and dangling is the set of possible_production_methods names with
+    no external definition."""
     buildings = []
     dangling = set()
     for name, path in iter_db_files(building_types_dir):
@@ -416,6 +429,10 @@ def parse_buildings(building_types_dir, goods_categories, external_pms):
         for building, body, b_line in child_blocks(text):
             slots = []
             gates = []
+            rank_flags = {}
+            for key, value in scalar_assignments(body):
+                if key in RANK_FLAGS:
+                    rank_flags[key] = value
             for child, inner, c_line in child_blocks(body):
                 if child == "unique_production_methods":
                     slot = []
@@ -441,7 +458,8 @@ def parse_buildings(building_types_dir, goods_categories, external_pms):
                                "country_potential"):
                     gates.append((child, inner))
             if slots:
-                buildings.append((building, slots, gates, f"{rel}:{b_line}"))
+                buildings.append(
+                    (building, slots, gates, rank_flags, f"{rel}:{b_line}"))
     return buildings, dangling
 
 
@@ -539,16 +557,34 @@ def compute_advance_locks(advances, restrictions):
     return pm_lock, building_lock
 
 
+def location_gate(gates):
+    """One-line trigger text of the building's location_potential block(s), or
+    None. raw_material compares are rewritten null-safe (locations without an
+    RGO have an invalid raw_material link)."""
+    inners = [" ".join(inner.split()) for kind, inner in gates
+              if kind == "location_potential"]
+    inners = [text for text in inners if text]
+    if not inners:
+        return None
+    return re.sub(r"\braw_material\s*=\s*", "raw_material ?= ",
+                  " ".join(inners))
+
+
 def filter_buildings(buildings, pm_lock, building_lock, boosted_goods):
-    """Drop advance-locked or restriction-gated buildings and PMs before any
-    scoring math, so main-slot selection and the worth-using threshold only
-    ever see universally available production methods. Returns the
-    (building, slots) list collect_options consumes plus report lines for
-    every exclusion that touches a boosted good."""
+    """Drop advance-locked, restriction-gated, or rural-only buildings and
+    PMs before any scoring math, so main-slot selection and the worth-using
+    threshold only ever see universally available production methods. Returns
+    the (building, slots, location_gate) list collect_options consumes plus
+    report lines for every exclusion that touches a boosted good."""
     kept = []
     report = []
-    for building, slots, gates, ref in buildings:
-        reason = building_lock.get(building)
+    for building, slots, gates, rank_flags, ref in buildings:
+        reason = None
+        if rank_flags and not any(
+                rank_flags.get(flag) == "yes" for flag in URBAN_RANK_FLAGS):
+            reason = "only buildable below town rank"
+        if not reason:
+            reason = building_lock.get(building)
         if not reason:
             for kind, inner in gates:
                 tokens = restricted_tokens(inner)
@@ -583,7 +619,7 @@ def filter_buildings(buildings, pm_lock, building_lock, boosted_goods):
             if new_slot:
                 new_slots.append(new_slot)
         if new_slots:
-            kept.append((building, new_slots))
+            kept.append((building, new_slots, location_gate(gates)))
     return kept, report
 
 
@@ -608,10 +644,11 @@ def fmt_amount(value):
 
 
 def collect_options(buildings, boosted_goods, goods_categories):
-    """Return {good: [option]}, option = {shares {good: share_str}, comment}."""
+    """Return {good: [option]}, option = {shares {good: share_str}, gate,
+    building, comment}."""
     options = {good: [] for good in boosted_goods}
     seen = {good: set() for good in boosted_goods}
-    for building, slots in buildings:
+    for building, slots, gate in buildings:
         main_slot = max(
             slots,
             key=lambda slot: max((pm["output"] or 0.0) for pm in slot))
@@ -634,7 +671,7 @@ def collect_options(buildings, boosted_goods, goods_categories):
                 shares[input_good] = fmt_num(amount / total)
             if not shares:
                 continue
-            key = tuple(sorted(shares.items()))
+            key = (gate, tuple(sorted(shares.items())))
             if key in seen[good]:
                 continue
             seen[good].add(key)
@@ -642,19 +679,45 @@ def collect_options(buildings, boosted_goods, goods_categories):
                             for g, a in sorted(pm["inputs"].items()))
             options[good].append({
                 "shares": shares,
+                "gate": gate,
+                "building": building,
                 "comment": (f"{pm['name']} ({building}), {pm['ref']} - "
                             f"{mix} of {fmt_amount(total)} total input"),
             })
     for good, opts in options.items():
-        options[good] = [o for o in opts
-                         if not any(dominates(a, o) for a in opts if a is not o)]
+        options[good] = [
+            o for o in opts
+            if not any((a["gate"] is None or a["gate"] == o["gate"])
+                       and dominates(a, o) for a in opts if a is not o)]
     return options
 
 
 def dominates(a, b):
-    """True when option a's coverage is >= option b's in every province."""
+    """True when option a's input shares are >= option b's for every input.
+    Only a valid prune when a is available wherever b is (caller checks the
+    location gates)."""
     return all(g in a["shares"] and float(a["shares"][g]) >= float(s)
                for g, s in b["shares"].items())
+
+
+def group_options(opts):
+    """Group a good's options by location gate: [(gate, [option, ...])], the
+    ungated group first so it keeps the plain variable names."""
+    groups = []
+    index = {}
+    for option in opts:
+        gate = option["gate"]
+        if gate not in index:
+            index[gate] = len(groups)
+            groups.append((gate, []))
+        groups[index[gate]][1].append(option)
+    groups.sort(key=lambda item: item[0] is not None)
+    return groups
+
+
+def gate_comment(opts):
+    """Reader comment naming the gated group's building(s)."""
+    return "/".join(sorted({o["building"] for o in opts})) + " location_potential."
 
 
 def province_check(good):
@@ -693,26 +756,57 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods):
         "# cm_trmm_recompute_province_definition (each is one worth-using production\n"
         "# method's locally-available input share), plus the location-scoped readers of\n"
         "# the stored province variables that the map mode tooltip machinery uses.\n"
+        "# Options from a building with a location_potential pool separately and only\n"
+        "# count on locations where that gate holds.\n"
         "# Readers are only evaluated on locations the recompute pass marked\n"
         "# (has_variable cm_trmm_best_idx).\n")
 
     for good in boosted_goods:
-        for k, option in enumerate(options[good], start=1):
-            lines.append(f"# {option['comment']}")
-            lines.append(f"cm_trmm_opt_{good}_{k} = {{")
-            lines.append("\tvalue = 0")
-            for input_good, share in option["shares"].items():
-                lines.append("\tif = {")
-                lines.append(f"\t\tlimit = {{ {province_check(input_good)} }}")
-                lines.append(f"\t\tadd = {share}")
-                lines.append("\t}")
-            lines.append("}")
+        k = 0
+        for _gate, opts in group_options(options[good]):
+            for option in opts:
+                k += 1
+                lines.append(f"# {option['comment']}")
+                lines.append(f"cm_trmm_opt_{good}_{k} = {{")
+                lines.append("\tvalue = 0")
+                for input_good, share in option["shares"].items():
+                    lines.append("\tif = {")
+                    lines.append(
+                        f"\t\tlimit = {{ {province_check(input_good)} }}")
+                    lines.append(f"\t\tadd = {share}")
+                    lines.append("\t}")
+                lines.append("}")
         lines.append("")
 
     for good in boosted_goods:
+        groups = group_options(options[good])
+        for gi, (_gate, opts) in enumerate(groups, start=1):
+            if gi == 1:
+                continue
+            lines.append(f"cm_trmm_covp_{good}_g{gi} = {{")
+            lines.append("\tvalue = 0")
+            lines.append(
+                f"\tprovince = {{ add = var:cm_trmm_cov_{good}_g{gi} }}")
+            lines.append("}")
         lines.append(f"cm_trmm_cov_{good} = {{")
         lines.append("\tvalue = 0")
-        lines.append(f"\tprovince = {{ add = var:cm_trmm_cov_{good} }}")
+        first_gate, first_opts = groups[0]
+        if first_gate is None:
+            lines.append(f"\tprovince = {{ add = var:cm_trmm_cov_{good} }}")
+        else:
+            lines.append(f"\t# {gate_comment(first_opts)}")
+            lines.append("\tif = {")
+            lines.append(f"\t\tlimit = {{ {first_gate} }}")
+            lines.append(f"\t\tprovince = {{ add = var:cm_trmm_cov_{good} }}")
+            lines.append("\t}")
+        for gi, (gate, opts) in enumerate(groups, start=1):
+            if gi == 1:
+                continue
+            lines.append(f"\t# {gate_comment(opts)}")
+            lines.append("\tif = {")
+            lines.append(f"\t\tlimit = {{ {gate} }}")
+            lines.append(f"\t\tmin = cm_trmm_covp_{good}_g{gi}")
+            lines.append("\t}")
         if good in self_goods:
             lines.append("\t# The right's output modifier also boosts this raw material's own RGO, so")
             lines.append("\t# on its location the RGO averages in as one more fully covered producer.")
@@ -910,20 +1004,29 @@ def emit_effects(options, aliases, boosted_goods):
     lines.append("\tif = {")
     lines.append("\t\tlimit = { cm_trmm_province_definition_has_any_input = yes }")
     for good in boosted_goods:
-        lines.append("\t\tset_local_variable = {")
-        lines.append(f"\t\t\tname = cm_trmm_l_cov_{good}")
-        lines.append("\t\t\tvalue = {")
-        lines.append("\t\t\t\tvalue = 0")
-        for k in range(1, len(options[good]) + 1):
-            lines.append(f"\t\t\t\tmin = cm_trmm_opt_{good}_{k}")
-        lines.append("\t\t\t}")
-        lines.append("\t\t}")
+        k = 0
+        for gi, (_gate, opts) in enumerate(group_options(options[good]),
+                                           start=1):
+            suffix = "" if gi == 1 else f"_g{gi}"
+            lines.append("\t\tset_local_variable = {")
+            lines.append(f"\t\t\tname = cm_trmm_l_cov_{good}{suffix}")
+            lines.append("\t\t\tvalue = {")
+            lines.append("\t\t\t\tvalue = 0")
+            for _ in opts:
+                k += 1
+                lines.append(f"\t\t\t\tmin = cm_trmm_opt_{good}_{k}")
+            lines.append("\t\t\t}")
+            lines.append("\t\t}")
     lines.append("\t\tevery_province_in_province_definition = {")
     for good in boosted_goods:
-        lines.append("\t\t\tset_variable = {")
-        lines.append(f"\t\t\t\tname = cm_trmm_cov_{good}")
-        lines.append(f"\t\t\t\tvalue = local_var:cm_trmm_l_cov_{good}")
-        lines.append("\t\t\t}")
+        for gi, (_gate, _opts) in enumerate(group_options(options[good]),
+                                            start=1):
+            suffix = "" if gi == 1 else f"_g{gi}"
+            lines.append("\t\t\tset_variable = {")
+            lines.append(f"\t\t\t\tname = cm_trmm_cov_{good}{suffix}")
+            lines.append(
+                f"\t\t\t\tvalue = local_var:cm_trmm_l_cov_{good}{suffix}")
+            lines.append("\t\t\t}")
     lines.append(
         "\t\t\t# Best right per location, encoded as round(score * 1000) * 10 + index so\n"
         "\t\t\t# the chained min = (raise-to-at-least) running maximum keeps both the score\n"
@@ -1579,6 +1682,17 @@ def main():
             print(f"    {entry}")
     else:
         print("  gated content excluded: none")
+    gated = []
+    for good in boosted_goods:
+        for gate, opts in group_options(options[good]):
+            if gate:
+                names = "/".join(sorted({o["building"] for o in opts}))
+                gated.append(f"{good}: {names} options only count where "
+                             f"[{gate}] holds at the location")
+    if gated:
+        print(f"  location-gated option groups ({len(gated)}):")
+        for entry in gated:
+            print(f"    {entry}")
     for warning in sorted(set(requires_warnings)):
         print(f"  WARNING: {warning}")
     if dangling:
