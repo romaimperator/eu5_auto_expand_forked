@@ -1410,9 +1410,15 @@ def emit_loc(rights, aliases, boosted_goods):
         boosted = ", ".join(
             f"@{good}! [ShowGoodsName('{good}')]"
             for good in rights[right]["goods"])
-        lines.append(
-            f" mapmode_cm_trmm_search_{alias}_name: "
-            f"\"Urban Right Search: [ShowTownRightsName('{right}')]\"")
+        if right == "royal_naval_rights":
+            # "Naval Supplies Rights" overflows the search strip covering the banner.
+            lines.append(
+                f" mapmode_cm_trmm_search_{alias}_name: "
+                f"\"Urban Right Search: Naval Rights\"")
+        else:
+            lines.append(
+                f" mapmode_cm_trmm_search_{alias}_name: "
+                f"\"Urban Right Search: [ShowTownRightsName('{right}')]\"")
         lines.append(
             f" MAPMODE_CM_TRMM_SEARCH_{upper}: "
             f"\"#T $mapmode_cm_trmm_search_{alias}_name$#!"

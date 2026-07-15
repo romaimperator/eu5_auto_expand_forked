@@ -111,4 +111,213 @@ widget = {
 
 		cm_trmm_search_strip = {}
 	}
+
+	# Selection memory: cm_trmm_sel holds the last set family mode, and an
+	# outside open of cm_best_town_right swaps once to it. cm_trmm_in marks
+	# being inside the family, which keeps strip picks of best-rights from
+	# re-triggering the swap. IsSet ignores the hover-preview overrides.
+
+	# Open-swap drivers, one per search.
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetMapMode('cm_best_town_right').IsSet, GetVariableSystem.HasValue('cm_trmm_sel', 'cm_trmm_search_tooling'), Not(GetVariableSystem.Exists('cm_trmm_in')))]"
+		state = {
+			name = _show
+			on_start = "[GetMapMode('cm_trmm_search_tooling').SetMapMode]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetMapMode('cm_best_town_right').IsSet, GetVariableSystem.HasValue('cm_trmm_sel', 'cm_trmm_search_jewelry'), Not(GetVariableSystem.Exists('cm_trmm_in')))]"
+		state = {
+			name = _show
+			on_start = "[GetMapMode('cm_trmm_search_jewelry').SetMapMode]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetMapMode('cm_best_town_right').IsSet, GetVariableSystem.HasValue('cm_trmm_sel', 'cm_trmm_search_naval'), Not(GetVariableSystem.Exists('cm_trmm_in')))]"
+		state = {
+			name = _show
+			on_start = "[GetMapMode('cm_trmm_search_naval').SetMapMode]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetMapMode('cm_best_town_right').IsSet, GetVariableSystem.HasValue('cm_trmm_sel', 'cm_trmm_search_textile'), Not(GetVariableSystem.Exists('cm_trmm_in')))]"
+		state = {
+			name = _show
+			on_start = "[GetMapMode('cm_trmm_search_textile').SetMapMode]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetMapMode('cm_best_town_right').IsSet, GetVariableSystem.HasValue('cm_trmm_sel', 'cm_trmm_search_weaponry'), Not(GetVariableSystem.Exists('cm_trmm_in')))]"
+		state = {
+			name = _show
+			on_start = "[GetMapMode('cm_trmm_search_weaponry').SetMapMode]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetMapMode('cm_best_town_right').IsSet, GetVariableSystem.HasValue('cm_trmm_sel', 'cm_trmm_search_book'), Not(GetVariableSystem.Exists('cm_trmm_in')))]"
+		state = {
+			name = _show
+			on_start = "[GetMapMode('cm_trmm_search_book').SetMapMode]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetMapMode('cm_best_town_right').IsSet, GetVariableSystem.HasValue('cm_trmm_sel', 'cm_trmm_search_artisan'), Not(GetVariableSystem.Exists('cm_trmm_in')))]"
+		state = {
+			name = _show
+			on_start = "[GetMapMode('cm_trmm_search_artisan').SetMapMode]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetMapMode('cm_best_town_right').IsSet, GetVariableSystem.HasValue('cm_trmm_sel', 'cm_trmm_search_brewing'), Not(GetVariableSystem.Exists('cm_trmm_in')))]"
+		state = {
+			name = _show
+			on_start = "[GetMapMode('cm_trmm_search_brewing').SetMapMode]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetMapMode('cm_best_town_right').IsSet, GetVariableSystem.HasValue('cm_trmm_sel', 'cm_trmm_search_masonry'), Not(GetVariableSystem.Exists('cm_trmm_in')))]"
+		state = {
+			name = _show
+			on_start = "[GetMapMode('cm_trmm_search_masonry').SetMapMode]"
+		}
+	}
+
+	# Selection recorders.
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[GetMapMode('cm_trmm_search_tooling').IsSet]"
+		state = {
+			name = _show
+			# Delayed so the entry frame's swap check still sees the mark absent.
+			duration = 0.2
+			on_start = "[GetVariableSystem.Set('cm_trmm_sel', 'cm_trmm_search_tooling')]"
+			on_finish = "[GetVariableSystem.Set('cm_trmm_in', 'on')]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[GetMapMode('cm_trmm_search_jewelry').IsSet]"
+		state = {
+			name = _show
+			duration = 0.2
+			on_start = "[GetVariableSystem.Set('cm_trmm_sel', 'cm_trmm_search_jewelry')]"
+			on_finish = "[GetVariableSystem.Set('cm_trmm_in', 'on')]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[GetMapMode('cm_trmm_search_naval').IsSet]"
+		state = {
+			name = _show
+			duration = 0.2
+			on_start = "[GetVariableSystem.Set('cm_trmm_sel', 'cm_trmm_search_naval')]"
+			on_finish = "[GetVariableSystem.Set('cm_trmm_in', 'on')]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[GetMapMode('cm_trmm_search_textile').IsSet]"
+		state = {
+			name = _show
+			duration = 0.2
+			on_start = "[GetVariableSystem.Set('cm_trmm_sel', 'cm_trmm_search_textile')]"
+			on_finish = "[GetVariableSystem.Set('cm_trmm_in', 'on')]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[GetMapMode('cm_trmm_search_weaponry').IsSet]"
+		state = {
+			name = _show
+			duration = 0.2
+			on_start = "[GetVariableSystem.Set('cm_trmm_sel', 'cm_trmm_search_weaponry')]"
+			on_finish = "[GetVariableSystem.Set('cm_trmm_in', 'on')]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[GetMapMode('cm_trmm_search_book').IsSet]"
+		state = {
+			name = _show
+			duration = 0.2
+			on_start = "[GetVariableSystem.Set('cm_trmm_sel', 'cm_trmm_search_book')]"
+			on_finish = "[GetVariableSystem.Set('cm_trmm_in', 'on')]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[GetMapMode('cm_trmm_search_artisan').IsSet]"
+		state = {
+			name = _show
+			duration = 0.2
+			on_start = "[GetVariableSystem.Set('cm_trmm_sel', 'cm_trmm_search_artisan')]"
+			on_finish = "[GetVariableSystem.Set('cm_trmm_in', 'on')]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[GetMapMode('cm_trmm_search_brewing').IsSet]"
+		state = {
+			name = _show
+			duration = 0.2
+			on_start = "[GetVariableSystem.Set('cm_trmm_sel', 'cm_trmm_search_brewing')]"
+			on_finish = "[GetVariableSystem.Set('cm_trmm_in', 'on')]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[GetMapMode('cm_trmm_search_masonry').IsSet]"
+		state = {
+			name = _show
+			duration = 0.2
+			on_start = "[GetVariableSystem.Set('cm_trmm_sel', 'cm_trmm_search_masonry')]"
+			on_finish = "[GetVariableSystem.Set('cm_trmm_in', 'on')]"
+		}
+	}
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And(GetMapMode('cm_best_town_right').IsSet, GetVariableSystem.Exists('cm_trmm_in'))]"
+		state = {
+			name = _show
+			on_start = "[GetVariableSystem.Set('cm_trmm_sel', 'cm_best_town_right')]"
+		}
+	}
+
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[Not(Or(Or5(GetMapMode('cm_best_town_right').IsSet, GetMapMode('cm_trmm_search_tooling').IsSet, GetMapMode('cm_trmm_search_jewelry').IsSet, GetMapMode('cm_trmm_search_naval').IsSet, GetMapMode('cm_trmm_search_textile').IsSet), Or5(GetMapMode('cm_trmm_search_weaponry').IsSet, GetMapMode('cm_trmm_search_book').IsSet, GetMapMode('cm_trmm_search_artisan').IsSet, GetMapMode('cm_trmm_search_brewing').IsSet, GetMapMode('cm_trmm_search_masonry').IsSet)))]"
+		state = {
+			name = _show
+			on_start = "[GetVariableSystem.Clear('cm_trmm_in')]"
+		}
+	}
 }
