@@ -3,216 +3,1307 @@
 
 # Once-per-lobby precompute: computes each qualifying province definition's
 # industry coverages definition-wide, stores them on every province slice in
-# the definition, and stores each location's best right index as a location
-# variable, so the map mode and tooltip only read stored values. Variables
-# stored on the province_definition itself do not read back, so coverage is
-# staged in locals and written to every slice.
+# the definition along with the winning option indices and raw-input presence
+# flags the tooltip breakdown chips read, and stores each location's best
+# right index as a location variable, so the map mode and tooltip only read
+# stored values. Variables stored on the province_definition itself do not
+# read back, so everything is staged in locals and written to every slice.
 
 # Province definition scope.
 cm_trmm_recompute_province_definition = {
 	if = {
 		limit = { cm_trmm_province_definition_has_any_input = yes }
+		# First-best scan per group: coverage plus the winning option's index
+		# for the breakdown chips. Options are never negative and ties keep the
+		# earliest option.
 		set_local_variable = {
 			name = cm_trmm_l_cov_tools
-			value = {
-				value = 0
-				min = cm_trmm_opt_tools_1
-				min = cm_trmm_opt_tools_2
-				min = cm_trmm_opt_tools_3
+			value = cm_trmm_opt_tools_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_tools
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_tools_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_tools }
+			set_local_variable = {
+				name = cm_trmm_l_cov_tools
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_tools
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_tools_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_tools }
+			set_local_variable = {
+				name = cm_trmm_l_cov_tools
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_tools
+				value = 3
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_jewelry
-			value = {
-				value = 0
-				min = cm_trmm_opt_jewelry_1
-				min = cm_trmm_opt_jewelry_2
+			value = cm_trmm_opt_jewelry_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_jewelry
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_jewelry_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_jewelry }
+			set_local_variable = {
+				name = cm_trmm_l_cov_jewelry
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_jewelry
+				value = 2
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_naval_supplies
-			value = {
-				value = 0
-				min = cm_trmm_opt_naval_supplies_1
-				min = cm_trmm_opt_naval_supplies_2
+			value = cm_trmm_opt_naval_supplies_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_naval_supplies
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_naval_supplies_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_naval_supplies }
+			set_local_variable = {
+				name = cm_trmm_l_cov_naval_supplies
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_naval_supplies
+				value = 2
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_tar
-			value = {
-				value = 0
-				min = cm_trmm_opt_tar_1
-			}
+			value = cm_trmm_opt_tar_1
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_cloth
-			value = {
-				value = 0
-				min = cm_trmm_opt_cloth_1
-				min = cm_trmm_opt_cloth_2
-				min = cm_trmm_opt_cloth_3
-				min = cm_trmm_opt_cloth_4
-				min = cm_trmm_opt_cloth_5
-				min = cm_trmm_opt_cloth_6
-				min = cm_trmm_opt_cloth_7
-				min = cm_trmm_opt_cloth_8
-				min = cm_trmm_opt_cloth_9
+			value = cm_trmm_opt_cloth_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_cloth
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_cloth_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_cloth }
+			set_local_variable = {
+				name = cm_trmm_l_cov_cloth
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_cloth
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_cloth_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_cloth }
+			set_local_variable = {
+				name = cm_trmm_l_cov_cloth
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_cloth
+				value = 3
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_cloth_4
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_cloth }
+			set_local_variable = {
+				name = cm_trmm_l_cov_cloth
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_cloth
+				value = 4
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_cloth_5
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_cloth }
+			set_local_variable = {
+				name = cm_trmm_l_cov_cloth
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_cloth
+				value = 5
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_cloth_6
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_cloth }
+			set_local_variable = {
+				name = cm_trmm_l_cov_cloth
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_cloth
+				value = 6
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_cloth_7
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_cloth }
+			set_local_variable = {
+				name = cm_trmm_l_cov_cloth
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_cloth
+				value = 7
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_cloth_8
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_cloth }
+			set_local_variable = {
+				name = cm_trmm_l_cov_cloth
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_cloth
+				value = 8
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_cloth_9
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_cloth }
+			set_local_variable = {
+				name = cm_trmm_l_cov_cloth
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_cloth
+				value = 9
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_fine_cloth
-			value = {
-				value = 0
-				min = cm_trmm_opt_fine_cloth_1
-				min = cm_trmm_opt_fine_cloth_2
-				min = cm_trmm_opt_fine_cloth_3
+			value = cm_trmm_opt_fine_cloth_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_fine_cloth
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_fine_cloth_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_fine_cloth }
+			set_local_variable = {
+				name = cm_trmm_l_cov_fine_cloth
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_fine_cloth
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_fine_cloth_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_fine_cloth }
+			set_local_variable = {
+				name = cm_trmm_l_cov_fine_cloth
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_fine_cloth
+				value = 3
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_dyes
-			value = {
-				value = 0
-				min = cm_trmm_opt_dyes_1
-				min = cm_trmm_opt_dyes_2
-				min = cm_trmm_opt_dyes_3
-				min = cm_trmm_opt_dyes_4
-				min = cm_trmm_opt_dyes_5
+			value = cm_trmm_opt_dyes_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_dyes
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_dyes_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_dyes }
+			set_local_variable = {
+				name = cm_trmm_l_cov_dyes
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_dyes
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_dyes_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_dyes }
+			set_local_variable = {
+				name = cm_trmm_l_cov_dyes
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_dyes
+				value = 3
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_dyes_4
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_dyes }
+			set_local_variable = {
+				name = cm_trmm_l_cov_dyes
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_dyes
+				value = 4
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_dyes_5
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_dyes }
+			set_local_variable = {
+				name = cm_trmm_l_cov_dyes
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_dyes
+				value = 5
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_weaponry
-			value = {
-				value = 0
-				min = cm_trmm_opt_weaponry_1
-			}
+			value = cm_trmm_opt_weaponry_1
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_firearms
-			value = {
-				value = 0
-				min = cm_trmm_opt_firearms_1
-				min = cm_trmm_opt_firearms_2
-				min = cm_trmm_opt_firearms_3
-				min = cm_trmm_opt_firearms_4
+			value = cm_trmm_opt_firearms_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_firearms
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_firearms_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_firearms }
+			set_local_variable = {
+				name = cm_trmm_l_cov_firearms
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_firearms
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_firearms_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_firearms }
+			set_local_variable = {
+				name = cm_trmm_l_cov_firearms
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_firearms
+				value = 3
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_firearms_4
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_firearms }
+			set_local_variable = {
+				name = cm_trmm_l_cov_firearms
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_firearms
+				value = 4
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_cannons
-			value = {
-				value = 0
-				min = cm_trmm_opt_cannons_1
-				min = cm_trmm_opt_cannons_2
-				min = cm_trmm_opt_cannons_3
+			value = cm_trmm_opt_cannons_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_cannons
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_cannons_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_cannons }
+			set_local_variable = {
+				name = cm_trmm_l_cov_cannons
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_cannons
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_cannons_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_cannons }
+			set_local_variable = {
+				name = cm_trmm_l_cov_cannons
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_cannons
+				value = 3
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_paper
-			value = {
-				value = 0
-				min = cm_trmm_opt_paper_1
-				min = cm_trmm_opt_paper_2
-				min = cm_trmm_opt_paper_3
+			value = cm_trmm_opt_paper_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_paper
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_paper_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_paper }
+			set_local_variable = {
+				name = cm_trmm_l_cov_paper
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_paper
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_paper_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_paper }
+			set_local_variable = {
+				name = cm_trmm_l_cov_paper
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_paper
+				value = 3
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_books
-			value = {
-				value = 0
-				min = cm_trmm_opt_books_1
-				min = cm_trmm_opt_books_2
+			value = cm_trmm_opt_books_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_books
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_books_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_books }
+			set_local_variable = {
+				name = cm_trmm_l_cov_books
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_books
+				value = 2
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_furniture
-			value = {
-				value = 0
-				min = cm_trmm_opt_furniture_1
-				min = cm_trmm_opt_furniture_2
-				min = cm_trmm_opt_furniture_3
-				min = cm_trmm_opt_furniture_4
+			value = cm_trmm_opt_furniture_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_furniture
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_furniture_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_furniture }
+			set_local_variable = {
+				name = cm_trmm_l_cov_furniture
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_furniture
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_furniture_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_furniture }
+			set_local_variable = {
+				name = cm_trmm_l_cov_furniture
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_furniture
+				value = 3
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_furniture_4
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_furniture }
+			set_local_variable = {
+				name = cm_trmm_l_cov_furniture
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_furniture
+				value = 4
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_pottery
-			value = {
-				value = 0
-				min = cm_trmm_opt_pottery_1
-				min = cm_trmm_opt_pottery_2
-				min = cm_trmm_opt_pottery_3
-				min = cm_trmm_opt_pottery_4
+			value = cm_trmm_opt_pottery_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_pottery
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_pottery_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_pottery }
+			set_local_variable = {
+				name = cm_trmm_l_cov_pottery
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_pottery
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_pottery_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_pottery }
+			set_local_variable = {
+				name = cm_trmm_l_cov_pottery
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_pottery
+				value = 3
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_pottery_4
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_pottery }
+			set_local_variable = {
+				name = cm_trmm_l_cov_pottery
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_pottery
+				value = 4
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_leather
-			value = {
-				value = 0
-				min = cm_trmm_opt_leather_1
-				min = cm_trmm_opt_leather_2
-				min = cm_trmm_opt_leather_3
-				min = cm_trmm_opt_leather_4
-				min = cm_trmm_opt_leather_5
+			value = cm_trmm_opt_leather_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_leather
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_leather_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_leather }
+			set_local_variable = {
+				name = cm_trmm_l_cov_leather
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_leather
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_leather_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_leather }
+			set_local_variable = {
+				name = cm_trmm_l_cov_leather
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_leather
+				value = 3
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_leather_4
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_leather }
+			set_local_variable = {
+				name = cm_trmm_l_cov_leather
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_leather
+				value = 4
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_leather_5
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_leather }
+			set_local_variable = {
+				name = cm_trmm_l_cov_leather
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_leather
+				value = 5
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_liquor
-			value = {
-				value = 0
-				min = cm_trmm_opt_liquor_1
-				min = cm_trmm_opt_liquor_2
-				min = cm_trmm_opt_liquor_3
-				min = cm_trmm_opt_liquor_4
-				min = cm_trmm_opt_liquor_5
+			value = cm_trmm_opt_liquor_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_liquor
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_liquor_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_liquor }
+			set_local_variable = {
+				name = cm_trmm_l_cov_liquor
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_liquor
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_liquor_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_liquor }
+			set_local_variable = {
+				name = cm_trmm_l_cov_liquor
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_liquor
+				value = 3
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_liquor_4
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_liquor }
+			set_local_variable = {
+				name = cm_trmm_l_cov_liquor
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_liquor
+				value = 4
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_liquor_5
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_liquor }
+			set_local_variable = {
+				name = cm_trmm_l_cov_liquor
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_liquor
+				value = 5
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_beer
-			value = {
-				value = 0
-				min = cm_trmm_opt_beer_1
-				min = cm_trmm_opt_beer_2
-				min = cm_trmm_opt_beer_3
-				min = cm_trmm_opt_beer_4
-				min = cm_trmm_opt_beer_5
-				min = cm_trmm_opt_beer_6
-				min = cm_trmm_opt_beer_7
-				min = cm_trmm_opt_beer_8
+			value = cm_trmm_opt_beer_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_beer
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_beer_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_beer }
+			set_local_variable = {
+				name = cm_trmm_l_cov_beer
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_beer
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_beer_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_beer }
+			set_local_variable = {
+				name = cm_trmm_l_cov_beer
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_beer
+				value = 3
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_beer_4
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_beer }
+			set_local_variable = {
+				name = cm_trmm_l_cov_beer
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_beer
+				value = 4
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_beer_5
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_beer }
+			set_local_variable = {
+				name = cm_trmm_l_cov_beer
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_beer
+				value = 5
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_beer_6
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_beer }
+			set_local_variable = {
+				name = cm_trmm_l_cov_beer
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_beer
+				value = 6
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_beer_7
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_beer }
+			set_local_variable = {
+				name = cm_trmm_l_cov_beer
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_beer
+				value = 7
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_beer_8
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_beer }
+			set_local_variable = {
+				name = cm_trmm_l_cov_beer
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_beer
+				value = 8
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_wine
-			value = {
-				value = 0
-				min = cm_trmm_opt_wine_1
-				min = cm_trmm_opt_wine_2
-				min = cm_trmm_opt_wine_3
-				min = cm_trmm_opt_wine_4
-				min = cm_trmm_opt_wine_5
-				min = cm_trmm_opt_wine_6
+			value = cm_trmm_opt_wine_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_wine
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_wine_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_wine }
+			set_local_variable = {
+				name = cm_trmm_l_cov_wine
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_wine
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_wine_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_wine }
+			set_local_variable = {
+				name = cm_trmm_l_cov_wine
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_wine
+				value = 3
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_wine_4
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_wine }
+			set_local_variable = {
+				name = cm_trmm_l_cov_wine
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_wine
+				value = 4
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_wine_5
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_wine }
+			set_local_variable = {
+				name = cm_trmm_l_cov_wine
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_wine
+				value = 5
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_wine_6
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_wine }
+			set_local_variable = {
+				name = cm_trmm_l_cov_wine
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_wine
+				value = 6
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_masonry
-			value = {
-				value = 0
-				min = cm_trmm_opt_masonry_1
-				min = cm_trmm_opt_masonry_2
+			value = cm_trmm_opt_masonry_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_masonry
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_masonry_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_masonry }
+			set_local_variable = {
+				name = cm_trmm_l_cov_masonry
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_masonry
+				value = 2
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_glass
-			value = {
-				value = 0
-				min = cm_trmm_opt_glass_1
-				min = cm_trmm_opt_glass_2
-				min = cm_trmm_opt_glass_3
+			value = cm_trmm_opt_glass_1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_glass
+			value = 1
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_glass_2
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_glass }
+			set_local_variable = {
+				name = cm_trmm_l_cov_glass
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_glass
+				value = 2
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_glass_3
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_glass }
+			set_local_variable = {
+				name = cm_trmm_l_cov_glass
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_glass
+				value = 3
 			}
 		}
 		set_local_variable = {
 			name = cm_trmm_l_cov_glass_g2
+			value = cm_trmm_opt_glass_4
+		}
+		set_local_variable = {
+			name = cm_trmm_l_pm_glass_g2
+			value = 4
+		}
+		set_local_variable = {
+			name = cm_trmm_l_opt
+			value = cm_trmm_opt_glass_5
+		}
+		if = {
+			limit = { local_var:cm_trmm_l_opt > local_var:cm_trmm_l_cov_glass_g2 }
+			set_local_variable = {
+				name = cm_trmm_l_cov_glass_g2
+				value = local_var:cm_trmm_l_opt
+			}
+			set_local_variable = {
+				name = cm_trmm_l_pm_glass_g2
+				value = 5
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_alum
 			value = {
 				value = 0
-				min = cm_trmm_opt_glass_4
-				min = cm_trmm_opt_glass_5
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:alum } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_beeswax
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:beeswax } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_clay
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:clay } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_coal
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:coal } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_copper
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:copper } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_cotton
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:cotton } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_dyes
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:dyes } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_fiber_crops
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:fiber_crops } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_fruit
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:fruit } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_goods_gold
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:goods_gold } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_iron
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:iron } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_lead
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:lead } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_livestock
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:livestock } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_lumber
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:lumber } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_maize
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:maize } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_millet
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:millet } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_potato
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:potato } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_rice
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:rice } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_saltpeter
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:saltpeter } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_sand
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:sand } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_silk
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:silk } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_silver
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:silver } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_stone
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:stone } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_sugar
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:sugar } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_tin
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:tin } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_wheat
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:wheat } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_wild_game
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:wild_game } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_wine
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:wine } }
+					add = 1
+				}
+			}
+		}
+		set_local_variable = {
+			name = cm_trmm_l_in_wool
+			value = {
+				value = 0
+				if = {
+					limit = { any_location_in_province_definition = { raw_material ?= goods:wool } }
+					add = 1
+				}
 			}
 		}
 		every_province_in_province_definition = {
@@ -299,6 +1390,402 @@ cm_trmm_recompute_province_definition = {
 			set_variable = {
 				name = cm_trmm_cov_glass_g2
 				value = local_var:cm_trmm_l_cov_glass_g2
+			}
+			set_variable = {
+				name = cm_trmm_pm_tools
+				value = local_var:cm_trmm_l_pm_tools
+			}
+			set_variable = {
+				name = cm_trmm_pm_jewelry
+				value = local_var:cm_trmm_l_pm_jewelry
+			}
+			set_variable = {
+				name = cm_trmm_pm_naval_supplies
+				value = local_var:cm_trmm_l_pm_naval_supplies
+			}
+			set_variable = {
+				name = cm_trmm_pm_cloth
+				value = local_var:cm_trmm_l_pm_cloth
+			}
+			set_variable = {
+				name = cm_trmm_pm_fine_cloth
+				value = local_var:cm_trmm_l_pm_fine_cloth
+			}
+			set_variable = {
+				name = cm_trmm_pm_dyes
+				value = local_var:cm_trmm_l_pm_dyes
+			}
+			set_variable = {
+				name = cm_trmm_pm_firearms
+				value = local_var:cm_trmm_l_pm_firearms
+			}
+			set_variable = {
+				name = cm_trmm_pm_cannons
+				value = local_var:cm_trmm_l_pm_cannons
+			}
+			set_variable = {
+				name = cm_trmm_pm_paper
+				value = local_var:cm_trmm_l_pm_paper
+			}
+			set_variable = {
+				name = cm_trmm_pm_books
+				value = local_var:cm_trmm_l_pm_books
+			}
+			set_variable = {
+				name = cm_trmm_pm_furniture
+				value = local_var:cm_trmm_l_pm_furniture
+			}
+			set_variable = {
+				name = cm_trmm_pm_pottery
+				value = local_var:cm_trmm_l_pm_pottery
+			}
+			set_variable = {
+				name = cm_trmm_pm_leather
+				value = local_var:cm_trmm_l_pm_leather
+			}
+			set_variable = {
+				name = cm_trmm_pm_liquor
+				value = local_var:cm_trmm_l_pm_liquor
+			}
+			set_variable = {
+				name = cm_trmm_pm_beer
+				value = local_var:cm_trmm_l_pm_beer
+			}
+			set_variable = {
+				name = cm_trmm_pm_wine
+				value = local_var:cm_trmm_l_pm_wine
+			}
+			set_variable = {
+				name = cm_trmm_pm_masonry
+				value = local_var:cm_trmm_l_pm_masonry
+			}
+			set_variable = {
+				name = cm_trmm_pm_glass
+				value = local_var:cm_trmm_l_pm_glass
+			}
+			set_variable = {
+				name = cm_trmm_pm_glass_g2
+				value = local_var:cm_trmm_l_pm_glass_g2
+			}
+			# Absence marks a raw input missing.
+			if = {
+				limit = { local_var:cm_trmm_l_in_alum = 1 }
+				set_variable = {
+					name = cm_trmm_in_alum
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_alum }
+				remove_variable = cm_trmm_in_alum
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_beeswax = 1 }
+				set_variable = {
+					name = cm_trmm_in_beeswax
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_beeswax }
+				remove_variable = cm_trmm_in_beeswax
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_clay = 1 }
+				set_variable = {
+					name = cm_trmm_in_clay
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_clay }
+				remove_variable = cm_trmm_in_clay
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_coal = 1 }
+				set_variable = {
+					name = cm_trmm_in_coal
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_coal }
+				remove_variable = cm_trmm_in_coal
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_copper = 1 }
+				set_variable = {
+					name = cm_trmm_in_copper
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_copper }
+				remove_variable = cm_trmm_in_copper
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_cotton = 1 }
+				set_variable = {
+					name = cm_trmm_in_cotton
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_cotton }
+				remove_variable = cm_trmm_in_cotton
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_dyes = 1 }
+				set_variable = {
+					name = cm_trmm_in_dyes
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_dyes }
+				remove_variable = cm_trmm_in_dyes
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_fiber_crops = 1 }
+				set_variable = {
+					name = cm_trmm_in_fiber_crops
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_fiber_crops }
+				remove_variable = cm_trmm_in_fiber_crops
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_fruit = 1 }
+				set_variable = {
+					name = cm_trmm_in_fruit
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_fruit }
+				remove_variable = cm_trmm_in_fruit
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_goods_gold = 1 }
+				set_variable = {
+					name = cm_trmm_in_goods_gold
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_goods_gold }
+				remove_variable = cm_trmm_in_goods_gold
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_iron = 1 }
+				set_variable = {
+					name = cm_trmm_in_iron
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_iron }
+				remove_variable = cm_trmm_in_iron
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_lead = 1 }
+				set_variable = {
+					name = cm_trmm_in_lead
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_lead }
+				remove_variable = cm_trmm_in_lead
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_livestock = 1 }
+				set_variable = {
+					name = cm_trmm_in_livestock
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_livestock }
+				remove_variable = cm_trmm_in_livestock
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_lumber = 1 }
+				set_variable = {
+					name = cm_trmm_in_lumber
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_lumber }
+				remove_variable = cm_trmm_in_lumber
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_maize = 1 }
+				set_variable = {
+					name = cm_trmm_in_maize
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_maize }
+				remove_variable = cm_trmm_in_maize
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_millet = 1 }
+				set_variable = {
+					name = cm_trmm_in_millet
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_millet }
+				remove_variable = cm_trmm_in_millet
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_potato = 1 }
+				set_variable = {
+					name = cm_trmm_in_potato
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_potato }
+				remove_variable = cm_trmm_in_potato
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_rice = 1 }
+				set_variable = {
+					name = cm_trmm_in_rice
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_rice }
+				remove_variable = cm_trmm_in_rice
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_saltpeter = 1 }
+				set_variable = {
+					name = cm_trmm_in_saltpeter
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_saltpeter }
+				remove_variable = cm_trmm_in_saltpeter
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_sand = 1 }
+				set_variable = {
+					name = cm_trmm_in_sand
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_sand }
+				remove_variable = cm_trmm_in_sand
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_silk = 1 }
+				set_variable = {
+					name = cm_trmm_in_silk
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_silk }
+				remove_variable = cm_trmm_in_silk
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_silver = 1 }
+				set_variable = {
+					name = cm_trmm_in_silver
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_silver }
+				remove_variable = cm_trmm_in_silver
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_stone = 1 }
+				set_variable = {
+					name = cm_trmm_in_stone
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_stone }
+				remove_variable = cm_trmm_in_stone
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_sugar = 1 }
+				set_variable = {
+					name = cm_trmm_in_sugar
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_sugar }
+				remove_variable = cm_trmm_in_sugar
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_tin = 1 }
+				set_variable = {
+					name = cm_trmm_in_tin
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_tin }
+				remove_variable = cm_trmm_in_tin
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_wheat = 1 }
+				set_variable = {
+					name = cm_trmm_in_wheat
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_wheat }
+				remove_variable = cm_trmm_in_wheat
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_wild_game = 1 }
+				set_variable = {
+					name = cm_trmm_in_wild_game
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_wild_game }
+				remove_variable = cm_trmm_in_wild_game
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_wine = 1 }
+				set_variable = {
+					name = cm_trmm_in_wine
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_wine }
+				remove_variable = cm_trmm_in_wine
+			}
+			if = {
+				limit = { local_var:cm_trmm_l_in_wool = 1 }
+				set_variable = {
+					name = cm_trmm_in_wool
+					value = 1
+				}
+			}
+			else_if = {
+				limit = { has_variable = cm_trmm_in_wool }
+				remove_variable = cm_trmm_in_wool
 			}
 			# Best right per location, encoded as round(score * 1000) * 10 + index so
 			# the chained min = (raise-to-at-least) running maximum keeps both the score

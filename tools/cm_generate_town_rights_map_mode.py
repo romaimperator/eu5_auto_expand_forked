@@ -33,8 +33,14 @@ location's best right index as a location variable.
 A boosted good that is itself a raw material (dyes, wine) gets the RGO averaged
 in as one more fully covered producer on the RGO's own location, since the
 right's output modifier boosts that RGO too - so scores differ per location
-there. The map mode and tooltip only read stored variables plus that one
-raw-material check.
+there.
+Each tooltip industry line ends in breakdown chips naming the winning option's
+inputs: green = raw material present in the province, red = missing, white =
+an input that is never a raw material. The chips read per-group winning-option
+indices (cm_trmm_pm_*, multi-option groups only) and raw-input presence flags
+(cm_trmm_in_*) stored alongside the coverages, so the map mode and tooltip
+still only read stored variables plus the raw-material checks on dyes/wine
+locations.
 
 Scoring model:
   - A building's main production slot is its slot with the highest output;
@@ -644,8 +650,10 @@ def fmt_amount(value):
 
 
 def collect_options(buildings, boosted_goods, goods_categories):
-    """Return {good: [option]}, option = {shares {good: share_str}, gate,
-    building, comment}."""
+    """Return {good: [option]}, option = {shares {good: share_str}, others
+    {good: share_str}, gate, building, comment}. shares holds the raw-material
+    input shares that can be locally covered, others the remaining inputs'
+    shares for the breakdown chips; dedup and domination use raw shares only."""
     options = {good: [] for good in boosted_goods}
     seen = {good: set() for good in boosted_goods}
     for building, slots, gate in buildings:
@@ -665,8 +673,10 @@ def collect_options(buildings, boosted_goods, goods_categories):
                 continue
             total = sum(pm["inputs"].values())
             shares = {}
+            others = {}
             for input_good, amount in sorted(pm["inputs"].items()):
                 if goods_categories.get(input_good) != "raw_material":
+                    others[input_good] = fmt_num(amount / total)
                     continue
                 shares[input_good] = fmt_num(amount / total)
             if not shares:
@@ -679,6 +689,7 @@ def collect_options(buildings, boosted_goods, goods_categories):
                             for g, a in sorted(pm["inputs"].items()))
             options[good].append({
                 "shares": shares,
+                "others": others,
                 "gate": gate,
                 "building": building,
                 "comment": (f"{pm['name']} ({building}), {pm['ref']} - "
@@ -718,6 +729,80 @@ def group_options(opts):
 def gate_comment(opts):
     """Reader comment naming the gated group's building(s)."""
     return "/".join(sorted({o["building"] for o in opts})) + " location_potential."
+
+
+def chip_permille(share):
+    """Integer permille key for a share string ("0.667" -> 667)."""
+    return int(round(float(share) * 1000))
+
+
+def chip_pct(permille):
+    """Display percent for a permille key, matching the |%1 format."""
+    return f"{permille / 10:.1f}%"
+
+
+def chip_key(kind, input_good, permille):
+    """Shared loc key of one chip string: kind y (present), n (missing), o
+    (never a raw material)."""
+    return f"cm_trmm_chip_{kind}_{input_good}_{permille}"
+
+
+def chip_inputs(options, good):
+    """Per distinct input across a good's options: (input, is_raw, uses),
+    uses = [(k, gi, share)] in option order. Raw inputs first, alphabetical."""
+    uses = {}
+    is_raw = {}
+    k = 0
+    for gi, (_gate, opts) in enumerate(group_options(options[good]), start=1):
+        for option in opts:
+            k += 1
+            for input_good, share in option["shares"].items():
+                uses.setdefault(input_good, []).append((k, gi, share))
+                is_raw[input_good] = True
+            for input_good, share in option["others"].items():
+                uses.setdefault(input_good, []).append((k, gi, share))
+                is_raw.setdefault(input_good, False)
+    ordered = sorted(uses, key=lambda g: (not is_raw[g], g))
+    return [(g, is_raw[g], uses[g]) for g in ordered]
+
+
+def chip_inline_neutral(options, good):
+    """True when the good's one option is ungated, so its non-raw shares can
+    sit in the line as literal text instead of chip entries."""
+    return (len(options[good]) == 1
+            and group_options(options[good])[0][0] is None)
+
+
+def chip_group_select(good, groups, gi):
+    """Trigger fragments selecting group gi at the location, mirroring the
+    cm_trmm_cov_<good> reader's fold (the first available group reaching the
+    location's max wins): (trigger_lines, province_conds), the latter merged
+    into the text's own province block."""
+    def cov_ref(gj):
+        suffix = "" if gj == 1 else f"_g{gj}"
+        return f"var:cm_trmm_cov_{good}{suffix}"
+
+    trigger_lines = []
+    province_conds = []
+    gate_i = groups[gi - 1][0]
+    if gate_i is not None:
+        trigger_lines.append(gate_i)
+    for gj, (gate_j, _opts) in enumerate(groups, start=1):
+        if gj == gi:
+            continue
+        if gate_j is None:
+            flip = "<" if gj < gi else "<="
+            province_conds.append(f"{cov_ref(gj)} {flip} {cov_ref(gi)}")
+        else:
+            op = ">=" if gj < gi else ">"
+            trigger_lines.append("NOT = {")
+            trigger_lines.append("\tAND = {")
+            trigger_lines.append(f"\t\t{gate_j}")
+            trigger_lines.append(
+                f"\t\tprovince = {{ {cov_ref(gj)} {op} {cov_ref(gi)} }}")
+            trigger_lines.append("\t}")
+            trigger_lines.append("}")
+    return trigger_lines, province_conds
 
 
 def province_check(good):
@@ -990,33 +1075,70 @@ def emit_triggers(relevant_goods):
     return "\n".join(lines) + "\n"
 
 
-def emit_effects(options, aliases, boosted_goods):
+def emit_effects(options, aliases, boosted_goods, relevant):
     lines = [GENERATED_HEADER]
     lines.append(
         "# Once-per-lobby precompute: computes each qualifying province definition's\n"
         "# industry coverages definition-wide, stores them on every province slice in\n"
-        "# the definition, and stores each location's best right index as a location\n"
-        "# variable, so the map mode and tooltip only read stored values. Variables\n"
-        "# stored on the province_definition itself do not read back, so coverage is\n"
-        "# staged in locals and written to every slice.\n")
+        "# the definition along with the winning option indices and raw-input presence\n"
+        "# flags the tooltip breakdown chips read, and stores each location's best\n"
+        "# right index as a location variable, so the map mode and tooltip only read\n"
+        "# stored values. Variables stored on the province_definition itself do not\n"
+        "# read back, so everything is staged in locals and written to every slice.\n")
     lines.append("# Province definition scope.")
     lines.append("cm_trmm_recompute_province_definition = {")
     lines.append("\tif = {")
     lines.append("\t\tlimit = { cm_trmm_province_definition_has_any_input = yes }")
+    lines.append(
+        "\t\t# First-best scan per group: coverage plus the winning option's index\n"
+        "\t\t# for the breakdown chips. Options are never negative and ties keep the\n"
+        "\t\t# earliest option.")
     for good in boosted_goods:
         k = 0
         for gi, (_gate, opts) in enumerate(group_options(options[good]),
                                            start=1):
             suffix = "" if gi == 1 else f"_g{gi}"
+            k += 1
             lines.append("\t\tset_local_variable = {")
             lines.append(f"\t\t\tname = cm_trmm_l_cov_{good}{suffix}")
-            lines.append("\t\t\tvalue = {")
-            lines.append("\t\t\t\tvalue = 0")
-            for _ in opts:
-                k += 1
-                lines.append(f"\t\t\t\tmin = cm_trmm_opt_{good}_{k}")
-            lines.append("\t\t\t}")
+            lines.append(f"\t\t\tvalue = cm_trmm_opt_{good}_{k}")
             lines.append("\t\t}")
+            if len(opts) == 1:
+                continue
+            lines.append("\t\tset_local_variable = {")
+            lines.append(f"\t\t\tname = cm_trmm_l_pm_{good}{suffix}")
+            lines.append(f"\t\t\tvalue = {k}")
+            lines.append("\t\t}")
+            for _ in opts[1:]:
+                k += 1
+                lines.append("\t\tset_local_variable = {")
+                lines.append("\t\t\tname = cm_trmm_l_opt")
+                lines.append(f"\t\t\tvalue = cm_trmm_opt_{good}_{k}")
+                lines.append("\t\t}")
+                lines.append("\t\tif = {")
+                lines.append(
+                    "\t\t\tlimit = { local_var:cm_trmm_l_opt > "
+                    f"local_var:cm_trmm_l_cov_{good}{suffix} }}")
+                lines.append("\t\t\tset_local_variable = {")
+                lines.append(f"\t\t\t\tname = cm_trmm_l_cov_{good}{suffix}")
+                lines.append("\t\t\t\tvalue = local_var:cm_trmm_l_opt")
+                lines.append("\t\t\t}")
+                lines.append("\t\t\tset_local_variable = {")
+                lines.append(f"\t\t\t\tname = cm_trmm_l_pm_{good}{suffix}")
+                lines.append(f"\t\t\t\tvalue = {k}")
+                lines.append("\t\t\t}")
+                lines.append("\t\t}")
+    for input_good in relevant:
+        lines.append("\t\tset_local_variable = {")
+        lines.append(f"\t\t\tname = cm_trmm_l_in_{input_good}")
+        lines.append("\t\t\tvalue = {")
+        lines.append("\t\t\t\tvalue = 0")
+        lines.append("\t\t\t\tif = {")
+        lines.append(f"\t\t\t\t\tlimit = {{ {province_check(input_good)} }}")
+        lines.append("\t\t\t\t\tadd = 1")
+        lines.append("\t\t\t\t}")
+        lines.append("\t\t\t}")
+        lines.append("\t\t}")
     lines.append("\t\tevery_province_in_province_definition = {")
     for good in boosted_goods:
         for gi, (_gate, _opts) in enumerate(group_options(options[good]),
@@ -1027,6 +1149,32 @@ def emit_effects(options, aliases, boosted_goods):
             lines.append(
                 f"\t\t\t\tvalue = local_var:cm_trmm_l_cov_{good}{suffix}")
             lines.append("\t\t\t}")
+    for good in boosted_goods:
+        for gi, (_gate, opts) in enumerate(group_options(options[good]),
+                                           start=1):
+            if len(opts) == 1:
+                continue
+            suffix = "" if gi == 1 else f"_g{gi}"
+            lines.append("\t\t\tset_variable = {")
+            lines.append(f"\t\t\t\tname = cm_trmm_pm_{good}{suffix}")
+            lines.append(
+                f"\t\t\t\tvalue = local_var:cm_trmm_l_pm_{good}{suffix}")
+            lines.append("\t\t\t}")
+    lines.append("\t\t\t# Absence marks a raw input missing.")
+    for input_good in relevant:
+        lines.append("\t\t\tif = {")
+        lines.append(
+            f"\t\t\t\tlimit = {{ local_var:cm_trmm_l_in_{input_good} = 1 }}")
+        lines.append("\t\t\t\tset_variable = {")
+        lines.append(f"\t\t\t\t\tname = cm_trmm_in_{input_good}")
+        lines.append("\t\t\t\t\tvalue = 1")
+        lines.append("\t\t\t\t}")
+        lines.append("\t\t\t}")
+        lines.append("\t\t\telse_if = {")
+        lines.append(
+            f"\t\t\t\tlimit = {{ has_variable = cm_trmm_in_{input_good} }}")
+        lines.append(f"\t\t\t\tremove_variable = cm_trmm_in_{input_good}")
+        lines.append("\t\t\t}")
     lines.append(
         "\t\t\t# Best right per location, encoded as round(score * 1000) * 10 + index so\n"
         "\t\t\t# the chained min = (raise-to-at-least) running maximum keeps both the score\n"
@@ -1069,7 +1217,7 @@ def emit_effects(options, aliases, boosted_goods):
     return "\n".join(lines) + "\n"
 
 
-def emit_custom_loc(aliases, boosted_goods):
+def emit_custom_loc(aliases, boosted_goods, options, self_goods):
     lines = [GENERATED_HEADER]
     lines.append(
         "# Slot entries resolve rank k to a line, or to nothing: cm_trmm_slot_* for the\n"
@@ -1118,6 +1266,84 @@ def emit_custom_loc(aliases, boosted_goods):
             lines.append("\t\tfallback = yes")
             lines.append("\t}")
             lines.append("}")
+
+    lines.append(
+        "# Breakdown chips: one entry per (industry, input) resolving to that input's\n"
+        "# share chip for the location's winning option, colored by stored raw-input\n"
+        "# presence (green/red) or white for inputs that are never raw materials.\n"
+        "# Triggers read the location/province and texts are static, so both the\n"
+        "# ROOT.GetLocation and Location line families call the same entries. Chips are\n"
+        "# only evaluated inside tooltips gated on cm_trmm_best_idx / right score > 0,\n"
+        "# the same marked-locations contract the coverage readers rely on.")
+
+    def emit_text(trigger_lines, province_conds, key):
+        if not trigger_lines and not province_conds:
+            lines.append("\ttext = {")
+            lines.append(f"\t\tlocalization_key = {key}")
+            lines.append("\t\tfallback = yes")
+            lines.append("\t}")
+            return True
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        for fragment in trigger_lines:
+            lines.append(f"\t\t\t{fragment}")
+        if len(province_conds) == 1:
+            lines.append(f"\t\t\tprovince = {{ {province_conds[0]} }}")
+        elif province_conds:
+            lines.append("\t\t\tprovince = {")
+            for cond in province_conds:
+                lines.append(f"\t\t\t\t{cond}")
+            lines.append("\t\t\t}")
+        lines.append("\t\t}")
+        lines.append(f"\t\tlocalization_key = {key}")
+        lines.append("\t}")
+        return False
+
+    for good in boosted_goods:
+        groups = group_options(options[good])
+        inline_neutral = chip_inline_neutral(options, good)
+        for input_good, is_raw, uses in chip_inputs(options, good):
+            if not is_raw and inline_neutral:
+                continue
+            lines.append(f"cm_trmm_chip_{good}_{input_good} = {{")
+            lines.append("\ttype = location")
+            closed = False
+            for k, gi, share in uses:
+                permille = chip_permille(share)
+                group_lines, group_conds = chip_group_select(good, groups, gi)
+                conds = list(group_conds)
+                if len(groups[gi - 1][1]) > 1:
+                    suffix = "" if gi == 1 else f"_g{gi}"
+                    conds.append(f"var:cm_trmm_pm_{good}{suffix} = {k}")
+                if is_raw:
+                    emit_text(group_lines,
+                              conds + [f"has_variable = cm_trmm_in_{input_good}"],
+                              chip_key("y", input_good, permille))
+                    closed = emit_text(group_lines, conds,
+                                       chip_key("n", input_good, permille))
+                else:
+                    closed = emit_text(group_lines, conds,
+                                       chip_key("o", input_good, permille))
+            if not closed:
+                lines.append("\ttext = {")
+                lines.append("\t\tlocalization_key = cm_trmm_blank")
+                lines.append("\t\tfallback = yes")
+                lines.append("\t}")
+            lines.append("}")
+    for good in sorted(self_goods):
+        lines.append(f"cm_trmm_rgo_chip_{good} = {{")
+        lines.append("\ttype = location")
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append(f"\t\t\traw_material ?= goods:{good}")
+        lines.append("\t\t}")
+        lines.append(f"\t\tlocalization_key = cm_trmm_chip_rgo_{good}")
+        lines.append("\t}")
+        lines.append("\ttext = {")
+        lines.append("\t\tlocalization_key = cm_trmm_blank")
+        lines.append("\t\tfallback = yes")
+        lines.append("\t}")
+        lines.append("}")
 
     lines.append(
         "# Comma-joined \"tied with\" list per right: cm_trmm_tie_prefix_* shows the\n"
@@ -1422,7 +1648,21 @@ def emit_search_map_modes(rights, aliases, right_colors):
     return "\n".join(lines) + "\n"
 
 
-def emit_loc(rights, aliases, boosted_goods):
+def emit_loc(rights, aliases, boosted_goods, options, self_goods):
+    def chip_calls(good, accessor):
+        parts = []
+        inline_neutral = chip_inline_neutral(options, good)
+        for input_good, is_raw, uses in chip_inputs(options, good):
+            if not is_raw and inline_neutral:
+                permille = chip_permille(uses[0][2])
+                parts.append(f" #V @{input_good}! {chip_pct(permille)}#!")
+            else:
+                parts.append(
+                    f"[{accessor}.Custom('cm_trmm_chip_{good}_{input_good}')]")
+        if good in self_goods:
+            parts.append(f"[{accessor}.Custom('cm_trmm_rgo_chip_{good}')]")
+        return "".join(parts)
+
     slot_calls = "".join(
         f"[ROOT.GetLocation.Custom('cm_trmm_slot_{slot}')]"
         for slot in range(1, len(ROYAL_RIGHTS) + 1))
@@ -1450,6 +1690,7 @@ def emit_loc(rights, aliases, boosted_goods):
         sub_lines = "".join(
             f"\\n  @{good}! [ShowGoodsName('{good}')]: "
             f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_cov_{good}')|%1]"
+            f"{chip_calls(good, 'ROOT.GetLocation')}"
             for good in rights[right]["goods"])
         lines.append(f" cm_trmm_bd_line_{alias}: \"\\n{right_core}{sub_lines}\"")
         search_cores[alias] = right_core + sub_lines
@@ -1458,6 +1699,28 @@ def emit_loc(rights, aliases, boosted_goods):
             f" cm_trmm_ind_line_{good}: \"\\n@{good}! [ShowGoodsName('{good}')]: "
             f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_cov_{good}')|%1]\"")
     lines.append(" cm_trmm_blank: \"\"")
+
+    chip_strings = {}
+    for good in boosted_goods:
+        inline_neutral = chip_inline_neutral(options, good)
+        for input_good, is_raw, uses in chip_inputs(options, good):
+            if not is_raw and inline_neutral:
+                continue
+            for _k, _gi, share in uses:
+                permille = chip_permille(share)
+                pct = chip_pct(permille)
+                if is_raw:
+                    chip_strings[chip_key("y", input_good, permille)] = (
+                        f" #G @{input_good}! {pct}#!")
+                    chip_strings[chip_key("n", input_good, permille)] = (
+                        f" #R @{input_good}! {pct}#!")
+                else:
+                    chip_strings[chip_key("o", input_good, permille)] = (
+                        f" #V @{input_good}! {pct}#!")
+    for key in sorted(chip_strings):
+        lines.append(f" {key}: \"{chip_strings[key]}\"")
+    for good in sorted(self_goods):
+        lines.append(f" cm_trmm_chip_rgo_{good}: \" #G @{good}! RGO here#!\"")
 
     # Build-location marker strings. The ranking tooltip is reused here where the
     # window root is not the row's location, so these copies read the location from
@@ -1481,6 +1744,7 @@ def emit_loc(rights, aliases, boosted_goods):
         u_sub = "".join(
             f"\\n  @{good}! [ShowGoodsName('{good}')]: "
             f"[Location.MakeScope.ScriptValue('cm_trmm_cov_{good}')|%1]"
+            f"{chip_calls(good, 'Location')}"
             for good in rights[right]["goods"])
         lines.append(f" cm_uright_rank_bd_line_{alias}: \"\\n{u_core}{u_sub}\"")
     for right in ROYAL_RIGHTS:
@@ -1529,7 +1793,10 @@ def emit_loc(rights, aliases, boosted_goods):
             f"buildings boosted by @{right}! [ShowTownRightsName('{right}')] can "
             f"source from the [province|e]'s [rgo|e]s. Light stripes mark "
             f"where the right is already granted; gold stripes mark where it is the "
-            f"best specialization option.\\nBoosted industries: {boosted}\"")
+            f"best specialization option.\\nBoosted industries: {boosted}"
+            f"\\nIn the tooltip breakdown, #G green#! inputs are covered by the "
+            f"[province|e]'s [rgo|e]s, #R red#! ones are missing, and #V white#! "
+            f"ones never come from [rgo|e]s.\"")
         tie_items = "".join(
             f"[ROOT.GetLocation.Custom('cm_trmm_tie_item_{alias}_{aliases[other]}')]"
             for other in ROYAL_RIGHTS if other != right)
@@ -1658,12 +1925,15 @@ def main():
                  emit_script_values(rights, options, aliases, boosted_goods,
                                     self_goods))
     write_output(OUT_TRIGGERS, emit_triggers(relevant))
-    write_output(OUT_EFFECTS, emit_effects(options, aliases, boosted_goods))
-    write_output(OUT_CUSTOM_LOC, emit_custom_loc(aliases, boosted_goods))
+    write_output(OUT_EFFECTS,
+                 emit_effects(options, aliases, boosted_goods, relevant))
+    write_output(OUT_CUSTOM_LOC,
+                 emit_custom_loc(aliases, boosted_goods, options, self_goods))
     write_output(OUT_MAP_MODE,
                  emit_map_mode(rights, aliases, right_colors) + "\n"
                  + emit_search_map_modes(rights, aliases, right_colors))
-    write_output(OUT_LOC, emit_loc(rights, aliases, boosted_goods))
+    write_output(OUT_LOC,
+                 emit_loc(rights, aliases, boosted_goods, options, self_goods))
     write_output(OUT_SCRIPTED_GUIS, emit_scripted_guis(aliases))
 
     for path in (OUT_SCRIPT_VALUES, OUT_TRIGGERS, OUT_EFFECTS, OUT_CUSTOM_LOC,
@@ -1676,6 +1946,16 @@ def main():
         print(f"  {right}: {goods_list}")
     print(f"  relevant raw materials: {', '.join(relevant)}")
     print(f"  RGO-self boosted goods: {', '.join(sorted(self_goods))}")
+    chip_entries = len(self_goods)
+    inline_neutrals = 0
+    for good in boosted_goods:
+        for _input_good, is_raw, _uses in chip_inputs(options, good):
+            if not is_raw and chip_inline_neutral(options, good):
+                inline_neutrals += 1
+            else:
+                chip_entries += 1
+    print(f"  breakdown chips: {chip_entries} custom loc entries, "
+          f"{inline_neutrals} inline neutral share(s)")
     if excluded:
         print(f"  gated content excluded ({len(excluded)}):")
         for entry in excluded:
