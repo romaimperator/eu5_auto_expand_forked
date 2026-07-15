@@ -1333,7 +1333,8 @@ def emit_loc(rights, aliases, boosted_goods):
     for header_line in GENERATED_HEADER.splitlines():
         lines.append(f" {header_line}")
     lines.append(
-        f" MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND: \"Specialization options:{slot_calls}"
+        f" MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND: \"[ROOT.GetLocation.GetName], "
+        f"[ROOT.GetLocation.GetProvince.GetName] specialization options:{slot_calls}"
         f"\\n\\nDetails:{bd_calls}"
         f"\\n\\nBest industries:{ind_calls}\"")
     search_cores = {}
@@ -1365,7 +1366,8 @@ def emit_loc(rights, aliases, boosted_goods):
         f"[Location.Custom('cm_uright_rank_bd_slot_{slot}')]"
         for slot in range(1, len(ROYAL_RIGHTS) + 1))
     lines.append(
-        f" CM_URIGHT_RANKING_TT: \"Specialization options:{u_slot_calls}"
+        f" CM_URIGHT_RANKING_TT: \"[Location.GetName], "
+        f"[Location.GetProvince.GetName] specialization options:{u_slot_calls}"
         f"\\n\\nDetails:{u_bd_calls}\"")
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
