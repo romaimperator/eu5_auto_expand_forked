@@ -56,10 +56,12 @@ cm_should_rgo_auto_expand = {
 
 # Root is the location. Expects scopes: country, income, profit.
 # Metric gate for RGO expansion. scope:cm_income is the RGO profit scaled by the
-# location income-to-wealth ratio. The threshold is monthly gold per level for
+# location income-to-wealth ratio. Base-good RGOs (raw material in cm_base_goods)
+# and a zero threshold are exempt. The threshold is monthly gold per level for
 # Tax Income and Profit, years to recoup the expansion cost for the ROI metrics.
 cm_rgo_metric_gate_passes = {
 	OR = {
+		is_target_in_global_variable_list = { name = cm_base_goods target = raw_material }
 		NOT = { scope:cm_country = { has_variable_map = cm_priority_min_profit } }
 		"scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_rgos)" = 0
 		AND = {

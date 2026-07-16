@@ -432,7 +432,7 @@ cm_construction_demand = {
 }
 
 cm_produced_good = {
-	saved_scopes = { cm_building_type produced_good }
+	saved_scopes = { cm_building_type produced_good cm_is_multiple_levels }
 	effect = {
 		add_to_global_variable_map = { name = cm_building_type_to_produced_good key = scope:cm_building_type value = scope:cm_produced_good }
 		switch = { trigger = scope:cm_produced_good
@@ -576,6 +576,10 @@ cm_produced_good = {
 					add_to_global_variable_map = { name = cm_building_type_produces_own_construction_good key = scope:cm_building_type value = 1 }
 				}
 			}
+		}
+		# Feeds the RGO metric-gate base-good exemption.
+		if = { limit = { AND = { scope:cm_is_multiple_levels = yes cm_get_construction_demand_total_count = 0 } }
+			add_to_global_variable_list = { name = cm_base_goods target = scope:cm_produced_good }
 		}
 	}
 }
