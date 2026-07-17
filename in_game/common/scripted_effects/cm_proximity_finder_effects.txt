@@ -1842,13 +1842,14 @@ cm_pf_score_candidate_pruned = {
 	set_local_variable = { name = cm_pf_do_c value = scope:cm_pf_c.var:cm_pf_run_c }
 	set_local_variable = { name = cm_pf_bskip_g value = 0 }
 	set_local_variable = { name = cm_pf_bskip_c value = 0 }
-	# Vanilla can never place a governor without a road to the capital or a port (local_governor /
-	# naval_governor location_potential, in_game/common/building_types/capital_buildings.txt);
-	# Exhaustive still evaluates these for mods that lift the rules.
+	# Without a land/strait connection to the capital, local_governor's required road to the
+	# capital can never exist, and naval_governor needs the port (both location_potential,
+	# in_game/common/building_types/capital_buildings.txt). A missing road alone never skips
+	# (roads can be built); Exhaustive evaluates everything for mods that lift the rules.
 	if = {
 		limit = {
 			local_var:cm_pf_do_g = 1
-			has_road_to_capital = no
+			NOT = { is_connected_to_through_realm = owner.capital }
 			is_port = no
 		}
 		set_local_variable = { name = cm_pf_do_g value = 0 }
@@ -2045,7 +2046,7 @@ cm_pf_phase_sample = {
 						}
 					}
 					OR = {
-						has_road_to_capital = yes
+						is_connected_to_through_realm = owner.capital
 						is_port = yes
 					}
 				}
