@@ -3,11 +3,14 @@
 
 Scores each royal specialization town right per province by how much of its
 boosted buildings' input goods the province supplies as raw materials, then
-emits the map mode that colors provinces by the best right and the tooltip
-machinery that ranks every option. Alongside it, one hidden search map mode
-per right colors by that right's fit alone (with already-granted and
-best-right-here stripes), opened from the search panel and the urban right
-tooltips; the scripted GUI checks those tooltip buttons use are emitted too.
+emits the map mode that colors provinces by the best right (with stripes
+grading any granted right: the best one here, at least GRANTED_GOOD_THRESHOLD,
+or below) and the tooltip machinery that ranks every option. Alongside it, one
+hidden search map mode per right colors by that right's fit alone (with
+already-granted, best-right-here, and other-right-granted stripes), opened
+from the search panel and the urban right tooltips; the scripted GUI checks
+those tooltip buttons use are emitted too. A reason line at the bottom of
+each mode's tooltip names the granted right(s) behind the active stripe.
 
 Reads vanilla town_rights (which goods each right boosts, right colors),
 building_types (production method slots: inline unique_production_methods plus
@@ -36,14 +39,12 @@ in as one more fully covered producer on the RGO's own location, since the
 right's output modifier boosts that RGO too - so scores differ per location
 there.
 Each tooltip industry line keeps the goods link on the name and wraps only the
-percent in a #TOOLTIP:CUSTOM span binding the hovered location's province plus
-the winning option's production method (single-option goods bake the pm key;
-multi-option goods resolve it per location through the cm_trmm_pmkey_* custom
-loc selectors). The span opens a per-good sub-tooltip (containers in
-custom_cooltip.gui, a full-file override of the comment-only vanilla registry)
-headed by the recommended method, whose hover shows the vanilla
-ProductionMethod_tooltip, above the winning option's inputs: green = raw
-material present in the province, red = missing, white = an input that is
+percent in a #TOOLTIP:CUSTOM span binding the hovered location's province. The
+span opens a per-good sub-tooltip (containers in custom_cooltip.gui, a
+full-file override of the comment-only vanilla registry) where each option
+opens with "Building:" and "Using <method>:" lines whose name links carry the
+building and production method tooltips, above that option's inputs: green =
+raw material present in the province, red = missing, white = an input that is
 never a raw material. The containers read the per-group winning-option indices
 (cm_trmm_pm_*, multi-option groups only) and raw-input presence flags
 (cm_trmm_in_*) stored alongside the coverages through the province-rooted
@@ -229,6 +230,16 @@ NO_MATCH_COLOR = "rgb { 0 0 0 }"
 SEARCH_GRANTED_STRIPE = "rgb { 205 206 205 }"
 # Best-right-here stripe, gold to stand apart from every right color.
 SEARCH_BEST_STRIPE = "rgb { 255 200 60 }"
+# Another-royal-right-granted stripe, magenta to stand apart from the other
+# two stripes and every right color.
+SEARCH_OTHER_GRANTED_STRIPE = "rgb { 255 0 255 }"
+
+# Main-mode granted stripes: how well the granted right fits the location.
+GRANTED_BEST_STRIPE = "rgb { 60 220 60 }"
+GRANTED_GOOD_STRIPE = "rgb { 255 255 255 }"
+GRANTED_POOR_STRIPE = "rgb { 230 60 50 }"
+# Middle granted-stripe tier: the granted right's own score at least this.
+GRANTED_GOOD_THRESHOLD = 0.5
 
 OUTPUT_MODIFIER = re.compile(r"^local_([a-z0-9_]+)_output_modifier$")
 ASSIGN_BLOCK = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*=\s*\{")
@@ -810,7 +821,7 @@ def gate_label(gate):
 
 def why_groups(options, good):
     """Sub-tooltip structure for a good: [(gi, gate, label_key, first_k,
-    multi_option, [(k, building, [(kind, input, permille), ...]), ...])].
+    multi_option, [(k, building, pm, [(kind, input, permille), ...]), ...])].
     label_key is None only when the good has a single ungated group; row kind
     is raw or other."""
     groups = group_options(options[good])
@@ -832,41 +843,9 @@ def why_groups(options, good):
                 rows.append(("raw", input_good, chip_permille(share)))
             for input_good, share in option["others"].items():
                 rows.append(("other", input_good, chip_permille(share)))
-            rows_opts.append((k, option["building"], rows))
+            rows_opts.append((k, option["building"], option["pm"], rows))
         out.append((gi, gate, label_key, first_k, len(opts) > 1, rows_opts))
     return out
-
-
-def pmkey_group_select(good, groups, gi):
-    """Trigger fragments selecting group gi at the location, mirroring the
-    cm_trmm_cov_<good> reader's fold (the first available group reaching the
-    location's max wins): (trigger_lines, province_conds), the latter merged
-    into the text's own province block."""
-    def cov_ref(gj):
-        suffix = "" if gj == 1 else f"_g{gj}"
-        return f"var:cm_trmm_cov_{good}{suffix}"
-
-    trigger_lines = []
-    province_conds = []
-    gate_i = groups[gi - 1][0]
-    if gate_i is not None:
-        trigger_lines.append(gate_i)
-    for gj, (gate_j, _opts) in enumerate(groups, start=1):
-        if gj == gi:
-            continue
-        if gate_j is None:
-            flip = "<" if gj < gi else "<="
-            province_conds.append(f"{cov_ref(gj)} {flip} {cov_ref(gi)}")
-        else:
-            op = ">=" if gj < gi else ">"
-            trigger_lines.append("NOT = {")
-            trigger_lines.append("\tAND = {")
-            trigger_lines.append(f"\t\t{gate_j}")
-            trigger_lines.append(
-                f"\t\tprovince = {{ {cov_ref(gj)} {op} {cov_ref(gi)} }}")
-            trigger_lines.append("\t}")
-            trigger_lines.append("}")
-    return trigger_lines, province_conds
 
 
 def province_check(good):
@@ -1326,7 +1305,7 @@ def emit_effects(options, aliases, boosted_goods, relevant):
     return "\n".join(lines) + "\n"
 
 
-def emit_custom_loc(aliases, boosted_goods, options, self_goods):
+def emit_custom_loc(aliases, boosted_goods, self_goods):
     lines = [GENERATED_HEADER]
     lines.append(
         "# Slot entries resolve rank k to a line, or to nothing: cm_trmm_slot_* for the\n"
@@ -1395,48 +1374,6 @@ def emit_custom_loc(aliases, boosted_goods, options, self_goods):
         lines.append("}")
 
     lines.append(
-        "# pm-key selectors: resolve a multi-option good's winning option at the\n"
-        "# location (the cm_trmm_cov_<good> reader's group fold, gates included) to\n"
-        "# its production method key, fed into the breakdown span's\n"
-        "# PRODUCTION_METHOD= tag param.")
-    for good in boosted_goods:
-        if len(options[good]) == 1:
-            continue
-        groups = group_options(options[good])
-        lines.append(f"cm_trmm_pmkey_{good} = {{")
-        lines.append("\ttype = location")
-        k = 0
-        for gi, (_gate, opts) in enumerate(groups, start=1):
-            suffix = "" if gi == 1 else f"_g{gi}"
-            for option in opts:
-                k += 1
-                trigger_lines, conds = pmkey_group_select(good, groups, gi)
-                conds = list(conds)
-                if len(opts) > 1:
-                    conds.append(f"var:cm_trmm_pm_{good}{suffix} = {k}")
-                lines.append("\ttext = {")
-                lines.append("\t\ttrigger = {")
-                for fragment in trigger_lines:
-                    lines.append(f"\t\t\t{fragment}")
-                if len(conds) == 1:
-                    lines.append(f"\t\t\tprovince = {{ {conds[0]} }}")
-                elif conds:
-                    lines.append("\t\t\tprovince = {")
-                    for cond in conds:
-                        lines.append(f"\t\t\t\t{cond}")
-                    lines.append("\t\t\t}")
-                lines.append("\t\t}")
-                lines.append(
-                    f"\t\tlocalization_key = cm_trmm_pmkey_{option['pm']}")
-                lines.append("\t}")
-        lines.append("\ttext = {")
-        lines.append(
-            f"\t\tlocalization_key = cm_trmm_pmkey_{groups[0][1][0]['pm']}")
-        lines.append("\t\tfallback = yes")
-        lines.append("\t}")
-        lines.append("}")
-
-    lines.append(
         "# Comma-joined \"tied with\" list per right: cm_trmm_tie_prefix_* shows the\n"
         "# shared static label when at least one other right ties, and\n"
         "# cm_trmm_tie_item_<right>_<other> resolves to that other right's name (with a\n"
@@ -1495,7 +1432,8 @@ def emit_custom_loc(aliases, boosted_goods, options, self_goods):
         "# Build-location urban-right marker icons: cm_uright_rec_icon resolves the\n"
         "# recommended right (rank 0), cm_uright_assigned_icon the single granted royal\n"
         "# right, each to that right's texticon. cm_uright_assigned_item_* is the\n"
-        "# per-right granted-or-blank line the multi-right hover list concatenates.")
+        "# per-right granted-or-blank line the multi-right hover list and the\n"
+        "# search-mode stripe-reason line concatenate.")
     for name in ("cm_uright_rec_icon", "cm_uright_assigned_icon"):
         lines.append(f"{name} = {{")
         lines.append("\ttype = location")
@@ -1532,6 +1470,86 @@ def emit_custom_loc(aliases, boosted_goods, options, self_goods):
         lines.append("\t}")
         lines.append("}")
 
+    n = len(ROYAL_RIGHTS)
+    lines.append(
+        "# Stripe-reason lines for the map mode tooltips' bottom:\n"
+        "# cm_trmm_granted_reason names the granted right behind the main mode's\n"
+        "# stripe tier, cm_trmm_search_reason_* the reason for the search modes'\n"
+        "# stripe. Blocks mirror the stripe limits, so first match = stripe\n"
+        "# precedence.")
+    lines.append("cm_trmm_granted_reason = {")
+    lines.append("\ttype = location")
+    for pos, right in enumerate(ROYAL_RIGHTS):
+        idx = n - pos
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append("\t\t\thas_variable = cm_trmm_best_idx")
+        lines.append(f"\t\t\tvar:cm_trmm_best_idx = {idx}")
+        lines.append(f"\t\t\thas_town_rights = town_rights_type:{right}")
+        lines.append("\t\t}")
+        lines.append(
+            f"\t\tlocalization_key = cm_trmm_reason_best_{aliases[right]}")
+        lines.append("\t}")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append("\t\t\thas_variable = cm_trmm_best_idx")
+        lines.append(f"\t\t\thas_town_rights = town_rights_type:{right}")
+        lines.append(
+            f"\t\t\tcm_trmm_right_{alias} >= {GRANTED_GOOD_THRESHOLD}")
+        lines.append("\t\t}")
+        lines.append(f"\t\tlocalization_key = cm_trmm_reason_good_{alias}")
+        lines.append("\t}")
+    for right in ROYAL_RIGHTS:
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append(f"\t\t\thas_town_rights = town_rights_type:{right}")
+        lines.append("\t\t}")
+        lines.append(
+            f"\t\tlocalization_key = cm_trmm_reason_poor_{aliases[right]}")
+        lines.append("\t}")
+    lines.append("\ttext = {")
+    lines.append("\t\tlocalization_key = cm_trmm_blank")
+    lines.append("\t\tfallback = yes")
+    lines.append("\t}")
+    lines.append("}")
+    for pos, right in enumerate(ROYAL_RIGHTS):
+        alias = aliases[right]
+        idx = n - pos
+        lines.append(f"cm_trmm_search_reason_{alias} = {{")
+        lines.append("\ttype = location")
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append(f"\t\t\thas_town_rights = town_rights_type:{right}")
+        lines.append("\t\t}")
+        lines.append("\t\tlocalization_key = cm_trmm_search_granted_line")
+        lines.append("\t}")
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append("\t\t\thas_variable = cm_trmm_best_idx")
+        lines.append(f"\t\t\tvar:cm_trmm_best_idx = {idx}")
+        lines.append("\t\t}")
+        lines.append("\t\tlocalization_key = cm_trmm_search_best_line")
+        lines.append("\t}")
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append("\t\t\tOR = {")
+        for other in ROYAL_RIGHTS:
+            if other == right:
+                continue
+            lines.append(
+                f"\t\t\t\thas_town_rights = town_rights_type:{other}")
+        lines.append("\t\t\t}")
+        lines.append("\t\t}")
+        lines.append("\t\tlocalization_key = cm_trmm_search_other_line")
+        lines.append("\t}")
+        lines.append("\ttext = {")
+        lines.append("\t\tlocalization_key = cm_trmm_blank")
+        lines.append("\t\tfallback = yes")
+        lines.append("\t}")
+        lines.append("}")
+
     return "\n".join(lines) + "\n"
 
 
@@ -1558,12 +1576,6 @@ def emit_custom_cooltip(options, boosted_goods, self_goods):
         lines.append("\t\t\t\tlayoutpolicy_horizontal = expanding")
         lines.append("\t\t\t\tmargin = { 10 10 }")
         lines.append("\t\t\t\tignoreinvisible = yes")
-        lines.append("\t\t\t\ttextbox = {")
-        lines.append("\t\t\t\t\tusing = tooltip_text_block_template")
-        lines.append(
-            "\t\t\t\t\ttooltipwidget = { using = ProductionMethod_tooltip }")
-        lines.append("\t\t\t\t\ttext = \"cm_trmm_why_rec\"")
-        lines.append("\t\t\t\t}")
         for gi, _gate, label_key, _first_k, multi_option, opts in why_groups(
                 options, good):
             suffix = "" if gi == 1 else f"_g{gi}"
@@ -1572,7 +1584,7 @@ def emit_custom_cooltip(options, boosted_goods, self_goods):
                 lines.append("\t\t\t\t\tusing = tooltip_text_block_template")
                 lines.append(f"\t\t\t\t\ttext = \"{label_key}\"")
                 lines.append("\t\t\t\t}")
-            for k, building, rows in opts:
+            for k, building, pm, rows in opts:
                 lines.append("\t\t\t\tvbox = {")
                 if multi_option:
                     lines.append(
@@ -1585,7 +1597,11 @@ def emit_custom_cooltip(options, boosted_goods, self_goods):
                 lines.append("\t\t\t\t\ttextbox = {")
                 lines.append("\t\t\t\t\t\tusing = tooltip_text_block_template")
                 lines.append(
-                    f"\t\t\t\t\t\ttext = \"cm_trmm_why_via_{building}\"")
+                    f"\t\t\t\t\t\ttext = \"cm_trmm_why_bld_{building}\"")
+                lines.append("\t\t\t\t\t}")
+                lines.append("\t\t\t\t\ttextbox = {")
+                lines.append("\t\t\t\t\t\tusing = tooltip_text_block_template")
+                lines.append(f"\t\t\t\t\t\ttext = \"cm_trmm_why_pm_{pm}\"")
                 lines.append("\t\t\t\t\t}")
                 for kind, input_good, permille in rows:
                     if kind == "raw":
@@ -1703,6 +1719,51 @@ def emit_map_mode(rights, aliases, right_colors):
         lines.append("\t\t}")
     lines.append("\t}")
     lines.append("")
+    lines.append("\tsecondary_map_color = {")
+    lines.append("\t\tif = {")
+    lines.append("\t\t\tlimit = {")
+    lines.append("\t\t\t\tis_land = yes")
+    lines.append("\t\t\t\thas_any_town_rights = yes")
+    lines.append("\t\t\t\thas_variable = cm_trmm_best_idx")
+    lines.append("\t\t\t\tOR = {")
+    for pos, right in enumerate(ROYAL_RIGHTS):
+        idx = n - pos
+        lines.append("\t\t\t\t\tAND = {")
+        lines.append(f"\t\t\t\t\t\tvar:cm_trmm_best_idx = {idx}")
+        lines.append(f"\t\t\t\t\t\thas_town_rights = town_rights_type:{right}")
+        lines.append("\t\t\t\t\t}")
+    lines.append("\t\t\t\t}")
+    lines.append("\t\t\t}")
+    lines.append(f"\t\t\tvalue = {GRANTED_BEST_STRIPE}")
+    lines.append("\t\t}")
+    # The has_variable gate keeps the scores from reading unset province
+    # variables.
+    lines.append("\t\telse_if = {")
+    lines.append("\t\t\tlimit = {")
+    lines.append("\t\t\t\tis_land = yes")
+    lines.append("\t\t\t\thas_any_town_rights = yes")
+    lines.append("\t\t\t\thas_variable = cm_trmm_best_idx")
+    lines.append("\t\t\t\tOR = {")
+    for right in ROYAL_RIGHTS:
+        lines.append("\t\t\t\t\tAND = {")
+        lines.append(f"\t\t\t\t\t\thas_town_rights = town_rights_type:{right}")
+        lines.append(f"\t\t\t\t\t\tcm_trmm_right_{aliases[right]} >= "
+                     f"{GRANTED_GOOD_THRESHOLD}")
+        lines.append("\t\t\t\t\t}")
+    lines.append("\t\t\t\t}")
+    lines.append("\t\t\t}")
+    lines.append(f"\t\t\tvalue = {GRANTED_GOOD_STRIPE}")
+    lines.append("\t\t}")
+    lines.append("\t\telse_if = {")
+    lines.append("\t\t\tlimit = {")
+    lines.append("\t\t\t\tis_land = yes")
+    lines.append("\t\t\t\thas_any_town_rights = yes")
+    lines.append("\t\t\t\tcm_uright_assigned_count >= 1")
+    lines.append("\t\t\t}")
+    lines.append(f"\t\t\tvalue = {GRANTED_POOR_STRIPE}")
+    lines.append("\t\t}")
+    lines.append("\t}")
+    lines.append("")
     for right in ROYAL_RIGHTS:
         color, _ = right_colors[right]
         lines.append("\tlegend_key = {")
@@ -1713,6 +1774,14 @@ def emit_map_mode(rights, aliases, right_colors):
     lines.append("\t\tdesc = \"cm_trmm_legend_none\"")
     lines.append(f"\t\tcolor = {NO_MATCH_COLOR}")
     lines.append("\t}")
+    for desc, key_color in (
+            ("cm_trmm_legend_granted_best", GRANTED_BEST_STRIPE),
+            ("cm_trmm_legend_granted_good", GRANTED_GOOD_STRIPE),
+            ("cm_trmm_legend_granted_poor", GRANTED_POOR_STRIPE)):
+        lines.append("\tlegend_key = {")
+        lines.append(f"\t\tdesc = \"{desc}\"")
+        lines.append(f"\t\tcolor = {key_color}")
+        lines.append("\t}")
     lines.append("")
     lines.append("\ttooltip_key = {")
     lines.append("\t\tif = {")
@@ -1731,6 +1800,9 @@ def emit_map_mode(rights, aliases, right_colors):
     lines.append("\tcategory = economy")
     lines.append("\tindex = 1")
     lines.append(MODE_TAIL_BLOCKS)
+    lines.append("\t# The Day refresh counter (vanilla in_game/gfx/map/map_modes/")
+    lines.append("\t# map_modes.txt:1099) keeps the granted stripes current after grants.")
+    lines.append("\tcolor_refresh_counters = { Day }")
     lines.append("}")
     return "\n".join(lines) + "\n"
 
@@ -1741,9 +1813,7 @@ def emit_search_map_modes(rights, aliases, right_colors):
         "# Per-right search variants of cm_best_town_right, hidden from the flyout",
         "# (opened from the search panel and the urban right tooltips). The fill lerps",
         "# from the low anchor to the right's own color by its fit score; stripes mark",
-        "# already-granted and best-right-here locations. The Day refresh counter",
-        "# (vanilla in_game/gfx/map/map_modes/map_modes.txt:1099) keeps the granted",
-        "# stripe current after grants.",
+        "# already-granted, best-right-here, and other-right-granted locations.",
     ]
     for pos, right in enumerate(ROYAL_RIGHTS):
         alias = aliases[right]
@@ -1793,13 +1863,29 @@ def emit_search_map_modes(rights, aliases, right_colors):
         lines.append("\t\t\t}")
         lines.append(f"\t\t\tvalue = {SEARCH_BEST_STRIPE}")
         lines.append("\t\t}")
+        lines.append("\t\telse_if = {")
+        lines.append("\t\t\tlimit = {")
+        lines.append("\t\t\t\tis_land = yes")
+        lines.append("\t\t\t\thas_any_town_rights = yes")
+        lines.append("\t\t\t\tOR = {")
+        for other in ROYAL_RIGHTS:
+            if other == right:
+                continue
+            lines.append(
+                f"\t\t\t\t\thas_town_rights = town_rights_type:{other}")
+        lines.append("\t\t\t\t}")
+        lines.append("\t\t\t}")
+        lines.append(f"\t\t\tvalue = {SEARCH_OTHER_GRANTED_STRIPE}")
+        lines.append("\t\t}")
         lines.append("\t}")
         lines.append("")
         for desc, key_color in (
                 ("cm_trmm_search_legend_100", color),
                 ("cm_trmm_search_legend_none", NO_MATCH_COLOR),
                 ("cm_trmm_search_legend_granted", SEARCH_GRANTED_STRIPE),
-                ("cm_trmm_search_legend_best", SEARCH_BEST_STRIPE)):
+                ("cm_trmm_search_legend_best", SEARCH_BEST_STRIPE),
+                ("cm_trmm_search_legend_granted_other",
+                 SEARCH_OTHER_GRANTED_STRIPE)):
             lines.append("\tlegend_key = {")
             lines.append(f"\t\tdesc = \"{desc}\"")
             lines.append(f"\t\tcolor = {key_color}")
@@ -1818,10 +1904,6 @@ def emit_search_map_modes(rights, aliases, right_colors):
         lines.append(f"\t\t\tlimit = {{ cm_trmm_right_{alias} <= 0 }}")
         lines.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_NONE")
         lines.append("\t\t}")
-        lines.append("\t\telse_if = {")
-        lines.append(f"\t\t\tlimit = {{ has_town_rights = town_rights_type:{right} }}")
-        lines.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_GRANTED")
-        lines.append("\t\t}")
         lines.append("\t\telse = {")
         lines.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_LAND")
         lines.append("\t\t}")
@@ -1837,15 +1919,10 @@ def emit_search_map_modes(rights, aliases, right_colors):
 
 def emit_loc(rights, aliases, boosted_goods, options, self_goods):
     def why_line(good, accessor):
-        if len(options[good]) == 1:
-            pm_param = options[good][0]["pm"]
-        else:
-            pm_param = f"[{accessor}.Custom('cm_trmm_pmkey_{good}')]"
         line = (
             f"\\n  @{good}! [ShowGoodsName('{good}')]: "
             f"#TOOLTIP:CUSTOM,cm_trmm_why_{good},"
-            f"PROVINCE=[{accessor}.GetProvince.GetID],"
-            f"PRODUCTION_METHOD={pm_param} "
+            f"PROVINCE=[{accessor}.GetProvince.GetID] "
             f"#L [{accessor}.MakeScope.ScriptValue('cm_trmm_cov_{good}')|%1]#!#!")
         if good in self_goods:
             line += f"[{accessor}.Custom('cm_trmm_rgo_chip_{good}')]"
@@ -1867,7 +1944,8 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
         f" MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND: \"[ROOT.GetLocation.GetName], "
         f"[ROOT.GetLocation.GetProvince.GetName] specialization options:{slot_calls}"
         f"\\n\\nDetails:{bd_calls}"
-        f"\\n\\nBest industries:{ind_calls}\"")
+        f"\\n\\nBest industries:{ind_calls}"
+        f"[ROOT.GetLocation.Custom('cm_trmm_granted_reason')]\"")
     search_cores = {}
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
@@ -1894,11 +1972,11 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
         {building
          for good in boosted_goods
          for _gi, _gate, _label, _fk, _mo, opts in why_groups(options, good)
-         for _k, building, _rows in opts})
+         for _k, building, _pm, _rows in opts})
     for building in via_buildings:
         lines.append(
-            f" cm_trmm_why_via_{building}: "
-            f"\"Via [ShowBuildingTypeName('{building}')]:\"")
+            f" cm_trmm_why_bld_{building}: "
+            f"\"Building: [ShowBuildingTypeName('{building}')]\"")
     row_strings = {}
     for good in boosted_goods:
         structure = why_groups(options, good)
@@ -1910,7 +1988,7 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
                     label += (" [Province.MakeScope.ScriptValue("
                               f"'cm_trmm_covv_{good}{suffix}')|%1]")
                 lines.append(f" {label_key}: \"{label}\"")
-            for _k, _building, rows in opts:
+            for _k, _building, _pm, rows in opts:
                 for kind, input_good, permille in rows:
                     pct = chip_pct(permille)
                     name = (f"@{input_good}! "
@@ -1927,13 +2005,11 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
         lines.append(f" {key}: \"{row_strings[key]}\"")
     pm_keys = sorted({option["pm"]
                       for good in boosted_goods
-                      if len(options[good]) > 1
                       for option in options[good]})
     for pm in pm_keys:
-        lines.append(f" cm_trmm_pmkey_{pm}: \"{pm}\"")
-    lines.append(
-        " cm_trmm_why_rec: \"Recommended method: "
-        "#L [ProductionMethod.GetNameWithNoTooltip]#!\"")
+        lines.append(
+            f" cm_trmm_why_pm_{pm}: "
+            f"\"Using [ShowProductionMethodName('{pm}')]:\"")
     for good in sorted(self_goods):
         lines.append(f" cm_trmm_chip_rgo_{good}: \" #G @{good}! RGO here#!\"")
     lines.append(
@@ -1975,6 +2051,25 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
     lines.append(
         f" CM_URIGHT_ASSIGNED_LIST_TT: "
         f"\"#T Assigned Specialization Rights#!{assigned_items}\"")
+    pct = round(GRANTED_GOOD_THRESHOLD * 100)
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        granted_part = f"@{right}! [ShowTownRightsName('{right}')] granted"
+        lines.append(
+            f" cm_trmm_reason_best_{alias}: "
+            f"\"\\n\\n{granted_part} - best urban right for this location\"")
+        lines.append(
+            f" cm_trmm_reason_good_{alias}: "
+            f"\"\\n\\n{granted_part} - at least {pct}% score\"")
+        lines.append(
+            f" cm_trmm_reason_poor_{alias}: "
+            f"\"\\n\\n{granted_part} - below {pct}% score\"")
+    reason_items = "".join(
+        f"[ROOT.GetLocation.Custom('cm_uright_assigned_item_{aliases[right]}')]"
+        for right in ROYAL_RIGHTS)
+    lines.append(
+        f" cm_trmm_search_other_line: "
+        f"\"\\nOther specializations granted here:{reason_items}\"")
 
     for right in ROYAL_RIGHTS:
         lines.append(
@@ -2020,16 +2115,13 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
             f"\\nRank among specializations here: "
             f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_tierdisp_{alias}')|0] "
             f"of [ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_tier_total')|0]"
-            f"[ROOT.GetLocation.Custom('cm_trmm_tie_prefix_{alias}')]{tie_items}\"")
-        lines.append(
-            f" MAPMODE_CM_TRMM_SEARCH_{upper}_TT_GRANTED: "
-            f"\"$MAPMODE_CM_TRMM_SEARCH_{upper}_TT_LAND$"
-            f"$cm_trmm_search_granted_line$\"")
+            f"[ROOT.GetLocation.Custom('cm_trmm_tie_prefix_{alias}')]{tie_items}"
+            f"[ROOT.GetLocation.Custom('cm_trmm_search_reason_{alias}')]\"")
         lines.append(
             f" MAPMODE_CM_TRMM_SEARCH_{upper}_TT_NONE: "
             f"\"[ROOT.GetLocation.GetProvince.GetName] has no [raw_material|e] "
             f"used by the industries @{right}! [ShowTownRightsName('{right}')] "
-            f"boosts.\"")
+            f"boosts.[ROOT.GetLocation.Custom('cm_trmm_search_reason_{alias}')]\"")
     return "\n".join(lines) + "\n"
 
 
@@ -2143,7 +2235,7 @@ def main():
     write_output(OUT_EFFECTS,
                  emit_effects(options, aliases, boosted_goods, relevant))
     write_output(OUT_CUSTOM_LOC,
-                 emit_custom_loc(aliases, boosted_goods, options, self_goods))
+                 emit_custom_loc(aliases, boosted_goods, self_goods))
     write_output(OUT_CUSTOM_COOLTIP,
                  emit_custom_cooltip(options, boosted_goods, self_goods))
     write_output(OUT_MAP_MODE,
@@ -2166,7 +2258,7 @@ def main():
     total_rows = 0
     for good in boosted_goods:
         for _gi, _gate, _label, _fk, _mo, opts in why_groups(options, good):
-            for _k, _building, rows in opts:
+            for _k, _building, _pm, rows in opts:
                 total_rows += len(rows)
     print(f"  breakdown sub-tooltips: {len(boosted_goods)} containers, "
           f"{total_rows} input rows")

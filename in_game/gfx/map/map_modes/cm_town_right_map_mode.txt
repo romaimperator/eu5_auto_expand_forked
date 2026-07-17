@@ -58,6 +58,109 @@ cm_best_town_right = {
 		}
 	}
 
+	secondary_map_color = {
+		if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				has_variable = cm_trmm_best_idx
+				OR = {
+					AND = {
+						var:cm_trmm_best_idx = 9
+						has_town_rights = town_rights_type:royal_tooling_rights
+					}
+					AND = {
+						var:cm_trmm_best_idx = 8
+						has_town_rights = town_rights_type:royal_jewelry_rights
+					}
+					AND = {
+						var:cm_trmm_best_idx = 7
+						has_town_rights = town_rights_type:royal_naval_rights
+					}
+					AND = {
+						var:cm_trmm_best_idx = 6
+						has_town_rights = town_rights_type:royal_textile_rights
+					}
+					AND = {
+						var:cm_trmm_best_idx = 5
+						has_town_rights = town_rights_type:royal_weaponry_rights
+					}
+					AND = {
+						var:cm_trmm_best_idx = 4
+						has_town_rights = town_rights_type:royal_book_rights
+					}
+					AND = {
+						var:cm_trmm_best_idx = 3
+						has_town_rights = town_rights_type:royal_artisan_rights
+					}
+					AND = {
+						var:cm_trmm_best_idx = 2
+						has_town_rights = town_rights_type:royal_brewing_rights
+					}
+					AND = {
+						var:cm_trmm_best_idx = 1
+						has_town_rights = town_rights_type:royal_masonry_rights
+					}
+				}
+			}
+			value = rgb { 60 220 60 }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				has_variable = cm_trmm_best_idx
+				OR = {
+					AND = {
+						has_town_rights = town_rights_type:royal_tooling_rights
+						cm_trmm_right_tooling >= 0.5
+					}
+					AND = {
+						has_town_rights = town_rights_type:royal_jewelry_rights
+						cm_trmm_right_jewelry >= 0.5
+					}
+					AND = {
+						has_town_rights = town_rights_type:royal_naval_rights
+						cm_trmm_right_naval >= 0.5
+					}
+					AND = {
+						has_town_rights = town_rights_type:royal_textile_rights
+						cm_trmm_right_textile >= 0.5
+					}
+					AND = {
+						has_town_rights = town_rights_type:royal_weaponry_rights
+						cm_trmm_right_weaponry >= 0.5
+					}
+					AND = {
+						has_town_rights = town_rights_type:royal_book_rights
+						cm_trmm_right_book >= 0.5
+					}
+					AND = {
+						has_town_rights = town_rights_type:royal_artisan_rights
+						cm_trmm_right_artisan >= 0.5
+					}
+					AND = {
+						has_town_rights = town_rights_type:royal_brewing_rights
+						cm_trmm_right_brewing >= 0.5
+					}
+					AND = {
+						has_town_rights = town_rights_type:royal_masonry_rights
+						cm_trmm_right_masonry >= 0.5
+					}
+				}
+			}
+			value = rgb { 255 255 255 }
+		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				cm_uright_assigned_count >= 1
+			}
+			value = rgb { 230 60 50 }
+		}
+	}
+
 	legend_key = {
 		desc = "cm_trmm_legend_tooling"
 		color = hsv { 0.62 0.3 0.08 }
@@ -97,6 +200,18 @@ cm_best_town_right = {
 	legend_key = {
 		desc = "cm_trmm_legend_none"
 		color = rgb { 0 0 0 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_granted_best"
+		color = rgb { 60 220 60 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_granted_good"
+		color = rgb { 255 255 255 }
+	}
+	legend_key = {
+		desc = "cm_trmm_legend_granted_poor"
+		color = rgb { 230 60 50 }
 	}
 
 	tooltip_key = {
@@ -159,14 +274,15 @@ cm_best_town_right = {
 	}
 
 	refresh_colors_on_selection_change = no
+	# The Day refresh counter (vanilla in_game/gfx/map/map_modes/
+	# map_modes.txt:1099) keeps the granted stripes current after grants.
+	color_refresh_counters = { Day }
 }
 
 # Per-right search variants of cm_best_town_right, hidden from the flyout
 # (opened from the search panel and the urban right tooltips). The fill lerps
 # from the low anchor to the right's own color by its fit score; stripes mark
-# already-granted and best-right-here locations. The Day refresh counter
-# (vanilla in_game/gfx/map/map_modes/map_modes.txt:1099) keeps the granted
-# stripe current after grants.
+# already-granted, best-right-here, and other-right-granted locations.
 
 cm_trmm_search_tooling = {
 	map_color = {
@@ -208,6 +324,23 @@ cm_trmm_search_tooling = {
 			}
 			value = rgb { 255 200 60 }
 		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				OR = {
+					has_town_rights = town_rights_type:royal_jewelry_rights
+					has_town_rights = town_rights_type:royal_naval_rights
+					has_town_rights = town_rights_type:royal_textile_rights
+					has_town_rights = town_rights_type:royal_weaponry_rights
+					has_town_rights = town_rights_type:royal_book_rights
+					has_town_rights = town_rights_type:royal_artisan_rights
+					has_town_rights = town_rights_type:royal_brewing_rights
+					has_town_rights = town_rights_type:royal_masonry_rights
+				}
+			}
+			value = rgb { 255 0 255 }
+		}
 	}
 
 	legend_key = {
@@ -226,6 +359,10 @@ cm_trmm_search_tooling = {
 		desc = "cm_trmm_search_legend_best"
 		color = rgb { 255 200 60 }
 	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted_other"
+		color = rgb { 255 0 255 }
+	}
 
 	tooltip_key = {
 		if = {
@@ -239,10 +376,6 @@ cm_trmm_search_tooling = {
 		else_if = {
 			limit = { cm_trmm_right_tooling <= 0 }
 			value = MAPMODE_CM_TRMM_SEARCH_TOOLING_TT_NONE
-		}
-		else_if = {
-			limit = { has_town_rights = town_rights_type:royal_tooling_rights }
-			value = MAPMODE_CM_TRMM_SEARCH_TOOLING_TT_GRANTED
 		}
 		else = {
 			value = MAPMODE_CM_TRMM_SEARCH_TOOLING_TT_LAND
@@ -338,6 +471,23 @@ cm_trmm_search_jewelry = {
 			}
 			value = rgb { 255 200 60 }
 		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				OR = {
+					has_town_rights = town_rights_type:royal_tooling_rights
+					has_town_rights = town_rights_type:royal_naval_rights
+					has_town_rights = town_rights_type:royal_textile_rights
+					has_town_rights = town_rights_type:royal_weaponry_rights
+					has_town_rights = town_rights_type:royal_book_rights
+					has_town_rights = town_rights_type:royal_artisan_rights
+					has_town_rights = town_rights_type:royal_brewing_rights
+					has_town_rights = town_rights_type:royal_masonry_rights
+				}
+			}
+			value = rgb { 255 0 255 }
+		}
 	}
 
 	legend_key = {
@@ -356,6 +506,10 @@ cm_trmm_search_jewelry = {
 		desc = "cm_trmm_search_legend_best"
 		color = rgb { 255 200 60 }
 	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted_other"
+		color = rgb { 255 0 255 }
+	}
 
 	tooltip_key = {
 		if = {
@@ -369,10 +523,6 @@ cm_trmm_search_jewelry = {
 		else_if = {
 			limit = { cm_trmm_right_jewelry <= 0 }
 			value = MAPMODE_CM_TRMM_SEARCH_JEWELRY_TT_NONE
-		}
-		else_if = {
-			limit = { has_town_rights = town_rights_type:royal_jewelry_rights }
-			value = MAPMODE_CM_TRMM_SEARCH_JEWELRY_TT_GRANTED
 		}
 		else = {
 			value = MAPMODE_CM_TRMM_SEARCH_JEWELRY_TT_LAND
@@ -468,6 +618,23 @@ cm_trmm_search_naval = {
 			}
 			value = rgb { 255 200 60 }
 		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				OR = {
+					has_town_rights = town_rights_type:royal_tooling_rights
+					has_town_rights = town_rights_type:royal_jewelry_rights
+					has_town_rights = town_rights_type:royal_textile_rights
+					has_town_rights = town_rights_type:royal_weaponry_rights
+					has_town_rights = town_rights_type:royal_book_rights
+					has_town_rights = town_rights_type:royal_artisan_rights
+					has_town_rights = town_rights_type:royal_brewing_rights
+					has_town_rights = town_rights_type:royal_masonry_rights
+				}
+			}
+			value = rgb { 255 0 255 }
+		}
 	}
 
 	legend_key = {
@@ -486,6 +653,10 @@ cm_trmm_search_naval = {
 		desc = "cm_trmm_search_legend_best"
 		color = rgb { 255 200 60 }
 	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted_other"
+		color = rgb { 255 0 255 }
+	}
 
 	tooltip_key = {
 		if = {
@@ -499,10 +670,6 @@ cm_trmm_search_naval = {
 		else_if = {
 			limit = { cm_trmm_right_naval <= 0 }
 			value = MAPMODE_CM_TRMM_SEARCH_NAVAL_TT_NONE
-		}
-		else_if = {
-			limit = { has_town_rights = town_rights_type:royal_naval_rights }
-			value = MAPMODE_CM_TRMM_SEARCH_NAVAL_TT_GRANTED
 		}
 		else = {
 			value = MAPMODE_CM_TRMM_SEARCH_NAVAL_TT_LAND
@@ -598,6 +765,23 @@ cm_trmm_search_textile = {
 			}
 			value = rgb { 255 200 60 }
 		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				OR = {
+					has_town_rights = town_rights_type:royal_tooling_rights
+					has_town_rights = town_rights_type:royal_jewelry_rights
+					has_town_rights = town_rights_type:royal_naval_rights
+					has_town_rights = town_rights_type:royal_weaponry_rights
+					has_town_rights = town_rights_type:royal_book_rights
+					has_town_rights = town_rights_type:royal_artisan_rights
+					has_town_rights = town_rights_type:royal_brewing_rights
+					has_town_rights = town_rights_type:royal_masonry_rights
+				}
+			}
+			value = rgb { 255 0 255 }
+		}
 	}
 
 	legend_key = {
@@ -616,6 +800,10 @@ cm_trmm_search_textile = {
 		desc = "cm_trmm_search_legend_best"
 		color = rgb { 255 200 60 }
 	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted_other"
+		color = rgb { 255 0 255 }
+	}
 
 	tooltip_key = {
 		if = {
@@ -629,10 +817,6 @@ cm_trmm_search_textile = {
 		else_if = {
 			limit = { cm_trmm_right_textile <= 0 }
 			value = MAPMODE_CM_TRMM_SEARCH_TEXTILE_TT_NONE
-		}
-		else_if = {
-			limit = { has_town_rights = town_rights_type:royal_textile_rights }
-			value = MAPMODE_CM_TRMM_SEARCH_TEXTILE_TT_GRANTED
 		}
 		else = {
 			value = MAPMODE_CM_TRMM_SEARCH_TEXTILE_TT_LAND
@@ -728,6 +912,23 @@ cm_trmm_search_weaponry = {
 			}
 			value = rgb { 255 200 60 }
 		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				OR = {
+					has_town_rights = town_rights_type:royal_tooling_rights
+					has_town_rights = town_rights_type:royal_jewelry_rights
+					has_town_rights = town_rights_type:royal_naval_rights
+					has_town_rights = town_rights_type:royal_textile_rights
+					has_town_rights = town_rights_type:royal_book_rights
+					has_town_rights = town_rights_type:royal_artisan_rights
+					has_town_rights = town_rights_type:royal_brewing_rights
+					has_town_rights = town_rights_type:royal_masonry_rights
+				}
+			}
+			value = rgb { 255 0 255 }
+		}
 	}
 
 	legend_key = {
@@ -746,6 +947,10 @@ cm_trmm_search_weaponry = {
 		desc = "cm_trmm_search_legend_best"
 		color = rgb { 255 200 60 }
 	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted_other"
+		color = rgb { 255 0 255 }
+	}
 
 	tooltip_key = {
 		if = {
@@ -759,10 +964,6 @@ cm_trmm_search_weaponry = {
 		else_if = {
 			limit = { cm_trmm_right_weaponry <= 0 }
 			value = MAPMODE_CM_TRMM_SEARCH_WEAPONRY_TT_NONE
-		}
-		else_if = {
-			limit = { has_town_rights = town_rights_type:royal_weaponry_rights }
-			value = MAPMODE_CM_TRMM_SEARCH_WEAPONRY_TT_GRANTED
 		}
 		else = {
 			value = MAPMODE_CM_TRMM_SEARCH_WEAPONRY_TT_LAND
@@ -858,6 +1059,23 @@ cm_trmm_search_book = {
 			}
 			value = rgb { 255 200 60 }
 		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				OR = {
+					has_town_rights = town_rights_type:royal_tooling_rights
+					has_town_rights = town_rights_type:royal_jewelry_rights
+					has_town_rights = town_rights_type:royal_naval_rights
+					has_town_rights = town_rights_type:royal_textile_rights
+					has_town_rights = town_rights_type:royal_weaponry_rights
+					has_town_rights = town_rights_type:royal_artisan_rights
+					has_town_rights = town_rights_type:royal_brewing_rights
+					has_town_rights = town_rights_type:royal_masonry_rights
+				}
+			}
+			value = rgb { 255 0 255 }
+		}
 	}
 
 	legend_key = {
@@ -876,6 +1094,10 @@ cm_trmm_search_book = {
 		desc = "cm_trmm_search_legend_best"
 		color = rgb { 255 200 60 }
 	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted_other"
+		color = rgb { 255 0 255 }
+	}
 
 	tooltip_key = {
 		if = {
@@ -889,10 +1111,6 @@ cm_trmm_search_book = {
 		else_if = {
 			limit = { cm_trmm_right_book <= 0 }
 			value = MAPMODE_CM_TRMM_SEARCH_BOOK_TT_NONE
-		}
-		else_if = {
-			limit = { has_town_rights = town_rights_type:royal_book_rights }
-			value = MAPMODE_CM_TRMM_SEARCH_BOOK_TT_GRANTED
 		}
 		else = {
 			value = MAPMODE_CM_TRMM_SEARCH_BOOK_TT_LAND
@@ -988,6 +1206,23 @@ cm_trmm_search_artisan = {
 			}
 			value = rgb { 255 200 60 }
 		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				OR = {
+					has_town_rights = town_rights_type:royal_tooling_rights
+					has_town_rights = town_rights_type:royal_jewelry_rights
+					has_town_rights = town_rights_type:royal_naval_rights
+					has_town_rights = town_rights_type:royal_textile_rights
+					has_town_rights = town_rights_type:royal_weaponry_rights
+					has_town_rights = town_rights_type:royal_book_rights
+					has_town_rights = town_rights_type:royal_brewing_rights
+					has_town_rights = town_rights_type:royal_masonry_rights
+				}
+			}
+			value = rgb { 255 0 255 }
+		}
 	}
 
 	legend_key = {
@@ -1006,6 +1241,10 @@ cm_trmm_search_artisan = {
 		desc = "cm_trmm_search_legend_best"
 		color = rgb { 255 200 60 }
 	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted_other"
+		color = rgb { 255 0 255 }
+	}
 
 	tooltip_key = {
 		if = {
@@ -1019,10 +1258,6 @@ cm_trmm_search_artisan = {
 		else_if = {
 			limit = { cm_trmm_right_artisan <= 0 }
 			value = MAPMODE_CM_TRMM_SEARCH_ARTISAN_TT_NONE
-		}
-		else_if = {
-			limit = { has_town_rights = town_rights_type:royal_artisan_rights }
-			value = MAPMODE_CM_TRMM_SEARCH_ARTISAN_TT_GRANTED
 		}
 		else = {
 			value = MAPMODE_CM_TRMM_SEARCH_ARTISAN_TT_LAND
@@ -1118,6 +1353,23 @@ cm_trmm_search_brewing = {
 			}
 			value = rgb { 255 200 60 }
 		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				OR = {
+					has_town_rights = town_rights_type:royal_tooling_rights
+					has_town_rights = town_rights_type:royal_jewelry_rights
+					has_town_rights = town_rights_type:royal_naval_rights
+					has_town_rights = town_rights_type:royal_textile_rights
+					has_town_rights = town_rights_type:royal_weaponry_rights
+					has_town_rights = town_rights_type:royal_book_rights
+					has_town_rights = town_rights_type:royal_artisan_rights
+					has_town_rights = town_rights_type:royal_masonry_rights
+				}
+			}
+			value = rgb { 255 0 255 }
+		}
 	}
 
 	legend_key = {
@@ -1136,6 +1388,10 @@ cm_trmm_search_brewing = {
 		desc = "cm_trmm_search_legend_best"
 		color = rgb { 255 200 60 }
 	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted_other"
+		color = rgb { 255 0 255 }
+	}
 
 	tooltip_key = {
 		if = {
@@ -1149,10 +1405,6 @@ cm_trmm_search_brewing = {
 		else_if = {
 			limit = { cm_trmm_right_brewing <= 0 }
 			value = MAPMODE_CM_TRMM_SEARCH_BREWING_TT_NONE
-		}
-		else_if = {
-			limit = { has_town_rights = town_rights_type:royal_brewing_rights }
-			value = MAPMODE_CM_TRMM_SEARCH_BREWING_TT_GRANTED
 		}
 		else = {
 			value = MAPMODE_CM_TRMM_SEARCH_BREWING_TT_LAND
@@ -1248,6 +1500,23 @@ cm_trmm_search_masonry = {
 			}
 			value = rgb { 255 200 60 }
 		}
+		else_if = {
+			limit = {
+				is_land = yes
+				has_any_town_rights = yes
+				OR = {
+					has_town_rights = town_rights_type:royal_tooling_rights
+					has_town_rights = town_rights_type:royal_jewelry_rights
+					has_town_rights = town_rights_type:royal_naval_rights
+					has_town_rights = town_rights_type:royal_textile_rights
+					has_town_rights = town_rights_type:royal_weaponry_rights
+					has_town_rights = town_rights_type:royal_book_rights
+					has_town_rights = town_rights_type:royal_artisan_rights
+					has_town_rights = town_rights_type:royal_brewing_rights
+				}
+			}
+			value = rgb { 255 0 255 }
+		}
 	}
 
 	legend_key = {
@@ -1266,6 +1535,10 @@ cm_trmm_search_masonry = {
 		desc = "cm_trmm_search_legend_best"
 		color = rgb { 255 200 60 }
 	}
+	legend_key = {
+		desc = "cm_trmm_search_legend_granted_other"
+		color = rgb { 255 0 255 }
+	}
 
 	tooltip_key = {
 		if = {
@@ -1279,10 +1552,6 @@ cm_trmm_search_masonry = {
 		else_if = {
 			limit = { cm_trmm_right_masonry <= 0 }
 			value = MAPMODE_CM_TRMM_SEARCH_MASONRY_TT_NONE
-		}
-		else_if = {
-			limit = { has_town_rights = town_rights_type:royal_masonry_rights }
-			value = MAPMODE_CM_TRMM_SEARCH_MASONRY_TT_GRANTED
 		}
 		else = {
 			value = MAPMODE_CM_TRMM_SEARCH_MASONRY_TT_LAND
