@@ -196,6 +196,89 @@ cm_pf_prep_core = {
 	cm_pf_build_water_set = yes
 	set_variable = { name = cm_pf_n value = 0 }
 	every_owned_location = { cm_pf_prime_land_location = yes }
+	# Under non-Current settings the searches price an assumed world, so governor headroom
+	# comes from a predicted multi-source spread instead of the live proximity read.
+	if = {
+		limit = {
+			var:cm_pf_run_g = 1
+			OR = {
+				var:cm_pf_roads_current = 0
+				var:cm_pf_naval_cur_presence = 0
+			}
+		}
+		every_owned_location = {
+			limit = { modifier:local_proximity_source > 0 }
+			# Seed at 100 - source value so the spread's 100 - d is the best source's predicted proximity.
+			set_variable = {
+				name = cm_pf_d
+				value = {
+					value = 100 # Capital source value (and the stacked-sources cap): main_menu/common/static_modifiers/location.txt:330
+					subtract = {
+						value = modifier:local_proximity_source
+						max = 100
+					}
+				}
+			}
+		}
+		cm_pf_bellman_g = { BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
+		every_owned_location = {
+			if = {
+				limit = { has_variable = cm_pf_d }
+				# Headroom against the predicted proximity (100 - d).
+				set_variable = {
+					name = cm_pf_t
+					value = {
+						value = 80 # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+						subtract = {
+							value = 100
+							subtract = var:cm_pf_d
+						}
+						min = 0
+					}
+				}
+				remove_variable = cm_pf_d
+			}
+			else = {
+				# Unreached by any source: predicted proximity 0.
+				set_variable = { name = cm_pf_t value = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+			}
+		}
+		every_in_list = {
+			variable = cm_pf_water_set
+			remove_variable = cm_pf_d
+		}
+	}
+	# A proximity source only floors its own tile, so a zero-headroom candidate can never add
+	# proximity anywhere.
+	if = {
+		limit = { var:cm_pf_run_g = 1 }
+		# Governor search budget: nothing contributes at path cost beyond the largest headroom.
+		set_variable = { name = cm_pf_tmax value = 0 }
+		# The headroom score cap's totals: a candidate scores at most its headroom times these.
+		set_variable = { name = cm_pf_npos value = 0 }
+		set_variable = { name = cm_pf_wpos value = 0 }
+		every_owned_location = {
+			if = {
+				limit = { var:cm_pf_t > 0 }
+				set_local_variable = { name = cm_pf_lt value = var:cm_pf_t }
+				set_local_variable = { name = cm_pf_lw value = var:cm_pf_w }
+				scope:cm_pf_c = {
+					change_variable = { name = cm_pf_tmax max = local_var:cm_pf_lt }
+					change_variable = { name = cm_pf_npos add = 1 }
+					change_variable = { name = cm_pf_wpos add = local_var:cm_pf_lw }
+				}
+			}
+			else = {
+				set_variable = { name = cm_gf_nogain value = 1 }
+				cm_pf_drop_gov_outputs = yes
+				if = {
+					# Combined runs still need the capital search here.
+					limit = { scope:cm_pf_c.var:cm_pf_run_c = 0 }
+					set_variable = { name = cm_pf_done value = 1 }
+				}
+			}
+		}
+	}
 	if = {
 		limit = { var:cm_pf_acc >= 2 }
 		set_variable = { name = cm_pf_phase value = 1 }
@@ -303,6 +386,7 @@ cm_pf_prime_land_location = {
 		limit = { scope:cm_pf_c.var:cm_pf_run_g = 1 }
 		remove_variable = cm_gf_skip
 		remove_variable = cm_gf_inelig
+		remove_variable = cm_gf_nogain
 	}
 	if = {
 		limit = { scope:cm_pf_c.var:cm_pf_run_c = 1 }
@@ -448,9 +532,12 @@ cm_pf_run_batch_all = {
 cm_pf_score_candidate = {
 	save_temporary_scope_as = cm_pf_cand
 	if = {
-		limit = { scope:cm_pf_c.var:cm_pf_run_g = 1 }
+		limit = {
+			scope:cm_pf_c.var:cm_pf_run_g = 1
+			NOT = { has_variable = cm_gf_nogain }
+		}
 		set_variable = { name = cm_pf_d value = 0 }
-		cm_pf_bellman_g = { BUDGET = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+		cm_pf_bellman_g = { BUDGET = scope:cm_pf_c.var:cm_pf_tmax }
 		cm_pf_sweep_gov = yes
 	}
 	if = {
@@ -470,23 +557,30 @@ cm_pf_score_candidate = {
 cm_pf_sweep_gov = {
 	set_local_variable = { name = cm_pf_sum value = 0 }
 	set_local_variable = { name = cm_pf_sum_p value = 0 }
+	# A source only floors its own tile, so no destination can gain more than the candidate's
+	# own headroom.
+	set_local_variable = { name = cm_pf_hc value = var:cm_pf_t }
 	scope:cm_pf_c = {
 		every_owned_location = {
 			limit = { has_variable = cm_pf_d }
 			if = {
 				limit = { var:cm_pf_t > var:cm_pf_d }
-				change_local_variable = {
-					name = cm_pf_sum_p
-					add = {
+				set_local_variable = {
+					name = cm_pf_gain
+					value = {
 						value = var:cm_pf_t
 						subtract = var:cm_pf_d
 					}
 				}
+				if = {
+					limit = { local_var:cm_pf_gain > local_var:cm_pf_hc }
+					set_local_variable = { name = cm_pf_gain value = local_var:cm_pf_hc }
+				}
+				change_local_variable = { name = cm_pf_sum_p add = local_var:cm_pf_gain }
 				change_local_variable = {
 					name = cm_pf_sum
 					add = {
-						value = var:cm_pf_t
-						subtract = var:cm_pf_d
+						value = local_var:cm_pf_gain
 						multiply = var:cm_pf_w
 					}
 				}
@@ -1093,8 +1187,8 @@ cm_pf_bellman_ref = {
 	cm_pf_frontier_residue_clear = yes
 }
 
-# Country scope. Arms the bound state; small countries skip the reference machinery and
-# drain everything.
+# Country scope. Arms the bound state; small countries and governor-only runs with no
+# headroom anywhere skip the reference machinery and drain everything.
 cm_pf_phase_init = {
 	set_variable = { name = cm_pf_ref_i value = 0 }
 	set_variable = { name = cm_pf_round value = 0 }
@@ -1121,7 +1215,15 @@ cm_pf_phase_init = {
 		set_variable = { name = cm_pf_dref_min value = 9999 }
 	}
 	if = {
-		limit = { var:cm_pf_n < @cm_pf_min_n_prune }
+		limit = {
+			OR = {
+				var:cm_pf_n < @cm_pf_min_n_prune
+				AND = {
+					var:cm_pf_run_c = 0
+					var:cm_pf_npos = 0
+				}
+			}
+		}
 		set_variable = { name = cm_pf_ub_valid value = 0 }
 		every_owned_location = {
 			limit = { has_variable = cm_pf_cl_g }
@@ -1202,8 +1304,9 @@ cm_pf_phase_refs_step = {
 	}
 }
 
-# Country scope. Bakes the drain/seed order key from the active metric's bounds, over the
-# modes this run computes, and enters the evaluation phase for the tier.
+# Country scope. Bakes the drain/seed order key from the active metric's bounds (governor
+# bounds capped at headroom times the positive-headroom total), over the modes this run
+# computes, and enters the evaluation phase for the tier.
 cm_pf_refs_done = {
 	every_owned_location = {
 		limit = { has_variable = cm_pf_cl_g }
@@ -1215,7 +1318,18 @@ cm_pf_refs_done = {
 			limit = { var:cm_pf_run_g = 1 }
 			every_owned_location = {
 				limit = { has_variable = cm_pf_cl_g }
-				change_variable = { name = cm_pf_ub_ord add = var:cm_pf_ub_gt }
+				set_local_variable = {
+					name = cm_pf_ubg
+					value = {
+						value = var:cm_pf_t
+						multiply = scope:cm_pf_c.var:cm_pf_wpos
+					}
+				}
+				if = {
+					limit = { var:cm_pf_ub_gt < local_var:cm_pf_ubg }
+					set_local_variable = { name = cm_pf_ubg value = var:cm_pf_ub_gt }
+				}
+				change_variable = { name = cm_pf_ub_ord add = local_var:cm_pf_ubg }
 			}
 		}
 		if = {
@@ -1231,7 +1345,18 @@ cm_pf_refs_done = {
 			limit = { var:cm_pf_run_g = 1 }
 			every_owned_location = {
 				limit = { has_variable = cm_pf_cl_g }
-				change_variable = { name = cm_pf_ub_ord add = var:cm_pf_ub_gp }
+				set_local_variable = {
+					name = cm_pf_ubg
+					value = {
+						value = var:cm_pf_t
+						multiply = scope:cm_pf_c.var:cm_pf_npos
+					}
+				}
+				if = {
+					limit = { var:cm_pf_ub_gp < local_var:cm_pf_ubg }
+					set_local_variable = { name = cm_pf_ubg value = var:cm_pf_ub_gp }
+				}
+				change_variable = { name = cm_pf_ub_ord add = local_var:cm_pf_ubg }
 			}
 		}
 		if = {
@@ -1842,6 +1967,14 @@ cm_pf_score_candidate_pruned = {
 	set_local_variable = { name = cm_pf_do_c value = scope:cm_pf_c.var:cm_pf_run_c }
 	set_local_variable = { name = cm_pf_bskip_g value = 0 }
 	set_local_variable = { name = cm_pf_bskip_c value = 0 }
+	# Zero-headroom candidates: flagged and dropped at prep.
+	if = {
+		limit = {
+			local_var:cm_pf_do_g = 1
+			has_variable = cm_gf_nogain
+		}
+		set_local_variable = { name = cm_pf_do_g value = 0 }
+	}
 	# Without a land/strait connection to the capital, local_governor's required road to the
 	# capital can never exist, and naval_governor needs the port (both location_potential,
 	# in_game/common/building_types/capital_buildings.txt). A missing road alone never skips
@@ -1912,12 +2045,26 @@ cm_pf_score_candidate_pruned = {
 		if = {
 			limit = { scope:cm_pf_c = { cm_pf_method_is_tax_base = yes } }
 			if = {
-				limit = {
-					local_var:cm_pf_do_g = 1
-					var:cm_pf_ub_gt < local_var:cm_pf_th_gt
+				limit = { local_var:cm_pf_do_g = 1 }
+				# Headroom cap: a candidate scores at most its own headroom times the
+				# positive-headroom total.
+				set_local_variable = {
+					name = cm_pf_cap_g
+					value = {
+						value = var:cm_pf_t
+						multiply = scope:cm_pf_c.var:cm_pf_wpos
+					}
 				}
-				set_local_variable = { name = cm_pf_do_g value = 0 }
-				set_local_variable = { name = cm_pf_bskip_g value = 1 }
+				if = {
+					limit = {
+						OR = {
+							var:cm_pf_ub_gt < local_var:cm_pf_th_gt
+							local_var:cm_pf_cap_g < local_var:cm_pf_th_gt
+						}
+					}
+					set_local_variable = { name = cm_pf_do_g value = 0 }
+					set_local_variable = { name = cm_pf_bskip_g value = 1 }
+				}
 			}
 			if = {
 				limit = {
@@ -1930,12 +2077,24 @@ cm_pf_score_candidate_pruned = {
 		}
 		else = {
 			if = {
-				limit = {
-					local_var:cm_pf_do_g = 1
-					var:cm_pf_ub_gp < local_var:cm_pf_th_gp
+				limit = { local_var:cm_pf_do_g = 1 }
+				set_local_variable = {
+					name = cm_pf_cap_g
+					value = {
+						value = var:cm_pf_t
+						multiply = scope:cm_pf_c.var:cm_pf_npos
+					}
 				}
-				set_local_variable = { name = cm_pf_do_g value = 0 }
-				set_local_variable = { name = cm_pf_bskip_g value = 1 }
+				if = {
+					limit = {
+						OR = {
+							var:cm_pf_ub_gp < local_var:cm_pf_th_gp
+							local_var:cm_pf_cap_g < local_var:cm_pf_th_gp
+						}
+					}
+					set_local_variable = { name = cm_pf_do_g value = 0 }
+					set_local_variable = { name = cm_pf_bskip_g value = 1 }
+				}
 			}
 			if = {
 				limit = {
@@ -1950,7 +2109,7 @@ cm_pf_score_candidate_pruned = {
 	if = {
 		limit = { local_var:cm_pf_do_g = 1 }
 		set_variable = { name = cm_pf_d value = 0 }
-		cm_pf_bellman_g_fast = { BUDGET = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+		cm_pf_bellman_g_fast = { BUDGET = scope:cm_pf_c.var:cm_pf_tmax }
 		cm_pf_sweep_gov = yes
 		if = {
 			limit = { scope:cm_pf_c.var:cm_pf_acc <= 4 }
@@ -2045,6 +2204,7 @@ cm_pf_phase_sample = {
 							var:cm_pf_run_c = 0
 						}
 					}
+					NOT = { has_variable = cm_gf_nogain }
 					OR = {
 						is_connected_to_through_realm = owner.capital
 						is_port = yes
@@ -2596,6 +2756,9 @@ cm_pf_clean_country = {
 	remove_variable = cm_pf_cx_gp
 	remove_variable = cm_pf_cx_ct
 	remove_variable = cm_pf_cx_cp
+	remove_variable = cm_pf_tmax
+	remove_variable = cm_pf_npos
+	remove_variable = cm_pf_wpos
 	clear_variable_list = cm_pf_front
 	clear_variable_map = cm_pf_tb_gc
 	clear_variable_map = cm_pf_tb_gk
