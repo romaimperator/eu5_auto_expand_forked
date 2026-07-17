@@ -302,6 +302,7 @@ cm_pf_prime_land_location = {
 	if = {
 		limit = { scope:cm_pf_c.var:cm_pf_run_g = 1 }
 		remove_variable = cm_gf_skip
+		remove_variable = cm_gf_inelig
 	}
 	if = {
 		limit = { scope:cm_pf_c.var:cm_pf_run_c = 1 }
@@ -1832,7 +1833,7 @@ cm_pf_drop_cap_outputs = {
 # ranks (strict <, so a possible tie always evaluates); the guarantee covers the viewed
 # ranking only, and a method switch invalidates the cache. Accuracy 5 evaluates whatever
 # the sample and refinement phases marked. A mode outside the run keeps its previous outputs
-# untouched; only a bound-skip (cm_pf_bskip_*) blacks a mode out. Bumps local cm_pf_evals
+# untouched; only a skip (cm_pf_bskip_*) blacks a mode out. Bumps local cm_pf_evals
 # when it ran at least one search.
 cm_pf_score_candidate_pruned = {
 	save_temporary_scope_as = cm_pf_cand
@@ -1841,6 +1842,19 @@ cm_pf_score_candidate_pruned = {
 	set_local_variable = { name = cm_pf_do_c value = scope:cm_pf_c.var:cm_pf_run_c }
 	set_local_variable = { name = cm_pf_bskip_g value = 0 }
 	set_local_variable = { name = cm_pf_bskip_c value = 0 }
+	# Vanilla can never place a governor without a road to the capital or a port (local_governor /
+	# naval_governor location_potential, in_game/common/building_types/capital_buildings.txt);
+	# Exhaustive still evaluates these for mods that lift the rules.
+	if = {
+		limit = {
+			local_var:cm_pf_do_g = 1
+			has_road_to_capital = no
+			is_port = no
+		}
+		set_local_variable = { name = cm_pf_do_g value = 0 }
+		set_local_variable = { name = cm_pf_bskip_g value = 1 }
+		set_variable = { name = cm_gf_inelig value = 1 }
+	}
 	if = {
 		limit = {
 			scope:cm_pf_c = {
@@ -2016,13 +2030,25 @@ cm_pf_phase_drain_step = {
 }
 
 # Country scope. Marks the seed evaluations: the best-bound location of every owned
-# province, and the capital always.
+# province (governor-only runs take the best-bound placeable one), and the capital always.
 cm_pf_phase_sample = {
 	every_province = {
 		ordered_location_in_province = {
 			limit = {
 				owner ?= scope:cm_pf_c
 				has_variable = cm_pf_cl_g
+				trigger_if = {
+					limit = {
+						scope:cm_pf_c = {
+							var:cm_pf_run_g = 1
+							var:cm_pf_run_c = 0
+						}
+					}
+					OR = {
+						has_road_to_capital = yes
+						is_port = yes
+					}
+				}
 			}
 			order_by = { value = var:cm_pf_ub_ord }
 			position = 0

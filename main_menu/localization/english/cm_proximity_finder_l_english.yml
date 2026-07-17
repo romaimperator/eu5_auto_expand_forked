@@ -1,10 +1,14 @@
 ﻿l_english:
  mapmode_cm_governor_finder_name: "Recommended Governor Placement"
- MAPMODE_CM_GOVERNOR_FINDER: "#T $mapmode_cm_governor_finder_name$#!\nColors your [locations|e] by how much [proximity|e] a new Local Governor or Naval Governor built there would add, given the proximity your [capital|e] and existing governors already provide. Greener is better.\nThis is an estimate: it assumes the best roads you have unlocked are built everywhere and full [maritime_presence|e] at sea. It recalculates when you open this mapmode, at most once every 4 years; use the action bar refresh button to force a fresh calculation. The colors refresh when it finishes."
+ MAPMODE_CM_GOVERNOR_FINDER: "#T $mapmode_cm_governor_finder_name$#!\nColors your [locations|e] by how much [proximity|e] a new Local Governor or Naval Governor built there would add, given the proximity your [capital|e] and existing governors already provide. Greener is better. Your capital and existing governors are striped.\nThis is an estimate: it assumes the best roads you have unlocked are built everywhere and full [maritime_presence|e] at sea. It recalculates when you open this mapmode, at most once every 4 years; use the action bar refresh button to force a fresh calculation. The colors refresh when it finishes."
  MAPMODE_CM_GOVERNOR_FINDER_TT_SCORED: "Predicted max average [proximity|e] gain: +[ROOT.GetLocation.MakeScope.ScriptValue('cm_pf_gf_avg_value')|1]%\nMax predicted tax base gained from [proximity|e]: +[ROOT.GetLocation.MakeScope.ScriptValue('cm_pf_gf_taxgain_value')|1]\nScore: [ROOT.GetLocation.MakeScope.ScriptValue('cm_pf_gf_pct_value')|0]% of your best location[ROOT.GetLocation.Custom('cm_pf_gf_status')]"
  MAPMODE_CM_GOVERNOR_FINDER_TT_BEST: "Predicted max average [proximity|e] gain: +[ROOT.GetLocation.MakeScope.ScriptValue('cm_pf_gf_avg_value')|1]%\nMax predicted tax base gained from [proximity|e]: +[ROOT.GetLocation.MakeScope.ScriptValue('cm_pf_gf_taxgain_value')|1]\nYour best location"
  MAPMODE_CM_GOVERNOR_FINDER_TT_SCORED_DEBUG: "$MAPMODE_CM_GOVERNOR_FINDER_TT_SCORED$$CM_PF_DEBUG_BLOCK$"
  MAPMODE_CM_GOVERNOR_FINDER_TT_BEST_DEBUG: "$MAPMODE_CM_GOVERNOR_FINDER_TT_BEST$$CM_PF_DEBUG_BLOCK$"
+ MAPMODE_CM_GOVERNOR_FINDER_TT_CAPITAL: "Your [capital|e] already spreads [proximity|e] from here."
+ MAPMODE_CM_GOVERNOR_FINDER_TT_CAPITAL_DEBUG: "$MAPMODE_CM_GOVERNOR_FINDER_TT_CAPITAL$$CM_PF_DEBUG_BLOCK$"
+ MAPMODE_CM_GOVERNOR_FINDER_TT_SOURCE: "Existing [proximity|e] source: [ROOT.GetLocation.GetModifierValueFixed('local_proximity_source')|0]\n$MAPMODE_CM_GOVERNOR_FINDER_TT_SCORED$"
+ MAPMODE_CM_GOVERNOR_FINDER_TT_SOURCE_DEBUG: "$MAPMODE_CM_GOVERNOR_FINDER_TT_SOURCE$$CM_PF_DEBUG_BLOCK$"
  CM_PF_DEBUG_BLOCK: "[ROOT.GetLocation.Custom('cm_pf_debug_block')]"
  cm_pf_debug_block_text: "\n--debug--\n[ROOT.GetLocation.Custom('cm_pf_pred_label')]: [ROOT.GetLocation.MakeScope.ScriptValue('cm_pf_pred_value')|0]%\nCurrent [proximity|e]: [ROOT.GetLocation.MakeScope.ScriptValue('cm_pf_current_proximity')|0]%[ROOT.GetLocation.Custom('cm_pf_path_block')]"
  cm_pf_pred_label_max: "Predicted max [proximity|e] from capital"
@@ -28,6 +32,8 @@
  MAPMODE_CM_GOVERNOR_FINDER_TT_NO_DATA: "Not scored yet. Use the action bar refresh button to calculate scores for the current borders."
  MAPMODE_CM_GOVERNOR_FINDER_TT_SKIPPED: "Not evaluated: the Search Accuracy setting skipped this location. Set it to Exhaustive and refresh to evaluate every location."
  MAPMODE_CM_GOVERNOR_FINDER_TT_SKIPPED_DEBUG: "$MAPMODE_CM_GOVERNOR_FINDER_TT_SKIPPED$$CM_PF_DEBUG_BLOCK$"
+ MAPMODE_CM_GOVERNOR_FINDER_TT_INELIGIBLE: "Not evaluated: no governor can be placed here (no land connection to your capital and not coastal). Set Search Accuracy to Exhaustive and refresh to evaluate every location."
+ MAPMODE_CM_GOVERNOR_FINDER_TT_INELIGIBLE_DEBUG: "$MAPMODE_CM_GOVERNOR_FINDER_TT_INELIGIBLE$$CM_PF_DEBUG_BLOCK$"
  MAPMODE_CM_GOVERNOR_FINDER_TT_FOREIGN: "Not part of your country."
  MAPMODE_CM_GOVERNOR_FINDER_TT_WATER: "This is a water location; placement scores apply to your own land."
 
@@ -48,6 +54,8 @@
  cm_pf_poor_legend_key: "25% of Best"
  cm_pf_bad_legend_key: "0% of Best"
  cm_pf_localmax_legend_key: "Local maximum (striped)"
+ cm_pf_gov_capital_legend_key: "Capital (striped)"
+ cm_pf_gov_source_legend_key: "Existing governor (striped)"
  cm_pf_not_scored_legend_key: "Not scored yet"
  cm_pf_skipped_legend_key: "Not evaluated (skipped)"
 
