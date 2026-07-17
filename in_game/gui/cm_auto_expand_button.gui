@@ -513,6 +513,18 @@ template cm_Building_Autoexpand_Tooltip {
 						}
 					}
 					cm_tooltip_row = {
+						visible = "[Not(GetScriptedGui('cm_is_building_profitable_or_subsidized').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(Building.GetType, Building.GetLocation))).End))]"
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('cm_is_building_profitable_or_subsidized').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(Building.GetType, Building.GetLocation))).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('cm_is_building_profitable_or_subsidized').IsShown(GuiScope.SetRoot(Building.MakeScope).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(Building.GetType, Building.GetLocation))).End))]"
+						}
+						blockoverride "row_text" {
+							text = "CM_AUTO_EXPAND_REQ_BLD_PROFITABLE_OR_SUBSIDIZED"
+						}
+					}
+					cm_tooltip_row = {
 						visible = "[Not(GetScriptedGui('cm_is_building_open').IsShown(GuiScope.SetRoot(Building.MakeScope).End))]"
 						blockoverride "yes_visible" {
 							visible = "[GetScriptedGui('cm_is_building_open').IsShown(GuiScope.SetRoot(Building.MakeScope).End)]"
@@ -1005,6 +1017,18 @@ template cm_Building_Type_Autoexpand_Tooltip {
 						}
 						blockoverride "row_text" {
 							text = "CM_AUTO_EXPAND_REQ_BLD_METRIC_EXEMPT"
+						}
+					}
+					cm_tooltip_row = {
+						visible = "[Not(GetScriptedGui('cm_is_building_type_profitable_or_subsidized').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))).End))]"
+						blockoverride "yes_visible" {
+							visible = "[GetScriptedGui('cm_is_building_type_profitable_or_subsidized').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))).End)]"
+						}
+						blockoverride "no_visible" {
+							visible = "[Not(GetScriptedGui('cm_is_building_type_profitable_or_subsidized').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))).End))]"
+						}
+						blockoverride "row_text" {
+							text = "CM_AUTO_EXPAND_REQ_BLD_PROFITABLE_OR_SUBSIDIZED_BT"
 						}
 					}
 					cm_tooltip_row = {

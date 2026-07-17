@@ -141,6 +141,19 @@ cm_gui_metric_gate_passes = {
 	}
 }
 
+# Root is the location. Expects scope:cm_building_type and scope:cm_profit. The engine
+# does not staff an unprofitable unsubsidized building. Non-production types are exempt.
+cm_building_type_profitable_or_subsidized = {
+	OR = {
+		NOT = { scope:cm_building_type = { cm_is_building_type_production_building = yes } }
+		scope:cm_profit > 0
+		any_buildings_in_location = {
+			building_type = scope:cm_building_type
+			is_subsidized = yes
+		}
+	}
+}
+
 # Expects scope:cm_building_type. Checks if the building type produces a good that is also
 # one of its construction demand goods, e.g. horse_breeders produces and requires horses.
 # Precomputed by the hidden window GUI at game start.
