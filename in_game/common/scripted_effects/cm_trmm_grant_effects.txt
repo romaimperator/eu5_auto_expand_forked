@@ -1,0 +1,11 @@
+﻿# Grants $RIGHT$ at the root location; scope:cm_country pays the price
+# unless the Free Grants rule is on. Root is the location.
+cm_trmm_grant_right = {
+	grant_town_rights = town_rights_type:$RIGHT$
+	if = {
+		limit = { NOT = { cm_town_rights_grants_are_free = yes } }
+		scope:cm_country = { pay_price = price:grant_town_rights }
+	}
+	# Arms the search panel's stripe-refresh swap.
+	scope:cm_country = { set_variable = { name = cm_trmm_refresh_armed value = yes } }
+}

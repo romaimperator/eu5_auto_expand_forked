@@ -11,6 +11,11 @@ already-granted, best-right-here, and other-right-granted stripes), opened
 from the search panel and the urban right tooltips; the scripted GUI checks
 those tooltip buttons use are emitted too. A reason line at the bottom of
 each mode's tooltip names the granted right(s) behind the active stripe.
+Every mode additionally gets a hidden _refresh twin the search panel swaps
+through and back for an immediate stripe recolor after a tooltip grant, and
+the grant-section gui gives the map tooltip a per-right grant button row
+(spliced into the location_tooltip_alt redefinition) firing the per-right
+grant scripted GUIs emitted into the scripted_guis output.
 
 Reads vanilla town_rights (which goods each right boosts, right colors),
 building_types (production method slots: inline unique_production_methods plus
@@ -26,6 +31,7 @@ potential/allow gates and requires chains), and named_colors. Emits:
   in_game/common/scripted_guis/cm_town_right_map_mode_scripted_guis.txt
   in_game/gfx/map/map_modes/cm_town_right_map_mode.txt
   in_game/gui/custom_cooltip.gui
+  in_game/gui/cm_town_right_map_mode_grant_section.gui
   main_menu/localization/english/cm_town_right_map_mode_l_english.yml
 
 The scoring math runs once per lobby: cm_trmm_recompute_all sweeps every
@@ -148,6 +154,8 @@ OUT_SCRIPTED_GUIS = os.path.join(
     "cm_town_right_map_mode_scripted_guis.txt")
 OUT_CUSTOM_COOLTIP = os.path.join(
     ROOT_DIR, "in_game", "gui", "custom_cooltip.gui")
+OUT_GRANT_SECTION = os.path.join(
+    ROOT_DIR, "in_game", "gui", "cm_town_right_map_mode_grant_section.gui")
 
 # The generic royal specialization rights, in vanilla 01_discovery.txt order.
 # The order is the tie-break priority for both map color and tooltip ranking.
@@ -1143,6 +1151,27 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
             lines.append("\t}")
             lines.append("}")
 
+    lines.append("")
+    lines.append("# 1 when any urban right both scores and is ungranted here (the")
+    lines.append("# grant row's best-mode gate). Root is the location.")
+    lines.append("cm_trmm_grant_choices = {")
+    lines.append("\tvalue = 0")
+    lines.append("\tif = {")
+    lines.append("\t\tlimit = {")
+    lines.append("\t\t\thas_variable = cm_trmm_best_idx")
+    lines.append("\t\t\tOR = {")
+    for right in ROYAL_RIGHTS:
+        lines.append("\t\t\t\tAND = {")
+        lines.append(f"\t\t\t\t\tcm_trmm_right_{aliases[right]} > 0")
+        lines.append(
+            f"\t\t\t\t\tNOT = {{ has_town_rights = town_rights_type:{right} }}")
+        lines.append("\t\t\t\t}")
+    lines.append("\t\t\t}")
+    lines.append("\t\t}")
+    lines.append("\t\tadd = 1")
+    lines.append("\t}")
+    lines.append("}")
+
     return "\n".join(lines) + "\n"
 
 
@@ -1696,106 +1725,122 @@ MODE_TAIL_BLOCKS = """
 	refresh_colors_on_selection_change = no"""
 
 
+# Emits a hidden-category mode: the search primaries and every _refresh twin.
+def _hidden_mode_lines(name, body):
+    lines = [f"{name} = {{"]
+    lines.extend(body)
+    lines.append(MODE_TAIL_HEAD)
+    lines.append("\tcategory = hidden")
+    lines.append("\tallow_allocate_hotkey = no")
+    lines.append(MODE_TAIL_BLOCKS)
+    lines.append("\tcolor_refresh_counters = { Day }")
+    lines.append("}")
+    return lines
+
+
 def emit_map_mode(rights, aliases, right_colors):
     n = len(ROYAL_RIGHTS)
-    lines = [GENERATED_HEADER]
-    lines.append("cm_best_town_right = {")
-    lines.append("\tmap_color = {")
-    lines.append("\t\tif = {")
-    lines.append("\t\t\tlimit = { is_land = no }")
-    lines.append(f"\t\t\tvalue = {WATER_COLOR}")
-    lines.append("\t\t}")
-    lines.append("\t\telse_if = {")
-    lines.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
-    lines.append(f"\t\t\tvalue = {NO_MATCH_COLOR}")
-    lines.append("\t\t}")
+    # The mode body, shared verbatim by cm_best_town_right and its _refresh twin.
+    body = []
+    body.append("\tmap_color = {")
+    body.append("\t\tif = {")
+    body.append("\t\t\tlimit = { is_land = no }")
+    body.append(f"\t\t\tvalue = {WATER_COLOR}")
+    body.append("\t\t}")
+    body.append("\t\telse_if = {")
+    body.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
+    body.append(f"\t\t\tvalue = {NO_MATCH_COLOR}")
+    body.append("\t\t}")
     for pos, right in enumerate(ROYAL_RIGHTS):
         idx = n - pos
         color, source = right_colors[right]
-        lines.append("\t\telse_if = {")
-        lines.append(f"\t\t\tlimit = {{ var:cm_trmm_best_idx = {idx} }}")
-        lines.append(f"\t\t\t# {right} color: {source}")
-        lines.append(f"\t\t\tvalue = {color}")
-        lines.append("\t\t}")
-    lines.append("\t}")
-    lines.append("")
-    lines.append("\tsecondary_map_color = {")
-    lines.append("\t\tif = {")
-    lines.append("\t\t\tlimit = {")
-    lines.append("\t\t\t\tis_land = yes")
-    lines.append("\t\t\t\thas_any_town_rights = yes")
-    lines.append("\t\t\t\thas_variable = cm_trmm_best_idx")
-    lines.append("\t\t\t\tOR = {")
+        body.append("\t\telse_if = {")
+        body.append(f"\t\t\tlimit = {{ var:cm_trmm_best_idx = {idx} }}")
+        body.append(f"\t\t\t# {right} color: {source}")
+        body.append(f"\t\t\tvalue = {color}")
+        body.append("\t\t}")
+    body.append("\t}")
+    body.append("")
+    body.append("\tsecondary_map_color = {")
+    body.append("\t\tif = {")
+    body.append("\t\t\tlimit = {")
+    body.append("\t\t\t\tis_land = yes")
+    body.append("\t\t\t\thas_any_town_rights = yes")
+    body.append("\t\t\t\thas_variable = cm_trmm_best_idx")
+    body.append("\t\t\t\tOR = {")
     for pos, right in enumerate(ROYAL_RIGHTS):
         idx = n - pos
-        lines.append("\t\t\t\t\tAND = {")
-        lines.append(f"\t\t\t\t\t\tvar:cm_trmm_best_idx = {idx}")
-        lines.append(f"\t\t\t\t\t\thas_town_rights = town_rights_type:{right}")
-        lines.append("\t\t\t\t\t}")
-    lines.append("\t\t\t\t}")
-    lines.append("\t\t\t}")
-    lines.append(f"\t\t\tvalue = {GRANTED_BEST_STRIPE}")
-    lines.append("\t\t}")
+        body.append("\t\t\t\t\tAND = {")
+        body.append(f"\t\t\t\t\t\tvar:cm_trmm_best_idx = {idx}")
+        body.append(f"\t\t\t\t\t\thas_town_rights = town_rights_type:{right}")
+        body.append("\t\t\t\t\t}")
+    body.append("\t\t\t\t}")
+    body.append("\t\t\t}")
+    body.append(f"\t\t\tvalue = {GRANTED_BEST_STRIPE}")
+    body.append("\t\t}")
     # The has_variable gate keeps the scores from reading unset province
     # variables.
-    lines.append("\t\telse_if = {")
-    lines.append("\t\t\tlimit = {")
-    lines.append("\t\t\t\tis_land = yes")
-    lines.append("\t\t\t\thas_any_town_rights = yes")
-    lines.append("\t\t\t\thas_variable = cm_trmm_best_idx")
-    lines.append("\t\t\t\tOR = {")
+    body.append("\t\telse_if = {")
+    body.append("\t\t\tlimit = {")
+    body.append("\t\t\t\tis_land = yes")
+    body.append("\t\t\t\thas_any_town_rights = yes")
+    body.append("\t\t\t\thas_variable = cm_trmm_best_idx")
+    body.append("\t\t\t\tOR = {")
     for right in ROYAL_RIGHTS:
-        lines.append("\t\t\t\t\tAND = {")
-        lines.append(f"\t\t\t\t\t\thas_town_rights = town_rights_type:{right}")
-        lines.append(f"\t\t\t\t\t\tcm_trmm_right_{aliases[right]} >= "
+        body.append("\t\t\t\t\tAND = {")
+        body.append(f"\t\t\t\t\t\thas_town_rights = town_rights_type:{right}")
+        body.append(f"\t\t\t\t\t\tcm_trmm_right_{aliases[right]} >= "
                      f"{GRANTED_GOOD_THRESHOLD}")
-        lines.append("\t\t\t\t\t}")
-    lines.append("\t\t\t\t}")
-    lines.append("\t\t\t}")
-    lines.append(f"\t\t\tvalue = {GRANTED_GOOD_STRIPE}")
-    lines.append("\t\t}")
-    lines.append("\t\telse_if = {")
-    lines.append("\t\t\tlimit = {")
-    lines.append("\t\t\t\tis_land = yes")
-    lines.append("\t\t\t\thas_any_town_rights = yes")
-    lines.append("\t\t\t\tcm_uright_assigned_count >= 1")
-    lines.append("\t\t\t}")
-    lines.append(f"\t\t\tvalue = {GRANTED_POOR_STRIPE}")
-    lines.append("\t\t}")
-    lines.append("\t}")
-    lines.append("")
+        body.append("\t\t\t\t\t}")
+    body.append("\t\t\t\t}")
+    body.append("\t\t\t}")
+    body.append(f"\t\t\tvalue = {GRANTED_GOOD_STRIPE}")
+    body.append("\t\t}")
+    body.append("\t\telse_if = {")
+    body.append("\t\t\tlimit = {")
+    body.append("\t\t\t\tis_land = yes")
+    body.append("\t\t\t\thas_any_town_rights = yes")
+    body.append("\t\t\t\tcm_uright_assigned_count >= 1")
+    body.append("\t\t\t}")
+    body.append(f"\t\t\tvalue = {GRANTED_POOR_STRIPE}")
+    body.append("\t\t}")
+    body.append("\t}")
+    body.append("")
     for right in ROYAL_RIGHTS:
         color, _ = right_colors[right]
-        lines.append("\tlegend_key = {")
-        lines.append(f"\t\tdesc = \"cm_trmm_legend_{aliases[right]}\"")
-        lines.append(f"\t\tcolor = {color}")
-        lines.append("\t}")
-    lines.append("\tlegend_key = {")
-    lines.append("\t\tdesc = \"cm_trmm_legend_none\"")
-    lines.append(f"\t\tcolor = {NO_MATCH_COLOR}")
-    lines.append("\t}")
+        body.append("\tlegend_key = {")
+        body.append(f"\t\tdesc = \"cm_trmm_legend_{aliases[right]}\"")
+        body.append(f"\t\tcolor = {color}")
+        body.append("\t}")
+    body.append("\tlegend_key = {")
+    body.append("\t\tdesc = \"cm_trmm_legend_none\"")
+    body.append(f"\t\tcolor = {NO_MATCH_COLOR}")
+    body.append("\t}")
     for desc, key_color in (
             ("cm_trmm_legend_granted_best", GRANTED_BEST_STRIPE),
             ("cm_trmm_legend_granted_good", GRANTED_GOOD_STRIPE),
             ("cm_trmm_legend_granted_poor", GRANTED_POOR_STRIPE)):
-        lines.append("\tlegend_key = {")
-        lines.append(f"\t\tdesc = \"{desc}\"")
-        lines.append(f"\t\tcolor = {key_color}")
-        lines.append("\t}")
-    lines.append("")
-    lines.append("\ttooltip_key = {")
-    lines.append("\t\tif = {")
-    lines.append("\t\t\tlimit = { is_land = no }")
-    lines.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER")
-    lines.append("\t\t}")
-    lines.append("\t\telse_if = {")
-    lines.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
-    lines.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE")
-    lines.append("\t\t}")
-    lines.append("\t\telse = {")
-    lines.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND")
-    lines.append("\t\t}")
-    lines.append("\t}")
+        body.append("\tlegend_key = {")
+        body.append(f"\t\tdesc = \"{desc}\"")
+        body.append(f"\t\tcolor = {key_color}")
+        body.append("\t}")
+    body.append("")
+    body.append("\ttooltip_key = {")
+    body.append("\t\tif = {")
+    body.append("\t\t\tlimit = { is_land = no }")
+    body.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER")
+    body.append("\t\t}")
+    body.append("\t\telse_if = {")
+    body.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
+    body.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_NONE")
+    body.append("\t\t}")
+    body.append("\t\telse = {")
+    body.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND")
+    body.append("\t\t}")
+    body.append("\t}")
+    lines = [GENERATED_HEADER]
+    lines.append("cm_best_town_right = {")
+    lines.extend(body)
     lines.append(MODE_TAIL_HEAD)
     lines.append("\tcategory = economy")
     lines.append("\tindex = 1")
@@ -1804,6 +1849,10 @@ def emit_map_mode(rights, aliases, right_colors):
     lines.append("\t# map_modes.txt:1099) keeps the granted stripes current after grants.")
     lines.append("\tcolor_refresh_counters = { Day }")
     lines.append("}")
+    lines.append("")
+    lines.append("# Hidden duplicate for the post-grant stripe refresh: setting the same")
+    lines.append("# mode is a no-op, so the search panel swaps through the twin and back.")
+    lines.extend(_hidden_mode_lines("cm_best_town_right_refresh", body))
     return "\n".join(lines) + "\n"
 
 
@@ -1820,65 +1869,65 @@ def emit_search_map_modes(rights, aliases, right_colors):
         upper = alias.upper()
         idx = n - pos
         color, source = right_colors[right]
-        lines.append("")
-        lines.append(f"cm_trmm_search_{alias} = {{")
-        lines.append("\tmap_color = {")
-        lines.append("\t\tif = {")
-        lines.append("\t\t\tlimit = { is_land = no }")
-        lines.append(f"\t\t\tvalue = {WATER_COLOR}")
-        lines.append("\t\t}")
-        lines.append("\t\telse_if = {")
-        lines.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
-        lines.append(f"\t\t\tvalue = {NO_MATCH_COLOR}")
-        lines.append("\t\t}")
+        # The mode body, shared verbatim by the search mode and its _refresh twin.
+        body = []
+        body.append("\tmap_color = {")
+        body.append("\t\tif = {")
+        body.append("\t\t\tlimit = { is_land = no }")
+        body.append(f"\t\t\tvalue = {WATER_COLOR}")
+        body.append("\t\t}")
+        body.append("\t\telse_if = {")
+        body.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
+        body.append(f"\t\t\tvalue = {NO_MATCH_COLOR}")
+        body.append("\t\t}")
         # Kept after the has_variable branch so the score never reads unset
         # province variables.
-        lines.append("\t\telse_if = {")
-        lines.append(f"\t\t\tlimit = {{ cm_trmm_right_{alias} <= 0 }}")
-        lines.append(f"\t\t\tvalue = {NO_MATCH_COLOR}")
-        lines.append("\t\t}")
-        lines.append("\t\telse = {")
-        lines.append("\t\t\tlerp = {")
-        lines.append(f"\t\t\t\tmin_color = {NO_MATCH_COLOR}")
-        lines.append(f"\t\t\t\t# {right} color: {source}")
-        lines.append(f"\t\t\t\tmax_color = {color}")
-        lines.append(f"\t\t\t\tfactor = {{ value = cm_trmm_right_{alias} }}")
-        lines.append("\t\t\t}")
-        lines.append("\t\t}")
-        lines.append("\t}")
-        lines.append("")
-        lines.append("\tsecondary_map_color = {")
-        lines.append("\t\tif = {")
-        lines.append("\t\t\tlimit = {")
-        lines.append("\t\t\t\tis_land = yes")
-        lines.append(f"\t\t\t\thas_town_rights = town_rights_type:{right}")
-        lines.append("\t\t\t}")
-        lines.append(f"\t\t\tvalue = {SEARCH_GRANTED_STRIPE}")
-        lines.append("\t\t}")
-        lines.append("\t\telse_if = {")
-        lines.append("\t\t\tlimit = {")
-        lines.append("\t\t\t\tis_land = yes")
-        lines.append("\t\t\t\thas_variable = cm_trmm_best_idx")
-        lines.append(f"\t\t\t\tvar:cm_trmm_best_idx = {idx}")
-        lines.append("\t\t\t}")
-        lines.append(f"\t\t\tvalue = {SEARCH_BEST_STRIPE}")
-        lines.append("\t\t}")
-        lines.append("\t\telse_if = {")
-        lines.append("\t\t\tlimit = {")
-        lines.append("\t\t\t\tis_land = yes")
-        lines.append("\t\t\t\thas_any_town_rights = yes")
-        lines.append("\t\t\t\tOR = {")
+        body.append("\t\telse_if = {")
+        body.append(f"\t\t\tlimit = {{ cm_trmm_right_{alias} <= 0 }}")
+        body.append(f"\t\t\tvalue = {NO_MATCH_COLOR}")
+        body.append("\t\t}")
+        body.append("\t\telse = {")
+        body.append("\t\t\tlerp = {")
+        body.append(f"\t\t\t\tmin_color = {NO_MATCH_COLOR}")
+        body.append(f"\t\t\t\t# {right} color: {source}")
+        body.append(f"\t\t\t\tmax_color = {color}")
+        body.append(f"\t\t\t\tfactor = {{ value = cm_trmm_right_{alias} }}")
+        body.append("\t\t\t}")
+        body.append("\t\t}")
+        body.append("\t}")
+        body.append("")
+        body.append("\tsecondary_map_color = {")
+        body.append("\t\tif = {")
+        body.append("\t\t\tlimit = {")
+        body.append("\t\t\t\tis_land = yes")
+        body.append(f"\t\t\t\thas_town_rights = town_rights_type:{right}")
+        body.append("\t\t\t}")
+        body.append(f"\t\t\tvalue = {SEARCH_GRANTED_STRIPE}")
+        body.append("\t\t}")
+        body.append("\t\telse_if = {")
+        body.append("\t\t\tlimit = {")
+        body.append("\t\t\t\tis_land = yes")
+        body.append("\t\t\t\thas_variable = cm_trmm_best_idx")
+        body.append(f"\t\t\t\tvar:cm_trmm_best_idx = {idx}")
+        body.append("\t\t\t}")
+        body.append(f"\t\t\tvalue = {SEARCH_BEST_STRIPE}")
+        body.append("\t\t}")
+        body.append("\t\telse_if = {")
+        body.append("\t\t\tlimit = {")
+        body.append("\t\t\t\tis_land = yes")
+        body.append("\t\t\t\thas_any_town_rights = yes")
+        body.append("\t\t\t\tOR = {")
         for other in ROYAL_RIGHTS:
             if other == right:
                 continue
-            lines.append(
+            body.append(
                 f"\t\t\t\t\thas_town_rights = town_rights_type:{other}")
-        lines.append("\t\t\t\t}")
-        lines.append("\t\t\t}")
-        lines.append(f"\t\t\tvalue = {SEARCH_OTHER_GRANTED_STRIPE}")
-        lines.append("\t\t}")
-        lines.append("\t}")
-        lines.append("")
+        body.append("\t\t\t\t}")
+        body.append("\t\t\t}")
+        body.append(f"\t\t\tvalue = {SEARCH_OTHER_GRANTED_STRIPE}")
+        body.append("\t\t}")
+        body.append("\t}")
+        body.append("")
         for desc, key_color in (
                 ("cm_trmm_search_legend_100", color),
                 ("cm_trmm_search_legend_none", NO_MATCH_COLOR),
@@ -1886,34 +1935,32 @@ def emit_search_map_modes(rights, aliases, right_colors):
                 ("cm_trmm_search_legend_best", SEARCH_BEST_STRIPE),
                 ("cm_trmm_search_legend_granted_other",
                  SEARCH_OTHER_GRANTED_STRIPE)):
-            lines.append("\tlegend_key = {")
-            lines.append(f"\t\tdesc = \"{desc}\"")
-            lines.append(f"\t\tcolor = {key_color}")
-            lines.append("\t}")
+            body.append("\tlegend_key = {")
+            body.append(f"\t\tdesc = \"{desc}\"")
+            body.append(f"\t\tcolor = {key_color}")
+            body.append("\t}")
+        body.append("")
+        body.append("\ttooltip_key = {")
+        body.append("\t\tif = {")
+        body.append("\t\t\tlimit = { is_land = no }")
+        body.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER")
+        body.append("\t\t}")
+        body.append("\t\telse_if = {")
+        body.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
+        body.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_NONE")
+        body.append("\t\t}")
+        body.append("\t\telse_if = {")
+        body.append(f"\t\t\tlimit = {{ cm_trmm_right_{alias} <= 0 }}")
+        body.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_NONE")
+        body.append("\t\t}")
+        body.append("\t\telse = {")
+        body.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_LAND")
+        body.append("\t\t}")
+        body.append("\t}")
         lines.append("")
-        lines.append("\ttooltip_key = {")
-        lines.append("\t\tif = {")
-        lines.append("\t\t\tlimit = { is_land = no }")
-        lines.append("\t\t\tvalue = MAPMODE_CM_BEST_TOWN_RIGHT_TT_WATER")
-        lines.append("\t\t}")
-        lines.append("\t\telse_if = {")
-        lines.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
-        lines.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_NONE")
-        lines.append("\t\t}")
-        lines.append("\t\telse_if = {")
-        lines.append(f"\t\t\tlimit = {{ cm_trmm_right_{alias} <= 0 }}")
-        lines.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_NONE")
-        lines.append("\t\t}")
-        lines.append("\t\telse = {")
-        lines.append(f"\t\t\tvalue = MAPMODE_CM_TRMM_SEARCH_{upper}_TT_LAND")
-        lines.append("\t\t}")
-        lines.append("\t}")
-        lines.append(MODE_TAIL_HEAD)
-        lines.append("\tcategory = hidden")
-        lines.append("\tallow_allocate_hotkey = no")
-        lines.append(MODE_TAIL_BLOCKS)
-        lines.append("\tcolor_refresh_counters = { Day }")
-        lines.append("}")
+        lines.extend(_hidden_mode_lines(f"cm_trmm_search_{alias}", body))
+        lines.append("")
+        lines.extend(_hidden_mode_lines(f"cm_trmm_search_{alias}_refresh", body))
     return "\n".join(lines) + "\n"
 
 
@@ -2122,6 +2169,22 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
             f"\"[ROOT.GetLocation.GetProvince.GetName] has no [raw_material|e] "
             f"used by the industries @{right}! [ShowTownRightsName('{right}')] "
             f"boosts.[ROOT.GetLocation.Custom('cm_trmm_search_reason_{alias}')]\"")
+
+    # The _refresh twins reuse their primary's display name.
+    lines.append(
+        " mapmode_cm_best_town_right_refresh_name: "
+        "\"$mapmode_cm_best_town_right_name$\"")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        lines.append(
+            f" mapmode_cm_trmm_search_{alias}_refresh_name: "
+            f"\"$mapmode_cm_trmm_search_{alias}_name$\"")
+
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        lines.append(
+            f" cm_trmm_grant_title_{alias}: "
+            f"\"Grant [ShowTownRightsName('{right}')]\"")
     return "\n".join(lines) + "\n"
 
 
@@ -2143,6 +2206,113 @@ def emit_scripted_guis(aliases):
     for right in ROYAL_RIGHTS:
         lines.append(f"\t\t\tthis = town_rights_type:{right}")
     lines.append("\t\t}")
+    lines.append("\t}")
+    lines.append("}")
+    lines.append("")
+    lines.append(
+        "# Map-tooltip grant row scripted GUIs, one per right. Root is the\n"
+        "# location; cm_country is the clicking player's country.")
+    for right in ROYAL_RIGHTS:
+        lines.append(f"cm_trmm_grant_{aliases[right]} = {{")
+        lines.append("\tsaved_scopes = { cm_country }")
+        lines.append("\tis_shown = {")
+        lines.append("\t\texists = owner")
+        lines.append("\t\towner = scope:cm_country")
+        lines.append(f"\t\tNOT = {{ has_town_rights = town_rights_type:{right} }}")
+        lines.append("\t\tNOT = { integration_level = conquered }")
+        lines.append("\t}")
+        lines.append("\tis_valid = {")
+        lines.append(f"\t\tcm_trmm_can_grant_right = {{ RIGHT = {right} }}")
+        lines.append("\t}")
+        lines.append("\teffect = {")
+        lines.append(f"\t\tcm_trmm_grant_right = {{ RIGHT = {right} }}")
+        lines.append("\t}")
+        lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
+def emit_grant_section(aliases):
+    root = ("GuiScope.SetRoot(Location.MakeScope)"
+            ".AddScope('cm_country', GetPlayer.MakeScope).End")
+    player = "GuiScope.SetRoot(GetPlayer.MakeScope).End"
+    loc = "GuiScope.SetRoot(Location.MakeScope).End"
+    best_pair = ("Or(GetMapMode('cm_best_town_right').IsActive, "
+                 "GetMapMode('cm_best_town_right_refresh').IsActive)")
+    # Per-mode "a grant button would show" terms: the searched right's IsShown in
+    # its search mode, any scoring ungranted right in the best mode.
+    shown_terms = [
+        f"And({best_pair}, EqualTo_CFixedPoint("
+        f"Location.MakeScope.ScriptValue('cm_trmm_grant_choices'), "
+        f"'(CFixedPoint)1'))"]
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        shown_terms.append(
+            f"And(Or(GetMapMode('cm_trmm_search_{alias}').IsActive, "
+            f"GetMapMode('cm_trmm_search_{alias}_refresh').IsActive), "
+            f"GetScriptedGui('cm_trmm_grant_{alias}').IsShown({root}))")
+    any_shown = (f"Or(Or5({', '.join(shown_terms[:5])}), "
+                 f"Or5({', '.join(shown_terms[5:])}))")
+
+    lines = [GENERATED_HEADER]
+    lines.append("types cm_town_right_map_mode_grant_types {")
+    lines.append("\t# Grant row for the recommended urban rights map tooltip; spliced into the")
+    lines.append("\t# location_tooltip_alt redefinition in cm_town_rights_tooltip_types.gui.")
+    lines.append("\ttype cm_trmm_grant_section = hbox {")
+    lines.append("\t\tspacing = 4")
+    lines.append("\t\tmargin = { 10 4 }")
+    lines.append(
+        f"\t\tvisible = \"[And4(ObjectsEqual(Location.GetOwner, GetPlayer), "
+        f"EqualTo_CFixedPoint(Location.MakeScope.ScriptValue('cm_trmm_grant_any'), "
+        f"'(CFixedPoint)1'), GetScriptedGui('cm_trmm_grant_location_eligible')"
+        f".IsShown({loc}), {any_shown})]\"")
+    lines.append("")
+    for key, negate in (("CM_TRMM_GRANT_LABEL", True),
+                        ("CM_TRMM_GRANT_LABEL_FREE", False)):
+        free = f"GetScriptedGui('cm_trmm_grant_is_free').IsShown({player})"
+        lines.append("\t\ttext_single = {")
+        lines.append("\t\t\tautoresize = yes")
+        # Stretched to the row height with vcenter so the label lines up with the buttons.
+        lines.append("\t\t\tlayoutpolicy_vertical = expanding")
+        lines.append("\t\t\talign = left|vcenter")
+        lines.append(f"\t\t\ttext = \"{key}\"")
+        lines.append(
+            f"\t\t\tvisible = \"[{f'Not({free})' if negate else free}]\"")
+        lines.append("\t\t}")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        gui = f"GetScriptedGui('cm_trmm_grant_{alias}')"
+        search_pair = (f"Or(GetMapMode('cm_trmm_search_{alias}').IsActive, "
+                       f"GetMapMode('cm_trmm_search_{alias}_refresh').IsActive)")
+        scoring = (f"GreaterThan_CFixedPoint(Location.MakeScope.ScriptValue("
+                   f"'cm_trmm_right_{alias}'), '(CFixedPoint)0')")
+        lines.append("")
+        lines.append("\t\tbutton_townrights = {")
+        lines.append("\t\t\tsize = { 34 30 }")
+        lines.append(f"\t\t\ttext = \"cm_uright_icon_line_{alias}\"")
+        lines.append(
+            f"\t\t\tvisible = \"[And(Or({search_pair}, And({best_pair}, "
+            f"{scoring})), {gui}.IsShown({root}))]\"")
+        lines.append(f"\t\t\tenabled = \"[{gui}.IsValid({root})]\"")
+        lines.append("")
+        lines.append("\t\t\taction_tooltip = {")
+        lines.append("\t\t\t\tclick_type = left")
+        lines.append("\t\t\t\tclick_mode = single")
+        lines.append(f"\t\t\t\ttitle = \"cm_trmm_grant_title_{alias}\"")
+        lines.append(
+            "\t\t\t\tconditions = \"[AddLocalizationIf("
+            "Not(ShowGrantLocationTownRights(Location.Self)), 'TWR_NOT_CAPABLE')]\"")
+        lines.append(
+            f"\t\t\t\tconditions = \"[AddLocalizationIf(Not(GetScriptedGui("
+            f"'cm_trmm_grant_can_afford').IsShown({player})), 'CM_TRMM_GRANT_CANT_AFFORD')]\"")
+        lines.append(
+            f"\t\t\t\tconditions = \"[AddLocalizationIf(And3("
+            f"ShowGrantLocationTownRights(Location.Self), "
+            f"GetScriptedGui('cm_trmm_grant_can_afford').IsShown({player}), "
+            f"Not({gui}.IsValid({root}))), 'CM_TRMM_GRANT_REQUIREMENTS')]\"")
+        lines.append(f"\t\t\t\tenabled = \"[{gui}.IsValid({root})]\"")
+        lines.append(f"\t\t\t\ton_action = \"[{gui}.Execute({root})]\"")
+        lines.append("\t\t\t}")
+        lines.append("\t\t}")
     lines.append("\t}")
     lines.append("}")
     return "\n".join(lines) + "\n"
@@ -2244,9 +2414,11 @@ def main():
     write_output(OUT_LOC,
                  emit_loc(rights, aliases, boosted_goods, options, self_goods))
     write_output(OUT_SCRIPTED_GUIS, emit_scripted_guis(aliases))
+    write_output(OUT_GRANT_SECTION, emit_grant_section(aliases))
 
     for path in (OUT_SCRIPT_VALUES, OUT_TRIGGERS, OUT_EFFECTS, OUT_CUSTOM_LOC,
-                 OUT_CUSTOM_COOLTIP, OUT_MAP_MODE, OUT_LOC, OUT_SCRIPTED_GUIS):
+                 OUT_CUSTOM_COOLTIP, OUT_MAP_MODE, OUT_LOC, OUT_SCRIPTED_GUIS,
+                 OUT_GRANT_SECTION):
         print(f"Wrote {os.path.relpath(path, ROOT_DIR).replace(os.sep, '/')}")
     for right in ROYAL_RIGHTS:
         goods_list = ", ".join(

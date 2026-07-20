@@ -1,0 +1,23 @@
+﻿# Whether $RIGHT$ may be granted at the root location by scope:cm_country.
+# Root is the location.
+cm_trmm_can_grant_right = {
+	town_rights_type:$RIGHT$ = { save_temporary_scope_as = cm_town_right }
+	save_temporary_scope_as = target
+	exists = owner
+	owner = scope:cm_country
+	NOT = { integration_level = conquered }
+	# Urban locations only, mirroring the vanilla grant button's Not(GetRank.IsDefault) gate: in_game/gui/location_window.gui:892
+	NOT = { location_rank = location_rank:rural_settlement }
+	has_max_town_rights = no
+	NOT = { has_town_rights = town_rights_type:$RIGHT$ }
+	scope:cm_country = {
+		modifier:can_grant_town_rights = yes
+		cm_auto_town_rights_potential_passes = yes
+		cm_can_grant_specific_town_right_at_location = yes
+		# Cost only; the auto-grant gov-power floor does not apply to manual grants.
+		OR = {
+			cm_town_rights_grants_are_free = yes
+			government_power >= cm_grant_town_rights_cost
+		}
+	}
+}

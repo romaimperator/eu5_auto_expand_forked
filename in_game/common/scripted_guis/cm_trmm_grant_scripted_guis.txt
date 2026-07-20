@@ -1,0 +1,43 @@
+﻿# Display and refresh helpers for the recommended-urban-rights grant row.
+
+# Cost/Free readout swap for the grant row label. Root is the player country.
+cm_trmm_grant_is_free = {
+	is_shown = {
+		cm_town_rights_grants_are_free = yes
+	}
+}
+
+# Location-level grant row gate: urban, unconquered, a rights slot open. Root is the location.
+cm_trmm_grant_location_eligible = {
+	is_shown = {
+		exists = owner
+		NOT = { integration_level = conquered }
+		# Urban locations only, mirroring the vanilla grant button's Not(GetRank.IsDefault) gate: in_game/gui/location_window.gui:892
+		NOT = { location_rank = location_rank:rural_settlement }
+		has_max_town_rights = no
+	}
+}
+
+# Grant button reason line: cost-only affordability. Root is the player country.
+cm_trmm_grant_can_afford = {
+	is_shown = {
+		OR = {
+			cm_town_rights_grants_are_free = yes
+			government_power >= cm_grant_town_rights_cost
+		}
+	}
+}
+
+# Gates the search panel's stripe-refresh drivers. Root is the player country;
+# set by cm_trmm_grant_right, cleared by cm_trmm_ack_refresh once the swap ran.
+cm_trmm_refresh_pending = {
+	is_shown = {
+		has_variable = cm_trmm_refresh_armed
+	}
+}
+
+cm_trmm_ack_refresh = {
+	effect = {
+		remove_variable = cm_trmm_refresh_armed
+	}
+}

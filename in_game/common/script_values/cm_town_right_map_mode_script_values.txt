@@ -5402,3 +5402,53 @@ cm_trmm_covv_glass_g2 = {
 		add = var:cm_trmm_cov_glass_g2
 	}
 }
+
+# 1 when any urban right both scores and is ungranted here (the
+# grant row's best-mode gate). Root is the location.
+cm_trmm_grant_choices = {
+	value = 0
+	if = {
+		limit = {
+			has_variable = cm_trmm_best_idx
+			OR = {
+				AND = {
+					cm_trmm_right_tooling > 0
+					NOT = { has_town_rights = town_rights_type:royal_tooling_rights }
+				}
+				AND = {
+					cm_trmm_right_jewelry > 0
+					NOT = { has_town_rights = town_rights_type:royal_jewelry_rights }
+				}
+				AND = {
+					cm_trmm_right_naval > 0
+					NOT = { has_town_rights = town_rights_type:royal_naval_rights }
+				}
+				AND = {
+					cm_trmm_right_textile > 0
+					NOT = { has_town_rights = town_rights_type:royal_textile_rights }
+				}
+				AND = {
+					cm_trmm_right_weaponry > 0
+					NOT = { has_town_rights = town_rights_type:royal_weaponry_rights }
+				}
+				AND = {
+					cm_trmm_right_book > 0
+					NOT = { has_town_rights = town_rights_type:royal_book_rights }
+				}
+				AND = {
+					cm_trmm_right_artisan > 0
+					NOT = { has_town_rights = town_rights_type:royal_artisan_rights }
+				}
+				AND = {
+					cm_trmm_right_brewing > 0
+					NOT = { has_town_rights = town_rights_type:royal_brewing_rights }
+				}
+				AND = {
+					cm_trmm_right_masonry > 0
+					NOT = { has_town_rights = town_rights_type:royal_masonry_rights }
+				}
+			}
+		}
+		add = 1
+	}
+}

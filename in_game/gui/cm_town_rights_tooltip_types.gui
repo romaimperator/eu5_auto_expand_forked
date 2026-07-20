@@ -230,3 +230,103 @@ template TownRightsItem_tooltip {
 		}
 	}
 }
+
+# Vanilla location_tooltip_alt (in_game/gui/shared/location_tooltips.gui:590) with the urban right grant row added.
+template location_tooltip_alt {
+    ContextualTooltipType = {
+        blockoverride "title_icon" {
+            icon = {
+                visible = "[And(Not(Location.GetArea.IsSea), Not(Location.IsCorridor))]"
+                using = tooltip_title_icon_size
+                texture = "[Location.GetRankIcon]"
+                tooltipwidget = {
+                    using = location_rank_tooltip
+                }
+            }
+            icon = {
+                visible = "[Location.GetArea.IsSea]"
+                using = tooltip_title_icon_size
+                texture = "gfx/interface/icons/flat_icons/geopolitics/exploration_sea.dds"
+                tooltipwidget = {
+                    using = seazone_tooltip
+                }
+            }
+            icon = {
+                visible = "[Location.IsCorridor]"
+                using = tooltip_title_icon_size
+                texture = "gfx/interface/mapitems/desert_connector.dds"
+            }
+        }
+
+        blockoverride "title_button" {
+            mapmode_tooltip_button = {
+                datacontext = "[GetMapMode('locations')]"
+            }
+        }
+
+        blockoverride "title_text" {
+            text = "MAP_TT_LOCATION_ALT_TITLE"
+        }
+
+        blockoverride "concept_link" {
+            text = "[Select_CString(Location.GetArea.IsSea, Select_CString(Location.GetTopography.IsDeepOcean, sea_current, seazone), Select_CString(Location.IsCorridor, corridor, location))|e]"
+        }
+
+        blockoverride "tooltip_content" {
+            TooltipDebugStringPairList = {
+                textcontext = "[Location.GetDebugText]"
+            }
+
+            hbox = {
+                visible = "[Location.ShowMarketForMapModeTooltip]"
+                layoutpolicy_horizontal = expanding
+                margin = { 10 10 }
+                background = {
+                    using = bg_round_corners
+                    alpha = 0.3
+                }
+
+                icon = {
+                    size = { 32 32 }
+                    texture = "gfx/interface/buttons/flats/market.dds"
+                }
+
+                text_single = {
+                    align = left
+                    text = "[Location.GetMarket.GetNameWithNoTooltip]"
+                    using = Font_Size_Big
+                    default_format = "#subtle_name"
+                }
+
+                text_single = {
+                    align = right
+                    text = "[Location.GetMarketAccessWithTooltip]"
+                }
+            }
+
+            block "tooltip_location_specific" {
+                TooltipListScrollArea = {
+                    visible = "[Location.HasMapmodeSpecificTooltip]"
+                    blockoverride "block_scrollarea" {
+                        maximumsize = { -1 300 }
+                    }
+
+                    blockoverride "scrollarea_content" {
+                        TooltipTextBlock = {
+                            set_parent_dimension_to_minimum = height
+                            layoutpolicy_horizontal = expanding
+                            textcontext = "[Location.GetMapmodeSpecificTooltip]"
+                        }
+                    }
+                }
+            }
+
+            # CM: recommended urban rights grant row
+            cm_trmm_grant_section = {}
+
+            TooltipContentSection = {
+                using = tooltip_location_alt_content
+            }
+        }
+    }
+}
