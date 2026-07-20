@@ -550,6 +550,16 @@ cm_run_auto_expand_buildings = {
 }
 
 # --- Auto Expand RGOs ---
+
+# Force-enables RGO auto-expand at the root location without toggling. Root = location.
+cm_enable_auto_expand_for_rgo = {
+	if = { limit = { owner = { exists = var:cm_mass_auto_expand_rgo } }
+		remove_variable = cm_auto_expand_rgo_excluded
+	} else = {
+		set_variable = { name = cm_auto_expand_rgo value = yes }
+	}
+}
+
 # Expands RGO levels in locations with cm_auto_expand_rgo enabled.
 # Single monthly pass, no daily spread.
 cm_run_auto_expand_rgos = {

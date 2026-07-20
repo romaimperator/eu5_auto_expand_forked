@@ -497,12 +497,13 @@ def parse_production_methods(game_dir, goods_categories):
 
 
 def parse_buildings(building_types_dir, goods_categories, external_pms):
-    """Return ([(building, [slot, ...], gates, rank_flags, ref)], dangling)
-    where each slot is a list of PM dicts {name, ref, inputs, produced,
-    output, gates}, gates is the building's own restriction blocks as
-    (kind, inner_text), rank_flags maps declared location-rank flags to their
-    values, and dangling is the set of possible_production_methods names with
-    no external definition."""
+    """Return ([(building, [slot, ...], gates, rank_flags, ref, obsolete)],
+    dangling) where each slot is a list of PM dicts {name, ref, inputs,
+    produced, output, gates}, gates is the building's own restriction blocks
+    as (kind, inner_text), rank_flags maps declared location-rank flags to
+    their values, obsolete is the building type this one replaces (the tier
+    chain link) or None, and dangling is the set of
+    possible_production_methods names with no external definition."""
     buildings = []
     dangling = set()
     for name, path in iter_db_files(building_types_dir):
@@ -512,9 +513,12 @@ def parse_buildings(building_types_dir, goods_categories, external_pms):
             slots = []
             gates = []
             rank_flags = {}
+            obsolete = None
             for key, value in scalar_assignments(body):
                 if key in RANK_FLAGS:
                     rank_flags[key] = value
+                elif key == "obsolete":
+                    obsolete = value
             for child, inner, c_line in child_blocks(body):
                 if child == "unique_production_methods":
                     slot = []
@@ -541,7 +545,8 @@ def parse_buildings(building_types_dir, goods_categories, external_pms):
                     gates.append((child, inner))
             if slots:
                 buildings.append(
-                    (building, slots, gates, rank_flags, f"{rel}:{b_line}"))
+                    (building, slots, gates, rank_flags, f"{rel}:{b_line}",
+                     obsolete))
     return buildings, dangling
 
 
@@ -656,11 +661,12 @@ def filter_buildings(buildings, pm_lock, building_lock, boosted_goods):
     """Drop advance-locked, restriction-gated, or rural-only buildings and
     PMs before any scoring math, so main-slot selection and the worth-using
     threshold only ever see universally available production methods. Returns
-    the (building, slots, location_gate) list collect_options consumes plus
-    report lines for every exclusion that touches a boosted good."""
+    the (building, slots, location_gate, obsolete) list collect_options and
+    collect_expand_bases consume plus report lines for every exclusion that
+    touches a boosted good."""
     kept = []
     report = []
-    for building, slots, gates, rank_flags, ref in buildings:
+    for building, slots, gates, rank_flags, ref, obsolete in buildings:
         reason = None
         if rank_flags and not any(
                 rank_flags.get(flag) == "yes" for flag in URBAN_RANK_FLAGS):
@@ -701,7 +707,7 @@ def filter_buildings(buildings, pm_lock, building_lock, boosted_goods):
             if new_slot:
                 new_slots.append(new_slot)
         if new_slots:
-            kept.append((building, new_slots, location_gate(gates)))
+            kept.append((building, new_slots, location_gate(gates), obsolete))
     return kept, report
 
 
@@ -733,7 +739,7 @@ def collect_options(buildings, boosted_goods, goods_categories):
     raw shares only."""
     options = {good: [] for good in boosted_goods}
     seen = {good: set() for good in boosted_goods}
-    for building, slots, gate in buildings:
+    for building, slots, gate, _obsolete in buildings:
         main_slot = max(
             slots,
             key=lambda slot: max((pm["output"] or 0.0) for pm in slot))
@@ -787,6 +793,37 @@ def dominates(a, b):
     location gates)."""
     return all(g in a["shares"] and float(a["shares"][g]) >= float(s)
                for g, s in b["shares"].items())
+
+
+def collect_expand_bases(buildings, rights):
+    """Return {right: [(building, gate)]}: the base tier of each building
+    chain producing one of the right's goods, registered for auto-expand by
+    the grant-and-expand scripted GUIs. A type qualifies when a worth-using
+    main-slot PM produces a boosted good; a base is a qualifying type whose
+    obsolete target is not itself in the right's qualifying set."""
+    producers = {right: {} for right in ROYAL_RIGHTS}
+    obsoletes = {}
+    for building, slots, gate, obsolete in buildings:
+        obsoletes[building] = obsolete
+        main_slot = max(
+            slots,
+            key=lambda slot: max((pm["output"] or 0.0) for pm in slot))
+        best_output = max((pm["output"] or 0.0) for pm in main_slot)
+        if best_output <= 0:
+            continue
+        produced = {pm["produced"] for pm in main_slot
+                    if (pm["output"] or 0.0)
+                    >= PM_OUTPUT_THRESHOLD * best_output}
+        for right in ROYAL_RIGHTS:
+            if produced & set(rights[right]["goods"]):
+                producers[right][building] = gate
+    bases = {}
+    for right in ROYAL_RIGHTS:
+        types = producers[right]
+        bases[right] = sorted(
+            (building, gate) for building, gate in types.items()
+            if obsoletes.get(building) not in types)
+    return bases
 
 
 def group_options(opts):
@@ -2323,10 +2360,14 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
         lines.append(
             f" cm_trmm_grant_tt_{alias}: "
             f"\"Match: [Location.MakeScope.ScriptValue('cm_trmm_right_{alias}')|%1]\"")
+        lines.append(
+            f" cm_trmm_grant_expand_title_{alias}: "
+            f"\"Grant [ShowTownRightsName('{right}')] and enable matching "
+            f"auto-expands\"")
     return "\n".join(lines) + "\n"
 
 
-def emit_scripted_guis(aliases):
+def emit_scripted_guis(aliases, expand_bases, rgo_goods):
     lines = [GENERATED_HEADER]
     lines.append(
         "# Right-identity checks for the urban right tooltip search buttons. Root is\n"
@@ -2364,6 +2405,43 @@ def emit_scripted_guis(aliases):
         lines.append("\t}")
         lines.append("\teffect = {")
         lines.append(f"\t\tcm_trmm_grant_right = {{ RIGHT = {right} }}")
+        lines.append("\t}")
+        lines.append("}")
+    lines.append("")
+    lines.append(
+        "# Right-click grant scripted GUIs: grant plus enable matching\n"
+        "# auto-expands. Each industry registers its chain's base tier; the\n"
+        "# obsolete-registration migration resolves it to the current tier.\n"
+        "# Root is the location; cm_country is the clicking player's country.")
+    for right in ROYAL_RIGHTS:
+        lines.append(f"cm_trmm_grant_expand_{aliases[right]} = {{")
+        lines.append("\tsaved_scopes = { cm_country }")
+        lines.append("\tis_valid = {")
+        lines.append(f"\t\tcm_trmm_can_grant_right = {{ RIGHT = {right} }}")
+        lines.append("\t}")
+        lines.append("\teffect = {")
+        lines.append(f"\t\tcm_trmm_grant_right = {{ RIGHT = {right} }}")
+        for building, gate in expand_bases[right]:
+            register = [
+                f"building_type:{building} = "
+                "{ save_scope_as = cm_building_type }",
+                "cm_enable_auto_expand_for_building_type = yes"]
+            if gate:
+                lines.append("\t\tif = {")
+                lines.append(f"\t\t\tlimit = {{ {gate} }}")
+                lines.extend(f"\t\t\t{line}" for line in register)
+                lines.append("\t\t}")
+            else:
+                lines.extend(f"\t\t{line}" for line in register)
+        if rgo_goods[right]:
+            compares = [f"raw_material ?= goods:{good}"
+                        for good in rgo_goods[right]]
+            joined = (compares[0] if len(compares) == 1
+                      else f"OR = {{ {' '.join(compares)} }}")
+            lines.append("\t\tif = {")
+            lines.append(f"\t\t\tlimit = {{ {joined} }}")
+            lines.append("\t\t\tcm_enable_auto_expand_for_rgo = yes")
+            lines.append("\t\t}")
         lines.append("\t}")
         lines.append("}")
     return "\n".join(lines) + "\n"
@@ -2422,6 +2500,7 @@ def emit_grant_section(aliases):
         for right in ROYAL_RIGHTS:
             alias = aliases[right]
             gui = f"GetScriptedGui('cm_trmm_grant_{alias}')"
+            gui_expand = f"GetScriptedGui('cm_trmm_grant_expand_{alias}')"
             search_pair = (f"Or(GetMapMode('cm_trmm_search_{alias}').IsActive, "
                            f"GetMapMode('cm_trmm_search_{alias}_refresh').IsActive)")
             scoring = (f"GreaterThan_CFixedPoint(Location.MakeScope.ScriptValue("
@@ -2478,6 +2557,16 @@ def emit_grant_section(aliases):
                 f"Not({gui}.IsValid({root}))), 'CM_TRMM_GRANT_REQUIREMENTS')]\"")
             lines.append(f"\t\t\t\tenabled = \"[{gui}.IsValid({root})]\"")
             lines.append(f"\t\t\t\ton_action = \"[{gui}.Execute({root})]\"")
+            lines.append("\t\t\t}")
+            lines.append("")
+            lines.append("\t\t\taction_tooltip = {")
+            lines.append("\t\t\t\tclick_type = right")
+            lines.append("\t\t\t\tclick_mode = single")
+            lines.append(
+                f"\t\t\t\ttitle = \"cm_trmm_grant_expand_title_{alias}\"")
+            lines.append(f"\t\t\t\tenabled = \"[{gui_expand}.IsValid({root})]\"")
+            lines.append(
+                f"\t\t\t\ton_action = \"[{gui_expand}.Execute({root})]\"")
             lines.append("\t\t\t}")
             lines.append("\t\t}")
     lines.append("\t}")
@@ -2552,6 +2641,10 @@ def main():
     for good in boosted_goods:
         if not options[good]:
             sys.exit(f"No worth-using production methods found for {good}")
+    expand_bases = collect_expand_bases(buildings, rights)
+    for right in ROYAL_RIGHTS:
+        if not expand_bases[right]:
+            sys.exit(f"No auto-expand base buildings found for {right}")
 
     relevant = sorted({g for opts in options.values()
                        for opt in opts for g in opt["shares"]})
@@ -2562,6 +2655,8 @@ def main():
 
     self_goods = {good for good in boosted_goods
                   if goods_categories.get(good) == "raw_material"}
+    rgo_goods = {right: sorted(self_goods & set(rights[right]["goods"]))
+                 for right in ROYAL_RIGHTS}
 
     right_colors = resolve_right_colors(rights, game_dir)
 
@@ -2580,7 +2675,8 @@ def main():
                  + emit_search_map_modes(rights, aliases, right_colors))
     write_output(OUT_LOC,
                  emit_loc(rights, aliases, boosted_goods, options, self_goods))
-    write_output(OUT_SCRIPTED_GUIS, emit_scripted_guis(aliases))
+    write_output(OUT_SCRIPTED_GUIS,
+                 emit_scripted_guis(aliases, expand_bases, rgo_goods))
     write_output(OUT_GRANT_SECTION, emit_grant_section(aliases))
 
     for path in (OUT_SCRIPT_VALUES, OUT_TRIGGERS, OUT_EFFECTS, OUT_CUSTOM_LOC,
@@ -2592,6 +2688,10 @@ def main():
             f"{g} ({len(options[g])} option{'s' if len(options[g]) != 1 else ''})"
             for g in rights[right]["goods"])
         print(f"  {right}: {goods_list}")
+    for right in ROYAL_RIGHTS:
+        parts = [building for building, _gate in expand_bases[right]]
+        parts += [f"{good} RGO" for good in rgo_goods[right]]
+        print(f"  grant-expand {right}: {', '.join(parts)}")
     print(f"  relevant raw materials: {', '.join(relevant)}")
     print(f"  RGO-self boosted goods: {', '.join(sorted(self_goods))}")
     total_rows = 0
