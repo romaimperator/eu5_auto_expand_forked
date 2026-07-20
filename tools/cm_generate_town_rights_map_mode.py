@@ -251,6 +251,10 @@ GRANTED_GOOD_THRESHOLD = 0.5
 # Main-mode tie stripes: a two-way tie for best stripes the runner-up right's
 # own color; three or more tied stripe this dedicated cyan instead.
 MULTI_TIE_STRIPE = "rgb { 0 220 255 }"
+# Open-urban-right-slot stripe on both the main and search modes, blue reused
+# from the placement finder's existing-governor stripe
+# (in_game/gfx/map/map_modes/cm_proximity_finder_map_modes.txt:55).
+OPEN_SLOT_STRIPE = "rgb { 0 100 255 }"
 
 OUTPUT_MODIFIER = re.compile(r"^local_([a-z0-9_]+)_output_modifier$")
 ASSIGN_BLOCK = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*=\s*\{")
@@ -1610,9 +1614,9 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
     lines.append(
         "# Stripe-reason lines for the map mode tooltips' bottom:\n"
         "# cm_trmm_stripe_reason explains the main mode's stripe (the granted\n"
-        "# right's fit tier, or the tied rights), cm_trmm_search_reason_* the\n"
-        "# reason for the search modes' stripe. Blocks mirror the stripe limits,\n"
-        "# so first match = stripe precedence.")
+        "# right's fit tier, the tied rights, or the open urban right slot),\n"
+        "# cm_trmm_search_reason_* the reason for the search modes' stripe.\n"
+        "# Blocks mirror the stripe limits, so first match = stripe precedence.")
     lines.append("cm_trmm_stripe_reason = {")
     lines.append("\ttype = location")
     for pos, right in enumerate(ROYAL_RIGHTS):
@@ -1655,6 +1659,12 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
         lines.append(
             f"\t\tlocalization_key = cm_trmm_reason_tied_{aliases[right]}")
         lines.append("\t}")
+    lines.append("\ttext = {")
+    lines.append("\t\ttrigger = {")
+    lines.append("\t\t\thas_max_town_rights = no")
+    lines.append("\t\t}")
+    lines.append("\t\tlocalization_key = cm_trmm_reason_open_slot")
+    lines.append("\t}")
     lines.append("\ttext = {")
     lines.append("\t\tlocalization_key = cm_trmm_blank")
     lines.append("\t\tfallback = yes")
@@ -1704,6 +1714,12 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
         lines.append("\t\t\t}")
         lines.append("\t\t}")
         lines.append("\t\tlocalization_key = cm_trmm_search_other_line")
+        lines.append("\t}")
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append("\t\t\thas_max_town_rights = no")
+        lines.append("\t\t}")
+        lines.append("\t\tlocalization_key = cm_trmm_search_open_slot_line")
         lines.append("\t}")
         lines.append("\ttext = {")
         lines.append("\t\tlocalization_key = cm_trmm_blank")
@@ -1957,6 +1973,13 @@ def emit_map_mode(rights, aliases, right_colors):
         body.append(f"\t\t\t# {right} color: {source}")
         body.append(f"\t\t\tvalue = {color}")
         body.append("\t\t}")
+    body.append("\t\telse_if = {")
+    body.append("\t\t\tlimit = {")
+    body.append("\t\t\t\tis_land = yes")
+    body.append("\t\t\t\thas_max_town_rights = no")
+    body.append("\t\t\t}")
+    body.append(f"\t\t\tvalue = {OPEN_SLOT_STRIPE}")
+    body.append("\t\t}")
     body.append("\t}")
     body.append("")
     for right in ROYAL_RIGHTS:
@@ -1973,7 +1996,8 @@ def emit_map_mode(rights, aliases, right_colors):
             ("cm_trmm_legend_granted_best", GRANTED_BEST_STRIPE),
             ("cm_trmm_legend_granted_good", GRANTED_GOOD_STRIPE),
             ("cm_trmm_legend_granted_poor", GRANTED_POOR_STRIPE),
-            ("cm_trmm_legend_tied_multi", MULTI_TIE_STRIPE)):
+            ("cm_trmm_legend_tied_multi", MULTI_TIE_STRIPE),
+            ("cm_trmm_legend_open_slot", OPEN_SLOT_STRIPE)):
         body.append("\tlegend_key = {")
         body.append(f"\t\tdesc = \"{desc}\"")
         body.append(f"\t\tcolor = {key_color}")
@@ -2016,8 +2040,9 @@ def emit_search_map_modes(rights, aliases, right_colors):
         "# Per-right search variants of cm_best_town_right, hidden from the flyout",
         "# (opened from the search panel and the urban right tooltips). The fill lerps",
         "# from the low anchor to the right's own color by its fit score; stripes mark",
-        "# already-granted, best-or-tied-for-best-here, and other-right-granted",
-        "# locations. cm_trmm_tie_idx: 1-8 = two-way runner-up, 10 = 3+ tied.",
+        "# already-granted, best-or-tied-for-best-here, other-right-granted, and",
+        "# open-urban-right-slot locations. cm_trmm_tie_idx: 1-8 = two-way runner-up,",
+        "# 10 = 3+ tied.",
     ]
     for pos, right in enumerate(ROYAL_RIGHTS):
         alias = aliases[right]
@@ -2091,6 +2116,13 @@ def emit_search_map_modes(rights, aliases, right_colors):
         body.append("\t\t\t}")
         body.append(f"\t\t\tvalue = {SEARCH_OTHER_GRANTED_STRIPE}")
         body.append("\t\t}")
+        body.append("\t\telse_if = {")
+        body.append("\t\t\tlimit = {")
+        body.append("\t\t\t\tis_land = yes")
+        body.append("\t\t\t\thas_max_town_rights = no")
+        body.append("\t\t\t}")
+        body.append(f"\t\t\tvalue = {OPEN_SLOT_STRIPE}")
+        body.append("\t\t}")
         body.append("\t}")
         body.append("")
         for desc, key_color in (
@@ -2099,7 +2131,8 @@ def emit_search_map_modes(rights, aliases, right_colors):
                 ("cm_trmm_search_legend_granted", SEARCH_GRANTED_STRIPE),
                 ("cm_trmm_search_legend_best", SEARCH_BEST_STRIPE),
                 ("cm_trmm_search_legend_granted_other",
-                 SEARCH_OTHER_GRANTED_STRIPE)):
+                 SEARCH_OTHER_GRANTED_STRIPE),
+                ("cm_trmm_search_legend_open_slot", OPEN_SLOT_STRIPE)):
             body.append("\tlegend_key = {")
             body.append(f"\t\tdesc = \"{desc}\"")
             body.append(f"\t\tcolor = {key_color}")
