@@ -238,9 +238,8 @@ NO_MATCH_COLOR = "rgb { 0 0 0 }"
 SEARCH_GRANTED_STRIPE = "rgb { 205 206 205 }"
 # Best-right-here stripe, gold to stand apart from every right color.
 SEARCH_BEST_STRIPE = "rgb { 255 200 60 }"
-# Another-royal-right-granted stripe, magenta to stand apart from the other
-# two stripes and every right color.
-SEARCH_OTHER_GRANTED_STRIPE = "rgb { 255 0 255 }"
+# Another-royal-right-granted stripe.
+SEARCH_OTHER_GRANTED_STRIPE = "rgb { 0 0 0 }"
 
 # Main-mode granted stripes: how well the granted right fits the location.
 GRANTED_BEST_STRIPE = "rgb { 60 220 60 }"
