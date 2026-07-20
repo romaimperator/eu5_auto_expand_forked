@@ -40,7 +40,7 @@ cm_check_location_has_peasants_available_or_will_be = {
 	}
 }
 
-# Root is the location. Expects the building type as target and scope country. True when location has enough RGO/lumber levels for this building type: sawmill needs RGO or lumber_mill >= required; windmill/local_smelters need RGO >= required.
+# Root is the location. Expects the raw auto-build list key as target and scope country. True when location has enough RGO/lumber levels for this building type: sawmill needs RGO or lumber_mill >= required; windmill/local_smelters need RGO >= required.
 # Non-RGO buildings always pass via the fallback.
 cm_auto_build_check_rgo_level_requirement_met = {
 	switch = { trigger = $target$
@@ -108,7 +108,9 @@ cm_location_has_no_auto_build_chain_predecessor = {
 	}
 }
 
-# Root is the location. Expects the building type as a target, also expects the scope country.
+# Root is the location. Expects the resolved building type as a target, also expects the scope country.
+# The per-row settings checks take scope:cm_auto_build_settings_type, the raw list key saved by
+# cm_auto_build_resolve_building_type, because the settings maps are keyed by it.
 cm_auto_build_will_auto_build = {
 	scope:cm_country = { cm_should_pause_auto_expand = no }
 	save_temporary_scope_as = cm_location
@@ -116,10 +118,10 @@ cm_auto_build_will_auto_build = {
 	# are handled by the auto-expand-buildings feature.
 	NOT = { has_building = $target$ }
 	cm_location_allowed_to_build = { target = $target$ }
-	cm_auto_build_check_meets_minimum_control = { target = $target$ }
-	cm_auto_build_check_meets_minimum_market_price_impact = { target = $target$ }
+	cm_auto_build_check_meets_minimum_control = { target = scope:cm_auto_build_settings_type }
+	cm_auto_build_check_meets_minimum_market_price_impact = { target = scope:cm_auto_build_settings_type }
 	cm_location_has_enough_pops_available = yes
-	cm_auto_build_check_rgo_level_requirement_met = { target = $target$ }
+	cm_auto_build_check_rgo_level_requirement_met = { target = scope:cm_auto_build_settings_type }
 	cm_check_location_meets_min_market_access = yes
 }
 
@@ -135,18 +137,19 @@ cm_location_allowed_to_build = {
 }
 
 # Expects scopes: country, location
-# Expects param: target => building_type
+# Expects param: target => the raw auto-build list key; the min-control map is keyed by it.
 cm_auto_build_check_meets_minimum_control = {
 	scope:cm_location.max_control >= $target$.cm_get_minimum_control_for_auto_build
 }
 
-# Expects scopes: country, location
-# Expects param: target => building_type
+# Expects scopes: country, location, and scope:cm_building_type = the type actually built.
+# $target$ = the raw auto-build list key; the min-discount map is keyed by it, while demand
+# and cost adjustment evaluate scope:cm_building_type.
 # The 0.005 added is a 0.5% tolerance so that a setting of -33% matches a cost
 # adjustment of -32.5%, avoiding float-rounding misses at the boundary.
 cm_auto_build_check_meets_minimum_market_price_impact = {
 	OR = {
-		$target$ = { save_temporary_scope_as = cm_building_type cm_get_standard_construction_demand_total = 0 }
+		scope:cm_building_type = { cm_get_standard_construction_demand_total = 0 }
 		$target$ = { cm_get_standard_construction_cost_adjustment_for_building_type <= { value = cm_get_minimum_market_price_impact_for_auto_build add = 0.005 } }
 	}
 }

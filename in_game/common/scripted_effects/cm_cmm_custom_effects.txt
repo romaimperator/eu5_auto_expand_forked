@@ -509,7 +509,13 @@ cm_update_auto_build_list_visibility = {
 # Root: country
 cm_auto_build_list_update_visibility_item = {
 	if = {
-		limit = { can_build_building = scope:cmm_list_current_item_value }
+		limit = {
+			OR = {
+				can_build_building = scope:cmm_list_current_item_value
+				# An obsolete key means a newer tier of the row's chain is unlocked.
+				building_type_is_obsolete = scope:cmm_list_current_item_value
+			}
+		}
 		cmm_show_list_item = { mod_id = cm setting_id = auto_build_list item = $i$ }
 	}
 	else = {

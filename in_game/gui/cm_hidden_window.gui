@@ -47,6 +47,27 @@ widget = {
 			}
 		}
 
+		# Upgrade-map refresh driver: re-records every type's replacement when script arms
+		# cm_refresh_upgrade_types after finding an obsolete type with no map entry mid-session.
+		# visible_at_creation = no pins it hidden at creation so a gate already true when the
+		# window builds (armed flag in a loaded save) still fires _show.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_should_refresh_upgrade_types').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			state = {
+				name = _show
+				duration = 0.5
+				next = cm_upgrade_type_refresh_done
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_upgrade_type_refresh_state')]"
+			}
+			state = {
+				name = cm_upgrade_type_refresh_done
+				duration = 0.5
+				on_finish = "[GetScriptedGui('cm_refresh_upgrade_types_done').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+		}
+
 		# Statically visible so each type's nested demand/produced sub-datamodels instantiate before the driver fires the passes.
 		widget = {
 			datamodel = "[GetGlobalList('cm_building_types_to_process')]"
@@ -56,6 +77,10 @@ widget = {
 					state = {
 						name = cm_building_type_section_buildings_init_state
 						on_finish = "[GetScriptedGui('cm_building_type_section_buildings_init').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_is_producing', MakeScopeBool(BuildingType.IsProducing)).AddScope('cm_is_multiple_levels', MakeScopeBool(BuildingType.IsMultipleLevels)).AddScope('cm_is_fort', MakeScopeBool(BuildingType.IsFort)).AddScope('cm_pop_type', BuildingType.GetPopType.MakeScope).AddScope('cm_upgrade_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).End)]"
+					}
+					state = {
+						name = cm_upgrade_type_refresh_state
+						on_finish = "[GetScriptedGui('cm_refresh_upgrade_type').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_upgrade_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).End)]"
 					}
 					vbox = {
 						margin = { 5 0 }
