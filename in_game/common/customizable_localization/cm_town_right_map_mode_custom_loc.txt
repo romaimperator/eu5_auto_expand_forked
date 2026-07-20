@@ -7743,11 +7743,11 @@ cm_uright_assigned_item_masonry = {
 	}
 }
 # Stripe-reason lines for the map mode tooltips' bottom:
-# cm_trmm_granted_reason names the granted right behind the main mode's
-# stripe tier, cm_trmm_search_reason_* the reason for the search modes'
-# stripe. Blocks mirror the stripe limits, so first match = stripe
-# precedence.
-cm_trmm_granted_reason = {
+# cm_trmm_stripe_reason explains the main mode's stripe (the granted
+# right's fit tier, or the tied rights), cm_trmm_search_reason_* the
+# reason for the search modes' stripe. Blocks mirror the stripe limits,
+# so first match = stripe precedence.
+cm_trmm_stripe_reason = {
 	type = location
 	text = {
 		trigger = {
@@ -7948,6 +7948,70 @@ cm_trmm_granted_reason = {
 		localization_key = cm_trmm_reason_poor_masonry
 	}
 	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			var:cm_trmm_best_idx = 9
+			var:cm_trmm_tie_idx >= 1
+		}
+		localization_key = cm_trmm_reason_tied_tooling
+	}
+	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			var:cm_trmm_best_idx = 8
+			var:cm_trmm_tie_idx >= 1
+		}
+		localization_key = cm_trmm_reason_tied_jewelry
+	}
+	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			var:cm_trmm_best_idx = 7
+			var:cm_trmm_tie_idx >= 1
+		}
+		localization_key = cm_trmm_reason_tied_naval
+	}
+	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			var:cm_trmm_best_idx = 6
+			var:cm_trmm_tie_idx >= 1
+		}
+		localization_key = cm_trmm_reason_tied_textile
+	}
+	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			var:cm_trmm_best_idx = 5
+			var:cm_trmm_tie_idx >= 1
+		}
+		localization_key = cm_trmm_reason_tied_weaponry
+	}
+	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			var:cm_trmm_best_idx = 4
+			var:cm_trmm_tie_idx >= 1
+		}
+		localization_key = cm_trmm_reason_tied_book
+	}
+	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			var:cm_trmm_best_idx = 3
+			var:cm_trmm_tie_idx >= 1
+		}
+		localization_key = cm_trmm_reason_tied_artisan
+	}
+	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			var:cm_trmm_best_idx = 2
+			var:cm_trmm_tie_idx >= 1
+		}
+		localization_key = cm_trmm_reason_tied_brewing
+	}
+	text = {
 		localization_key = cm_trmm_blank
 		fallback = yes
 	}
@@ -8004,6 +8068,19 @@ cm_trmm_search_reason_jewelry = {
 	}
 	text = {
 		trigger = {
+			has_variable = cm_trmm_tie_idx
+			OR = {
+				var:cm_trmm_tie_idx = 8
+				AND = {
+					var:cm_trmm_tie_idx = 10
+					cm_trmm_tier_jewelry = 0
+				}
+			}
+		}
+		localization_key = cm_trmm_search_tied_best_line
+	}
+	text = {
+		trigger = {
 			OR = {
 				has_town_rights = town_rights_type:royal_tooling_rights
 				has_town_rights = town_rights_type:royal_naval_rights
@@ -8036,6 +8113,19 @@ cm_trmm_search_reason_naval = {
 			var:cm_trmm_best_idx = 7
 		}
 		localization_key = cm_trmm_search_best_line
+	}
+	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			OR = {
+				var:cm_trmm_tie_idx = 7
+				AND = {
+					var:cm_trmm_tie_idx = 10
+					cm_trmm_tier_naval = 0
+				}
+			}
+		}
+		localization_key = cm_trmm_search_tied_best_line
 	}
 	text = {
 		trigger = {
@@ -8074,6 +8164,19 @@ cm_trmm_search_reason_textile = {
 	}
 	text = {
 		trigger = {
+			has_variable = cm_trmm_tie_idx
+			OR = {
+				var:cm_trmm_tie_idx = 6
+				AND = {
+					var:cm_trmm_tie_idx = 10
+					cm_trmm_tier_textile = 0
+				}
+			}
+		}
+		localization_key = cm_trmm_search_tied_best_line
+	}
+	text = {
+		trigger = {
 			OR = {
 				has_town_rights = town_rights_type:royal_tooling_rights
 				has_town_rights = town_rights_type:royal_jewelry_rights
@@ -8106,6 +8209,19 @@ cm_trmm_search_reason_weaponry = {
 			var:cm_trmm_best_idx = 5
 		}
 		localization_key = cm_trmm_search_best_line
+	}
+	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			OR = {
+				var:cm_trmm_tie_idx = 5
+				AND = {
+					var:cm_trmm_tie_idx = 10
+					cm_trmm_tier_weaponry = 0
+				}
+			}
+		}
+		localization_key = cm_trmm_search_tied_best_line
 	}
 	text = {
 		trigger = {
@@ -8144,6 +8260,19 @@ cm_trmm_search_reason_book = {
 	}
 	text = {
 		trigger = {
+			has_variable = cm_trmm_tie_idx
+			OR = {
+				var:cm_trmm_tie_idx = 4
+				AND = {
+					var:cm_trmm_tie_idx = 10
+					cm_trmm_tier_book = 0
+				}
+			}
+		}
+		localization_key = cm_trmm_search_tied_best_line
+	}
+	text = {
+		trigger = {
 			OR = {
 				has_town_rights = town_rights_type:royal_tooling_rights
 				has_town_rights = town_rights_type:royal_jewelry_rights
@@ -8176,6 +8305,19 @@ cm_trmm_search_reason_artisan = {
 			var:cm_trmm_best_idx = 3
 		}
 		localization_key = cm_trmm_search_best_line
+	}
+	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			OR = {
+				var:cm_trmm_tie_idx = 3
+				AND = {
+					var:cm_trmm_tie_idx = 10
+					cm_trmm_tier_artisan = 0
+				}
+			}
+		}
+		localization_key = cm_trmm_search_tied_best_line
 	}
 	text = {
 		trigger = {
@@ -8214,6 +8356,19 @@ cm_trmm_search_reason_brewing = {
 	}
 	text = {
 		trigger = {
+			has_variable = cm_trmm_tie_idx
+			OR = {
+				var:cm_trmm_tie_idx = 2
+				AND = {
+					var:cm_trmm_tie_idx = 10
+					cm_trmm_tier_brewing = 0
+				}
+			}
+		}
+		localization_key = cm_trmm_search_tied_best_line
+	}
+	text = {
+		trigger = {
 			OR = {
 				has_town_rights = town_rights_type:royal_tooling_rights
 				has_town_rights = town_rights_type:royal_jewelry_rights
@@ -8246,6 +8401,19 @@ cm_trmm_search_reason_masonry = {
 			var:cm_trmm_best_idx = 1
 		}
 		localization_key = cm_trmm_search_best_line
+	}
+	text = {
+		trigger = {
+			has_variable = cm_trmm_tie_idx
+			OR = {
+				var:cm_trmm_tie_idx = 1
+				AND = {
+					var:cm_trmm_tie_idx = 10
+					cm_trmm_tier_masonry = 0
+				}
+			}
+		}
+		localization_key = cm_trmm_search_tied_best_line
 	}
 	text = {
 		trigger = {

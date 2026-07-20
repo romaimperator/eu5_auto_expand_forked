@@ -1814,6 +1814,342 @@ cm_trmm_recompute_province_definition = {
 						modulo = 10
 					}
 				}
+				# Tie data for the stripes: 0 = no tie, 1-8 = the runner-up right of a
+				# two-way tie for best, 10 = three or more tied. An exact-tied earlier
+				# right would have won the encoding, so only later rights can be partners.
+				set_variable = {
+					name = cm_trmm_tie_idx
+					value = 0
+				}
+				if = {
+					# enc below 10 = best score rounds to 0.
+					limit = { local_var:cm_trmm_enc >= 10 }
+					if = {
+						limit = { var:cm_trmm_best_idx = 9 }
+						if = {
+							limit = { cm_trmm_tie_count_tooling >= 2 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 10
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_tooling__jewelry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 8
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_tooling__naval = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 7
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_tooling__textile = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 6
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_tooling__weaponry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 5
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_tooling__book = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 4
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_tooling__artisan = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 3
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_tooling__brewing = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 2
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_tooling__masonry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 1
+							}
+						}
+					}
+					else_if = {
+						limit = { var:cm_trmm_best_idx = 8 }
+						if = {
+							limit = { cm_trmm_tie_count_jewelry >= 2 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 10
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_jewelry__naval = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 7
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_jewelry__textile = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 6
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_jewelry__weaponry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 5
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_jewelry__book = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 4
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_jewelry__artisan = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 3
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_jewelry__brewing = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 2
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_jewelry__masonry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 1
+							}
+						}
+					}
+					else_if = {
+						limit = { var:cm_trmm_best_idx = 7 }
+						if = {
+							limit = { cm_trmm_tie_count_naval >= 2 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 10
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_naval__textile = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 6
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_naval__weaponry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 5
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_naval__book = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 4
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_naval__artisan = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 3
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_naval__brewing = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 2
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_naval__masonry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 1
+							}
+						}
+					}
+					else_if = {
+						limit = { var:cm_trmm_best_idx = 6 }
+						if = {
+							limit = { cm_trmm_tie_count_textile >= 2 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 10
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_textile__weaponry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 5
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_textile__book = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 4
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_textile__artisan = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 3
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_textile__brewing = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 2
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_textile__masonry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 1
+							}
+						}
+					}
+					else_if = {
+						limit = { var:cm_trmm_best_idx = 5 }
+						if = {
+							limit = { cm_trmm_tie_count_weaponry >= 2 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 10
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_weaponry__book = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 4
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_weaponry__artisan = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 3
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_weaponry__brewing = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 2
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_weaponry__masonry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 1
+							}
+						}
+					}
+					else_if = {
+						limit = { var:cm_trmm_best_idx = 4 }
+						if = {
+							limit = { cm_trmm_tie_count_book >= 2 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 10
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_book__artisan = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 3
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_book__brewing = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 2
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_book__masonry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 1
+							}
+						}
+					}
+					else_if = {
+						limit = { var:cm_trmm_best_idx = 3 }
+						if = {
+							limit = { cm_trmm_tie_count_artisan >= 2 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 10
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_artisan__brewing = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 2
+							}
+						}
+						else_if = {
+							limit = { cm_trmm_diff_artisan__masonry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 1
+							}
+						}
+					}
+					else_if = {
+						limit = { var:cm_trmm_best_idx = 2 }
+						if = {
+							limit = { cm_trmm_diff_brewing__masonry = 0 }
+							set_variable = {
+								name = cm_trmm_tie_idx
+								value = 1
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -1822,6 +2158,10 @@ cm_trmm_recompute_province_definition = {
 			every_location_in_province = {
 				limit = { has_variable = cm_trmm_best_idx }
 				remove_variable = cm_trmm_best_idx
+			}
+			every_location_in_province = {
+				limit = { has_variable = cm_trmm_tie_idx }
+				remove_variable = cm_trmm_tie_idx
 			}
 		}
 	}

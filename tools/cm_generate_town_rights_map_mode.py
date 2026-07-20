@@ -248,6 +248,9 @@ GRANTED_GOOD_STRIPE = "rgb { 255 255 255 }"
 GRANTED_POOR_STRIPE = "rgb { 230 60 50 }"
 # Middle granted-stripe tier: the granted right's own score at least this.
 GRANTED_GOOD_THRESHOLD = 0.5
+# Main-mode tie stripes: a two-way tie for best stripes the runner-up right's
+# own color; three or more tied stripe this dedicated cyan instead.
+MULTI_TIE_STRIPE = "rgb { 0 220 255 }"
 
 OUTPUT_MODIFIER = re.compile(r"^local_([a-z0-9_]+)_output_modifier$")
 ASSIGN_BLOCK = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*=\s*\{")
@@ -1172,6 +1175,25 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
     lines.append("\t}")
     lines.append("}")
 
+    lines.append("")
+    lines.append("# Grant row ordering: how many rights beat this one on score, ties")
+    lines.append("# broken by list order (0 = leftmost button). Root is the location.")
+    for pos_a, right_a in enumerate(ROYAL_RIGHTS):
+        alias_a = aliases[right_a]
+        lines.append(f"cm_trmm_grant_slot_{alias_a} = {{")
+        lines.append("\tvalue = 0")
+        for pos_b, right_b in enumerate(ROYAL_RIGHTS):
+            if right_b == right_a:
+                continue
+            op = ">=" if pos_b < pos_a else ">"
+            lines.append("\tif = {")
+            lines.append(
+                f"\t\tlimit = {{ cm_trmm_right_{aliases[right_b]} {op} "
+                f"{{ value = cm_trmm_right_{alias_a} }} }}")
+            lines.append("\t\tadd = 1")
+            lines.append("\t}")
+        lines.append("}")
+
     return "\n".join(lines) + "\n"
 
 
@@ -1313,6 +1335,50 @@ def emit_effects(options, aliases, boosted_goods, relevant):
     lines.append("\t\t\t\t\t\tmodulo = 10")
     lines.append("\t\t\t\t\t}")
     lines.append("\t\t\t\t}")
+    lines.append(
+        "\t\t\t\t# Tie data for the stripes: 0 = no tie, 1-8 = the runner-up right of a\n"
+        "\t\t\t\t# two-way tie for best, 10 = three or more tied. An exact-tied earlier\n"
+        "\t\t\t\t# right would have won the encoding, so only later rights can be partners.")
+    lines.append("\t\t\t\tset_variable = {")
+    lines.append("\t\t\t\t\tname = cm_trmm_tie_idx")
+    lines.append("\t\t\t\t\tvalue = 0")
+    lines.append("\t\t\t\t}")
+    lines.append("\t\t\t\tif = {")
+    lines.append("\t\t\t\t\t# enc below 10 = best score rounds to 0.")
+    lines.append("\t\t\t\t\tlimit = { local_var:cm_trmm_enc >= 10 }")
+    n = len(ROYAL_RIGHTS)
+    for pos, right in enumerate(ROYAL_RIGHTS[:-1]):
+        partners = ROYAL_RIGHTS[pos + 1:]
+        kw = "if" if pos == 0 else "else_if"
+        lines.append(f"\t\t\t\t\t{kw} = {{")
+        lines.append(
+            f"\t\t\t\t\t\tlimit = {{ var:cm_trmm_best_idx = {n - pos} }}")
+        inner = "if"
+        if len(partners) > 1:
+            lines.append("\t\t\t\t\t\tif = {")
+            lines.append(
+                "\t\t\t\t\t\t\tlimit = { "
+                f"cm_trmm_tie_count_{aliases[right]} >= 2 }}")
+            lines.append("\t\t\t\t\t\t\tset_variable = {")
+            lines.append("\t\t\t\t\t\t\t\tname = cm_trmm_tie_idx")
+            lines.append("\t\t\t\t\t\t\t\tvalue = 10")
+            lines.append("\t\t\t\t\t\t\t}")
+            lines.append("\t\t\t\t\t\t}")
+            inner = "else_if"
+        for partner in partners:
+            lines.append(f"\t\t\t\t\t\t{inner} = {{")
+            lines.append(
+                "\t\t\t\t\t\t\tlimit = { "
+                f"{tied_trigger(right, partner, aliases)} }}")
+            lines.append("\t\t\t\t\t\t\tset_variable = {")
+            lines.append("\t\t\t\t\t\t\t\tname = cm_trmm_tie_idx")
+            lines.append(
+                f"\t\t\t\t\t\t\t\tvalue = {n - ROYAL_RIGHTS.index(partner)}")
+            lines.append("\t\t\t\t\t\t\t}")
+            lines.append("\t\t\t\t\t\t}")
+            inner = "else_if"
+        lines.append("\t\t\t\t\t}")
+    lines.append("\t\t\t\t}")
     lines.append("\t\t\t}")
     lines.append("\t\t}")
     lines.append("\t}")
@@ -1321,6 +1387,10 @@ def emit_effects(options, aliases, boosted_goods, relevant):
     lines.append("\t\t\tevery_location_in_province = {")
     lines.append("\t\t\t\tlimit = { has_variable = cm_trmm_best_idx }")
     lines.append("\t\t\t\tremove_variable = cm_trmm_best_idx")
+    lines.append("\t\t\t}")
+    lines.append("\t\t\tevery_location_in_province = {")
+    lines.append("\t\t\t\tlimit = { has_variable = cm_trmm_tie_idx }")
+    lines.append("\t\t\t\tremove_variable = cm_trmm_tie_idx")
     lines.append("\t\t\t}")
     lines.append("\t\t}")
     lines.append("\t}")
@@ -1502,11 +1572,11 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
     n = len(ROYAL_RIGHTS)
     lines.append(
         "# Stripe-reason lines for the map mode tooltips' bottom:\n"
-        "# cm_trmm_granted_reason names the granted right behind the main mode's\n"
-        "# stripe tier, cm_trmm_search_reason_* the reason for the search modes'\n"
-        "# stripe. Blocks mirror the stripe limits, so first match = stripe\n"
-        "# precedence.")
-    lines.append("cm_trmm_granted_reason = {")
+        "# cm_trmm_stripe_reason explains the main mode's stripe (the granted\n"
+        "# right's fit tier, or the tied rights), cm_trmm_search_reason_* the\n"
+        "# reason for the search modes' stripe. Blocks mirror the stripe limits,\n"
+        "# so first match = stripe precedence.")
+    lines.append("cm_trmm_stripe_reason = {")
     lines.append("\ttype = location")
     for pos, right in enumerate(ROYAL_RIGHTS):
         idx = n - pos
@@ -1538,6 +1608,16 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
         lines.append(
             f"\t\tlocalization_key = cm_trmm_reason_poor_{aliases[right]}")
         lines.append("\t}")
+    for pos, right in enumerate(ROYAL_RIGHTS[:-1]):
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append("\t\t\thas_variable = cm_trmm_tie_idx")
+        lines.append(f"\t\t\tvar:cm_trmm_best_idx = {n - pos}")
+        lines.append("\t\t\tvar:cm_trmm_tie_idx >= 1")
+        lines.append("\t\t}")
+        lines.append(
+            f"\t\tlocalization_key = cm_trmm_reason_tied_{aliases[right]}")
+        lines.append("\t}")
     lines.append("\ttext = {")
     lines.append("\t\tlocalization_key = cm_trmm_blank")
     lines.append("\t\tfallback = yes")
@@ -1561,6 +1641,21 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
         lines.append("\t\t}")
         lines.append("\t\tlocalization_key = cm_trmm_search_best_line")
         lines.append("\t}")
+        if pos != 0:
+            lines.append("\ttext = {")
+            lines.append("\t\ttrigger = {")
+            lines.append("\t\t\thas_variable = cm_trmm_tie_idx")
+            lines.append("\t\t\tOR = {")
+            lines.append(f"\t\t\t\tvar:cm_trmm_tie_idx = {idx}")
+            lines.append("\t\t\t\tAND = {")
+            lines.append("\t\t\t\t\tvar:cm_trmm_tie_idx = 10")
+            lines.append(f"\t\t\t\t\tcm_trmm_tier_{alias} = 0")
+            lines.append("\t\t\t\t}")
+            lines.append("\t\t\t}")
+            lines.append("\t\t}")
+            lines.append(
+                "\t\tlocalization_key = cm_trmm_search_tied_best_line")
+            lines.append("\t}")
         lines.append("\ttext = {")
         lines.append("\t\ttrigger = {")
         lines.append("\t\t\tOR = {")
@@ -1804,6 +1899,27 @@ def emit_map_mode(rights, aliases, right_colors):
     body.append("\t\t\t}")
     body.append(f"\t\t\tvalue = {GRANTED_POOR_STRIPE}")
     body.append("\t\t}")
+    body.append("\t\t# cm_trmm_tie_idx: 1-8 = two-way runner-up, 10 = 3+ tied.")
+    body.append("\t\telse_if = {")
+    body.append("\t\t\tlimit = {")
+    body.append("\t\t\t\tis_land = yes")
+    body.append("\t\t\t\thas_variable = cm_trmm_tie_idx")
+    body.append("\t\t\t\tvar:cm_trmm_tie_idx = 10")
+    body.append("\t\t\t}")
+    body.append(f"\t\t\tvalue = {MULTI_TIE_STRIPE}")
+    body.append("\t\t}")
+    for pos, right in enumerate(ROYAL_RIGHTS[1:], start=1):
+        idx = n - pos
+        color, source = right_colors[right]
+        body.append("\t\telse_if = {")
+        body.append("\t\t\tlimit = {")
+        body.append("\t\t\t\tis_land = yes")
+        body.append("\t\t\t\thas_variable = cm_trmm_tie_idx")
+        body.append(f"\t\t\t\tvar:cm_trmm_tie_idx = {idx}")
+        body.append("\t\t\t}")
+        body.append(f"\t\t\t# {right} color: {source}")
+        body.append(f"\t\t\tvalue = {color}")
+        body.append("\t\t}")
     body.append("\t}")
     body.append("")
     for right in ROYAL_RIGHTS:
@@ -1819,7 +1935,8 @@ def emit_map_mode(rights, aliases, right_colors):
     for desc, key_color in (
             ("cm_trmm_legend_granted_best", GRANTED_BEST_STRIPE),
             ("cm_trmm_legend_granted_good", GRANTED_GOOD_STRIPE),
-            ("cm_trmm_legend_granted_poor", GRANTED_POOR_STRIPE)):
+            ("cm_trmm_legend_granted_poor", GRANTED_POOR_STRIPE),
+            ("cm_trmm_legend_tied_multi", MULTI_TIE_STRIPE)):
         body.append("\tlegend_key = {")
         body.append(f"\t\tdesc = \"{desc}\"")
         body.append(f"\t\tcolor = {key_color}")
@@ -1862,7 +1979,8 @@ def emit_search_map_modes(rights, aliases, right_colors):
         "# Per-right search variants of cm_best_town_right, hidden from the flyout",
         "# (opened from the search panel and the urban right tooltips). The fill lerps",
         "# from the low anchor to the right's own color by its fit score; stripes mark",
-        "# already-granted, best-right-here, and other-right-granted locations.",
+        "# already-granted, best-or-tied-for-best-here, and other-right-granted",
+        "# locations. cm_trmm_tie_idx: 1-8 = two-way runner-up, 10 = 3+ tied.",
     ]
     for pos, right in enumerate(ROYAL_RIGHTS):
         alias = aliases[right]
@@ -1908,7 +2026,17 @@ def emit_search_map_modes(rights, aliases, right_colors):
         body.append("\t\t\tlimit = {")
         body.append("\t\t\t\tis_land = yes")
         body.append("\t\t\t\thas_variable = cm_trmm_best_idx")
-        body.append(f"\t\t\t\tvar:cm_trmm_best_idx = {idx}")
+        if pos == 0:
+            body.append(f"\t\t\t\tvar:cm_trmm_best_idx = {idx}")
+        else:
+            body.append("\t\t\t\tOR = {")
+            body.append(f"\t\t\t\t\tvar:cm_trmm_best_idx = {idx}")
+            body.append(f"\t\t\t\t\tvar:cm_trmm_tie_idx = {idx}")
+            body.append("\t\t\t\t\tAND = {")
+            body.append("\t\t\t\t\t\tvar:cm_trmm_tie_idx = 10")
+            body.append(f"\t\t\t\t\t\tcm_trmm_tier_{alias} = 0")
+            body.append("\t\t\t\t\t}")
+            body.append("\t\t\t\t}")
         body.append("\t\t\t}")
         body.append(f"\t\t\tvalue = {SEARCH_BEST_STRIPE}")
         body.append("\t\t}")
@@ -1992,7 +2120,7 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
         f"[ROOT.GetLocation.GetProvince.GetName] specialization options:{slot_calls}"
         f"\\n\\nDetails:{bd_calls}"
         f"\\n\\nBest industries:{ind_calls}"
-        f"[ROOT.GetLocation.Custom('cm_trmm_granted_reason')]\"")
+        f"[ROOT.GetLocation.Custom('cm_trmm_stripe_reason')]\"")
     search_cores = {}
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
@@ -2111,6 +2239,13 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
         lines.append(
             f" cm_trmm_reason_poor_{alias}: "
             f"\"\\n\\n{granted_part} - below {pct}% score\"")
+    for pos, right in enumerate(ROYAL_RIGHTS[:-1]):
+        alias = aliases[right]
+        tied_items = "".join(
+            f"[ROOT.GetLocation.Custom('cm_trmm_tie_item_{alias}_{aliases[other]}')]"
+            for other in ROYAL_RIGHTS[pos + 1:])
+        lines.append(
+            f" cm_trmm_reason_tied_{alias}: \"\\n\\nTied with: {tied_items}\"")
     reason_items = "".join(
         f"[ROOT.GetLocation.Custom('cm_uright_assigned_item_{aliases[right]}')]"
         for right in ROYAL_RIGHTS)
@@ -2185,6 +2320,9 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
         lines.append(
             f" cm_trmm_grant_title_{alias}: "
             f"\"Grant [ShowTownRightsName('{right}')]\"")
+        lines.append(
+            f" cm_trmm_grant_tt_{alias}: "
+            f"\"Match: [Location.MakeScope.ScriptValue('cm_trmm_right_{alias}')|%1]\"")
     return "\n".join(lines) + "\n"
 
 
@@ -2278,41 +2416,70 @@ def emit_grant_section(aliases):
         lines.append(
             f"\t\t\tvisible = \"[{f'Not({free})' if negate else free}]\"")
         lines.append("\t\t}")
-    for right in ROYAL_RIGHTS:
-        alias = aliases[right]
-        gui = f"GetScriptedGui('cm_trmm_grant_{alias}')"
-        search_pair = (f"Or(GetMapMode('cm_trmm_search_{alias}').IsActive, "
-                       f"GetMapMode('cm_trmm_search_{alias}_refresh').IsActive)")
-        scoring = (f"GreaterThan_CFixedPoint(Location.MakeScope.ScriptValue("
-                   f"'cm_trmm_right_{alias}'), '(CFixedPoint)0')")
-        lines.append("")
-        lines.append("\t\tbutton_townrights = {")
-        lines.append("\t\t\tsize = { 34 30 }")
-        lines.append(f"\t\t\ttext = \"cm_uright_icon_line_{alias}\"")
-        lines.append(
-            f"\t\t\tvisible = \"[And(Or({search_pair}, And({best_pair}, "
-            f"{scoring})), {gui}.IsShown({root}))]\"")
-        lines.append(f"\t\t\tenabled = \"[{gui}.IsValid({root})]\"")
-        lines.append("")
-        lines.append("\t\t\taction_tooltip = {")
-        lines.append("\t\t\t\tclick_type = left")
-        lines.append("\t\t\t\tclick_mode = single")
-        lines.append(f"\t\t\t\ttitle = \"cm_trmm_grant_title_{alias}\"")
-        lines.append(
-            "\t\t\t\tconditions = \"[AddLocalizationIf("
-            "Not(ShowGrantLocationTownRights(Location.Self)), 'TWR_NOT_CAPABLE')]\"")
-        lines.append(
-            f"\t\t\t\tconditions = \"[AddLocalizationIf(Not(GetScriptedGui("
-            f"'cm_trmm_grant_can_afford').IsShown({player})), 'CM_TRMM_GRANT_CANT_AFFORD')]\"")
-        lines.append(
-            f"\t\t\t\tconditions = \"[AddLocalizationIf(And3("
-            f"ShowGrantLocationTownRights(Location.Self), "
-            f"GetScriptedGui('cm_trmm_grant_can_afford').IsShown({player}), "
-            f"Not({gui}.IsValid({root}))), 'CM_TRMM_GRANT_REQUIREMENTS')]\"")
-        lines.append(f"\t\t\t\tenabled = \"[{gui}.IsValid({root})]\"")
-        lines.append(f"\t\t\t\ton_action = \"[{gui}.Execute({root})]\"")
-        lines.append("\t\t\t}")
-        lines.append("\t\t}")
+    # One copy of each right's button per slot position; the cm_trmm_grant_slot
+    # values order the visible buttons best-first.
+    for slot in range(len(ROYAL_RIGHTS)):
+        for right in ROYAL_RIGHTS:
+            alias = aliases[right]
+            gui = f"GetScriptedGui('cm_trmm_grant_{alias}')"
+            search_pair = (f"Or(GetMapMode('cm_trmm_search_{alias}').IsActive, "
+                           f"GetMapMode('cm_trmm_search_{alias}_refresh').IsActive)")
+            scoring = (f"GreaterThan_CFixedPoint(Location.MakeScope.ScriptValue("
+                       f"'cm_trmm_right_{alias}'), '(CFixedPoint)0')")
+            slot_eq = (f"EqualTo_CFixedPoint(Location.MakeScope.ScriptValue("
+                       f"'cm_trmm_grant_slot_{alias}'), '(CFixedPoint){slot}')")
+            lines.append("")
+            lines.append("\t\tbutton_townrights = {")
+            lines.append("\t\t\tsize = { 34 30 }")
+            lines.append(f"\t\t\ttext = \"cm_uright_icon_line_{alias}\"")
+            lines.append(
+                f"\t\t\tvisible = \"[And3({slot_eq}, Or({search_pair}, "
+                f"And({best_pair}, {scoring})), {gui}.IsShown({root}))]\"")
+            lines.append(f"\t\t\tenabled = \"[{gui}.IsValid({root})]\"")
+            lines.append("")
+            lines.append("\t\t\ttooltipwidget = {")
+            lines.append("\t\t\t\tContextualTooltipType = {")
+            lines.append("\t\t\t\t\tblockoverride \"title_icon\" {")
+            lines.append("\t\t\t\t\t\ticon = {")
+            lines.append("\t\t\t\t\t\t\tusing = tooltip_title_icon_size")
+            lines.append(
+                "\t\t\t\t\t\t\ttexture = \"[GetConceptTexture('town_rights')]\"")
+            lines.append("\t\t\t\t\t\t}")
+            lines.append("\t\t\t\t\t}")
+            lines.append("\t\t\t\t\tblockoverride \"concept_link\" {")
+            lines.append("\t\t\t\t\t\ttext = \"[town_rights|e]\"")
+            lines.append("\t\t\t\t\t}")
+            lines.append("\t\t\t\t\tblockoverride \"title_text\" {")
+            lines.append(
+                f"\t\t\t\t\t\ttext = \"[ShowTownRightsNameWithNoTooltip('{right}')]\"")
+            lines.append("\t\t\t\t\t}")
+            lines.append("\t\t\t\t\tblockoverride \"tooltip_content\" {")
+            lines.append("\t\t\t\t\t\tTooltipStringPairList = {")
+            lines.append(f"\t\t\t\t\t\t\ttextcontext = \"cm_trmm_grant_tt_{alias}\"")
+            lines.append("\t\t\t\t\t\t}")
+            lines.append("\t\t\t\t\t}")
+            lines.append("\t\t\t\t}")
+            lines.append("\t\t\t}")
+            lines.append("")
+            lines.append("\t\t\taction_tooltip = {")
+            lines.append("\t\t\t\tclick_type = left")
+            lines.append("\t\t\t\tclick_mode = single")
+            lines.append(f"\t\t\t\ttitle = \"cm_trmm_grant_title_{alias}\"")
+            lines.append(
+                "\t\t\t\tconditions = \"[AddLocalizationIf("
+                "Not(ShowGrantLocationTownRights(Location.Self)), 'TWR_NOT_CAPABLE')]\"")
+            lines.append(
+                f"\t\t\t\tconditions = \"[AddLocalizationIf(Not(GetScriptedGui("
+                f"'cm_trmm_grant_can_afford').IsShown({player})), 'CM_TRMM_GRANT_CANT_AFFORD')]\"")
+            lines.append(
+                f"\t\t\t\tconditions = \"[AddLocalizationIf(And3("
+                f"ShowGrantLocationTownRights(Location.Self), "
+                f"GetScriptedGui('cm_trmm_grant_can_afford').IsShown({player}), "
+                f"Not({gui}.IsValid({root}))), 'CM_TRMM_GRANT_REQUIREMENTS')]\"")
+            lines.append(f"\t\t\t\tenabled = \"[{gui}.IsValid({root})]\"")
+            lines.append(f"\t\t\t\ton_action = \"[{gui}.Execute({root})]\"")
+            lines.append("\t\t\t}")
+            lines.append("\t\t}")
     lines.append("\t}")
     lines.append("}")
     return "\n".join(lines) + "\n"
