@@ -243,7 +243,7 @@ SEARCH_OTHER_GRANTED_STRIPE = "rgb { 0 0 0 }"
 
 # Main-mode granted stripes: how well the granted right fits the location.
 GRANTED_BEST_STRIPE = "rgb { 60 220 60 }"
-GRANTED_GOOD_STRIPE = "rgb { 255 255 255 }"
+GRANTED_GOOD_STRIPE = "rgb { 190 190 190 }"
 GRANTED_POOR_STRIPE = "rgb { 230 60 50 }"
 # Middle granted-stripe tier: the granted right's own score at least this.
 GRANTED_GOOD_THRESHOLD = 0.5
@@ -1716,6 +1716,8 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
         lines.append("\t}")
         lines.append("\ttext = {")
         lines.append("\t\ttrigger = {")
+        lines.append("\t\t\thas_variable = cm_trmm_best_idx")
+        lines.append(f"\t\t\tcm_trmm_right_{alias} > 0")
         lines.append("\t\t\thas_max_town_rights = no")
         lines.append("\t\t}")
         lines.append("\t\tlocalization_key = cm_trmm_search_open_slot_line")
@@ -2118,6 +2120,10 @@ def emit_search_map_modes(rights, aliases, right_colors):
         body.append("\t\telse_if = {")
         body.append("\t\t\tlimit = {")
         body.append("\t\t\t\tis_land = yes")
+        # Gate able-to-grant on the searched right fitting here, so open slots
+        # with no coverage for it stay unpainted.
+        body.append("\t\t\t\thas_variable = cm_trmm_best_idx")
+        body.append(f"\t\t\t\tcm_trmm_right_{alias} > 0")
         body.append("\t\t\t\thas_max_town_rights = no")
         body.append("\t\t\t}")
         body.append(f"\t\t\tvalue = {OPEN_SLOT_STRIPE}")
@@ -2374,15 +2380,23 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
             f"used by the industries @{right}! [ShowTownRightsName('{right}')] "
             f"boosts.[ROOT.GetLocation.Custom('cm_trmm_search_reason_{alias}')]\"")
 
-    # The _refresh twins reuse their primary's display name.
+    # The engine looks up mapmode_<name>_name and MAPMODE_<name> for hidden twins
+    # too; alias each to its primary.
     lines.append(
         " mapmode_cm_best_town_right_refresh_name: "
         "\"$mapmode_cm_best_town_right_name$\"")
+    lines.append(
+        " MAPMODE_CM_BEST_TOWN_RIGHT_REFRESH: "
+        "\"$MAPMODE_CM_BEST_TOWN_RIGHT$\"")
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
+        upper = alias.upper()
         lines.append(
             f" mapmode_cm_trmm_search_{alias}_refresh_name: "
             f"\"$mapmode_cm_trmm_search_{alias}_name$\"")
+        lines.append(
+            f" MAPMODE_CM_TRMM_SEARCH_{upper}_REFRESH: "
+            f"\"$MAPMODE_CM_TRMM_SEARCH_{upper}$\"")
 
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
