@@ -243,7 +243,7 @@ SEARCH_OTHER_GRANTED_STRIPE = "rgb { 0 0 0 }"
 
 # Main-mode granted stripes: how well the granted right fits the location.
 GRANTED_BEST_STRIPE = "rgb { 60 220 60 }"
-GRANTED_GOOD_STRIPE = "rgb { 190 190 190 }"
+GRANTED_GOOD_STRIPE = "rgb { 254 254 254 }"
 GRANTED_POOR_STRIPE = "rgb { 230 60 50 }"
 # Middle granted-stripe tier: the granted right's own score at least this.
 GRANTED_GOOD_THRESHOLD = 0.5

@@ -6,11 +6,33 @@ cm_pf_current_proximity = {
 	value = proximity
 }
 
-# Location scope. Proximity a new governor could still add here.
+# Location scope. Proximity a new governor could still add here, against the stored basis
+# proximity cm_pf_pb.
 cm_pf_gf_seed_value = {
 	value = 80 # Governor source value: in_game/common/building_types/capital_buildings.txt:681
-	subtract = cm_pf_current_proximity
+	subtract = var:cm_pf_pb
 	min = 0
+}
+
+# Location scope. Proximity source already here from anything other than the capital or an
+# existing governor; a new governor stacks on top of it, raising its source value past 80 by
+# this much.
+cm_pf_gf_stack_excess_value = {
+	value = modifier:local_proximity_source
+	if = {
+		limit = { is_capital = yes }
+		subtract = 100 # Capital source value: main_menu/common/static_modifiers/location.txt:330
+	}
+	if = {
+		limit = { has_building = building_type:local_governor }
+		subtract = 80 # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+	}
+	if = {
+		limit = { has_building = building_type:naval_governor }
+		subtract = 80 # Naval governor source value: in_game/common/building_types/capital_buildings.txt:840
+	}
+	min = 0
+	max = 20 # Sources stack to a 100 cap (main_menu/common/static_modifiers/location.txt:330); the governor's 80 leaves 20.
 }
 
 # cm_pf_road_reduction_value, cm_pf_cap_adj_value, and cm_pf_capb_extra_value are the

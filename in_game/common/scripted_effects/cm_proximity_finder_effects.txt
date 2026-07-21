@@ -224,22 +224,20 @@ cm_pf_prep_core = {
 		every_owned_location = {
 			if = {
 				limit = { has_variable = cm_pf_d }
-				# Headroom against the predicted proximity (100 - d).
+				# The predicted proximity (100 - d) replaces the live read as the basis.
 				set_variable = {
-					name = cm_pf_t
+					name = cm_pf_pb
 					value = {
-						value = 80 # Governor source value: in_game/common/building_types/capital_buildings.txt:681
-						subtract = {
-							value = 100
-							subtract = var:cm_pf_d
-						}
-						min = 0
+						value = 100 # Capital source value: main_menu/common/static_modifiers/location.txt:330
+						subtract = var:cm_pf_d
 					}
 				}
+				set_variable = { name = cm_pf_t value = cm_pf_gf_seed_value }
 				remove_variable = cm_pf_d
 			}
 			else = {
 				# Unreached by any source: predicted proximity 0.
+				set_variable = { name = cm_pf_pb value = 0 }
 				set_variable = { name = cm_pf_t value = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
 			}
 		}
@@ -248,8 +246,8 @@ cm_pf_prep_core = {
 			remove_variable = cm_pf_d
 		}
 	}
-	# A proximity source only floors its own tile, so a zero-headroom candidate can never add
-	# proximity anywhere.
+	# A proximity source only floors its own tile, so a candidate with no effective headroom
+	# (its stacked source value minus its basis proximity) can never add proximity anywhere.
 	if = {
 		limit = { var:cm_pf_run_g = 1 }
 		# Governor search budget: nothing contributes at path cost beyond the largest headroom.
@@ -269,12 +267,27 @@ cm_pf_prep_core = {
 				}
 			}
 			else = {
-				set_variable = { name = cm_gf_nogain value = 1 }
-				cm_pf_drop_gov_outputs = yes
+				# Stacking can clear the bar even at zero clamped headroom.
+				set_local_variable = {
+					name = cm_pf_lte
+					value = {
+						value = 80 # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+						subtract = var:cm_pf_pb
+					}
+				}
 				if = {
-					# Combined runs still need the capital search here.
-					limit = { scope:cm_pf_c.var:cm_pf_run_c = 0 }
-					set_variable = { name = cm_pf_done value = 1 }
+					limit = { has_variable = cm_pf_sx }
+					change_local_variable = { name = cm_pf_lte add = var:cm_pf_sx }
+				}
+				if = {
+					limit = { local_var:cm_pf_lte <= 0 }
+					set_variable = { name = cm_gf_nogain value = 1 }
+					cm_pf_drop_gov_outputs = yes
+					if = {
+						# Combined runs still need the capital search here.
+						limit = { scope:cm_pf_c.var:cm_pf_run_c = 0 }
+						set_variable = { name = cm_pf_done value = 1 }
+					}
 				}
 			}
 		}
@@ -411,7 +424,17 @@ cm_pf_prime_land_location = {
 	else = {
 		set_variable = { name = cm_pf_topo value = 0 }
 	}
+	set_variable = { name = cm_pf_pb value = cm_pf_current_proximity }
 	set_variable = { name = cm_pf_t value = cm_pf_gf_seed_value }
+	remove_variable = cm_pf_sx
+	if = {
+		limit = { modifier:local_proximity_source > 0 }
+		set_local_variable = { name = cm_pf_lsx value = cm_pf_gf_stack_excess_value }
+		if = {
+			limit = { local_var:cm_pf_lsx > 0 }
+			set_variable = { name = cm_pf_sx value = local_var:cm_pf_lsx }
+		}
+	}
 	set_variable = { name = cm_pf_cl_g value = cm_pf_cl_g_value }
 	set_variable = { name = cm_pf_cl_c value = cm_pf_cl_c_value }
 	set_variable = { name = cm_pf_cl_cb value = cm_pf_cl_cb_value }
@@ -537,7 +560,13 @@ cm_pf_score_candidate = {
 			NOT = { has_variable = cm_gf_nogain }
 		}
 		set_variable = { name = cm_pf_d value = 0 }
-		cm_pf_bellman_g = { BUDGET = scope:cm_pf_c.var:cm_pf_tmax }
+		set_local_variable = { name = cm_pf_bg value = scope:cm_pf_c.var:cm_pf_tmax }
+		if = {
+			# A stacked candidate's gains can outrun the shared budget by its excess.
+			limit = { has_variable = cm_pf_sx }
+			change_local_variable = { name = cm_pf_bg add = var:cm_pf_sx }
+		}
+		cm_pf_bellman_g = { BUDGET = local_var:cm_pf_bg }
 		cm_pf_sweep_gov = yes
 	}
 	if = {
@@ -557,21 +586,34 @@ cm_pf_score_candidate = {
 cm_pf_sweep_gov = {
 	set_local_variable = { name = cm_pf_sum value = 0 }
 	set_local_variable = { name = cm_pf_sum_p value = 0 }
+	# The candidate's source value: a governor plus whatever already stacks with one here.
+	set_local_variable = { name = cm_pf_sv value = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+	if = {
+		limit = { has_variable = cm_pf_sx }
+		change_local_variable = { name = cm_pf_sv add = var:cm_pf_sx }
+	}
 	# A source only floors its own tile, so no destination can gain more than the candidate's
 	# own headroom.
-	set_local_variable = { name = cm_pf_hc value = var:cm_pf_t }
+	set_local_variable = {
+		name = cm_pf_hc
+		value = {
+			value = local_var:cm_pf_sv
+			subtract = var:cm_pf_pb
+		}
+	}
 	scope:cm_pf_c = {
 		every_owned_location = {
 			limit = { has_variable = cm_pf_d }
-			if = {
-				limit = { var:cm_pf_t > var:cm_pf_d }
-				set_local_variable = {
-					name = cm_pf_gain
-					value = {
-						value = var:cm_pf_t
-						subtract = var:cm_pf_d
-					}
+			set_local_variable = {
+				name = cm_pf_gain
+				value = {
+					value = local_var:cm_pf_sv
+					subtract = var:cm_pf_d
+					subtract = var:cm_pf_pb
 				}
+			}
+			if = {
+				limit = { local_var:cm_pf_gain > 0 }
 				if = {
 					limit = { local_var:cm_pf_gain > local_var:cm_pf_hc }
 					set_local_variable = { name = cm_pf_gain value = local_var:cm_pf_hc }
@@ -2045,7 +2087,11 @@ cm_pf_score_candidate_pruned = {
 		if = {
 			limit = { scope:cm_pf_c = { cm_pf_method_is_tax_base = yes } }
 			if = {
-				limit = { local_var:cm_pf_do_g = 1 }
+				limit = {
+					local_var:cm_pf_do_g = 1
+					# The 80-based bounds undercount stacked candidates; always evaluate those.
+					NOT = { has_variable = cm_pf_sx }
+				}
 				# Headroom cap: a candidate scores at most its own headroom times the
 				# positive-headroom total.
 				set_local_variable = {
@@ -2077,7 +2123,10 @@ cm_pf_score_candidate_pruned = {
 		}
 		else = {
 			if = {
-				limit = { local_var:cm_pf_do_g = 1 }
+				limit = {
+					local_var:cm_pf_do_g = 1
+					NOT = { has_variable = cm_pf_sx }
+				}
 				set_local_variable = {
 					name = cm_pf_cap_g
 					value = {
@@ -2109,7 +2158,13 @@ cm_pf_score_candidate_pruned = {
 	if = {
 		limit = { local_var:cm_pf_do_g = 1 }
 		set_variable = { name = cm_pf_d value = 0 }
-		cm_pf_bellman_g_fast = { BUDGET = scope:cm_pf_c.var:cm_pf_tmax }
+		set_local_variable = { name = cm_pf_bg value = scope:cm_pf_c.var:cm_pf_tmax }
+		if = {
+			# A stacked candidate's gains can outrun the shared budget by its excess.
+			limit = { has_variable = cm_pf_sx }
+			change_local_variable = { name = cm_pf_bg add = var:cm_pf_sx }
+		}
+		cm_pf_bellman_g_fast = { BUDGET = local_var:cm_pf_bg }
 		cm_pf_sweep_gov = yes
 		if = {
 			limit = { scope:cm_pf_c.var:cm_pf_acc <= 4 }
@@ -2226,6 +2281,22 @@ cm_pf_phase_sample = {
 			}
 		}
 		capital = { set_variable = { name = cm_pf_samp value = 1 } }
+	}
+	if = {
+		# The 80-based order key undercounts stacked candidates; sample the placeable ones.
+		limit = { var:cm_pf_run_g = 1 }
+		every_owned_location = {
+			limit = {
+				has_variable = cm_pf_sx
+				has_variable = cm_pf_cl_g
+				NOT = { has_variable = cm_gf_nogain }
+				OR = {
+					is_connected_to_through_realm = owner.capital
+					is_port = yes
+				}
+			}
+			set_variable = { name = cm_pf_samp value = 1 }
+		}
 	}
 	set_variable = { name = cm_pf_phase value = 5 }
 }
@@ -2680,6 +2751,8 @@ cm_pf_clean_location = {
 	remove_variable = cm_pf_done
 	remove_variable = cm_pf_topo
 	remove_variable = cm_pf_t
+	remove_variable = cm_pf_pb
+	remove_variable = cm_pf_sx
 	remove_variable = cm_pf_cl_g
 	remove_variable = cm_pf_cl_c
 	remove_variable = cm_pf_cl_cb
