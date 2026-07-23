@@ -120,22 +120,6 @@ cm_food_can_build_fishing_village = {
 	}
 }
 
-# Option 6: +1 Forest Village level
-# Requires: wild_game RGO OR forest/woods/jungle vegetation, rural, not at max level, not already under construction
-cm_food_can_build_forest_village = {
-	AND = {
-		location_rank = location_rank:rural_settlement
-		OR = {
-			raw_material = goods:wild_game
-			vegetation = forest
-			vegetation = woods
-			vegetation = jungle
-		}
-		cm_food_location_buildable_for_building_type = { target = building_type:forest_village }
-		cm_check_location_has_peasants_available_or_will_be = yes
-	}
-}
-
 # Per-option discount check: can-build AND meets minimum discount, ignoring gold.
 # Root is the location. Expects scopes: country, location.
 
@@ -168,13 +152,7 @@ cm_food_option_fishing_village_discounted = {
 	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
 }
 
-cm_food_option_forest_village_discounted = {
-	cm_food_can_build_forest_village = yes
-	building_type:forest_village = { save_temporary_scope_as = cm_building_type }
-	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food }
-}
-
-# True if ANY of the six food-building options meets its minimum discount, ignoring gold.
+# True if ANY of the five food-building options meets its minimum discount, ignoring gold.
 cm_food_location_has_discounted_option = {
 	OR = {
 		cm_food_option_rgo_discounted = yes
@@ -182,7 +160,6 @@ cm_food_location_has_discounted_option = {
 		cm_food_option_windmill_discounted = yes
 		cm_food_option_irrigation_discounted = yes
 		cm_food_option_fishing_village_discounted = yes
-		cm_food_option_forest_village_discounted = yes
 	}
 }
 
@@ -216,13 +193,7 @@ cm_food_option_fishing_village_unshortaged = {
 	cm_market_has_construction_goods_for_building = yes
 }
 
-cm_food_option_forest_village_unshortaged = {
-	cm_food_option_forest_village_discounted = yes
-	building_type:forest_village = { save_temporary_scope_as = cm_building_type }
-	cm_market_has_construction_goods_for_building = yes
-}
-
-# True if ANY of the six food options is discounted and its construction goods are not short.
+# True if ANY of the five food options is discounted and its construction goods are not short.
 cm_food_location_has_unshortaged_discounted_option = {
 	OR = {
 		cm_food_option_rgo_unshortaged = yes
@@ -230,7 +201,6 @@ cm_food_location_has_unshortaged_discounted_option = {
 		cm_food_option_windmill_unshortaged = yes
 		cm_food_option_irrigation_unshortaged = yes
 		cm_food_option_fishing_village_unshortaged = yes
-		cm_food_option_forest_village_unshortaged = yes
 	}
 }
 
@@ -249,6 +219,5 @@ cm_food_location_has_buildable_option = {
 		cm_food_can_build_windmill = yes
 		cm_food_can_build_irrigation = yes
 		cm_food_can_build_fishing_village = yes
-		cm_food_can_build_forest_village = yes
 	}
 }

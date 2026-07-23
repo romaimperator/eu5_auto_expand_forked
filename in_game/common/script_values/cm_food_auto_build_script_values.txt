@@ -178,15 +178,6 @@ cm_food_marginal_fishing_village = {
 	multiply = cm_food_one_plus_total_food_mod
 }
 
-# Forest Village: delta B = +0.2 * wild_game.food_value + 1.0 local_monthly_food. delta food = delta_B * R * F.
-cm_food_marginal_forest_village = {
-	value = 0.2
-	goods:wild_game = { multiply = food_value }
-	add = 1.0
-	multiply = cm_food_raw_material_output_mod
-	multiply = cm_food_one_plus_total_food_mod
-}
-
 # --- Pop-weighted ranking values ---
 # Below the threshold the location's pop pool binds before its supported building levels, so the
 # option comparison ranks by marginal food per pop: windmill and irrigation employ 0.25 pop-units
@@ -250,14 +241,6 @@ cm_food_expected_gold_for_fishing_village = {
 	scope:cm_country = { add = cm_get_minimum_gold }
 }
 
-cm_food_expected_gold_for_forest_village = {
-	building_type:forest_village = { value = building_base_cost_in_gold }
-	multiply = { value = 1 add = cm_food_build_cost_modifier }
-	multiply = { value = 1 building_type:forest_village = { add = cm_get_construction_cost_adjustment_for_building_type } }
-	multiply = { value = 1 add = scope:cm_country.inflation }
-	scope:cm_country = { add = cm_get_minimum_gold }
-}
-
 # Build cost modifier, global plus local. Root is the location, expects scope:cm_country.
 cm_food_build_cost_modifier = {
 	value = 0
@@ -280,7 +263,6 @@ cm_food_gold_threshold = {
 	min = cm_food_expected_gold_for_windmill
 	min = cm_food_expected_gold_for_irrigation_systems
 	min = cm_food_expected_gold_for_fishing_village
-	min = cm_food_expected_gold_for_forest_village
 }
 
 # Food gold threshold raised by the spend already approved this drain.

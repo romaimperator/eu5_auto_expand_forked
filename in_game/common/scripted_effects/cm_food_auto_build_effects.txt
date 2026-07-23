@@ -32,7 +32,7 @@ cm_food_auto_build_in_location = {
 	# Skip the location when no pop-restricted option is buildable.
 	if = { limit = { NOT = { cm_food_location_pops_still_filling = yes } }
 
-		# Track best rank and action: 0=none, 1=rgo, 2=farming_village, 3=windmill, 4=irrigation, 5=fishing_village, 6=forest_village
+		# Track best rank and action: 0=none, 1=rgo, 2=farming_village, 3=windmill, 4=irrigation, 5=fishing_village
 		set_local_variable = { name = cm_food_best value = 0 }
 		set_local_variable = { name = cm_food_action value = 0 }
 
@@ -44,7 +44,6 @@ cm_food_auto_build_in_location = {
 		cm_food_consider_option = { CAN = cm_food_can_build_windmill MARGINAL = cm_food_rank_windmill ACTION = 3 }
 		cm_food_consider_option = { CAN = cm_food_can_build_irrigation MARGINAL = cm_food_rank_irrigation ACTION = 4 }
 		cm_food_consider_option = { CAN = cm_food_can_build_fishing_village MARGINAL = cm_food_marginal_fishing_village ACTION = 5 }
-		cm_food_consider_option = { CAN = cm_food_can_build_forest_village MARGINAL = cm_food_marginal_forest_village ACTION = 6 }
 
 		# --- Execute best action, discount-gated: if the winner fails min discount, build nothing ---
 		if = { limit = { local_var:cm_food_action = 1 cm_rgo_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
@@ -55,7 +54,6 @@ cm_food_auto_build_in_location = {
 		cm_food_stage_building_option = { ACTION = 3 BT = building_type:windmill }
 		cm_food_stage_building_option = { ACTION = 4 BT = building_type:irrigation_systems }
 		cm_food_stage_building_option = { ACTION = 5 BT = building_type:fishing_village }
-		cm_food_stage_building_option = { ACTION = 6 BT = building_type:forest_village }
 
 	} # end pops_still_filling check
 	} # end gold reserve
