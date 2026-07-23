@@ -107,7 +107,9 @@ cm_expand_metric_is = {
 # Metric gate for the GUI construction executor. Expects scopes: country, building_type,
 # cost, income, profit. Non-production types, zero construction demand, and a zero
 # threshold are exempt. The threshold is monthly gold per level for Tax Income and
-# Profit, years to recoup the cost for the ROI metrics.
+# Profit, years to recoup the cost for the ROI metrics. The ROI branches add
+# cm_bld_amenity_value when the amenity scopes (cm_amenity_loc and the cm_cur_* values)
+# are passed; Tax Income and Profit always compare the raw engine values.
 cm_gui_metric_gate_passes = {
 	OR = {
 		NOT = { scope:cm_building_type = { cm_is_building_type_production_building = yes } }
@@ -124,18 +126,44 @@ cm_gui_metric_gate_passes = {
 		}
 		AND = {
 			cm_expand_metric_is = { metric = 3 }
-			scope:cm_cost <= {
-				value = scope:cm_income
-				multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
-				multiply = 12
+			trigger_if = {
+				limit = { exists = scope:cm_amenity_loc }
+				scope:cm_amenity_loc = {
+					scope:cm_cost <= {
+						value = scope:cm_income
+						add = cm_bld_amenity_value
+						multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+						multiply = 12
+					}
+				}
+			}
+			trigger_else = {
+				scope:cm_cost <= {
+					value = scope:cm_income
+					multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+					multiply = 12
+				}
 			}
 		}
 		AND = {
 			cm_expand_metric_is = { metric = 4 }
-			scope:cm_cost <= {
-				value = scope:cm_profit
-				multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
-				multiply = 12
+			trigger_if = {
+				limit = { exists = scope:cm_amenity_loc }
+				scope:cm_amenity_loc = {
+					scope:cm_cost <= {
+						value = scope:cm_profit
+						add = cm_bld_amenity_value
+						multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+						multiply = 12
+					}
+				}
+			}
+			trigger_else = {
+				scope:cm_cost <= {
+					value = scope:cm_profit
+					multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+					multiply = 12
+				}
 			}
 		}
 	}

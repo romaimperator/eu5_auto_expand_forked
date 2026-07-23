@@ -1,0 +1,137 @@
+﻿# Predicted indirect value for the ROI metric gates: the gold/month one more level of a
+# building adds through its market access or RGO output grants, on top of the engine's
+# predicted income/profit. Grants are baked constants seeded by cm_amenity_populate_grant_maps.
+
+# Root is the location. Expects scope:cm_building_type and the GUI-only inputs
+# scope:cm_cur_market_access (Location.GetMarketAccess), scope:cm_cur_total_income
+# (Location.GetTotalIncome), scope:cm_cur_rgo_profit (Location.GetRGOProfitPerLevel),
+# with scope:cm_amenity_loc marking them present. Returns 0 when they are absent.
+cm_bld_amenity_value = {
+	value = 0
+	if = {
+		limit = {
+			exists = scope:cm_amenity_loc
+			exists = scope:cm_building_type
+		}
+		add = cm_bld_amenity_market_access
+		add = cm_bld_amenity_rgo_output
+	}
+}
+
+# Market access scales the whole location's throughput: one more level adds
+# (total income / access) * grant, the grant capped at the headroom below 100% access.
+cm_bld_amenity_market_access = {
+	value = 0
+	if = {
+		limit = {
+			has_global_variable_map = cm_amenity_market_access_grants
+			is_key_in_global_variable_map = { name = cm_amenity_market_access_grants target = scope:cm_building_type }
+			scope:cm_cur_market_access > 0
+			scope:cm_cur_market_access < 1
+			scope:cm_cur_total_income > 0
+		}
+		add = "global_variable_map(cm_amenity_market_access_grants|scope:cm_building_type)"
+		max = { value = 1 subtract = scope:cm_cur_market_access }
+		multiply = scope:cm_cur_total_income
+		divide = scope:cm_cur_market_access
+	}
+}
+
+# One more level's share of the RGO's income: grants times (RGO income / current output
+# bonuses), so income the existing bonuses already produce is not credited again.
+cm_bld_amenity_rgo_output = {
+	value = 0
+	if = {
+		limit = {
+			has_global_variable_map = cm_amenity_rgo_output_grants
+			is_key_in_global_variable_map = { name = cm_amenity_rgo_output_grants target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_amenity_rgo_output_grants|scope:cm_building_type)"
+	}
+	# Per-good grants, credited only when the location's RGO produces the boosted good.
+	if = {
+		limit = {
+			raw_material ?= goods:sugar
+			has_global_variable_map = cm_amenity_rgo_output_grants_sugar
+			is_key_in_global_variable_map = { name = cm_amenity_rgo_output_grants_sugar target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_amenity_rgo_output_grants_sugar|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:cotton
+			has_global_variable_map = cm_amenity_rgo_output_grants_cotton
+			is_key_in_global_variable_map = { name = cm_amenity_rgo_output_grants_cotton target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_amenity_rgo_output_grants_cotton|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:tobacco
+			has_global_variable_map = cm_amenity_rgo_output_grants_tobacco
+			is_key_in_global_variable_map = { name = cm_amenity_rgo_output_grants_tobacco target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_amenity_rgo_output_grants_tobacco|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:goods_gold
+			has_global_variable_map = cm_amenity_rgo_output_grants_goods_gold
+			is_key_in_global_variable_map = { name = cm_amenity_rgo_output_grants_goods_gold target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_amenity_rgo_output_grants_goods_gold|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:silver
+			has_global_variable_map = cm_amenity_rgo_output_grants_silver
+			is_key_in_global_variable_map = { name = cm_amenity_rgo_output_grants_silver target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_amenity_rgo_output_grants_silver|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:fish
+			has_global_variable_map = cm_amenity_rgo_output_grants_fish
+			is_key_in_global_variable_map = { name = cm_amenity_rgo_output_grants_fish target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_amenity_rgo_output_grants_fish|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:livestock
+			has_global_variable_map = cm_amenity_rgo_output_grants_livestock
+			is_key_in_global_variable_map = { name = cm_amenity_rgo_output_grants_livestock target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_amenity_rgo_output_grants_livestock|scope:cm_building_type)"
+	}
+	multiply = scope:cm_cur_rgo_profit
+	multiply = modifier:cm_rgo_level
+	divide = cm_bld_amenity_rgo_denominator
+}
+
+# 1 + every output bonus already in the RGO's income. Floored: devastation can push it negative.
+cm_bld_amenity_rgo_denominator = {
+	value = 1
+	add = modifier:local_raw_material_output
+	add = owner.modifier:global_raw_material_output
+	if = { limit = { raw_material ?= goods:sugar } add = modifier:local_sugar_output_modifier }
+	if = { limit = { raw_material ?= goods:cotton } add = modifier:local_cotton_output_modifier }
+	if = { limit = { raw_material ?= goods:tobacco } add = modifier:local_tobacco_output_modifier }
+	if = { limit = { raw_material ?= goods:goods_gold } add = modifier:local_goods_gold_output_modifier }
+	if = { limit = { raw_material ?= goods:silver } add = modifier:local_silver_output_modifier }
+	if = { limit = { raw_material ?= goods:fish } add = modifier:local_fish_output_modifier }
+	if = { limit = { raw_material ?= goods:livestock } add = modifier:local_livestock_output_modifier }
+	min = 0.25
+}
+
+# Root is the location. Expects scope:cm_income / scope:cm_profit plus the cm_bld_amenity_value scopes.
+cm_bld_adjusted_income = {
+	value = scope:cm_income
+	add = cm_bld_amenity_value
+}
+
+cm_bld_adjusted_profit = {
+	value = scope:cm_profit
+	add = cm_bld_amenity_value
+}
