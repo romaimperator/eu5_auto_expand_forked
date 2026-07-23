@@ -1097,6 +1097,122 @@ cm_trmm_right_masonry = {
 	divide = 2
 }
 
+# Right-score readers safe on unmarked locations (the grant row renders
+# there).
+cm_trmm_rightv_tooling = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_trmm_best_idx }
+		add = cm_trmm_right_tooling
+	}
+}
+cm_trmm_rightv_jewelry = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_trmm_best_idx }
+		add = cm_trmm_right_jewelry
+	}
+}
+cm_trmm_rightv_naval = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_trmm_best_idx }
+		add = cm_trmm_right_naval
+	}
+}
+cm_trmm_rightv_textile = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_trmm_best_idx }
+		add = cm_trmm_right_textile
+	}
+}
+cm_trmm_rightv_weaponry = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_trmm_best_idx }
+		add = cm_trmm_right_weaponry
+	}
+}
+cm_trmm_rightv_book = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_trmm_best_idx }
+		add = cm_trmm_right_book
+	}
+}
+cm_trmm_rightv_artisan = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_trmm_best_idx }
+		add = cm_trmm_right_artisan
+	}
+}
+cm_trmm_rightv_brewing = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_trmm_best_idx }
+		add = cm_trmm_right_brewing
+	}
+}
+cm_trmm_rightv_masonry = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_trmm_best_idx }
+		add = cm_trmm_right_masonry
+	}
+}
+
+# The granted royal right's fit versus the best specialization here:
+# the best score among granted rights, and the shortfall (0-1) the
+# granted stripe shades from green to red.
+cm_trmm_granted_best = {
+	value = 0
+	if = {
+		limit = { has_town_rights = town_rights_type:royal_tooling_rights }
+		min = cm_trmm_right_tooling
+	}
+	if = {
+		limit = { has_town_rights = town_rights_type:royal_jewelry_rights }
+		min = cm_trmm_right_jewelry
+	}
+	if = {
+		limit = { has_town_rights = town_rights_type:royal_naval_rights }
+		min = cm_trmm_right_naval
+	}
+	if = {
+		limit = { has_town_rights = town_rights_type:royal_textile_rights }
+		min = cm_trmm_right_textile
+	}
+	if = {
+		limit = { has_town_rights = town_rights_type:royal_weaponry_rights }
+		min = cm_trmm_right_weaponry
+	}
+	if = {
+		limit = { has_town_rights = town_rights_type:royal_book_rights }
+		min = cm_trmm_right_book
+	}
+	if = {
+		limit = { has_town_rights = town_rights_type:royal_artisan_rights }
+		min = cm_trmm_right_artisan
+	}
+	if = {
+		limit = { has_town_rights = town_rights_type:royal_brewing_rights }
+		min = cm_trmm_right_brewing
+	}
+	if = {
+		limit = { has_town_rights = town_rights_type:royal_masonry_rights }
+		min = cm_trmm_right_masonry
+	}
+}
+cm_trmm_granted_miss = {
+	value = var:cm_trmm_best_mil
+	multiply = 0.001
+	subtract = cm_trmm_granted_best
+	min = 0
+	max = 1
+}
+
 cm_trmm_enc_tooling = {
 	value = cm_trmm_right_tooling
 	multiply = 1000
@@ -5403,370 +5519,320 @@ cm_trmm_covv_glass_g2 = {
 	}
 }
 
-# 1 when any urban right both scores and is ungranted here (the
-# grant row's best-mode gate). Root is the location.
-cm_trmm_grant_choices = {
-	value = 0
-	if = {
-		limit = {
-			has_variable = cm_trmm_best_idx
-			OR = {
-				AND = {
-					cm_trmm_right_tooling > 0
-					NOT = { has_town_rights = town_rights_type:royal_tooling_rights }
-				}
-				AND = {
-					cm_trmm_right_jewelry > 0
-					NOT = { has_town_rights = town_rights_type:royal_jewelry_rights }
-				}
-				AND = {
-					cm_trmm_right_naval > 0
-					NOT = { has_town_rights = town_rights_type:royal_naval_rights }
-				}
-				AND = {
-					cm_trmm_right_textile > 0
-					NOT = { has_town_rights = town_rights_type:royal_textile_rights }
-				}
-				AND = {
-					cm_trmm_right_weaponry > 0
-					NOT = { has_town_rights = town_rights_type:royal_weaponry_rights }
-				}
-				AND = {
-					cm_trmm_right_book > 0
-					NOT = { has_town_rights = town_rights_type:royal_book_rights }
-				}
-				AND = {
-					cm_trmm_right_artisan > 0
-					NOT = { has_town_rights = town_rights_type:royal_artisan_rights }
-				}
-				AND = {
-					cm_trmm_right_brewing > 0
-					NOT = { has_town_rights = town_rights_type:royal_brewing_rights }
-				}
-				AND = {
-					cm_trmm_right_masonry > 0
-					NOT = { has_town_rights = town_rights_type:royal_masonry_rights }
-				}
-			}
-		}
-		add = 1
-	}
-}
-
 # Grant row ordering: how many rights beat this one on score, ties
 # broken by list order (0 = leftmost button). Root is the location.
 cm_trmm_grant_slot_tooling = {
 	value = 0
 	if = {
-		limit = { cm_trmm_right_jewelry > { value = cm_trmm_right_tooling } }
+		limit = { cm_trmm_rightv_jewelry > { value = cm_trmm_rightv_tooling } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_naval > { value = cm_trmm_right_tooling } }
+		limit = { cm_trmm_rightv_naval > { value = cm_trmm_rightv_tooling } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_textile > { value = cm_trmm_right_tooling } }
+		limit = { cm_trmm_rightv_textile > { value = cm_trmm_rightv_tooling } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_weaponry > { value = cm_trmm_right_tooling } }
+		limit = { cm_trmm_rightv_weaponry > { value = cm_trmm_rightv_tooling } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_book > { value = cm_trmm_right_tooling } }
+		limit = { cm_trmm_rightv_book > { value = cm_trmm_rightv_tooling } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_artisan > { value = cm_trmm_right_tooling } }
+		limit = { cm_trmm_rightv_artisan > { value = cm_trmm_rightv_tooling } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_brewing > { value = cm_trmm_right_tooling } }
+		limit = { cm_trmm_rightv_brewing > { value = cm_trmm_rightv_tooling } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_masonry > { value = cm_trmm_right_tooling } }
+		limit = { cm_trmm_rightv_masonry > { value = cm_trmm_rightv_tooling } }
 		add = 1
 	}
 }
 cm_trmm_grant_slot_jewelry = {
 	value = 0
 	if = {
-		limit = { cm_trmm_right_tooling >= { value = cm_trmm_right_jewelry } }
+		limit = { cm_trmm_rightv_tooling >= { value = cm_trmm_rightv_jewelry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_naval > { value = cm_trmm_right_jewelry } }
+		limit = { cm_trmm_rightv_naval > { value = cm_trmm_rightv_jewelry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_textile > { value = cm_trmm_right_jewelry } }
+		limit = { cm_trmm_rightv_textile > { value = cm_trmm_rightv_jewelry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_weaponry > { value = cm_trmm_right_jewelry } }
+		limit = { cm_trmm_rightv_weaponry > { value = cm_trmm_rightv_jewelry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_book > { value = cm_trmm_right_jewelry } }
+		limit = { cm_trmm_rightv_book > { value = cm_trmm_rightv_jewelry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_artisan > { value = cm_trmm_right_jewelry } }
+		limit = { cm_trmm_rightv_artisan > { value = cm_trmm_rightv_jewelry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_brewing > { value = cm_trmm_right_jewelry } }
+		limit = { cm_trmm_rightv_brewing > { value = cm_trmm_rightv_jewelry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_masonry > { value = cm_trmm_right_jewelry } }
+		limit = { cm_trmm_rightv_masonry > { value = cm_trmm_rightv_jewelry } }
 		add = 1
 	}
 }
 cm_trmm_grant_slot_naval = {
 	value = 0
 	if = {
-		limit = { cm_trmm_right_tooling >= { value = cm_trmm_right_naval } }
+		limit = { cm_trmm_rightv_tooling >= { value = cm_trmm_rightv_naval } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_jewelry >= { value = cm_trmm_right_naval } }
+		limit = { cm_trmm_rightv_jewelry >= { value = cm_trmm_rightv_naval } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_textile > { value = cm_trmm_right_naval } }
+		limit = { cm_trmm_rightv_textile > { value = cm_trmm_rightv_naval } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_weaponry > { value = cm_trmm_right_naval } }
+		limit = { cm_trmm_rightv_weaponry > { value = cm_trmm_rightv_naval } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_book > { value = cm_trmm_right_naval } }
+		limit = { cm_trmm_rightv_book > { value = cm_trmm_rightv_naval } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_artisan > { value = cm_trmm_right_naval } }
+		limit = { cm_trmm_rightv_artisan > { value = cm_trmm_rightv_naval } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_brewing > { value = cm_trmm_right_naval } }
+		limit = { cm_trmm_rightv_brewing > { value = cm_trmm_rightv_naval } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_masonry > { value = cm_trmm_right_naval } }
+		limit = { cm_trmm_rightv_masonry > { value = cm_trmm_rightv_naval } }
 		add = 1
 	}
 }
 cm_trmm_grant_slot_textile = {
 	value = 0
 	if = {
-		limit = { cm_trmm_right_tooling >= { value = cm_trmm_right_textile } }
+		limit = { cm_trmm_rightv_tooling >= { value = cm_trmm_rightv_textile } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_jewelry >= { value = cm_trmm_right_textile } }
+		limit = { cm_trmm_rightv_jewelry >= { value = cm_trmm_rightv_textile } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_naval >= { value = cm_trmm_right_textile } }
+		limit = { cm_trmm_rightv_naval >= { value = cm_trmm_rightv_textile } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_weaponry > { value = cm_trmm_right_textile } }
+		limit = { cm_trmm_rightv_weaponry > { value = cm_trmm_rightv_textile } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_book > { value = cm_trmm_right_textile } }
+		limit = { cm_trmm_rightv_book > { value = cm_trmm_rightv_textile } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_artisan > { value = cm_trmm_right_textile } }
+		limit = { cm_trmm_rightv_artisan > { value = cm_trmm_rightv_textile } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_brewing > { value = cm_trmm_right_textile } }
+		limit = { cm_trmm_rightv_brewing > { value = cm_trmm_rightv_textile } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_masonry > { value = cm_trmm_right_textile } }
+		limit = { cm_trmm_rightv_masonry > { value = cm_trmm_rightv_textile } }
 		add = 1
 	}
 }
 cm_trmm_grant_slot_weaponry = {
 	value = 0
 	if = {
-		limit = { cm_trmm_right_tooling >= { value = cm_trmm_right_weaponry } }
+		limit = { cm_trmm_rightv_tooling >= { value = cm_trmm_rightv_weaponry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_jewelry >= { value = cm_trmm_right_weaponry } }
+		limit = { cm_trmm_rightv_jewelry >= { value = cm_trmm_rightv_weaponry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_naval >= { value = cm_trmm_right_weaponry } }
+		limit = { cm_trmm_rightv_naval >= { value = cm_trmm_rightv_weaponry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_textile >= { value = cm_trmm_right_weaponry } }
+		limit = { cm_trmm_rightv_textile >= { value = cm_trmm_rightv_weaponry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_book > { value = cm_trmm_right_weaponry } }
+		limit = { cm_trmm_rightv_book > { value = cm_trmm_rightv_weaponry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_artisan > { value = cm_trmm_right_weaponry } }
+		limit = { cm_trmm_rightv_artisan > { value = cm_trmm_rightv_weaponry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_brewing > { value = cm_trmm_right_weaponry } }
+		limit = { cm_trmm_rightv_brewing > { value = cm_trmm_rightv_weaponry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_masonry > { value = cm_trmm_right_weaponry } }
+		limit = { cm_trmm_rightv_masonry > { value = cm_trmm_rightv_weaponry } }
 		add = 1
 	}
 }
 cm_trmm_grant_slot_book = {
 	value = 0
 	if = {
-		limit = { cm_trmm_right_tooling >= { value = cm_trmm_right_book } }
+		limit = { cm_trmm_rightv_tooling >= { value = cm_trmm_rightv_book } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_jewelry >= { value = cm_trmm_right_book } }
+		limit = { cm_trmm_rightv_jewelry >= { value = cm_trmm_rightv_book } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_naval >= { value = cm_trmm_right_book } }
+		limit = { cm_trmm_rightv_naval >= { value = cm_trmm_rightv_book } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_textile >= { value = cm_trmm_right_book } }
+		limit = { cm_trmm_rightv_textile >= { value = cm_trmm_rightv_book } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_weaponry >= { value = cm_trmm_right_book } }
+		limit = { cm_trmm_rightv_weaponry >= { value = cm_trmm_rightv_book } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_artisan > { value = cm_trmm_right_book } }
+		limit = { cm_trmm_rightv_artisan > { value = cm_trmm_rightv_book } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_brewing > { value = cm_trmm_right_book } }
+		limit = { cm_trmm_rightv_brewing > { value = cm_trmm_rightv_book } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_masonry > { value = cm_trmm_right_book } }
+		limit = { cm_trmm_rightv_masonry > { value = cm_trmm_rightv_book } }
 		add = 1
 	}
 }
 cm_trmm_grant_slot_artisan = {
 	value = 0
 	if = {
-		limit = { cm_trmm_right_tooling >= { value = cm_trmm_right_artisan } }
+		limit = { cm_trmm_rightv_tooling >= { value = cm_trmm_rightv_artisan } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_jewelry >= { value = cm_trmm_right_artisan } }
+		limit = { cm_trmm_rightv_jewelry >= { value = cm_trmm_rightv_artisan } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_naval >= { value = cm_trmm_right_artisan } }
+		limit = { cm_trmm_rightv_naval >= { value = cm_trmm_rightv_artisan } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_textile >= { value = cm_trmm_right_artisan } }
+		limit = { cm_trmm_rightv_textile >= { value = cm_trmm_rightv_artisan } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_weaponry >= { value = cm_trmm_right_artisan } }
+		limit = { cm_trmm_rightv_weaponry >= { value = cm_trmm_rightv_artisan } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_book >= { value = cm_trmm_right_artisan } }
+		limit = { cm_trmm_rightv_book >= { value = cm_trmm_rightv_artisan } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_brewing > { value = cm_trmm_right_artisan } }
+		limit = { cm_trmm_rightv_brewing > { value = cm_trmm_rightv_artisan } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_masonry > { value = cm_trmm_right_artisan } }
+		limit = { cm_trmm_rightv_masonry > { value = cm_trmm_rightv_artisan } }
 		add = 1
 	}
 }
 cm_trmm_grant_slot_brewing = {
 	value = 0
 	if = {
-		limit = { cm_trmm_right_tooling >= { value = cm_trmm_right_brewing } }
+		limit = { cm_trmm_rightv_tooling >= { value = cm_trmm_rightv_brewing } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_jewelry >= { value = cm_trmm_right_brewing } }
+		limit = { cm_trmm_rightv_jewelry >= { value = cm_trmm_rightv_brewing } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_naval >= { value = cm_trmm_right_brewing } }
+		limit = { cm_trmm_rightv_naval >= { value = cm_trmm_rightv_brewing } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_textile >= { value = cm_trmm_right_brewing } }
+		limit = { cm_trmm_rightv_textile >= { value = cm_trmm_rightv_brewing } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_weaponry >= { value = cm_trmm_right_brewing } }
+		limit = { cm_trmm_rightv_weaponry >= { value = cm_trmm_rightv_brewing } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_book >= { value = cm_trmm_right_brewing } }
+		limit = { cm_trmm_rightv_book >= { value = cm_trmm_rightv_brewing } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_artisan >= { value = cm_trmm_right_brewing } }
+		limit = { cm_trmm_rightv_artisan >= { value = cm_trmm_rightv_brewing } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_masonry > { value = cm_trmm_right_brewing } }
+		limit = { cm_trmm_rightv_masonry > { value = cm_trmm_rightv_brewing } }
 		add = 1
 	}
 }
 cm_trmm_grant_slot_masonry = {
 	value = 0
 	if = {
-		limit = { cm_trmm_right_tooling >= { value = cm_trmm_right_masonry } }
+		limit = { cm_trmm_rightv_tooling >= { value = cm_trmm_rightv_masonry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_jewelry >= { value = cm_trmm_right_masonry } }
+		limit = { cm_trmm_rightv_jewelry >= { value = cm_trmm_rightv_masonry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_naval >= { value = cm_trmm_right_masonry } }
+		limit = { cm_trmm_rightv_naval >= { value = cm_trmm_rightv_masonry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_textile >= { value = cm_trmm_right_masonry } }
+		limit = { cm_trmm_rightv_textile >= { value = cm_trmm_rightv_masonry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_weaponry >= { value = cm_trmm_right_masonry } }
+		limit = { cm_trmm_rightv_weaponry >= { value = cm_trmm_rightv_masonry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_book >= { value = cm_trmm_right_masonry } }
+		limit = { cm_trmm_rightv_book >= { value = cm_trmm_rightv_masonry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_artisan >= { value = cm_trmm_right_masonry } }
+		limit = { cm_trmm_rightv_artisan >= { value = cm_trmm_rightv_masonry } }
 		add = 1
 	}
 	if = {
-		limit = { cm_trmm_right_brewing >= { value = cm_trmm_right_masonry } }
+		limit = { cm_trmm_rightv_brewing >= { value = cm_trmm_rightv_masonry } }
 		add = 1
 	}
 }

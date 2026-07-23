@@ -3,9 +3,9 @@
 
 Scores each royal specialization town right per province by how much of its
 boosted buildings' input goods the province supplies as raw materials, then
-emits the map mode that colors provinces by the best right (with stripes
-grading any granted right: the best one here, at least GRANTED_GOOD_THRESHOLD,
-or below) and the tooltip machinery that ranks every option. Alongside it, one
+emits the map mode that colors provinces by the best right (with a granted
+right striped on a red-to-green scale by how far its fit falls below the best
+right here) and the tooltip machinery that ranks every option. Alongside it, one
 hidden search map mode per right colors by that right's fit alone (with
 already-granted, best-right-here, and other-right-granted stripes), opened
 from the search panel and the urban right tooltips; the scripted GUI checks
@@ -241,12 +241,11 @@ SEARCH_BEST_STRIPE = "rgb { 255 200 60 }"
 # Another-royal-right-granted stripe.
 SEARCH_OTHER_GRANTED_STRIPE = "rgb { 0 0 0 }"
 
-# Main-mode granted stripes: how well the granted right fits the location.
-GRANTED_BEST_STRIPE = "rgb { 60 220 60 }"
-GRANTED_GOOD_STRIPE = "rgb { 254 254 254 }"
-GRANTED_POOR_STRIPE = "rgb { 230 60 50 }"
-# Middle granted-stripe tier: the granted right's own score at least this.
-GRANTED_GOOD_THRESHOLD = 0.5
+# Main-mode granted stripe: a red-to-green gradient by how far the granted
+# right's fit falls below the best specialization here. Green is the low-miss
+# end (factor 0), red the high-miss end (factor 1).
+GRANTED_MISS_NONE_STRIPE = "rgb { 60 220 60 }"
+GRANTED_MISS_FULL_STRIPE = "rgb { 230 60 50 }"
 # Main-mode tie stripes: a two-way tie for best stripes the runner-up right's
 # own color; three or more tied stripe this dedicated cyan instead.
 MULTI_TIE_STRIPE = "rgb { 0 220 255 }"
@@ -254,6 +253,9 @@ MULTI_TIE_STRIPE = "rgb { 0 220 255 }"
 # from the placement finder's existing-governor stripe
 # (in_game/gfx/map/map_modes/cm_proximity_finder_map_modes.txt:55).
 OPEN_SLOT_STRIPE = "rgb { 0 100 255 }"
+# City-or-larger at its town-rights cap with no specialization right granted: a
+# recommended right cannot be granted here without revoking an existing one.
+FULL_NO_SPEC_STRIPE = "rgb { 170 70 210 }"
 
 OUTPUT_MODIFIER = re.compile(r"^local_([a-z0-9_]+)_output_modifier$")
 ASSIGN_BLOCK = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*=\s*\{")
@@ -1009,6 +1011,42 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
         lines.append("}")
     lines.append("")
 
+    lines.append(
+        "# Right-score readers safe on unmarked locations (the grant row renders\n"
+        "# there).")
+    for right in ROYAL_RIGHTS:
+        alias = aliases[right]
+        lines.append(f"cm_trmm_rightv_{alias} = {{")
+        lines.append("\tvalue = 0")
+        lines.append("\tif = {")
+        lines.append("\t\tlimit = { has_variable = cm_trmm_best_idx }")
+        lines.append(f"\t\tadd = cm_trmm_right_{alias}")
+        lines.append("\t}")
+        lines.append("}")
+    lines.append("")
+
+    lines.append(
+        "# The granted royal right's fit versus the best specialization here:\n"
+        "# the best score among granted rights, and the shortfall (0-1) the\n"
+        "# granted stripe shades from green to red.")
+    lines.append("cm_trmm_granted_best = {")
+    lines.append("\tvalue = 0")
+    for right in ROYAL_RIGHTS:
+        lines.append("\tif = {")
+        lines.append(
+            f"\t\tlimit = {{ has_town_rights = town_rights_type:{right} }}")
+        lines.append(f"\t\tmin = cm_trmm_right_{aliases[right]}")
+        lines.append("\t}")
+    lines.append("}")
+    lines.append("cm_trmm_granted_miss = {")
+    lines.append("\tvalue = var:cm_trmm_best_mil")
+    lines.append("\tmultiply = 0.001")
+    lines.append("\tsubtract = cm_trmm_granted_best")
+    lines.append("\tmin = 0")
+    lines.append("\tmax = 1")
+    lines.append("}")
+    lines.append("")
+
     n = len(ROYAL_RIGHTS)
     for pos, right in enumerate(ROYAL_RIGHTS):
         lines.append(f"cm_trmm_enc_{aliases[right]} = {{")
@@ -1195,27 +1233,6 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
             lines.append("}")
 
     lines.append("")
-    lines.append("# 1 when any urban right both scores and is ungranted here (the")
-    lines.append("# grant row's best-mode gate). Root is the location.")
-    lines.append("cm_trmm_grant_choices = {")
-    lines.append("\tvalue = 0")
-    lines.append("\tif = {")
-    lines.append("\t\tlimit = {")
-    lines.append("\t\t\thas_variable = cm_trmm_best_idx")
-    lines.append("\t\t\tOR = {")
-    for right in ROYAL_RIGHTS:
-        lines.append("\t\t\t\tAND = {")
-        lines.append(f"\t\t\t\t\tcm_trmm_right_{aliases[right]} > 0")
-        lines.append(
-            f"\t\t\t\t\tNOT = {{ has_town_rights = town_rights_type:{right} }}")
-        lines.append("\t\t\t\t}")
-    lines.append("\t\t\t}")
-    lines.append("\t\t}")
-    lines.append("\t\tadd = 1")
-    lines.append("\t}")
-    lines.append("}")
-
-    lines.append("")
     lines.append("# Grant row ordering: how many rights beat this one on score, ties")
     lines.append("# broken by list order (0 = leftmost button). Root is the location.")
     for pos_a, right_a in enumerate(ROYAL_RIGHTS):
@@ -1228,8 +1245,8 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
             op = ">=" if pos_b < pos_a else ">"
             lines.append("\tif = {")
             lines.append(
-                f"\t\tlimit = {{ cm_trmm_right_{aliases[right_b]} {op} "
-                f"{{ value = cm_trmm_right_{alias_a} }} }}")
+                f"\t\tlimit = {{ cm_trmm_rightv_{aliases[right_b]} {op} "
+                f"{{ value = cm_trmm_rightv_{alias_a} }} }}")
             lines.append("\t\tadd = 1")
             lines.append("\t}")
         lines.append("}")
@@ -1375,6 +1392,15 @@ def emit_effects(options, aliases, boosted_goods, relevant):
     lines.append("\t\t\t\t\t\tmodulo = 10")
     lines.append("\t\t\t\t\t}")
     lines.append("\t\t\t\t}")
+    lines.append("\t\t\t\t# The encoding's score half: round(best score * 1000).")
+    lines.append("\t\t\t\tset_variable = {")
+    lines.append("\t\t\t\t\tname = cm_trmm_best_mil")
+    lines.append("\t\t\t\t\tvalue = {")
+    lines.append("\t\t\t\t\t\tvalue = local_var:cm_trmm_enc")
+    lines.append("\t\t\t\t\t\tsubtract = var:cm_trmm_best_idx")
+    lines.append("\t\t\t\t\t\tdivide = 10")
+    lines.append("\t\t\t\t\t}")
+    lines.append("\t\t\t\t}")
     lines.append(
         "\t\t\t\t# Tie data for the stripes: 0 = no tie, 1-8 = the runner-up right of a\n"
         "\t\t\t\t# two-way tie for best, 10 = three or more tied. An exact-tied earlier\n"
@@ -1427,6 +1453,10 @@ def emit_effects(options, aliases, boosted_goods, relevant):
     lines.append("\t\t\tevery_location_in_province = {")
     lines.append("\t\t\t\tlimit = { has_variable = cm_trmm_best_idx }")
     lines.append("\t\t\t\tremove_variable = cm_trmm_best_idx")
+    lines.append("\t\t\t}")
+    lines.append("\t\t\tevery_location_in_province = {")
+    lines.append("\t\t\t\tlimit = { has_variable = cm_trmm_best_mil }")
+    lines.append("\t\t\t\tremove_variable = cm_trmm_best_mil")
     lines.append("\t\t\t}")
     lines.append("\t\t\tevery_location_in_province = {")
     lines.append("\t\t\t\tlimit = { has_variable = cm_trmm_tie_idx }")
@@ -1612,12 +1642,19 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
     n = len(ROYAL_RIGHTS)
     lines.append(
         "# Stripe-reason lines for the map mode tooltips' bottom:\n"
-        "# cm_trmm_stripe_reason explains the main mode's stripe (the granted\n"
-        "# right's fit tier, the tied rights, or the open urban right slot),\n"
+        "# cm_trmm_stripe_reason explains the main mode's stripe (the open urban\n"
+        "# right slot, the granted right's fit versus the best, a full city with\n"
+        "# no specialization granted, or the tied rights),\n"
         "# cm_trmm_search_reason_* the reason for the search modes' stripe.\n"
         "# Blocks mirror the stripe limits, so first match = stripe precedence.")
     lines.append("cm_trmm_stripe_reason = {")
     lines.append("\ttype = location")
+    lines.append("\ttext = {")
+    lines.append("\t\ttrigger = {")
+    lines.append("\t\t\thas_max_town_rights = no")
+    lines.append("\t\t}")
+    lines.append("\t\tlocalization_key = cm_trmm_reason_open_slot")
+    lines.append("\t}")
     for pos, right in enumerate(ROYAL_RIGHTS):
         idx = n - pos
         lines.append("\ttext = {")
@@ -1630,24 +1667,34 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
             f"\t\tlocalization_key = cm_trmm_reason_best_{aliases[right]}")
         lines.append("\t}")
     for right in ROYAL_RIGHTS:
-        alias = aliases[right]
         lines.append("\ttext = {")
         lines.append("\t\ttrigger = {")
         lines.append("\t\t\thas_variable = cm_trmm_best_idx")
         lines.append(f"\t\t\thas_town_rights = town_rights_type:{right}")
-        lines.append(
-            f"\t\t\tcm_trmm_right_{alias} >= {GRANTED_GOOD_THRESHOLD}")
         lines.append("\t\t}")
-        lines.append(f"\t\tlocalization_key = cm_trmm_reason_good_{alias}")
+        lines.append(
+            f"\t\tlocalization_key = cm_trmm_reason_missed_{aliases[right]}")
         lines.append("\t}")
     for right in ROYAL_RIGHTS:
         lines.append("\ttext = {")
         lines.append("\t\ttrigger = {")
+        lines.append("\t\t\tNOT = { has_variable = cm_trmm_best_idx }")
         lines.append(f"\t\t\thas_town_rights = town_rights_type:{right}")
         lines.append("\t\t}")
         lines.append(
-            f"\t\tlocalization_key = cm_trmm_reason_poor_{aliases[right]}")
+            f"\t\tlocalization_key = cm_trmm_reason_granted_{aliases[right]}")
         lines.append("\t}")
+    lines.append("\ttext = {")
+    lines.append("\t\ttrigger = {")
+    lines.append("\t\t\thas_max_town_rights = yes")
+    lines.append("\t\t\tcm_uright_assigned_count = 0")
+    lines.append("\t\t\tOR = {")
+    lines.append("\t\t\t\tlocation_rank = location_rank:city")
+    lines.append("\t\t\t\tlocation_rank = location_rank:megalopolis")
+    lines.append("\t\t\t}")
+    lines.append("\t\t}")
+    lines.append("\t\tlocalization_key = cm_trmm_reason_full_no_spec")
+    lines.append("\t}")
     for pos, right in enumerate(ROYAL_RIGHTS[:-1]):
         lines.append("\ttext = {")
         lines.append("\t\ttrigger = {")
@@ -1658,12 +1705,6 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
         lines.append(
             f"\t\tlocalization_key = cm_trmm_reason_tied_{aliases[right]}")
         lines.append("\t}")
-    lines.append("\ttext = {")
-    lines.append("\t\ttrigger = {")
-    lines.append("\t\t\thas_max_town_rights = no")
-    lines.append("\t\t}")
-    lines.append("\t\tlocalization_key = cm_trmm_reason_open_slot")
-    lines.append("\t}")
     lines.append("\ttext = {")
     lines.append("\t\tlocalization_key = cm_trmm_blank")
     lines.append("\t\tfallback = yes")
@@ -1914,44 +1955,46 @@ def emit_map_mode(rights, aliases, right_colors):
     body.append("\t\tif = {")
     body.append("\t\t\tlimit = {")
     body.append("\t\t\t\tis_land = yes")
-    body.append("\t\t\t\thas_any_town_rights = yes")
-    body.append("\t\t\t\thas_variable = cm_trmm_best_idx")
-    body.append("\t\t\t\tOR = {")
-    for pos, right in enumerate(ROYAL_RIGHTS):
-        idx = n - pos
-        body.append("\t\t\t\t\tAND = {")
-        body.append(f"\t\t\t\t\t\tvar:cm_trmm_best_idx = {idx}")
-        body.append(f"\t\t\t\t\t\thas_town_rights = town_rights_type:{right}")
-        body.append("\t\t\t\t\t}")
-    body.append("\t\t\t\t}")
+    body.append("\t\t\t\thas_max_town_rights = no")
     body.append("\t\t\t}")
-    body.append(f"\t\t\tvalue = {GRANTED_BEST_STRIPE}")
+    body.append(f"\t\t\tvalue = {OPEN_SLOT_STRIPE}")
     body.append("\t\t}")
-    # The has_variable gate keeps the scores from reading unset province
-    # variables.
+    # Granted royal right: red-to-green by how far the granted right's fit falls
+    # below the best specialization here.
     body.append("\t\telse_if = {")
     body.append("\t\t\tlimit = {")
     body.append("\t\t\t\tis_land = yes")
-    body.append("\t\t\t\thas_any_town_rights = yes")
     body.append("\t\t\t\thas_variable = cm_trmm_best_idx")
-    body.append("\t\t\t\tOR = {")
-    for right in ROYAL_RIGHTS:
-        body.append("\t\t\t\t\tAND = {")
-        body.append(f"\t\t\t\t\t\thas_town_rights = town_rights_type:{right}")
-        body.append(f"\t\t\t\t\t\tcm_trmm_right_{aliases[right]} >= "
-                     f"{GRANTED_GOOD_THRESHOLD}")
-        body.append("\t\t\t\t\t}")
-    body.append("\t\t\t\t}")
-    body.append("\t\t\t}")
-    body.append(f"\t\t\tvalue = {GRANTED_GOOD_STRIPE}")
-    body.append("\t\t}")
-    body.append("\t\telse_if = {")
-    body.append("\t\t\tlimit = {")
-    body.append("\t\t\t\tis_land = yes")
-    body.append("\t\t\t\thas_any_town_rights = yes")
     body.append("\t\t\t\tcm_uright_assigned_count >= 1")
     body.append("\t\t\t}")
-    body.append(f"\t\t\tvalue = {GRANTED_POOR_STRIPE}")
+    body.append("\t\t\tlerp = {")
+    body.append(f"\t\t\t\tmin_color = {GRANTED_MISS_NONE_STRIPE}")
+    body.append(f"\t\t\t\tmax_color = {GRANTED_MISS_FULL_STRIPE}")
+    body.append("\t\t\t\tfactor = { value = cm_trmm_granted_miss }")
+    body.append("\t\t\t}")
+    body.append("\t\t}")
+    # Granted where nothing scores (unmarked): no fit to miss, so the green end.
+    body.append("\t\telse_if = {")
+    body.append("\t\t\tlimit = {")
+    body.append("\t\t\t\tis_land = yes")
+    body.append("\t\t\t\tNOT = { has_variable = cm_trmm_best_idx }")
+    body.append("\t\t\t\tcm_uright_assigned_count >= 1")
+    body.append("\t\t\t}")
+    body.append(f"\t\t\tvalue = {GRANTED_MISS_NONE_STRIPE}")
+    body.append("\t\t}")
+    # A full city-or-larger with no specialization right granted: nowhere to
+    # grant the recommended right without revoking one first.
+    body.append("\t\telse_if = {")
+    body.append("\t\t\tlimit = {")
+    body.append("\t\t\t\tis_land = yes")
+    body.append("\t\t\t\thas_max_town_rights = yes")
+    body.append("\t\t\t\tcm_uright_assigned_count = 0")
+    body.append("\t\t\t\tOR = {")
+    body.append("\t\t\t\t\tlocation_rank = location_rank:city")
+    body.append("\t\t\t\t\tlocation_rank = location_rank:megalopolis")
+    body.append("\t\t\t\t}")
+    body.append("\t\t\t}")
+    body.append(f"\t\t\tvalue = {FULL_NO_SPEC_STRIPE}")
     body.append("\t\t}")
     body.append("\t\t# cm_trmm_tie_idx: 1-8 = two-way runner-up, 10 = 3+ tied.")
     body.append("\t\telse_if = {")
@@ -1974,13 +2017,6 @@ def emit_map_mode(rights, aliases, right_colors):
         body.append(f"\t\t\t# {right} color: {source}")
         body.append(f"\t\t\tvalue = {color}")
         body.append("\t\t}")
-    body.append("\t\telse_if = {")
-    body.append("\t\t\tlimit = {")
-    body.append("\t\t\t\tis_land = yes")
-    body.append("\t\t\t\thas_max_town_rights = no")
-    body.append("\t\t\t}")
-    body.append(f"\t\t\tvalue = {OPEN_SLOT_STRIPE}")
-    body.append("\t\t}")
     body.append("\t}")
     body.append("")
     for right in ROYAL_RIGHTS:
@@ -1994,11 +2030,11 @@ def emit_map_mode(rights, aliases, right_colors):
     body.append(f"\t\tcolor = {NO_MATCH_COLOR}")
     body.append("\t}")
     for desc, key_color in (
-            ("cm_trmm_legend_granted_best", GRANTED_BEST_STRIPE),
-            ("cm_trmm_legend_granted_good", GRANTED_GOOD_STRIPE),
-            ("cm_trmm_legend_granted_poor", GRANTED_POOR_STRIPE),
+            ("cm_trmm_legend_granted_best", GRANTED_MISS_NONE_STRIPE),
+            ("cm_trmm_legend_granted_poor", GRANTED_MISS_FULL_STRIPE),
             ("cm_trmm_legend_tied_multi", MULTI_TIE_STRIPE),
-            ("cm_trmm_legend_open_slot", OPEN_SLOT_STRIPE)):
+            ("cm_trmm_legend_open_slot", OPEN_SLOT_STRIPE),
+            ("cm_trmm_legend_full_no_spec", FULL_NO_SPEC_STRIPE)):
         body.append("\tlegend_key = {")
         body.append(f"\t\tdesc = \"{desc}\"")
         body.append(f"\t\tcolor = {key_color}")
@@ -2301,7 +2337,6 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
     lines.append(
         f" CM_URIGHT_ASSIGNED_LIST_TT: "
         f"\"#T Assigned Specialization Rights#!{assigned_items}\"")
-    pct = round(GRANTED_GOOD_THRESHOLD * 100)
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
         granted_part = f"@{right}! [ShowTownRightsName('{right}')] granted"
@@ -2309,11 +2344,12 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
             f" cm_trmm_reason_best_{alias}: "
             f"\"\\n\\n{granted_part} - best urban right for this location\"")
         lines.append(
-            f" cm_trmm_reason_good_{alias}: "
-            f"\"\\n\\n{granted_part} - at least {pct}% score\"")
+            f" cm_trmm_reason_granted_{alias}: \"\\n\\n{granted_part}\"")
         lines.append(
-            f" cm_trmm_reason_poor_{alias}: "
-            f"\"\\n\\n{granted_part} - below {pct}% score\"")
+            f" cm_trmm_reason_missed_{alias}: "
+            f"\"\\n\\n{granted_part} - "
+            f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_granted_miss')|%1] "
+            f"short of the best fit here\"")
     for pos, right in enumerate(ROYAL_RIGHTS[:-1]):
         alias = aliases[right]
         tied_items = "".join(
@@ -2405,7 +2441,7 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
             f"\"Grant [ShowTownRightsName('{right}')]\"")
         lines.append(
             f" cm_trmm_grant_tt_{alias}: "
-            f"\"Match: [Location.MakeScope.ScriptValue('cm_trmm_right_{alias}')|%1]\"")
+            f"\"Match: [Location.MakeScope.ScriptValue('cm_trmm_rightv_{alias}')|%1]\"")
         lines.append(
             f" cm_trmm_grant_expand_title_{alias}: "
             f"\"Grant [ShowTownRightsName('{right}')] and enable matching "
@@ -2501,11 +2537,9 @@ def emit_grant_section(aliases):
     best_pair = ("Or(GetMapMode('cm_best_town_right').IsActive, "
                  "GetMapMode('cm_best_town_right_refresh').IsActive)")
     # Per-mode "a grant button would show" terms: the searched right's IsShown in
-    # its search mode, any scoring ungranted right in the best mode.
-    shown_terms = [
-        f"And({best_pair}, EqualTo_CFixedPoint("
-        f"Location.MakeScope.ScriptValue('cm_trmm_grant_choices'), "
-        f"'(CFixedPoint)1'))"]
+    # its search mode; in the best mode the open slot the section already
+    # requires guarantees an ungranted right, so the mode being active is enough.
+    shown_terms = [best_pair]
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
         shown_terms.append(
@@ -2523,9 +2557,8 @@ def emit_grant_section(aliases):
     lines.append("\t\tspacing = 4")
     lines.append("\t\tmargin = { 10 4 }")
     lines.append(
-        f"\t\tvisible = \"[And4(ObjectsEqual(Location.GetOwner, GetPlayer), "
-        f"EqualTo_CFixedPoint(Location.MakeScope.ScriptValue('cm_trmm_grant_any'), "
-        f"'(CFixedPoint)1'), GetScriptedGui('cm_trmm_grant_location_eligible')"
+        f"\t\tvisible = \"[And3(ObjectsEqual(Location.GetOwner, GetPlayer), "
+        f"GetScriptedGui('cm_trmm_grant_location_eligible')"
         f".IsShown({loc}), {any_shown})]\"")
     lines.append("")
     for key, negate in (("CM_TRMM_GRANT_LABEL", True),
@@ -2549,8 +2582,6 @@ def emit_grant_section(aliases):
             gui_expand = f"GetScriptedGui('cm_trmm_grant_expand_{alias}')"
             search_pair = (f"Or(GetMapMode('cm_trmm_search_{alias}').IsActive, "
                            f"GetMapMode('cm_trmm_search_{alias}_refresh').IsActive)")
-            scoring = (f"GreaterThan_CFixedPoint(Location.MakeScope.ScriptValue("
-                       f"'cm_trmm_right_{alias}'), '(CFixedPoint)0')")
             slot_eq = (f"EqualTo_CFixedPoint(Location.MakeScope.ScriptValue("
                        f"'cm_trmm_grant_slot_{alias}'), '(CFixedPoint){slot}')")
             lines.append("")
@@ -2559,7 +2590,7 @@ def emit_grant_section(aliases):
             lines.append(f"\t\t\ttext = \"cm_uright_icon_line_{alias}\"")
             lines.append(
                 f"\t\t\tvisible = \"[And3({slot_eq}, Or({search_pair}, "
-                f"And({best_pair}, {scoring})), {gui}.IsShown({root}))]\"")
+                f"{best_pair}), {gui}.IsShown({root}))]\"")
             lines.append(f"\t\t\tenabled = \"[{gui}.IsValid({root})]\"")
             lines.append("")
             lines.append("\t\t\ttooltipwidget = {")

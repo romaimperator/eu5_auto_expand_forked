@@ -1814,6 +1814,15 @@ cm_trmm_recompute_province_definition = {
 						modulo = 10
 					}
 				}
+				# The encoding's score half: round(best score * 1000).
+				set_variable = {
+					name = cm_trmm_best_mil
+					value = {
+						value = local_var:cm_trmm_enc
+						subtract = var:cm_trmm_best_idx
+						divide = 10
+					}
+				}
 				# Tie data for the stripes: 0 = no tie, 1-8 = the runner-up right of a
 				# two-way tie for best, 10 = three or more tied. An exact-tied earlier
 				# right would have won the encoding, so only later rights can be partners.
@@ -2158,6 +2167,10 @@ cm_trmm_recompute_province_definition = {
 			every_location_in_province = {
 				limit = { has_variable = cm_trmm_best_idx }
 				remove_variable = cm_trmm_best_idx
+			}
+			every_location_in_province = {
+				limit = { has_variable = cm_trmm_best_mil }
+				remove_variable = cm_trmm_best_mil
 			}
 			every_location_in_province = {
 				limit = { has_variable = cm_trmm_tie_idx }
