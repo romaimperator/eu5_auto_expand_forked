@@ -949,6 +949,25 @@ cm_register_cmf_mod = {
 		setting_id = fa_food_budget
 	}
 
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = fa_food_target
+		tab_id = full_automation
+		group_id = fa_food
+		default_value = 125
+		min_value = 100
+		max_value = 300
+		step_value = 5
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__fa_food_target
+		alias = cm_fa_food_target
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_food_target
+	}
+
 	## Utilities (fa_utilities) Group
 	cmm_register_bool_setting = {
 		mod_id = cm
@@ -1214,6 +1233,12 @@ cm_handle_cmf_callback = {
 		}
 		flag:cm__fa_food_budget = {
 			cm_fa_apply_budget_change = { cat = food }
+		}
+		flag:cm__fa_food_target = {
+			cmm_sync_setting_alias = {
+				setting = cm__fa_food_target
+				alias = cm_fa_food_target
+			}
 		}
 		## Utilities (fa_utilities) Group
 		flag:cm__fa_utilities_enabled = {

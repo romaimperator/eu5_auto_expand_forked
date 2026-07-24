@@ -8,6 +8,20 @@ cm_fa_get_reserve = {
 	}
 }
 
+# Root is the country. The food surplus target as a supply/demand ratio: the fa_food_target
+# percent setting over 100 (125 -> 1.25). A market whose best food month stayed below this
+# gets new auto-food locations.
+cm_fa_food_target_ratio = {
+	if = {
+		limit = { exists = var:cm_fa_food_target }
+		value = var:cm_fa_food_target
+		divide = 100
+	}
+	else = {
+		value = 1.25
+	}
+}
+
 # The next RGO level's cost plus the full-automation reserve and this drain's committed
 # spend. Root is the location, expects scopes: country, location.
 cm_fa_rgo_gold_threshold = {

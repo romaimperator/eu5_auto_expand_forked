@@ -1,12 +1,15 @@
 ﻿# Full-automation Food: samples each market's food supply against demand monthly, once a
-# year enables auto-food on the best food-potential locations in markets whose best month
+# year enables auto-food on the best food-potential locations in markets whose median month
 # still fell short, and stages the system-picked locations through the food option engine
 # under the food pool. System picks never turn off except when the location stops being a
 # rural settlement or leaves the country.
 
-# Tracks each market's best food month: the supply/demand ratio sampled monthly into the
-# yearly-max map. The transient 100x-demand bug craters the ratio only in spiked months,
-# so any clean month keeps the market off the low-food list.
+# Samples each market's monthly supply/demand ratio into a 7-bucket histogram (the maps
+# cm_fa_food_h1..h7 keyed by market), from which the yearly evaluation reads the median.
+# A histogram gives a spike-robust central value that EU5's lack of numeric arrays makes
+# hard to compute exactly: the transient 100x-demand bug (and any demand-near-zero month)
+# lands in an extreme bucket and never moves the median, and the target is applied at
+# evaluation time so it stays tunable. Buckets rebuild each year.
 # Root is the country, scope:cm_country set.
 cm_fa_food_sample_markets = {
 	if = {
@@ -15,37 +18,87 @@ cm_fa_food_sample_markets = {
 			save_scope_as = cm_fa_market
 			set_local_variable = { name = cm_fa_supply value = 0 }
 			set_local_variable = { name = cm_fa_demand value = 0 }
-			# All owners: the food market is shared.
+			# All owners: the food market is shared. food_consumption is a negative
+			# contribution, so subtracting it accumulates the demand magnitude.
 			every_location_in_market = {
 				change_local_variable = { name = cm_fa_supply add = food_production }
-				change_local_variable = { name = cm_fa_demand add = food_consumption }
+				change_local_variable = { name = cm_fa_demand subtract = food_consumption }
 			}
 			if = {
 				limit = { local_var:cm_fa_demand > 0 }
 				set_local_variable = { name = cm_fa_ratio value = local_var:cm_fa_supply }
 				change_local_variable = { name = cm_fa_ratio divide = local_var:cm_fa_demand }
 			} else = {
-				# No demand reads as plentiful; any value at or above 1.25 works here.
+				# No demand reads as plentiful; the top bucket never lowers the median.
 				set_local_variable = { name = cm_fa_ratio value = 999 }
 			}
-			scope:cm_country = {
-				if = {
-					limit = { NOT = { is_key_in_variable_map = { name = cm_fa_food_ratio_max target = scope:cm_fa_market } } }
-					add_to_variable_map = { name = cm_fa_food_ratio_max key = scope:cm_fa_market value = local_var:cm_fa_ratio }
-				} else_if = {
-					limit = { local_var:cm_fa_ratio > "variable_map(cm_fa_food_ratio_max|scope:cm_fa_market)" }
-					remove_from_variable_map = { name = cm_fa_food_ratio_max key = scope:cm_fa_market }
-					add_to_variable_map = { name = cm_fa_food_ratio_max key = scope:cm_fa_market value = local_var:cm_fa_ratio }
-				}
-			}
+			scope:cm_country = { cm_fa_food_hist_add = yes }
 		}
 	}
 }
 
-# Yearly per-market check: where even the year's best month stayed below 125% supply to
-# demand, enable auto-food on the top food-potential locations until two active locations
-# can still expand, the player's own included. Marking only; construction runs through
-# the monthly staging. Root is the country.
+# Increments this month's histogram bucket for scope:cm_fa_market by the ratio in
+# local_var:cm_fa_ratio. The bucket boundaries (ratio 0.75/1.0/1.25/1.5/2.0/3.0) are the
+# same everywhere the median is read. add_to_variable_map overwrites, so each bucket reads
+# its count, bumps it, and writes it back; the read is inlined per bucket because a quoted
+# variable_map() map name cannot be a macro. Root is the country, expects scope:cm_fa_market.
+cm_fa_food_hist_add = {
+	if = {
+		limit = { local_var:cm_fa_ratio < 0.75 }
+		set_local_variable = { name = cm_fa_hc value = 0 }
+		if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h1 target = scope:cm_fa_market } }
+			set_local_variable = { name = cm_fa_hc value = "variable_map(cm_fa_food_h1|scope:cm_fa_market)" } }
+		change_local_variable = { name = cm_fa_hc add = 1 }
+		add_to_variable_map = { name = cm_fa_food_h1 key = scope:cm_fa_market value = local_var:cm_fa_hc }
+	} else_if = {
+		limit = { local_var:cm_fa_ratio < 1.0 }
+		set_local_variable = { name = cm_fa_hc value = 0 }
+		if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h2 target = scope:cm_fa_market } }
+			set_local_variable = { name = cm_fa_hc value = "variable_map(cm_fa_food_h2|scope:cm_fa_market)" } }
+		change_local_variable = { name = cm_fa_hc add = 1 }
+		add_to_variable_map = { name = cm_fa_food_h2 key = scope:cm_fa_market value = local_var:cm_fa_hc }
+	} else_if = {
+		limit = { local_var:cm_fa_ratio < 1.25 }
+		set_local_variable = { name = cm_fa_hc value = 0 }
+		if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h3 target = scope:cm_fa_market } }
+			set_local_variable = { name = cm_fa_hc value = "variable_map(cm_fa_food_h3|scope:cm_fa_market)" } }
+		change_local_variable = { name = cm_fa_hc add = 1 }
+		add_to_variable_map = { name = cm_fa_food_h3 key = scope:cm_fa_market value = local_var:cm_fa_hc }
+	} else_if = {
+		limit = { local_var:cm_fa_ratio < 1.5 }
+		set_local_variable = { name = cm_fa_hc value = 0 }
+		if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h4 target = scope:cm_fa_market } }
+			set_local_variable = { name = cm_fa_hc value = "variable_map(cm_fa_food_h4|scope:cm_fa_market)" } }
+		change_local_variable = { name = cm_fa_hc add = 1 }
+		add_to_variable_map = { name = cm_fa_food_h4 key = scope:cm_fa_market value = local_var:cm_fa_hc }
+	} else_if = {
+		limit = { local_var:cm_fa_ratio < 2.0 }
+		set_local_variable = { name = cm_fa_hc value = 0 }
+		if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h5 target = scope:cm_fa_market } }
+			set_local_variable = { name = cm_fa_hc value = "variable_map(cm_fa_food_h5|scope:cm_fa_market)" } }
+		change_local_variable = { name = cm_fa_hc add = 1 }
+		add_to_variable_map = { name = cm_fa_food_h5 key = scope:cm_fa_market value = local_var:cm_fa_hc }
+	} else_if = {
+		limit = { local_var:cm_fa_ratio < 3.0 }
+		set_local_variable = { name = cm_fa_hc value = 0 }
+		if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h6 target = scope:cm_fa_market } }
+			set_local_variable = { name = cm_fa_hc value = "variable_map(cm_fa_food_h6|scope:cm_fa_market)" } }
+		change_local_variable = { name = cm_fa_hc add = 1 }
+		add_to_variable_map = { name = cm_fa_food_h6 key = scope:cm_fa_market value = local_var:cm_fa_hc }
+	} else = {
+		set_local_variable = { name = cm_fa_hc value = 0 }
+		if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h7 target = scope:cm_fa_market } }
+			set_local_variable = { name = cm_fa_hc value = "variable_map(cm_fa_food_h7|scope:cm_fa_market)" } }
+		change_local_variable = { name = cm_fa_hc add = 1 }
+		add_to_variable_map = { name = cm_fa_food_h7 key = scope:cm_fa_market value = local_var:cm_fa_hc }
+	}
+}
+
+# Yearly per-market check: where the median food month stayed below the fa_food_target
+# surplus ratio, enable auto-food on the top food-potential locations until two active
+# locations can still expand, the player's own included. The median bucket is logged for
+# every market. Marking only; construction runs through the monthly staging.
+# Root is the country.
 cm_fa_food_yearly_evaluation = {
 	if = {
 		limit = {
@@ -53,24 +106,21 @@ cm_fa_food_yearly_evaluation = {
 			exists = var:cm_fa_food_enabled
 		}
 		save_scope_as = cm_country
+		set_local_variable = { name = cm_fa_food_thresh value = cm_fa_food_target_ratio }
 		cm_fa_food_cleanup = yes
 		every_market_present_in_country = {
 			save_scope_as = cm_fa_market
+			scope:cm_country = { cm_fa_food_compute_median = yes }
+			scope:cm_country = { cm_fa_food_log_market_numbers = yes }
 			if = {
-				limit = {
-					trigger_if = {
-						limit = { scope:cm_country = { is_key_in_variable_map = { name = cm_fa_food_ratio_max target = scope:cm_fa_market } } }
-						"scope:cm_country.variable_map(cm_fa_food_ratio_max|scope:cm_fa_market)" < 1.25
-					}
-					trigger_else = { always = no }
-				}
+				limit = { local_var:cm_fa_med_below = 1 }
 				set_local_variable = { name = cm_fa_food_n value = 0 }
 				scope:cm_country = {
 					every_owned_location = {
 						limit = {
 							market = scope:cm_fa_market
 							NOT = { integration_level = conquered }
-							cm_location_is_auto_food_active = yes
+							cm_fa_food_location_effectively_active = yes
 							cm_fa_food_location_counts_as_expandable = yes
 						}
 						change_local_variable = { name = cm_fa_food_n add = 1 }
@@ -78,7 +128,8 @@ cm_fa_food_yearly_evaluation = {
 				}
 				if = {
 					limit = { local_var:cm_fa_food_n < 2 }
-					cmf_log = { action = cm_fa_log_food_low }
+					scope:cm_country = { cmf_log = { action = cm_fa_log_food_low } }
+					scope:cm_country = { cm_fa_food_log_candidate_diag = yes }
 					scope:cm_country = {
 						ordered_owned_location = {
 							order_by = cm_location_food_potential
@@ -89,7 +140,7 @@ cm_fa_food_yearly_evaluation = {
 								NOT = { integration_level = conquered }
 								location_rank = location_rank:rural_settlement
 								cm_fa_location_has_food_rgo = yes
-								NOT = { cm_location_is_auto_food_active = yes }
+								NOT = { cm_fa_food_location_effectively_active = yes }
 								# The player said no here.
 								NOT = { exists = var:cm_auto_food_location_excluded }
 								cm_check_location_meets_min_market_access = yes
@@ -102,15 +153,162 @@ cm_fa_food_yearly_evaluation = {
 								scope:cm_fa_cand = { set_variable = { name = cm_fa_food_marked value = yes } }
 								scope:cm_country = { add_to_variable_list = { name = cm_fa_food_locations target = scope:cm_fa_cand } }
 								change_local_variable = { name = cm_fa_food_n add = 1 }
-								cmf_log = { action = cm_fa_log_food_picked }
+								scope:cm_country = { cmf_log = { action = cm_fa_log_food_picked } }
 							}
 						}
 					}
 				}
 			}
 		}
-		clear_variable_map = cm_fa_food_ratio_max
+		clear_variable_map = cm_fa_food_h1
+		clear_variable_map = cm_fa_food_h2
+		clear_variable_map = cm_fa_food_h3
+		clear_variable_map = cm_fa_food_h4
+		clear_variable_map = cm_fa_food_h5
+		clear_variable_map = cm_fa_food_h6
+		clear_variable_map = cm_fa_food_h7
 	}
+}
+
+# Reads scope:cm_fa_market's histogram, finds the median bucket (the first whose running
+# count reaches half the samples), logs it, and sets local_var:cm_fa_med_below to 1 when the
+# median bucket's lower bound is under local_var:cm_fa_food_thresh. The lower bound biases a
+# mid-bucket target toward building food, the safe direction. Root is the country.
+cm_fa_food_compute_median = {
+	set_local_variable = { name = cm_fa_c1 value = 0 }
+	if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h1 target = scope:cm_fa_market } }
+		set_local_variable = { name = cm_fa_c1 value = "variable_map(cm_fa_food_h1|scope:cm_fa_market)" } }
+	set_local_variable = { name = cm_fa_c2 value = 0 }
+	if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h2 target = scope:cm_fa_market } }
+		set_local_variable = { name = cm_fa_c2 value = "variable_map(cm_fa_food_h2|scope:cm_fa_market)" } }
+	set_local_variable = { name = cm_fa_c3 value = 0 }
+	if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h3 target = scope:cm_fa_market } }
+		set_local_variable = { name = cm_fa_c3 value = "variable_map(cm_fa_food_h3|scope:cm_fa_market)" } }
+	set_local_variable = { name = cm_fa_c4 value = 0 }
+	if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h4 target = scope:cm_fa_market } }
+		set_local_variable = { name = cm_fa_c4 value = "variable_map(cm_fa_food_h4|scope:cm_fa_market)" } }
+	set_local_variable = { name = cm_fa_c5 value = 0 }
+	if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h5 target = scope:cm_fa_market } }
+		set_local_variable = { name = cm_fa_c5 value = "variable_map(cm_fa_food_h5|scope:cm_fa_market)" } }
+	set_local_variable = { name = cm_fa_c6 value = 0 }
+	if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h6 target = scope:cm_fa_market } }
+		set_local_variable = { name = cm_fa_c6 value = "variable_map(cm_fa_food_h6|scope:cm_fa_market)" } }
+	set_local_variable = { name = cm_fa_c7 value = 0 }
+	if = { limit = { is_key_in_variable_map = { name = cm_fa_food_h7 target = scope:cm_fa_market } }
+		set_local_variable = { name = cm_fa_c7 value = "variable_map(cm_fa_food_h7|scope:cm_fa_market)" } }
+	set_local_variable = { name = cm_fa_tot value = local_var:cm_fa_c1 }
+	change_local_variable = { name = cm_fa_tot add = local_var:cm_fa_c2 }
+	change_local_variable = { name = cm_fa_tot add = local_var:cm_fa_c3 }
+	change_local_variable = { name = cm_fa_tot add = local_var:cm_fa_c4 }
+	change_local_variable = { name = cm_fa_tot add = local_var:cm_fa_c5 }
+	change_local_variable = { name = cm_fa_tot add = local_var:cm_fa_c6 }
+	change_local_variable = { name = cm_fa_tot add = local_var:cm_fa_c7 }
+	set_local_variable = { name = cm_fa_med_below value = 0 }
+	set_local_variable = { name = cm_fa_med_bucket value = 0 }
+	if = {
+		limit = { local_var:cm_fa_tot > 0 }
+		set_local_variable = { name = cm_fa_half value = local_var:cm_fa_tot }
+		change_local_variable = { name = cm_fa_half multiply = 0.5 }
+		set_local_variable = { name = cm_fa_cum value = 0 }
+		cm_fa_food_median_step = { N = 1 LB = 0 }
+		cm_fa_food_median_step = { N = 2 LB = 0.75 }
+		cm_fa_food_median_step = { N = 3 LB = 1.0 }
+		cm_fa_food_median_step = { N = 4 LB = 1.25 }
+		cm_fa_food_median_step = { N = 5 LB = 1.5 }
+		cm_fa_food_median_step = { N = 6 LB = 2.0 }
+		cm_fa_food_median_step = { N = 7 LB = 3.0 }
+		if = {
+			limit = { local_var:cm_fa_med_lb < local_var:cm_fa_food_thresh }
+			set_local_variable = { name = cm_fa_med_below value = 1 }
+		}
+		cm_fa_food_log_median = yes
+	}
+}
+
+# One cumulative step of the median walk: adds bucket $N$'s count, and if the running count
+# first reaches the halfway mark here, records this as the median bucket with lower bound
+# $LB$. Root is the country.
+cm_fa_food_median_step = {
+	change_local_variable = { name = cm_fa_cum add = local_var:cm_fa_c$N$ }
+	if = {
+		limit = {
+			local_var:cm_fa_med_bucket = 0
+			local_var:cm_fa_cum >= local_var:cm_fa_half
+		}
+		set_local_variable = { name = cm_fa_med_bucket value = $N$ }
+		set_local_variable = { name = cm_fa_med_lb value = $LB$ }
+	}
+}
+
+# Debug: re-sums scope:cm_fa_market's food supply and demand (demand from the negative
+# food_consumption, sign-flipped) and logs the raw numbers, the net balance, and the count
+# of locations summed. Root is the country, expects scope:cm_fa_market.
+cm_fa_food_log_market_numbers = {
+	set_local_variable = { name = cm_fa_dbg_supply value = 0 }
+	set_local_variable = { name = cm_fa_dbg_demand value = 0 }
+	set_local_variable = { name = cm_fa_dbg_count value = 0 }
+	scope:cm_fa_market = {
+		every_location_in_market = {
+			change_local_variable = { name = cm_fa_dbg_supply add = food_production }
+			change_local_variable = { name = cm_fa_dbg_demand subtract = food_consumption }
+			change_local_variable = { name = cm_fa_dbg_count add = 1 }
+		}
+	}
+	set_local_variable = { name = cm_fa_dbg_balance value = local_var:cm_fa_dbg_supply }
+	change_local_variable = { name = cm_fa_dbg_balance subtract = local_var:cm_fa_dbg_demand }
+	cmf_log_value = { action = cm_fa_log_food_supply value = local_var:cm_fa_dbg_supply }
+	cmf_log_value = { action = cm_fa_log_food_demand value = local_var:cm_fa_dbg_demand }
+	cmf_log_value = { action = cm_fa_log_food_balance value = local_var:cm_fa_dbg_balance }
+	cmf_log_value = { action = cm_fa_log_food_locs value = local_var:cm_fa_dbg_count }
+}
+
+# Debug: counts scope:cm_fa_market's candidate locations through each stage of the marking
+# filter and logs each count, to find which condition drops the count to zero. Root is the
+# country, expects scope:cm_fa_market.
+cm_fa_food_log_candidate_diag = {
+	set_local_variable = { name = cm_fa_diag_rgo value = 0 }
+	set_local_variable = { name = cm_fa_diag_expand value = 0 }
+	set_local_variable = { name = cm_fa_diag_access value = 0 }
+	set_local_variable = { name = cm_fa_diag_cand value = 0 }
+	every_owned_location = {
+		limit = {
+			market = scope:cm_fa_market
+			NOT = { integration_level = conquered }
+			location_rank = location_rank:rural_settlement
+			cm_fa_location_has_food_rgo = yes
+		}
+		change_local_variable = { name = cm_fa_diag_rgo add = 1 }
+		if = {
+			limit = { cm_fa_food_location_counts_as_expandable = yes }
+			change_local_variable = { name = cm_fa_diag_expand add = 1 }
+			if = {
+				limit = { cm_check_location_meets_min_market_access = yes }
+				change_local_variable = { name = cm_fa_diag_access add = 1 }
+				if = {
+					limit = {
+						NOT = { cm_fa_food_location_effectively_active = yes }
+						NOT = { exists = var:cm_auto_food_location_excluded }
+					}
+					change_local_variable = { name = cm_fa_diag_cand add = 1 }
+				}
+			}
+		}
+	}
+	cmf_log_value = { action = cm_fa_log_food_diag_rgo value = local_var:cm_fa_diag_rgo }
+	cmf_log_value = { action = cm_fa_log_food_diag_expand value = local_var:cm_fa_diag_expand }
+	cmf_log_value = { action = cm_fa_log_food_diag_access value = local_var:cm_fa_diag_access }
+	cmf_log_value = { action = cm_fa_log_food_diag_cand value = local_var:cm_fa_diag_cand }
+}
+
+# Logs the median bucket to the CMM log, one flag per bucket. Root is the country.
+cm_fa_food_log_median = {
+	if = { limit = { local_var:cm_fa_med_bucket = 1 } cmf_log = { action = cm_fa_log_food_med_1 } }
+	else_if = { limit = { local_var:cm_fa_med_bucket = 2 } cmf_log = { action = cm_fa_log_food_med_2 } }
+	else_if = { limit = { local_var:cm_fa_med_bucket = 3 } cmf_log = { action = cm_fa_log_food_med_3 } }
+	else_if = { limit = { local_var:cm_fa_med_bucket = 4 } cmf_log = { action = cm_fa_log_food_med_4 } }
+	else_if = { limit = { local_var:cm_fa_med_bucket = 5 } cmf_log = { action = cm_fa_log_food_med_5 } }
+	else_if = { limit = { local_var:cm_fa_med_bucket = 6 } cmf_log = { action = cm_fa_log_food_med_6 } }
+	else_if = { limit = { local_var:cm_fa_med_bucket = 7 } cmf_log = { action = cm_fa_log_food_med_7 } }
 }
 
 # Drops entries that stopped being valid: lost ownership (the marker stays, inert without
@@ -132,9 +330,10 @@ cm_fa_food_cleanup = {
 	}
 }
 
-# Stages the system-picked locations the player's own flow does not cover this pulse; a
-# location covered by both builds through the player's queue with player funds and still
-# counts toward the yearly target. Root is the country, scope:cm_country set.
+# Stages every system-picked location through the full-automation food flow under the food
+# pool, independent of the player's own auto-food feature: a location the player flow also
+# covers is deduped at staging (the earlier-running player queue wins), so it is never
+# built twice. Root is the country, scope:cm_country set.
 cm_fa_run_food = {
 	cm_fa_food_cleanup = yes
 	every_in_list = {
@@ -149,10 +348,7 @@ cm_fa_run_food = {
 				}
 			}
 			scope:cm_location = { raw_material = { save_scope_as = cm_food_good } }
-			if = {
-				limit = { NOT = { scope:cm_location = { cm_fa_food_player_flow_covers = yes } } }
-				scope:cm_location = { cm_fa_food_stage_in_location = yes }
-			}
+			scope:cm_location = { cm_fa_food_stage_in_location = yes }
 		}
 	}
 }
