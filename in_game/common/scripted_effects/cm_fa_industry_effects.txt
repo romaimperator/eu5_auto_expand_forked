@@ -161,10 +161,11 @@ cm_fa_compute_roi_score = {
 }
 
 # Greedy per-market drain: in each market the best-scored candidate, actionable or not,
-# sets the bar, and actionable candidates are approved best-first while holding the margin
-# share of its payback rate. The affordability stop is global: the pool and treasury are
-# country-wide, so spending in later markets would consume the funds a blocked better pick
-# is saving for. Root is the country.
+# sets the bar, and actionable builds and upgrades are approved best-first while holding
+# the margin share of its payback rate; RGO expansions bypass the margin and drain by ROI.
+# The affordability stop is global: the pool and treasury are country-wide, so spending in
+# later markets would consume the funds a blocked better pick is saving for.
+# Root is the country.
 cm_fa_pass_industry = {
 	# Margin factor = 100 / margin percent; scores are negative years, so the anchor times
 	# the factor is the bar for holding margin percent of the best payback rate. 0 = off.
@@ -267,10 +268,9 @@ cm_fa_drain_market = {
 				scope:cm_fa_pick_u_loc = { cm_fa_pick_best_upgrade_item = yes }
 				set_local_variable = { name = cm_fa_mkt_more value = 1 }
 			} else_if = {
-				limit = {
-					scope:cm_fa_dom_r >= { value = local_var:cm_fa_thresh }
-					scope:cm_fa_dom_r > -2000000
-				}
+				# RGOs have no input good, so they can never be unprofitable and never steal a
+				# building's opportunity; the margin never gates them, only ROI order.
+				limit = { scope:cm_fa_dom_r > -2000000 }
 				scope:cm_fa_pick_r_loc = { cm_fa_approve_rgo_item = yes }
 				set_local_variable = { name = cm_fa_mkt_more value = 1 }
 			}
