@@ -1,0 +1,195 @@
+﻿# Full-automation queue scorers, invoked by the construct queue window per staged entry.
+
+# Build scorer for every category's staged entry. Root is the location. Stores the engine
+# cost when the engine allows the build; Industry entries additionally score on ROI Tax
+# Income, and a blocked Industry candidate still anchors its market via cm_fa_best_any so
+# a worse buildable one cannot slip inside the margin.
+# scope:cm_cost = GetBuildOrExpandBuildingCost, scope:cm_income = income-to-owner per level,
+# scope:cm_profit = profit per level, scope:cm_can_build = CanBuildOrExpandBuilding,
+# scope:cm_obsolete_building = the standing obsolete predecessor, unset when none.
+# Plus the cm_bld_amenity_value inputs: cm_amenity_loc, cm_cur_market_access,
+# cm_cur_total_income, cm_cur_rgo_profit.
+cm_fa_score_build = {
+	saved_scopes = { cm_building_type cm_country cm_cost cm_income cm_profit cm_can_build cm_obsolete_building cm_amenity_loc cm_cur_market_access cm_cur_total_income cm_cur_rgo_profit }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		if = {
+			limit = {
+				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
+				is_target_in_variable_list = { name = cm_fa_b_types target = scope:cm_building_type }
+				NOT = { is_target_in_variable_list = { name = cm_fa_done_b_types target = scope:cm_building_type } }
+			}
+			add_to_variable_list = { name = cm_fa_done_b_types target = scope:cm_building_type }
+			scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
+			# The engine converts a build into the standing obsolete predecessor's upgrade;
+			# skip the item entirely when that predecessor is staged for upgrade this pulse.
+			set_local_variable = { name = cm_fa_conv_clash value = 0 }
+			if = {
+				limit = { exists = scope:cm_obsolete_building }
+				scope:cm_obsolete_building = { building_type = { save_temporary_scope_as = cm_fa_conv_type } }
+				if = {
+					limit = {
+						OR = {
+							is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_fa_conv_type }
+							is_target_in_variable_list = { name = cm_fa_u_types target = scope:cm_fa_conv_type }
+						}
+					}
+					set_local_variable = { name = cm_fa_conv_clash value = 1 }
+				} else = {
+					remove_from_variable_map = { name = cm_fa_b_conv key = scope:cm_building_type }
+					add_to_variable_map = { name = cm_fa_b_conv key = scope:cm_building_type value = scope:cm_fa_conv_type }
+				}
+			}
+			if = {
+				limit = { local_var:cm_fa_conv_clash = 0 }
+				if = {
+					limit = { scope:cm_can_build = yes }
+					remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
+					add_to_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type value = scope:cm_cost }
+				}
+				# Industry entries score; the other categories drain by category in list order.
+				if = {
+					limit = {
+						trigger_if = {
+							limit = {
+								has_variable_map = cm_fa_b_cats
+								is_key_in_variable_map = { name = cm_fa_b_cats target = scope:cm_building_type }
+							}
+							"variable_map(cm_fa_b_cats|scope:cm_building_type)" = 1
+						}
+						trigger_else = { always = no }
+						cm_fa_ind_roi_passes = { COST = scope:cm_cost }
+						cm_building_type_profitable_or_subsidized = yes
+					}
+					save_temporary_scope_value_as = { name = cm_q_score_cost value = scope:cm_cost }
+					cm_fa_compute_roi_score = yes
+					if = {
+						limit = { OR = { NOT = { has_variable = cm_fa_best_any } var:cm_fa_best_any < scope:cm_fa_score_val } }
+						set_variable = { name = cm_fa_best_any value = scope:cm_fa_score_val }
+					}
+					if = {
+						limit = { scope:cm_can_build = yes }
+						remove_from_variable_map = { name = cm_fa_b_scores key = scope:cm_building_type }
+						add_to_variable_map = { name = cm_fa_b_scores key = scope:cm_building_type value = scope:cm_fa_score_val }
+						if = {
+							limit = { OR = { NOT = { has_variable = cm_fa_b_best } var:cm_fa_b_best < scope:cm_fa_score_val } }
+							set_variable = { name = cm_fa_b_best value = scope:cm_fa_score_val }
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# Upgrade scorer, keyed by the standing obsolete type. Root is the location. The
+# replacement resolves only in GUI context; the drain reads it from cm_fa_u_new_types.
+# No profitable gate: upgrades are exempt, matching cm_gui_construct_upgrade.
+# scope:cm_cost/cm_income = the replacement's engine values,
+# scope:cm_can_build = CanUpgradeToBuilding for the replacement.
+cm_fa_score_upgrade = {
+	saved_scopes = { cm_old_building_type cm_new_building_type cm_building_type cm_country cm_cost cm_income cm_can_build cm_amenity_loc cm_cur_market_access cm_cur_total_income cm_cur_rgo_profit }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		if = {
+			limit = {
+				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
+				is_target_in_variable_list = { name = cm_fa_u_types target = scope:cm_old_building_type }
+				NOT = { is_target_in_variable_list = { name = cm_fa_done_u_types target = scope:cm_old_building_type } }
+			}
+			add_to_variable_list = { name = cm_fa_done_u_types target = scope:cm_old_building_type }
+			scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
+			if = {
+				limit = {
+					exists = scope:cm_new_building_type
+					cm_fa_ind_roi_passes = { COST = scope:cm_cost }
+				}
+				save_temporary_scope_value_as = { name = cm_q_score_cost value = scope:cm_cost }
+				cm_fa_compute_roi_score = yes
+				if = {
+					limit = { OR = { NOT = { has_variable = cm_fa_best_any } var:cm_fa_best_any < scope:cm_fa_score_val } }
+					set_variable = { name = cm_fa_best_any value = scope:cm_fa_score_val }
+				}
+				if = {
+					limit = { scope:cm_can_build = yes }
+					remove_from_variable_map = { name = cm_fa_u_new_types key = scope:cm_old_building_type }
+					add_to_variable_map = { name = cm_fa_u_new_types key = scope:cm_old_building_type value = scope:cm_new_building_type }
+					remove_from_variable_map = { name = cm_fa_u_scores key = scope:cm_old_building_type }
+					add_to_variable_map = { name = cm_fa_u_scores key = scope:cm_old_building_type value = scope:cm_fa_score_val }
+					remove_from_variable_map = { name = cm_fa_u_costs key = scope:cm_old_building_type }
+					add_to_variable_map = { name = cm_fa_u_costs key = scope:cm_old_building_type value = scope:cm_cost }
+					if = {
+						limit = { OR = { NOT = { has_variable = cm_fa_u_best } var:cm_fa_u_best < scope:cm_fa_score_val } }
+						set_variable = { name = cm_fa_u_best value = scope:cm_fa_score_val }
+					}
+				}
+			}
+		}
+	}
+}
+
+# Root is location. GUI-readable wrapper for the system-picked marker.
+cm_fa_is_system_food_picked = {
+	is_shown = {
+		cm_fa_location_is_system_food_picked = yes
+	}
+}
+
+# Root is location. GUI-readable wrapper for the system-active state.
+cm_fa_is_system_food_active = {
+	is_shown = {
+		cm_fa_location_is_system_food_active = yes
+	}
+}
+
+# Root is location. Expects scope:cm_country, scope:cm_location. The full-automation
+# analogue of cm_is_able_to_auto_food_location: drops the player-feature, discount, and
+# gold rows; the pool gate runs at the drain.
+cm_fa_is_able_system_food = {
+	is_shown = {
+		scope:cm_country = { cm_should_pause_auto_expand = no }
+		cm_check_location_meets_min_market_access = yes
+		NOT = { cm_food_location_pops_still_filling = yes }
+		cm_food_location_has_buildable_option = yes
+	}
+}
+
+# RGO scorer. Root is the location. The cost is the script-side glorpui_rgo_expand_cost;
+# slot availability is an approval-time concern, so a slot-blocked RGO still scores and
+# anchors. scope:cm_income = the RGO profit scaled by the location income-to-wealth ratio.
+cm_fa_score_rgo = {
+	saved_scopes = { cm_country cm_location cm_income }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		if = {
+			limit = {
+				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
+				save_temporary_scope_as = cm_q_item_loc
+				scope:cm_country = { is_target_in_variable_list = { name = cm_fa_r_locations target = scope:cm_q_item_loc } }
+				NOT = { has_variable = cm_fa_done_rgo }
+			}
+			set_variable = { name = cm_fa_done_rgo value = yes }
+			scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
+			if = {
+				limit = {
+					cm_rgo_basic_expand_eligibility = yes
+					cm_market_has_construction_goods_for_rgo = yes
+					cm_fa_ind_roi_passes = { COST = glorpui_rgo_expand_cost }
+				}
+				save_temporary_scope_value_as = { name = cm_q_score_cost value = glorpui_rgo_expand_cost }
+				cm_fa_compute_roi_score = yes
+				set_variable = { name = cm_fa_r_score value = scope:cm_fa_score_val }
+				if = {
+					limit = { OR = { NOT = { has_variable = cm_fa_best_any } var:cm_fa_best_any < scope:cm_fa_score_val } }
+					set_variable = { name = cm_fa_best_any value = scope:cm_fa_score_val }
+				}
+			}
+		}
+	}
+}

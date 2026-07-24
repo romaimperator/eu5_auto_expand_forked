@@ -1,0 +1,262 @@
+﻿# Full-automation Food: samples each market's food supply against demand monthly, once a
+# year enables auto-food on the best food-potential locations in markets whose best month
+# still fell short, and stages the system-picked locations through the food option engine
+# under the food pool. System picks never turn off except when the location stops being a
+# rural settlement or leaves the country.
+
+# Tracks each market's best food month: the supply/demand ratio sampled monthly into the
+# yearly-max map. The transient 100x-demand bug craters the ratio only in spiked months,
+# so any clean month keeps the market off the low-food list.
+# Root is the country, scope:cm_country set.
+cm_fa_food_sample_markets = {
+	if = {
+		limit = { exists = var:cm_fa_food_enabled }
+		every_market_present_in_country = {
+			save_scope_as = cm_fa_market
+			set_local_variable = { name = cm_fa_supply value = 0 }
+			set_local_variable = { name = cm_fa_demand value = 0 }
+			# All owners: the food market is shared.
+			every_location_in_market = {
+				change_local_variable = { name = cm_fa_supply add = food_production }
+				change_local_variable = { name = cm_fa_demand add = food_consumption }
+			}
+			if = {
+				limit = { local_var:cm_fa_demand > 0 }
+				set_local_variable = { name = cm_fa_ratio value = local_var:cm_fa_supply }
+				change_local_variable = { name = cm_fa_ratio divide = local_var:cm_fa_demand }
+			} else = {
+				# No demand reads as plentiful; any value at or above 1.25 works here.
+				set_local_variable = { name = cm_fa_ratio value = 999 }
+			}
+			scope:cm_country = {
+				if = {
+					limit = { NOT = { is_key_in_variable_map = { name = cm_fa_food_ratio_max target = scope:cm_fa_market } } }
+					add_to_variable_map = { name = cm_fa_food_ratio_max key = scope:cm_fa_market value = local_var:cm_fa_ratio }
+				} else_if = {
+					limit = { local_var:cm_fa_ratio > "variable_map(cm_fa_food_ratio_max|scope:cm_fa_market)" }
+					remove_from_variable_map = { name = cm_fa_food_ratio_max key = scope:cm_fa_market }
+					add_to_variable_map = { name = cm_fa_food_ratio_max key = scope:cm_fa_market value = local_var:cm_fa_ratio }
+				}
+			}
+		}
+	}
+}
+
+# Yearly per-market check: where even the year's best month stayed below 125% supply to
+# demand, enable auto-food on the top food-potential locations until two active locations
+# can still expand, the player's own included. Marking only; construction runs through
+# the monthly staging. Root is the country.
+cm_fa_food_yearly_evaluation = {
+	if = {
+		limit = {
+			exists = var:cm_fa_enabled
+			exists = var:cm_fa_food_enabled
+		}
+		save_scope_as = cm_country
+		cm_fa_food_cleanup = yes
+		every_market_present_in_country = {
+			save_scope_as = cm_fa_market
+			if = {
+				limit = {
+					trigger_if = {
+						limit = { scope:cm_country = { is_key_in_variable_map = { name = cm_fa_food_ratio_max target = scope:cm_fa_market } } }
+						"scope:cm_country.variable_map(cm_fa_food_ratio_max|scope:cm_fa_market)" < 1.25
+					}
+					trigger_else = { always = no }
+				}
+				set_local_variable = { name = cm_fa_food_n value = 0 }
+				scope:cm_country = {
+					every_owned_location = {
+						limit = {
+							market = scope:cm_fa_market
+							NOT = { integration_level = conquered }
+							cm_location_is_auto_food_active = yes
+							cm_fa_food_location_counts_as_expandable = yes
+						}
+						change_local_variable = { name = cm_fa_food_n add = 1 }
+					}
+				}
+				if = {
+					limit = { local_var:cm_fa_food_n < 2 }
+					cmf_log = { action = cm_fa_log_food_low }
+					scope:cm_country = {
+						ordered_owned_location = {
+							order_by = cm_location_food_potential
+							max = cm_max_guess_at_number_of_locations
+							check_range_bounds = no
+							limit = {
+								market = scope:cm_fa_market
+								NOT = { integration_level = conquered }
+								location_rank = location_rank:rural_settlement
+								cm_fa_location_has_food_rgo = yes
+								NOT = { cm_location_is_auto_food_active = yes }
+								# The player said no here.
+								NOT = { exists = var:cm_auto_food_location_excluded }
+								cm_check_location_meets_min_market_access = yes
+								cm_fa_food_location_counts_as_expandable = yes
+							}
+							save_scope_as = cm_fa_cand
+							# The iterator snapshots its limit; the count advances live.
+							if = {
+								limit = { local_var:cm_fa_food_n < 2 }
+								scope:cm_fa_cand = { set_variable = { name = cm_fa_food_marked value = yes } }
+								scope:cm_country = { add_to_variable_list = { name = cm_fa_food_locations target = scope:cm_fa_cand } }
+								change_local_variable = { name = cm_fa_food_n add = 1 }
+								cmf_log = { action = cm_fa_log_food_picked }
+							}
+						}
+					}
+				}
+			}
+		}
+		clear_variable_map = cm_fa_food_ratio_max
+	}
+}
+
+# Drops entries that stopped being valid: lost ownership (the marker stays, inert without
+# list membership) or left rural rank. Never removes for any other reason.
+# Root is the country.
+cm_fa_food_cleanup = {
+	save_scope_as = cm_fa_chk_country
+	every_in_list = {
+		variable = cm_fa_food_locations
+		save_scope_as = cm_fa_chk
+		if = {
+			limit = { scope:cm_fa_chk = { NOT = { owner = scope:cm_fa_chk_country } } }
+			scope:cm_fa_chk_country = { remove_list_variable = { name = cm_fa_food_locations target = scope:cm_fa_chk } }
+		} else_if = {
+			limit = { scope:cm_fa_chk = { NOT = { location_rank = location_rank:rural_settlement } } }
+			scope:cm_fa_chk = { remove_variable = cm_fa_food_marked }
+			scope:cm_fa_chk_country = { remove_list_variable = { name = cm_fa_food_locations target = scope:cm_fa_chk } }
+		}
+	}
+}
+
+# Stages the system-picked locations the player's own flow does not cover this pulse; a
+# location covered by both builds through the player's queue with player funds and still
+# counts toward the yearly target. Root is the country, scope:cm_country set.
+cm_fa_run_food = {
+	cm_fa_food_cleanup = yes
+	every_in_list = {
+		variable = cm_fa_food_locations
+		save_scope_as = cm_location
+		if = {
+			limit = {
+				scope:cm_location = {
+					owner = scope:cm_country
+					NOT = { integration_level = conquered }
+					location_rank = location_rank:rural_settlement
+				}
+			}
+			scope:cm_location = { raw_material = { save_scope_as = cm_food_good } }
+			if = {
+				limit = { NOT = { scope:cm_location = { cm_fa_food_player_flow_covers = yes } } }
+				scope:cm_location = { cm_fa_food_stage_in_location = yes }
+			}
+		}
+	}
+}
+
+# Full-automation mirror of cm_food_auto_build_in_location: the same marginal comparison
+# over the five food options, with the gold and discount gates dropped; affordability
+# runs only at the drain.
+# Root is the location. Expects scopes: country, location, food_good.
+cm_fa_food_stage_in_location = {
+	if = { limit = { cm_get_open_build_queue_slots > 0 }
+	if = { limit = { cm_check_location_meets_min_market_access = yes }
+	if = { limit = { NOT = { cm_food_location_pops_still_filling = yes } }
+
+		set_local_variable = { name = cm_food_best value = 0 }
+		set_local_variable = { name = cm_food_action value = 0 }
+
+		cm_food_consider_option = { CAN = cm_food_can_build_rgo MARGINAL = cm_food_marginal_rgo ACTION = 1 }
+		cm_food_consider_option = { CAN = cm_food_can_build_farming_village MARGINAL = cm_food_marginal_farming_village ACTION = 2 }
+		cm_food_consider_option = { CAN = cm_food_can_build_windmill MARGINAL = cm_food_rank_windmill ACTION = 3 }
+		cm_food_consider_option = { CAN = cm_food_can_build_irrigation MARGINAL = cm_food_rank_irrigation ACTION = 4 }
+		cm_food_consider_option = { CAN = cm_food_can_build_fishing_village MARGINAL = cm_food_marginal_fishing_village ACTION = 5 }
+
+		if = {
+			limit = { local_var:cm_food_action = 1 }
+			cm_fa_stage_food_rgo = yes
+		}
+		cm_fa_food_stage_building_option = { ACTION = 2 BT = building_type:farming_village }
+		cm_fa_food_stage_building_option = { ACTION = 3 BT = building_type:windmill }
+		cm_fa_food_stage_building_option = { ACTION = 4 BT = building_type:irrigation_systems }
+		cm_fa_food_stage_building_option = { ACTION = 5 BT = building_type:fishing_village }
+
+	} # end pops check
+	} # end market access
+	} # end build queue
+}
+
+# Root is the location. Skips a winner some player queue already stages here this pulse.
+cm_fa_food_stage_building_option = {
+	if = {
+		limit = { local_var:cm_food_action = $ACTION$ }
+		$BT$ = { save_scope_as = cm_building_type }
+		if = {
+			limit = {
+				scope:cm_location = {
+					NOT = { is_target_in_variable_list = { name = cm_q_food_building_types target = scope:cm_building_type } }
+					NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:cm_building_type } }
+					NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+				}
+			}
+			cm_fa_stage_build_candidate = { cat = 3 }
+		}
+	}
+}
+
+# Adds the location to the drain-only RGO list; no GUI scoring, so the staged counter is
+# untouched. Root is the location. Expects scope:cm_country, scope:cm_location.
+cm_fa_stage_food_rgo = {
+	scope:cm_country = {
+		if = {
+			limit = { NOT = { is_target_in_variable_list = { name = cm_fa_food_rgo_locations target = scope:cm_location } } }
+			add_to_variable_list = { name = cm_fa_food_rgo_locations target = scope:cm_location }
+		}
+	}
+}
+
+# Food drain: staged food buildings in list order, then RGO levels, one level per location
+# per cycle. Root is the country.
+cm_fa_pass_food = {
+	if = {
+		limit = { has_variable_list = cm_fa_b_locations }
+		every_in_list = {
+			variable = cm_fa_b_locations
+			save_temporary_scope_as = cm_fa_drain_loc
+			scope:cm_fa_drain_loc = {
+				every_in_list = {
+					variable = cm_fa_b_types
+					save_scope_as = cm_building_type
+					scope:cm_fa_drain_loc = {
+						cm_fa_try_approve_build = { cat = 3 POOL = cm_fa_pool_food GOODS_GATE = cm_market_has_construction_goods_for_building }
+					}
+				}
+			}
+		}
+	}
+	if = {
+		limit = { has_variable_list = cm_fa_food_rgo_locations }
+		every_in_list = {
+			variable = cm_fa_food_rgo_locations
+			save_temporary_scope_as = cm_location
+			scope:cm_location = {
+				if = {
+					limit = {
+						cm_get_open_build_queue_slots > 0
+						cm_is_rgo_not_max_level_already = yes
+						cm_is_rgo_under_construction = no
+						cm_location_rgo_promotion_buffer_slack >= 0
+						cm_market_has_construction_goods_for_rgo = yes
+						cm_fa_can_afford_rgo = { POOL = cm_fa_pool_food }
+					}
+					set_local_variable = { name = cm_fa_rgo_cost value = glorpui_rgo_expand_cost }
+					construct_rgo_upgrade = { }
+					scope:cm_country = { change_variable = { name = cm_fa_pool_food subtract = local_var:cm_fa_rgo_cost } }
+				}
+			}
+		}
+	}
+}

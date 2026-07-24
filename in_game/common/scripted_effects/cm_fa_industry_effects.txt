@@ -1,0 +1,573 @@
+﻿# Full-automation Industry: stages expand, from-zero, obsolete-upgrade, and RGO candidates
+# on ROI Tax Income, then the greedy per-market drain approves the best of them under the
+# industry pool. Staging applies no slot, under-construction, or affordability gates: a
+# currently blocked good candidate must still score so it can anchor its market and hold
+# the margin bar against worse buildable ones.
+
+# Root is the country, scope:cm_country set.
+cm_fa_run_industry = {
+	# From-zero candidate types this pulse: buildable, non-obsolete production types.
+	clear_variable_list = cm_fa_ind_types
+	every_in_global_list = {
+		variable = cm_building_types_to_process
+		limit = {
+			cm_is_building_type_production_building = yes
+			is_foreign = no
+			save_temporary_scope_as = cm_fa_try_type
+			scope:cm_country = {
+				can_build_building = scope:cm_fa_try_type
+				NOT = { building_type_is_obsolete = scope:cm_fa_try_type }
+			}
+		}
+		save_scope_as = cm_fa_list_type
+		scope:cm_country = { add_to_variable_list = { name = cm_fa_ind_types target = scope:cm_fa_list_type } }
+	}
+	ordered_owned_location = {
+		order_by = max_control
+		max = cm_max_guess_at_number_of_locations
+		check_range_bounds = no
+		limit = { NOT = { integration_level = conquered } }
+		save_scope_as = cm_location
+		# Standing buildings: expands and obsolete upgrades.
+		ordered_buildings_in_location = {
+			order_by = building_index
+			max = 100
+			check_range_bounds = no
+			save_scope_as = cm_building
+			building_type = { save_scope_as = cm_building_type }
+			if = {
+				limit = { cm_is_building_type_obsolete = yes }
+				if = {
+					limit = {
+						scope:cm_building_type = { cm_is_building_type_production_building = yes }
+						scope:cm_location = { cm_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
+					}
+					scope:cm_building_type = { cm_find_current_building_type = yes }
+					cm_fa_stage_upgrade_candidate = yes
+				}
+			} else_if = {
+				limit = {
+					scope:cm_building_type = { cm_is_building_type_production_building = yes }
+					scope:cm_building = { is_at_max_level = no }
+					scope:cm_location = {
+						cm_location_has_enough_pops_available = yes
+						cm_is_location_under_building_limit = yes
+						NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
+					}
+				}
+				cm_fa_stage_build_candidate = { cat = 1 }
+			}
+		}
+		# From-zero production buildings.
+		scope:cm_country = {
+			every_in_list = {
+				variable = cm_fa_ind_types
+				save_scope_as = cm_building_type
+				if = {
+					limit = {
+						scope:cm_location = {
+							NOT = { has_building = scope:cm_building_type }
+							cm_location_allowed_to_build = { target = scope:cm_building_type }
+							cm_location_has_enough_pops_available = yes
+							cm_is_location_under_building_limit = yes
+							NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
+							NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_building_type } }
+						}
+					}
+					cm_fa_stage_build_candidate = { cat = 1 }
+				}
+			}
+		}
+		# RGO expansion.
+		if = {
+			limit = {
+				cm_rgo_basic_expand_eligibility = yes
+				NOT = { cm_location_auto_food_supersedes_rgo = yes }
+			}
+			cm_fa_stage_rgo_candidate = yes
+		}
+	}
+}
+
+# Stages a build candidate into the full-automation build queue and marks its category,
+# first stager wins. $cat$ = 1 industry, 2 collapsar, 3 food, 4 utilities.
+# Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
+cm_fa_stage_build_candidate = {
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_fa_b_locations LOCATION_LIST = cm_fa_b_types DONE_LIST = cm_fa_done_b_types }
+	scope:cm_location = {
+		if = {
+			limit = { NOT = { is_key_in_variable_map = { name = cm_fa_b_cats target = scope:cm_building_type } } }
+			add_to_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type value = $cat$ }
+		}
+	}
+}
+
+# Expects scope:cm_country, scope:cm_location.
+cm_fa_stage_rgo_candidate = {
+	cm_stage_location_to_queue = { COUNTRY_LIST = cm_fa_r_locations DONE_VAR = cm_fa_done_rgo }
+}
+
+# Full-automation obsolete-upgrade staging, keyed by the standing obsolete type. Mirrors
+# cm_stage_upgrade_candidate's scope dance and shared markers; the ROI gate replaces the
+# min-gold and min-discount gates and runs at scoring. scope:cm_building_type holds the
+# replacement while the gates run. Expects scope:cm_country, scope:cm_location,
+# scope:cm_building, scope:cm_building_type as the standing obsolete type,
+# scope:cm_current_building_type as the resolved replacement.
+cm_fa_stage_upgrade_candidate = {
+	cm_clear_finished_upgrade_in_progress = yes
+	scope:cm_building_type = { save_scope_as = cm_fa_staged_type }
+	scope:cm_current_building_type = { save_scope_as = cm_building_type }
+	set_local_variable = { name = cm_fa_upg_ok value = 0 }
+	if = {
+		limit = {
+			scope:cm_building = { cm_is_not_under_construction = yes }
+			scope:cm_location = {
+				cm_location_building_type_not_under_construction = yes
+				cm_location_has_enough_pops_available = yes
+				cm_is_location_under_building_limit = yes
+			}
+			NOT = { scope:cm_location = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_fa_staged_type } } }
+			# Already staged in the player's upgrade queue this pulse
+			NOT = { scope:cm_location = { is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_fa_staged_type } } }
+		}
+		set_local_variable = { name = cm_fa_upg_ok value = 1 }
+	}
+	scope:cm_fa_staged_type = { save_scope_as = cm_building_type }
+	if = {
+		limit = { local_var:cm_fa_upg_ok = 1 }
+		cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_fa_u_locations LOCATION_LIST = cm_fa_u_types DONE_LIST = cm_fa_done_u_types }
+		# Shared marker so no feature from-zero-builds the replacement this pulse.
+		scope:cm_location = {
+			if = {
+				limit = { NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type } } }
+				add_to_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type }
+			}
+		}
+	}
+}
+
+# score = -(cost / (adjusted income * 12)), floored at the -99999 sentinel; bigger =
+# better, matching cm_q_compute_metric_score's ROI branch. Root is the item's location.
+# Expects scope:cm_income (plus the amenity scopes when available) and scope:cm_q_score_cost.
+# Result exported as scope:cm_fa_score_val. Callers gate on cm_fa_ind_roi_passes first.
+cm_fa_compute_roi_score = {
+	set_local_variable = { name = cm_fa_denom value = cm_bld_adjusted_income }
+	change_local_variable = { name = cm_fa_denom multiply = 12 }
+	set_local_variable = { name = cm_fa_sc value = scope:cm_q_score_cost }
+	change_local_variable = { name = cm_fa_sc divide = local_var:cm_fa_denom }
+	change_local_variable = { name = cm_fa_sc multiply = -1 }
+	change_local_variable = { name = cm_fa_sc max = -99999 }
+	save_temporary_scope_value_as = { name = cm_fa_score_val value = local_var:cm_fa_sc }
+}
+
+# Greedy per-market drain: in each market the best-scored candidate, actionable or not,
+# sets the bar, and actionable candidates are approved best-first while holding the margin
+# share of its payback rate. The affordability stop is global: the pool and treasury are
+# country-wide, so spending in later markets would consume the funds a blocked better pick
+# is saving for. Root is the country.
+cm_fa_pass_industry = {
+	# Margin factor = 100 / margin percent; scores are negative years, so the anchor times
+	# the factor is the bar for holding margin percent of the best payback rate. 0 = off.
+	set_local_variable = { name = cm_fa_margin_f value = 0 }
+	if = {
+		limit = {
+			exists = var:cm_fa_industry_margin
+			var:cm_fa_industry_margin > 0
+		}
+		set_local_variable = { name = cm_fa_margin_f value = 100 }
+		change_local_variable = { name = cm_fa_margin_f divide = var:cm_fa_industry_margin }
+	}
+	every_market_present_in_country = {
+		save_scope_as = cm_fa_market
+		if = {
+			limit = { local_var:cm_fa_blk_industry = 0 }
+			scope:cm_country = { cm_fa_drain_market = yes }
+		}
+	}
+}
+
+# Drains one market's industry candidates. Root is the country, expects scope:cm_fa_market.
+cm_fa_drain_market = {
+	save_temporary_scope_value_as = { name = cm_fa_anchor value = -2000000 }
+	ordered_owned_location = {
+		limit = {
+			market = scope:cm_fa_market
+			has_variable = cm_fa_best_any
+		}
+		order_by = { value = var:cm_fa_best_any }
+		position = 0
+		check_range_bounds = no
+		save_temporary_scope_value_as = { name = cm_fa_anchor value = var:cm_fa_best_any }
+	}
+	if = {
+		limit = { scope:cm_fa_anchor > -2000000 }
+		if = {
+			limit = { local_var:cm_fa_margin_f > 0 }
+			set_local_variable = { name = cm_fa_thresh value = scope:cm_fa_anchor }
+			change_local_variable = { name = cm_fa_thresh multiply = local_var:cm_fa_margin_f }
+		} else = {
+			# Margin off: below every real score.
+			set_local_variable = { name = cm_fa_thresh value = -2000000 }
+		}
+		set_local_variable = { name = cm_fa_mkt_more value = 1 }
+		set_local_variable = { name = cm_fa_guard value = 0 }
+		while = {
+			limit = {
+				local_var:cm_fa_mkt_more = 1
+				local_var:cm_fa_blk_industry = 0
+				# 999 stays under the engine's 1000-iteration while abort.
+				local_var:cm_fa_guard < 999
+			}
+			change_local_variable = { name = cm_fa_guard add = 1 }
+			set_local_variable = { name = cm_fa_mkt_more value = 0 }
+			# Best actionable candidate per domain in this market.
+			save_temporary_scope_value_as = { name = cm_fa_dom_b value = -2000000 }
+			save_temporary_scope_value_as = { name = cm_fa_dom_u value = -2000000 }
+			save_temporary_scope_value_as = { name = cm_fa_dom_r value = -2000000 }
+			ordered_owned_location = {
+				limit = { market = scope:cm_fa_market has_variable = cm_fa_b_best }
+				order_by = { value = var:cm_fa_b_best }
+				position = 0
+				check_range_bounds = no
+				save_temporary_scope_as = cm_fa_pick_b_loc
+				save_temporary_scope_value_as = { name = cm_fa_dom_b value = var:cm_fa_b_best }
+			}
+			ordered_owned_location = {
+				limit = { market = scope:cm_fa_market has_variable = cm_fa_u_best }
+				order_by = { value = var:cm_fa_u_best }
+				position = 0
+				check_range_bounds = no
+				save_temporary_scope_as = cm_fa_pick_u_loc
+				save_temporary_scope_value_as = { name = cm_fa_dom_u value = var:cm_fa_u_best }
+			}
+			ordered_owned_location = {
+				limit = { market = scope:cm_fa_market has_variable = cm_fa_r_score }
+				order_by = { value = var:cm_fa_r_score }
+				position = 0
+				check_range_bounds = no
+				save_temporary_scope_as = cm_fa_pick_r_loc
+				save_temporary_scope_value_as = { name = cm_fa_dom_r value = var:cm_fa_r_score }
+			}
+			if = {
+				# Ties go to the build domain, then upgrades.
+				limit = {
+					scope:cm_fa_dom_b >= { value = scope:cm_fa_dom_u }
+					scope:cm_fa_dom_b >= { value = scope:cm_fa_dom_r }
+					scope:cm_fa_dom_b >= { value = local_var:cm_fa_thresh }
+					scope:cm_fa_dom_b > -2000000
+				}
+				scope:cm_fa_pick_b_loc = { cm_fa_pick_best_build_item = yes }
+				set_local_variable = { name = cm_fa_mkt_more value = 1 }
+			} else_if = {
+				limit = {
+					scope:cm_fa_dom_u >= { value = scope:cm_fa_dom_r }
+					scope:cm_fa_dom_u >= { value = local_var:cm_fa_thresh }
+					scope:cm_fa_dom_u > -2000000
+				}
+				scope:cm_fa_pick_u_loc = { cm_fa_pick_best_upgrade_item = yes }
+				set_local_variable = { name = cm_fa_mkt_more value = 1 }
+			} else_if = {
+				limit = {
+					scope:cm_fa_dom_r >= { value = local_var:cm_fa_thresh }
+					scope:cm_fa_dom_r > -2000000
+				}
+				scope:cm_fa_pick_r_loc = { cm_fa_approve_rgo_item = yes }
+				set_local_variable = { name = cm_fa_mkt_more value = 1 }
+			}
+		}
+	}
+}
+
+# Approves the highest-scored full-automation build at this location, then consumes it;
+# the key is removed even when the gates fail, so every pick shrinks a map. Root is the
+# location.
+cm_fa_pick_best_build_item = {
+	save_temporary_scope_as = cm_fa_pick_loc
+	ordered_key_in_variable_map = {
+		variable = cm_fa_b_scores
+		order_by = {
+			save_temporary_scope_as = cm_fa_try_type
+			value = "scope:cm_fa_pick_loc.variable_map(cm_fa_b_scores|scope:cm_fa_try_type)"
+		}
+		position = 0
+		check_range_bounds = no
+		save_temporary_scope_as = cm_fa_pick_type
+	}
+	scope:cm_fa_pick_type = { save_scope_as = cm_building_type }
+	save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_fa_b_costs|scope:cm_fa_pick_type)" }
+	market = { save_temporary_scope_as = cm_market }
+	if = {
+		# Approved by another feature this cycle: consume silently.
+		limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } } }
+		if = {
+			limit = {
+				cm_get_open_build_queue_slots > 0
+				cm_market_has_construction_goods_for_building = yes
+			}
+			if = {
+				limit = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
+				cm_approve_gui_build = yes
+				scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
+				# The engine converts this build into the standing obsolete predecessor's upgrade.
+				if = {
+					limit = {
+						has_variable_map = cm_fa_b_conv
+						is_key_in_variable_map = { name = cm_fa_b_conv target = scope:cm_fa_pick_type }
+					}
+					"variable_map(cm_fa_b_conv|scope:cm_fa_pick_type)" = { save_temporary_scope_as = cm_fa_conv_pred }
+					if = {
+						limit = { NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_fa_conv_pred } } }
+						add_to_variable_list = { name = cm_upgrade_in_progress target = scope:cm_fa_conv_pred }
+					}
+					remove_from_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_fa_conv_pred }
+					add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_fa_conv_pred value = scope:cm_building_type }
+				} else = {
+					# A conversion must fire exactly once.
+					cm_fa_approve_extra_build_copies = yes
+				}
+			} else = {
+				set_local_variable = { name = cm_fa_blk_industry value = 1 }
+			}
+		}
+	}
+	remove_from_variable_map = { name = cm_fa_b_scores key = scope:cm_fa_pick_type }
+	remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_fa_pick_type }
+	remove_from_variable_map = { name = cm_fa_b_conv key = scope:cm_fa_pick_type }
+	remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_fa_pick_type }
+	cm_fa_refresh_build_best = yes
+}
+
+# Full-automation twin of cm_q_approve_extra_build_copies: the same rank lists and claims,
+# with the industry pool as the affordability gate and per-copy pool spend. No rank
+# collision is possible: the pick's dedup keeps this off types the player's features
+# approved at the location, so this batch always starts at x2 for its own type.
+# Root is the location. Expects scope:cm_country, scope:cm_building_type, scope:cm_cost,
+# scope:cm_market.
+cm_fa_approve_extra_build_copies = {
+	set_local_variable = { name = cm_fa_copy_guard value = 0 }
+	set_local_variable = { name = cm_fa_copy_emp value = scope:cm_building_type.employment_size }
+	set_local_variable = { name = cm_fa_copy_batch_emp value = local_var:cm_fa_copy_emp }
+	# Levels the type reaches once the queued batch completes, counting the approved first copy.
+	set_local_variable = { name = cm_fa_copy_type_levels value = 1 }
+	if = {
+		limit = { has_building = scope:cm_building_type }
+		"building(scope:cm_building_type|scope:cm_country)" = {
+			change_local_variable = { name = cm_fa_copy_type_levels add = building_level }
+			change_local_variable = { name = cm_fa_copy_type_levels add = building_levels_under_construction }
+		}
+	}
+	while = {
+		limit = {
+			# One rank list per extra level, so at most 8 levels per type per cycle.
+			local_var:cm_fa_copy_guard < 7
+			cm_get_open_build_queue_slots > 0
+			var:cm_q_levels_used < { value = cm_get_remaining_free_building_levels_allowed ceiling = yes }
+			OR = {
+				building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
+				building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_fa_copy_type_levels }
+			}
+			# Each extra copy needs the pop room the copies before it left free.
+			OR = {
+				cm_location_unemployed_for_building_type > local_var:cm_fa_copy_batch_emp
+				cm_location_promotion_buffer_slack >= local_var:cm_fa_copy_batch_emp
+			}
+			cm_fa_can_afford = { POOL = cm_fa_pool_industry }
+			cm_market_has_construction_goods_for_building = yes
+		}
+		change_local_variable = { name = cm_fa_copy_guard add = 1 }
+		# A variable list holds a target once, so each extra level fires from its own rank list.
+		if = {
+			limit = { local_var:cm_fa_copy_guard = 1 }
+			add_to_variable_list = { name = cm_q_approved_build_x2 target = scope:cm_building_type }
+		} else_if = {
+			limit = { local_var:cm_fa_copy_guard = 2 }
+			add_to_variable_list = { name = cm_q_approved_build_x3 target = scope:cm_building_type }
+		} else_if = {
+			limit = { local_var:cm_fa_copy_guard = 3 }
+			add_to_variable_list = { name = cm_q_approved_build_x4 target = scope:cm_building_type }
+		} else_if = {
+			limit = { local_var:cm_fa_copy_guard = 4 }
+			add_to_variable_list = { name = cm_q_approved_build_x5 target = scope:cm_building_type }
+		} else_if = {
+			limit = { local_var:cm_fa_copy_guard = 5 }
+			add_to_variable_list = { name = cm_q_approved_build_x6 target = scope:cm_building_type }
+		} else_if = {
+			limit = { local_var:cm_fa_copy_guard = 6 }
+			add_to_variable_list = { name = cm_q_approved_build_x7 target = scope:cm_building_type }
+		} else = {
+			add_to_variable_list = { name = cm_q_approved_build_x8 target = scope:cm_building_type }
+		}
+		cm_q_claim_build_copy = yes
+		scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
+		change_local_variable = { name = cm_fa_copy_batch_emp add = local_var:cm_fa_copy_emp }
+		change_local_variable = { name = cm_fa_copy_type_levels add = 1 }
+	}
+	if = {
+		# Same non-affordability conditions as the while above, affordability negated: true
+		# only when the pool or treasury alone stopped this batch.
+		limit = {
+			local_var:cm_fa_copy_guard < 7
+			cm_get_open_build_queue_slots > 0
+			var:cm_q_levels_used < { value = cm_get_remaining_free_building_levels_allowed ceiling = yes }
+			OR = {
+				building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
+				building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_fa_copy_type_levels }
+			}
+			OR = {
+				cm_location_unemployed_for_building_type > local_var:cm_fa_copy_batch_emp
+				cm_location_promotion_buffer_slack >= local_var:cm_fa_copy_batch_emp
+			}
+			cm_market_has_construction_goods_for_building = yes
+			NOT = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
+		}
+		set_local_variable = { name = cm_fa_blk_industry value = 1 }
+	}
+}
+
+# Recomputes this location's best build score after a pick; an empty map drops the best
+# marker, which is the market picks' membership filter. Root is the location.
+cm_fa_refresh_build_best = {
+	save_temporary_scope_as = cm_fa_refresh_loc
+	remove_variable = cm_fa_b_best
+	if = {
+		limit = {
+			has_variable_map = cm_fa_b_scores
+			variable_map_size = { name = cm_fa_b_scores value >= 1 }
+		}
+		ordered_key_in_variable_map = {
+			variable = cm_fa_b_scores
+			order_by = {
+				save_temporary_scope_as = cm_fa_try_type
+				value = "scope:cm_fa_refresh_loc.variable_map(cm_fa_b_scores|scope:cm_fa_try_type)"
+			}
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_fa_next_type
+		}
+		set_variable = { name = cm_fa_b_best value = "variable_map(cm_fa_b_scores|scope:cm_fa_next_type)" }
+	}
+}
+
+# Upgrade twin of cm_fa_pick_best_build_item, keyed by the standing obsolete type. Root is
+# the location.
+cm_fa_pick_best_upgrade_item = {
+	save_temporary_scope_as = cm_fa_pick_loc
+	ordered_key_in_variable_map = {
+		variable = cm_fa_u_scores
+		order_by = {
+			save_temporary_scope_as = cm_fa_try_type
+			value = "scope:cm_fa_pick_loc.variable_map(cm_fa_u_scores|scope:cm_fa_try_type)"
+		}
+		position = 0
+		check_range_bounds = no
+		save_temporary_scope_as = cm_fa_pick_type
+	}
+	if = {
+		limit = {
+			has_variable_map = cm_fa_u_new_types
+			is_key_in_variable_map = { name = cm_fa_u_new_types target = scope:cm_fa_pick_type }
+		}
+		scope:cm_fa_pick_type = { save_scope_as = cm_old_building_type }
+		"variable_map(cm_fa_u_new_types|scope:cm_fa_pick_type)" = { save_scope_as = cm_new_building_type }
+		scope:cm_new_building_type = { save_scope_as = cm_building_type }
+		save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_fa_u_costs|scope:cm_fa_pick_type)" }
+		market = { save_temporary_scope_as = cm_market }
+		if = {
+			# Approved or already converting via another feature: consume silently.
+			limit = {
+				NOT = { is_target_in_variable_list = { name = cm_q_approved_upgrade_types target = scope:cm_old_building_type } }
+				NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_old_building_type } }
+			}
+			if = {
+				limit = { cm_market_has_construction_goods_for_building = yes }
+				if = {
+					limit = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
+					cm_q_record_upgrade_approval = yes
+					scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
+				} else = {
+					set_local_variable = { name = cm_fa_blk_industry value = 1 }
+				}
+			}
+		}
+	}
+	remove_from_variable_map = { name = cm_fa_u_scores key = scope:cm_fa_pick_type }
+	remove_from_variable_map = { name = cm_fa_u_costs key = scope:cm_fa_pick_type }
+	remove_from_variable_map = { name = cm_fa_u_new_types key = scope:cm_fa_pick_type }
+	cm_fa_refresh_upg_best = yes
+}
+
+# Upgrade twin of cm_fa_refresh_build_best. Root is the location.
+cm_fa_refresh_upg_best = {
+	save_temporary_scope_as = cm_fa_refresh_loc
+	remove_variable = cm_fa_u_best
+	if = {
+		limit = {
+			has_variable_map = cm_fa_u_scores
+			variable_map_size = { name = cm_fa_u_scores value >= 1 }
+		}
+		ordered_key_in_variable_map = {
+			variable = cm_fa_u_scores
+			order_by = {
+				save_temporary_scope_as = cm_fa_try_type
+				value = "scope:cm_fa_refresh_loc.variable_map(cm_fa_u_scores|scope:cm_fa_try_type)"
+			}
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_fa_next_type
+		}
+		set_variable = { name = cm_fa_u_best value = "variable_map(cm_fa_u_scores|scope:cm_fa_next_type)" }
+	}
+}
+
+# Approves RGO levels at this location under the industry pool, mirroring the player RGO
+# drain's slot, headroom, and laborer budget; consumes the score first so the pick loop
+# always advances. Root is the location.
+cm_fa_approve_rgo_item = {
+	remove_variable = cm_fa_r_score
+	save_temporary_scope_as = cm_location
+	if = {
+		limit = {
+			cm_rgo_basic_expand_eligibility = yes
+			NOT = { cm_location_auto_food_supersedes_rgo = yes }
+			cm_market_has_construction_goods_for_rgo = yes
+		}
+		if = {
+			limit = { cm_get_open_build_queue_slots > 0 }
+			set_local_variable = { name = cm_fa_rgo_budget value = cm_get_open_build_queue_slots }
+			set_local_variable = { name = cm_fa_rgo_headroom value = cm_get_max_rgo_workers_floor }
+			change_local_variable = { name = cm_fa_rgo_headroom subtract = cm_modifier_rgo_level }
+			change_local_variable = { name = cm_fa_rgo_headroom subtract = cm_get_rgos_under_construction }
+			if = {
+				limit = { local_var:cm_fa_rgo_headroom < local_var:cm_fa_rgo_budget }
+				set_local_variable = { name = cm_fa_rgo_budget value = local_var:cm_fa_rgo_headroom }
+			}
+			set_local_variable = { name = cm_fa_rgo_slack value = cm_location_rgo_promotion_buffer_slack }
+			set_local_variable = { name = cm_fa_rgo_done value = 0 }
+			while = {
+				limit = {
+					local_var:cm_fa_rgo_budget > 0
+					local_var:cm_fa_rgo_slack >= local_var:cm_fa_rgo_done
+					cm_get_open_build_queue_slots > 0
+					cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction }
+					cm_fa_can_afford_rgo = { POOL = cm_fa_pool_industry }
+				}
+				set_local_variable = { name = cm_fa_rgo_cost value = glorpui_rgo_expand_cost }
+				construct_rgo_upgrade = { }
+				scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = local_var:cm_fa_rgo_cost } }
+				change_local_variable = { name = cm_fa_rgo_budget subtract = 1 }
+				change_local_variable = { name = cm_fa_rgo_done add = 1 }
+			}
+			if = {
+				# Same non-affordability conditions as the while above, affordability negated.
+				limit = {
+					local_var:cm_fa_rgo_budget > 0
+					local_var:cm_fa_rgo_slack >= local_var:cm_fa_rgo_done
+					cm_get_open_build_queue_slots > 0
+					cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction }
+					NOT = { cm_fa_can_afford_rgo = { POOL = cm_fa_pool_industry } }
+				}
+				set_local_variable = { name = cm_fa_blk_industry value = 1 }
+			}
+		}
+	}
+}

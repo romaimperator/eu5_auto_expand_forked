@@ -96,6 +96,30 @@ cm_q_loc_reset_rank_scoring = {
 	remove_variable = cm_q_seen_rank
 }
 
+cm_fa_loc_reset_build_scoring = {
+	clear_variable_map = cm_fa_b_scores
+	clear_variable_map = cm_fa_b_costs
+	clear_variable_map = cm_fa_b_conv
+	clear_variable_map = cm_fa_b_cats
+	remove_variable = cm_fa_b_best
+	remove_variable = cm_fa_best_any
+	remove_variable = cm_fa_collapsar_touched
+	cm_q_loc_reset_cycle_counters = yes
+}
+
+cm_fa_loc_reset_upgrade_scoring = {
+	clear_variable_map = cm_fa_u_scores
+	clear_variable_map = cm_fa_u_costs
+	clear_variable_map = cm_fa_u_new_types
+	remove_variable = cm_fa_u_best
+	remove_variable = cm_fa_best_any
+}
+
+cm_fa_loc_reset_rgo_scoring = {
+	remove_variable = cm_fa_r_score
+	remove_variable = cm_fa_best_any
+}
+
 # Within-cycle construction slot and level claims. Root is the location.
 cm_q_loc_reset_cycle_counters = {
 	remove_variable = cm_q_slots_used
@@ -138,6 +162,19 @@ cm_q_approval_pass = {
 				}
 			}
 		}
+	}
+	# Full-automation category drains after every priority feature has claimed. Pools
+	# cascade in drain order: each category's unspent funds join the next one's pool.
+	if = {
+		limit = { cm_fa_master_active = yes }
+		set_local_variable = { name = cm_fa_blk_industry value = 0 }
+		if = { limit = { exists = var:cm_fa_industry_enabled } cm_fa_pass_industry = yes }
+		cm_fa_cascade_pool = { from = industry to = collapsar }
+		if = { limit = { exists = var:cm_fa_collapsar_enabled } cm_fa_pass_collapsar = yes }
+		cm_fa_cascade_pool = { from = collapsar to = food }
+		if = { limit = { exists = var:cm_fa_food_enabled } cm_fa_pass_food = yes }
+		cm_fa_cascade_pool = { from = food to = utilities }
+		if = { limit = { exists = var:cm_fa_utilities_enabled } cm_fa_pass_utilities = yes }
 	}
 }
 
@@ -435,56 +472,7 @@ cm_q_pass_approve_upgrade_item = {
 			limit = { cm_market_has_construction_goods_for_building = yes }
 			if = {
 				limit = { cm_country_can_afford_staged_cost = yes }
-				if = {
-					limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_upgrade_types target = scope:cm_old_building_type } } }
-					add_to_variable_list = { name = cm_q_approved_upgrade_types target = scope:cm_old_building_type }
-					save_temporary_scope_as = cm_approved_location
-					scope:cm_country = {
-						if = {
-							limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_upgrade_locations target = scope:cm_approved_location } } }
-							add_to_variable_list = { name = cm_q_approved_upgrade_locations target = scope:cm_approved_location }
-							scope:cm_approved_location = { clear_variable_list = cm_q_seen_upgrade_types }
-						}
-						change_variable = { name = cm_q_planned_spend add = scope:cm_cost }
-					}
-					# An upgrade occupies a construction slot while it converts.
-					if = {
-						limit = { NOT = { has_variable = cm_q_slots_used } }
-						set_variable = { name = cm_q_slots_used value = 0 }
-					}
-					change_variable = { name = cm_q_slots_used add = 1 }
-					cm_commit_market_demand = yes
-				}
-				# Swap auto-expand tracking from old to new
-				if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_old_building_type } } }
-					# Mass mode: add new type to country mass list and swap exclusion entries
-					owner = {
-						if = { limit = { NOT = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_new_building_type } } }
-							add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_new_building_type }
-						}
-					}
-					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_old_building_type } }
-						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_old_building_type }
-						if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_new_building_type } } }
-							add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_new_building_type }
-						}
-					}
-				} else = {
-					# Normal mode: swap registration entries, only if old type was registered.
-					if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_old_building_type } }
-						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_old_building_type }
-						if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_new_building_type } } }
-							add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_new_building_type }
-						}
-					}
-				}
-				# Track that this building type has an upgrade queued so the monthly script won't re-flag it
-				if = { limit = { NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_old_building_type } } }
-					add_to_variable_list = { name = cm_upgrade_in_progress target = scope:cm_old_building_type }
-				}
-				# Record the constructed target for the finished-upgrade check
-				remove_from_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_old_building_type }
-				add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_old_building_type value = scope:cm_new_building_type }
+				cm_q_record_upgrade_approval = yes
 			} else = {
 				if = {
 					limit = { exists = scope:cm_q_scored_upgrade_pick }
@@ -494,6 +482,64 @@ cm_q_pass_approve_upgrade_item = {
 			}
 		}
 	}
+}
+
+# The approval bookkeeping shared by the player upgrade drains and the full-automation
+# upgrade pick, which applies its own gates before calling: approved lists, planned spend,
+# the slot claim, the market commit, the auto-expand registration swap, and the in-progress
+# records. Root is the location. Expects scope:cm_country, scope:cm_old_building_type,
+# scope:cm_new_building_type, scope:cm_cost, scope:cm_market.
+cm_q_record_upgrade_approval = {
+	if = {
+		limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_upgrade_types target = scope:cm_old_building_type } } }
+		add_to_variable_list = { name = cm_q_approved_upgrade_types target = scope:cm_old_building_type }
+		save_temporary_scope_as = cm_approved_location
+		scope:cm_country = {
+			if = {
+				limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_upgrade_locations target = scope:cm_approved_location } } }
+				add_to_variable_list = { name = cm_q_approved_upgrade_locations target = scope:cm_approved_location }
+				scope:cm_approved_location = { clear_variable_list = cm_q_seen_upgrade_types }
+			}
+			change_variable = { name = cm_q_planned_spend add = scope:cm_cost }
+		}
+		# An upgrade occupies a construction slot while it converts.
+		if = {
+			limit = { NOT = { has_variable = cm_q_slots_used } }
+			set_variable = { name = cm_q_slots_used value = 0 }
+		}
+		change_variable = { name = cm_q_slots_used add = 1 }
+		cm_commit_market_demand = yes
+	}
+	# Swap auto-expand tracking from old to new
+	if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_old_building_type } } }
+		# Mass mode: add new type to country mass list and swap exclusion entries
+		owner = {
+			if = { limit = { NOT = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_new_building_type } } }
+				add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_new_building_type }
+			}
+		}
+		if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_old_building_type } }
+			remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_old_building_type }
+			if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_new_building_type } } }
+				add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_new_building_type }
+			}
+		}
+	} else = {
+		# Normal mode: swap registration entries, only if old type was registered.
+		if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_old_building_type } }
+			remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_old_building_type }
+			if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_new_building_type } } }
+				add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_new_building_type }
+			}
+		}
+	}
+	# Track that this building type has an upgrade queued so the monthly script won't re-flag it
+	if = { limit = { NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_old_building_type } } }
+		add_to_variable_list = { name = cm_upgrade_in_progress target = scope:cm_old_building_type }
+	}
+	# Record the constructed target for the finished-upgrade check
+	remove_from_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_old_building_type }
+	add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_old_building_type value = scope:cm_new_building_type }
 }
 
 # Exact best-first drain for auto-expand RGOs: one ordered pass, best stored score first,

@@ -1,0 +1,28 @@
+﻿# Full-automation script values.
+
+# Root is the country. Returns the full-automation gold reserve setting.
+cm_fa_get_reserve = {
+	if = {
+		limit = { exists = var:cm_fa_reserve }
+		value = var:cm_fa_reserve
+	}
+}
+
+# The next RGO level's cost plus the full-automation reserve and this drain's committed
+# spend. Root is the location, expects scopes: country, location.
+cm_fa_rgo_gold_threshold = {
+	value = glorpui_rgo_expand_cost
+	scope:cm_country = {
+		add = cm_fa_get_reserve
+		add = var:cm_q_planned_spend
+	}
+}
+
+# max(ceil(10% of the market's locations), 6): the cap on this market's locations with
+# collapsar constructions still being absorbed. Root is the market.
+cm_fa_collapsar_market_cap = {
+	value = market_location_count
+	multiply = 0.1
+	ceiling = yes
+	min = 6
+}

@@ -1,0 +1,262 @@
+﻿# Full-automation Price Collapsar: builds producers of masonry, lumber, sand, and glass
+# to push their market prices down to the target price. Goods are staged and drained in
+# that priority order; within a good, RGO expansions come before producer buildings.
+# Staging in each market stops at max(10% of its locations, 6) locations whose collapsar
+# constructions have not been absorbed yet (still building, or built but not yet
+# employed, with levels remaining). Collapsar approvals skip the market
+# construction-goods gates: a shortage of those goods is exactly what the builds cure.
+
+# Root is the country, scope:cm_country set.
+cm_fa_run_collapsar = {
+	cm_fa_collapsar_cleanup_pending = yes
+	every_market_present_in_country = {
+		save_scope_as = cm_fa_market
+		scope:cm_country = { cm_fa_stage_collapsar_market = yes }
+	}
+}
+
+# Stages one market's candidates while room remains under its cap.
+# Root is the country, expects scope:cm_fa_market.
+cm_fa_stage_collapsar_market = {
+	set_local_variable = { name = cm_fa_room value = scope:cm_fa_market.cm_fa_collapsar_market_cap }
+	every_in_list = {
+		variable = cm_fa_collapsar_pending_locs
+		limit = { market = scope:cm_fa_market }
+		change_local_variable = { name = cm_fa_room subtract = 1 }
+	}
+	if = {
+		limit = { local_var:cm_fa_room > 0 }
+		if = {
+			limit = { cm_fa_collapsar_good_wanted = { good = masonry } }
+			cm_fa_stage_collapsar_building = { bt = mason }
+		}
+		if = {
+			limit = { cm_fa_collapsar_good_wanted = { good = lumber } }
+			goods:lumber = { save_scope_as = cm_fa_good }
+			cm_fa_stage_collapsar_rgos = yes
+			cm_fa_stage_collapsar_building = { bt = lumber_mill }
+		}
+		if = {
+			limit = { cm_fa_collapsar_good_wanted = { good = sand } }
+			goods:sand = { save_scope_as = cm_fa_good }
+			cm_fa_stage_collapsar_rgos = yes
+			cm_fa_stage_collapsar_building = { bt = sand_pit }
+		}
+		if = {
+			limit = { cm_fa_collapsar_good_wanted = { good = glass } }
+			cm_fa_stage_collapsar_building = { bt = glass_guild }
+			cm_fa_stage_collapsar_building = { bt = rural_glassmaker }
+		}
+	}
+}
+
+# Stages RGO expansions for scope:cm_fa_good across the country's locations in
+# scope:cm_fa_market, in any order, while room remains. The drain-only list bypasses GUI
+# scoring: the cost is script-side. Root is the country.
+cm_fa_stage_collapsar_rgos = {
+	every_owned_location = {
+		limit = {
+			market = scope:cm_fa_market
+			NOT = { integration_level = conquered }
+			raw_material ?= scope:cm_fa_good
+			cm_is_rgo_not_max_level_already = yes
+			cm_is_rgo_under_construction = no
+			cm_location_rgo_promotion_buffer_slack >= 0
+			NOT = { exists = var:cm_fa_collapsar_touched }
+			NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_fa_collapsar_pending_locs target = prev } } }
+			# The player's RGO auto-expand staged it this cycle.
+			NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_q_rgo_locations target = prev } } }
+		}
+		save_scope_as = cm_location
+		if = {
+			limit = { local_var:cm_fa_room > 0 }
+			scope:cm_country = {
+				if = {
+					limit = { NOT = { is_target_in_variable_list = { name = cm_fa_collapsar_rgo_locations target = scope:cm_location } } }
+					add_to_variable_list = { name = cm_fa_collapsar_rgo_locations target = scope:cm_location }
+				}
+			}
+			scope:cm_location = { set_variable = { name = cm_fa_collapsar_touched value = yes } }
+			change_local_variable = { name = cm_fa_room subtract = 1 }
+		}
+	}
+}
+
+# Stages one producer type across scope:cm_fa_market while room remains. Chain bases
+# resolve to the current tier (glass_guild through glass_mill); non-chain types pass
+# through unchanged. $bt$ = the producer's base type key. Root is the country.
+cm_fa_stage_collapsar_building = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	cm_auto_build_resolve_building_type = yes
+	every_owned_location = {
+		limit = {
+			market = scope:cm_fa_market
+			NOT = { integration_level = conquered }
+			NOT = { exists = var:cm_fa_collapsar_touched }
+			NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_fa_collapsar_pending_locs target = prev } } }
+		}
+		save_scope_as = cm_location
+		if = {
+			limit = {
+				local_var:cm_fa_room > 0
+				cm_location_allowed_to_build = { target = scope:cm_building_type }
+				cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
+				# A standing older tier would turn this build into its upgrade.
+				cm_location_has_no_auto_build_chain_predecessor = yes
+				cm_location_has_enough_pops_available = yes
+				cm_check_location_meets_min_market_access = yes
+				cm_get_open_build_queue_slots > 0
+				NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:cm_building_type } }
+				NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+				NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
+			}
+			cm_fa_stage_build_candidate = { cat = 2 }
+			scope:cm_location = {
+				# Take the claim from Industry: under cat 1 the item drains behind the ROI margin.
+				remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type }
+				add_to_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type value = 2 }
+				set_variable = { name = cm_fa_collapsar_touched value = yes }
+			}
+			change_local_variable = { name = cm_fa_room subtract = 1 }
+		}
+	}
+}
+
+# Removes pending entries no longer counting toward the cap: not owned, fully absorbed,
+# or without levels available. Root is the country.
+cm_fa_collapsar_cleanup_pending = {
+	save_scope_as = cm_fa_chk_country
+	every_in_list = {
+		variable = cm_fa_collapsar_pending_locs
+		save_scope_as = cm_fa_chk
+		if = {
+			limit = {
+				scope:cm_fa_chk = {
+					OR = {
+						NOT = { owner = scope:cm_fa_chk_country }
+						cm_fa_collapsar_location_absorbed = yes
+						NOT = { cm_fa_collapsar_location_has_levels = yes }
+					}
+				}
+			}
+			scope:cm_fa_chk_country = { remove_list_variable = { name = cm_fa_collapsar_pending_locs target = scope:cm_fa_chk } }
+		}
+	}
+}
+
+# Collapsar drain, in good priority order masonry, lumber, sand, glass; within a good,
+# RGO levels first, then producer buildings, the glass chain's current tier before
+# rural_glassmaker. Root is the country.
+cm_fa_pass_collapsar = {
+	building_type:mason = { save_scope_as = cm_building_type }
+	cm_fa_collapsar_drain_type = { good = masonry }
+	cm_fa_collapsar_drain_rgos = { good = lumber }
+	building_type:lumber_mill = { save_scope_as = cm_building_type }
+	cm_fa_collapsar_drain_type = { good = lumber }
+	cm_fa_collapsar_drain_rgos = { good = sand }
+	building_type:sand_pit = { save_scope_as = cm_building_type }
+	cm_fa_collapsar_drain_type = { good = sand }
+	building_type:glass_guild = { save_scope_as = cm_building_type }
+	cm_auto_build_resolve_building_type = yes
+	cm_fa_collapsar_drain_type = { good = glass }
+	building_type:rural_glassmaker = { save_scope_as = cm_building_type }
+	cm_fa_collapsar_drain_type = { good = glass }
+}
+
+# Drains one good's staged RGO expansions in list order. $good$ = the RGO good key.
+# Root is the country.
+cm_fa_collapsar_drain_rgos = {
+	if = {
+		limit = { has_variable_list = cm_fa_collapsar_rgo_locations }
+		every_in_list = {
+			variable = cm_fa_collapsar_rgo_locations
+			limit = { raw_material ?= goods:$good$ }
+			save_temporary_scope_as = cm_location
+			scope:cm_location = { cm_fa_collapsar_drain_rgo = yes }
+		}
+	}
+}
+
+# Approves one queued RGO level under the collapsar pool and books the location as
+# pending. A target reached while queued drops the item. Root is the location,
+# scope:cm_location set. Expects scope:cm_country.
+cm_fa_collapsar_drain_rgo = {
+	raw_material = { save_temporary_scope_as = cm_fa_good_t }
+	market = { save_temporary_scope_as = cm_fa_market }
+	if = {
+		limit = { NOT = { cm_fa_collapsar_target_met = yes } }
+		if = {
+			limit = {
+				cm_is_rgo_not_max_level_already = yes
+				# Also the dedup vs the player's RGO drain and Industry, which ran earlier
+				# this pass and construct immediately.
+				cm_is_rgo_under_construction = no
+				cm_location_rgo_promotion_buffer_slack >= 0
+			}
+			if = {
+				limit = {
+					cm_get_open_build_queue_slots > 0
+					cm_fa_can_afford_rgo = { POOL = cm_fa_pool_collapsar }
+				}
+				set_local_variable = { name = cm_fa_rgo_cost value = glorpui_rgo_expand_cost }
+				construct_rgo_upgrade = { }
+				scope:cm_country = {
+					change_variable = { name = cm_fa_pool_collapsar subtract = local_var:cm_fa_rgo_cost }
+					if = {
+						limit = { NOT = { is_target_in_variable_list = { name = cm_fa_collapsar_pending_locs target = scope:cm_location } } }
+						add_to_variable_list = { name = cm_fa_collapsar_pending_locs target = scope:cm_location }
+					}
+				}
+			}
+		}
+	}
+}
+
+# Drains one producer type's staged entries across the queue. Root is the country.
+# Expects scope:cm_building_type as the resolved tier. $good$ = the type's produced good,
+# for the target re-check.
+cm_fa_collapsar_drain_type = {
+	if = {
+		limit = { has_variable_list = cm_fa_b_locations }
+		every_in_list = {
+			variable = cm_fa_b_locations
+			save_temporary_scope_as = cm_fa_drain_loc
+			scope:cm_fa_drain_loc = {
+				if = {
+					limit = {
+						trigger_if = {
+							limit = {
+								has_variable_map = cm_fa_b_cats
+								is_key_in_variable_map = { name = cm_fa_b_cats target = scope:cm_building_type }
+							}
+							"variable_map(cm_fa_b_cats|scope:cm_building_type)" = 2
+						}
+						trigger_else = { always = no }
+						has_variable_map = cm_fa_b_costs
+						is_key_in_variable_map = { name = cm_fa_b_costs target = scope:cm_building_type }
+					}
+					goods:$good$ = { save_temporary_scope_as = cm_fa_good_t }
+					market = { save_temporary_scope_as = cm_fa_market }
+					if = {
+						limit = { cm_fa_collapsar_target_met = yes }
+						# Opportunity gone: drop the entry.
+						remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
+						remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type }
+					} else = {
+						cm_fa_try_approve_build = { cat = 2 POOL = cm_fa_pool_collapsar GOODS_GATE = always }
+						if = {
+							limit = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } }
+							save_temporary_scope_as = cm_fa_pend_loc
+							scope:cm_country = {
+								if = {
+									limit = { NOT = { is_target_in_variable_list = { name = cm_fa_collapsar_pending_locs target = scope:cm_fa_pend_loc } } }
+									add_to_variable_list = { name = cm_fa_collapsar_pending_locs target = scope:cm_fa_pend_loc }
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

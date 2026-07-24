@@ -26,10 +26,16 @@ cm_is_able_to_auto_expand_rgo = {
 }
 
 # Root is the location.
-# The owner feature-enabled check prevents suppressing RGO auto-expand while auto-food is off.
+# The owner feature-enabled check prevents suppressing RGO auto-expand while auto-food is
+# off; a full-automation food pick supersedes on its own regardless of that feature.
 cm_location_auto_food_supersedes_rgo = {
-	owner = { is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_food } }
-	cm_location_is_auto_food_active = yes
+	OR = {
+		AND = {
+			owner = { is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_food } }
+			cm_location_is_auto_food_active = yes
+		}
+		cm_fa_location_is_system_food_active = yes
+	}
 }
 
 # Root is the location. RGO eligibility minus the gold gate, shared by the staging trigger

@@ -39,7 +39,7 @@
 					glow_radius = 5
 					color = { 0.0 1.0 0.0 0.9 }
 					alpha = 0.6
-					block "green_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))]" }
+					block "green_glow_visible" { visible = "[Or(And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)), And(GetScriptedGui('cm_fa_is_system_food_active').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_fa_is_able_system_food').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]" }
 				}
 			}
 			background = {
@@ -50,7 +50,7 @@
 					glow_radius = 5
 					color = { 1.0 0.0 0.0 0.9 }
 					alpha = 0.6
-					block "red_glow_visible" { visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]" }
+					block "red_glow_visible" { visible = "[And(Or(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), GetScriptedGui('cm_fa_is_system_food_active').IsShown(GuiScope.SetRoot(Location.MakeScope).End)), Not(Or(And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)), And(GetScriptedGui('cm_fa_is_system_food_active').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_fa_is_able_system_food').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))))]" }
 				}
 			}
 			background = {
@@ -124,7 +124,14 @@ template cm_Autofood_Tooltip {
 			}
 
 			TooltipTextBlock = {
-				visible = "[GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)]"
+				visible = "[GetScriptedGui('cm_fa_is_system_food_active').IsShown(GuiScope.SetRoot(Location.MakeScope).End)]"
+				blockoverride "text" {
+					text = "CM_FA_AUTO_FOOD_ACTIVE_TT"
+				}
+			}
+
+			TooltipTextBlock = {
+				visible = "[Or(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), And(GetScriptedGui('cm_fa_is_system_food_active').IsShown(GuiScope.SetRoot(Location.MakeScope).End), GetScriptedGui('cm_fa_is_able_system_food').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]"
 				blockoverride "text" {
 					text = "CM_AUTO_EXPAND_ALL_REQUIREMENTS_MET"
 				}
@@ -241,7 +248,7 @@ template cm_Autofood_Tooltip {
 			}
 
 			TooltipTextBlock = {
-				visible = "[And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End)))]"
+				visible = "[Or(And(GetScriptedGui('cm_set_auto_food_for_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_food_location').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_food_good', Location.GetRawMaterial.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))), And(GetScriptedGui('cm_fa_is_system_food_active').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_fa_is_able_system_food').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_country', Location.GetOwner.MakeScope).AddScope('cm_location', Location.MakeScope).End))))]"
 				blockoverride "text" {
 					text = "CM_AUTO_FOOD_WILL_NOT_BUILD"
 				}

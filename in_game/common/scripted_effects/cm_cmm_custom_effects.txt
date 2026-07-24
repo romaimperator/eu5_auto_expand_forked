@@ -30,6 +30,7 @@ cm_cmm_post_registration = {
 	cm_rebuild_auto_food_lookups = yes
 	cm_rebuild_auto_urbanize_lookups = yes
 	cm_rebuild_auto_town_rights_lookups = yes
+	cm_fa_rebuild_collapsar_lookups = yes
 
 	# Hide buildings whose advance hasn't been researched yet
 	cm_update_auto_build_list_visibility = yes
@@ -368,6 +369,55 @@ cm_apply_placement_finder_debug_path_change = {
 	}
 }
 
+# Scope: country
+cm_fa_apply_master_change = {
+	cmm_sync_bool_alias = {
+		setting = cm__fa_enabled
+		alias = cm_fa_enabled
+	}
+	if = {
+		limit = { NOT = { exists = var:cm_fa_enabled } }
+		cm_fa_clear_budget_state = yes
+	}
+}
+
+# Turning a category off zeroes its pool; the monthly refresh skips it while off.
+# $cat$ = industry | collapsar | food | utilities. Scope: country
+cm_fa_apply_category_toggle = {
+	cmm_sync_bool_alias = {
+		setting = cm__fa_$cat$_enabled
+		alias = cm_fa_$cat$_enabled
+	}
+	if = {
+		limit = { NOT = { exists = var:cm_fa_$cat$_enabled } }
+		set_variable = { name = cm_fa_pool_$cat$ value = 0 }
+	}
+}
+
+# $cat$ = industry | collapsar | food | utilities. Scope: country
+cm_fa_apply_budget_change = {
+	cmm_sync_setting_alias = {
+		setting = cm__fa_$cat$_budget
+		alias = cm_fa_$cat$_budget
+	}
+	cm_fa_clamp_pool = { cat = $cat$ }
+}
+
+# Rebuild the collapsar goods lookup from CMM list field data.
+# Called on registration and on every setting change.
+# Scope: country
+cm_fa_rebuild_collapsar_lookups = {
+	if = {
+		limit = { NOT = { has_variable_list = cmm_list_items_cm__fa_collapsar_goods_list } }
+	}
+	else = {
+
+	# Enabled collapsar goods, bool field slot 1.
+	cmm_build_list_bool_list = { setting = cm__fa_collapsar_goods_list field_slot = 1 list_name = cm_fa_collapsar_goods_enabled }
+
+	} # end guard
+}
+
 cm_toggle_priority_feature = {
 	clear_variable_list = cm_priority_desired_enabled
 	every_in_list = {
@@ -652,5 +702,7 @@ _cm_cmm_suppress_warnings = {
 		# Auto town rights lookup lists
 		cmf_suppress = { v = cm_auto_town_rights_list }
 		cmf_suppress = { v = cm_auto_town_rights_enabled }
+		# Full-automation collapsar goods lookup
+		cmf_suppress = { v = cm_fa_collapsar_goods_enabled }
 	}
 }

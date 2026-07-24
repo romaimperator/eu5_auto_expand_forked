@@ -1,0 +1,182 @@
+﻿# Full-automation Utilities: the capital-only set (from cm_run_auto_build_capital), the
+# auto_build_list roster minus hospitals (cm_cmm_effects.txt), and the vanilla
+# market-center buildings (game in_game/common/building_types/market_buildings.txt, the
+# is_market_center-gated set). Runs on default thresholds and never reads or writes the
+# player's auto-build settings or toggles.
+
+# Root is the country, scope:cm_country set.
+cm_fa_run_utilities = {
+	if = {
+		limit = { exists = capital }
+		capital = { save_scope_as = cm_location }
+		if = {
+			limit = { scope:cm_location = { NOT = { integration_level = conquered } } }
+			scope:cm_location = {
+				cm_fa_stage_utility_type_here = { bt = royal_court }
+				cm_fa_stage_utility_type_here = { bt = house_of_parliament }
+				cm_fa_stage_utility_type_here = { bt = order_headquarters }
+				cm_fa_stage_utility_type_here = { bt = admiralty }
+				cm_fa_stage_utility_type_here = { bt = war_college }
+				cm_fa_stage_utility_type_here = { bt = tax_assessor }
+				cm_fa_stage_utility_type_here = { bt = supreme_court }
+				cm_fa_stage_utility_type_here = { bt = chancery }
+				cm_fa_stage_utility_type_here = { bt = republican_assembly }
+				cm_fa_stage_utility_type_here = { bt = royal_garden }
+				cm_fa_stage_utility_type_here = { bt = pirate_stronghold }
+			}
+		}
+	}
+	cm_fa_stage_utility_everywhere = { bt = early_council_hall }
+	cm_fa_stage_utility_everywhere = { bt = minting_office }
+	cm_fa_stage_utility_everywhere = { bt = settlement_building }
+	cm_fa_stage_utility_everywhere = { bt = library }
+	cm_fa_stage_utility_everywhere = { bt = bridge_infrastructure }
+	cm_fa_stage_utility_everywhere = { bt = pound_lock_canal_infrastructure }
+	cm_fa_stage_utility_everywhere = { bt = wharf }
+	cm_fa_stage_utility_everywhere = { bt = university }
+	cm_fa_stage_utility_everywhere = { bt = market_village }
+	cm_fa_stage_utility_everywhere = { bt = counting_house }
+	cm_fa_stage_utility_everywhere = { bt = sawmill }
+	cm_fa_stage_utility_everywhere = { bt = windmill }
+	cm_fa_stage_utility_everywhere = { bt = local_smelters }
+	cm_fa_stage_utility_everywhere = { bt = protected_harbor }
+	cm_fa_stage_utility_everywhere = { bt = fortress_granary }
+	cm_fa_stage_utility_everywhere = { bt = confucian_academy }
+	cm_fa_stage_utility_everywhere = { bt = confucian_school }
+	cm_fa_stage_utility_everywhere = { bt = zhixian }
+	cm_fa_stage_utility_everywhere = { bt = tambo }
+	cm_fa_stage_utility_everywhere = { bt = dock }
+	ordered_owned_location = {
+		order_by = max_control
+		max = cm_max_guess_at_number_of_locations
+		check_range_bounds = no
+		limit = {
+			NOT = { integration_level = conquered }
+			is_market_center = yes
+		}
+		save_scope_as = cm_location
+		cm_fa_stage_utility_type_here = { bt = entrepot }
+		cm_fa_stage_utility_type_here = { bt = trading_hub }
+		cm_fa_stage_utility_type_here = { bt = customs_house }
+		cm_fa_stage_utility_type_here = { bt = stock_exchange }
+		cm_fa_stage_utility_type_here = { bt = clearing_house }
+		cm_fa_stage_utility_type_here = { bt = market_warehouse }
+	}
+}
+
+# Stages one utility type at this location when it fits; the capital and market-center
+# sets have no obsolete chains. The not-at-max-level check keeps multi-level types like
+# chancery topping up. Root is the location. Expects scope:cm_country, scope:cm_location;
+# $bt$ = the type key.
+cm_fa_stage_utility_type_here = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	if = {
+		limit = {
+			cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
+			cm_location_allowed_to_build = { target = scope:cm_building_type }
+			cm_location_has_enough_pops_available = yes
+			cm_check_location_meets_min_market_access = yes
+			cm_get_open_build_queue_slots > 0
+			NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+		}
+		cm_fa_stage_build_candidate = { cat = 4 }
+	}
+}
+
+# Stages one auto-build roster type across owned locations; chain bases resolve to the
+# current tier, and a location holding an older tier is left to the upgrade features.
+# One level per location, matching the auto-build feature the roster comes from.
+# Root is the country. $bt$ = the raw roster key.
+cm_fa_stage_utility_everywhere = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	cm_auto_build_resolve_building_type = yes
+	ordered_owned_location = {
+		order_by = max_control
+		max = cm_max_guess_at_number_of_locations
+		check_range_bounds = no
+		limit = { NOT = { integration_level = conquered } }
+		save_scope_as = cm_location
+		if = {
+			limit = {
+				NOT = { has_building = scope:cm_building_type }
+				cm_location_allowed_to_build = { target = scope:cm_building_type }
+				cm_location_has_no_auto_build_chain_predecessor = yes
+				cm_location_has_enough_pops_available = yes
+				cm_fa_utilities_rgo_req_met = yes
+				cm_check_location_meets_min_market_access = yes
+				cm_get_open_build_queue_slots > 0
+				NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+			}
+			cm_fa_stage_build_candidate = { cat = 4 }
+		}
+	}
+}
+
+# Utilities drain, type-major in the assembly order: the capital set, the auto-build
+# roster, then the market-center buildings. Root is the country.
+cm_fa_pass_utilities = {
+	cm_fa_drain_utility_type = { bt = royal_court }
+	cm_fa_drain_utility_type = { bt = house_of_parliament }
+	cm_fa_drain_utility_type = { bt = order_headquarters }
+	cm_fa_drain_utility_type = { bt = admiralty }
+	cm_fa_drain_utility_type = { bt = war_college }
+	cm_fa_drain_utility_type = { bt = tax_assessor }
+	cm_fa_drain_utility_type = { bt = supreme_court }
+	cm_fa_drain_utility_type = { bt = chancery }
+	cm_fa_drain_utility_type = { bt = republican_assembly }
+	cm_fa_drain_utility_type = { bt = royal_garden }
+	cm_fa_drain_utility_type = { bt = pirate_stronghold }
+	cm_fa_drain_utility_roster_type = { bt = early_council_hall }
+	cm_fa_drain_utility_roster_type = { bt = minting_office }
+	cm_fa_drain_utility_roster_type = { bt = settlement_building }
+	cm_fa_drain_utility_roster_type = { bt = library }
+	cm_fa_drain_utility_roster_type = { bt = bridge_infrastructure }
+	cm_fa_drain_utility_roster_type = { bt = pound_lock_canal_infrastructure }
+	cm_fa_drain_utility_roster_type = { bt = wharf }
+	cm_fa_drain_utility_roster_type = { bt = university }
+	cm_fa_drain_utility_roster_type = { bt = market_village }
+	cm_fa_drain_utility_roster_type = { bt = counting_house }
+	cm_fa_drain_utility_roster_type = { bt = sawmill }
+	cm_fa_drain_utility_roster_type = { bt = windmill }
+	cm_fa_drain_utility_roster_type = { bt = local_smelters }
+	cm_fa_drain_utility_roster_type = { bt = protected_harbor }
+	cm_fa_drain_utility_roster_type = { bt = fortress_granary }
+	cm_fa_drain_utility_roster_type = { bt = confucian_academy }
+	cm_fa_drain_utility_roster_type = { bt = confucian_school }
+	cm_fa_drain_utility_roster_type = { bt = zhixian }
+	cm_fa_drain_utility_roster_type = { bt = tambo }
+	cm_fa_drain_utility_roster_type = { bt = dock }
+	cm_fa_drain_utility_type = { bt = entrepot }
+	cm_fa_drain_utility_type = { bt = trading_hub }
+	cm_fa_drain_utility_type = { bt = customs_house }
+	cm_fa_drain_utility_type = { bt = stock_exchange }
+	cm_fa_drain_utility_type = { bt = clearing_house }
+	cm_fa_drain_utility_type = { bt = market_warehouse }
+}
+
+# Root is the country. $bt$ = a type key with no chain.
+cm_fa_drain_utility_type = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	cm_fa_drain_utility_resolved = yes
+}
+
+# Root is the country. $bt$ = a raw roster key; chains resolve first.
+cm_fa_drain_utility_roster_type = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	cm_auto_build_resolve_building_type = yes
+	cm_fa_drain_utility_resolved = yes
+}
+
+# Root is the country. Expects scope:cm_building_type.
+cm_fa_drain_utility_resolved = {
+	if = {
+		limit = { has_variable_list = cm_fa_b_locations }
+		every_in_list = {
+			variable = cm_fa_b_locations
+			save_temporary_scope_as = cm_fa_drain_loc
+			scope:cm_fa_drain_loc = {
+				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building }
+			}
+		}
+	}
+}

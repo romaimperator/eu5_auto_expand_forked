@@ -1,5 +1,7 @@
 ﻿cmf_monthly_human_country_pulse = {
 	on_actions = {
+		# Budget refresh first so this month's funds exist before the dispatcher stages.
+		cm_fa_monthly_budget
 		cm_unified_auto_expand
 		cm_update_all_list_visibility
 		cm_monthly_auto_town_rights
@@ -32,6 +34,19 @@ cm_monthly_auto_town_rights = {
 	}
 }
 
+# Standalone monthly hook for the full-automation budget and food sampling. Its own
+# on_action so a skipped construction cycle never skips them.
+cm_fa_monthly_budget = {
+	effect = {
+		save_scope_as = cm_country
+		if = {
+			limit = { cm_fa_master_active = yes }
+			cm_fa_monthly_budget_refresh = yes
+			cm_fa_food_sample_markets = yes
+		}
+	}
+}
+
 # Unified dispatcher: iterates the priority list in order and calls each
 # enabled feature's effect. Gated by the master pause toggle.
 cm_unified_auto_expand = {
@@ -57,6 +72,11 @@ cm_unified_auto_expand = {
 			cm_clear_queue_pair = { COUNTRY_LIST = cm_q_food_locations LOCATION_LIST = cm_q_food_building_types }
 			clear_variable_list = cm_q_food_rgo_locations
 			clear_variable_list = cm_q_rank_locations
+			cm_clear_queue_pair = { COUNTRY_LIST = cm_fa_b_locations LOCATION_LIST = cm_fa_b_types }
+			cm_clear_queue_pair = { COUNTRY_LIST = cm_fa_u_locations LOCATION_LIST = cm_fa_u_types }
+			clear_variable_list = cm_fa_r_locations
+			clear_variable_list = cm_fa_food_rgo_locations
+			clear_variable_list = cm_fa_collapsar_rgo_locations
 			# The upgrade queue carries two extra per-location lists alongside the drained one
 			every_in_list = {
 				variable = cm_gui_upgrade_locations
@@ -97,8 +117,32 @@ cm_unified_auto_expand = {
 					}
 				}
 			}
+			# Full-automation staging after the priority features, so the player's own
+			# features always stage and claim first.
+			if = {
+				limit = { cm_fa_master_active = yes }
+				if = { limit = { exists = var:cm_fa_industry_enabled } cm_fa_run_industry = yes }
+				if = { limit = { exists = var:cm_fa_collapsar_enabled } cm_fa_run_collapsar = yes }
+				if = { limit = { exists = var:cm_fa_food_enabled } cm_fa_run_food = yes }
+				if = { limit = { exists = var:cm_fa_utilities_enabled } cm_fa_run_utilities = yes }
+			}
 			# Show the construction-queue window to construct this month's staged items.
-			if = { limit = { var:cm_q_staged >= 1 }
+			# The full-automation RGO lists bypass the staged counter (no GUI scoring), so
+			# they arm the window on their own.
+			if = {
+				limit = {
+					OR = {
+						var:cm_q_staged >= 1
+						AND = {
+							has_variable_list = cm_fa_food_rgo_locations
+							variable_list_size = { name = cm_fa_food_rgo_locations value >= 1 }
+						}
+						AND = {
+							has_variable_list = cm_fa_collapsar_rgo_locations
+							variable_list_size = { name = cm_fa_collapsar_rgo_locations value >= 1 }
+						}
+					}
+				}
 				set_variable = { name = cm_should_construct value = yes }
 			}
 		}

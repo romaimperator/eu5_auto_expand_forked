@@ -1,0 +1,126 @@
+﻿# Full-automation budget engine: monthly per-category pools set from the treasury above
+# the reserve, and the cascade that passes each drain's unspent pool to the next category.
+# Pools are country variables and persist in saves.
+
+# Sets each enabled category's pool to its share of this month's available spending.
+# available = max(0, gold - reserve)
+# Root is the country.
+cm_fa_monthly_budget_refresh = {
+	set_local_variable = { name = cm_fa_avail value = gold }
+	change_local_variable = { name = cm_fa_avail subtract = cm_fa_get_reserve }
+	change_local_variable = { name = cm_fa_avail max = 0 }
+	cm_fa_set_category_pool = { cat = industry }
+	cm_fa_set_category_pool = { cat = collapsar }
+	cm_fa_set_category_pool = { cat = food }
+	cm_fa_set_category_pool = { cat = utilities }
+}
+
+# pool = pct * available. $cat$ = industry | collapsar | food | utilities.
+# Root is the country.
+cm_fa_set_category_pool = {
+	if = {
+		limit = { exists = var:cm_fa_$cat$_enabled }
+		set_local_variable = { name = cm_fa_inc value = local_var:cm_fa_avail }
+		change_local_variable = { name = cm_fa_inc multiply = var:cm_fa_$cat$_budget }
+		change_local_variable = { name = cm_fa_inc multiply = 0.01 }
+		set_variable = { name = cm_fa_pool_$cat$ value = local_var:cm_fa_inc }
+	}
+}
+
+# pool = min(pool, pct * the live treasury above the reserve). Called on budget-slider
+# change. $cat$ = category id. Root is the country.
+cm_fa_clamp_pool = {
+	if = {
+		limit = { has_variable = cm_fa_pool_$cat$ }
+		set_local_variable = { name = cm_fa_cap value = gold }
+		change_local_variable = { name = cm_fa_cap subtract = cm_fa_get_reserve }
+		change_local_variable = { name = cm_fa_cap max = 0 }
+		change_local_variable = { name = cm_fa_cap multiply = var:cm_fa_$cat$_budget }
+		change_local_variable = { name = cm_fa_cap multiply = 0.01 }
+		change_variable = { name = cm_fa_pool_$cat$ min = local_var:cm_fa_cap }
+	}
+}
+
+# Root is the country.
+cm_fa_clear_budget_state = {
+	set_variable = { name = cm_fa_pool_industry value = 0 }
+	set_variable = { name = cm_fa_pool_collapsar value = 0 }
+	set_variable = { name = cm_fa_pool_food value = 0 }
+	set_variable = { name = cm_fa_pool_utilities value = 0 }
+}
+
+# Copies the budget state from scope:old_country on tag switch; pools are non-CMM state
+# CMF does not carry. Root is the new country.
+cm_fa_copy_budget_state = {
+	cm_fa_copy_budget_var = { v = cm_fa_pool_industry }
+	cm_fa_copy_budget_var = { v = cm_fa_pool_collapsar }
+	cm_fa_copy_budget_var = { v = cm_fa_pool_food }
+	cm_fa_copy_budget_var = { v = cm_fa_pool_utilities }
+}
+
+# $v$ = variable name. Root is the new country, expects scope:old_country.
+cm_fa_copy_budget_var = {
+	if = {
+		limit = { scope:old_country = { exists = var:$v$ } }
+		set_variable = { name = $v$ value = scope:old_country.var:$v$ }
+	}
+}
+
+# Approves one staged full-automation build at this location under its category's pool,
+# then consumes its keys; a key missing from cm_fa_b_costs means the engine blocked the
+# build at scoring and the item is skipped. Callers iterate their own category's entries.
+# $cat$ = category code, $POOL$ = pool variable, $GOODS_GATE$ = the market
+# construction-goods gate trigger. Root is the location. Expects scope:cm_country,
+# scope:cm_building_type.
+cm_fa_try_approve_build = {
+	if = {
+		limit = {
+			trigger_if = {
+				limit = {
+					has_variable_map = cm_fa_b_cats
+					is_key_in_variable_map = { name = cm_fa_b_cats target = scope:cm_building_type }
+				}
+				"variable_map(cm_fa_b_cats|scope:cm_building_type)" = $cat$
+			}
+			trigger_else = { always = no }
+			has_variable_map = cm_fa_b_costs
+			is_key_in_variable_map = { name = cm_fa_b_costs target = scope:cm_building_type }
+		}
+		save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_fa_b_costs|scope:cm_building_type)" }
+		market = { save_temporary_scope_as = cm_market }
+		if = {
+			# Approved by another feature this cycle: consume silently.
+			limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } } }
+			if = {
+				limit = {
+					cm_get_open_build_queue_slots > 0
+					$GOODS_GATE$ = yes
+					cm_fa_can_afford = { POOL = $POOL$ }
+				}
+				cm_approve_gui_build = yes
+				scope:cm_country = { change_variable = { name = $POOL$ subtract = scope:cm_cost } }
+			}
+		}
+		remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
+		remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type }
+	}
+}
+
+# Moves a category's unspent pool into the next category's, in drain priority order; a
+# disabled category's pool passes the flow through untouched by its skipped drain.
+# Runs between the category drains in cm_q_approval_pass. $from$, $to$ = category ids.
+# Root is the country.
+cm_fa_cascade_pool = {
+	if = {
+		limit = {
+			has_variable = cm_fa_pool_$from$
+			var:cm_fa_pool_$from$ > 0
+		}
+		if = {
+			limit = { NOT = { has_variable = cm_fa_pool_$to$ } }
+			set_variable = { name = cm_fa_pool_$to$ value = 0 }
+		}
+		change_variable = { name = cm_fa_pool_$to$ add = var:cm_fa_pool_$from$ }
+		set_variable = { name = cm_fa_pool_$from$ value = 0 }
+	}
+}

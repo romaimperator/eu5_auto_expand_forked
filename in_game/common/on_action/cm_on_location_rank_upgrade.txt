@@ -30,5 +30,15 @@
 				change_location_rank = location_rank:megalopolis
 			}
 		}
+		# A location leaving rural rank leaves the full-automation food system.
+		if = {
+			limit = {
+				exists = var:cm_fa_food_marked
+				NOT = { location_rank = location_rank:rural_settlement }
+			}
+			save_scope_as = cm_fa_left_rural
+			remove_variable = cm_fa_food_marked
+			owner = { remove_list_variable = { name = cm_fa_food_locations target = scope:cm_fa_left_rural } }
+		}
 	}
 }
