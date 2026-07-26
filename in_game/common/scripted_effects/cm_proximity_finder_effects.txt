@@ -56,6 +56,16 @@ cm_pf_prep_gated = {
 				}
 			}
 		}
+		# Switching straight from one finder mode to the other never fires cm_pf_clear_mode_open,
+		# so a run abandoned mid-compute is torn down here. cm_pf_n marks a primed run and finalize
+		# drops it while leaving cm_pf_all_done, so the pair is exactly "primed but never finished".
+		if = {
+			limit = {
+				has_variable = cm_pf_n
+				NOT = { has_variable = cm_pf_all_done }
+			}
+			cm_pf_clear_run_state = yes
+		}
 		set_variable = { name = cm_pf_all_done value = 1 }
 	}
 	else_if = {
@@ -73,19 +83,25 @@ cm_pf_force_refresh = {
 	cm_pf_prep_core = yes
 }
 
-# Country scope. Forced synchronous recompute for the lobby init; skips while cached, while the
-# river-adjacency precompute is still running (its completion branch re-runs this), and in
-# multiplayer, where the manual refresh button computes on demand instead.
+# Country scope. Forced synchronous recompute, fired from cm_on_init_human_country immediately
+# after the loading screen. Skips while cached and in multiplayer, where the manual refresh button
+# computes on demand instead. On the one load where the river-adjacency harvest rebuilds it only
+# invalidates: those scores are about to be superseded, and chaining a synchronous run off the
+# harvest's completion freezes the game seconds into play instead of at load. Reading the stamp
+# rather than the in-flight flag keeps this independent of which lobby hook runs first.
 cm_pf_recompute_now = {
 	save_scope_as = cm_pf_c
 	if = {
+		limit = { NOT = { cm_pf_river_data_is_current = yes } }
+		remove_variable = cm_pf_fresh_g
+		remove_variable = cm_pf_fresh_c
+	}
+	else_if = {
 		limit = {
 			OR = {
 				NOT = { exists = var:cm_pf_fresh_g }
 				NOT = { exists = var:cm_pf_fresh_c }
 			}
-			# Skip while the river precompute runs; its completion branch re-runs this once the lists exist.
-			NOT = { has_global_variable = cm_pf_river_process }
 			is_multiplayer_session = no
 		}
 		# A save can carry stale view flags; the lobby run computes both modes.
@@ -104,14 +120,18 @@ cm_pf_recompute_now = {
 		else = {
 			cm_pf_run_tiered_sync = yes
 		}
-		remove_variable = cm_pf_repaint
+		if = {
+			# A save reloaded with a finder mode up still needs the repaint these scores earned.
+			limit = { NOT = { exists = var:cm_pf_mode_open } }
+			remove_variable = cm_pf_repaint
+		}
 	}
 }
 
-# Country scope. One-time setup for a scoring run.
-cm_pf_prep_core = {
-	save_scope_as = cm_pf_c
-	# Strip any interrupted run before rebuilding.
+# Country scope. Strips a run's per-country transients and every per-location transient from owned
+# land and the run's water set, including the cm_pf_en / cm_pf_ev edge maps, which carry one entry
+# per land neighbor and are the bulk of an abandoned run's weight in the save.
+cm_pf_clear_run_state = {
 	every_owned_location = { cm_pf_clean_location = yes }
 	every_in_list = {
 		variable = cm_pf_water_set
@@ -119,6 +139,13 @@ cm_pf_prep_core = {
 	}
 	clear_variable_list = cm_pf_water_set
 	cm_pf_clean_country = yes
+}
+
+# Country scope. One-time setup for a scoring run.
+cm_pf_prep_core = {
+	save_scope_as = cm_pf_c
+	# Strip any interrupted run before rebuilding.
+	cm_pf_clear_run_state = yes
 	# Only an automatically started run arms the full-automation governor pick.
 	remove_variable = cm_fa_gov_auto_run
 	if = {
@@ -2667,38 +2694,35 @@ cm_pf_finalize = {
 		}
 	}
 	# Diagnostic: the model's predicted proximity from the actual capital, for comparison
-	# against the game's real proximity in the tooltip.
+	# against the game's real proximity in the tooltip. Gated to match the debug_only tooltip
+	# block that is its only reader, so a normal run skips a whole capital-wide spread.
 	if = {
 		limit = {
+			debug_only = yes
+			scope:cm_pf_c = { exists = var:cm_placement_finder_debug_path }
 			exists = capital
 			capital = {
 				owner ?= scope:cm_pf_c
 				has_variable = cm_pf_cl_g
 			}
 		}
-		# Arm path recording for this spread when debugging. The path can cross shared sea zones,
-		# so clear stale path vars on the water set too, not just owned land.
-		if = {
-			limit = {
-				debug_only = yes
-				scope:cm_pf_c = { exists = var:cm_placement_finder_debug_path }
-			}
-			every_owned_location = {
-				remove_variable = cm_pf_prev
-				remove_variable = cm_pf_hop
-				remove_variable = cm_pf_dep
-			}
-			every_in_list = {
-				variable = cm_pf_water_set
-				remove_variable = cm_pf_prev
-				remove_variable = cm_pf_hop
-				remove_variable = cm_pf_dep
-			}
-			scope:cm_pf_c = { set_variable = { name = cm_pf_rec value = 1 } }
-			capital = {
-				set_variable = { name = cm_pf_dep value = 0 }
-				set_variable = { name = cm_pf_hop value = 0 }
-			}
+		# Arm path recording for this spread. The path can cross shared sea zones, so clear stale
+		# path vars on the water set too, not just owned land.
+		every_owned_location = {
+			remove_variable = cm_pf_prev
+			remove_variable = cm_pf_hop
+			remove_variable = cm_pf_dep
+		}
+		every_in_list = {
+			variable = cm_pf_water_set
+			remove_variable = cm_pf_prev
+			remove_variable = cm_pf_hop
+			remove_variable = cm_pf_dep
+		}
+		scope:cm_pf_c = { set_variable = { name = cm_pf_rec value = 1 } }
+		capital = {
+			set_variable = { name = cm_pf_dep value = 0 }
+			set_variable = { name = cm_pf_hop value = 0 }
 		}
 		capital = { set_variable = { name = cm_pf_d value = 0 } }
 		cm_pf_bellman_g = { BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
@@ -2728,13 +2752,7 @@ cm_pf_finalize = {
 	else = {
 		every_owned_location = { remove_variable = cm_pf_pred }
 	}
-	every_owned_location = { cm_pf_clean_location = yes }
-	every_in_list = {
-		variable = cm_pf_water_set
-		cm_pf_clean_location = yes
-	}
-	clear_variable_list = cm_pf_water_set
-	cm_pf_clean_country = yes
+	cm_pf_clear_run_state = yes
 	set_variable = { name = cm_pf_all_done value = 1 }
 	set_variable = { name = cm_pf_repaint value = 1 }
 	# Cache each computed mode for 4 years: reopening within that window reuses it instead of

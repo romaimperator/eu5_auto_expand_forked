@@ -44,12 +44,22 @@ cm_pf_refresh = {
 	}
 }
 
-# Clears the finder-mode-open and viewed-mode flags; fired by the mapmode window when the
-# last finder mode closes.
+# Clears the finder-mode-open and viewed-mode flags, plus any abandoned run's transients; fired by
+# the mapmode window when the last finder mode closes.
 cm_pf_clear_mode_open = {
 	effect = {
 		remove_variable = cm_pf_mode_open
 		remove_variable = cm_pf_view_g
 		remove_variable = cm_pf_view_c
+		# Closing the mode stops the driver that would have reached cm_pf_finalize, so this run's
+		# per-location transients and cm_pf_en / cm_pf_ev maps would otherwise sit in the save until
+		# some later run's prep happened to clear them.
+		if = {
+			limit = {
+				has_variable = cm_pf_n
+				NOT = { has_variable = cm_pf_all_done }
+			}
+			cm_pf_clear_run_state = yes
+		}
 	}
 }

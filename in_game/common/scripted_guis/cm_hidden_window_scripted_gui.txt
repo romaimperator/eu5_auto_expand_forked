@@ -221,6 +221,20 @@ cm_pf_river_should_process = {
 	}
 }
 
+# Root is the player. Gates the hidden window's R.G.O. Bonus coverage sweep driver while it runs.
+cm_rgob_should_sweep = {
+	is_shown = {
+		has_global_variable = cm_rgob_sweep
+	}
+}
+
+# Root is the player. Advances the R.G.O. Bonus coverage sweep one tick.
+cm_rgob_sweep_tick = {
+	effect = {
+		cm_rgob_sweep_batch = yes
+	}
+}
+
 # Root is the player. Adds a real river-connected neighbor to the source's cm_pf_river_neighbors list,
 # read per edge by the placement finder path search to gate the river channel.
 cm_pf_river_record = {
@@ -232,10 +246,14 @@ cm_pf_river_record = {
 	}
 }
 
-# Root is the player. Advances the batched river precompute one tick: queues the next batch of source
-# locations for the datamodel to instantiate, or, once every location has been queued, tears down the
-# source lists (freeing the per-frame widget cost) and rebuilds the finder scores the synchronous lobby
-# init computed without river data. 150 sources per tick keeps the record volume under the flood threshold.
+# Root is the player. Advances the batched river harvest one tick: queues the next batch of source
+# locations for the datamodel to instantiate, or, once every location has been queued, stamps the
+# harvest complete, tears down the source lists (freeing the per-frame widget cost) and invalidates
+# the finder scores computed before the adjacency data existed. The harvest runs once per save, so
+# nothing synchronous is chained off it here. 150 sources per tick keeps the record volume under
+# the flood threshold. An iterator limit cannot bound the cursor walk: the limit is evaluated
+# against local_var:cm_pf_river_i before the body increments it, so every element passes and the
+# whole tail of the list is queued in one fire, flooding scripted_gui_command until the game hangs.
 cm_pf_river_fill_batch = {
 	effect = {
 		if = {
@@ -260,10 +278,21 @@ cm_pf_river_fill_batch = {
 			limit = { has_global_variable = cm_pf_river_process }
 			clear_global_variable_list = cm_pf_river_locations
 			clear_global_variable_list = cm_pf_river_batch
+			set_global_variable = { name = cm_pf_river_idx value = 0 }
+			set_global_variable = { name = cm_pf_river_count value = 0 }
 			remove_global_variable = cm_pf_river_process
-			remove_variable = cm_pf_fresh_g
-			remove_variable = cm_pf_fresh_c
-			cm_pf_recompute_now = yes
+			# Written only here, so a save taken mid-harvest carries no stamp and re-harvests.
+			set_global_variable = { name = cm_pf_river_stamp value = cm_pf_river_version_value }
+			if = {
+				# A mode opened during the harvest primed its edges before the neighbors existed;
+				# re-priming lets its own driver rebatch instead of caching that for four years.
+				limit = { exists = var:cm_pf_mode_open }
+				cm_pf_force_refresh = yes
+			}
+			else = {
+				remove_variable = cm_pf_fresh_g
+				remove_variable = cm_pf_fresh_c
+			}
 		}
 	}
 }
@@ -311,8 +340,9 @@ cm_building_type_section_buildings_init = {
 			global_variable_map_size = { name = cm_building_type_processed value >= global_var:cm_building_types_to_process_count }
 		} }
 			remove_global_variable = cm_process_buildings
-			# The rgob collect data is complete; precompute per-province coverage for the R.G.O. Bonus filters.
-			cm_rgob_recompute_all = yes
+			# The rgob collect data is complete; start the per-province coverage sweep the
+			# R.G.O. Bonus filters read.
+			cm_rgob_arm_sweep = yes
 		}
 	}
 }
@@ -672,7 +702,17 @@ cm_rgob_collect_pm = {
 				limit = { scope:cm_rgob_out >= local_var:cm_rgob_thr }
 				change_global_variable = { name = cm_rgob_pair_count add = 1 }
 				add_to_global_variable_map = { name = cm_rgob_pair_bt key = global_var:cm_rgob_pair_count value = scope:cm_rgob_bt }
-				add_to_global_variable_map = { name = cm_rgob_pair_pm key = global_var:cm_rgob_pair_count value = scope:cm_rgob_pm }
+				# Push onto the method's pair chain, so a province walks only the methods it
+				# accumulated a sum for instead of all of them. 0 ends a chain, and the counter
+				# is pre-incremented, so no real index collides with it.
+				set_local_variable = { name = cm_rgob_head value = 0 }
+				if = {
+					limit = { is_key_in_global_variable_map = { name = cm_rgob_pm_head target = scope:cm_rgob_pm } }
+					set_local_variable = { name = cm_rgob_head value = "global_variable_map(cm_rgob_pm_head|scope:cm_rgob_pm)" }
+					remove_from_global_variable_map = { name = cm_rgob_pm_head key = scope:cm_rgob_pm }
+				}
+				add_to_global_variable_map = { name = cm_rgob_pair_next key = global_var:cm_rgob_pair_count value = local_var:cm_rgob_head }
+				add_to_global_variable_map = { name = cm_rgob_pm_head key = scope:cm_rgob_pm value = global_var:cm_rgob_pair_count }
 			}
 		}
 	}
@@ -708,8 +748,17 @@ cm_rgob_collect_entry = {
 						set_local_variable = { name = cm_rgob_share value = { value = scope:cm_rgob_amount divide = local_var:cm_rgob_tot } }
 						change_global_variable = { name = cm_rgob_row_count add = 1 }
 						add_to_global_variable_map = { name = cm_rgob_row_pm key = global_var:cm_rgob_row_count value = scope:cm_rgob_pm }
-						add_to_global_variable_map = { name = cm_rgob_row_good key = global_var:cm_rgob_row_count value = scope:cm_rgob_good }
 						add_to_global_variable_map = { name = cm_rgob_row_share key = global_var:cm_rgob_row_count value = local_var:cm_rgob_share }
+						# Push onto the good's row chain, so a province walks only the rows for the
+						# handful of goods it actually produces instead of all of them.
+						set_local_variable = { name = cm_rgob_head value = 0 }
+						if = {
+							limit = { is_key_in_global_variable_map = { name = cm_rgob_good_head target = scope:cm_rgob_good } }
+							set_local_variable = { name = cm_rgob_head value = "global_variable_map(cm_rgob_good_head|scope:cm_rgob_good)" }
+							remove_from_global_variable_map = { name = cm_rgob_good_head key = scope:cm_rgob_good }
+						}
+						add_to_global_variable_map = { name = cm_rgob_row_next key = global_var:cm_rgob_row_count value = local_var:cm_rgob_head }
+						add_to_global_variable_map = { name = cm_rgob_good_head key = scope:cm_rgob_good value = global_var:cm_rgob_row_count }
 					}
 				}
 			}

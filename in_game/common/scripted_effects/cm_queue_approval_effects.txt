@@ -285,12 +285,20 @@ cm_q_fb_build_levels = {
 				# what actually ends the batch.
 				local_var:cm_fb_guard < 99
 				cm_country_can_afford_staged_cost = yes
-				# max_levels of 0 or less reads as uncapped. Passing scope:cm_country rather than
-				# the bare owner link is what reads the cap for the building's owner instead of
-				# the host's.
+				# max_levels of 0 or less reads as uncapped. The owner param is omitted because
+				# building_type_max_level accepts only a link there, and no link reaches the builder
+				# from a location it does not own. Every foreign cap either ignores scope:owner or
+				# reads the bare owner link anyway, so the host stands in harmlessly;
+				# hanseatic_shipwright_guild_max_level is the one that reads scope:owner.modifier and
+				# under-reports here, which the third branch turns into one level per cycle.
 				OR = {
-					building_type_max_level = { building_type = scope:cm_building_type owner = scope:cm_country value <= 0 }
-					building_type_max_level = { building_type = scope:cm_building_type owner = scope:cm_country value > local_var:cm_fb_lvl }
+					building_type_max_level = { building_type = scope:cm_building_type value <= 0 }
+					building_type_max_level = { building_type = scope:cm_building_type value > local_var:cm_fb_lvl }
+					AND = {
+						local_var:cm_fb_guard = 0
+						cm_fb_has_own_building = yes
+						"building(scope:cm_building_type|scope:cm_country)" = { is_at_max_level = no }
+					}
 				}
 			}
 			change_local_variable = { name = cm_fb_guard add = 1 }

@@ -17,22 +17,48 @@ cm_populate_building_types_to_process = {
 
 # Populates the global list of river locations for the placement finder's river-adjacency precompute
 # in the hidden window GUI. Called from cm_on_init_lobby_globals, once per lobby, not per player.
-# Stateless: always rebuilds from scratch so no version tracking or migration is needed.
+# River adjacency is map geometry and cm_pf_river_neighbors is saved, so the harvest runs only when
+# the save carries no completed one at the current version: a fresh save, a bumped
+# cm_pf_river_version_value, or a harvest a save-and-quit interrupted.
 cm_pf_populate_river_locations = {
-  clear_global_variable_list = cm_pf_river_locations
-  clear_global_variable_list = cm_pf_river_batch
-  set_global_variable = { name = cm_pf_river_count value = 0 }
-  set_global_variable = { name = cm_pf_river_idx value = 0 }
+  if = {
+    limit = { NOT = { cm_pf_river_data_is_current = yes } }
+    # A partial harvest's stamp must not survive the rebuild that replaces it.
+    remove_global_variable = cm_pf_river_stamp
+    clear_global_variable_list = cm_pf_river_locations
+    clear_global_variable_list = cm_pf_river_batch
+    set_global_variable = { name = cm_pf_river_count value = 0 }
+    set_global_variable = { name = cm_pf_river_idx value = 0 }
+    every_province_definition = {
+      every_location_in_province_definition = {
+        # Cleared everywhere, not just on current river locations: a patch that takes a river away
+        # would otherwise leave a stale list the path search still reads.
+        clear_variable_list = cm_pf_river_neighbors
+        if = {
+          limit = { has_river = yes }
+          add_to_global_variable_list = { name = cm_pf_river_locations target = this }
+          change_global_variable = { name = cm_pf_river_count add = 1 }
+        }
+      }
+    }
+    # Trigger the river-adjacency precompute in the hidden window GUI.
+    set_global_variable = { name = cm_pf_river_process value = yes }
+  }
+}
+
+# Enumerates every province slice into the R.G.O. Bonus sweep work list so the batched
+# recompute can cursor it instead of rescanning the map each tick. Called from
+# cm_on_init_lobby_globals, which puts the enumeration in the load rather than 2.5s after it.
+# Keyed by a counter into a map, not a list: list insertion cost grows with length, and a
+# list cursor would force an O(n) rescan every tick. Stateless: always rebuilds from scratch.
+cm_rgob_populate_work_list = {
+  cm_rgob_reset_sweep = yes
   every_province_definition = {
-    every_location_in_province_definition = {
-      limit = { has_river = yes }
-      clear_variable_list = cm_pf_river_neighbors
-      add_to_global_variable_list = { name = cm_pf_river_locations target = this }
-      change_global_variable = { name = cm_pf_river_count add = 1 }
+    every_province_in_province_definition = {
+      change_global_variable = { name = cm_rgob_wl_count add = 1 }
+      add_to_global_variable_map = { name = cm_rgob_wl key = global_var:cm_rgob_wl_count value = this }
     }
   }
-  # Trigger the river-adjacency precompute in the hidden window GUI.
-  set_global_variable = { name = cm_pf_river_process value = yes }
 }
 
 # Stores goods scope references in global variables so localization can display

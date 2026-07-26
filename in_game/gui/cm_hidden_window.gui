@@ -150,7 +150,7 @@ widget = {
 		# visible_at_creation = no pins it hidden at creation so a loaded save still gets a
 		# hidden->shown first-show that fires _show. The tick loop records one small batch of source
 		# locations per fire so scripted_gui_command volume stays under the flood threshold; each fill rebinds
-		# this datamodel to the next batch, and cm_pf_river_fill_batch tears down and recomputes once done.
+		# this datamodel to the next batch, and cm_pf_river_fill_batch tears down and stamps once done.
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
@@ -195,6 +195,36 @@ widget = {
 					}
 				}
 			}
+		}
+	}
+
+	# R.G.O. Bonus coverage sweep driver. The recompute reads the rgob classification maps, so it
+	# cannot run from the lobby on_action like the trmm sweep; the classification completion branch
+	# arms cm_rgob_sweep and this loop recomputes one batch of province slices per tick so no frame
+	# stalls. The work is pure script, so there is no datamodel to instantiate alongside it.
+	# visible_at_creation = no pins it hidden at creation so a loaded save (gate already true when
+	# the window builds) still gets a hidden->shown first-show that fires _show.
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_rgob_should_sweep').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+		state = {
+			name = _show
+			duration = 0.1
+			next = cm_rgob_sweep_tick_b
+			on_finish = "[GetScriptedGui('cm_rgob_sweep_tick').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+		state = {
+			name = cm_rgob_sweep_tick_b
+			duration = 0.1
+			next = cm_rgob_sweep_tick_a
+			on_finish = "[GetScriptedGui('cm_rgob_sweep_tick').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+		state = {
+			name = cm_rgob_sweep_tick_a
+			duration = 0.1
+			next = cm_rgob_sweep_tick_b
+			on_finish = "[GetScriptedGui('cm_rgob_sweep_tick').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 	}
 }

@@ -55,6 +55,15 @@ cm_pf_naval_is_optimal_harbor = {
 	var:cm_placement_finder_naval = 3
 }
 
+# No scope. True when a completed river-adjacency harvest at the current version is in the save,
+# so the per-location cm_pf_river_neighbors lists the path search reads can be trusted. The stamp
+# is written only by the harvest's completion branch, so a save taken mid-harvest reads false.
+cm_pf_river_data_is_current = {
+	has_global_variable = cm_pf_river_stamp
+	global_var:cm_pf_river_stamp = cm_pf_river_version_value
+	NOT = { has_global_variable = cm_pf_river_process }
+}
+
 # Root is location. The three is_lake = yes topographies: in_game/common/topography/00_default.txt:228-286
 cm_pf_location_is_lake = {
 	OR = {
