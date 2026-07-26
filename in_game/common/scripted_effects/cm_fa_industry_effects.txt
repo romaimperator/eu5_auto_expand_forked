@@ -48,7 +48,10 @@ cm_fa_run_industry = {
 			} else_if = {
 				limit = {
 					scope:cm_building_type = { cm_is_building_type_production_building = yes }
-					scope:cm_building = { is_at_max_level = no }
+					scope:cm_building = {
+						is_at_max_level = no
+						is_opened = yes
+					}
 					scope:cm_location = {
 						cm_location_has_enough_pops_available = yes
 						cm_is_location_under_building_limit = yes
@@ -90,7 +93,7 @@ cm_fa_run_industry = {
 }
 
 # Stages a build candidate into the full-automation build queue and marks its category,
-# first stager wins. $cat$ = 1 industry, 2 collapsar, 3 food, 4 utilities.
+# first stager wins. $cat$ = 1 industry, 2 collapsar, 3 food, 4 utilities, 5 governors.
 # Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_fa_stage_build_candidate = {
 	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_fa_b_locations LOCATION_LIST = cm_fa_b_types DONE_LIST = cm_fa_done_b_types }

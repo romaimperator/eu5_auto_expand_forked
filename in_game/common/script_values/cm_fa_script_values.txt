@@ -123,3 +123,40 @@ cm_fa_ur_order = {
 		add = var:cm_trmm_best_mil
 	}
 }
+
+# Ordered iterators sort high to low, so negating takes the least profitable first.
+# Root is the building.
+cm_fa_cu_neg_profit = {
+	value = 0
+	subtract = building_profit
+}
+
+# Half the market's open buildings of this type, rounded down.
+# Root is the country, expects scope:cm_building_type.
+cm_fa_cu_close_cap = {
+	value = 0
+	if = {
+		limit = {
+			has_variable_map = cm_fa_cu_open
+			is_key_in_variable_map = { name = cm_fa_cu_open target = scope:cm_building_type }
+		}
+		value = "variable_map(cm_fa_cu_open|scope:cm_building_type)"
+		divide = 2
+		floor = yes
+	}
+}
+
+# Half the market's closed buildings of this type, rounded up.
+# Root is the country, expects scope:cm_building_type.
+cm_fa_cu_reopen_cap = {
+	value = 0
+	if = {
+		limit = {
+			has_variable_map = cm_fa_cu_closed_n
+			is_key_in_variable_map = { name = cm_fa_cu_closed_n target = scope:cm_building_type }
+		}
+		value = "variable_map(cm_fa_cu_closed_n|scope:cm_building_type)"
+		divide = 2
+		ceiling = yes
+	}
+}

@@ -13,6 +13,11 @@ cm_fa_monthly_budget_refresh = {
 	cm_fa_set_category_pool = { cat = collapsar }
 	cm_fa_set_category_pool = { cat = food }
 	cm_fa_set_category_pool = { cat = utilities }
+	# Governors drains ahead of the shared categories.
+	if = {
+		limit = { exists = var:cm_fa_governors_enabled }
+		set_variable = { name = cm_fa_pool_governors value = local_var:cm_fa_avail }
+	}
 }
 
 # pool = pct * available. $cat$ = industry | collapsar | food | utilities.
@@ -47,6 +52,7 @@ cm_fa_clear_budget_state = {
 	set_variable = { name = cm_fa_pool_collapsar value = 0 }
 	set_variable = { name = cm_fa_pool_food value = 0 }
 	set_variable = { name = cm_fa_pool_utilities value = 0 }
+	set_variable = { name = cm_fa_pool_governors value = 0 }
 }
 
 # Copies the budget state from scope:old_country on tag switch; pools are non-CMM state
@@ -56,6 +62,7 @@ cm_fa_copy_budget_state = {
 	cm_fa_copy_budget_var = { v = cm_fa_pool_collapsar }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_food }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_utilities }
+	cm_fa_copy_budget_var = { v = cm_fa_pool_governors }
 }
 
 # $v$ = variable name. Root is the new country, expects scope:old_country.
@@ -140,5 +147,6 @@ cm_fa_stage_category = {
 		flag:cm_fa_cat_food = { cm_fa_run_food = yes }
 		flag:cm_fa_cat_utilities = { cm_fa_run_utilities = yes }
 		flag:cm_fa_cat_urban_rights = { cm_fa_run_urban_rights = yes }
+		flag:cm_fa_cat_governors = { cm_fa_run_governors = yes }
 	}
 }

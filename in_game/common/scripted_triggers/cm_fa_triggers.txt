@@ -263,3 +263,97 @@ cm_fa_ur_has_no_specialization = {
 		has_town_rights = town_rights_type:royal_masonry_rights
 	}
 }
+
+# Building Cleanup gates.
+
+# The 0.01 floor keeps a building idling either side of zero from reading as one that is
+# working. Root is the building.
+cm_fa_cu_is_unprofitable = {
+	building_profit <= 0.01
+}
+
+# Ten levels is the margin at which an unprofitable building is destroyed rather than closed.
+# Root is the location.
+cm_fa_cu_location_near_cap = {
+	cm_get_available_building_levels <= 10
+}
+
+# This building type's close budget in the market is not yet spent.
+# Root is the country, expects scope:cm_building_type.
+cm_fa_cu_group_has_room = {
+	trigger_if = {
+		limit = {
+			has_variable_map = cm_fa_cu_acted
+			is_key_in_variable_map = { name = cm_fa_cu_acted target = scope:cm_building_type }
+		}
+		"variable_map(cm_fa_cu_acted|scope:cm_building_type)" < cm_fa_cu_close_cap
+	}
+	trigger_else = { cm_fa_cu_close_cap >= 1 }
+}
+
+# A group reopens only when this pass closed nothing in it and one of its open buildings
+# still earns. Root is the country, expects scope:cm_building_type.
+cm_fa_cu_group_reopen_room = {
+	NOT = {
+		AND = {
+			has_variable_map = cm_fa_cu_acted
+			is_key_in_variable_map = { name = cm_fa_cu_acted target = scope:cm_building_type }
+		}
+	}
+	has_variable_map = cm_fa_cu_prof_open
+	is_key_in_variable_map = { name = cm_fa_cu_prof_open target = scope:cm_building_type }
+	trigger_if = {
+		limit = {
+			has_variable_map = cm_fa_cu_reop
+			is_key_in_variable_map = { name = cm_fa_cu_reop target = scope:cm_building_type }
+		}
+		"variable_map(cm_fa_cu_reop|scope:cm_building_type)" < cm_fa_cu_reopen_cap
+	}
+	trigger_else = { cm_fa_cu_reopen_cap >= 1 }
+}
+
+# Closed by this system rather than by hand, so it is ours to reopen or destroy.
+# Root is the building.
+cm_fa_cu_is_tracked_closed = {
+	is_opened = no
+	building_type = { save_temporary_scope_as = cm_fa_cu_t }
+	location = {
+		is_target_in_variable_list = { name = cm_fa_cu_closed_types target = scope:cm_fa_cu_t }
+	}
+}
+
+# Governors gates.
+
+# Copied from the vanilla local_governor allow block, where lieutenancies share the pool
+# (game in_game/common/building_types/capital_buildings.txt:627-630; lieutenancy repeats it at
+# in_game/common/building_types/unique_buildings.txt:1267-1270). Root is the country.
+cm_fa_gov_has_land_room = {
+	total_building_levels_including_construction:local_governor < {
+		value = modifier:num_local_governors
+		subtract = total_building_levels_including_construction:lieutenancy
+	}
+}
+
+# Copied from the vanilla naval_governor allow block
+# (game in_game/common/building_types/capital_buildings.txt:792). num_naval_governors has no base
+# value, so a country holds none until an advance or a naval reform grants one.
+# Root is the country.
+cm_fa_gov_has_naval_room = {
+	total_building_levels_including_construction:naval_governor < modifier:num_naval_governors
+}
+
+# A governor of either kind can go up here. The two are mutually exclusive by location: land
+# needs a road to the capital, naval needs the capital to be unreachable by land.
+# Root is the location, expects scope:cm_country.
+cm_fa_gov_location_placeable = {
+	OR = {
+		AND = {
+			scope:cm_country = { cm_fa_gov_has_land_room = yes }
+			cm_location_allowed_to_build = { target = building_type:local_governor }
+		}
+		AND = {
+			scope:cm_country = { cm_fa_gov_has_naval_room = yes }
+			cm_location_allowed_to_build = { target = building_type:naval_governor }
+		}
+	}
+}

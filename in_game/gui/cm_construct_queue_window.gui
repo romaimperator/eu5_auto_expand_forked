@@ -62,6 +62,46 @@ widget = {
 				on_finish = "[GetScriptedGui('cm_q_end_cycle').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 		}
+		# Building Cleanup toggle driver: the yearly pass arms the gate, so _show runs the
+		# engine toggles exactly once. Pinned hidden at creation so the gate going true always
+		# makes a hidden->shown first show.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_fa_cu_fire_gate').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			state = {
+				name = _show
+				duration = 0.1
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_fa_cu_toggle')]"
+				next = cm_fa_cu_toggle_done
+			}
+			state = {
+				name = cm_fa_cu_toggle_done
+				duration = 0.25
+				on_finish = "[GetScriptedGui('cm_fa_cu_end').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+		}
+		# One list carries both the closes and the reopens: ToggleBuilding flips whichever
+		# state the building is in, and a variable list holds each target once.
+		widget = {
+			datamodel = "[GetPlayer.MakeScope.GetList('cm_fa_cu_toggle')]"
+			item = {
+				widget = {
+					datacontext = "[Scope.GetBuilding]"
+					state = {
+						name = cm_fa_cu_toggle
+						on_finish = "[ToggleBuilding(Building.Self)]"
+					}
+					widget = {
+						size = { 0 0 }
+						state = {
+							name = cm_fa_cu_toggle
+							on_finish = "[GetScriptedGui('cm_fa_cu_probe').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+				}
+			}
+		}
 		# Foreign building constructs. Both lists are the country's, because a foreign location's
 		# variables are shared with every other player, so this is a cross product of the staged
 		# sites and the staged types; cm_gui_try_foreign drops every pair the staging did not make.

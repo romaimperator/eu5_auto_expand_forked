@@ -62,6 +62,7 @@ cm_pf_prep_gated = {
 		# In multiplayer, compute only on the manual refresh button, never on open.
 		limit = { is_multiplayer_session = no }
 		cm_pf_prep_core = yes
+		set_variable = { name = cm_fa_gov_auto_run value = 1 }
 	}
 }
 
@@ -91,6 +92,7 @@ cm_pf_recompute_now = {
 		remove_variable = cm_pf_view_g
 		remove_variable = cm_pf_view_c
 		cm_pf_prep_core = yes
+		set_variable = { name = cm_fa_gov_auto_run value = 1 }
 		if = {
 			limit = { var:cm_pf_acc <= 1 }
 			every_owned_location = {
@@ -117,6 +119,8 @@ cm_pf_prep_core = {
 	}
 	clear_variable_list = cm_pf_water_set
 	cm_pf_clean_country = yes
+	# Only an automatically started run arms the full-automation governor pick.
+	remove_variable = cm_fa_gov_auto_run
 	if = {
 		limit = { cm_pf_roads_is_current = yes }
 		set_variable = { name = cm_pf_roads_current value = 1 }
@@ -2743,6 +2747,15 @@ cm_pf_finalize = {
 		limit = { local_var:cm_pf_ran_c = 1 }
 		set_variable = { name = cm_pf_fresh_c value = 1 days = 1460 }
 	}
+	# Hand fresh governor scores to full automation, which picks from them on its next pulse.
+	if = {
+		limit = {
+			local_var:cm_pf_ran_g = 1
+			exists = var:cm_fa_gov_auto_run
+		}
+		set_variable = { name = cm_fa_gov_armed value = 1 }
+	}
+	remove_variable = cm_fa_gov_auto_run
 }
 
 # Location scope.

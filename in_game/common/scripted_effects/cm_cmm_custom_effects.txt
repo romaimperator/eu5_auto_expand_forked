@@ -26,8 +26,11 @@ cm_cmm_post_registration = {
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = budget item = 2 value = 20 }
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = budget item = 3 value = 60 }
 
-	# Urban Rights is the one category that starts off.
+	# Urban Rights, Building Cleanup and Governors start off; cleanup is the only category that
+	# closes and destroys what the player already has.
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = enabled item = 5 value = 0 }
+	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = enabled item = 6 value = 0 }
+	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = enabled item = 7 value = 0 }
 
 	cm_repair_expand_thresholds = yes
 
@@ -410,6 +413,8 @@ cm_fa_rebuild_category_lookups = {
 	cm_fa_sync_category = { cat = food }
 	cm_fa_sync_category = { cat = utilities }
 	cm_fa_sync_urban_rights = yes
+	cm_fa_sync_cleanup = yes
+	cm_fa_sync_governors = yes
 
 	} # end guard
 }
@@ -446,6 +451,29 @@ cm_fa_sync_urban_rights = {
 	}
 	else = {
 		remove_variable = cm_fa_urban_rights_enabled
+	}
+}
+
+# Building Cleanup spends nothing, so it has no pool to project. Scope: country
+cm_fa_sync_cleanup = {
+	if = {
+		limit = { is_target_in_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_cleanup } }
+		set_variable = { name = cm_fa_cleanup_enabled value = 1 }
+	}
+	else = {
+		remove_variable = cm_fa_cleanup_enabled
+	}
+}
+
+# Governors takes no budget share, so there is no percentage to project. Scope: country
+cm_fa_sync_governors = {
+	if = {
+		limit = { is_target_in_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_governors } }
+		set_variable = { name = cm_fa_governors_enabled value = 1 }
+	}
+	else = {
+		remove_variable = cm_fa_governors_enabled
+		set_variable = { name = cm_fa_pool_governors value = 0 }
 	}
 }
 

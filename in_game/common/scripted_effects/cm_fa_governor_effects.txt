@@ -1,0 +1,88 @@
+﻿# Full-automation Governors: places one governor at the best location the Recommended Governor
+# Placement map mode scored, whenever vanilla leaves a governor slot open. The pick runs only
+# after that map mode's own scores are refreshed; the placement itself rides the shared
+# full-automation build queue so it is charged the engine's real cost.
+
+# Root is the country, scope:cm_country set.
+cm_fa_run_governors = {
+	if = {
+		limit = { exists = var:cm_fa_gov_armed }
+		remove_variable = cm_fa_gov_armed
+		cm_fa_gov_pick_target = yes
+	}
+	cm_fa_gov_stage_target = yes
+}
+
+# Takes the highest-scoring location a governor can legally occupy. cm_gf_score is absent on
+# locations the finder never scored and on the ones it dropped (the capital, standing governor
+# seats, anything already at 80 proximity).
+# Root is the country, scope:cm_country set.
+cm_fa_gov_pick_target = {
+	remove_variable = cm_fa_gov_loc
+	remove_variable = cm_fa_gov_naval
+	ordered_owned_location = {
+		order_by = { value = var:cm_gf_score }
+		position = 0
+		check_range_bounds = no
+		limit = {
+			has_variable = cm_gf_score
+			cm_fa_gov_location_placeable = yes
+		}
+		save_scope_as = cm_fa_gov_pick
+		if = {
+			limit = {
+				scope:cm_country = { cm_fa_gov_has_naval_room = yes }
+				cm_location_allowed_to_build = { target = building_type:naval_governor }
+			}
+			scope:cm_country = { set_variable = { name = cm_fa_gov_naval value = 1 } }
+		}
+		scope:cm_country = { set_variable = { name = cm_fa_gov_loc value = scope:cm_fa_gov_pick } }
+	}
+}
+
+# Stages the pending target into the shared full-automation build queue.
+# Root is the country, scope:cm_country set.
+cm_fa_gov_stage_target = {
+	if = {
+		limit = { exists = var:cm_fa_gov_loc }
+		cm_fa_gov_resolve_type = yes
+		var:cm_fa_gov_loc = { save_scope_as = cm_location }
+		if = {
+			limit = { scope:cm_location = { has_building = scope:cm_building_type } }
+			remove_variable = cm_fa_gov_loc
+			remove_variable = cm_fa_gov_naval
+		}
+		else_if = {
+			limit = {
+				scope:cm_location = {
+					cm_location_allowed_to_build = { target = scope:cm_building_type }
+					cm_location_has_enough_pops_available = yes
+					cm_get_open_build_queue_slots > 0
+				}
+			}
+			cm_fa_stage_build_candidate = { cat = 5 }
+		}
+	}
+}
+
+# Root is the country. Sets scope:cm_building_type from the pending target's kind.
+cm_fa_gov_resolve_type = {
+	if = {
+		limit = { exists = var:cm_fa_gov_naval }
+		building_type:naval_governor = { save_scope_as = cm_building_type }
+	}
+	else = {
+		building_type:local_governor = { save_scope_as = cm_building_type }
+	}
+}
+
+# Governors drain. Root is the country, scope:cm_country set.
+cm_fa_pass_governors = {
+	if = {
+		limit = { exists = var:cm_fa_gov_loc }
+		cm_fa_gov_resolve_type = yes
+		var:cm_fa_gov_loc = {
+			cm_fa_try_approve_build = { cat = 5 POOL = cm_fa_pool_governors GOODS_GATE = cm_market_has_construction_goods_for_building }
+		}
+	}
+}
