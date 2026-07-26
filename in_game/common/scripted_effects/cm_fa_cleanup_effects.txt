@@ -200,7 +200,8 @@ cm_fa_cu_survey_market = {
 }
 
 # Closes one market's unprofitable production buildings least profitable first, destroying
-# instead where the location is near its cap, until each type's half share is spent.
+# instead where the location is near its cap, until each type's half share is spent. A market
+# village is cut back to one level instead, never closed or destroyed.
 # Root is the country, expects scope:cm_fa_market.
 cm_fa_cu_close_pass = {
 	ordered_owned_building = {
@@ -215,6 +216,11 @@ cm_fa_cu_close_pass = {
 			cm_is_not_under_construction = yes
 			cm_fa_cu_is_unprofitable = yes
 			building_type = { cm_is_building_type_production_building = yes }
+			# One level keeps the location's market access.
+			trigger_if = {
+				limit = { building_type = building_type:market_village }
+				building_level > 1
+			}
 			location = {
 				owner = scope:cm_country
 				market = scope:cm_fa_market
@@ -229,6 +235,17 @@ cm_fa_cu_close_pass = {
 			limit = { scope:cm_country = { cm_fa_cu_group_has_room = yes } }
 			scope:cm_country = { cm_fa_cu_bump_acted = yes }
 			if = {
+				limit = { building_type = building_type:market_village }
+				scope:cm_location = {
+					change_building_level_in_location = {
+						building = building_type:market_village
+						value = { value = 1 subtract = scope:cm_building.building_level }
+						owner = scope:cm_country
+					}
+				}
+				scope:cm_country = { cmf_log = { action = cm_fa_log_cu_trimmed } }
+			}
+			else_if = {
 				limit = { scope:cm_location = { cm_fa_cu_location_near_cap = yes } }
 				scope:cm_location = { destroy_building = scope:cm_building }
 				scope:cm_country = { cmf_log = { action = cm_fa_log_cu_deleted } }
