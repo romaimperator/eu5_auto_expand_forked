@@ -266,10 +266,50 @@ cm_fa_ur_has_no_specialization = {
 
 # Building Cleanup gates.
 
-# The 0.01 floor keeps a building idling either side of zero from reading as one that is
-# working. Root is the building.
+# Root is the building, expects scope:cm_country.
 cm_fa_cu_is_unprofitable = {
-	building_profit <= 0.01
+	building_profit <= cm_fa_cu_effective_floor
+}
+
+# Mostly runs on construction materials without making any, so its inputs are worth more in
+# the construction queue than in a barely-profitable building.
+# Root is the building, expects scope:cm_country.
+cm_fa_cu_core_goods_applies = {
+	scope:cm_country = { exists = var:cm_fa_cleanup_core_goods }
+	building_type = { save_temporary_scope_as = cm_fa_cu_ct }
+	has_global_variable_map = cm_fa_cu_core_in
+	is_key_in_global_variable_map = { name = cm_fa_cu_core_in target = scope:cm_fa_cu_ct }
+	NOR = {
+		building_produced_goods = goods:masonry
+		building_produced_goods = goods:lumber
+		building_produced_goods = goods:sand
+		building_produced_goods = goods:glass
+	}
+}
+
+# Destroyed on sight, whatever it earns: the goods it draws are worth more elsewhere.
+# fruit_orchard turns lumber 0.167 into fruit 0.3 per level
+# (in_game/common/building_types/common_buildings.txt:591). Root is the building type.
+cm_fa_cu_is_always_delete = {
+	OR = {
+		this = building_type:fruit_orchard
+	}
+}
+
+# Root is the building, expects scope:cm_country. Takes pops an auto-food location needs
+# without putting food back. building_produced_goods reads the method the building actually
+# runs, so a fishing village switched off fishing counts here and a modded food producer does not.
+cm_fa_cu_af_is_removable = {
+	building_type = { cm_is_building_type_production_building = yes }
+	save_temporary_scope_as = cm_fa_cu_af_b
+	NOT = {
+		scope:cm_country = {
+			any_in_list = {
+				variable = cm_auto_food_rgo_types_list
+				scope:cm_fa_cu_af_b = { building_produced_goods = prev }
+			}
+		}
+	}
 }
 
 # Ten levels is the margin at which an unprofitable building is destroyed rather than closed.

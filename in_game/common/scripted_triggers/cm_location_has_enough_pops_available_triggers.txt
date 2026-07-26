@@ -23,3 +23,26 @@ cm_location_promotion_buffer_covers_deficit = {
 	}
 	cm_location_promotion_buffer_slack >= 0
 }
+
+# Root is the location. Some pop type's building jobs, plus the RGO's share, outnumber the pops
+# that can fill them. The laborers/slaves pool is read combined so the RGO and the jobs either
+# type can take are not counted twice; between them the six values cover all eight pop types.
+cm_location_has_worker_deficit = {
+	OR = {
+		cm_location_nobles_available < 0
+		cm_location_clergy_available < 0
+		cm_location_burghers_available < 0
+		cm_location_soldiers_available < 0
+		cm_location_peasants_available < 0
+		cm_location_laborers_or_slaves_available < 0
+	}
+}
+
+# Root is the location. Construction gate for locations auto-food is working: while any pop type
+# is short, a new building level would take pops the food buildings and RGO need.
+cm_location_auto_food_workers_ok = {
+	OR = {
+		cm_fa_food_location_effectively_active = no
+		cm_location_has_worker_deficit = no
+	}
+}

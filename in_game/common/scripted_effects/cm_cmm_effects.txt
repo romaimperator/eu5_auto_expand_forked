@@ -905,6 +905,25 @@ cm_register_cmf_mod = {
 		setting_id = fa_food_target
 	}
 
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = fa_food_min_potential
+		tab_id = full_automation
+		group_id = fa_food
+		default_value = 15
+		min_value = 1
+		max_value = 30
+		step_value = 1
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__fa_food_min_potential
+		alias = cm_fa_food_min_potential
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_food_min_potential
+	}
+
 	## Urban Rights (fa_urban_rights) Group
 	cmm_register_slider_setting = {
 		mod_id = cm
@@ -942,6 +961,75 @@ cm_register_cmf_mod = {
 	cmm_add_scripted_gui = {
 		mod_id = cm
 		setting_id = fa_urban_rights_reserve
+	}
+
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = fa_urban_rights_expand
+		tab_id = full_automation
+		group_id = fa_urban_rights
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__fa_urban_rights_expand
+		alias = cm_fa_urban_rights_expand
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_urban_rights_expand
+	}
+
+	## Building Cleanup (fa_cleanup) Group
+	# Stored in hundredths of a gold so the slider stays integral; cm_fa_cu_profit_floor divides.
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = fa_cleanup_min_profit
+		tab_id = full_automation
+		group_id = fa_cleanup
+		default_value = 5
+		min_value = 0
+		max_value = 100
+		step_value = 5
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__fa_cleanup_min_profit
+		alias = cm_fa_cleanup_min_profit
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_cleanup_min_profit
+	}
+
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = fa_cleanup_core_goods
+		tab_id = full_automation
+		group_id = fa_cleanup
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__fa_cleanup_core_goods
+		alias = cm_fa_cleanup_core_goods
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_cleanup_core_goods
+	}
+
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = fa_cleanup_auto_food
+		tab_id = full_automation
+		group_id = fa_cleanup
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__fa_cleanup_auto_food
+		alias = cm_fa_cleanup_auto_food
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_cleanup_auto_food
 	}
 
 	# Mapmodes (map_modes) Tab
@@ -1162,6 +1250,12 @@ cm_handle_cmf_callback = {
 				alias = cm_fa_food_target
 			}
 		}
+		flag:cm__fa_food_min_potential = {
+			cmm_sync_setting_alias = {
+				setting = cm__fa_food_min_potential
+				alias = cm_fa_food_min_potential
+			}
+		}
 		## Urban Rights (fa_urban_rights) Group
 		flag:cm__fa_urban_rights_window = {
 			cmm_sync_setting_alias = {
@@ -1173,6 +1267,31 @@ cm_handle_cmf_callback = {
 			cmm_sync_setting_alias = {
 				setting = cm__fa_urban_rights_reserve
 				alias = cm_fa_urban_rights_reserve
+			}
+		}
+		flag:cm__fa_urban_rights_expand = {
+			cmm_sync_bool_alias = {
+				setting = cm__fa_urban_rights_expand
+				alias = cm_fa_urban_rights_expand
+			}
+		}
+		## Building Cleanup (fa_cleanup) Group
+		flag:cm__fa_cleanup_min_profit = {
+			cmm_sync_setting_alias = {
+				setting = cm__fa_cleanup_min_profit
+				alias = cm_fa_cleanup_min_profit
+			}
+		}
+		flag:cm__fa_cleanup_core_goods = {
+			cmm_sync_bool_alias = {
+				setting = cm__fa_cleanup_core_goods
+				alias = cm_fa_cleanup_core_goods
+			}
+		}
+		flag:cm__fa_cleanup_auto_food = {
+			cmm_sync_bool_alias = {
+				setting = cm__fa_cleanup_auto_food
+				alias = cm_fa_cleanup_auto_food
 			}
 		}
 		# Mapmodes (map_modes) Tab

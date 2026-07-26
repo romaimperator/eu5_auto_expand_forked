@@ -204,9 +204,8 @@ cm_trmm_grant_masonry = {
 }
 
 # Right-click grant scripted GUIs: grant plus enable matching
-# auto-expands. Each industry registers its chain's base tier; the
-# obsolete-registration migration resolves it to the current tier.
-# Root is the location; cm_country is the clicking player's country.
+# auto-expands. Root is the location; cm_country is the clicking
+# player's country.
 cm_trmm_grant_expand_tooling = {
 	saved_scopes = { cm_country }
 	is_valid = {
@@ -214,8 +213,7 @@ cm_trmm_grant_expand_tooling = {
 	}
 	effect = {
 		cm_trmm_grant_right = { RIGHT = royal_tooling_rights }
-		building_type:tools_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
+		cm_trmm_enable_expands_tooling = yes
 	}
 }
 cm_trmm_grant_expand_jewelry = {
@@ -225,8 +223,7 @@ cm_trmm_grant_expand_jewelry = {
 	}
 	effect = {
 		cm_trmm_grant_right = { RIGHT = royal_jewelry_rights }
-		building_type:jewelry_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
+		cm_trmm_enable_expands_jewelry = yes
 	}
 }
 cm_trmm_grant_expand_naval = {
@@ -236,13 +233,7 @@ cm_trmm_grant_expand_naval = {
 	}
 	effect = {
 		cm_trmm_grant_right = { RIGHT = royal_naval_rights }
-		building_type:naval_supplies_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		if = {
-			limit = { OR = { vegetation = woods vegetation = forest vegetation = jungle raw_material ?= goods:lumber } }
-			building_type:tar_kiln = { save_scope_as = cm_building_type }
-			cm_enable_auto_expand_for_building_type = yes
-		}
+		cm_trmm_enable_expands_naval = yes
 	}
 }
 cm_trmm_grant_expand_textile = {
@@ -252,16 +243,7 @@ cm_trmm_grant_expand_textile = {
 	}
 	effect = {
 		cm_trmm_grant_right = { RIGHT = royal_textile_rights }
-		building_type:cloth_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		building_type:dyes_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		building_type:fine_cloth_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		if = {
-			limit = { raw_material ?= goods:dyes }
-			cm_enable_auto_expand_for_rgo = yes
-		}
+		cm_trmm_enable_expands_textile = yes
 	}
 }
 cm_trmm_grant_expand_weaponry = {
@@ -271,12 +253,7 @@ cm_trmm_grant_expand_weaponry = {
 	}
 	effect = {
 		cm_trmm_grant_right = { RIGHT = royal_weaponry_rights }
-		building_type:cannon_maker = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		building_type:gun_smith = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		building_type:weapon_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
+		cm_trmm_enable_expands_weaponry = yes
 	}
 }
 cm_trmm_grant_expand_book = {
@@ -286,16 +263,7 @@ cm_trmm_grant_expand_book = {
 	}
 	effect = {
 		cm_trmm_grant_right = { RIGHT = royal_book_rights }
-		building_type:dyes_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		building_type:paper_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		building_type:scriptorium = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		if = {
-			limit = { raw_material ?= goods:dyes }
-			cm_enable_auto_expand_for_rgo = yes
-		}
+		cm_trmm_enable_expands_book = yes
 	}
 }
 cm_trmm_grant_expand_artisan = {
@@ -305,12 +273,7 @@ cm_trmm_grant_expand_artisan = {
 	}
 	effect = {
 		cm_trmm_grant_right = { RIGHT = royal_artisan_rights }
-		building_type:furniture_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		building_type:pottery_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		building_type:tannery = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
+		cm_trmm_enable_expands_artisan = yes
 	}
 }
 cm_trmm_grant_expand_brewing = {
@@ -320,16 +283,7 @@ cm_trmm_grant_expand_brewing = {
 	}
 	effect = {
 		cm_trmm_grant_right = { RIGHT = royal_brewing_rights }
-		building_type:brewery = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		building_type:distillers_guild = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		building_type:winery = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
-		if = {
-			limit = { raw_material ?= goods:wine }
-			cm_enable_auto_expand_for_rgo = yes
-		}
+		cm_trmm_enable_expands_brewing = yes
 	}
 }
 cm_trmm_grant_expand_masonry = {
@@ -339,12 +293,6 @@ cm_trmm_grant_expand_masonry = {
 	}
 	effect = {
 		cm_trmm_grant_right = { RIGHT = royal_masonry_rights }
-		if = {
-			limit = { is_produced_in_location_market = goods:sand }
-			building_type:glass_guild = { save_scope_as = cm_building_type }
-			cm_enable_auto_expand_for_building_type = yes
-		}
-		building_type:mason = { save_scope_as = cm_building_type }
-		cm_enable_auto_expand_for_building_type = yes
+		cm_trmm_enable_expands_masonry = yes
 	}
 }

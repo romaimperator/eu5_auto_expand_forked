@@ -2185,3 +2185,86 @@ cm_trmm_recompute_all = {
 		cm_trmm_recompute_province_definition = yes
 	}
 }
+
+# Turns on auto-expand for the industries a right boosts, and for its raw
+# goods where the location produces them. Each industry registers its chain's
+# base tier; the obsolete-registration migration resolves it to the current
+# tier. Root is the location, expects scope:cm_country.
+cm_trmm_enable_expands_tooling = {
+	building_type:tools_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+}
+cm_trmm_enable_expands_jewelry = {
+	building_type:jewelry_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+}
+cm_trmm_enable_expands_naval = {
+	building_type:naval_supplies_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	if = {
+		limit = { OR = { vegetation = woods vegetation = forest vegetation = jungle raw_material ?= goods:lumber } }
+		building_type:tar_kiln = { save_scope_as = cm_building_type }
+		cm_enable_auto_expand_for_building_type = yes
+	}
+}
+cm_trmm_enable_expands_textile = {
+	building_type:cloth_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	building_type:dyes_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	building_type:fine_cloth_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	if = {
+		limit = { raw_material ?= goods:dyes }
+		cm_enable_auto_expand_for_rgo = yes
+	}
+}
+cm_trmm_enable_expands_weaponry = {
+	building_type:cannon_maker = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	building_type:gun_smith = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	building_type:weapon_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+}
+cm_trmm_enable_expands_book = {
+	building_type:dyes_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	building_type:paper_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	building_type:scriptorium = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	if = {
+		limit = { raw_material ?= goods:dyes }
+		cm_enable_auto_expand_for_rgo = yes
+	}
+}
+cm_trmm_enable_expands_artisan = {
+	building_type:furniture_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	building_type:pottery_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	building_type:tannery = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+}
+cm_trmm_enable_expands_brewing = {
+	building_type:brewery = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	building_type:distillers_guild = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	building_type:winery = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+	if = {
+		limit = { raw_material ?= goods:wine }
+		cm_enable_auto_expand_for_rgo = yes
+	}
+}
+cm_trmm_enable_expands_masonry = {
+	if = {
+		limit = { is_produced_in_location_market = goods:sand }
+		building_type:glass_guild = { save_scope_as = cm_building_type }
+		cm_enable_auto_expand_for_building_type = yes
+	}
+	building_type:mason = { save_scope_as = cm_building_type }
+	cm_enable_auto_expand_for_building_type = yes
+}

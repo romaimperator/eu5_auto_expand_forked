@@ -59,6 +59,17 @@ cm_fa_ur_specialization_pass = {
 	}
 }
 
+# Grants $RIGHT$ and, unless the player turned it off, turns on auto-expand for the
+# industries it boosts, the same set the map mode's right-click grant registers.
+# $ALIAS$ = the right's short alias. Root is the location, expects scope:cm_country.
+cm_fa_ur_grant = {
+	cm_trmm_grant_right = { RIGHT = $RIGHT$ }
+	if = {
+		limit = { scope:cm_country = { exists = var:cm_fa_urban_rights_expand } }
+		cm_trmm_enable_expands_$ALIAS$ = yes
+	}
+}
+
 # Draws one right from those scoring within the player's window of the best right still
 # grantable here, weighted by fit. Root is the location, expects scope:cm_country.
 # Rights: in_game/common/town_rights/01_discovery.txt
@@ -82,7 +93,7 @@ cm_fa_ur_draw_specialization = {
 					cm_trmm_rightv_tooling >= local_var:cm_fa_ur_thresh
 				}
 				modifier = { factor = { value = cm_trmm_rightv_tooling } }
-				cm_trmm_grant_right = { RIGHT = royal_tooling_rights }
+				cm_fa_ur_grant = { RIGHT = royal_tooling_rights ALIAS = tooling }
 			}
 			100 = {
 				trigger = {
@@ -90,7 +101,7 @@ cm_fa_ur_draw_specialization = {
 					cm_trmm_rightv_jewelry >= local_var:cm_fa_ur_thresh
 				}
 				modifier = { factor = { value = cm_trmm_rightv_jewelry } }
-				cm_trmm_grant_right = { RIGHT = royal_jewelry_rights }
+				cm_fa_ur_grant = { RIGHT = royal_jewelry_rights ALIAS = jewelry }
 			}
 			100 = {
 				trigger = {
@@ -98,7 +109,7 @@ cm_fa_ur_draw_specialization = {
 					cm_trmm_rightv_naval >= local_var:cm_fa_ur_thresh
 				}
 				modifier = { factor = { value = cm_trmm_rightv_naval } }
-				cm_trmm_grant_right = { RIGHT = royal_naval_rights }
+				cm_fa_ur_grant = { RIGHT = royal_naval_rights ALIAS = naval }
 			}
 			100 = {
 				trigger = {
@@ -106,7 +117,7 @@ cm_fa_ur_draw_specialization = {
 					cm_trmm_rightv_textile >= local_var:cm_fa_ur_thresh
 				}
 				modifier = { factor = { value = cm_trmm_rightv_textile } }
-				cm_trmm_grant_right = { RIGHT = royal_textile_rights }
+				cm_fa_ur_grant = { RIGHT = royal_textile_rights ALIAS = textile }
 			}
 			100 = {
 				trigger = {
@@ -114,7 +125,7 @@ cm_fa_ur_draw_specialization = {
 					cm_trmm_rightv_weaponry >= local_var:cm_fa_ur_thresh
 				}
 				modifier = { factor = { value = cm_trmm_rightv_weaponry } }
-				cm_trmm_grant_right = { RIGHT = royal_weaponry_rights }
+				cm_fa_ur_grant = { RIGHT = royal_weaponry_rights ALIAS = weaponry }
 			}
 			100 = {
 				trigger = {
@@ -122,7 +133,7 @@ cm_fa_ur_draw_specialization = {
 					cm_trmm_rightv_book >= local_var:cm_fa_ur_thresh
 				}
 				modifier = { factor = { value = cm_trmm_rightv_book } }
-				cm_trmm_grant_right = { RIGHT = royal_book_rights }
+				cm_fa_ur_grant = { RIGHT = royal_book_rights ALIAS = book }
 			}
 			100 = {
 				trigger = {
@@ -130,7 +141,7 @@ cm_fa_ur_draw_specialization = {
 					cm_trmm_rightv_artisan >= local_var:cm_fa_ur_thresh
 				}
 				modifier = { factor = { value = cm_trmm_rightv_artisan } }
-				cm_trmm_grant_right = { RIGHT = royal_artisan_rights }
+				cm_fa_ur_grant = { RIGHT = royal_artisan_rights ALIAS = artisan }
 			}
 			100 = {
 				trigger = {
@@ -138,7 +149,7 @@ cm_fa_ur_draw_specialization = {
 					cm_trmm_rightv_brewing >= local_var:cm_fa_ur_thresh
 				}
 				modifier = { factor = { value = cm_trmm_rightv_brewing } }
-				cm_trmm_grant_right = { RIGHT = royal_brewing_rights }
+				cm_fa_ur_grant = { RIGHT = royal_brewing_rights ALIAS = brewing }
 			}
 			100 = {
 				trigger = {
@@ -146,7 +157,7 @@ cm_fa_ur_draw_specialization = {
 					cm_trmm_rightv_masonry >= local_var:cm_fa_ur_thresh
 				}
 				modifier = { factor = { value = cm_trmm_rightv_masonry } }
-				cm_trmm_grant_right = { RIGHT = royal_masonry_rights }
+				cm_fa_ur_grant = { RIGHT = royal_masonry_rights ALIAS = masonry }
 			}
 		}
 	}

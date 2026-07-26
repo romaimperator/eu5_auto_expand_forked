@@ -144,7 +144,7 @@ cm_fa_food_yearly_evaluation = {
 								# The player said no here.
 								NOT = { exists = var:cm_auto_food_location_excluded }
 								cm_check_location_meets_min_market_access = yes
-								cm_fa_food_location_counts_as_expandable = yes
+								cm_location_food_potential >= cm_fa_food_min_potential_value
 							}
 							save_scope_as = cm_fa_cand
 							# The iterator snapshots its limit; the count advances live.
@@ -267,7 +267,7 @@ cm_fa_food_log_market_numbers = {
 # country, expects scope:cm_fa_market.
 cm_fa_food_log_candidate_diag = {
 	set_local_variable = { name = cm_fa_diag_rgo value = 0 }
-	set_local_variable = { name = cm_fa_diag_expand value = 0 }
+	set_local_variable = { name = cm_fa_diag_pot value = 0 }
 	set_local_variable = { name = cm_fa_diag_access value = 0 }
 	set_local_variable = { name = cm_fa_diag_cand value = 0 }
 	every_owned_location = {
@@ -279,8 +279,8 @@ cm_fa_food_log_candidate_diag = {
 		}
 		change_local_variable = { name = cm_fa_diag_rgo add = 1 }
 		if = {
-			limit = { cm_fa_food_location_counts_as_expandable = yes }
-			change_local_variable = { name = cm_fa_diag_expand add = 1 }
+			limit = { cm_location_food_potential >= cm_fa_food_min_potential_value }
+			change_local_variable = { name = cm_fa_diag_pot add = 1 }
 			if = {
 				limit = { cm_check_location_meets_min_market_access = yes }
 				change_local_variable = { name = cm_fa_diag_access add = 1 }
@@ -295,7 +295,7 @@ cm_fa_food_log_candidate_diag = {
 		}
 	}
 	cmf_log_value = { action = cm_fa_log_food_diag_rgo value = local_var:cm_fa_diag_rgo }
-	cmf_log_value = { action = cm_fa_log_food_diag_expand value = local_var:cm_fa_diag_expand }
+	cmf_log_value = { action = cm_fa_log_food_diag_pot value = local_var:cm_fa_diag_pot }
 	cmf_log_value = { action = cm_fa_log_food_diag_access value = local_var:cm_fa_diag_access }
 	cmf_log_value = { action = cm_fa_log_food_diag_cand value = local_var:cm_fa_diag_cand }
 }

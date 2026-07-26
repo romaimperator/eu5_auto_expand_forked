@@ -13,6 +13,7 @@ cm_fa_run_industry = {
 		limit = {
 			cm_is_building_type_production_building = yes
 			is_foreign = no
+			cm_fa_cu_is_always_delete = no
 			save_temporary_scope_as = cm_fa_try_type
 			scope:cm_country = {
 				can_build_building = scope:cm_fa_try_type
@@ -26,7 +27,10 @@ cm_fa_run_industry = {
 		order_by = max_control
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
-		limit = { NOT = { integration_level = conquered } }
+		limit = {
+			NOT = { integration_level = conquered }
+			cm_location_auto_food_workers_ok = yes
+		}
 		save_scope_as = cm_location
 		# Standing buildings: expands and obsolete upgrades.
 		ordered_buildings_in_location = {
@@ -47,7 +51,10 @@ cm_fa_run_industry = {
 				}
 			} else_if = {
 				limit = {
-					scope:cm_building_type = { cm_is_building_type_production_building = yes }
+					scope:cm_building_type = {
+						cm_is_building_type_production_building = yes
+						cm_fa_cu_is_always_delete = no
+					}
 					scope:cm_building = {
 						is_at_max_level = no
 						is_opened = yes

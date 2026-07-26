@@ -22,6 +22,19 @@ cm_fa_food_target_ratio = {
 	}
 }
 
+# Root is the location. The owner's fa_food_min_potential setting, the minimum food potential
+# per RGO level a location must reach to be picked. Falls back to the setting default of 15
+# before the first sync.
+cm_fa_food_min_potential_value = {
+	if = {
+		limit = { owner = { exists = var:cm_fa_food_min_potential } }
+		value = owner.var:cm_fa_food_min_potential
+	}
+	else = {
+		value = 15
+	}
+}
+
 # The next RGO level's cost plus the full-automation reserve and this drain's committed
 # spend. Root is the location, expects scopes: country, location.
 cm_fa_rgo_gold_threshold = {
@@ -121,6 +134,39 @@ cm_fa_ur_order = {
 	if = {
 		limit = { exists = var:cm_trmm_best_mil }
 		add = var:cm_trmm_best_mil
+	}
+}
+
+# Root is the country. The cleanup profit floor in gold: the fa_cleanup_min_profit setting
+# over 100 (5 -> 0.05). Stored in hundredths so the slider stays integral.
+cm_fa_cu_profit_floor = {
+	if = {
+		limit = { exists = var:cm_fa_cleanup_min_profit }
+		value = var:cm_fa_cleanup_min_profit
+		divide = 100
+	}
+	else = {
+		value = 0.05
+	}
+}
+
+# Root is the country. The floor a construction-material consumer must clear: double the
+# normal one, never under 0.1. In a value block min is a floor, so this is the higher of the two.
+cm_fa_cu_core_floor = {
+	value = cm_fa_cu_profit_floor
+	multiply = 2
+	min = 0.1
+}
+
+# Root is the building, expects scope:cm_country.
+cm_fa_cu_effective_floor = {
+	value = 0
+	if = {
+		limit = { cm_fa_cu_core_goods_applies = yes }
+		scope:cm_country = { add = cm_fa_cu_core_floor }
+	}
+	else = {
+		scope:cm_country = { add = cm_fa_cu_profit_floor }
 	}
 }
 

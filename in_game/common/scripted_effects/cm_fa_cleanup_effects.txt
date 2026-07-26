@@ -1,8 +1,9 @@
 ﻿# Full-automation Building Cleanup: once a year, closes production buildings that stopped
-# earning, destroys them where the location has no building levels to spare, and reopens the
-# ones whose market recovered. Closing and reopening are GUI-only (ToggleBuilding), so both
-# queue into cm_fa_cu_toggle and fire from cm_construct_queue_window.gui; destroying is the
-# script effect destroy_building and runs inline.
+# earning, destroys them where the location has no building levels to spare, reopens the
+# ones whose market recovered, and clears non-food production out of shorthanded auto-food
+# locations. Closing and reopening are GUI-only (ToggleBuilding), so both queue into
+# cm_fa_cu_toggle and fire from cm_construct_queue_window.gui; destroying is the script
+# effect destroy_building and runs inline.
 
 # Root is the country.
 cm_fa_cu_yearly_pass = {
@@ -13,6 +14,15 @@ cm_fa_cu_yearly_pass = {
 		}
 		save_scope_as = cm_country
 		clear_variable_list = cm_fa_cu_toggle
+		cm_fa_cu_purge_pass = yes
+		if = {
+			limit = {
+				exists = var:cm_fa_cleanup_auto_food
+				# Without the food roster every building reads as non-food.
+				has_variable_list = cm_auto_food_rgo_types_list
+			}
+			cm_fa_cu_auto_food_pass = yes
+		}
 		cm_fa_cu_validate_tracking = yes
 		every_market_present_in_country = {
 			save_scope_as = cm_fa_market
@@ -26,6 +36,98 @@ cm_fa_cu_yearly_pass = {
 		if = {
 			limit = { variable_list_size = { name = cm_fa_cu_toggle value >= 1 } }
 			set_variable = { name = cm_fa_cu_fire value = 1 }
+		}
+	}
+}
+
+# Destroys the always-delete types outright, no profit, subsidy, cap, or share check. Runs
+# before everything else so the removals never reach the survey counts.
+# Root is the country, scope:cm_country set.
+cm_fa_cu_purge_pass = {
+	every_owned_location = {
+		limit = { NOT = { integration_level = conquered } }
+		save_scope_as = cm_location
+		every_buildings_in_location = {
+			limit = {
+				owner = scope:cm_country
+				building_type = { cm_fa_cu_is_always_delete = yes }
+			}
+			save_scope_as = cm_building
+			scope:cm_location = { destroy_building = scope:cm_building }
+			scope:cm_country = { cmf_log = { action = cm_fa_log_cu_purged } }
+		}
+	}
+}
+
+# Clears the way for food production where auto-food is running and the pops are already
+# spoken for. Runs beside the purge, ahead of the survey counts, and ahead of
+# cm_fa_cu_validate_tracking so a destroyed building's closed-tracking entry is dropped there.
+# Root is the country, scope:cm_country set.
+cm_fa_cu_auto_food_pass = {
+	every_owned_location = {
+		limit = {
+			NOT = { integration_level = conquered }
+			cm_fa_food_location_effectively_active = yes
+			cm_location_has_worker_deficit = yes
+		}
+		save_scope_as = cm_location
+		every_buildings_in_location = {
+			limit = {
+				owner = scope:cm_country
+				# Do not tear down what the treasury is still paying to build.
+				cm_is_not_under_construction = yes
+				cm_fa_cu_af_is_removable = yes
+			}
+			save_scope_as = cm_building
+			if = {
+				# One level keeps the location's market access and food capacity.
+				limit = { building_type = building_type:market_village }
+				if = {
+					limit = { building_level > 1 }
+					scope:cm_location = {
+						change_building_level_in_location = {
+							building = building_type:market_village
+							value = { value = 1 subtract = scope:cm_building.building_level }
+							owner = scope:cm_country
+						}
+					}
+					scope:cm_country = { cmf_log = { action = cm_fa_log_cu_af_trimmed } }
+				}
+			}
+			else = {
+				scope:cm_location = { destroy_building = scope:cm_building }
+				scope:cm_country = { cmf_log = { action = cm_fa_log_cu_af_removed } }
+			}
+		}
+	}
+}
+
+# Flags a building type whose majority input is one of the four construction materials.
+# Fired from cm_rgob_collect_entry per goods demand entry of a worth-using method, so it
+# reuses that wave's per-method input total. Expects scope:cm_rgob_bt, scope:cm_rgob_pm,
+# scope:cm_rgob_good, scope:cm_rgob_amount.
+cm_fa_cu_mark_core_input = {
+	if = {
+		limit = {
+			scope:cm_rgob_amount > 0
+			is_key_in_global_variable_map = { name = cm_rgob_total target = scope:cm_rgob_pm }
+			scope:cm_rgob_good = {
+				OR = {
+					this = goods:masonry
+					this = goods:lumber
+					this = goods:sand
+					this = goods:glass
+				}
+			}
+		}
+		set_local_variable = { name = cm_fa_cu_tot value = "global_variable_map(cm_rgob_total|scope:cm_rgob_pm)" }
+		if = {
+			limit = { local_var:cm_fa_cu_tot > 0 }
+			set_local_variable = { name = cm_fa_cu_share value = { value = scope:cm_rgob_amount divide = local_var:cm_fa_cu_tot } }
+			if = {
+				limit = { local_var:cm_fa_cu_share > 0.5 }
+				add_to_global_variable_map = { name = cm_fa_cu_core_in key = scope:cm_rgob_bt value = 1 }
+			}
 		}
 	}
 }
@@ -108,6 +210,9 @@ cm_fa_cu_close_pass = {
 		limit = {
 			is_opened = yes
 			is_subsidized = no
+			# A building exists and reads no profit from the moment its first level is
+			# queued, so without this the pass closes what it is still paying to build.
+			cm_is_not_under_construction = yes
 			cm_fa_cu_is_unprofitable = yes
 			building_type = { cm_is_building_type_production_building = yes }
 			location = {

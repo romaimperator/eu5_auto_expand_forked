@@ -1271,7 +1271,8 @@ def emit_triggers(relevant_goods):
     return "\n".join(lines) + "\n"
 
 
-def emit_effects(options, aliases, boosted_goods, relevant):
+def emit_effects(options, aliases, boosted_goods, relevant, expand_bases,
+                 rgo_goods):
     lines = [GENERATED_HEADER]
     lines.append(
         "# Once-per-lobby precompute: computes each qualifying province definition's\n"
@@ -1471,6 +1472,36 @@ def emit_effects(options, aliases, boosted_goods, relevant):
     lines.append("\t\tcm_trmm_recompute_province_definition = yes")
     lines.append("\t}")
     lines.append("}")
+    lines.append("")
+    lines.append(
+        "# Turns on auto-expand for the industries a right boosts, and for its raw\n"
+        "# goods where the location produces them. Each industry registers its chain's\n"
+        "# base tier; the obsolete-registration migration resolves it to the current\n"
+        "# tier. Root is the location, expects scope:cm_country.")
+    for right in ROYAL_RIGHTS:
+        lines.append(f"cm_trmm_enable_expands_{aliases[right]} = {{")
+        for building, gate in expand_bases[right]:
+            register = [
+                f"building_type:{building} = "
+                "{ save_scope_as = cm_building_type }",
+                "cm_enable_auto_expand_for_building_type = yes"]
+            if gate:
+                lines.append("\tif = {")
+                lines.append(f"\t\tlimit = {{ {gate} }}")
+                lines.extend(f"\t\t{line}" for line in register)
+                lines.append("\t}")
+            else:
+                lines.extend(f"\t{line}" for line in register)
+        if rgo_goods[right]:
+            compares = [f"raw_material ?= goods:{good}"
+                        for good in rgo_goods[right]]
+            joined = (compares[0] if len(compares) == 1
+                      else f"OR = {{ {' '.join(compares)} }}")
+            lines.append("\tif = {")
+            lines.append(f"\t\tlimit = {{ {joined} }}")
+            lines.append("\t\tcm_enable_auto_expand_for_rgo = yes")
+            lines.append("\t}")
+        lines.append("}")
     return "\n".join(lines) + "\n"
 
 
@@ -2449,7 +2480,7 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
     return "\n".join(lines) + "\n"
 
 
-def emit_scripted_guis(aliases, expand_bases, rgo_goods):
+def emit_scripted_guis(aliases):
     lines = [GENERATED_HEADER]
     lines.append(
         "# Right-identity checks for the urban right tooltip search buttons. Root is\n"
@@ -2492,9 +2523,8 @@ def emit_scripted_guis(aliases, expand_bases, rgo_goods):
     lines.append("")
     lines.append(
         "# Right-click grant scripted GUIs: grant plus enable matching\n"
-        "# auto-expands. Each industry registers its chain's base tier; the\n"
-        "# obsolete-registration migration resolves it to the current tier.\n"
-        "# Root is the location; cm_country is the clicking player's country.")
+        "# auto-expands. Root is the location; cm_country is the clicking\n"
+        "# player's country.")
     for right in ROYAL_RIGHTS:
         lines.append(f"cm_trmm_grant_expand_{aliases[right]} = {{")
         lines.append("\tsaved_scopes = { cm_country }")
@@ -2503,27 +2533,7 @@ def emit_scripted_guis(aliases, expand_bases, rgo_goods):
         lines.append("\t}")
         lines.append("\teffect = {")
         lines.append(f"\t\tcm_trmm_grant_right = {{ RIGHT = {right} }}")
-        for building, gate in expand_bases[right]:
-            register = [
-                f"building_type:{building} = "
-                "{ save_scope_as = cm_building_type }",
-                "cm_enable_auto_expand_for_building_type = yes"]
-            if gate:
-                lines.append("\t\tif = {")
-                lines.append(f"\t\t\tlimit = {{ {gate} }}")
-                lines.extend(f"\t\t\t{line}" for line in register)
-                lines.append("\t\t}")
-            else:
-                lines.extend(f"\t\t{line}" for line in register)
-        if rgo_goods[right]:
-            compares = [f"raw_material ?= goods:{good}"
-                        for good in rgo_goods[right]]
-            joined = (compares[0] if len(compares) == 1
-                      else f"OR = {{ {' '.join(compares)} }}")
-            lines.append("\t\tif = {")
-            lines.append(f"\t\t\tlimit = {{ {joined} }}")
-            lines.append("\t\t\tcm_enable_auto_expand_for_rgo = yes")
-            lines.append("\t\t}")
+        lines.append(f"\t\tcm_trmm_enable_expands_{aliases[right]} = yes")
         lines.append("\t}")
         lines.append("}")
     return "\n".join(lines) + "\n"
@@ -2742,7 +2752,8 @@ def main():
                                     self_goods, relevant))
     write_output(OUT_TRIGGERS, emit_triggers(relevant))
     write_output(OUT_EFFECTS,
-                 emit_effects(options, aliases, boosted_goods, relevant))
+                 emit_effects(options, aliases, boosted_goods, relevant,
+                              expand_bases, rgo_goods))
     write_output(OUT_CUSTOM_LOC,
                  emit_custom_loc(aliases, boosted_goods, self_goods))
     write_output(OUT_CUSTOM_COOLTIP,
@@ -2752,8 +2763,7 @@ def main():
                  + emit_search_map_modes(rights, aliases, right_colors))
     write_output(OUT_LOC,
                  emit_loc(rights, aliases, boosted_goods, options, self_goods))
-    write_output(OUT_SCRIPTED_GUIS,
-                 emit_scripted_guis(aliases, expand_bases, rgo_goods))
+    write_output(OUT_SCRIPTED_GUIS, emit_scripted_guis(aliases))
     write_output(OUT_GRANT_SECTION, emit_grant_section(aliases))
 
     for path in (OUT_SCRIPT_VALUES, OUT_TRIGGERS, OUT_EFFECTS, OUT_CUSTOM_LOC,
