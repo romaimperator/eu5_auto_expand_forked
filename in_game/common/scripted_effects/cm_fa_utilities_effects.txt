@@ -1,8 +1,9 @@
 ﻿# Full-automation Utilities: the capital-only set (from cm_run_auto_build_capital), the
-# auto_build_list roster minus hospitals (cm_cmm_effects.txt), the vanilla market-center
-# buildings (game in_game/common/building_types/market_buildings.txt, the
-# is_market_center-gated set), and the marketplace chain last. Runs on default thresholds
-# and never reads or writes the player's auto-build settings or toggles.
+# auto_build_list roster (cm_cmm_effects.txt), granaries, mercury patios, the vanilla
+# market-center buildings (game in_game/common/building_types/market_buildings.txt, the
+# is_market_center-gated set), bailiffs, the marketplace chain, and the disease-resistance
+# buildings last. Runs on default thresholds and never reads or writes the player's
+# auto-build settings or toggles.
 
 # Root is the country, scope:cm_country set.
 cm_fa_run_utilities = {
@@ -46,6 +47,24 @@ cm_fa_run_utilities = {
 	cm_fa_stage_utility_everywhere = { bt = zhixian }
 	cm_fa_stage_utility_everywhere = { bt = tambo }
 	cm_fa_stage_utility_everywhere = { bt = dock }
+	# Granary is not in the auto_build_list roster.
+	cm_fa_stage_utility_everywhere = { bt = granary }
+	# Mercury patio stands only on gold and silver RGOs (game
+	# in_game/common/building_types/common_buildings.txt, mercury_patio location_potential).
+	ordered_owned_location = {
+		order_by = max_control
+		max = cm_max_guess_at_number_of_locations
+		check_range_bounds = no
+		limit = {
+			NOT = { integration_level = conquered }
+			OR = {
+				raw_material = goods:silver
+				raw_material = goods:goods_gold
+			}
+		}
+		save_scope_as = cm_location
+		cm_fa_stage_utility_type_here = { bt = mercury_patio }
+	}
 	ordered_owned_location = {
 		order_by = max_control
 		max = cm_max_guess_at_number_of_locations
@@ -62,7 +81,14 @@ cm_fa_run_utilities = {
 		cm_fa_stage_utility_type_here = { bt = clearing_house }
 		cm_fa_stage_utility_type_here = { bt = market_warehouse }
 	}
+	cm_fa_stage_bailiffs = yes
 	cm_fa_stage_marketplaces = yes
+	# The generic local_disease_resistance buildings, most resistance first (game
+	# in_game/common/building_types/town_buildings.txt: medical_school 0.33, lazaretto 0.25,
+	# hospital 0.1).
+	cm_fa_stage_utility_everywhere = { bt = medical_school }
+	cm_fa_stage_utility_everywhere = { bt = lazaretto }
+	cm_fa_stage_utility_everywhere = { bt = hospital }
 }
 
 # Stages one utility type at this location when it fits; the capital and market-center
@@ -84,10 +110,10 @@ cm_fa_stage_utility_type_here = {
 	}
 }
 
-# Stages one auto-build roster type across owned locations; chain bases resolve to the
-# current tier, and a location holding an older tier is left to the upgrade features.
-# One level per location, matching the auto-build feature the roster comes from.
-# Root is the country. $bt$ = the raw roster key.
+# Stages one utility type across owned locations; chain bases resolve to the current tier,
+# and a location holding an older tier is left to the upgrade features. One level per
+# location, matching the auto-build feature the roster comes from.
+# Root is the country. $bt$ = the raw type key.
 cm_fa_stage_utility_everywhere = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes
@@ -109,6 +135,36 @@ cm_fa_stage_utility_everywhere = {
 				NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
 			}
 			cm_fa_stage_build_candidate = { cat = 4 }
+		}
+	}
+}
+
+# Bailiffs, wealthiest locations first: local_max_control earns tax base in proportion to
+# the location's wealth. The country-wide num_bailiffs modifier caps how many can stand
+# (game in_game/common/building_types/rural_buildings.txt, bailiff allow), so staging stops
+# at the remaining room and the cap goes to the best locations. Root is the country.
+cm_fa_stage_bailiffs = {
+	building_type:bailiff = { save_scope_as = cm_building_type }
+	set_local_variable = { name = cm_fa_bailiff_room value = modifier:num_bailiffs }
+	change_local_variable = { name = cm_fa_bailiff_room subtract = total_building_levels_including_construction:bailiff }
+	ordered_owned_location = {
+		order_by = cm_location_raw_wealth
+		max = cm_max_guess_at_number_of_locations
+		check_range_bounds = no
+		limit = { NOT = { integration_level = conquered } }
+		save_scope_as = cm_location
+		if = {
+			limit = {
+				local_var:cm_fa_bailiff_room >= 1
+				NOT = { has_building = scope:cm_building_type }
+				cm_location_allowed_to_build = { target = scope:cm_building_type }
+				cm_location_has_enough_pops_available = yes
+				cm_check_location_meets_min_market_access = yes
+				cm_get_open_build_queue_slots > 0
+				NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+			}
+			cm_fa_stage_build_candidate = { cat = 4 }
+			change_local_variable = { name = cm_fa_bailiff_room subtract = 1 }
 		}
 	}
 }
@@ -142,7 +198,8 @@ cm_fa_stage_marketplaces = {
 }
 
 # Utilities drain, type-major in the assembly order: the capital set, the auto-build
-# roster, the market-center buildings, then marketplaces. Root is the country.
+# roster, granaries, mercury patios, the market-center buildings, bailiffs, marketplaces,
+# then the disease-resistance buildings. Root is the country.
 cm_fa_pass_utilities = {
 	cm_fa_drain_utility_type = { bt = royal_court }
 	cm_fa_drain_utility_type = { bt = house_of_parliament }
@@ -175,13 +232,19 @@ cm_fa_pass_utilities = {
 	cm_fa_drain_utility_roster_type = { bt = zhixian }
 	cm_fa_drain_utility_roster_type = { bt = tambo }
 	cm_fa_drain_utility_roster_type = { bt = dock }
+	cm_fa_drain_utility_roster_type = { bt = granary }
+	cm_fa_drain_utility_type = { bt = mercury_patio }
 	cm_fa_drain_utility_type = { bt = entrepot }
 	cm_fa_drain_utility_type = { bt = trading_hub }
 	cm_fa_drain_utility_type = { bt = customs_house }
 	cm_fa_drain_utility_type = { bt = stock_exchange }
 	cm_fa_drain_utility_type = { bt = clearing_house }
 	cm_fa_drain_utility_type = { bt = market_warehouse }
+	cm_fa_drain_bailiffs = yes
 	cm_fa_drain_marketplaces = yes
+	cm_fa_drain_utility_roster_type = { bt = medical_school }
+	cm_fa_drain_utility_roster_type = { bt = lazaretto }
+	cm_fa_drain_utility_roster_type = { bt = hospital }
 }
 
 # Root is the country. $bt$ = a type key with no chain.
@@ -190,15 +253,32 @@ cm_fa_drain_utility_type = {
 	cm_fa_drain_utility_resolved = yes
 }
 
-# Root is the country. $bt$ = a raw roster key; chains resolve first.
+# Root is the country. $bt$ = a raw type key; chains resolve first.
 cm_fa_drain_utility_roster_type = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes
 	cm_fa_drain_utility_resolved = yes
 }
 
-# Marketplaces claim what the rest of the category leaves, lowest market access first.
-# Root is the country.
+# Bailiffs, wealthiest locations first. Root is the country.
+cm_fa_drain_bailiffs = {
+	building_type:bailiff = { save_scope_as = cm_building_type }
+	if = {
+		limit = { has_variable_list = cm_fa_b_locations }
+		ordered_in_list = {
+			variable = cm_fa_b_locations
+			order_by = cm_location_raw_wealth
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			save_temporary_scope_as = cm_fa_drain_loc
+			scope:cm_fa_drain_loc = {
+				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building }
+			}
+		}
+	}
+}
+
+# Marketplaces, lowest market access first. Root is the country.
 cm_fa_drain_marketplaces = {
 	building_type:marketplace = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes

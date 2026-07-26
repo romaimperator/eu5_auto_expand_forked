@@ -11,7 +11,8 @@
  cm__minimum_gold_desc: "The minimum gold reserve to keep. Construction will not be queued if it would leave the treasury below this amount. Applies to all automation features."
  cm__minimum_gold_format: "[CMMV('cm__minimum_gold')]@gold!"
  cm__allowed_building_overbuild_levels_name: "Overbuild Limit"
- cm__allowed_building_overbuild_levels_desc: "How many total building levels a location may exceed its Supported Building Levels cap by before auto-expand will stop queueing new construction there. At zero, it won't allow any overbuilding."
+ cm__allowed_building_overbuild_levels_desc: "How many total building levels a location may exceed its Supported Building Levels cap by before auto-expand will stop queueing new construction there. At zero, it won't allow any overbuilding. At 200+, there is no limit."
+ cm__allowed_building_overbuild_levels_format: "[CMMV('cm__allowed_building_overbuild_levels')][Select_CString(GreaterThanOrEqualTo_CFixedPoint(CMMV('cm__allowed_building_overbuild_levels'), CMMMapValue('cmm_max', 'cm__allowed_building_overbuild_levels')), '+', '')]"
 
  ## Priority List Group
  cm__settings__priority_list_name: "Construction Automation"
@@ -258,7 +259,7 @@
  cm__fa_priority_list_i3_name: "Industry"
  cm__fa_priority_list_i3_desc: "Builds, expands, and upgrades the production buildings and RGOs that repay their cost fastest in tax income. In each market the best opportunity sets the bar: only constructions close to it are started, so a poor building is never rushed while a much better one is about to free up."
  cm__fa_priority_list_i4_name: "Utilities"
- cm__fa_priority_list_i4_desc: "Builds supporting infrastructure everywhere it fits: capital buildings, the auto-build roster except hospitals, market center buildings, and marketplaces. Marketplaces come last, and go to the locations with the least market access first."
+ cm__fa_priority_list_i4_desc: "Builds supporting infrastructure everywhere it fits: capital buildings, the auto-build roster, granaries, mercury patios, market center buildings, bailiffs, marketplaces, then disease-resisting buildings last. Bailiffs go to the wealthiest locations first, and marketplaces to the locations with the least market access first."
  cm__fa_priority_list__budget_name: "Budget Share"
  cm__fa_priority_list__budget_desc: "The share of the treasury above the Gold Reserve this category may spend each month."
  cm__fa_priority_list__budget_postfix: "%"

@@ -1,10 +1,15 @@
-﻿cm_max_guess_at_number_of_locations = 1000000
+﻿@cm_overbuild_limit_max = 200 # Mirrors the cm__allowed_building_overbuild_levels slider max (cm_cmm_effects.txt).
+@cm_overbuild_unlimited_levels = 1000000 # Stands in for no limit, past any location's level count.
+
+cm_max_guess_at_number_of_locations = 1000000
 
 # Root is the country
 cm_get_allowed_building_overbuild_levels = {
-	if = { limit = { exists = var:cm_allowed_building_overbuild_levels }
-		value = var:cm_allowed_building_overbuild_levels
-	} else = { value = 0 }
+	if = { limit = { NOT = { exists = var:cm_allowed_building_overbuild_levels } }
+		value = 0
+	} else_if = { limit = { var:cm_allowed_building_overbuild_levels >= @cm_overbuild_limit_max }
+		value = @cm_overbuild_unlimited_levels
+	} else = { value = var:cm_allowed_building_overbuild_levels }
 }
 
 # Root is the country
