@@ -26,6 +26,9 @@ cm_cmm_post_registration = {
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = budget item = 2 value = 20 }
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = budget item = 3 value = 60 }
 
+	# Urban Rights is the one category that starts off.
+	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = enabled item = 5 value = 0 }
+
 	cm_repair_expand_thresholds = yes
 
 	# Build lookup tables from CMM list fields
@@ -406,6 +409,7 @@ cm_fa_rebuild_category_lookups = {
 	cm_fa_sync_category = { cat = collapsar }
 	cm_fa_sync_category = { cat = food }
 	cm_fa_sync_category = { cat = utilities }
+	cm_fa_sync_urban_rights = yes
 
 	} # end guard
 }
@@ -431,6 +435,17 @@ cm_fa_sync_category = {
 	else = {
 		remove_variable = cm_fa_$cat$_enabled
 		set_variable = { name = cm_fa_pool_$cat$ value = 0 }
+	}
+}
+
+# Urban Rights spends government power, so it has no pool to project. Scope: country
+cm_fa_sync_urban_rights = {
+	if = {
+		limit = { is_target_in_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_urban_rights } }
+		set_variable = { name = cm_fa_urban_rights_enabled value = 1 }
+	}
+	else = {
+		remove_variable = cm_fa_urban_rights_enabled
 	}
 }
 

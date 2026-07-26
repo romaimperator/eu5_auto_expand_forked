@@ -1,0 +1,239 @@
+﻿# Foreign half of auto-expand buildings. A foreign building stands in another country's
+# location, so none of the owned-location machinery reaches it: ordered_owned_location never
+# visits the site, and per-location variables there are shared with every other player.
+# Registration is therefore keyed by location on the acting country, and the sites to visit
+# come from the engine's own every_owned_foreign_building plus the two country-side
+# registries (cm_fb_reg from the player's toggles, cm_fb_mass_sites from the lobby sweep).
+
+# Foreign building types the greedy path must not build, for two separate reasons.
+# Ownership: their on_built hands the finished building to someone else, so the gold would buy
+# a building the player does not end up with. The six trade company types create a
+# trade_company subject country and transfer to it (vanilla
+# in_game/common/building_types/trade_company_buildings.txt:87 create_building_country_in_location,
+# :104 and :223/:301/:376/:452/:529 change_building_owner), and the HRE armory belongs to the
+# international organization leader (hre_buildings.txt:6 international_organization_link).
+# Price: construct_building charges no special currency, so a type whose price has a non-gold
+# component would be built below its real cost. merchant_guild_chapel is the only foreign type
+# affected: price = merchant_guild_chapel_price = { religious_influence = 25 }, vanilla
+# in_game/common/prices/01_buildings.txt:71. Every other foreign price is gold only.
+# Called from cm_on_init_lobby_globals, once per lobby, not per player.
+cm_fb_populate_excluded_types = {
+	clear_global_variable_list = cm_fb_excluded_types
+	add_to_global_variable_list = { name = cm_fb_excluded_types target = building_type:trade_company_headquarters }
+	add_to_global_variable_list = { name = cm_fb_excluded_types target = building_type:trade_company_garrison }
+	add_to_global_variable_list = { name = cm_fb_excluded_types target = building_type:trade_company_harbor }
+	add_to_global_variable_list = { name = cm_fb_excluded_types target = building_type:trade_company_local_venture }
+	add_to_global_variable_list = { name = cm_fb_excluded_types target = building_type:trade_company_foreign_influence }
+	add_to_global_variable_list = { name = cm_fb_excluded_types target = building_type:trade_company_governance }
+	add_to_global_variable_list = { name = cm_fb_excluded_types target = building_type:hre_imperial_armory_foreign }
+	add_to_global_variable_list = { name = cm_fb_excluded_types target = building_type:merchant_guild_chapel }
+}
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+cm_fb_register_here = {
+	save_temporary_scope_as = cm_fb_site
+	scope:cm_country = { add_to_variable_map = { name = cm_fb_reg key = scope:cm_fb_site value = scope:cm_building_type } }
+}
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+# The type match stops a second foreign type's toggle from dropping this one's entry.
+cm_fb_unregister_here = {
+	save_temporary_scope_as = cm_fb_site
+	if = {
+		limit = { cm_fb_is_registered_here = yes }
+		scope:cm_country = { remove_from_variable_map = { name = cm_fb_reg key = scope:cm_fb_site } }
+	}
+}
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+cm_fb_exclude_here = {
+	save_temporary_scope_as = cm_fb_site
+	scope:cm_country = { add_to_variable_map = { name = cm_fb_excl key = scope:cm_fb_site value = scope:cm_building_type } }
+}
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+cm_fb_unexclude_here = {
+	save_temporary_scope_as = cm_fb_site
+	if = {
+		limit = { cm_fb_is_excluded_here = yes }
+		scope:cm_country = { remove_from_variable_map = { name = cm_fb_excl key = scope:cm_fb_site } }
+	}
+}
+
+# Foreign branch of cm_apply_auto_expand_toggle, mirroring its mass-versus-registration split
+# against the country-side maps. Root is the location, expects scope:cm_country and
+# scope:cm_building_type; optional scope:cm_set_off forces the direction.
+cm_fb_apply_auto_expand_toggle = {
+	if = {
+		limit = { exists = scope:cm_set_off }
+		if = {
+			limit = { scope:cm_set_off = yes }
+			cm_disable_auto_expand_for_building_type = yes
+		} else = {
+			cm_enable_auto_expand_for_building_type = yes
+		}
+	} else = {
+		if = {
+			limit = { scope:cm_country = { cm_fb_type_is_mass_enabled = yes } }
+			if = {
+				limit = { cm_fb_is_excluded_here = yes }
+				cm_fb_unexclude_here = yes
+			} else = {
+				cm_fb_exclude_here = yes
+			}
+		} else = {
+			if = {
+				limit = { cm_fb_is_registered_here = yes }
+				cm_fb_unregister_here = yes
+			} else = {
+				cm_fb_register_here = yes
+			}
+		}
+	}
+}
+
+# Foreign branch of cm_toggle_mass_auto_expand_for_building_type. Turning mass on drops the
+# per-site registrations the mass coverage supersedes, and turning it off drops the exclusions
+# that only meant anything under it. Expects scope:cm_country and scope:cm_building_type.
+cm_fb_toggle_mass_for_type = {
+	if = {
+		limit = { scope:cm_country = { cm_fb_type_is_mass_enabled = yes } }
+		scope:cm_country = {
+			remove_list_variable = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type }
+			cm_fb_clear_map_for_type = { MAP = cm_fb_excl CHECK = cm_fb_is_excluded_here }
+		}
+	} else = {
+		scope:cm_country = {
+			add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type }
+			cm_fb_clear_map_for_type = { MAP = cm_fb_reg CHECK = cm_fb_is_registered_here }
+		}
+	}
+}
+
+# Root is the country. Drops every $MAP$ entry holding scope:cm_building_type.
+# $CHECK$ is the location-rooted trigger that reads $MAP$, passed separately because a macro
+# parameter never substitutes inside the quoted variable_map lookup the trigger has to make.
+cm_fb_clear_map_for_type = {
+	if = {
+		limit = { has_variable_map = $MAP$ }
+		clear_variable_list = cm_fb_clear_sites
+		every_key_in_variable_map = {
+			variable = $MAP$
+			save_scope_as = cm_fb_clear_site
+			# Removing keys while iterating them is not safe, so collect first.
+			if = {
+				limit = { scope:cm_fb_clear_site = { $CHECK$ = yes } }
+				scope:cm_country = { add_to_variable_list = { name = cm_fb_clear_sites target = scope:cm_fb_clear_site } }
+			}
+		}
+		every_in_list = {
+			variable = cm_fb_clear_sites
+			save_scope_as = cm_fb_clear_site
+			scope:cm_country = { remove_from_variable_map = { name = $MAP$ key = scope:cm_fb_clear_site } }
+		}
+		clear_variable_list = cm_fb_clear_sites
+	}
+}
+
+# Foreign staging for auto-expand buildings. Expects scope:cm_country.
+cm_run_auto_expand_foreign = {
+	every_owned_foreign_building = {
+		save_scope_as = cm_fb_building
+		building_type = { save_scope_as = cm_building_type }
+		location = {
+			save_scope_as = cm_location
+			if = {
+				limit = {
+					scope:cm_fb_building = { is_at_max_level = no }
+					cm_location_is_auto_expand_active_for_building_type = yes
+					cm_fb_type_is_allowed = yes
+					cm_fb_location_can_expand = yes
+				}
+				cm_stage_foreign_candidate = yes
+			}
+		}
+	}
+	if = {
+		limit = { has_variable_list = cm_fb_mass_sites }
+		every_in_list = {
+			variable = cm_fb_mass_sites
+			save_scope_as = cm_location
+			scope:cm_location = { cm_fb_stage_mass_site = yes }
+		}
+	}
+	if = {
+		limit = { has_variable_map = cm_fb_reg }
+		every_key_in_variable_map = {
+			variable = cm_fb_reg
+			save_scope_as = cm_location
+			# The iterator makes the key the scope, so the map read has to name its owner.
+			"scope:cm_country.variable_map(cm_fb_reg|scope:cm_location)" = { save_scope_as = cm_building_type }
+			scope:cm_location = { cm_fb_stage_site_for_type = yes }
+		}
+	}
+}
+
+# Root is the location, expects scope:cm_country. Stages every mass-enabled foreign type the
+# site is still missing; a type already standing here is staged from the owned-buildings pass.
+cm_fb_stage_mass_site = {
+	if = {
+		limit = { scope:cm_country = { has_variable_list = cm_mass_auto_expand_building_types } }
+		scope:cm_country = {
+			every_in_list = {
+				variable = cm_mass_auto_expand_building_types
+				limit = { is_foreign = yes }
+				save_scope_as = cm_building_type
+				scope:cm_location = {
+					if = {
+						limit = { cm_fb_is_excluded_here = no }
+						cm_fb_stage_site_for_type = yes
+					}
+				}
+			}
+		}
+	}
+}
+
+# Root is the location, expects scope:cm_country and scope:cm_building_type.
+cm_fb_stage_site_for_type = {
+	if = {
+		limit = {
+			cm_fb_has_own_building = no
+			cm_fb_type_is_allowed = yes
+			cm_fb_location_can_expand = yes
+		}
+		cm_stage_foreign_candidate = yes
+	}
+}
+
+# Carries the foreign registries and the swept sites onto the new tag, alongside the
+# expand-threshold copy CMF cannot do for us. Root is the new country, expects scope:old_country.
+cm_fb_copy_state = {
+	save_scope_as = cm_fb_new_country
+	scope:old_country = {
+		if = {
+			limit = { has_variable_map = cm_fb_reg }
+			every_key_in_variable_map = {
+				variable = cm_fb_reg
+				save_scope_as = cm_fb_copy_site
+				# The iterator makes the key the scope, so the map read has to name its owner.
+				"scope:old_country.variable_map(cm_fb_reg|scope:cm_fb_copy_site)" = { save_scope_as = cm_fb_copy_type }
+				scope:cm_fb_new_country = { add_to_variable_map = { name = cm_fb_reg key = scope:cm_fb_copy_site value = scope:cm_fb_copy_type } }
+			}
+		}
+		if = {
+			limit = { has_variable_map = cm_fb_excl }
+			every_key_in_variable_map = {
+				variable = cm_fb_excl
+				save_scope_as = cm_fb_copy_site
+				"scope:old_country.variable_map(cm_fb_excl|scope:cm_fb_copy_site)" = { save_scope_as = cm_fb_copy_type }
+				scope:cm_fb_new_country = { add_to_variable_map = { name = cm_fb_excl key = scope:cm_fb_copy_site value = scope:cm_fb_copy_type } }
+			}
+		}
+		every_in_list = {
+			variable = cm_fb_mass_sites
+			save_scope_as = cm_fb_copy_site
+			scope:cm_fb_new_country = { add_to_variable_list = { name = cm_fb_mass_sites target = scope:cm_fb_copy_site } }
+		}
+	}
+}

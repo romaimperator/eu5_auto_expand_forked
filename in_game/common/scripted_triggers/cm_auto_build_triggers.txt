@@ -128,10 +128,19 @@ cm_auto_build_will_auto_build = {
 # Root is the location. Expects the building type as a target, also expects the scope country.
 # Uses can_build_building to check all placement prerequisites such as tech, location rank, terrain, and culture.
 # Foreign-only building types with is_foreign = yes, such as hanseatic_kontor and fondaco, are excluded:
-# can_build_building does not filter them out, but auto-expanding them in owned locations is not supported.
+# can_build_building does not filter them out, and every gate downstream of this reads the
+# location owner's data, which is the wrong country for a foreign build. The foreign path
+# calls cm_location_can_place_building directly instead.
 cm_location_allowed_to_build = {
-	scope:cm_country = { save_temporary_scope_as = actor }
 	$target$ = { is_foreign = no }
+	cm_location_can_place_building = { target = $target$ }
+}
+
+# Root is the location. Expects the building type as a target, also expects the scope country.
+# Setting actor from the scope country rather than the location owner is what makes this
+# correct for a foreign build, where the two differ.
+cm_location_can_place_building = {
+	scope:cm_country = { save_temporary_scope_as = actor }
 	can_build_building = $target$
 	scope:cm_country = { can_build_building = $target$ }
 }

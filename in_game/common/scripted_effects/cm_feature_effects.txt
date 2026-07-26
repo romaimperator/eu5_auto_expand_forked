@@ -125,9 +125,19 @@ cm_q_reset_cycle_state = {
 	clear_variable_list = cm_fa_collapsar_rgo_locations
 	clear_variable_list = cm_q_cand_locations
 	clear_variable_list = cm_q_upg_cand_locations
+	cm_q_clear_foreign_queue = yes
 	remove_variable = cm_q_pass_done
 	remove_variable = cm_should_construct
 	remove_variable = cm_q_fire_approved
+}
+
+# Root is the country. The foreign queue keeps no per-location state, so its whole teardown
+# is four country-side structures.
+cm_q_clear_foreign_queue = {
+	clear_variable_list = cm_q_fb_locations
+	clear_variable_list = cm_q_fb_types
+	clear_variable_map = cm_q_fb_pair
+	clear_variable_map = cm_q_fb_costs
 }
 
 # Per-cycle construction queue: a country list of locations, each carrying a location list
@@ -136,6 +146,31 @@ cm_q_reset_cycle_state = {
 # Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_stage_candidate = {
 	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_locations LOCATION_LIST = cm_q_building_types DONE_LIST = cm_q_done_build_types }
+}
+
+# Per-cycle foreign construction queue. Every part of it is stored on the acting country: a
+# foreign location's variables are shared save data that another player's cycle also writes.
+# The two lists are the queue window's outer and inner datamodels and cm_q_fb_pair is the
+# (location, type) membership its cross product filters on, so one foreign type per location
+# per cycle; a second type at the same location waits for the next one.
+# Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
+cm_stage_foreign_candidate = {
+	scope:cm_country = {
+		if = {
+			limit = {
+				NOT = {
+					AND = {
+						has_variable_map = cm_q_fb_pair
+						is_key_in_variable_map = { name = cm_q_fb_pair target = scope:cm_location }
+					}
+				}
+			}
+			add_to_variable_map = { name = cm_q_fb_pair key = scope:cm_location value = scope:cm_building_type }
+			add_to_variable_list = { name = cm_q_fb_locations target = scope:cm_location }
+			add_to_variable_list = { name = cm_q_fb_types target = scope:cm_building_type }
+			change_variable = { name = cm_q_staged add = 1 }
+		}
+	}
 }
 
 # RGO upgrade candidate for the unified queue. Scored per location by the queue window;
@@ -317,84 +352,107 @@ cm_q_claim_build_copy = {
 # Flags obsolete buildings for GUI-driven upgrade processing.
 
 # Force-enables scope:cm_building_type at the root location without toggling. Root = location,
-# expects scope:cm_building_type.
+# expects scope:cm_building_type. A foreign type additionally expects scope:cm_country.
 cm_enable_auto_expand_for_building_type = {
-	if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } } }
-		remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
+	if = { limit = { scope:cm_building_type = { is_foreign = yes } }
+		if = { limit = { scope:cm_country = { cm_fb_type_is_mass_enabled = yes } }
+			cm_fb_unexclude_here = yes
+		} else = {
+			cm_fb_register_here = yes
+		}
 	} else = {
-		add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+		if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } } }
+			remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
+		} else = {
+			add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+		}
 	}
 }
 
 # Force-disables scope:cm_building_type at the root location without toggling. Root = location,
-# expects scope:cm_building_type.
+# expects scope:cm_building_type. A foreign type additionally expects scope:cm_country.
 cm_disable_auto_expand_for_building_type = {
-	if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } } }
-		if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type } } }
-			add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
+	if = { limit = { scope:cm_building_type = { is_foreign = yes } }
+		if = { limit = { scope:cm_country = { cm_fb_type_is_mass_enabled = yes } }
+			cm_fb_exclude_here = yes
+		} else = {
+			cm_fb_unregister_here = yes
 		}
 	} else = {
-		remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+		if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } } }
+			if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type } } }
+				add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
+			}
+		} else = {
+			remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+		}
 	}
 }
 
 # Toggles auto-expand for scope:cm_building_type at the root location.
 # Optional scope:cm_set_off forces the direction instead of toggling.
+# A foreign type additionally expects scope:cm_country.
 cm_apply_auto_expand_toggle = {
-	if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } } }
-		# Mass mode: operate on exclusion list with inverted logic.
-		if = { limit = { NOT = { exists = scope:cm_set_off } }
-			if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type } }
-				remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
-			} else = {
-				add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
-			}
-		} else = {
-			if = { limit = { scope:cm_set_off = yes }
-				cm_disable_auto_expand_for_building_type = yes
-			} else = {
-				cm_enable_auto_expand_for_building_type = yes
-			}
-		}
+	if = { limit = { scope:cm_building_type = { is_foreign = yes } }
+		cm_fb_apply_auto_expand_toggle = yes
 	} else = {
-		# Normal mode: operate on registration list
-		if = { limit = { NOT = { exists = scope:cm_set_off } }
-			if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type } }
-				remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+		if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } } }
+			# Mass mode: operate on exclusion list with inverted logic.
+			if = { limit = { NOT = { exists = scope:cm_set_off } }
+				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type } }
+					remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
+				} else = {
+					add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
+				}
 			} else = {
-				add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+				if = { limit = { scope:cm_set_off = yes }
+					cm_disable_auto_expand_for_building_type = yes
+				} else = {
+					cm_enable_auto_expand_for_building_type = yes
+				}
 			}
 		} else = {
-			if = { limit = { scope:cm_set_off = yes }
-				cm_disable_auto_expand_for_building_type = yes
+			# Normal mode: operate on registration list
+			if = { limit = { NOT = { exists = scope:cm_set_off } }
+				if = { limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type } }
+					remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+				} else = {
+					add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+				}
 			} else = {
-				cm_enable_auto_expand_for_building_type = yes
+				if = { limit = { scope:cm_set_off = yes }
+					cm_disable_auto_expand_for_building_type = yes
+				} else = {
+					cm_enable_auto_expand_for_building_type = yes
+				}
 			}
 		}
 	}
 }
 
 # Ctrl-click bulk-toggle driver. Root = location (the clicked location). Expects
-# scope:cm_building_type. Mirrors the province's overall state, like the existing shift-click
-# filtered toggle: if every eligible same-owner location in the province already has this
-# building type active, turns it off everywhere; otherwise turns it on everywhere, including
-# locations without this building yet.
+# scope:cm_building_type and scope:cm_country. Mirrors the province's overall state, like the
+# existing shift-click filtered toggle: if every eligible same-owner location in the province
+# already has this building type active, turns it off everywhere; otherwise turns it on
+# everywhere, including locations without this building yet.
+# scope:cm_fb_host selects which locations the sweep covers, which for a foreign type is the
+# host's land rather than scope:cm_country's.
 cm_toggle_auto_expand_for_building_type_in_province = {
 	save_scope_as = cm_the_location
-	owner = { save_scope_as = cm_country }
+	owner = { save_scope_as = cm_fb_host }
 	if = { limit = { NOT = { cm_is_building_type_obsolete = yes } }
 		province = {
 			if = {
 				limit = {
 					any_location_in_province = {
-						owner = scope:cm_country
+						owner = scope:cm_fb_host
 						NOT = { integration_level = conquered }
 						NOT = { cm_location_is_auto_expand_active_for_building_type = yes }
 					}
 				}
 				every_location_in_province = {
 					limit = {
-						owner = scope:cm_country
+						owner = scope:cm_fb_host
 						NOT = { integration_level = conquered }
 					}
 					cm_enable_auto_expand_for_building_type = yes
@@ -402,7 +460,7 @@ cm_toggle_auto_expand_for_building_type_in_province = {
 			} else = {
 				every_location_in_province = {
 					limit = {
-						owner = scope:cm_country
+						owner = scope:cm_fb_host
 						NOT = { integration_level = conquered }
 					}
 					cm_disable_auto_expand_for_building_type = yes
@@ -506,6 +564,9 @@ cm_run_auto_expand_buildings = {
 				scope:cm_building_type = { cm_find_current_building_type = yes }
 				if = {
 					limit = {
+						# The mass list holds foreign types too; cm_run_auto_expand_foreign owns those,
+						# and this loop would otherwise stage another country's building at our location.
+						scope:cm_current_building_type = { is_foreign = no }
 						# Building type is mass-toggled for this country
 						scope:cm_country = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_current_building_type } }
 						# Not excluded by the player at this location
@@ -518,6 +579,7 @@ cm_run_auto_expand_buildings = {
 			scope:cm_country = {
 				every_in_list = {
 					variable = cm_mass_auto_expand_building_types
+					limit = { is_foreign = no }
 					save_scope_as = cm_building_type
 					if = {
 						limit = {
@@ -569,6 +631,7 @@ cm_run_auto_expand_buildings = {
 			}
 		}
 	}
+	cm_run_auto_expand_foreign = yes
 }
 
 # --- Auto Expand RGOs ---

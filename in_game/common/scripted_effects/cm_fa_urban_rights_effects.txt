@@ -1,0 +1,153 @@
+﻿# Full-automation Urban Rights: the granary right first, then one royal specialization drawn
+# at random weighted by its fit score (cm_trmm_rightv_*, the Recommended Urban Rights map
+# mode's per-location scores). Grants cost government power rather than gold, so the category
+# carries no budget pool and grants while it stages.
+
+# Root is the country, scope:cm_country set.
+cm_fa_run_urban_rights = {
+	if = {
+		limit = { modifier:can_grant_town_rights = yes }
+		cm_fa_ur_grant_granary_pass = yes
+		# town_rights_enable unlocks all 9 royal rights: in_game/common/advances/0_age_of_discovery.txt:556
+		if = {
+			limit = { has_advance = town_rights_enable }
+			cm_fa_ur_specialization_pass = yes
+		}
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_fa_ur_grant_granary_pass = {
+	ordered_owned_location = {
+		order_by = max_control
+		max = cm_max_guess_at_number_of_locations
+		check_range_bounds = no
+		limit = {
+			NOT = { integration_level = conquered }
+			has_max_town_rights = no
+			NOT = { has_town_rights = town_rights_type:granary_town }
+		}
+		# ordered_owned_location snapshots its limit before the body runs.
+		if = {
+			limit = {
+				scope:cm_country = { cm_fa_ur_grant_affordable = yes }
+				cm_trmm_can_grant_right = { RIGHT = granary_town }
+			}
+			cm_trmm_grant_right = { RIGHT = granary_town }
+		}
+	}
+}
+
+# Best-fitting locations first. Root is the country, scope:cm_country set.
+cm_fa_ur_specialization_pass = {
+	set_local_variable = { name = cm_fa_ur_win value = cm_fa_ur_window_ratio }
+	ordered_owned_location = {
+		order_by = cm_fa_ur_order
+		max = cm_max_guess_at_number_of_locations
+		check_range_bounds = no
+		limit = {
+			NOT = { integration_level = conquered }
+			has_max_town_rights = no
+			has_variable = cm_trmm_best_idx
+			cm_fa_ur_has_no_specialization = yes
+		}
+		# ordered_owned_location snapshots its limit before the body runs.
+		if = {
+			limit = { scope:cm_country = { cm_fa_ur_grant_affordable = yes } }
+			cm_fa_ur_draw_specialization = yes
+		}
+	}
+}
+
+# Draws one right from those scoring within the player's window of the best right still
+# grantable here, weighted by fit. Root is the location, expects scope:cm_country.
+# Rights: in_game/common/town_rights/01_discovery.txt
+cm_fa_ur_draw_specialization = {
+	if = {
+		limit = { cm_fa_ur_best_available > 0 }
+		# Floor at 0.001: fit scores carry three decimals (cm_trmm_best_mil holds them in
+		# thousandths), so a window of 0 still leaves out a right with no fit at all.
+		set_local_variable = {
+			name = cm_fa_ur_thresh
+			value = {
+				value = cm_fa_ur_best_available
+				multiply = local_var:cm_fa_ur_win
+				min = 0.001
+			}
+		}
+		random_list = {
+			100 = {
+				trigger = {
+					cm_trmm_can_grant_right = { RIGHT = royal_tooling_rights }
+					cm_trmm_rightv_tooling >= local_var:cm_fa_ur_thresh
+				}
+				modifier = { factor = { value = cm_trmm_rightv_tooling } }
+				cm_trmm_grant_right = { RIGHT = royal_tooling_rights }
+			}
+			100 = {
+				trigger = {
+					cm_trmm_can_grant_right = { RIGHT = royal_jewelry_rights }
+					cm_trmm_rightv_jewelry >= local_var:cm_fa_ur_thresh
+				}
+				modifier = { factor = { value = cm_trmm_rightv_jewelry } }
+				cm_trmm_grant_right = { RIGHT = royal_jewelry_rights }
+			}
+			100 = {
+				trigger = {
+					cm_trmm_can_grant_right = { RIGHT = royal_naval_rights }
+					cm_trmm_rightv_naval >= local_var:cm_fa_ur_thresh
+				}
+				modifier = { factor = { value = cm_trmm_rightv_naval } }
+				cm_trmm_grant_right = { RIGHT = royal_naval_rights }
+			}
+			100 = {
+				trigger = {
+					cm_trmm_can_grant_right = { RIGHT = royal_textile_rights }
+					cm_trmm_rightv_textile >= local_var:cm_fa_ur_thresh
+				}
+				modifier = { factor = { value = cm_trmm_rightv_textile } }
+				cm_trmm_grant_right = { RIGHT = royal_textile_rights }
+			}
+			100 = {
+				trigger = {
+					cm_trmm_can_grant_right = { RIGHT = royal_weaponry_rights }
+					cm_trmm_rightv_weaponry >= local_var:cm_fa_ur_thresh
+				}
+				modifier = { factor = { value = cm_trmm_rightv_weaponry } }
+				cm_trmm_grant_right = { RIGHT = royal_weaponry_rights }
+			}
+			100 = {
+				trigger = {
+					cm_trmm_can_grant_right = { RIGHT = royal_book_rights }
+					cm_trmm_rightv_book >= local_var:cm_fa_ur_thresh
+				}
+				modifier = { factor = { value = cm_trmm_rightv_book } }
+				cm_trmm_grant_right = { RIGHT = royal_book_rights }
+			}
+			100 = {
+				trigger = {
+					cm_trmm_can_grant_right = { RIGHT = royal_artisan_rights }
+					cm_trmm_rightv_artisan >= local_var:cm_fa_ur_thresh
+				}
+				modifier = { factor = { value = cm_trmm_rightv_artisan } }
+				cm_trmm_grant_right = { RIGHT = royal_artisan_rights }
+			}
+			100 = {
+				trigger = {
+					cm_trmm_can_grant_right = { RIGHT = royal_brewing_rights }
+					cm_trmm_rightv_brewing >= local_var:cm_fa_ur_thresh
+				}
+				modifier = { factor = { value = cm_trmm_rightv_brewing } }
+				cm_trmm_grant_right = { RIGHT = royal_brewing_rights }
+			}
+			100 = {
+				trigger = {
+					cm_trmm_can_grant_right = { RIGHT = royal_masonry_rights }
+					cm_trmm_rightv_masonry >= local_var:cm_fa_ur_thresh
+				}
+				modifier = { factor = { value = cm_trmm_rightv_masonry } }
+				cm_trmm_grant_right = { RIGHT = royal_masonry_rights }
+			}
+		}
+	}
+}

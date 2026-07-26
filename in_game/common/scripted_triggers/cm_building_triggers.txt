@@ -30,12 +30,26 @@ cm_is_building_type_obsolete = {
 
 # Root is the location, expects scope:cm_building_type. Plain-script mirror of the GUI-only
 # cm_is_auto_expand_active_for_building_type, for use in effect/trigger context.
+# The foreign branch additionally expects scope:cm_country: a foreign location's owner is not
+# the country whose toggles decide this, and its state lives on the acting country instead.
 cm_location_is_auto_expand_active_for_building_type = {
-	OR = {
-		is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
-		AND = {
-			owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } }
-			NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type } }
+	trigger_if = {
+		limit = { scope:cm_building_type = { is_foreign = yes } }
+		OR = {
+			cm_fb_is_registered_here = yes
+			AND = {
+				scope:cm_country = { cm_fb_type_is_mass_enabled = yes }
+				cm_fb_is_excluded_here = no
+			}
+		}
+	}
+	trigger_else = {
+		OR = {
+			is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
+			AND = {
+				owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } }
+				NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type } }
+			}
 		}
 	}
 }

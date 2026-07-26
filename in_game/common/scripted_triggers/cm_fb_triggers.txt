@@ -1,0 +1,82 @@
+﻿# Foreign-building auto-expand. A foreign building stands in another country's location, so
+# its per-location toggle state is keyed by location on the acting country rather than stored
+# on the location: the location's own variables are shared with every other player.
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+cm_fb_is_registered_here = {
+	save_temporary_scope_as = cm_fb_site
+	scope:cm_country = {
+		trigger_if = {
+			limit = {
+				has_variable_map = cm_fb_reg
+				is_key_in_variable_map = { name = cm_fb_reg target = scope:cm_fb_site }
+			}
+			"variable_map(cm_fb_reg|scope:cm_fb_site)" = scope:cm_building_type
+		}
+		trigger_else = { always = no }
+	}
+}
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+cm_fb_is_excluded_here = {
+	save_temporary_scope_as = cm_fb_site
+	scope:cm_country = {
+		trigger_if = {
+			limit = {
+				has_variable_map = cm_fb_excl
+				is_key_in_variable_map = { name = cm_fb_excl target = scope:cm_fb_site }
+			}
+			"variable_map(cm_fb_excl|scope:cm_fb_site)" = scope:cm_building_type
+		}
+		trigger_else = { always = no }
+	}
+}
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+cm_fb_has_own_building = {
+	any_foreign_buildings_in_location = {
+		owner = scope:cm_country
+		building_type = scope:cm_building_type
+	}
+}
+
+# Expects scope:cm_building_type. Root scope is unused.
+cm_fb_type_is_allowed = {
+	trigger_if = {
+		limit = { has_global_variable_list = cm_fb_excluded_types }
+		NOT = { is_target_in_global_variable_list = { name = cm_fb_excluded_types target = scope:cm_building_type } }
+	}
+	trigger_else = { always = yes }
+}
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+# A foreign building sits outside the country, imports its own pop from the capital
+# (pop_size_created), and is placed to claim the host's building slots ahead of their own
+# construction, so the pop, slot, level-limit, discount and market gates do not apply to it.
+# The engine's placement check carries the type's relation and trade-range requirements.
+cm_fb_location_can_expand = {
+	scope:cm_country = { cm_should_pause_auto_expand = no }
+	cm_location_can_place_building = { target = scope:cm_building_type }
+}
+
+# Root is the country. Expects scope:cm_building_type.
+cm_fb_type_is_mass_enabled = {
+	trigger_if = {
+		limit = { has_variable_list = cm_mass_auto_expand_building_types }
+		is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type }
+	}
+	trigger_else = { always = no }
+}
+
+# Root is the country. True once any foreign type is mass-enabled, which is what the
+# lobby-wide site sweep costs anything for.
+cm_fb_wants_site_sweep = {
+	trigger_if = {
+		limit = { has_variable_list = cm_mass_auto_expand_building_types }
+		any_in_list = {
+			variable = cm_mass_auto_expand_building_types
+			is_foreign = yes
+		}
+	}
+	trigger_else = { always = no }
+}

@@ -1,0 +1,118 @@
+﻿# Lobby-wide site sweep for mass foreign auto-expand. It runs once for the whole lobby rather
+# than once per player, and spreads a full pass over the world across a year, so the cost does
+# not multiply by player count and no single tick carries the whole world.
+# Markets are the slice unit: they partition the map, and market membership is the engine's own
+# filter for foreign build candidates.
+# Nothing here runs unless some human has a foreign type in their mass list.
+
+@cm_fb_scan_markets_per_pulse = 12
+# Ceiling on how many sites one sweep hands a single country, so the monthly staging pass stays
+# proportional to a player's intent rather than to how much of the world qualifies.
+@cm_fb_max_sites = 400
+
+# Root scope: none. Hooked on weather_monthly_pulse, the one engine periodic that fires
+# globally instead of per country.
+cm_fb_scan_slice = {
+	if = {
+		limit = { NOT = { has_global_variable = cm_fb_scan_cycle } }
+		cm_fb_scan_begin_cycle = yes
+	}
+	set_local_variable = { name = cm_fb_room value = @cm_fb_scan_markets_per_pulse }
+	every_market_in_world = {
+		limit = {
+			NOT = {
+				AND = {
+					has_global_variable_map = cm_fb_scan_seen
+					is_key_in_global_variable_map = { name = cm_fb_scan_seen target = this }
+				}
+			}
+		}
+		if = {
+			limit = { local_var:cm_fb_room > 0 }
+			change_local_variable = { name = cm_fb_room subtract = 1 }
+			add_to_global_variable_map = { name = cm_fb_scan_seen key = this value = 1 }
+			cm_fb_scan_market = yes
+		}
+	}
+	if = {
+		limit = {
+			NOT = { has_global_variable = cm_fb_scan_published }
+			NOT = {
+				any_market_in_world = {
+					NOT = {
+						AND = {
+							has_global_variable_map = cm_fb_scan_seen
+							is_key_in_global_variable_map = { name = cm_fb_scan_seen target = this }
+						}
+					}
+				}
+			}
+		}
+		cm_fb_scan_publish = yes
+	}
+}
+
+# The 365-day timer is what makes the sweep yearly: a new cycle can only start once it lapses.
+cm_fb_scan_begin_cycle = {
+	set_global_variable = { name = cm_fb_scan_cycle value = 1 days = 365 }
+	remove_global_variable = cm_fb_scan_published
+	clear_global_variable_map = cm_fb_scan_seen
+	clear_global_variable_list = cm_fb_scan_humans
+	every_country = {
+		limit = { is_human = yes }
+		add_to_global_variable_list = { name = cm_fb_scan_humans target = this }
+		clear_variable_list = cm_fb_mass_next
+	}
+}
+
+# Root is the market.
+cm_fb_scan_market = {
+	every_location_in_market = {
+		save_scope_as = cm_location
+		every_in_global_list = {
+			variable = cm_fb_scan_humans
+			save_scope_as = cm_country
+			if = {
+				limit = { cm_fb_wants_site_sweep = yes }
+				every_in_list = {
+					variable = cm_mass_auto_expand_building_types
+					limit = { is_foreign = yes }
+					save_scope_as = cm_building_type
+					scope:cm_location = { cm_fb_scan_site_for_type = yes }
+				}
+			}
+		}
+	}
+}
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+# The two cheap checks run before the engine placement check, which is the expensive one and
+# the only thing in the sweep whose cost scales with the world.
+cm_fb_scan_site_for_type = {
+	if = {
+		limit = {
+			cm_fb_type_is_allowed = yes
+			cm_fb_has_own_building = no
+			scope:cm_country = { NOT = { variable_list_size = { name = cm_fb_mass_next value >= @cm_fb_max_sites } } }
+			cm_location_can_place_building = { target = scope:cm_building_type }
+		}
+		scope:cm_country = { add_to_variable_list = { name = cm_fb_mass_next target = scope:cm_location } }
+	}
+}
+
+# Swapping the finished pass in whole is what keeps a site building every month while the
+# sweep is still part-way through the world.
+cm_fb_scan_publish = {
+	set_global_variable = { name = cm_fb_scan_published value = 1 }
+	every_in_global_list = {
+		variable = cm_fb_scan_humans
+		save_scope_as = cm_fb_publish_country
+		clear_variable_list = cm_fb_mass_sites
+		every_in_list = {
+			variable = cm_fb_mass_next
+			save_scope_as = cm_fb_publish_site
+			scope:cm_fb_publish_country = { add_to_variable_list = { name = cm_fb_mass_sites target = scope:cm_fb_publish_site } }
+		}
+		clear_variable_list = cm_fb_mass_next
+	}
+}

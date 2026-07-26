@@ -1,0 +1,17 @@
+﻿# weather_monthly_pulse is the one engine periodic that fires globally rather than once per
+# country, which is what lets the foreign site sweep run for the whole lobby instead of per
+# player. It is engine-fired regardless of any weather setting and carries no root scope.
+weather_monthly_pulse = {
+	on_actions = {
+		cm_fb_monthly_scan
+	}
+}
+
+cm_fb_monthly_scan = {
+	effect = {
+		if = {
+			limit = { any_country = { is_human = yes cm_fb_wants_site_sweep = yes } }
+			cm_fb_scan_slice = yes
+		}
+	}
+}

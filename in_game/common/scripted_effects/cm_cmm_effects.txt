@@ -751,7 +751,7 @@ cm_register_cmf_mod = {
 		mod_id = cm
 		setting_id = fa_priority_list
 		tab_id = full_automation
-		item_count = 4
+		item_count = 5
 		is_ordered = 1
 	}
 
@@ -759,6 +759,7 @@ cm_register_cmf_mod = {
 	cmm_set_list_item_value = { mod_id = cm setting_id = fa_priority_list item = 2 value = flag:cm_fa_cat_collapsar }
 	cmm_set_list_item_value = { mod_id = cm setting_id = fa_priority_list item = 3 value = flag:cm_fa_cat_industry }
 	cmm_set_list_item_value = { mod_id = cm setting_id = fa_priority_list item = 4 value = flag:cm_fa_cat_utilities }
+	cmm_set_list_item_value = { mod_id = cm setting_id = fa_priority_list item = 5 value = flag:cm_fa_cat_urban_rights }
 
 	cmm_register_list_numeric_field = {
 		mod_id = cm
@@ -770,6 +771,8 @@ cm_register_cmf_mod = {
 		step_value = 5
 	}
 	cmm_set_list_field_format = { mod_id = cm setting_id = fa_priority_list field_id = budget }
+	# Urban Rights grants cost government power, not gold, so it takes no share of the treasury.
+	cmm_disable_list_field_for_item = { mod_id = cm setting_id = fa_priority_list field_id = budget item = 5 }
 
 	cmm_register_list_bool_field = {
 		mod_id = cm
@@ -894,6 +897,45 @@ cm_register_cmf_mod = {
 	cmm_add_scripted_gui = {
 		mod_id = cm
 		setting_id = fa_food_target
+	}
+
+	## Urban Rights (fa_urban_rights) Group
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = fa_urban_rights_window
+		tab_id = full_automation
+		group_id = fa_urban_rights
+		default_value = 50
+		min_value = 0
+		max_value = 100
+		step_value = 5
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__fa_urban_rights_window
+		alias = cm_fa_urban_rights_window
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_urban_rights_window
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = fa_urban_rights_reserve
+		tab_id = full_automation
+		group_id = fa_urban_rights
+		default_value = 50
+		min_value = 0
+		max_value = 100
+		step_value = 5
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__fa_urban_rights_reserve
+		alias = cm_fa_urban_rights_reserve
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_urban_rights_reserve
 	}
 
 	# Mapmodes (map_modes) Tab
@@ -1112,6 +1154,19 @@ cm_handle_cmf_callback = {
 			cmm_sync_setting_alias = {
 				setting = cm__fa_food_target
 				alias = cm_fa_food_target
+			}
+		}
+		## Urban Rights (fa_urban_rights) Group
+		flag:cm__fa_urban_rights_window = {
+			cmm_sync_setting_alias = {
+				setting = cm__fa_urban_rights_window
+				alias = cm_fa_urban_rights_window
+			}
+		}
+		flag:cm__fa_urban_rights_reserve = {
+			cmm_sync_setting_alias = {
+				setting = cm__fa_urban_rights_reserve
+				alias = cm_fa_urban_rights_reserve
 			}
 		}
 		# Mapmodes (map_modes) Tab

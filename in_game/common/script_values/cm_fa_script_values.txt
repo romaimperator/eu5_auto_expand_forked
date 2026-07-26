@@ -47,3 +47,79 @@ cm_fa_collapsar_market_cap = {
 	ceiling = yes
 	min = 6
 }
+
+# Root is the country. The urban-rights score window as a fraction: the
+# fa_urban_rights_window percent setting over 100 (50 -> 0.5).
+cm_fa_ur_window_ratio = {
+	if = {
+		limit = { exists = var:cm_fa_urban_rights_window }
+		value = var:cm_fa_urban_rights_window
+		divide = 100
+	}
+	else = {
+		value = 0.5
+	}
+}
+
+# Root is the country. Government power needed to grant without dropping below the
+# full-automation urban-rights reserve.
+cm_fa_ur_min_gov_power = {
+	if = {
+		limit = { exists = var:cm_fa_urban_rights_reserve }
+		value = var:cm_fa_urban_rights_reserve
+	}
+	add = cm_grant_town_rights_cost
+}
+
+# The best fit score among the royal specialization rights still grantable here, 0 when
+# none is. Root is the location, expects scope:cm_country.
+# Rights: in_game/common/town_rights/01_discovery.txt
+cm_fa_ur_best_available = {
+	value = 0
+	if = {
+		limit = { cm_trmm_can_grant_right = { RIGHT = royal_tooling_rights } }
+		min = cm_trmm_rightv_tooling
+	}
+	if = {
+		limit = { cm_trmm_can_grant_right = { RIGHT = royal_jewelry_rights } }
+		min = cm_trmm_rightv_jewelry
+	}
+	if = {
+		limit = { cm_trmm_can_grant_right = { RIGHT = royal_naval_rights } }
+		min = cm_trmm_rightv_naval
+	}
+	if = {
+		limit = { cm_trmm_can_grant_right = { RIGHT = royal_textile_rights } }
+		min = cm_trmm_rightv_textile
+	}
+	if = {
+		limit = { cm_trmm_can_grant_right = { RIGHT = royal_weaponry_rights } }
+		min = cm_trmm_rightv_weaponry
+	}
+	if = {
+		limit = { cm_trmm_can_grant_right = { RIGHT = royal_book_rights } }
+		min = cm_trmm_rightv_book
+	}
+	if = {
+		limit = { cm_trmm_can_grant_right = { RIGHT = royal_artisan_rights } }
+		min = cm_trmm_rightv_artisan
+	}
+	if = {
+		limit = { cm_trmm_can_grant_right = { RIGHT = royal_brewing_rights } }
+		min = cm_trmm_rightv_brewing
+	}
+	if = {
+		limit = { cm_trmm_can_grant_right = { RIGHT = royal_masonry_rights } }
+		min = cm_trmm_rightv_masonry
+	}
+}
+
+# The baked best-fit score, safe on locations the map mode never scored.
+# Root is the location.
+cm_fa_ur_order = {
+	value = 0
+	if = {
+		limit = { exists = var:cm_trmm_best_mil }
+		add = var:cm_trmm_best_mil
+	}
+}

@@ -1,0 +1,106 @@
+﻿types cm_fb_tooltip_types {
+	# Requirement block for a foreign building type, replacing the owned block in both
+	# auto-expand tooltips. Foreign builds answer to the excluded-type list, the engine's own
+	# placement rules and the gold reserve only, so the owned block's pop, slot, level,
+	# discount, market and metric rows would every one of them name a requirement that is not
+	# applied here.
+	# Expects the BuildingType and Location datacontexts.
+	type cm_fb_autoexpand_requirements = vbox {
+		layoutpolicy_horizontal = expanding
+
+		TooltipTextBlock = {
+			visible = "[GetScriptedGui('cm_fb_site_requirements_met').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End)]"
+			blockoverride "text" {
+				text = "CM_AUTO_EXPAND_ALL_REQUIREMENTS_MET"
+			}
+		}
+
+		TooltipListBase = {
+			visible = "[Not(GetScriptedGui('cm_fb_site_requirements_met').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End))]"
+			blockoverride "block_title" {
+				text = "CM_AUTO_EXPAND_REQ_HEADER"
+			}
+			TooltipListRowContent = {
+				cm_tooltip_row = {
+					visible = "[GetScriptedGui('cm_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					blockoverride "first_element" { visible = yes }
+					blockoverride "not_first_element" { visible = no }
+					blockoverride "yes_visible" {
+						visible = "[Not(GetScriptedGui('cm_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+					}
+					blockoverride "no_visible" {
+						visible = "[GetScriptedGui('cm_pause_auto_expand').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+					blockoverride "row_text" {
+						text = "CM_AUTO_EXPAND_REQ_NOT_PAUSED"
+					}
+				}
+				cm_tooltip_row = {
+					visible = "[Not(GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+					blockoverride "yes_visible" {
+						visible = "[GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+					blockoverride "no_visible" {
+						visible = "[Not(GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+					}
+					blockoverride "row_text" {
+						text = "CM_AUTO_EXPAND_REQ_BLD_ENABLED"
+					}
+				}
+				cm_tooltip_row = {
+					visible = "[Not(GetScriptedGui('cm_fb_type_is_allowed').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).End))]"
+					using = cm_tooltip_row_is_odd
+					blockoverride "yes_visible" {
+						visible = "[GetScriptedGui('cm_fb_type_is_allowed').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).End)]"
+					}
+					blockoverride "no_visible" {
+						visible = "[Not(GetScriptedGui('cm_fb_type_is_allowed').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).End))]"
+					}
+					blockoverride "row_text" {
+						text = "CM_FB_REQ_TYPE_ALLOWED"
+					}
+				}
+				cm_tooltip_row = {
+					visible = "[Not(GetScriptedGui('cm_fb_can_place_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End))]"
+					blockoverride "yes_visible" {
+						visible = "[GetScriptedGui('cm_fb_can_place_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End)]"
+					}
+					blockoverride "no_visible" {
+						visible = "[Not(GetScriptedGui('cm_fb_can_place_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End))]"
+					}
+					blockoverride "row_text" {
+						text = "CM_FB_REQ_CAN_PLACE"
+					}
+				}
+				cm_tooltip_row = {
+					visible = "[Not(GetScriptedGui('cm_fb_has_enough_gold').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End))]"
+					using = cm_tooltip_row_is_odd
+					blockoverride "yes_visible" {
+						visible = "[GetScriptedGui('cm_fb_has_enough_gold').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End)]"
+					}
+					blockoverride "no_visible" {
+						visible = "[Not(GetScriptedGui('cm_fb_has_enough_gold').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End))]"
+					}
+					blockoverride "row_text" {
+						text = "CM_AUTO_EXPAND_REQ_GOLD"
+					}
+				}
+			}
+		}
+
+		# The engine's own refusal text, which is where a relations or trade-range shortfall is
+		# spelled out.
+		TooltipTextBlock = {
+			visible = "[Not(GetScriptedGui('cm_fb_can_place_building').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).End))]"
+			blockoverride "text" {
+				raw_text = "[CanBuildOrExpandBuildingInfo(BuildingType.Self, Location.Self)]"
+			}
+		}
+
+		TooltipTextBlock = {
+			blockoverride "text" {
+				text = "CM_FB_TT_GREEDY_NOTE"
+			}
+		}
+	}
+}
