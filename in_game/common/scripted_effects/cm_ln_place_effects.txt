@@ -1,0 +1,179 @@
+﻿# Lucky Nations governor placement: roads out to one planned site at a time, then the
+# governor itself. A site that needs an existing seat freed is served last, and that
+# replacement is free, because the seat it replaces was a placement the country could have
+# made correctly in the first place.
+
+# Months to wait on a road order before re-issuing it.
+@cm_ln_road_retry_months = 24
+# Re-issues before the site is given up.
+@cm_ln_road_max_tries = 5
+
+# Serves the best-ranked pending site. $FREE$ = yes when the placement pairs with a seat being
+# given up. Root is the country, scope:cm_country set.
+cm_ln_place_next = {
+	cm_ln_prune_pending = yes
+	ordered_in_list = {
+		variable = cm_ln_pending
+		order_by = var:cm_ln_plan_ord
+		position = 0
+		check_range_bounds = no
+		save_scope_as = cm_ln_target
+	}
+	if = {
+		limit = { exists = scope:cm_ln_target }
+		cm_ln_resolve_target_type = yes
+		if = {
+			limit = { scope:cm_ln_target = { cm_ln_target_needs_road = yes } }
+			cm_ln_road_step = yes
+		}
+		else = {
+			cm_ln_do_placement = { FREE = $FREE$ }
+		}
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_prune_pending = {
+	clear_variable_list = cm_ln_pending_keep
+	every_in_list = {
+		variable = cm_ln_pending
+		save_scope_as = cm_ln_p
+		if = {
+			limit = {
+				scope:cm_ln_p = {
+					owner ?= scope:cm_country
+					cm_ln_has_governor = no
+				}
+			}
+			add_to_variable_list = { name = cm_ln_pending_keep target = scope:cm_ln_p }
+		}
+	}
+	clear_variable_list = cm_ln_pending
+	every_in_list = {
+		variable = cm_ln_pending_keep
+		save_scope_as = cm_ln_p
+		add_to_variable_list = { name = cm_ln_pending target = scope:cm_ln_p }
+	}
+	clear_variable_list = cm_ln_pending_keep
+}
+
+# Root is the country, expects scope:cm_ln_target. Sets scope:cm_building_type.
+cm_ln_resolve_target_type = {
+	if = {
+		limit = { scope:cm_ln_target = { has_variable = cm_ln_plan_naval } }
+		building_type:naval_governor = { save_scope_as = cm_building_type }
+	}
+	else = {
+		building_type:local_governor = { save_scope_as = cm_building_type }
+	}
+}
+
+# One corridor at a time, so the whole held treasury stands behind it. The order's cost and
+# duration are not script-readable, so the retry is a timer rather than a check.
+# Root is the country, scope:cm_country and scope:cm_ln_target set.
+cm_ln_road_step = {
+	if = {
+		# road_building is the advance that unlocks gravel_road:
+		# in_game/common/advances/3_road_unlocks.txt:1
+		limit = { NOT = { has_advance = road_building } }
+		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+		cm_ln_clear_road_state = yes
+	}
+	else_if = {
+		limit = {
+			exists = capital
+			NOT = { exists = var:cm_ln_road_issued }
+		}
+		construct_road = {
+			road_type = road_type:gravel_road
+			from = capital
+			to = scope:cm_ln_target
+		}
+		set_variable = { name = cm_ln_road_issued value = 1 }
+		set_variable = { name = cm_ln_road_age value = 0 }
+		cmf_log = { action = cm_ln_log_road_started }
+	}
+	else_if = {
+		limit = { exists = var:cm_ln_road_issued }
+		change_variable = { name = cm_ln_road_age add = 1 }
+		if = {
+			limit = { var:cm_ln_road_age >= @cm_ln_road_retry_months }
+			remove_variable = cm_ln_road_issued
+			set_variable = { name = cm_ln_road_age value = 0 }
+			change_variable = { name = cm_ln_road_tries add = 1 }
+			if = {
+				limit = { var:cm_ln_road_tries >= @cm_ln_road_max_tries }
+				remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+				cm_ln_clear_road_state = yes
+			}
+		}
+	}
+}
+
+# Root is the country.
+cm_ln_clear_road_state = {
+	remove_variable = cm_ln_road_issued
+	set_variable = { name = cm_ln_road_age value = 0 }
+	set_variable = { name = cm_ln_road_tries value = 0 }
+}
+
+# Root is the country, scope:cm_country, scope:cm_ln_target and scope:cm_building_type set.
+cm_ln_do_placement = {
+	if = {
+		limit = { scope:cm_ln_target = { cm_location_allowed_to_build = { target = scope:cm_building_type } } }
+		if = {
+			limit = { always = $FREE$ }
+			cm_ln_free_a_seat = yes
+			scope:cm_ln_target = {
+				construct_building = {
+					building_type = scope:cm_building_type
+					cost_multiplier = 0
+					cost_multiplier_reason = cm_ln_gov_relocation
+					instant = yes
+					owner = scope:cm_country
+					payer = scope:cm_country
+				}
+			}
+			cmf_log = { action = cm_ln_log_gov_moved }
+		}
+		else = {
+			scope:cm_ln_target = {
+				construct_building = {
+					building_type = scope:cm_building_type
+					owner = scope:cm_country
+					payer = scope:cm_country
+				}
+			}
+			cmf_log = { action = cm_ln_log_gov_placed }
+		}
+		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+		cm_ln_clear_road_state = yes
+	}
+}
+
+# Gives up one seat the plan does not want, or spends a credit for one the capital move
+# already destroyed. Root is the country, scope:cm_country set.
+cm_ln_free_a_seat = {
+	if = {
+		limit = { variable_list_size = { name = cm_ln_moves value >= 1 } }
+		ordered_in_list = {
+			variable = cm_ln_moves
+			order_by = max_control
+			position = 0
+			check_range_bounds = no
+			save_scope_as = cm_ln_seat
+			every_buildings_in_location = {
+				limit = {
+					owner = scope:cm_country
+					building_type = { cm_ln_is_governor_type = yes }
+				}
+				save_scope_as = cm_ln_bld
+				scope:cm_ln_seat = { destroy_building = scope:cm_ln_bld }
+			}
+		}
+		remove_list_variable = { name = cm_ln_moves target = scope:cm_ln_seat }
+	}
+	else = {
+		change_variable = { name = cm_ln_free_credits subtract = 1 }
+	}
+}

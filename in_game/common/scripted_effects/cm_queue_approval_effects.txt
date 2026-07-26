@@ -400,28 +400,7 @@ cm_q_approve_extra_build_copies = {
 			cm_market_has_construction_goods_for_building = yes
 		}
 		change_local_variable = { name = cm_q_copy_guard add = 1 }
-		# A variable list holds a target once, so each extra level fires from its own rank list.
-		if = {
-			limit = { local_var:cm_q_copy_guard = 1 }
-			add_to_variable_list = { name = cm_q_approved_build_x2 target = scope:cm_building_type }
-		} else_if = {
-			limit = { local_var:cm_q_copy_guard = 2 }
-			add_to_variable_list = { name = cm_q_approved_build_x3 target = scope:cm_building_type }
-		} else_if = {
-			limit = { local_var:cm_q_copy_guard = 3 }
-			add_to_variable_list = { name = cm_q_approved_build_x4 target = scope:cm_building_type }
-		} else_if = {
-			limit = { local_var:cm_q_copy_guard = 4 }
-			add_to_variable_list = { name = cm_q_approved_build_x5 target = scope:cm_building_type }
-		} else_if = {
-			limit = { local_var:cm_q_copy_guard = 5 }
-			add_to_variable_list = { name = cm_q_approved_build_x6 target = scope:cm_building_type }
-		} else_if = {
-			limit = { local_var:cm_q_copy_guard = 6 }
-			add_to_variable_list = { name = cm_q_approved_build_x7 target = scope:cm_building_type }
-		} else = {
-			add_to_variable_list = { name = cm_q_approved_build_x8 target = scope:cm_building_type }
-		}
+		cm_q_add_build_rank_copy = { GUARD = cm_q_copy_guard }
 		cm_q_claim_build_copy = yes
 		change_local_variable = { name = cm_q_copy_batch_emp add = local_var:cm_q_copy_emp }
 		change_local_variable = { name = cm_q_copy_type_levels add = 1 }
@@ -586,6 +565,17 @@ cm_q_record_upgrade_approval = {
 		}
 		change_variable = { name = cm_q_slots_used add = 1 }
 		cm_commit_market_demand = yes
+		# The engine upgrade action is the player's. Building the replacement over the standing
+		# obsolete predecessor is the same conversion, which is why every scorer skips a build
+		# whose predecessor is staged for upgrade.
+		if = {
+			limit = { scope:cm_country = { cm_ln_is_active = yes } }
+			construct_building = {
+				building_type = scope:cm_new_building_type
+				owner = scope:cm_country
+				payer = scope:cm_country
+			}
+		}
 	}
 	# Swap auto-expand tracking from old to new
 	if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_old_building_type } } }

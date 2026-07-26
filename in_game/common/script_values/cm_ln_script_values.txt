@@ -1,0 +1,63 @@
+﻿# Lucky Nations values.
+
+# Country scope. A lucky nation keeps nothing back for its first ten years, then holds its
+# tax base. Re-seeded monthly, so it tracks the tax base as the country grows.
+cm_ln_reserve_value = {
+	value = 0
+	if = {
+		# Ten years past the grand campaign start of 1337.1.1.
+		limit = { current_date >= 1347.1.1 }
+		add = country_tax_base
+	}
+}
+
+# Location scope. The proximity source value a reorganization's spread assumes: the live
+# sources minus the country's own governor seats, which are re-scored as candidates, plus the
+# sites the plan has already committed to.
+cm_ln_gov_replan_source_value = {
+	value = modifier:local_proximity_source
+	if = {
+		limit = { has_building = building_type:local_governor }
+		subtract = 80 # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+	}
+	if = {
+		limit = { has_building = building_type:naval_governor }
+		subtract = 80 # Governor source value: in_game/common/building_types/capital_buildings.txt:840
+	}
+	min = 0
+	if = {
+		limit = { has_variable = cm_ln_plan_ord }
+		add = 80 # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+	}
+	max = 100 # Stacked-sources cap: main_menu/common/static_modifiers/location.txt:330
+}
+
+# Country scope. Land governors share their pool with lieutenancies.
+# Vanilla allow: in_game/common/building_types/capital_buildings.txt:611
+cm_ln_gov_land_slots = {
+	value = modifier:num_local_governors
+	subtract = total_building_levels_including_construction:lieutenancy
+	min = 0
+}
+
+# Country scope. Vanilla allow: in_game/common/building_types/capital_buildings.txt:792
+cm_ln_gov_naval_slots = {
+	value = modifier:num_naval_governors
+	min = 0
+}
+
+# Location scope. The fort drain walks the shared full-automation build list, most of whose
+# entries belong to other categories and carry no rank.
+cm_ln_ft_prio_value = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_ln_ft_prio }
+		add = var:cm_ln_ft_prio
+	}
+}
+
+# Country scope.
+cm_ln_gov_slot_total = {
+	value = cm_ln_gov_land_slots
+	add = cm_ln_gov_naval_slots
+}

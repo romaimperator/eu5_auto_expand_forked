@@ -3,6 +3,119 @@
 # the corresponding feature is enabled in the priority list.
 # All effects expect scope:cm_country to be set.
 
+# One country's construction cycle: clears last cycle's queues, calls every enabled priority
+# feature and full-automation category in the country's own order, and arms the construct
+# window when anything staged. Driven by cm_unified_auto_expand for the player and by
+# cm_ln_monthly_cycle for a lucky nation. Root is the country.
+cm_run_construction_cycle = {
+	save_scope_as = cm_country
+	if = { limit = { exists = var:cm_should_construct }
+		# A cycle can straddle one month tick at high speed; a second straight skip means it is stuck.
+		change_variable = { name = cm_q_skipped_pulses add = 1 }
+		if = { limit = { var:cm_q_skipped_pulses >= 2 }
+			cm_q_reset_cycle_state = yes
+			set_variable = { name = cm_q_skipped_pulses value = 0 }
+			# A lucky nation shares the player's 200-entry log, so its pacing lines stay out of it.
+			if = { limit = { cm_ln_is_active = no }
+				cmf_log = { action = cm_log_cycle_force_reset }
+			}
+		} else = {
+			if = { limit = { cm_ln_is_active = no }
+				cmf_log = { action = cm_log_cycle_skipped }
+			}
+		}
+	} else = {
+		set_variable = { name = cm_q_skipped_pulses value = 0 }
+		# Start a fresh construction queue each cycle, drained once by the queue window.
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_locations LOCATION_LIST = cm_q_building_types }
+		clear_variable_list = cm_q_rgo_locations
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_ungated_locations LOCATION_LIST = cm_q_ungated_building_types }
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_urbanize_locations LOCATION_LIST = cm_q_urbanize_building_types }
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_food_locations LOCATION_LIST = cm_q_food_building_types }
+		clear_variable_list = cm_q_food_rgo_locations
+		clear_variable_list = cm_q_rank_locations
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_fa_b_locations LOCATION_LIST = cm_fa_b_types }
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_fa_u_locations LOCATION_LIST = cm_fa_u_types }
+		clear_variable_list = cm_fa_r_locations
+		clear_variable_list = cm_fa_food_rgo_locations
+		clear_variable_list = cm_fa_collapsar_rgo_locations
+		cm_q_clear_foreign_queue = yes
+		# The upgrade queue carries two extra per-location lists alongside the drained one
+		every_in_list = {
+			variable = cm_gui_upgrade_locations
+			save_scope_as = cm_q_up_loc
+			scope:cm_q_up_loc = {
+				clear_variable_list = cm_gui_upgrade_building_types
+				clear_variable_list = cm_q_upgrade_gated_types
+				clear_variable_list = cm_q_upgrade_target_types
+			}
+		}
+		clear_variable_list = cm_gui_upgrade_locations
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_build_locations LOCATION_LIST = cm_q_approved_build_types }
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_upgrade_locations LOCATION_LIST = cm_q_approved_upgrade_types }
+		clear_variable_list = cm_q_approved_rank_locations
+		set_variable = { name = cm_q_planned_spend value = 0 }
+		set_variable = { name = cm_q_staged value = 0 }
+		set_variable = { name = cm_q_processed value = 0 }
+		set_variable = { name = cm_q_progress_last value = 0 }
+		set_variable = { name = cm_q_stall_rounds value = 0 }
+		cm_q_reset_market_committed_for_cycle = yes
+		if = { limit = { cm_should_pause_auto_expand = no }
+			if = { limit = { has_variable_list = cm_priority_features_list }
+				every_in_list = {
+					variable = cm_priority_features_list
+					save_scope_as = cm_feature
+					if = { limit = { scope:cm_country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = scope:cm_feature } } }
+						switch = {
+							trigger = scope:cm_feature
+							flag:cm_feature_auto_expand_buildings = { scope:cm_country = { cm_run_auto_expand_buildings = yes } }
+							flag:cm_feature_auto_expand_rgos = { scope:cm_country = { cm_run_auto_expand_rgos = yes } }
+							flag:cm_feature_upgrade_all_buildings = { scope:cm_country = { cm_run_upgrade_all_buildings = yes } }
+							flag:cm_feature_auto_build = { scope:cm_country = { cm_run_auto_build = yes } }
+							flag:cm_feature_auto_food = { scope:cm_country = { cm_run_auto_food = yes } }
+							flag:cm_feature_auto_urbanize = { scope:cm_country = { cm_run_auto_urbanize = yes } }
+							flag:cm_feature_auto_build_capital = { scope:cm_country = { cm_run_auto_build_capital = yes } }
+						}
+					}
+				}
+			}
+		}
+		# Full-automation staging after the priority features, so the player's own
+		# features always stage and claim first. Categories stage in the player's
+		# order, so the higher one claims a candidate both of them want.
+		if = {
+			limit = {
+				cm_fa_master_active = yes
+				has_variable_list = cm_fa_categories_enabled
+			}
+			every_in_list = {
+				variable = cm_fa_categories_enabled
+				save_scope_as = cm_fa_cat
+				scope:cm_country = { cm_fa_stage_category = yes }
+			}
+		}
+		# Show the construction-queue window to construct this month's staged items.
+		# The full-automation RGO lists bypass the staged counter (no GUI scoring), so
+		# they arm the window on their own.
+		if = {
+			limit = {
+				OR = {
+					var:cm_q_staged >= 1
+					AND = {
+						has_variable_list = cm_fa_food_rgo_locations
+						variable_list_size = { name = cm_fa_food_rgo_locations value >= 1 }
+					}
+					AND = {
+						has_variable_list = cm_fa_collapsar_rgo_locations
+						variable_list_size = { name = cm_fa_collapsar_rgo_locations value >= 1 }
+					}
+				}
+			}
+			set_variable = { name = cm_should_construct value = yes }
+		}
+	}
+}
+
 # Add-if-absent queue staging shared by the cm_stage_* effects below: appends
 # scope:cm_location to the country's $COUNTRY_LIST$ and scope:cm_building_type to the
 # location's $LOCATION_LIST$. $DONE_LIST$ is the queue's per-location processed-marker list.
@@ -328,6 +441,59 @@ cm_q_approve_build_copy = {
 		}
 	}
 	cm_q_claim_build_copy = yes
+	cm_ln_construct_approved_build = yes
+}
+
+# The engine build action the approved lists feed is the player's, so a lucky nation
+# constructs its own approvals here instead. Root is the location.
+# Expects scope:cm_country, scope:cm_building_type.
+cm_ln_construct_approved_build = {
+	if = {
+		limit = { scope:cm_country = { cm_ln_is_active = yes } }
+		cm_ln_construct_build = yes
+	}
+}
+
+# Root is the location. Expects scope:cm_country, scope:cm_building_type.
+cm_ln_construct_build = {
+	construct_building = {
+		building_type = scope:cm_building_type
+		owner = scope:cm_country
+		payer = scope:cm_country
+	}
+}
+
+# One extra level of an approved build. A variable list holds each target once, so the
+# player's batch sends every level to a rank list of its own; a lucky nation has no fire pass
+# and constructs it here. $GUARD$ is the caller's copy counter.
+# Root is the location. Expects scope:cm_country, scope:cm_building_type.
+cm_q_add_build_rank_copy = {
+	if = {
+		limit = { scope:cm_country = { cm_ln_is_active = yes } }
+		cm_ln_construct_build = yes
+	} else = {
+		if = {
+			limit = { local_var:$GUARD$ = 1 }
+			add_to_variable_list = { name = cm_q_approved_build_x2 target = scope:cm_building_type }
+		} else_if = {
+			limit = { local_var:$GUARD$ = 2 }
+			add_to_variable_list = { name = cm_q_approved_build_x3 target = scope:cm_building_type }
+		} else_if = {
+			limit = { local_var:$GUARD$ = 3 }
+			add_to_variable_list = { name = cm_q_approved_build_x4 target = scope:cm_building_type }
+		} else_if = {
+			limit = { local_var:$GUARD$ = 4 }
+			add_to_variable_list = { name = cm_q_approved_build_x5 target = scope:cm_building_type }
+		} else_if = {
+			limit = { local_var:$GUARD$ = 5 }
+			add_to_variable_list = { name = cm_q_approved_build_x6 target = scope:cm_building_type }
+		} else_if = {
+			limit = { local_var:$GUARD$ = 6 }
+			add_to_variable_list = { name = cm_q_approved_build_x7 target = scope:cm_building_type }
+		} else = {
+			add_to_variable_list = { name = cm_q_approved_build_x8 target = scope:cm_building_type }
+		}
+	}
 }
 
 # Per-level claims shared by the base copy and the rank copies.

@@ -237,16 +237,38 @@ cm_pf_prep_core = {
 				var:cm_pf_naval_cur_presence = 0
 			}
 		}
-		every_owned_location = {
-			limit = { modifier:local_proximity_source > 0 }
-			# Seed at 100 - source value so the spread's 100 - d is the best source's predicted proximity.
-			set_variable = {
-				name = cm_pf_d
-				value = {
-					value = 100 # Capital source value (and the stacked-sources cap): main_menu/common/static_modifiers/location.txt:330
-					subtract = {
-						value = modifier:local_proximity_source
-						max = 100
+		if = {
+			limit = { exists = var:cm_ln_replan }
+			# A reorganization re-scores its own governor seats as candidates and treats the
+			# sites it has already committed to as sources, so the seed value replaces the
+			# live source read. Without that the seats sit at 80 or above, take zero headroom,
+			# and drop out as nogain, which would make every standing governor read as keep.
+			every_owned_location = {
+				set_local_variable = { name = cm_ln_src value = cm_ln_gov_replan_source_value }
+				if = {
+					limit = { local_var:cm_ln_src > 0 }
+					set_variable = {
+						name = cm_pf_d
+						value = {
+							value = 100 # Capital source value (and the stacked-sources cap): main_menu/common/static_modifiers/location.txt:330
+							subtract = local_var:cm_ln_src
+						}
+					}
+				}
+			}
+		}
+		else = {
+			every_owned_location = {
+				limit = { modifier:local_proximity_source > 0 }
+				# Seed at 100 - source value so the spread's 100 - d is the best source's predicted proximity.
+				set_variable = {
+					name = cm_pf_d
+					value = {
+						value = 100 # Capital source value (and the stacked-sources cap): main_menu/common/static_modifiers/location.txt:330
+						subtract = {
+							value = modifier:local_proximity_source
+							max = 100
+						}
 					}
 				}
 			}
@@ -320,6 +342,27 @@ cm_pf_prep_core = {
 						set_variable = { name = cm_pf_done value = 1 }
 					}
 				}
+			}
+		}
+	}
+	# A reorganization ranks only the locations that can host a governor right now. Marking the
+	# rest nogain reuses the existing never-search channel, and it sits outside the headroom
+	# block above so an ineligible location still counts as somewhere a governor can serve.
+	if = {
+		limit = {
+			var:cm_pf_run_g = 1
+			exists = var:cm_ln_gov_valid_only
+		}
+		every_owned_location = {
+			limit = {
+				NOT = { has_variable = cm_gf_nogain }
+				cm_ln_gov_site_eligible = no
+			}
+			set_variable = { name = cm_gf_nogain value = 1 }
+			cm_pf_drop_gov_outputs = yes
+			if = {
+				limit = { scope:cm_pf_c.var:cm_pf_run_c = 0 }
+				set_variable = { name = cm_pf_done value = 1 }
 			}
 		}
 	}
@@ -1304,6 +1347,17 @@ cm_pf_phase_init = {
 		}
 		set_variable = { name = cm_pf_phase value = 3 }
 	}
+	else_if = {
+		# A reorganization samples every legal site rather than one per province, so the
+		# reference phase would build an ordering key nothing reads.
+		limit = { exists = var:cm_ln_gov_valid_only }
+		set_variable = { name = cm_pf_ub_valid value = 0 }
+		every_owned_location = {
+			limit = { has_variable = cm_pf_cl_g }
+			set_variable = { name = cm_pf_ub_ord value = 0 }
+		}
+		set_variable = { name = cm_pf_phase value = 4 }
+	}
 	else = {
 		set_variable = { name = cm_pf_phase value = 2 }
 	}
@@ -2278,6 +2332,22 @@ cm_pf_phase_drain_step = {
 # Country scope. Marks the seed evaluations: the best-bound location of every owned
 # province (governor-only runs take the best-bound placeable one), and the capital always.
 cm_pf_phase_sample = {
+	if = {
+		# A reorganization has already marked every ineligible location done, so what is left
+		# is exactly the legal set: sampling all of it is both cheaper than one seed per
+		# province and exact, where per-province sampling would black out a province's other
+		# cities.
+		limit = { exists = var:cm_ln_gov_valid_only }
+		every_owned_location = {
+			limit = {
+				has_variable = cm_pf_cl_g
+				NOT = { has_variable = cm_pf_done }
+			}
+			set_variable = { name = cm_pf_samp value = 1 }
+		}
+		set_variable = { name = cm_pf_phase value = 5 }
+	}
+	else = {
 	every_province = {
 		ordered_location_in_province = {
 			limit = {
@@ -2330,6 +2400,7 @@ cm_pf_phase_sample = {
 		}
 	}
 	set_variable = { name = cm_pf_phase value = 5 }
+	} # end stock sampling
 }
 
 # Country scope. Evaluates up to @cm_pf_batch_size marked locations per tick; empty hands

@@ -1,4 +1,5 @@
-﻿# Full-automation queue scorers, invoked by the construct queue window per staged entry.
+﻿# Full-automation scripted GUIs: the queue scorers the construct queue window invokes per
+# staged entry, the Building Cleanup toggle driver, and the vanilla automation card bridge.
 
 # Build scorer for every category's staged entry. Root is the location. Stores the engine
 # cost when the engine allows the build; Industry entries additionally score on ROI Tax
@@ -45,7 +46,7 @@ cm_fa_score_build = {
 			if = {
 				limit = { local_var:cm_fa_conv_clash = 0 }
 				if = {
-					limit = { scope:cm_can_build = yes }
+					limit = { cm_ln_can_place = yes }
 					remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
 					add_to_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type value = scope:cm_cost }
 				}
@@ -70,7 +71,7 @@ cm_fa_score_build = {
 						set_variable = { name = cm_fa_best_any value = scope:cm_fa_score_val }
 					}
 					if = {
-						limit = { scope:cm_can_build = yes }
+						limit = { cm_ln_can_place = yes }
 						remove_from_variable_map = { name = cm_fa_b_scores key = scope:cm_building_type }
 						add_to_variable_map = { name = cm_fa_b_scores key = scope:cm_building_type value = scope:cm_fa_score_val }
 						if = {
@@ -115,7 +116,7 @@ cm_fa_score_upgrade = {
 					set_variable = { name = cm_fa_best_any value = scope:cm_fa_score_val }
 				}
 				if = {
-					limit = { scope:cm_can_build = yes }
+					limit = { cm_ln_can_place = yes }
 					remove_from_variable_map = { name = cm_fa_u_new_types key = scope:cm_old_building_type }
 					add_to_variable_map = { name = cm_fa_u_new_types key = scope:cm_old_building_type value = scope:cm_new_building_type }
 					remove_from_variable_map = { name = cm_fa_u_scores key = scope:cm_old_building_type }
@@ -214,5 +215,99 @@ cm_fa_cu_end = {
 	effect = {
 		remove_variable = cm_fa_cu_fire
 		clear_variable_list = cm_fa_cu_toggle
+	}
+}
+
+# Toggles the Full Automation master from the vanilla Buildings automation card.
+# Root is the player.
+cm_fa_toggle_master = {
+	scope = country
+	is_shown = { always = yes }
+	effect = {
+		cm_fa_toggle_master_setting = yes
+	}
+}
+
+# Toggles Building Cleanup from the vanilla Close and Open Buildings card. Root is the player.
+cm_fa_toggle_cleanup = {
+	scope = country
+	is_shown = { always = yes }
+	effect = {
+		cm_fa_toggle_cleanup_setting = yes
+	}
+}
+
+# Tick states for the two intercepted automation cards. Root is the player.
+cm_fa_is_master_enabled = {
+	scope = country
+	is_shown = {
+		exists = var:cm_fa_enabled
+	}
+}
+
+cm_fa_is_cleanup_enabled = {
+	scope = country
+	is_shown = {
+		exists = var:cm_fa_cleanup_enabled
+	}
+}
+
+# Reserve pull from the Buildings card's gold slider. Polled, so the guards live here: skip
+# while a push is pending, while the slider reads the stale zero it can show at card creation,
+# when the value already matches, and while the setting sits above the slider's own maximum.
+# Writes the CMM value map directly, since the callback would arm a push right back.
+# Root is the player. Saved scopes: cm_fa_res (value).
+cm_fa_reserve_changed = {
+	scope = country
+	saved_scopes = { cm_fa_res }
+	is_shown = { always = yes }
+	effect = {
+		set_local_variable = { name = cm_fa_tmp_reserve value = scope:cm_fa_res }
+		if = {
+			limit = {
+				NOT = { has_variable = cm_fa_reserve_from_cmm }
+				local_var:cm_fa_tmp_reserve > 0
+				NOT = { var:cm_fa_reserve = local_var:cm_fa_tmp_reserve }
+				OR = {
+					NOT = { has_variable = cm_fa_reserve_slider_max }
+					var:cm_fa_reserve <= var:cm_fa_reserve_slider_max
+				}
+			}
+			set_variable = { name = cm_fa_reserve value = scope:cm_fa_res }
+			remove_from_variable_map = { name = cmm key = flag:cm__fa_reserve }
+			add_to_variable_map = { name = cmm key = flag:cm__fa_reserve value = scope:cm_fa_res }
+		}
+	}
+}
+
+# Records the engine gold slider's scale, which appears in no file and has to be observed.
+# Root is the player. Saved scopes: cm_fa_max (value).
+cm_fa_reserve_max_changed = {
+	scope = country
+	saved_scopes = { cm_fa_max }
+	is_shown = { always = yes }
+	effect = {
+		set_variable = { name = cm_fa_reserve_slider_max value = scope:cm_fa_max }
+	}
+}
+
+# Clears the pending push once the caps have committed the value. Root is the player.
+cm_fa_reserve_pushed = {
+	scope = country
+	is_shown = { always = yes }
+	effect = {
+		if = {
+			limit = { has_variable = cm_fa_reserve_from_cmm }
+			remove_variable = cm_fa_reserve_from_cmm
+		}
+	}
+}
+
+# Arms a push on every card creation, so the stored setting wins the open. Root is the player.
+cm_fa_reserve_reconcile = {
+	scope = country
+	is_shown = { always = yes }
+	effect = {
+		set_variable = cm_fa_reserve_from_cmm
 	}
 }

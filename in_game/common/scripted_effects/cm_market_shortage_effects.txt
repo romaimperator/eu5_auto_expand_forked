@@ -64,6 +64,16 @@ cm_commit_market_demand = {
 	}
 }
 
+# Only the first country to open a cycle in a period clears; the rest accumulate onto it,
+# because two countries building in the same market do compete for its goods.
+cm_q_reset_market_committed_for_cycle = {
+	if = {
+		limit = { NOT = { has_global_variable = cm_q_committed_stamp } }
+		set_global_variable = { name = cm_q_committed_stamp value = 1 days = 20 }
+		cm_reset_market_committed_demand = yes
+	}
+}
+
 # Clears the within-cycle committed maps at the top of each construct cycle.
 cm_reset_market_committed_demand = {
 	clear_global_variable_map = cm_q_market_committed_glass

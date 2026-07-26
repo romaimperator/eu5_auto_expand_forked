@@ -180,7 +180,8 @@
 			action_tooltip = {
 				click_type = left
 				title = "[AutomatedSystemsItem.GetActionTooltipName]"
-				visible = "[And(Not(AutomatedSystemsItem.IsEnabled), Not(Or(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'))))]"
+				# CM: engine enable suppressed on the four intercepted cards
+				visible = "[And(Not(AutomatedSystemsItem.IsEnabled), Not(Or4(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'), AutomatedSystemsItem.IsName('buildings'), AutomatedSystemsItem.IsName('closebuildings'))))]"
 				using = snd_UI_checkbutton_automation
 				on_action = "[AutomatedSystemsItem.Toggle]"
 				on_action = "[PlayAudioEffect('UI_action_automate_enable')]"
@@ -189,18 +190,38 @@
 			action_tooltip = {
 				click_type = left
 				title = "[AutomatedSystemsItem.GetActionTooltipName]"
-				visible = "[And(AutomatedSystemsItem.IsEnabled, Not(Or(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'))))]"
+				# CM: engine disable suppressed on the four intercepted cards
+				visible = "[And(AutomatedSystemsItem.IsEnabled, Not(Or4(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'), AutomatedSystemsItem.IsName('buildings'), AutomatedSystemsItem.IsName('closebuildings'))))]"
 				using = snd_UI_checkbutton_automation
 				on_action = "[AutomatedSystemsItem.Toggle]"
 				on_action = "[PlayAudioEffect('UI_action_automate_disable')]"
 			}
 
+			# CM: expand cards toggle auto-expand
 			action_tooltip = {
 				click_type = left
 				title = "CM_AUTOMATION_TOGGLE"
 				visible = "[Or(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'))]"
 				using = snd_UI_checkbutton_automation
 				on_action = "[GetScriptedGui(Select_CString(AutomatedSystemsItem.IsName('expandbuildings'), 'cm_toggle_auto_expand_buildings_feature', 'cm_toggle_auto_expand_rgos_feature')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+
+			# CM: Buildings card toggles Full Automation
+			action_tooltip = {
+				click_type = left
+				title = "CM_AUTOMATION_TOGGLE_FULL_AUTOMATION"
+				visible = "[AutomatedSystemsItem.IsName('buildings')]"
+				using = snd_UI_checkbutton_automation
+				on_action = "[GetScriptedGui('cm_fa_toggle_master').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+
+			# CM: Close and Open Buildings card toggles Building Cleanup
+			action_tooltip = {
+				click_type = left
+				title = "CM_AUTOMATION_TOGGLE_CLEANUP"
+				visible = "[AutomatedSystemsItem.IsName('closebuildings')]"
+				using = snd_UI_checkbutton_automation
+				on_action = "[GetScriptedGui('cm_fa_toggle_cleanup').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 
 			# Right-click opens the relevant panel
@@ -308,17 +329,25 @@
 				visible = "[AutomatedSystemsItem.IsName('religiousdoctrines')]"
 				on_action = "[OpenLateralViewWithParams('country_religion', 'subtab = doctrine')]"
 			}
+			# CM: Buildings card opens the Full Automation settings
 			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
 				visible = "[AutomatedSystemsItem.IsName('buildings')]"
-				on_action = "[OpenLateralView('production')]"
+				on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
+				on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
+				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__full_automation')]"
 			}
+			# CM: Close and Open Buildings card opens the Full Automation settings
 			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
 				visible = "[AutomatedSystemsItem.IsName('closebuildings')]"
-				on_action = "[OpenLateralView('production')]"
+				on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
+				on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
+				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__full_automation')]"
 			}
 			action_tooltip = {
 				click_type = right
@@ -326,6 +355,7 @@
 				visible = "[AutomatedSystemsItem.IsName('subsidizebuildings')]"
 				on_action = "[OpenLateralView('production')]"
 			}
+			# CM: expand-buildings card opens the Construction Manager settings
 			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
@@ -347,6 +377,7 @@
 				visible = "[AutomatedSystemsItem.IsName('destroyestatebuildings')]"
 				on_action = "[OpenLateralView('production')]"
 			}
+			# CM: expand-RGO card opens the Construction Manager settings
 			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
@@ -525,14 +556,15 @@
 							size = { 100% 100% }
 							using = checkbox_auto_texture
 							frame = 2
-							visible = "[And(AutomatedSystemsItem.IsEnabled, Not(Or(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'))))]"
+							# CM: engine tick suppressed on the four intercepted cards
+							visible = "[And(AutomatedSystemsItem.IsEnabled, Not(Or4(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'), AutomatedSystemsItem.IsName('buildings'), AutomatedSystemsItem.IsName('closebuildings'))))]"
 						}
-						# CM: expand-buildings/expand-RGO cards reflect the auto-expand feature toggle
+						# CM: the four intercepted cards tick from this mod's own settings
 						icon = {
 							size = { 100% 100% }
 							using = checkbox_auto_texture
 							frame = 2
-							visible = "[Or(And(AutomatedSystemsItem.IsName('expandbuildings'), GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('expandrgo'), GetScriptedGui('cm_is_auto_expand_rgos_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
+							visible = "[Or4(And(AutomatedSystemsItem.IsName('expandbuildings'), GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('expandrgo'), GetScriptedGui('cm_is_auto_expand_rgos_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('buildings'), GetScriptedGui('cm_fa_is_master_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('closebuildings'), GetScriptedGui('cm_fa_is_cleanup_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
 						}
 					}
 				}
@@ -680,21 +712,30 @@
 						visible = "[AutomatedSystemsItem.IsName('religiousdoctrines')]"
 						on_action = "[OpenLateralViewWithParams('country_religion', 'subtab = doctrine')]"
 					}
+					# CM: Buildings card opens the Full Automation settings
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
 						visible = "[AutomatedSystemsItem.IsName('buildings')]"
-						on_action = "[OpenLateralView('production')]"
+						on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
+						on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
+						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__full_automation')]"
 					}
+					# CM: Close and Open Buildings card opens the Full Automation settings
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
 						visible = "[AutomatedSystemsItem.IsName('closebuildings')]"
-						on_action = "[OpenLateralView('production')]"
+						on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
+						on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
+						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__full_automation')]"
 					}
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
 						visible = "[AutomatedSystemsItem.IsName('subsidizebuildings')]"
 						on_action = "[OpenLateralView('production')]"
 					}
+					# CM: expand-buildings card opens the Construction Manager settings
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
 						visible = "[AutomatedSystemsItem.IsName('expandbuildings')]"
@@ -713,6 +754,7 @@
 						visible = "[AutomatedSystemsItem.IsName('destroyestatebuildings')]"
 						on_action = "[OpenLateralView('production')]"
 					}
+					# CM: expand-RGO card opens the Construction Manager settings
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
 						visible = "[AutomatedSystemsItem.IsName('expandrgo')]"
@@ -1108,6 +1150,10 @@
 							max = 1
 							# using = minimum_gold_tt # please displace TT so it doesn't cover slider if you want it!!!
 							value = "[AutomatedSystemsItem.GetGoldSlider]"
+							# CM: pinned to the reserve setting while a push is pending; the forced
+							# value commits through the callbacks below.
+							mincap = "[Select_CFixedPoint(And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Not(EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value')))), GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_push_target'), '(CFixedPoint)0')]"
+							maxcap = "[Select_CFixedPoint(And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Not(EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value')))), GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_push_target'), '(CFixedPoint)1')]"
 							onvaluechanged = "[AutomatedSystemsItem.OnChangedGoldSlider]"
 							onchangefinish = "[AutomatedSystemsItem.PostGoldSlider]"
 							blockoverride "economy_slider_inc_button_config"{
@@ -1122,6 +1168,56 @@
 							using = minimum_gold_tt
 							margin = { 15 0 }
 							raw_text = "[AutomatedSystemsItem.GetGoldSliderScaled|0Y]@gold!"
+						}
+					}
+
+					# CM: two-way link between this slider and the Full Automation gold reserve
+
+					# Arms a push on every card creation: the settings value wins the open.
+					widget = {
+						size = { 0 0 }
+						visible_at_creation = no
+						visible = "[GetPlayer.Exists]"
+						state = {
+							name = _show
+							on_start = "[GetScriptedGui('cm_fa_reserve_reconcile').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						}
+					}
+
+					# Pull: samples the slider into the reserve setting on a loop. A
+					# visibility-gated transition goes sticky after a few changes.
+					widget = {
+						size = { 0 0 }
+						state = {
+							name = cm_fa_reserve_poll
+							trigger_on_create = yes
+							duration = 0.25
+							on_finish = "[GetScriptedGui('cm_fa_reserve_changed').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_fa_res', MakeScopeValue(AutomatedSystemsItem.GetGoldSliderScaled)).End)]"
+							on_finish = "[PdxGuiWidget.TriggerAnimation('cm_fa_reserve_poll')]"
+						}
+					}
+
+					# Samples the engine slider's scale, which appears in no file.
+					widget = {
+						size = { 0 0 }
+						visible_at_creation = no
+						visible = "[And(GreaterThan_CFixedPoint(AutomatedSystemsItem.GetGoldSlider, '(CFixedPoint)0'), Not(EqualTo_CFixedPoint(Divide_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, AutomatedSystemsItem.GetGoldSlider), GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_max_value'))))]"
+						state = {
+							name = _show
+							on_start = "[GetScriptedGui('cm_fa_reserve_max_changed').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_fa_max', MakeScopeValue(Divide_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, AutomatedSystemsItem.GetGoldSlider))).End)]"
+						}
+					}
+
+					# The equality branch clears a pending flag that has nothing to push.
+					widget = {
+						size = { 0 0 }
+						visible_at_creation = no
+						visible = "[And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Or(GreaterThan_CFixedPoint(GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_max_value'), '(CFixedPoint)0'), EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value'))))]"
+						state = {
+							name = _show
+							duration = 0.3
+							on_finish = "[AutomatedSystemsItem.PostGoldSlider]"
+							on_finish = "[GetScriptedGui('cm_fa_reserve_pushed').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						}
 					}
 				}

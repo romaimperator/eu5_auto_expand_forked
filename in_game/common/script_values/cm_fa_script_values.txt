@@ -8,6 +8,35 @@ cm_fa_get_reserve = {
 	}
 }
 
+# The gold reserve setting for the automation card's slider expressions. The root-scoped
+# cm_fa_get_reserve is unreachable from GuiScope. Expects scope: country.
+cm_fa_reserve_value = {
+	value = scope:country.var:cm_fa_reserve
+}
+
+# The engine gold slider's observed scale, 0 until it has been sampled.
+# Expects scope: country.
+cm_fa_reserve_max_value = {
+	value = 0
+	if = {
+		limit = { scope:country = { has_variable = cm_fa_reserve_slider_max } }
+		add = scope:country.var:cm_fa_reserve_slider_max
+	}
+}
+
+# The reserve setting as a normalized slider position. 1 until the scale has been sampled,
+# which doubles as the calibration position. Expects scope: country.
+cm_fa_reserve_push_target = {
+	value = 1
+	if = {
+		limit = { scope:country = { has_variable = cm_fa_reserve_slider_max } }
+		multiply = scope:country.var:cm_fa_reserve
+		divide = scope:country.var:cm_fa_reserve_slider_max
+		min = 0
+		max = 1
+	}
+}
+
 # Root is the country. The food surplus target as a supply/demand ratio: the fa_food_target
 # percent setting over 100 (125 -> 1.25). A market whose best food month stayed below this
 # gets new auto-food locations.

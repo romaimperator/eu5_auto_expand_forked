@@ -527,6 +527,40 @@ cm_apply_priority_desired_item = {
 	if = { limit = { always = no } cmf_suppress = { v = $setting$_$i$ } }
 }
 
+# Flips the Full Automation master setting from the vanilla Buildings automation card.
+# Scope: country
+cm_fa_toggle_master_setting = {
+	remove_from_variable_map = { name = cmm key = flag:cm__fa_enabled }
+	if = {
+		limit = { exists = var:cm_fa_enabled }
+		add_to_variable_map = { name = cmm key = flag:cm__fa_enabled value = 0 }
+	}
+	else = {
+		add_to_variable_map = { name = cmm key = flag:cm__fa_enabled value = 1 }
+	}
+	cm_fa_apply_master_change = yes
+}
+
+# Flips the Building Cleanup category row from the vanilla Close and Open Buildings card.
+# Scope: country
+cm_fa_toggle_cleanup_setting = {
+	if = {
+		limit = { exists = var:cm_fa_cleanup_enabled }
+		cmm_set_list_data_value = { mod_id = cm setting_id = fa_priority_list field_id = enabled item = 6 value = 0 }
+	}
+	else = {
+		cmm_set_list_data_value = { mod_id = cm setting_id = fa_priority_list field_id = enabled item = 6 value = 1 }
+	}
+	cm_fa_rebuild_category_lookups = yes
+}
+
+# The Buildings and Close and Open Buildings cards drive this mod's settings instead.
+# Scope: country
+cm_fa_suppress_engine_automation = {
+	set_automated_system = { system = buildings activate = no }
+	set_automated_system = { system = closebuildings activate = no }
+}
+
 # Rebuild all lookup tables from CMM list field data.
 # Called on registration and on every setting change.
 # Scope: country

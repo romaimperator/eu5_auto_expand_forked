@@ -1,0 +1,365 @@
+﻿# Lucky Nations capital and governor reorganization: every fifty years, once income passes
+# the starting threshold, or whenever a new governor slot opens, a lucky nation re-picks its
+# capital and plans a full set of governor sites, then builds roads out to them and places the
+# governors one at a time. It supersedes the full-automation Governors category for these
+# countries.
+#
+# The plan is built one search per month so no single tick carries a whole placement finder
+# run, and each search treats the sites already committed to as proximity sources, so site
+# two is chosen knowing site one will exist.
+
+# 50 years, the reorganization cadence.
+@cm_ln_cooldown_days = 18250
+# Months a reorganization may run before it is abandoned and replanned from scratch.
+@cm_ln_reorg_max_months = 600
+# A capital scoring below this share of the best location is worth moving. Scores are
+# normalised to 0-1000 against the best, and the gap is hysteresis against churn.
+@cm_ln_cap_keep = 900
+# Monthly income that opens a reorganization before the cadence date is reached.
+@cm_ln_income_start = 100
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_tick = {
+	if = {
+		limit = { NOT = { exists = var:cm_ln_phase } }
+		set_variable = { name = cm_ln_phase value = 0 }
+	}
+	if = {
+		limit = { var:cm_ln_phase = 0 }
+		cm_ln_reorg_try_start = yes
+	}
+	if = {
+		limit = { var:cm_ln_phase > 0 }
+		change_variable = { name = cm_ln_age add = 1 }
+	}
+	switch = {
+		trigger = var:cm_ln_phase
+		1 = { cm_ln_reorg_capital_search = yes }
+		2 = { cm_ln_reorg_capital_move = yes }
+		3 = { cm_ln_reorg_plan_step = yes }
+		4 = { cm_ln_reorg_classify = yes }
+		5 = { cm_ln_reorg_place_step = yes }
+		6 = { cm_ln_reorg_move_step = yes }
+		7 = { cm_ln_reorg_teardown = yes }
+	}
+	if = {
+		limit = {
+			var:cm_ln_phase > 0
+			var:cm_ln_age >= @cm_ln_reorg_max_months
+		}
+		cm_ln_reorg_teardown = yes
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_try_start = {
+	if = {
+		limit = {
+			is_multiplayer_session = no
+			at_war = no
+			in_civil_war = no
+			exists = capital
+			cm_pf_river_data_is_current = yes
+			NOT = { has_global_variable = cm_ln_token }
+			cm_ln_no_human_search_in_flight = yes
+			OR = {
+				AND = {
+					NOT = { exists = var:cm_ln_cooldown }
+					OR = {
+						# 50 years past the grand campaign start of 1337.1.1.
+						current_date >= 1387.1.1
+						monthly_income_total >= @cm_ln_income_start
+					}
+				}
+				cm_ln_gov_slots_grew = yes
+			}
+		}
+		cm_ln_reorg_begin = yes
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_begin = {
+	set_global_variable = { name = cm_ln_token value = 1 }
+	set_variable = { name = cm_ln_cooldown value = 1 days = @cm_ln_cooldown_days }
+	set_variable = { name = cm_ln_age value = 0 }
+	set_variable = { name = cm_ln_free_credits value = 0 }
+	set_variable = { name = cm_ln_plan_n value = 0 }
+	clear_variable_list = cm_ln_plan
+	clear_variable_list = cm_ln_pending
+	clear_variable_list = cm_ln_moves
+	clear_variable_list = cm_ln_pre_seats
+	cm_ln_clear_road_state = yes
+	# Governors is superseded while a reorganization owns the placements.
+	remove_variable = cm_fa_gov_armed
+	remove_variable = cm_fa_gov_loc
+	remove_variable = cm_fa_gov_naval
+	every_owned_location = {
+		limit = { has_variable = cm_ln_plan_ord }
+		remove_variable = cm_ln_plan_ord
+		remove_variable = cm_ln_plan_naval
+	}
+	# The capital move's remove_if can destroy seats outright, and a seat lost that way is
+	# ours to replace at no cost.
+	every_owned_location = {
+		limit = { cm_ln_has_governor = yes }
+		save_scope_as = cm_ln_seat
+		scope:cm_country = { add_to_variable_list = { name = cm_ln_pre_seats target = scope:cm_ln_seat } }
+	}
+	cm_ln_pf_settings_on = yes
+	set_variable = { name = cm_ln_phase value = 1 }
+}
+
+# The finder reads these as ordinary country variables, and a country the player tag-switched
+# out of carries their values, so all four are written rather than left to their defaults.
+# Root is the country.
+cm_ln_pf_settings_on = {
+	set_variable = { name = cm_placement_finder_accuracy value = 5 } # Fastest
+	set_variable = { name = cm_placement_finder_naval value = 1 } # Current presence
+	set_variable = { name = cm_placement_finder_roads value = 2 } # Max Roads
+	set_variable = { name = cm_placement_finder_method value = 1 } # Tax Base
+}
+
+# Root is the country.
+cm_ln_pf_settings_off = {
+	remove_variable = cm_placement_finder_accuracy
+	remove_variable = cm_placement_finder_naval
+	remove_variable = cm_placement_finder_roads
+	remove_variable = cm_placement_finder_method
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_capital_search = {
+	set_variable = { name = cm_pf_view_c value = 1 }
+	remove_variable = cm_pf_view_g
+	cm_pf_prep_core = yes
+	cm_pf_run_tiered_sync = yes
+	remove_variable = cm_pf_view_c
+	remove_variable = cm_ln_cap_target
+	ordered_owned_location = {
+		order_by = { value = var:cm_cf_score }
+		position = 0
+		check_range_bounds = no
+		limit = { has_variable = cm_cf_score }
+		save_scope_as = cm_ln_cap_pick
+		scope:cm_country = { set_variable = { name = cm_ln_cap_target value = scope:cm_ln_cap_pick } }
+	}
+	set_variable = { name = cm_ln_phase value = 2 }
+}
+
+# The move ends the month: set_capital shifts every location's proximity, the country's
+# topography impact and has_road_to_capital everywhere, and the governor plan reads all three.
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_capital_move = {
+	if = {
+		limit = {
+			exists = var:cm_ln_cap_target
+			var:cm_ln_cap_target = { owner = scope:cm_country }
+			NOT = { var:cm_ln_cap_target = capital }
+			capital = {
+				trigger_if = {
+					limit = { has_variable = cm_cf_score }
+					var:cm_cf_score < @cm_ln_cap_keep
+				}
+				trigger_else = { always = yes }
+			}
+		}
+		set_capital = var:cm_ln_cap_target
+		cmf_log = { action = cm_ln_log_capital_moved }
+	}
+	remove_variable = cm_ln_cap_target
+	set_variable = { name = cm_ln_land_left value = cm_ln_gov_land_slots }
+	set_variable = { name = cm_ln_naval_left value = cm_ln_gov_naval_slots }
+	set_variable = { name = cm_ln_phase value = 3 }
+}
+
+# One governor search a month. Root is the country, scope:cm_country set.
+cm_ln_reorg_plan_step = {
+	if = {
+		limit = {
+			OR = {
+				var:cm_ln_land_left > 0
+				var:cm_ln_naval_left > 0
+			}
+			cm_ln_no_human_search_in_flight = yes
+			cm_pf_river_data_is_current = yes
+		}
+		set_variable = { name = cm_pf_view_g value = 1 }
+		remove_variable = cm_pf_view_c
+		set_variable = { name = cm_ln_replan value = 1 }
+		set_variable = { name = cm_ln_gov_valid_only value = 1 }
+		cm_pf_prep_core = yes
+		cm_pf_run_tiered_sync = yes
+		remove_variable = cm_pf_view_g
+		remove_variable = cm_ln_replan
+		remove_variable = cm_ln_gov_valid_only
+		set_local_variable = { name = cm_ln_picked value = 0 }
+		ordered_owned_location = {
+			order_by = { value = var:cm_gf_score }
+			position = 0
+			check_range_bounds = no
+			limit = { has_variable = cm_gf_score }
+			save_scope_as = cm_ln_pick
+			set_local_variable = { name = cm_ln_picked value = 1 }
+			scope:cm_country = { cm_ln_reorg_record_pick = yes }
+		}
+		# Nothing left the search would take, so the plan is as full as the map allows.
+		if = {
+			limit = { local_var:cm_ln_picked = 0 }
+			set_variable = { name = cm_ln_phase value = 4 }
+		}
+	}
+	else_if = {
+		limit = {
+			var:cm_ln_land_left <= 0
+			var:cm_ln_naval_left <= 0
+		}
+		set_variable = { name = cm_ln_phase value = 4 }
+	}
+}
+
+# Root is the country, scope:cm_country and scope:cm_ln_pick set.
+cm_ln_reorg_record_pick = {
+	add_to_variable_list = { name = cm_ln_plan target = scope:cm_ln_pick }
+	change_variable = { name = cm_ln_plan_n add = 1 }
+	set_local_variable = { name = cm_ln_ord value = 1000 }
+	change_local_variable = { name = cm_ln_ord subtract = var:cm_ln_plan_n }
+	scope:cm_ln_pick = { set_variable = { name = cm_ln_plan_ord value = local_var:cm_ln_ord } }
+	if = {
+		limit = {
+			var:cm_ln_naval_left > 0
+			scope:cm_ln_pick = { cm_ln_site_is_naval = yes }
+		}
+		scope:cm_ln_pick = { set_variable = { name = cm_ln_plan_naval value = 1 } }
+		change_variable = { name = cm_ln_naval_left subtract = 1 }
+	}
+	else = {
+		change_variable = { name = cm_ln_land_left subtract = 1 }
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_classify = {
+	remove_global_variable = cm_ln_token
+	set_variable = { name = cm_ln_hold value = 1 }
+	cm_ln_strip_finder_outputs = yes
+	cm_ln_pf_settings_off = yes
+	clear_variable_list = cm_ln_pending
+	clear_variable_list = cm_ln_moves
+	every_in_list = {
+		variable = cm_ln_plan
+		save_scope_as = cm_ln_p
+		if = {
+			limit = {
+				scope:cm_ln_p = {
+					owner ?= scope:cm_country
+					cm_ln_has_governor = no
+				}
+			}
+			add_to_variable_list = { name = cm_ln_pending target = scope:cm_ln_p }
+		}
+	}
+	every_owned_location = {
+		limit = {
+			cm_ln_has_governor = yes
+			NOT = { has_variable = cm_ln_plan_ord }
+		}
+		save_scope_as = cm_ln_seat
+		scope:cm_country = { add_to_variable_list = { name = cm_ln_moves target = scope:cm_ln_seat } }
+	}
+	every_in_list = {
+		variable = cm_ln_pre_seats
+		save_scope_as = cm_ln_seat
+		if = {
+			limit = { scope:cm_ln_seat = { cm_ln_has_governor = no } }
+			change_variable = { name = cm_ln_free_credits add = 1 }
+		}
+	}
+	clear_variable_list = cm_ln_pre_seats
+	set_variable = { name = cm_ln_phase value = 5 }
+}
+
+# A conquered location would otherwise hand the player an AI's scores until their own run
+# overwrites them. Root is the country.
+cm_ln_strip_finder_outputs = {
+	every_owned_location = {
+		remove_variable = cm_gf_score
+		remove_variable = cm_gf_avg
+		remove_variable = cm_gf_taxgain
+		remove_variable = cm_gf_top
+		remove_variable = cm_gf_localmax
+		remove_variable = cm_gf_skip
+		remove_variable = cm_gf_inelig
+		remove_variable = cm_gf_nogain
+		remove_variable = cm_cf_score
+		remove_variable = cm_cf_avg
+		remove_variable = cm_cf_taxgain
+		remove_variable = cm_cf_top
+		remove_variable = cm_cf_localmax
+		remove_variable = cm_cf_skip
+	}
+	remove_variable = cm_pf_fresh_g
+	remove_variable = cm_pf_fresh_c
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_place_step = {
+	if = {
+		limit = {
+			variable_list_size = { name = cm_ln_pending value >= 1 }
+			cm_ln_gov_slot_open = yes
+		}
+		cm_ln_place_next = { FREE = no }
+	}
+	else = {
+		set_variable = { name = cm_ln_phase value = 6 }
+	}
+}
+
+# Every site left needs a seat freed first, or a credit for one the capital move destroyed.
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_move_step = {
+	if = {
+		limit = {
+			variable_list_size = { name = cm_ln_pending value >= 1 }
+			OR = {
+				var:cm_ln_free_credits > 0
+				variable_list_size = { name = cm_ln_moves value >= 1 }
+			}
+		}
+		cm_ln_place_next = { FREE = yes }
+	}
+	else = {
+		set_variable = { name = cm_ln_phase value = 7 }
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_teardown = {
+	remove_variable = cm_ln_hold
+	remove_variable = cm_ln_age
+	remove_variable = cm_ln_cap_target
+	remove_variable = cm_ln_land_left
+	remove_variable = cm_ln_naval_left
+	remove_variable = cm_ln_free_credits
+	remove_variable = cm_ln_plan_n
+	remove_variable = cm_ln_replan
+	remove_variable = cm_ln_gov_valid_only
+	remove_variable = cm_pf_view_g
+	remove_variable = cm_pf_view_c
+	cm_ln_clear_road_state = yes
+	clear_variable_list = cm_ln_plan
+	clear_variable_list = cm_ln_pending
+	clear_variable_list = cm_ln_moves
+	clear_variable_list = cm_ln_pre_seats
+	every_owned_location = {
+		limit = { has_variable = cm_ln_plan_ord }
+		remove_variable = cm_ln_plan_ord
+		remove_variable = cm_ln_plan_naval
+	}
+	remove_global_variable = cm_ln_token
+	cm_ln_pf_settings_off = yes
+	set_variable = { name = cm_ln_slots_seen value = cm_ln_gov_slot_total }
+	set_variable = { name = cm_ln_cooldown value = 1 days = @cm_ln_cooldown_days }
+	set_variable = { name = cm_ln_phase value = 0 }
+}

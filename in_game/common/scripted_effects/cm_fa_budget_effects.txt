@@ -9,10 +9,18 @@ cm_fa_monthly_budget_refresh = {
 	set_local_variable = { name = cm_fa_avail value = gold }
 	change_local_variable = { name = cm_fa_avail subtract = cm_fa_get_reserve }
 	change_local_variable = { name = cm_fa_avail max = 0 }
+	# A reorganization holds the treasury while it pays for a road out to a planned
+	# governor site. Urban Rights spends government power and Building Cleanup spends
+	# nothing, so both keep running.
+	if = {
+		limit = { exists = var:cm_ln_hold }
+		set_local_variable = { name = cm_fa_avail value = 0 }
+	}
 	cm_fa_set_category_pool = { cat = industry }
 	cm_fa_set_category_pool = { cat = collapsar }
 	cm_fa_set_category_pool = { cat = food }
 	cm_fa_set_category_pool = { cat = utilities }
+	cm_fa_set_category_pool = { cat = forts }
 	# Governors drains ahead of the shared categories.
 	if = {
 		limit = { exists = var:cm_fa_governors_enabled }
@@ -20,7 +28,7 @@ cm_fa_monthly_budget_refresh = {
 	}
 }
 
-# pool = pct * available. $cat$ = industry | collapsar | food | utilities.
+# pool = pct * available. $cat$ = industry | collapsar | food | utilities | forts.
 # Root is the country.
 cm_fa_set_category_pool = {
 	if = {
@@ -52,6 +60,7 @@ cm_fa_clear_budget_state = {
 	set_variable = { name = cm_fa_pool_collapsar value = 0 }
 	set_variable = { name = cm_fa_pool_food value = 0 }
 	set_variable = { name = cm_fa_pool_utilities value = 0 }
+	set_variable = { name = cm_fa_pool_forts value = 0 }
 	set_variable = { name = cm_fa_pool_governors value = 0 }
 }
 
@@ -62,6 +71,7 @@ cm_fa_copy_budget_state = {
 	cm_fa_copy_budget_var = { v = cm_fa_pool_collapsar }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_food }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_utilities }
+	cm_fa_copy_budget_var = { v = cm_fa_pool_forts }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_governors }
 }
 
@@ -122,6 +132,9 @@ cm_fa_drain_category = {
 		flag:cm_fa_cat_collapsar = { cm_fa_drain_one = { CAT = collapsar PASS = cm_fa_pass_collapsar } }
 		flag:cm_fa_cat_food = { cm_fa_drain_one = { CAT = food PASS = cm_fa_pass_food } }
 		flag:cm_fa_cat_utilities = { cm_fa_drain_one = { CAT = utilities PASS = cm_fa_pass_utilities } }
+		# Forts drains against its own pool without taking the carry, so its 5 percent share
+		# stays 5 percent even though it runs last.
+		flag:cm_fa_cat_forts = { cm_fa_pass_forts = yes }
 	}
 }
 
@@ -148,5 +161,6 @@ cm_fa_stage_category = {
 		flag:cm_fa_cat_utilities = { cm_fa_run_utilities = yes }
 		flag:cm_fa_cat_urban_rights = { cm_fa_run_urban_rights = yes }
 		flag:cm_fa_cat_governors = { cm_fa_run_governors = yes }
+		flag:cm_fa_cat_forts = { cm_ln_ft_run = yes }
 	}
 }

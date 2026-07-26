@@ -1,0 +1,198 @@
+﻿# Lucky Nations: this mod's construction automation running on selected AI countries.
+# The engine build actions in cm_construct_queue_window.gui take no country argument, so a
+# lucky nation scores its queues in cm_ln_queue_window.gui and constructs from script.
+
+# Marks the lucky set from the game rule. Clears first, so a rule change or a mod update
+# converges on the next load. No scope.
+cm_ln_seed_marks = {
+	every_country = {
+		limit = { exists = var:cm_ln_active }
+		remove_variable = cm_ln_active
+	}
+	if = {
+		limit = {
+			has_game_rule = cm_ln_lucky_nations_castile
+			is_multiplayer_session = no
+			country_exists = c:CAS
+		}
+		c:CAS = {
+			# Marking a human would have the seeded values overwrite their own settings.
+			if = {
+				limit = { is_ai = yes }
+				set_variable = { name = cm_ln_active value = yes }
+			}
+		}
+	}
+}
+
+# Rebuilds the GUI's iteration set and re-seeds each member. Runs at lobby and monthly, so
+# annexation, tag switches and a player passing through a lucky tag all resolve on their own.
+# No scope.
+cm_ln_refresh_countries = {
+	clear_global_variable_list = cm_ln_countries
+	every_country = {
+		limit = { cm_ln_is_active = yes }
+		add_to_global_variable_list = { name = cm_ln_countries target = this }
+		cm_ln_seed_settings = yes
+	}
+}
+
+# Counts the lucky nations with a cycle open. The queue window's driver gate reads it.
+# No scope.
+cm_ln_sync_open_cycles = {
+	set_global_variable = { name = cm_ln_open_cycles value = 0 }
+	every_country = {
+		limit = {
+			cm_ln_is_active = yes
+			exists = var:cm_should_construct
+		}
+		change_global_variable = { name = cm_ln_open_cycles add = 1 }
+	}
+}
+
+# Counts the lucky nations with Building Cleanup toggles waiting. The queue window's toggle
+# driver gate reads it. No scope.
+cm_ln_sync_cu_pending = {
+	set_global_variable = { name = cm_ln_cu_pending value = 0 }
+	every_country = {
+		limit = {
+			cm_ln_is_active = yes
+			exists = var:cm_fa_cu_fire
+		}
+		change_global_variable = { name = cm_ln_cu_pending add = 1 }
+	}
+}
+
+# Per-lobby country setup, mirroring cm_on_init_human_country's share of it. Root is the country.
+cm_ln_init_country = {
+	# A loaded save can have a cycle's flags stuck on, which stops auto-construction.
+	cm_q_reset_cycle_state = yes
+	# A save taken between the cleanup toggles and their end state would otherwise
+	# toggle the same buildings a second time after the load.
+	remove_variable = cm_fa_cu_fire
+	clear_variable_list = cm_fa_cu_toggle
+	set_variable = { name = cm_q_planned_spend value = 0 }
+}
+
+# Writes the settings an AI country has no CMM registration to give it. Values are the
+# registered defaults in cm_cmm_effects.txt and cm_cmm_custom_effects.txt except where
+# marked. Re-run every month, so a player who passes through the tag leaves nothing behind.
+# Root is the country.
+cm_ln_seed_settings = {
+	# Both gold floors follow the one reserve rule rather than the registered defaults.
+	set_variable = { name = cm_minimum_gold value = cm_ln_reserve_value }
+	set_variable = { name = cm_urbanize_town_to_city value = yes }
+	# Registered default is off. Lucky nations run every option on.
+	set_variable = { name = cm_urbanize_rural_to_town value = yes }
+
+	clear_variable_list = cm_priority_features_list
+	clear_variable_list = cm_priority_features_enabled
+	add_to_variable_list = { name = cm_priority_features_list target = flag:cm_feature_auto_urbanize }
+	add_to_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_urbanize }
+	remove_from_variable_map = { name = cm_priority_min_discount key = flag:cm_feature_auto_urbanize }
+	add_to_variable_map = { name = cm_priority_min_discount key = flag:cm_feature_auto_urbanize value = 0 }
+
+	clear_variable_list = cm_auto_urbanize_ignored_rgo_goods
+	add_to_variable_list = { name = cm_auto_urbanize_ignored_rgo_goods target = goods:goods_gold }
+	add_to_variable_list = { name = cm_auto_urbanize_ignored_rgo_goods target = goods:silver }
+
+	cm_ln_seed_food_roster = yes
+
+	set_variable = { name = cm_fa_enabled value = yes }
+	set_variable = { name = cm_fa_reserve value = cm_ln_reserve_value }
+	set_variable = { name = cm_fa_industry_min_roi value = 20 }
+	set_variable = { name = cm_fa_industry_margin value = 70 }
+	set_variable = { name = cm_fa_collapsar_target value = 0 }
+	set_variable = { name = cm_fa_urban_rights_reserve value = 50 }
+	set_variable = { name = cm_fa_urban_rights_expand value = yes }
+	set_variable = { name = cm_fa_cleanup_core_goods value = yes }
+	set_variable = { name = cm_fa_cleanup_auto_food value = yes }
+
+	clear_variable_list = cm_fa_collapsar_goods_enabled
+	add_to_variable_list = { name = cm_fa_collapsar_goods_enabled target = goods:masonry }
+	add_to_variable_list = { name = cm_fa_collapsar_goods_enabled target = goods:lumber }
+	add_to_variable_list = { name = cm_fa_collapsar_goods_enabled target = goods:sand }
+	add_to_variable_list = { name = cm_fa_collapsar_goods_enabled target = goods:glass }
+
+	cm_ln_seed_categories = yes
+}
+
+# The 13 food goods of auto_food_list. Building Cleanup's auto-food pass reads the roster to
+# tell a food producer from any other production building. Root is the country.
+cm_ln_seed_food_roster = {
+	clear_variable_list = cm_auto_food_rgo_types_list
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:rice }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:wheat }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:maize }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:potato }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:livestock }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:millet }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:legumes }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:fish }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:olives }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:fruit }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:wild_game }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:beeswax }
+	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:fur }
+}
+
+# Category order is the drain priority and the enabled filter at once, so Forts going last
+# is what makes it the lowest-priority category. Urban Rights, Building Cleanup and Governors
+# are registered off; lucky nations run every option on. Industry gives up 5 of its 60 to
+# Forts. Root is the country.
+cm_ln_seed_categories = {
+	clear_variable_list = cm_fa_categories_enabled
+	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_food }
+	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_collapsar }
+	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_industry }
+	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_utilities }
+	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_urban_rights }
+	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_cleanup }
+	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_governors }
+	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_forts }
+
+	set_variable = { name = cm_fa_food_enabled value = 1 }
+	set_variable = { name = cm_fa_collapsar_enabled value = 1 }
+	set_variable = { name = cm_fa_industry_enabled value = 1 }
+	set_variable = { name = cm_fa_utilities_enabled value = 1 }
+	set_variable = { name = cm_fa_urban_rights_enabled value = 1 }
+	set_variable = { name = cm_fa_cleanup_enabled value = 1 }
+	set_variable = { name = cm_fa_governors_enabled value = 1 }
+	set_variable = { name = cm_fa_forts_enabled value = 1 }
+
+	set_variable = { name = cm_fa_food_budget value = 10 }
+	set_variable = { name = cm_fa_collapsar_budget value = 20 }
+	set_variable = { name = cm_fa_industry_budget value = 55 }
+	set_variable = { name = cm_fa_utilities_budget value = 10 }
+	set_variable = { name = cm_fa_forts_budget value = 5 }
+}
+
+# The monthly cycle. Root is the country.
+cm_ln_monthly_cycle = {
+	save_scope_as = cm_country
+	# Ahead of the budget refresh, so the month a reorganization claims the treasury is the
+	# month the pools go to zero.
+	cm_ln_reorg_tick = yes
+	if = {
+		limit = { cm_fa_master_active = yes }
+		cm_fa_monthly_budget_refresh = yes
+		cm_fa_food_sample_markets = yes
+	}
+	cm_run_construction_cycle = yes
+	cm_ln_sync_open_cycles = yes
+}
+
+# The yearly passes, matching cm_fa_yearly_pulse, plus the fort teardown, which is a lucky
+# nation's alone. Root is the country.
+cm_ln_yearly_cycle = {
+	cm_fa_food_yearly_evaluation = yes
+	cm_fa_cu_yearly_pass = yes
+	cm_ln_sync_cu_pending = yes
+	cm_ln_ft_delete_pass = yes
+}
+
+# Ends a lucky nation's cycle. Root is the country.
+cm_ln_end_cycle = {
+	cm_q_reset_cycle_state = yes
+	cm_ln_sync_open_cycles = yes
+}

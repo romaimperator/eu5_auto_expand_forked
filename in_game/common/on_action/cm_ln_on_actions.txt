@@ -1,0 +1,70 @@
+﻿# Lucky Nations hooks. The vanilla country pulses fire for every country in the world, so the
+# leaf trigger is the whole gate: with the rule off no country carries cm_ln_active and a
+# month costs one absent-variable lookup per country.
+
+on_game_start_after_lobby = {
+	on_actions = {
+		cm_ln_on_lobby
+	}
+}
+
+on_game_load_after_lobby = {
+	on_actions = {
+		cm_ln_on_lobby
+	}
+}
+
+cm_ln_on_lobby = {
+	effect = {
+		cm_ln_seed_marks = yes
+		cm_ln_refresh_countries = yes
+		every_country = {
+			limit = { cm_ln_is_active = yes }
+			cm_ln_init_country = yes
+		}
+		cm_ln_sync_open_cycles = yes
+	}
+}
+
+# weather_monthly_pulse is the one engine periodic that fires globally with no root scope.
+weather_monthly_pulse = {
+	on_actions = {
+		cm_ln_monthly_global
+	}
+}
+
+cm_ln_monthly_global = {
+	effect = {
+		cm_ln_refresh_countries = yes
+	}
+}
+
+monthly_country_pulse = {
+	on_actions = {
+		cm_ln_on_monthly
+	}
+}
+
+yearly_country_pulse = {
+	on_actions = {
+		cm_ln_on_yearly
+	}
+}
+
+cm_ln_on_monthly = {
+	trigger = {
+		cm_ln_is_active = yes
+	}
+	effect = {
+		cm_ln_monthly_cycle = yes
+	}
+}
+
+cm_ln_on_yearly = {
+	trigger = {
+		cm_ln_is_active = yes
+	}
+	effect = {
+		cm_ln_yearly_cycle = yes
+	}
+}

@@ -1212,9 +1212,18 @@ cm_handle_cmf_callback = {
 			cm_fa_apply_master_change = yes
 		}
 		flag:cm__fa_reserve = {
-			cmm_sync_setting_alias = {
-				setting = cm__fa_reserve
-				alias = cm_fa_reserve
+			# The CMM slider fires this callback on hover as well as on change.
+			set_local_variable = { name = cm_fa_tmp_flag value = flag:cm__fa_reserve }
+			if = {
+				limit = {
+					NOT = { "variable_map(cmm|local_var:cm_fa_tmp_flag)" = var:cm_fa_reserve }
+				}
+				cmm_sync_setting_alias = {
+					setting = cm__fa_reserve
+					alias = cm_fa_reserve
+				}
+				# Picked up by the push widgets in cm_automation_lateralview.gui.
+				set_variable = cm_fa_reserve_from_cmm
 			}
 		}
 		## Industry (fa_industry) Group

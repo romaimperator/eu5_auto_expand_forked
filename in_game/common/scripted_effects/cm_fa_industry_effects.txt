@@ -100,7 +100,7 @@ cm_fa_run_industry = {
 }
 
 # Stages a build candidate into the full-automation build queue and marks its category,
-# first stager wins. $cat$ = 1 industry, 2 collapsar, 3 food, 4 utilities, 5 governors.
+# first stager wins. $cat$ = 1 industry, 2 collapsar, 3 food, 4 utilities, 5 governors, 6 forts.
 # Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_fa_stage_build_candidate = {
 	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_fa_b_locations LOCATION_LIST = cm_fa_b_types DONE_LIST = cm_fa_done_b_types }
@@ -385,28 +385,7 @@ cm_fa_approve_extra_build_copies = {
 			cm_market_has_construction_goods_for_building = yes
 		}
 		change_local_variable = { name = cm_fa_copy_guard add = 1 }
-		# A variable list holds a target once, so each extra level fires from its own rank list.
-		if = {
-			limit = { local_var:cm_fa_copy_guard = 1 }
-			add_to_variable_list = { name = cm_q_approved_build_x2 target = scope:cm_building_type }
-		} else_if = {
-			limit = { local_var:cm_fa_copy_guard = 2 }
-			add_to_variable_list = { name = cm_q_approved_build_x3 target = scope:cm_building_type }
-		} else_if = {
-			limit = { local_var:cm_fa_copy_guard = 3 }
-			add_to_variable_list = { name = cm_q_approved_build_x4 target = scope:cm_building_type }
-		} else_if = {
-			limit = { local_var:cm_fa_copy_guard = 4 }
-			add_to_variable_list = { name = cm_q_approved_build_x5 target = scope:cm_building_type }
-		} else_if = {
-			limit = { local_var:cm_fa_copy_guard = 5 }
-			add_to_variable_list = { name = cm_q_approved_build_x6 target = scope:cm_building_type }
-		} else_if = {
-			limit = { local_var:cm_fa_copy_guard = 6 }
-			add_to_variable_list = { name = cm_q_approved_build_x7 target = scope:cm_building_type }
-		} else = {
-			add_to_variable_list = { name = cm_q_approved_build_x8 target = scope:cm_building_type }
-		}
+		cm_q_add_build_rank_copy = { GUARD = cm_fa_copy_guard }
 		cm_q_claim_build_copy = yes
 		scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
 		change_local_variable = { name = cm_fa_copy_batch_emp add = local_var:cm_fa_copy_emp }

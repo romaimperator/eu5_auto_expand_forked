@@ -1,0 +1,273 @@
+﻿# Lucky Nations Forts: the lowest-priority full-automation category. Monthly it builds a
+# spaced fort line along the borders of its strongest neighbors; yearly it tears down the
+# forts left far behind those borders.
+#
+# EU5 has no hop-distance trigger (distance_to and distance_to_squared are straight-line), so
+# each ring below is built from successive one-hop expansions writing a marker variable. All
+# three rings walk owned land only.
+
+# One neighbor's sweep costs an owned-land pass, so this is the monthly cost in sweeps.
+@cm_ln_ft_max_neighbors = 8
+# Keeps the strongest neighbor from spending the whole fort limit on its own border.
+@cm_ln_ft_max_per_neighbor = 4
+# Ranks count down from here, so an earlier (stronger) neighbor's sites outrank a later one's.
+@cm_ln_ft_rank_base = 100
+
+# --- Rings ---
+
+# Marks every owned land location within 2 hops of foreign-owned land as cm_ln_ft_bd = its hop
+# count. Root is the country, scope:cm_country set.
+cm_ln_ft_build_border_ring = {
+	every_owned_location = {
+		limit = { has_variable = cm_ln_ft_bd }
+		remove_variable = cm_ln_ft_bd
+	}
+	every_owned_location = {
+		limit = {
+			is_land = yes
+			any_neighbor_location = {
+				is_land = yes
+				exists = owner
+				NOT = { owner = scope:cm_country }
+			}
+		}
+		set_variable = { name = cm_ln_ft_bd value = 1 }
+	}
+	cm_ln_ft_expand_ring = { RING = cm_ln_ft_bd FROM = 1 TO = 2 }
+}
+
+# Marks every owned land location within 2 hops of scope:cm_ln_ft_nb's territory.
+# Root is the country, scope:cm_country and scope:cm_ln_ft_nb set.
+cm_ln_ft_build_neighbor_ring = {
+	every_owned_location = {
+		limit = { has_variable = cm_ln_ft_nd }
+		remove_variable = cm_ln_ft_nd
+	}
+	every_owned_location = {
+		limit = {
+			is_land = yes
+			adjacent_to_owned_by = scope:cm_ln_ft_nb
+		}
+		set_variable = { name = cm_ln_ft_nd value = 1 }
+	}
+	cm_ln_ft_expand_ring = { RING = cm_ln_ft_nd FROM = 1 TO = 2 }
+}
+
+# One hop out from the $FROM$ ring of $RING$. Reading $FROM$ exactly and writing $TO$ is what
+# keeps a location marked by this pass from seeding the same pass again.
+# Root is the country, scope:cm_country set.
+cm_ln_ft_expand_ring = {
+	every_owned_location = {
+		limit = {
+			is_land = yes
+			NOT = { has_variable = $RING$ }
+			any_neighbor_location = {
+				owner ?= scope:cm_country
+				has_variable = $RING$
+				var:$RING$ = $FROM$
+			}
+		}
+		set_variable = { name = $RING$ value = $TO$ }
+	}
+}
+
+# Marks every owned land location a standing fort's zone of control already reaches, plus the
+# ring beyond it, so a new fort lands at least 3 hops from an old one. A fort controls its own
+# neighbors, so two forts overlap at any spacing under 3.
+# Root is the country, scope:cm_country set.
+cm_ln_ft_build_exclusion_ring = {
+	every_owned_location = {
+		limit = { has_variable = cm_ln_ft_zx }
+		remove_variable = cm_ln_ft_zx
+	}
+	every_owned_location = {
+		limit = {
+			any_buildings_in_location = {
+				building_type = { cm_ln_ft_is_chain_fort = yes }
+			}
+		}
+		cm_ln_ft_mark_pick = yes
+	}
+}
+
+# Excludes this location and everything within 2 hops of it. The edge list carries the first
+# ring so the second needs no iterator inside an iterator.
+# Root is the location. Expects scope:cm_country.
+cm_ln_ft_mark_pick = {
+	set_variable = { name = cm_ln_ft_zx value = 0 }
+	scope:cm_country = { clear_variable_list = cm_ln_ft_edge }
+	every_neighbor_location = {
+		limit = { owner ?= scope:cm_country }
+		save_scope_as = cm_ln_ft_e
+		if = {
+			limit = { NOT = { has_variable = cm_ln_ft_zx } }
+			set_variable = { name = cm_ln_ft_zx value = 1 }
+		}
+		scope:cm_country = { add_to_variable_list = { name = cm_ln_ft_edge target = scope:cm_ln_ft_e } }
+	}
+	scope:cm_country = {
+		every_in_list = {
+			variable = cm_ln_ft_edge
+			save_scope_as = cm_ln_ft_e
+			scope:cm_ln_ft_e = {
+				every_neighbor_location = {
+					limit = {
+						owner ?= scope:cm_country
+						NOT = { has_variable = cm_ln_ft_zx }
+					}
+					set_variable = { name = cm_ln_ft_zx value = 2 }
+				}
+			}
+		}
+		clear_variable_list = cm_ln_ft_edge
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_ft_clear_rings = {
+	every_owned_location = {
+		if = { limit = { has_variable = cm_ln_ft_bd } remove_variable = cm_ln_ft_bd }
+		if = { limit = { has_variable = cm_ln_ft_nd } remove_variable = cm_ln_ft_nd }
+		if = { limit = { has_variable = cm_ln_ft_zx } remove_variable = cm_ln_ft_zx }
+	}
+}
+
+# --- Staging ---
+
+# Sets scope:cm_building_type to the fort tier the country can build now.
+# Root is the country.
+cm_ln_ft_resolve_type = {
+	building_type:stockade = { save_scope_as = cm_building_type }
+	cm_auto_build_resolve_building_type = yes
+}
+
+# Monthly staging. Root is the country, scope:cm_country set.
+cm_ln_ft_run = {
+	cm_ln_ft_resolve_type = yes
+	set_variable = { name = cm_ln_ft_claimed value = 0 }
+	every_owned_location = {
+		limit = { has_variable = cm_ln_ft_prio }
+		remove_variable = cm_ln_ft_prio
+	}
+	cm_ln_ft_build_exclusion_ring = yes
+	cm_ln_ft_stage_capital = yes
+	set_local_variable = { name = cm_ln_ft_rank value = @cm_ln_ft_rank_base }
+	ordered_neighbor_country = {
+		order_by = military_strength
+		max = @cm_ln_ft_max_neighbors
+		check_range_bounds = no
+		save_scope_as = cm_ln_ft_nb
+		change_local_variable = { name = cm_ln_ft_rank subtract = 1 }
+		scope:cm_country = { cm_ln_ft_stage_for_neighbor = yes }
+	}
+	cm_ln_ft_clear_rings = yes
+}
+
+# The keep rule names the capital a legitimate fort site, so it leads the order.
+# Root is the country, scope:cm_country and scope:cm_building_type set.
+cm_ln_ft_stage_capital = {
+	if = {
+		limit = {
+			exists = capital
+			cm_ln_ft_has_room = yes
+		}
+		capital = {
+			if = {
+				limit = { cm_ln_ft_site_placeable = yes }
+				save_scope_as = cm_location
+				# Above every border rank, so the capital is claimed first at the drain.
+				set_variable = { name = cm_ln_ft_prio value = 2000 }
+				scope:cm_country = {
+					cm_fa_stage_build_candidate = { cat = 6 }
+					change_variable = { name = cm_ln_ft_claimed add = 1 }
+				}
+				cm_ln_ft_mark_pick = yes
+			}
+		}
+	}
+}
+
+# Greedy best-terrain-first placement along one neighbor's border, each pick excluding its own
+# zone of control so the next one lands at least 3 hops away.
+# Root is the country, scope:cm_country, scope:cm_ln_ft_nb and scope:cm_building_type set.
+cm_ln_ft_stage_for_neighbor = {
+	cm_ln_ft_build_neighbor_ring = yes
+	set_local_variable = { name = cm_ln_ft_picks value = 0 }
+	while = {
+		limit = {
+			local_var:cm_ln_ft_picks < @cm_ln_ft_max_per_neighbor
+			cm_ln_ft_has_room = yes
+			any_owned_location = { cm_ln_ft_site_eligible = yes }
+		}
+		change_local_variable = { name = cm_ln_ft_picks add = 1 }
+		change_variable = { name = cm_ln_ft_claimed add = 1 }
+		ordered_owned_location = {
+			order_by = cm_location_attacker_penalty
+			position = 0
+			check_range_bounds = no
+			limit = { cm_ln_ft_site_eligible = yes }
+			save_scope_as = cm_location
+			set_variable = { name = cm_ln_ft_prio value = local_var:cm_ln_ft_rank }
+			change_variable = { name = cm_ln_ft_prio multiply = 10 }
+			change_variable = { name = cm_ln_ft_prio add = cm_location_attacker_penalty }
+			scope:cm_country = { cm_fa_stage_build_candidate = { cat = 6 } }
+			cm_ln_ft_mark_pick = yes
+		}
+	}
+}
+
+# --- Drain ---
+
+# Root is the country, scope:cm_country set. Best-ranked border site first; cm_ln_ft_prio is
+# the neighbor's strength rank with the defensive terrain as the tiebreak.
+cm_fa_pass_forts = {
+	if = {
+		limit = { has_variable_list = cm_fa_b_locations }
+		ordered_in_list = {
+			variable = cm_fa_b_locations
+			order_by = cm_ln_ft_prio_value
+			max = cm_max_guess_at_number_of_buildings
+			check_range_bounds = no
+			limit = { has_variable = cm_ln_ft_prio }
+			save_temporary_scope_as = cm_ln_ft_drain_loc
+			scope:cm_ln_ft_drain_loc = {
+				cm_fa_try_approve_build = { cat = 6 POOL = cm_fa_pool_forts GOODS_GATE = cm_market_has_construction_goods_for_building }
+			}
+		}
+	}
+}
+
+# --- Yearly teardown ---
+
+# Destroys every main-chain fort that is neither the capital's nor inside the 2-hop border
+# band. Spends nothing, so it needs no pool and no drain arm. Root is the country.
+cm_ln_ft_delete_pass = {
+	if = {
+		limit = {
+			cm_fa_master_active = yes
+			exists = var:cm_fa_forts_enabled
+		}
+		save_scope_as = cm_country
+		cm_ln_ft_build_border_ring = yes
+		every_owned_location = {
+			limit = {
+				has_fort = yes
+				NOT = { has_variable = cm_ln_ft_bd }
+				NOT = { this = scope:cm_country.capital }
+			}
+			save_scope_as = cm_location
+			every_buildings_in_location = {
+				limit = {
+					owner = scope:cm_country
+					# A building reads as standing from the moment its first level is queued.
+					cm_is_not_under_construction = yes
+					building_type = { cm_ln_ft_is_chain_fort = yes }
+				}
+				save_scope_as = cm_building
+				scope:cm_location = { destroy_building = scope:cm_building }
+				scope:cm_country = { cmf_log = { action = cm_ln_log_ft_deleted } }
+			}
+		}
+		cm_ln_ft_clear_rings = yes
+	}
+}

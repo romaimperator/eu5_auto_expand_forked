@@ -5,12 +5,16 @@
 
 # Root is the country, scope:cm_country set.
 cm_fa_run_governors = {
+	# A lucky nation plans its whole governor set at once instead.
 	if = {
-		limit = { exists = var:cm_fa_gov_armed }
-		remove_variable = cm_fa_gov_armed
-		cm_fa_gov_pick_target = yes
+		limit = { cm_ln_is_active = no }
+		if = {
+			limit = { exists = var:cm_fa_gov_armed }
+			remove_variable = cm_fa_gov_armed
+			cm_fa_gov_pick_target = yes
+		}
+		cm_fa_gov_stage_target = yes
 	}
-	cm_fa_gov_stage_target = yes
 }
 
 # Takes the highest-scoring location a governor can legally occupy. cm_gf_score is absent on
@@ -79,7 +83,10 @@ cm_fa_gov_resolve_type = {
 # Governors drain. Root is the country, scope:cm_country set.
 cm_fa_pass_governors = {
 	if = {
-		limit = { exists = var:cm_fa_gov_loc }
+		limit = {
+			cm_ln_is_active = no
+			exists = var:cm_fa_gov_loc
+		}
 		cm_fa_gov_resolve_type = yes
 		var:cm_fa_gov_loc = {
 			cm_fa_try_approve_build = { cat = 5 POOL = cm_fa_pool_governors GOODS_GATE = cm_market_has_construction_goods_for_building }
