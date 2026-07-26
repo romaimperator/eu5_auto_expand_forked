@@ -1,8 +1,8 @@
 ﻿# Full-automation Utilities: the capital-only set (from cm_run_auto_build_capital), the
-# auto_build_list roster minus hospitals (cm_cmm_effects.txt), and the vanilla
-# market-center buildings (game in_game/common/building_types/market_buildings.txt, the
-# is_market_center-gated set). Runs on default thresholds and never reads or writes the
-# player's auto-build settings or toggles.
+# auto_build_list roster minus hospitals (cm_cmm_effects.txt), the vanilla market-center
+# buildings (game in_game/common/building_types/market_buildings.txt, the
+# is_market_center-gated set), and the marketplace chain last. Runs on default thresholds
+# and never reads or writes the player's auto-build settings or toggles.
 
 # Root is the country, scope:cm_country set.
 cm_fa_run_utilities = {
@@ -62,6 +62,7 @@ cm_fa_run_utilities = {
 		cm_fa_stage_utility_type_here = { bt = clearing_house }
 		cm_fa_stage_utility_type_here = { bt = market_warehouse }
 	}
+	cm_fa_stage_marketplaces = yes
 }
 
 # Stages one utility type at this location when it fits; the capital and market-center
@@ -112,8 +113,36 @@ cm_fa_stage_utility_everywhere = {
 	}
 }
 
+# Stages the marketplace chain's current tier across owned locations, lowest market access
+# first: the chain grants local_market_access per level (game
+# in_game/common/building_types/trade_buildings.txt, marketplace). Tops up to max level; a
+# location holding an older tier is left to the upgrade features. Root is the country.
+cm_fa_stage_marketplaces = {
+	building_type:marketplace = { save_scope_as = cm_building_type }
+	cm_auto_build_resolve_building_type = yes
+	ordered_owned_location = {
+		order_by = cm_fa_market_access_inverted
+		max = cm_max_guess_at_number_of_locations
+		check_range_bounds = no
+		limit = { NOT = { integration_level = conquered } }
+		save_scope_as = cm_location
+		if = {
+			limit = {
+				cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
+				cm_location_allowed_to_build = { target = scope:cm_building_type }
+				cm_location_has_no_auto_build_chain_predecessor = yes
+				cm_location_has_enough_pops_available = yes
+				cm_check_location_meets_min_market_access = yes
+				cm_get_open_build_queue_slots > 0
+				NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+			}
+			cm_fa_stage_build_candidate = { cat = 4 }
+		}
+	}
+}
+
 # Utilities drain, type-major in the assembly order: the capital set, the auto-build
-# roster, then the market-center buildings. Root is the country.
+# roster, the market-center buildings, then marketplaces. Root is the country.
 cm_fa_pass_utilities = {
 	cm_fa_drain_utility_type = { bt = royal_court }
 	cm_fa_drain_utility_type = { bt = house_of_parliament }
@@ -152,6 +181,7 @@ cm_fa_pass_utilities = {
 	cm_fa_drain_utility_type = { bt = stock_exchange }
 	cm_fa_drain_utility_type = { bt = clearing_house }
 	cm_fa_drain_utility_type = { bt = market_warehouse }
+	cm_fa_drain_marketplaces = yes
 }
 
 # Root is the country. $bt$ = a type key with no chain.
@@ -165,6 +195,26 @@ cm_fa_drain_utility_roster_type = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes
 	cm_fa_drain_utility_resolved = yes
+}
+
+# Marketplaces claim what the rest of the category leaves, lowest market access first.
+# Root is the country.
+cm_fa_drain_marketplaces = {
+	building_type:marketplace = { save_scope_as = cm_building_type }
+	cm_auto_build_resolve_building_type = yes
+	if = {
+		limit = { has_variable_list = cm_fa_b_locations }
+		ordered_in_list = {
+			variable = cm_fa_b_locations
+			order_by = cm_fa_market_access_inverted
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			save_temporary_scope_as = cm_fa_drain_loc
+			scope:cm_fa_drain_loc = {
+				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building }
+			}
+		}
+	}
 }
 
 # Root is the country. Expects scope:cm_building_type.
