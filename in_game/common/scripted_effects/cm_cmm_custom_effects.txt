@@ -22,6 +22,10 @@ cm_cmm_post_registration = {
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_urbanize_ignore_list field_id = ignored item = 1 value = 1 }
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_urbanize_ignore_list field_id = ignored item = 2 value = 1 }
 
+	# Full-automation budget shares: food 10, collapsar 20, industry 60, utilities 10.
+	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = budget item = 2 value = 20 }
+	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = budget item = 3 value = 60 }
+
 	cm_repair_expand_thresholds = yes
 
 	# Build lookup tables from CMM list fields
@@ -30,6 +34,7 @@ cm_cmm_post_registration = {
 	cm_rebuild_auto_food_lookups = yes
 	cm_rebuild_auto_urbanize_lookups = yes
 	cm_rebuild_auto_town_rights_lookups = yes
+	cm_fa_rebuild_category_lookups = yes
 	cm_fa_rebuild_collapsar_lookups = yes
 
 	# Hide buildings whose advance hasn't been researched yet
@@ -381,39 +386,65 @@ cm_fa_apply_master_change = {
 	}
 }
 
-# Turning a category off zeroes its pool; the monthly refresh skips it while off.
-# $cat$ = industry | collapsar | food | utilities. Scope: country
-cm_fa_apply_category_toggle = {
-	cmm_sync_bool_alias = {
-		setting = cm__fa_$cat$_enabled
-		alias = cm_fa_$cat$_enabled
+# Rebuild the full-automation category lookups from CMM list field data.
+# Called on registration and on every setting change.
+# Scope: country
+cm_fa_rebuild_category_lookups = {
+	if = {
+		limit = { NOT = { has_variable_list = cmm_list_items_cm__fa_priority_list } }
+	}
+	else = {
+
+	# Enabled categories, bool field slot 2. Display order, so this one list is both the
+	# drain priority and the enabled filter.
+	cmm_build_list_bool_list = { setting = cm__fa_priority_list field_slot = 2 list_name = cm_fa_categories_enabled }
+
+	# Budget share by category, numeric field slot 1, direct values.
+	cmm_build_list_field_map = { setting = cm__fa_priority_list field_slot = 1 map_name = cm_fa_cat_budget multiply = 1 }
+
+	cm_fa_sync_category = { cat = industry }
+	cm_fa_sync_category = { cat = collapsar }
+	cm_fa_sync_category = { cat = food }
+	cm_fa_sync_category = { cat = utilities }
+
+	} # end guard
+}
+
+# Projects one category's row into the per-category variables the budget engine and the
+# settings-row visibility read. Turning a category off zeroes its pool; the monthly refresh
+# skips it while off. $cat$ = industry | collapsar | food | utilities. Scope: country
+cm_fa_sync_category = {
+	# A macro never resolves inside a quoted lookup, so the key goes through a local.
+	set_local_variable = { name = cm_fa_cat_key value = flag:cm_fa_cat_$cat$ }
+	if = {
+		limit = {
+			has_variable_map = cm_fa_cat_budget
+			is_key_in_variable_map = { name = cm_fa_cat_budget target = local_var:cm_fa_cat_key }
+		}
+		set_variable = { name = cm_fa_$cat$_budget value = "variable_map(cm_fa_cat_budget|local_var:cm_fa_cat_key)" }
 	}
 	if = {
-		limit = { NOT = { exists = var:cm_fa_$cat$_enabled } }
+		limit = { is_target_in_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_$cat$ } }
+		set_variable = { name = cm_fa_$cat$_enabled value = 1 }
+		cm_fa_clamp_pool = { cat = $cat$ }
+	}
+	else = {
+		remove_variable = cm_fa_$cat$_enabled
 		set_variable = { name = cm_fa_pool_$cat$ value = 0 }
 	}
 }
 
-# $cat$ = industry | collapsar | food | utilities. Scope: country
-cm_fa_apply_budget_change = {
-	cmm_sync_setting_alias = {
-		setting = cm__fa_$cat$_budget
-		alias = cm_fa_$cat$_budget
-	}
-	cm_fa_clamp_pool = { cat = $cat$ }
-}
-
-# Rebuild the collapsar goods lookup from CMM list field data.
+# Rebuild the collapsar materials lookup from CMM list field data.
 # Called on registration and on every setting change.
 # Scope: country
 cm_fa_rebuild_collapsar_lookups = {
 	if = {
-		limit = { NOT = { has_variable_list = cmm_list_items_cm__fa_collapsar_goods_list } }
+		limit = { NOT = { has_variable_list = cmm_list_items_cm__fa_collapsar } }
 	}
 	else = {
 
-	# Enabled collapsar goods, bool field slot 1.
-	cmm_build_list_bool_list = { setting = cm__fa_collapsar_goods_list field_slot = 1 list_name = cm_fa_collapsar_goods_enabled }
+	# Enabled materials, bool field slot 1, in staging and drain order.
+	cmm_build_list_bool_list = { setting = cm__fa_collapsar field_slot = 1 list_name = cm_fa_collapsar_goods_enabled }
 
 	} # end guard
 }
@@ -702,7 +733,9 @@ _cm_cmm_suppress_warnings = {
 		# Auto town rights lookup lists
 		cmf_suppress = { v = cm_auto_town_rights_list }
 		cmf_suppress = { v = cm_auto_town_rights_enabled }
-		# Full-automation collapsar goods lookup
+		# Full-automation category and collapsar material lookups
+		cmf_suppress = { v = cm_fa_categories_enabled }
+		cmf_suppress = { v = cm_fa_cat_budget }
 		cmf_suppress = { v = cm_fa_collapsar_goods_enabled }
 	}
 }

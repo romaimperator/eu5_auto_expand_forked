@@ -1,6 +1,6 @@
 ﻿# Full-automation budget engine: monthly per-category pools set from the treasury above
-# the reserve, and the cascade that passes each drain's unspent pool to the next category.
-# Pools are country variables and persist in saves.
+# the reserve, and the per-category dispatch that runs each drain and passes its unspent
+# pool down the player's category order. Pools are country variables and persist in saves.
 
 # Sets each enabled category's pool to its share of this month's available spending.
 # available = max(0, gold - reserve)
@@ -106,21 +106,38 @@ cm_fa_try_approve_build = {
 	}
 }
 
-# Moves a category's unspent pool into the next category's, in drain priority order; a
-# disabled category's pool passes the flow through untouched by its skipped drain.
-# Runs between the category drains in cm_q_approval_pass. $from$, $to$ = category ids.
-# Root is the country.
-cm_fa_cascade_pool = {
+# Runs one category's drain under its pool, taking in the funds earlier categories left
+# and handing on whatever it does not spend. Root is the country, expects scope:cm_fa_cat.
+cm_fa_drain_category = {
+	switch = {
+		trigger = scope:cm_fa_cat
+		flag:cm_fa_cat_industry = { cm_fa_drain_one = { CAT = industry PASS = cm_fa_pass_industry } }
+		flag:cm_fa_cat_collapsar = { cm_fa_drain_one = { CAT = collapsar PASS = cm_fa_pass_collapsar } }
+		flag:cm_fa_cat_food = { cm_fa_drain_one = { CAT = food PASS = cm_fa_pass_food } }
+		flag:cm_fa_cat_utilities = { cm_fa_drain_one = { CAT = utilities PASS = cm_fa_pass_utilities } }
+	}
+}
+
+# $CAT$ = category id, $PASS$ = its drain effect. Root is the country.
+cm_fa_drain_one = {
 	if = {
-		limit = {
-			has_variable = cm_fa_pool_$from$
-			var:cm_fa_pool_$from$ > 0
-		}
-		if = {
-			limit = { NOT = { has_variable = cm_fa_pool_$to$ } }
-			set_variable = { name = cm_fa_pool_$to$ value = 0 }
-		}
-		change_variable = { name = cm_fa_pool_$to$ add = var:cm_fa_pool_$from$ }
-		set_variable = { name = cm_fa_pool_$from$ value = 0 }
+		limit = { NOT = { has_variable = cm_fa_pool_$CAT$ } }
+		set_variable = { name = cm_fa_pool_$CAT$ value = 0 }
+	}
+	change_variable = { name = cm_fa_pool_$CAT$ add = var:cm_fa_carry }
+	set_variable = { name = cm_fa_carry value = 0 }
+	$PASS$ = yes
+	change_variable = { name = cm_fa_carry add = var:cm_fa_pool_$CAT$ }
+	set_variable = { name = cm_fa_pool_$CAT$ value = 0 }
+}
+
+# Runs one category's staging. Root is the country, expects scope:cm_fa_cat.
+cm_fa_stage_category = {
+	switch = {
+		trigger = scope:cm_fa_cat
+		flag:cm_fa_cat_industry = { cm_fa_run_industry = yes }
+		flag:cm_fa_cat_collapsar = { cm_fa_run_collapsar = yes }
+		flag:cm_fa_cat_food = { cm_fa_run_food = yes }
+		flag:cm_fa_cat_utilities = { cm_fa_run_utilities = yes }
 	}
 }

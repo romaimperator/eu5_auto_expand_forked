@@ -118,13 +118,18 @@ cm_unified_auto_expand = {
 				}
 			}
 			# Full-automation staging after the priority features, so the player's own
-			# features always stage and claim first.
+			# features always stage and claim first. Categories stage in the player's
+			# order, so the higher one claims a candidate both of them want.
 			if = {
-				limit = { cm_fa_master_active = yes }
-				if = { limit = { exists = var:cm_fa_industry_enabled } cm_fa_run_industry = yes }
-				if = { limit = { exists = var:cm_fa_collapsar_enabled } cm_fa_run_collapsar = yes }
-				if = { limit = { exists = var:cm_fa_food_enabled } cm_fa_run_food = yes }
-				if = { limit = { exists = var:cm_fa_utilities_enabled } cm_fa_run_utilities = yes }
+				limit = {
+					cm_fa_master_active = yes
+					has_variable_list = cm_fa_categories_enabled
+				}
+				every_in_list = {
+					variable = cm_fa_categories_enabled
+					save_scope_as = cm_fa_cat
+					scope:cm_country = { cm_fa_stage_category = yes }
+				}
 			}
 			# Show the construction-queue window to construct this month's staged items.
 			# The full-automation RGO lists bypass the staged counter (no GUI scoring), so

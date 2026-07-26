@@ -163,18 +163,21 @@ cm_q_approval_pass = {
 			}
 		}
 	}
-	# Full-automation category drains after every priority feature has claimed. Pools
-	# cascade in drain order: each category's unspent funds join the next one's pool.
+	# Full-automation category drains after every priority feature has claimed, in the
+	# player's category order, each category's unspent funds carrying into the next one.
 	if = {
-		limit = { cm_fa_master_active = yes }
+		limit = {
+			cm_fa_master_active = yes
+			has_variable_list = cm_fa_categories_enabled
+		}
 		set_local_variable = { name = cm_fa_blk_industry value = 0 }
-		if = { limit = { exists = var:cm_fa_industry_enabled } cm_fa_pass_industry = yes }
-		cm_fa_cascade_pool = { from = industry to = collapsar }
-		if = { limit = { exists = var:cm_fa_collapsar_enabled } cm_fa_pass_collapsar = yes }
-		cm_fa_cascade_pool = { from = collapsar to = food }
-		if = { limit = { exists = var:cm_fa_food_enabled } cm_fa_pass_food = yes }
-		cm_fa_cascade_pool = { from = food to = utilities }
-		if = { limit = { exists = var:cm_fa_utilities_enabled } cm_fa_pass_utilities = yes }
+		set_variable = { name = cm_fa_carry value = 0 }
+		every_in_list = {
+			variable = cm_fa_categories_enabled
+			save_scope_as = cm_fa_cat
+			scope:cm_country = { cm_fa_drain_category = yes }
+		}
+		remove_variable = cm_fa_carry
 	}
 }
 

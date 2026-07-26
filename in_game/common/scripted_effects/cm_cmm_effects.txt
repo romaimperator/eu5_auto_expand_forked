@@ -746,42 +746,39 @@ cm_register_cmf_mod = {
 		setting_id = fa_reserve
 	}
 
-	## Industry (fa_industry) Group
-	cmm_register_bool_setting = {
+	## Priorities (fa_priority_list) Group
+	cmm_register_settings_list = {
 		mod_id = cm
-		setting_id = fa_industry_enabled
+		setting_id = fa_priority_list
 		tab_id = full_automation
-		group_id = fa_industry
-		default_value = 1
-	}
-	cmm_sync_bool_alias = {
-		setting = cm__fa_industry_enabled
-		alias = cm_fa_industry_enabled
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = fa_industry_enabled
+		item_count = 4
+		is_ordered = 1
 	}
 
-	cmm_register_slider_setting = {
+	cmm_set_list_item_value = { mod_id = cm setting_id = fa_priority_list item = 1 value = flag:cm_fa_cat_food }
+	cmm_set_list_item_value = { mod_id = cm setting_id = fa_priority_list item = 2 value = flag:cm_fa_cat_collapsar }
+	cmm_set_list_item_value = { mod_id = cm setting_id = fa_priority_list item = 3 value = flag:cm_fa_cat_industry }
+	cmm_set_list_item_value = { mod_id = cm setting_id = fa_priority_list item = 4 value = flag:cm_fa_cat_utilities }
+
+	cmm_register_list_numeric_field = {
 		mod_id = cm
-		setting_id = fa_industry_budget
-		tab_id = full_automation
-		group_id = fa_industry
-		default_value = 60
+		setting_id = fa_priority_list
+		field_id = budget
+		default_value = 10
 		min_value = 0
 		max_value = 100
 		step_value = 5
 	}
-	cmm_sync_setting_alias = {
-		setting = cm__fa_industry_budget
-		alias = cm_fa_industry_budget
-	}
-	cmm_add_scripted_gui = {
+	cmm_set_list_field_format = { mod_id = cm setting_id = fa_priority_list field_id = budget }
+
+	cmm_register_list_bool_field = {
 		mod_id = cm
-		setting_id = fa_industry_budget
+		setting_id = fa_priority_list
+		field_id = enabled
+		default_value = 1
 	}
 
+	## Industry (fa_industry) Group
 	cmm_register_dropdown_setting = {
 		mod_id = cm
 		setting_id = fa_industry_algorithm
@@ -838,41 +835,6 @@ cm_register_cmf_mod = {
 	}
 
 	## Price Collapsar (fa_collapsar) Group
-	cmm_register_bool_setting = {
-		mod_id = cm
-		setting_id = fa_collapsar_enabled
-		tab_id = full_automation
-		group_id = fa_collapsar
-		default_value = 1
-	}
-	cmm_sync_bool_alias = {
-		setting = cm__fa_collapsar_enabled
-		alias = cm_fa_collapsar_enabled
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = fa_collapsar_enabled
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = cm
-		setting_id = fa_collapsar_budget
-		tab_id = full_automation
-		group_id = fa_collapsar
-		default_value = 20
-		min_value = 0
-		max_value = 100
-		step_value = 5
-	}
-	cmm_sync_setting_alias = {
-		setting = cm__fa_collapsar_budget
-		alias = cm_fa_collapsar_budget
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = fa_collapsar_budget
-	}
-
 	cmm_register_slider_setting = {
 		mod_id = cm
 		setting_id = fa_collapsar_target
@@ -892,63 +854,29 @@ cm_register_cmf_mod = {
 		setting_id = fa_collapsar_target
 	}
 
-	## Collapsar Goods (fa_collapsar_goods_list) Group
+	# Shares the fa_collapsar group with the Price Target above: a list forces its group id
+	# to its own setting id.
 	cmm_register_settings_list = {
 		mod_id = cm
-		setting_id = fa_collapsar_goods_list
+		setting_id = fa_collapsar
 		tab_id = full_automation
 		item_count = 4
-		is_ordered = 0
+		is_ordered = 1
 	}
 
-	cmm_set_list_item_value = { mod_id = cm setting_id = fa_collapsar_goods_list item = 1 value = goods:lumber }
-	cmm_set_list_item_value = { mod_id = cm setting_id = fa_collapsar_goods_list item = 2 value = goods:masonry }
-	cmm_set_list_item_value = { mod_id = cm setting_id = fa_collapsar_goods_list item = 3 value = goods:sand }
-	cmm_set_list_item_value = { mod_id = cm setting_id = fa_collapsar_goods_list item = 4 value = goods:glass }
+	cmm_set_list_item_value = { mod_id = cm setting_id = fa_collapsar item = 1 value = goods:masonry }
+	cmm_set_list_item_value = { mod_id = cm setting_id = fa_collapsar item = 2 value = goods:lumber }
+	cmm_set_list_item_value = { mod_id = cm setting_id = fa_collapsar item = 3 value = goods:sand }
+	cmm_set_list_item_value = { mod_id = cm setting_id = fa_collapsar item = 4 value = goods:glass }
 
 	cmm_register_list_bool_field = {
 		mod_id = cm
-		setting_id = fa_collapsar_goods_list
+		setting_id = fa_collapsar
 		field_id = enabled
 		default_value = 1
 	}
 
 	## Food (fa_food) Group
-	cmm_register_bool_setting = {
-		mod_id = cm
-		setting_id = fa_food_enabled
-		tab_id = full_automation
-		group_id = fa_food
-		default_value = 1
-	}
-	cmm_sync_bool_alias = {
-		setting = cm__fa_food_enabled
-		alias = cm_fa_food_enabled
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = fa_food_enabled
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = cm
-		setting_id = fa_food_budget
-		tab_id = full_automation
-		group_id = fa_food
-		default_value = 10
-		min_value = 0
-		max_value = 100
-		step_value = 5
-	}
-	cmm_sync_setting_alias = {
-		setting = cm__fa_food_budget
-		alias = cm_fa_food_budget
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = fa_food_budget
-	}
-
 	cmm_register_slider_setting = {
 		mod_id = cm
 		setting_id = fa_food_target
@@ -966,42 +894,6 @@ cm_register_cmf_mod = {
 	cmm_add_scripted_gui = {
 		mod_id = cm
 		setting_id = fa_food_target
-	}
-
-	## Utilities (fa_utilities) Group
-	cmm_register_bool_setting = {
-		mod_id = cm
-		setting_id = fa_utilities_enabled
-		tab_id = full_automation
-		group_id = fa_utilities
-		default_value = 1
-	}
-	cmm_sync_bool_alias = {
-		setting = cm__fa_utilities_enabled
-		alias = cm_fa_utilities_enabled
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = fa_utilities_enabled
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = cm
-		setting_id = fa_utilities_budget
-		tab_id = full_automation
-		group_id = fa_utilities
-		default_value = 10
-		min_value = 0
-		max_value = 100
-		step_value = 5
-	}
-	cmm_sync_setting_alias = {
-		setting = cm__fa_utilities_budget
-		alias = cm_fa_utilities_budget
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = fa_utilities_budget
 	}
 
 	# Mapmodes (map_modes) Tab
@@ -1190,12 +1082,6 @@ cm_handle_cmf_callback = {
 			}
 		}
 		## Industry (fa_industry) Group
-		flag:cm__fa_industry_enabled = {
-			cm_fa_apply_category_toggle = { cat = industry }
-		}
-		flag:cm__fa_industry_budget = {
-			cm_fa_apply_budget_change = { cat = industry }
-		}
 		flag:cm__fa_industry_algorithm = {
 			cmm_sync_setting_alias = {
 				setting = cm__fa_industry_algorithm
@@ -1215,12 +1101,6 @@ cm_handle_cmf_callback = {
 			}
 		}
 		## Price Collapsar (fa_collapsar) Group
-		flag:cm__fa_collapsar_enabled = {
-			cm_fa_apply_category_toggle = { cat = collapsar }
-		}
-		flag:cm__fa_collapsar_budget = {
-			cm_fa_apply_budget_change = { cat = collapsar }
-		}
 		flag:cm__fa_collapsar_target = {
 			cmm_sync_setting_alias = {
 				setting = cm__fa_collapsar_target
@@ -1228,24 +1108,11 @@ cm_handle_cmf_callback = {
 			}
 		}
 		## Food (fa_food) Group
-		flag:cm__fa_food_enabled = {
-			cm_fa_apply_category_toggle = { cat = food }
-		}
-		flag:cm__fa_food_budget = {
-			cm_fa_apply_budget_change = { cat = food }
-		}
 		flag:cm__fa_food_target = {
 			cmm_sync_setting_alias = {
 				setting = cm__fa_food_target
 				alias = cm_fa_food_target
 			}
-		}
-		## Utilities (fa_utilities) Group
-		flag:cm__fa_utilities_enabled = {
-			cm_fa_apply_category_toggle = { cat = utilities }
-		}
-		flag:cm__fa_utilities_budget = {
-			cm_fa_apply_budget_change = { cat = utilities }
 		}
 		# Mapmodes (map_modes) Tab
 		## Placement Finder (placement_finder) Group

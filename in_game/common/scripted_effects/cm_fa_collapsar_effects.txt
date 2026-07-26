@@ -1,9 +1,9 @@
 ﻿# Full-automation Price Collapsar: builds producers of masonry, lumber, sand, and glass
-# to push their market prices down to the target price. Goods are staged and drained in
-# that priority order; within a good, RGO expansions come before producer buildings.
-# Staging in each market stops at max(10% of its locations, 6) locations whose collapsar
-# constructions have not been absorbed yet (still building, or built but not yet
-# employed, with levels remaining). Collapsar approvals skip the market
+# to push their market prices down to the target price. Materials are staged and drained
+# in the player's list order; within a material, RGO expansions come before producer
+# buildings. Staging in each market stops at max(10% of its locations, 6) locations
+# whose collapsar constructions have not been absorbed yet (still building, or built but
+# not yet employed, with levels remaining). Collapsar approvals skip the market
 # construction-goods gates: a shortage of those goods is exactly what the builds cure.
 
 # Root is the country, scope:cm_country set.
@@ -25,28 +25,54 @@ cm_fa_stage_collapsar_market = {
 		change_local_variable = { name = cm_fa_room subtract = 1 }
 	}
 	if = {
-		limit = { local_var:cm_fa_room > 0 }
-		if = {
-			limit = { cm_fa_collapsar_good_wanted = { good = masonry } }
-			cm_fa_stage_collapsar_building = { bt = mason }
+		limit = {
+			local_var:cm_fa_room > 0
+			has_variable_list = cm_fa_collapsar_goods_enabled
 		}
-		if = {
-			limit = { cm_fa_collapsar_good_wanted = { good = lumber } }
-			goods:lumber = { save_scope_as = cm_fa_good }
-			cm_fa_stage_collapsar_rgos = yes
-			cm_fa_stage_collapsar_building = { bt = lumber_mill }
+		every_in_list = {
+			variable = cm_fa_collapsar_goods_enabled
+			save_scope_as = cm_fa_collapsar_item
+			scope:cm_country = { cm_fa_stage_collapsar_good = yes }
 		}
-		if = {
-			limit = { cm_fa_collapsar_good_wanted = { good = sand } }
-			goods:sand = { save_scope_as = cm_fa_good }
-			cm_fa_stage_collapsar_rgos = yes
-			cm_fa_stage_collapsar_building = { bt = sand_pit }
+	}
+}
+
+# Stages one material's candidates. The shared market room is a local, so an earlier
+# material in the list takes it first. Root is the country, expects scope:cm_fa_market
+# and scope:cm_fa_collapsar_item.
+cm_fa_stage_collapsar_good = {
+	if = {
+		limit = {
+			scope:cm_fa_collapsar_item = goods:masonry
+			cm_fa_collapsar_good_wanted = { good = masonry }
 		}
-		if = {
-			limit = { cm_fa_collapsar_good_wanted = { good = glass } }
-			cm_fa_stage_collapsar_building = { bt = glass_guild }
-			cm_fa_stage_collapsar_building = { bt = rural_glassmaker }
+		cm_fa_stage_collapsar_building = { bt = mason }
+	}
+	else_if = {
+		limit = {
+			scope:cm_fa_collapsar_item = goods:lumber
+			cm_fa_collapsar_good_wanted = { good = lumber }
 		}
+		goods:lumber = { save_scope_as = cm_fa_good }
+		cm_fa_stage_collapsar_rgos = yes
+		cm_fa_stage_collapsar_building = { bt = lumber_mill }
+	}
+	else_if = {
+		limit = {
+			scope:cm_fa_collapsar_item = goods:sand
+			cm_fa_collapsar_good_wanted = { good = sand }
+		}
+		goods:sand = { save_scope_as = cm_fa_good }
+		cm_fa_stage_collapsar_rgos = yes
+		cm_fa_stage_collapsar_building = { bt = sand_pit }
+	}
+	else_if = {
+		limit = {
+			scope:cm_fa_collapsar_item = goods:glass
+			cm_fa_collapsar_good_wanted = { good = glass }
+		}
+		cm_fa_stage_collapsar_building = { bt = glass_guild }
+		cm_fa_stage_collapsar_building = { bt = rural_glassmaker }
 	}
 }
 
@@ -112,9 +138,6 @@ cm_fa_stage_collapsar_building = {
 			}
 			cm_fa_stage_build_candidate = { cat = 2 }
 			scope:cm_location = {
-				# Take the claim from Industry: under cat 1 the item drains behind the ROI margin.
-				remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type }
-				add_to_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type value = 2 }
 				set_variable = { name = cm_fa_collapsar_touched value = yes }
 			}
 			change_local_variable = { name = cm_fa_room subtract = 1 }
@@ -144,23 +167,48 @@ cm_fa_collapsar_cleanup_pending = {
 	}
 }
 
-# Collapsar drain, in good priority order masonry, lumber, sand, glass; within a good,
-# RGO levels first, then producer buildings, the glass chain's current tier before
-# rural_glassmaker. Root is the country.
+# Collapsar drain, in the player's material order; within a material, RGO levels first,
+# then producer buildings, the glass chain's current tier before rural_glassmaker.
+# Root is the country.
 cm_fa_pass_collapsar = {
-	building_type:mason = { save_scope_as = cm_building_type }
-	cm_fa_collapsar_drain_type = { good = masonry }
-	cm_fa_collapsar_drain_rgos = { good = lumber }
-	building_type:lumber_mill = { save_scope_as = cm_building_type }
-	cm_fa_collapsar_drain_type = { good = lumber }
-	cm_fa_collapsar_drain_rgos = { good = sand }
-	building_type:sand_pit = { save_scope_as = cm_building_type }
-	cm_fa_collapsar_drain_type = { good = sand }
-	building_type:glass_guild = { save_scope_as = cm_building_type }
-	cm_auto_build_resolve_building_type = yes
-	cm_fa_collapsar_drain_type = { good = glass }
-	building_type:rural_glassmaker = { save_scope_as = cm_building_type }
-	cm_fa_collapsar_drain_type = { good = glass }
+	if = {
+		limit = { has_variable_list = cm_fa_collapsar_goods_enabled }
+		every_in_list = {
+			variable = cm_fa_collapsar_goods_enabled
+			save_scope_as = cm_fa_collapsar_item
+			scope:cm_country = { cm_fa_drain_collapsar_good = yes }
+		}
+	}
+}
+
+# Drains one material's staged entries. Root is the country, expects
+# scope:cm_fa_collapsar_item.
+cm_fa_drain_collapsar_good = {
+	if = {
+		limit = { scope:cm_fa_collapsar_item = goods:masonry }
+		building_type:mason = { save_scope_as = cm_building_type }
+		cm_fa_collapsar_drain_type = { good = masonry }
+	}
+	else_if = {
+		limit = { scope:cm_fa_collapsar_item = goods:lumber }
+		cm_fa_collapsar_drain_rgos = { good = lumber }
+		building_type:lumber_mill = { save_scope_as = cm_building_type }
+		cm_fa_collapsar_drain_type = { good = lumber }
+	}
+	else_if = {
+		limit = { scope:cm_fa_collapsar_item = goods:sand }
+		cm_fa_collapsar_drain_rgos = { good = sand }
+		building_type:sand_pit = { save_scope_as = cm_building_type }
+		cm_fa_collapsar_drain_type = { good = sand }
+	}
+	else_if = {
+		limit = { scope:cm_fa_collapsar_item = goods:glass }
+		building_type:glass_guild = { save_scope_as = cm_building_type }
+		cm_auto_build_resolve_building_type = yes
+		cm_fa_collapsar_drain_type = { good = glass }
+		building_type:rural_glassmaker = { save_scope_as = cm_building_type }
+		cm_fa_collapsar_drain_type = { good = glass }
+	}
 }
 
 # Drains one good's staged RGO expansions in list order. $good$ = the RGO good key.
