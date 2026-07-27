@@ -256,6 +256,8 @@ cm_ln_ft_delete_pass = {
 				NOT = { this = scope:cm_country.capital }
 			}
 			save_scope_as = cm_location
+			# Collected first: destroying inside every_buildings_in_location mutates the collection
+			# being walked, and the iterator then hands out a dangling handle.
 			every_buildings_in_location = {
 				limit = {
 					owner = scope:cm_country
@@ -264,9 +266,15 @@ cm_ln_ft_delete_pass = {
 					building_type = { cm_ln_ft_is_chain_fort = yes }
 				}
 				save_scope_as = cm_building
+				scope:cm_location = { add_to_variable_list = { name = cm_ln_ft_doomed target = scope:cm_building } }
+			}
+			every_in_list = {
+				variable = cm_ln_ft_doomed
+				save_scope_as = cm_building
 				scope:cm_location = { destroy_building = scope:cm_building }
 				scope:cm_country = { cmf_log = { action = cm_ln_log_ft_deleted } }
 			}
+			clear_variable_list = cm_ln_ft_doomed
 		}
 		cm_ln_ft_clear_rings = yes
 	}
