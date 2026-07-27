@@ -23,78 +23,84 @@ cm_fa_run_industry = {
 		save_scope_as = cm_fa_list_type
 		scope:cm_country = { add_to_variable_list = { name = cm_fa_ind_types target = scope:cm_fa_list_type } }
 	}
-	ordered_owned_location = {
-		order_by = max_control
-		max = cm_max_guess_at_number_of_locations
-		check_range_bounds = no
-		limit = {
-			NOT = { integration_level = conquered }
-			cm_location_auto_food_workers_ok = yes
-		}
-		save_scope_as = cm_location
-		# Standing buildings: expands and obsolete upgrades.
-		ordered_buildings_in_location = {
-			order_by = building_index
-			max = 100
+	every_market_present_in_country = {
+		limit = { cm_fa_market_in_slice = yes }
+		# The market iterators carry no ownership filter of their own, and a shared market
+		# holds other countries' locations.
+		ordered_location_in_market = {
+			order_by = max_control
+			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
-			save_scope_as = cm_building
-			building_type = { save_scope_as = cm_building_type }
-			if = {
-				limit = { cm_is_building_type_obsolete = yes }
-				if = {
-					limit = {
-						scope:cm_building_type = { cm_is_building_type_production_building = yes }
-						scope:cm_location = { cm_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
-					}
-					scope:cm_building_type = { cm_find_current_building_type = yes }
-					cm_fa_stage_upgrade_candidate = yes
-				}
-			} else_if = {
-				limit = {
-					scope:cm_building_type = {
-						cm_is_building_type_production_building = yes
-						cm_fa_cu_is_always_delete = no
-					}
-					scope:cm_building = {
-						is_at_max_level = no
-						is_opened = yes
-					}
-					scope:cm_location = {
-						cm_location_has_enough_pops_available = yes
-						cm_is_location_under_building_limit = yes
-						NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
-					}
-				}
-				cm_fa_stage_build_candidate = { cat = 1 }
+			limit = {
+				owner ?= scope:cm_country
+				NOT = { integration_level = conquered }
+				cm_location_auto_food_workers_ok = yes
 			}
-		}
-		# From-zero production buildings.
-		scope:cm_country = {
-			every_in_list = {
-				variable = cm_fa_ind_types
-				save_scope_as = cm_building_type
+			save_scope_as = cm_location
+			# Standing buildings: expands and obsolete upgrades.
+			ordered_buildings_in_location = {
+				order_by = building_index
+				max = 100
+				check_range_bounds = no
+				save_scope_as = cm_building
+				building_type = { save_scope_as = cm_building_type }
 				if = {
+					limit = { cm_is_building_type_obsolete = yes }
+					if = {
+						limit = {
+							scope:cm_building_type = { cm_is_building_type_production_building = yes }
+							scope:cm_location = { cm_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
+						}
+						scope:cm_building_type = { cm_find_current_building_type = yes }
+						cm_fa_stage_upgrade_candidate = yes
+					}
+				} else_if = {
 					limit = {
+						scope:cm_building_type = {
+							cm_is_building_type_production_building = yes
+							cm_fa_cu_is_always_delete = no
+						}
+						scope:cm_building = {
+							is_at_max_level = no
+							is_opened = yes
+						}
 						scope:cm_location = {
-							NOT = { has_building = scope:cm_building_type }
-							cm_location_allowed_to_build = { target = scope:cm_building_type }
 							cm_location_has_enough_pops_available = yes
 							cm_is_location_under_building_limit = yes
 							NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
-							NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_building_type } }
 						}
 					}
 					cm_fa_stage_build_candidate = { cat = 1 }
 				}
 			}
-		}
-		# RGO expansion.
-		if = {
-			limit = {
-				cm_rgo_basic_expand_eligibility = yes
-				NOT = { cm_location_auto_food_supersedes_rgo = yes }
+			# From-zero production buildings.
+			scope:cm_country = {
+				every_in_list = {
+					variable = cm_fa_ind_types
+					save_scope_as = cm_building_type
+					if = {
+						limit = {
+							scope:cm_location = {
+								NOT = { has_building = scope:cm_building_type }
+								cm_location_allowed_to_build = { target = scope:cm_building_type }
+								cm_location_has_enough_pops_available = yes
+								cm_is_location_under_building_limit = yes
+								NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
+								NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_building_type } }
+							}
+						}
+						cm_fa_stage_build_candidate = { cat = 1 }
+					}
+				}
 			}
-			cm_fa_stage_rgo_candidate = yes
+			# RGO expansion.
+			if = {
+				limit = {
+					cm_rgo_basic_expand_eligibility = yes
+					NOT = { cm_location_auto_food_supersedes_rgo = yes }
+				}
+				cm_fa_stage_rgo_candidate = yes
+			}
 		}
 	}
 }
@@ -188,7 +194,10 @@ cm_fa_pass_industry = {
 		set_local_variable = { name = cm_fa_margin_f value = 100 }
 		change_local_variable = { name = cm_fa_margin_f divide = var:cm_fa_industry_margin }
 	}
+	# Only the markets staged this cycle: a market outside the slice holds no candidates, so
+	# draining it would just re-scan the country for nothing.
 	every_market_present_in_country = {
+		limit = { cm_fa_market_in_slice = yes }
 		save_scope_as = cm_fa_market
 		if = {
 			limit = { local_var:cm_fa_blk_industry = 0 }
@@ -199,12 +208,28 @@ cm_fa_pass_industry = {
 
 # Drains one market's industry candidates. Root is the country, expects scope:cm_fa_market.
 cm_fa_drain_market = {
-	save_temporary_scope_value_as = { name = cm_fa_anchor value = -2000000 }
-	ordered_owned_location = {
-		limit = {
-			market = scope:cm_fa_market
-			has_variable = cm_fa_best_any
+	# The picks below run hundreds of times per market, so the candidate set is collected
+	# once here and re-read from the list instead of re-scanning every owned location.
+	clear_variable_list = cm_fa_drain_cands
+	scope:cm_fa_market = {
+		every_location_in_market = {
+			limit = {
+				owner ?= scope:cm_country
+				OR = {
+					has_variable = cm_fa_best_any
+					has_variable = cm_fa_b_best
+					has_variable = cm_fa_u_best
+					has_variable = cm_fa_r_score
+				}
+			}
+			save_scope_as = cm_fa_cand_loc
+			scope:cm_country = { add_to_variable_list = { name = cm_fa_drain_cands target = scope:cm_fa_cand_loc } }
 		}
+	}
+	save_temporary_scope_value_as = { name = cm_fa_anchor value = -2000000 }
+	ordered_in_list = {
+		variable = cm_fa_drain_cands
+		limit = { has_variable = cm_fa_best_any }
 		order_by = { value = var:cm_fa_best_any }
 		position = 0
 		check_range_bounds = no
@@ -235,30 +260,36 @@ cm_fa_drain_market = {
 			save_temporary_scope_value_as = { name = cm_fa_dom_b value = -2000000 }
 			save_temporary_scope_value_as = { name = cm_fa_dom_u value = -2000000 }
 			save_temporary_scope_value_as = { name = cm_fa_dom_r value = -2000000 }
-			ordered_owned_location = {
-				limit = { market = scope:cm_fa_market has_variable = cm_fa_b_best }
+			ordered_in_list = {
+				variable = cm_fa_drain_cands
+				limit = { has_variable = cm_fa_b_best }
 				order_by = { value = var:cm_fa_b_best }
 				position = 0
 				check_range_bounds = no
 				save_temporary_scope_as = cm_fa_pick_b_loc
 				save_temporary_scope_value_as = { name = cm_fa_dom_b value = var:cm_fa_b_best }
 			}
-			ordered_owned_location = {
-				limit = { market = scope:cm_fa_market has_variable = cm_fa_u_best }
+			ordered_in_list = {
+				variable = cm_fa_drain_cands
+				limit = { has_variable = cm_fa_u_best }
 				order_by = { value = var:cm_fa_u_best }
 				position = 0
 				check_range_bounds = no
 				save_temporary_scope_as = cm_fa_pick_u_loc
 				save_temporary_scope_value_as = { name = cm_fa_dom_u value = var:cm_fa_u_best }
 			}
-			ordered_owned_location = {
-				limit = { market = scope:cm_fa_market has_variable = cm_fa_r_score }
+			ordered_in_list = {
+				variable = cm_fa_drain_cands
+				limit = { has_variable = cm_fa_r_score }
 				order_by = { value = var:cm_fa_r_score }
 				position = 0
 				check_range_bounds = no
 				save_temporary_scope_as = cm_fa_pick_r_loc
 				save_temporary_scope_value_as = { name = cm_fa_dom_r value = var:cm_fa_r_score }
 			}
+			# The picks prune cm_fa_drain_cands, which is only safe because they run after
+			# all three scans above have closed. Moving one inside a scan body would mutate
+			# the list mid-iteration.
 			if = {
 				# Ties go to the build domain, then upgrades.
 				limit = {
@@ -350,6 +381,7 @@ cm_fa_pick_best_build_item = {
 	remove_from_variable_map = { name = cm_fa_b_conv key = scope:cm_fa_pick_type }
 	remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_fa_pick_type }
 	cm_fa_refresh_build_best = yes
+	cm_fa_drain_prune_loc = yes
 }
 
 # Full-automation twin of cm_q_approve_extra_build_copies: the same rank lists and claims,
@@ -415,6 +447,21 @@ cm_fa_approve_extra_build_copies = {
 			NOT = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
 		}
 		set_local_variable = { name = cm_fa_blk_industry value = 1 }
+	}
+}
+
+# Drops a spent location out of the market's candidate list so the picks stop reading it.
+# Not gated on cm_fa_best_any: the picks never clear it, and the anchor was taken before
+# the pick loop began. Root is the location.
+cm_fa_drain_prune_loc = {
+	save_temporary_scope_as = cm_fa_prune_loc
+	if = {
+		limit = {
+			NOT = { has_variable = cm_fa_b_best }
+			NOT = { has_variable = cm_fa_u_best }
+			NOT = { has_variable = cm_fa_r_score }
+		}
+		scope:cm_country = { remove_list_variable = { name = cm_fa_drain_cands target = scope:cm_fa_prune_loc } }
 	}
 }
 
@@ -488,6 +535,7 @@ cm_fa_pick_best_upgrade_item = {
 	remove_from_variable_map = { name = cm_fa_u_costs key = scope:cm_fa_pick_type }
 	remove_from_variable_map = { name = cm_fa_u_new_types key = scope:cm_fa_pick_type }
 	cm_fa_refresh_upg_best = yes
+	cm_fa_drain_prune_loc = yes
 }
 
 # Upgrade twin of cm_fa_refresh_build_best. Root is the location.
@@ -564,4 +612,5 @@ cm_fa_approve_rgo_item = {
 			}
 		}
 	}
+	cm_fa_drain_prune_loc = yes
 }

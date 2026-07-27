@@ -8,32 +8,56 @@ widget = {
 	visible = "[EqualTo_CFixedPoint('(CFixedPoint)0', '(CFixedPoint)0')]"
 	position = { -10000 1 }
 	widget = {
-		# One driver for every lucky nation: PdxGuiTriggerAllAnimations matches by state name
-		# across the whole tree, so a driver per country would fire every country's items.
-		# The 0.2s steps keep it off the player driver's 0.15s beat.
+		# Scan driver: one sweep per arm, shared by every lucky nation. A sweep costs one
+		# scripted_gui_command per staged item summed over the whole list, so repeating it
+		# every poll round flooded the engine's message queue once one of them grew large.
+		# A country whose cycle has ended has empty staged lists and contributes nothing.
+		# Pinned hidden so the gate going true always makes a hidden->shown first show.
 		widget = {
 			size = { 0 0 }
-			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_ln_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			visible_at_creation = no
+			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_ln_should_scan').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 			state = {
 				name = _show
-				duration = 0.1
-				next = cm_ln_round_fire
-			}
-			# Rounds are safe to repeat: scorers skip entries already processed this cycle.
-			state = {
-				name = cm_ln_round_fire
-				duration = 0.2
+				duration = 0.3
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_construct_urbanize')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_fa_construct_build')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_fa_construct_upgrade')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_fa_construct_rgo')]"
-				next = cm_ln_round_check
+				next = cm_ln_scan_done
 			}
 			state = {
-				name = cm_ln_round_check
+				name = cm_ln_scan_done
+				duration = 0.15
+				on_finish = "[GetScriptedGui('cm_ln_scan_disarm').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+		}
+		# One poll driver for every lucky nation: PdxGuiTriggerAllAnimations matches by state name
+		# across the whole tree, so a driver per country would fire every country's items.
+		# The 0.2s steps keep it off the player driver's 0.15s beat.
+		# Pinned hidden so the gate going true always makes a hidden->shown first show.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_ln_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			# Every state needs an on_finish: one without it never advances.
+			state = {
+				name = _show
 				duration = 0.2
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_check')]"
-				next = cm_ln_round_fire
+				next = cm_ln_round_b
+			}
+			state = {
+				name = cm_ln_round_b
+				duration = 0.2
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_check')]"
+				next = cm_ln_round_a
+			}
+			state = {
+				name = cm_ln_round_a
+				duration = 0.2
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_check')]"
+				next = cm_ln_round_b
 			}
 		}
 		# Building Cleanup toggle driver. Pinned hidden at creation so the gate going true always
@@ -67,11 +91,11 @@ widget = {
 						size = { 0 0 }
 						state = {
 							name = cm_ln_check
-							on_finish = "[GetScriptedGui('cm_ln_sync_check').Execute(GuiScope.SetRoot(Country.MakeScope).End)]"
+							on_finish = "[GetScriptedGui('cm_ln_sync_check').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_ln_country', Country.MakeScope).End)]"
 						}
 						state = {
 							name = cm_ln_cu_end
-							on_finish = "[GetScriptedGui('cm_ln_cu_end').Execute(GuiScope.SetRoot(Country.MakeScope).End)]"
+							on_finish = "[GetScriptedGui('cm_ln_cu_end').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_ln_country', Country.MakeScope).End)]"
 						}
 					}
 					# One list carries both the closes and the reopens: ToggleBuilding flips

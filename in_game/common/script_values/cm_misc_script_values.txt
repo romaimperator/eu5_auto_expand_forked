@@ -5,6 +5,18 @@ cm_max_guess_at_number_of_locations = 1000000
 
 cm_max_guess_at_number_of_buildings = 1000000
 
+# Rounds of no progress before a construction cycle gives up and fires whatever verified.
+# The scorer sweep dispatches once per cycle, so a round can make no progress simply
+# because that one burst is still draining, and the wait has to scale with how much was
+# dispatched. The ceiling keeps it under the dispatcher's own two-pulse force reset, which
+# drops the month outright rather than firing a partial one. Root is the country.
+cm_q_give_up_rounds = {
+	value = var:cm_q_staged
+	divide = 100
+	min = 12
+	max = 60
+}
+
 # Root is the country
 cm_get_allowed_building_overbuild_levels = {
 	if = { limit = { NOT = { exists = var:cm_allowed_building_overbuild_levels } }

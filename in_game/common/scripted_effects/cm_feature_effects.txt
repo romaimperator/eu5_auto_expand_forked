@@ -59,6 +59,7 @@ cm_run_construction_cycle = {
 		set_variable = { name = cm_q_processed value = 0 }
 		set_variable = { name = cm_q_progress_last value = 0 }
 		set_variable = { name = cm_q_stall_rounds value = 0 }
+		set_variable = { name = cm_q_rescans value = 0 }
 		cm_q_reset_market_committed_for_cycle = yes
 		if = { limit = { cm_should_pause_auto_expand = no }
 			if = { limit = { has_variable_list = cm_priority_features_list }
@@ -88,10 +89,15 @@ cm_run_construction_cycle = {
 				cm_fa_master_active = yes
 				has_variable_list = cm_fa_categories_enabled
 			}
+			cm_fa_pick_slice = yes
 			every_in_list = {
 				variable = cm_fa_categories_enabled
 				save_scope_as = cm_fa_cat
 				scope:cm_country = { cm_fa_stage_category = yes }
+			}
+			# The slice budget is tuned against this number.
+			if = { limit = { cm_ln_is_active = no }
+				cmf_log_value = { action = cm_fa_log_staged value = var:cm_q_staged }
 			}
 		}
 		# Show the construction-queue window to construct this month's staged items.
@@ -112,6 +118,13 @@ cm_run_construction_cycle = {
 				}
 			}
 			set_variable = { name = cm_should_construct value = yes }
+			# One scan driver serves every lucky nation, so their arm is global; several
+			# arming in one tick still produce one sweep.
+			if = { limit = { cm_ln_is_active = yes }
+				set_global_variable = { name = cm_ln_scan_armed value = 1 }
+			} else = {
+				set_variable = { name = cm_q_scan_armed value = yes }
+			}
 		}
 	}
 }
@@ -242,6 +255,10 @@ cm_q_reset_cycle_state = {
 	remove_variable = cm_q_pass_done
 	remove_variable = cm_should_construct
 	remove_variable = cm_q_fire_approved
+	# Leaving this set would deny the next cycle's arm its false->true edge, so the scan
+	# driver would never fire again.
+	remove_variable = cm_q_scan_armed
+	remove_variable = cm_q_rescans
 }
 
 # Root is the country. The foreign queue keeps no per-location state, so its whole teardown

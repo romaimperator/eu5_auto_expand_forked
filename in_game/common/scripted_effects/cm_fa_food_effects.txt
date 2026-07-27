@@ -115,46 +115,42 @@ cm_fa_food_yearly_evaluation = {
 			if = {
 				limit = { local_var:cm_fa_med_below = 1 }
 				set_local_variable = { name = cm_fa_food_n value = 0 }
-				scope:cm_country = {
-					every_owned_location = {
-						limit = {
-							market = scope:cm_fa_market
-							NOT = { integration_level = conquered }
-							cm_fa_food_location_effectively_active = yes
-							cm_fa_food_location_counts_as_expandable = yes
-						}
-						change_local_variable = { name = cm_fa_food_n add = 1 }
+				every_location_in_market = {
+					limit = {
+						owner ?= scope:cm_country
+						NOT = { integration_level = conquered }
+						cm_fa_food_location_effectively_active = yes
+						cm_fa_food_location_counts_as_expandable = yes
 					}
+					change_local_variable = { name = cm_fa_food_n add = 1 }
 				}
 				if = {
 					limit = { local_var:cm_fa_food_n < 2 }
 					scope:cm_country = { cmf_log = { action = cm_fa_log_food_low } }
 					scope:cm_country = { cm_fa_food_log_candidate_diag = yes }
-					scope:cm_country = {
-						ordered_owned_location = {
-							order_by = cm_location_food_potential
-							max = cm_max_guess_at_number_of_locations
-							check_range_bounds = no
-							limit = {
-								market = scope:cm_fa_market
-								NOT = { integration_level = conquered }
-								location_rank = location_rank:rural_settlement
-								cm_fa_location_has_food_rgo = yes
-								NOT = { cm_fa_food_location_effectively_active = yes }
-								# The player said no here.
-								NOT = { exists = var:cm_auto_food_location_excluded }
-								cm_check_location_meets_min_market_access = yes
-								cm_location_food_potential >= cm_fa_food_min_potential_value
-							}
-							save_scope_as = cm_fa_cand
-							# The iterator snapshots its limit; the count advances live.
-							if = {
-								limit = { local_var:cm_fa_food_n < 2 }
-								scope:cm_fa_cand = { set_variable = { name = cm_fa_food_marked value = yes } }
-								scope:cm_country = { add_to_variable_list = { name = cm_fa_food_locations target = scope:cm_fa_cand } }
-								change_local_variable = { name = cm_fa_food_n add = 1 }
-								scope:cm_country = { cmf_log = { action = cm_fa_log_food_picked } }
-							}
+					ordered_location_in_market = {
+						order_by = cm_location_food_potential
+						max = cm_max_guess_at_number_of_locations
+						check_range_bounds = no
+						limit = {
+							owner ?= scope:cm_country
+							NOT = { integration_level = conquered }
+							location_rank = location_rank:rural_settlement
+							cm_fa_location_has_food_rgo = yes
+							NOT = { cm_fa_food_location_effectively_active = yes }
+							# The player said no here.
+							NOT = { exists = var:cm_auto_food_location_excluded }
+							cm_check_location_meets_min_market_access = yes
+							cm_location_food_potential >= cm_fa_food_min_potential_value
+						}
+						save_scope_as = cm_fa_cand
+						# The iterator snapshots its limit; the count advances live.
+						if = {
+							limit = { local_var:cm_fa_food_n < 2 }
+							scope:cm_fa_cand = { set_variable = { name = cm_fa_food_marked value = yes } }
+							scope:cm_country = { add_to_variable_list = { name = cm_fa_food_locations target = scope:cm_fa_cand } }
+							change_local_variable = { name = cm_fa_food_n add = 1 }
+							scope:cm_country = { cmf_log = { action = cm_fa_log_food_picked } }
 						}
 					}
 				}
@@ -270,26 +266,28 @@ cm_fa_food_log_candidate_diag = {
 	set_local_variable = { name = cm_fa_diag_pot value = 0 }
 	set_local_variable = { name = cm_fa_diag_access value = 0 }
 	set_local_variable = { name = cm_fa_diag_cand value = 0 }
-	every_owned_location = {
-		limit = {
-			market = scope:cm_fa_market
-			NOT = { integration_level = conquered }
-			location_rank = location_rank:rural_settlement
-			cm_fa_location_has_food_rgo = yes
-		}
-		change_local_variable = { name = cm_fa_diag_rgo add = 1 }
-		if = {
-			limit = { cm_location_food_potential >= cm_fa_food_min_potential_value }
-			change_local_variable = { name = cm_fa_diag_pot add = 1 }
+	scope:cm_fa_market = {
+		every_location_in_market = {
+			limit = {
+				owner ?= scope:cm_country
+				NOT = { integration_level = conquered }
+				location_rank = location_rank:rural_settlement
+				cm_fa_location_has_food_rgo = yes
+			}
+			change_local_variable = { name = cm_fa_diag_rgo add = 1 }
 			if = {
-				limit = { cm_check_location_meets_min_market_access = yes }
-				change_local_variable = { name = cm_fa_diag_access add = 1 }
+				limit = { cm_location_food_potential >= cm_fa_food_min_potential_value }
+				change_local_variable = { name = cm_fa_diag_pot add = 1 }
 				if = {
-					limit = {
-						NOT = { cm_fa_food_location_effectively_active = yes }
-						NOT = { exists = var:cm_auto_food_location_excluded }
+					limit = { cm_check_location_meets_min_market_access = yes }
+					change_local_variable = { name = cm_fa_diag_access add = 1 }
+					if = {
+						limit = {
+							NOT = { cm_fa_food_location_effectively_active = yes }
+							NOT = { exists = var:cm_auto_food_location_excluded }
+						}
+						change_local_variable = { name = cm_fa_diag_cand add = 1 }
 					}
-					change_local_variable = { name = cm_fa_diag_cand add = 1 }
 				}
 			}
 		}

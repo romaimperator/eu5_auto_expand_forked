@@ -7,20 +7,19 @@ widget = {
 	visible = "[EqualTo_CFixedPoint('(CFixedPoint)0', '(CFixedPoint)0')]"
 	position = { -10000 1 }
 	widget = {
-		# Per-cycle driver: tears down when cm_should_construct clears and rebuilds next cycle, re-running _show.
+		# Scan driver: one sweep per cycle. PdxGuiTriggerAllAnimations matches by state name
+		# across the whole tree, so a sweep costs one scripted_gui_command per staged item;
+		# repeating it every poll round multiplied that by the round count and flooded the
+		# engine's message queue on very large nations. Pinned hidden so the gate going true
+		# always makes a hidden->shown first show.
 		widget = {
 			size = { 0 0 }
-			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
-			# Step lengths only pace the loop; completion is decided by cm_q_sync_check.
+			visible_at_creation = no
+			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_q_scan_gate').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			# 0.3 gives the staged datamodels time to instantiate before their one sweep.
 			state = {
 				name = _show
-				duration = 0.1
-				next = cm_q_round_fire
-			}
-			# Rounds are safe to repeat: executors skip entries already processed this cycle.
-			state = {
-				name = cm_q_round_fire
-				duration = 0.15
+				duration = 0.3
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_upgrade')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_ungated')]"
@@ -33,6 +32,29 @@ widget = {
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_fa_construct_build')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_fa_construct_upgrade')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_fa_construct_rgo')]"
+				next = cm_q_scan_done
+			}
+			state = {
+				name = cm_q_scan_done
+				duration = 0.15
+				on_finish = "[GetScriptedGui('cm_q_scan_disarm').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+		}
+		# Per-cycle poll driver: tears down when cm_should_construct clears and rebuilds next cycle, re-running _show.
+		widget = {
+			size = { 0 0 }
+			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			# Step lengths only pace the loop; completion is decided by cm_q_sync_check.
+			state = {
+				name = _show
+				duration = 0.1
+				next = cm_q_round_probe
+			}
+			# The approved lists populate mid-cycle, so their widgets need more than one
+			# chance to instantiate. Costs nothing until the approval pass fills them.
+			state = {
+				name = cm_q_round_probe
+				duration = 0.15
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_probe')]"
 				next = cm_q_round_check
 			}
@@ -40,7 +62,7 @@ widget = {
 				name = cm_q_round_check
 				duration = 0.15
 				on_finish = "[GetScriptedGui('cm_q_sync_check').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-				next = cm_q_round_fire
+				next = cm_q_round_probe
 			}
 		}
 		# Fire driver: the gate flag flips once per cycle, so _show runs the engine actions exactly once.

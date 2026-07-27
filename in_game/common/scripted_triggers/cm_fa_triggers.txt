@@ -6,6 +6,44 @@ cm_fa_master_active = {
 	cm_should_pause_auto_expand = no
 }
 
+# Market slice membership (cm_fa_slice_effects.txt).
+
+# Root is the market, expects scope:cm_fa_slice_country.
+cm_fa_market_unseen_this_rotation = {
+	save_temporary_scope_as = cm_fa_slice_test_mkt
+	scope:cm_fa_slice_country = {
+		OR = {
+			NOT = { has_variable_map = cm_fa_slice_seen }
+			NOT = { is_key_in_variable_map = { name = cm_fa_slice_seen target = scope:cm_fa_slice_test_mkt } }
+		}
+	}
+}
+
+# True while the current rotation still has a market it has not covered. Root is the country.
+cm_fa_slice_has_unseen = {
+	save_temporary_scope_as = cm_fa_slice_country
+	any_market_present_in_country = {
+		cm_fa_market_unseen_this_rotation = yes
+	}
+}
+
+# True for a market this cycle staged and will drain. Root is the market, expects
+# scope:cm_country.
+cm_fa_market_in_slice = {
+	save_temporary_scope_as = cm_fa_slice_test_mkt
+	scope:cm_country = {
+		has_variable_map = cm_fa_slice_now
+		is_key_in_variable_map = { name = cm_fa_slice_now target = scope:cm_fa_slice_test_mkt }
+	}
+}
+
+# Slice membership for a sweep that iterates locations rather than markets. Root is the
+# location, expects scope:cm_country. Cheap enough to lead a limit, so the engine
+# buildability and pop gates behind it never run for a location outside the slice.
+cm_location_market_in_fa_slice = {
+	market = { cm_fa_market_in_slice = yes }
+}
+
 # Affordability gate for full-automation approvals: the category pool covers the cost and
 # the treasury stays above the full-automation reserve after this drain's committed spend.
 # $POOL$ = the category pool variable name. Expects scope:cm_country, scope:cm_cost.
@@ -271,6 +309,17 @@ cm_fa_cu_is_unprofitable = {
 	building_profit <= cm_fa_cu_effective_floor
 }
 
+# Price Collapsar drives these four toward unprofitable on purpose. building_produced_goods
+# reads the method the building actually runs. Root is the building.
+cm_fa_cu_produces_core_good = {
+	OR = {
+		building_produced_goods = goods:masonry
+		building_produced_goods = goods:lumber
+		building_produced_goods = goods:sand
+		building_produced_goods = goods:glass
+	}
+}
+
 # Mostly runs on construction materials without making any, so its inputs are worth more in
 # the construction queue than in a barely-profitable building.
 # Root is the building, expects scope:cm_country.
@@ -279,12 +328,7 @@ cm_fa_cu_core_goods_applies = {
 	building_type = { save_temporary_scope_as = cm_fa_cu_ct }
 	has_global_variable_map = cm_fa_cu_core_in
 	is_key_in_global_variable_map = { name = cm_fa_cu_core_in target = scope:cm_fa_cu_ct }
-	NOR = {
-		building_produced_goods = goods:masonry
-		building_produced_goods = goods:lumber
-		building_produced_goods = goods:sand
-		building_produced_goods = goods:glass
-	}
+	cm_fa_cu_produces_core_good = no
 }
 
 # Destroyed on sight, whatever it earns: the goods it draws are worth more elsewhere.

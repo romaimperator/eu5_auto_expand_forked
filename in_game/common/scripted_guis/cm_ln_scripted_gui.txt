@@ -4,71 +4,98 @@
 # Gates the lucky queue window's round driver.
 cm_ln_should_construct = {
 	is_shown = {
-		trigger_if = {
-			limit = { has_global_variable = cm_ln_open_cycles }
-			global_var:cm_ln_open_cycles >= 1
+		has_global_variable = cm_ln_open_cycles
+	}
+}
+
+# Gates the lucky queue window's scan driver. Global rather than per country, because one
+# driver serves the whole list and lucky nations arm on different days of the month.
+cm_ln_should_scan = {
+	is_shown = {
+		has_global_variable = cm_ln_scan_armed
+	}
+}
+
+# Ends the scan driver's one sweep.
+cm_ln_scan_disarm = {
+	effect = {
+		if = {
+			limit = { has_global_variable = cm_ln_scan_armed }
+			remove_global_variable = cm_ln_scan_armed
 		}
-		trigger_else = { always = no }
 	}
 }
 
 # Gates the lucky queue window's Building Cleanup toggle driver.
 cm_ln_should_toggle = {
 	is_shown = {
-		trigger_if = {
-			limit = { has_global_variable = cm_ln_cu_pending }
-			global_var:cm_ln_cu_pending >= 1
-		}
-		trigger_else = { always = no }
+		has_global_variable = cm_ln_cu_pending
 	}
 }
 
-# Ends one lucky nation's toggle pass. Root is the country.
+# Ends one lucky nation's toggle pass. Root is the player, scope:cm_ln_country the lucky
+# nation, matching the scorers rather than rooting at a country this client does not play.
 cm_ln_cu_end = {
+	saved_scopes = { cm_ln_country }
 	effect = {
-		remove_variable = cm_fa_cu_fire
-		clear_variable_list = cm_fa_cu_toggle
+		scope:cm_ln_country = {
+			remove_variable = cm_fa_cu_fire
+			clear_variable_list = cm_fa_cu_toggle
+		}
 		cm_ln_sync_cu_pending = yes
 	}
 }
 
-# Per-round completion check for a lucky nation. Root is the country. Everything the pass
-# approves constructs from script inside it, so there is no approved set to verify
-# instantiated and no fire pass to arm.
+# Per-round completion check for a lucky nation. Root is the player, scope:cm_ln_country the
+# lucky nation. Everything the pass approves constructs from script inside it, so there is no
+# approved set to verify instantiated and no fire pass to arm.
 cm_ln_sync_check = {
+	saved_scopes = { cm_ln_country }
 	is_valid = {
 		always = yes
 	}
 	effect = {
-		if = {
-			limit = { exists = var:cm_should_construct }
+		scope:cm_ln_country = {
 			if = {
-				limit = { var:cm_q_processed >= var:cm_q_staged }
+				limit = { exists = var:cm_should_construct }
 				if = {
-					limit = { NOT = { exists = var:cm_q_pass_done } }
-					set_variable = { name = cm_q_pass_done value = yes }
-					cm_q_approval_pass = yes
-				}
-				cm_ln_end_cycle = yes
-			} else = {
-				# Stall watchdog: progress is executor completions, the only signal here.
-				set_variable = { name = cm_q_progress_now value = var:cm_q_processed }
-				if = {
-					limit = { var:cm_q_progress_now > var:cm_q_progress_last }
-					set_variable = { name = cm_q_progress_last value = var:cm_q_progress_now }
-					set_variable = { name = cm_q_stall_rounds value = 0 }
-				} else = {
-					change_variable = { name = cm_q_stall_rounds add = 1 }
+					limit = { var:cm_q_processed >= var:cm_q_staged }
 					if = {
-						# 8 stalled rounds is about 3.2s with no scoring progress.
-						limit = { var:cm_q_stall_rounds >= 8 }
-						cmf_log = { action = cm_ln_log_cycle_gave_up }
+						limit = { NOT = { exists = var:cm_q_pass_done } }
+						set_variable = { name = cm_q_pass_done value = yes }
+						cm_q_approval_pass = yes
+					}
+					cm_ln_end_cycle = yes
+				} else = {
+					# Stall watchdog: progress is executor completions, the only signal here.
+					set_variable = { name = cm_q_progress_now value = var:cm_q_processed }
+					if = {
+						limit = { var:cm_q_progress_now > var:cm_q_progress_last }
+						set_variable = { name = cm_q_progress_last value = var:cm_q_progress_now }
+						set_variable = { name = cm_q_stall_rounds value = 0 }
+					} else = {
+						change_variable = { name = cm_q_stall_rounds add = 1 }
 						if = {
-							limit = { NOT = { exists = var:cm_q_pass_done } }
-							set_variable = { name = cm_q_pass_done value = yes }
-							cm_q_approval_pass = yes
+							# An item widget that had not instantiated when the one sweep fired has
+							# no other way back in.
+							limit = {
+								var:cm_q_stall_rounds >= 6
+								var:cm_q_rescans < 2
+								NOT = { has_global_variable = cm_ln_scan_armed }
+							}
+							change_variable = { name = cm_q_rescans add = 1 }
+							set_variable = { name = cm_q_stall_rounds value = 0 }
+							set_global_variable = { name = cm_ln_scan_armed value = 1 }
+						} else_if = {
+							limit = { var:cm_q_stall_rounds >= { value = cm_q_give_up_rounds } }
+							cmf_log = { action = cm_ln_log_cycle_gave_up }
+							if = {
+								limit = { NOT = { exists = var:cm_q_pass_done } }
+								set_variable = { name = cm_q_pass_done value = yes }
+								cm_q_approval_pass = yes
+							}
+							cm_ln_end_cycle = yes
 						}
-						cm_ln_end_cycle = yes
 					}
 				}
 			}

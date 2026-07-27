@@ -6,6 +6,25 @@ cm_should_construct = {
 	}
 }
 
+# Gates the construction-queue window's scan driver. Root is the player.
+# Set by the dispatcher when a cycle arms, and again by cm_q_sync_check when a stalled
+# cycle still has unscored entries; cleared by the scan driver's own terminal state.
+cm_q_scan_gate = {
+	is_shown = {
+		exists = var:cm_q_scan_armed
+	}
+}
+
+# Ends the scan driver's one sweep. Root is the player.
+cm_q_scan_disarm = {
+	effect = {
+		if = {
+			limit = { exists = var:cm_q_scan_armed }
+			remove_variable = cm_q_scan_armed
+		}
+	}
+}
+
 # Gates the construction-queue window's fire driver. Root is the player.
 # Set by cm_q_sync_check once every approved entry is verified instantiated.
 cm_q_fire_approved_gate = {
@@ -65,8 +84,8 @@ cm_q_probe_rank = {
 # Per-round completion check for the construct window's loop. Root is the player.
 # Once every executor has scored (processed >= staged), runs cm_q_approval_pass, then arms
 # the fire pass when every approved entry's widget is verified by its probe mark. A cycle
-# making no instantiation progress for 8 straight rounds fires whatever is verified instead
-# of dropping the month.
+# making no instantiation progress re-arms the scan sweep twice, then fires whatever is
+# verified instead of dropping the month.
 cm_q_sync_check = {
 	is_valid = {
 		always = yes
@@ -156,8 +175,20 @@ cm_q_sync_check = {
 				} else = {
 					change_variable = { name = cm_q_stall_rounds add = 1 }
 					if = {
-						# 8 stalled rounds is about 2.4s with zero instantiation progress.
-						limit = { var:cm_q_stall_rounds >= 8 }
+						# Scoring is the only side a re-sweep can help: an item widget that had
+						# not instantiated when the one sweep fired has no other way back in,
+						# while an unverified approved entry already gets a probe every round.
+						limit = {
+							var:cm_q_stall_rounds >= 6
+							var:cm_q_processed < var:cm_q_staged
+							var:cm_q_rescans < 2
+							NOT = { exists = var:cm_q_scan_armed }
+						}
+						change_variable = { name = cm_q_rescans add = 1 }
+						set_variable = { name = cm_q_stall_rounds value = 0 }
+						set_variable = { name = cm_q_scan_armed value = yes }
+					} else_if = {
+						limit = { var:cm_q_stall_rounds >= { value = cm_q_give_up_rounds } }
 						cmf_log = { action = cm_log_cycle_gave_up }
 						# A stalled cycle can give up before reaching the approval pass; approve
 						# whatever scored so the month is not dropped outright.

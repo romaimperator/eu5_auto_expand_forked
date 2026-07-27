@@ -169,31 +169,35 @@ cm_fa_cu_survey_market = {
 	clear_variable_map = cm_fa_cu_closed_n
 	clear_variable_map = cm_fa_cu_acted
 	clear_variable_map = cm_fa_cu_reop
-	every_owned_location = {
-		limit = {
-			market = scope:cm_fa_market
-			NOT = { integration_level = conquered }
-		}
-		save_scope_as = cm_location
-		every_buildings_in_location = {
+	# Iterating the market rather than the country matters here: this runs once per market.
+	# The iterator carries no ownership filter of its own.
+	scope:cm_fa_market = {
+		every_location_in_market = {
 			limit = {
-				owner = scope:cm_country
-				building_type = { cm_is_building_type_production_building = yes }
+				owner ?= scope:cm_country
+				NOT = { integration_level = conquered }
 			}
-			save_scope_as = cm_building
-			building_type = { save_scope_as = cm_building_type }
-			if = {
-				limit = { scope:cm_building = { is_opened = yes } }
-				scope:cm_country = {
-					cm_fa_cu_bump_open = yes
-					if = {
-						limit = { scope:cm_building = { cm_fa_cu_is_unprofitable = no } }
-						add_to_variable_map = { name = cm_fa_cu_prof_open key = scope:cm_building_type value = 1 }
-					}
+			save_scope_as = cm_location
+			every_buildings_in_location = {
+				limit = {
+					owner = scope:cm_country
+					building_type = { cm_is_building_type_production_building = yes }
 				}
-			} else_if = {
-				limit = { scope:cm_building = { cm_fa_cu_is_tracked_closed = yes } }
-				scope:cm_country = { cm_fa_cu_bump_closed_n = yes }
+				save_scope_as = cm_building
+				building_type = { save_scope_as = cm_building_type }
+				if = {
+					limit = { scope:cm_building = { is_opened = yes } }
+					scope:cm_country = {
+						cm_fa_cu_bump_open = yes
+						if = {
+							limit = { scope:cm_building = { cm_fa_cu_is_unprofitable = no } }
+							add_to_variable_map = { name = cm_fa_cu_prof_open key = scope:cm_building_type value = 1 }
+						}
+					}
+				} else_if = {
+					limit = { scope:cm_building = { cm_fa_cu_is_tracked_closed = yes } }
+					scope:cm_country = { cm_fa_cu_bump_closed_n = yes }
+				}
 			}
 		}
 	}
@@ -209,11 +213,19 @@ cm_fa_cu_close_pass = {
 		max = cm_max_guess_at_number_of_buildings
 		check_range_bounds = no
 		limit = {
+			# The iterator walks every owned building once per market, so the market test
+			# leads: the profit read behind it is by far the most expensive check here.
+			location = {
+				owner = scope:cm_country
+				market = scope:cm_fa_market
+				NOT = { integration_level = conquered }
+			}
 			is_opened = yes
 			is_subsidized = no
 			# A building exists and reads no profit from the moment its first level is
 			# queued, so without this the pass closes what it is still paying to build.
 			cm_is_not_under_construction = yes
+			cm_fa_cu_produces_core_good = no
 			cm_fa_cu_is_unprofitable = yes
 			building_type = {
 				cm_is_building_type_production_building = yes
@@ -223,11 +235,6 @@ cm_fa_cu_close_pass = {
 			trigger_if = {
 				limit = { building_type = building_type:market_village }
 				building_level > 1
-			}
-			location = {
-				owner = scope:cm_country
-				market = scope:cm_fa_market
-				NOT = { integration_level = conquered }
 			}
 		}
 		save_scope_as = cm_building
@@ -272,17 +279,24 @@ cm_fa_cu_reopen_pass = {
 		max = cm_max_guess_at_number_of_buildings
 		check_range_bounds = no
 		limit = {
-			cm_fa_cu_is_tracked_closed = yes
 			location = {
 				owner = scope:cm_country
 				market = scope:cm_fa_market
 			}
+			cm_fa_cu_is_tracked_closed = yes
 		}
 		save_scope_as = cm_building
 		building_type = { save_scope_as = cm_building_type }
 		location = { save_scope_as = cm_location }
 		if = {
-			limit = { scope:cm_country = { cm_fa_cu_group_reopen_room = yes } }
+			# A core-goods producer is not judged on profit, so its group's recovery is not
+			# what decides it. This is also what restores the ones closed before the exemption.
+			limit = {
+				OR = {
+					cm_fa_cu_produces_core_good = yes
+					scope:cm_country = { cm_fa_cu_group_reopen_room = yes }
+				}
+			}
 			scope:cm_country = {
 				cm_fa_cu_bump_reop = yes
 				add_to_variable_list = { name = cm_fa_cu_toggle target = scope:cm_building }

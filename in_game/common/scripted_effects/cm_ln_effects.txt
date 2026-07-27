@@ -37,8 +37,8 @@ cm_ln_refresh_countries = {
 	}
 }
 
-# Counts the lucky nations with a cycle open. The queue window's driver gate reads it.
-# No scope.
+# Counts the lucky nations with a cycle open, and goes absent at zero. The queue window's
+# driver gate reads it. No scope.
 cm_ln_sync_open_cycles = {
 	set_global_variable = { name = cm_ln_open_cycles value = 0 }
 	every_country = {
@@ -48,10 +48,14 @@ cm_ln_sync_open_cycles = {
 		}
 		change_global_variable = { name = cm_ln_open_cycles add = 1 }
 	}
+	if = {
+		limit = { global_var:cm_ln_open_cycles = 0 }
+		remove_global_variable = cm_ln_open_cycles
+	}
 }
 
-# Counts the lucky nations with Building Cleanup toggles waiting. The queue window's toggle
-# driver gate reads it. No scope.
+# Counts the lucky nations with Building Cleanup toggles waiting, and goes absent at zero.
+# The queue window's toggle driver gate reads it. No scope.
 cm_ln_sync_cu_pending = {
 	set_global_variable = { name = cm_ln_cu_pending value = 0 }
 	every_country = {
@@ -60,6 +64,10 @@ cm_ln_sync_cu_pending = {
 			exists = var:cm_fa_cu_fire
 		}
 		change_global_variable = { name = cm_ln_cu_pending add = 1 }
+	}
+	if = {
+		limit = { global_var:cm_ln_cu_pending = 0 }
+		remove_global_variable = cm_ln_cu_pending
 	}
 }
 

@@ -1,0 +1,52 @@
+﻿# Full-automation market slice: one cycle covers a rotating subset of the country's markets
+# instead of all of them, so a very large nation's staging cost matches a medium one's.
+# Markets are the slice unit because they partition the country's locations and because the
+# Industry drain is already per market, so a sliced market keeps the complete candidate set
+# its anchor and payback margin are measured against.
+# Markets are stored as variable-map keys rather than list targets, the shape the food
+# histograms already use.
+
+# Market-locations admitted per cycle. A country at or under this size takes every market
+# every cycle, which is what it did before the slice existed.
+@cm_fa_slice_location_budget = 300
+
+# Picks this cycle's markets. Root is the country.
+cm_fa_pick_slice = {
+	clear_variable_map = cm_fa_slice_now
+	# Temporary because cm_fa_slice_has_unseen saves the same name, and a temporary target
+	# over a permanent one of the same name is a logged warning.
+	save_temporary_scope_as = cm_fa_slice_country
+	if = {
+		limit = { NOT = { cm_fa_slice_has_unseen = yes } }
+		clear_variable_map = cm_fa_slice_seen
+	}
+	set_local_variable = { name = cm_fa_slice_room value = @cm_fa_slice_location_budget }
+	set_local_variable = { name = cm_fa_slice_taken value = 0 }
+	every_market_present_in_country = {
+		limit = { cm_fa_market_unseen_this_rotation = yes }
+		save_scope_as = cm_fa_slice_mkt
+		if = {
+			# The first market is always admitted whatever its size, so no market can be too
+			# big to ever be taken.
+			limit = {
+				OR = {
+					local_var:cm_fa_slice_taken = 0
+					local_var:cm_fa_slice_room >= { value = market_location_count }
+				}
+			}
+			change_local_variable = { name = cm_fa_slice_room subtract = market_location_count }
+			set_local_variable = { name = cm_fa_slice_taken value = 1 }
+			scope:cm_fa_slice_country = {
+				add_to_variable_map = { name = cm_fa_slice_now key = scope:cm_fa_slice_mkt value = 1 }
+				add_to_variable_map = { name = cm_fa_slice_seen key = scope:cm_fa_slice_mkt value = 1 }
+			}
+		}
+	}
+}
+
+# A new tag's markets are different, so the rotation restarts rather than carrying over.
+# Root is the country.
+cm_fa_clear_slice_state = {
+	clear_variable_map = cm_fa_slice_now
+	clear_variable_map = cm_fa_slice_seen
+}

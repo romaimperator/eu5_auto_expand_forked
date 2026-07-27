@@ -153,8 +153,12 @@ cm_rgob_sweep_batch = {
 			while = {
 				limit = { local_var:cm_rgob_wi < local_var:cm_rgob_whi }
 				change_local_variable = { name = cm_rgob_wi add = 1 }
-				"global_variable_map(cm_rgob_wl|local_var:cm_rgob_wi)" = {
-					cm_rgob_recompute_province = yes
+				# The work list is a lobby-time snapshot of province slices.
+				if = {
+					limit = { exists = "global_variable_map(cm_rgob_wl|local_var:cm_rgob_wi)" }
+					"global_variable_map(cm_rgob_wl|local_var:cm_rgob_wi)" = {
+						cm_rgob_recompute_province = yes
+					}
 				}
 			}
 			set_global_variable = { name = cm_rgob_wl_idx value = local_var:cm_rgob_whi }

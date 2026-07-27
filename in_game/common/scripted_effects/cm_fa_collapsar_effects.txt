@@ -10,6 +10,7 @@
 cm_fa_run_collapsar = {
 	cm_fa_collapsar_cleanup_pending = yes
 	every_market_present_in_country = {
+		limit = { cm_fa_market_in_slice = yes }
 		save_scope_as = cm_fa_market
 		scope:cm_country = { cm_fa_stage_collapsar_market = yes }
 	}
@@ -80,30 +81,34 @@ cm_fa_stage_collapsar_good = {
 # scope:cm_fa_market, in any order, while room remains. The drain-only list bypasses GUI
 # scoring: the cost is script-side. Root is the country.
 cm_fa_stage_collapsar_rgos = {
-	every_owned_location = {
-		limit = {
-			market = scope:cm_fa_market
-			NOT = { integration_level = conquered }
-			raw_material ?= scope:cm_fa_good
-			cm_is_rgo_not_max_level_already = yes
-			cm_is_rgo_under_construction = no
-			cm_location_rgo_promotion_buffer_slack >= 0
-			NOT = { exists = var:cm_fa_collapsar_touched }
-			NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_fa_collapsar_pending_locs target = prev } } }
-			# The player's RGO auto-expand staged it this cycle.
-			NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_q_rgo_locations target = prev } } }
-		}
-		save_scope_as = cm_location
-		if = {
-			limit = { local_var:cm_fa_room > 0 }
-			scope:cm_country = {
-				if = {
-					limit = { NOT = { is_target_in_variable_list = { name = cm_fa_collapsar_rgo_locations target = scope:cm_location } } }
-					add_to_variable_list = { name = cm_fa_collapsar_rgo_locations target = scope:cm_location }
-				}
+	# Iterating the market rather than the country matters here: this runs once per material
+	# per market. The iterator carries no ownership filter of its own.
+	scope:cm_fa_market = {
+		every_location_in_market = {
+			limit = {
+				owner ?= scope:cm_country
+				NOT = { integration_level = conquered }
+				raw_material ?= scope:cm_fa_good
+				cm_is_rgo_not_max_level_already = yes
+				cm_is_rgo_under_construction = no
+				cm_location_rgo_promotion_buffer_slack >= 0
+				NOT = { exists = var:cm_fa_collapsar_touched }
+				NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_fa_collapsar_pending_locs target = prev } } }
+				# The player's RGO auto-expand staged it this cycle.
+				NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_q_rgo_locations target = prev } } }
 			}
-			scope:cm_location = { set_variable = { name = cm_fa_collapsar_touched value = yes } }
-			change_local_variable = { name = cm_fa_room subtract = 1 }
+			save_scope_as = cm_location
+			if = {
+				limit = { local_var:cm_fa_room > 0 }
+				scope:cm_country = {
+					if = {
+						limit = { NOT = { is_target_in_variable_list = { name = cm_fa_collapsar_rgo_locations target = scope:cm_location } } }
+						add_to_variable_list = { name = cm_fa_collapsar_rgo_locations target = scope:cm_location }
+					}
+				}
+				scope:cm_location = { set_variable = { name = cm_fa_collapsar_touched value = yes } }
+				change_local_variable = { name = cm_fa_room subtract = 1 }
+			}
 		}
 	}
 }
@@ -114,33 +119,35 @@ cm_fa_stage_collapsar_rgos = {
 cm_fa_stage_collapsar_building = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes
-	every_owned_location = {
-		limit = {
-			market = scope:cm_fa_market
-			NOT = { integration_level = conquered }
-			NOT = { exists = var:cm_fa_collapsar_touched }
-			NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_fa_collapsar_pending_locs target = prev } } }
-		}
-		save_scope_as = cm_location
-		if = {
+	scope:cm_fa_market = {
+		every_location_in_market = {
 			limit = {
-				local_var:cm_fa_room > 0
-				cm_location_allowed_to_build = { target = scope:cm_building_type }
-				cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
-				# A standing older tier would turn this build into its upgrade.
-				cm_location_has_no_auto_build_chain_predecessor = yes
-				cm_location_has_enough_pops_available = yes
-				cm_check_location_meets_min_market_access = yes
-				cm_get_open_build_queue_slots > 0
-				NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:cm_building_type } }
-				NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
-				NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
+				owner ?= scope:cm_country
+				NOT = { integration_level = conquered }
+				NOT = { exists = var:cm_fa_collapsar_touched }
+				NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_fa_collapsar_pending_locs target = prev } } }
 			}
-			cm_fa_stage_build_candidate = { cat = 2 }
-			scope:cm_location = {
-				set_variable = { name = cm_fa_collapsar_touched value = yes }
+			save_scope_as = cm_location
+			if = {
+				limit = {
+					local_var:cm_fa_room > 0
+					cm_location_allowed_to_build = { target = scope:cm_building_type }
+					cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
+					# A standing older tier would turn this build into its upgrade.
+					cm_location_has_no_auto_build_chain_predecessor = yes
+					cm_location_has_enough_pops_available = yes
+					cm_check_location_meets_min_market_access = yes
+					cm_get_open_build_queue_slots > 0
+					NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:cm_building_type } }
+					NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+					NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
+				}
+				cm_fa_stage_build_candidate = { cat = 2 }
+				scope:cm_location = {
+					set_variable = { name = cm_fa_collapsar_touched value = yes }
+				}
+				change_local_variable = { name = cm_fa_room subtract = 1 }
 			}
-			change_local_variable = { name = cm_fa_room subtract = 1 }
 		}
 	}
 }
