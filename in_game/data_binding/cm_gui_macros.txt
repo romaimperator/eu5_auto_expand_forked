@@ -25,10 +25,9 @@ macro = {
 
 # The console runs one command at a time and refuses any issued while one is running, so every
 # item appends its call to a per-country buffer and the sweep's terminal state submits the buffer.
-# A command costs about 3,385 log lines whatever it names, measured over 3,516 commands naming
-# nothing but the flat row effects, so the whole sweep goes in one scope block: a call per row cost
-# 11.9 million lines across two cycles. The cycle's rows are then all-or-nothing, which the probe
-# counters detect as arrivals falling short of staged, and the next cycle re-stages them.
+# A command costs a fixed 3,376 log lines whatever it names (cmf-engine-test 117/118), so the whole
+# sweep goes in one scope block: a call per row cost 11.9 million lines across two cycles. The
+# cycle's rows are then all-or-nothing, and the next cycle re-stages them.
 macro = {
 	description = "GUI variable holding a country's pending console batch"
 	definition = "CMBatchKey(CountryArg)"

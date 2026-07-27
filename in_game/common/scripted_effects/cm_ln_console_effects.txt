@@ -7,7 +7,7 @@
 # so every item appends its call to a per-country GUI buffer and the sweep's terminal state submits
 # the whole buffer as one command.
 #
-# A console command is parsed when it runs, costing a fixed ~3,385 log lines whatever it names plus
+# A console command is parsed when it runs, costing a fixed 3,376 log lines whatever it names plus
 # a term for very large named trees. Both bite: a command per item wrote 11.9 million lines across
 # two cycles, and naming the approval pass added about a million per command on top. So the
 # per-item effects below store their arguments and nothing else, cm_ln_c_process does the scoring
@@ -16,12 +16,6 @@
 #
 # Every effect here is entered from that command, so root is the country. Values cross as integers
 # scaled by 1000, because GUI has no CFixedPoint to string function.
-
-cm_ln_c_probe_reset = {
-	set_global_variable = { name = cm_ln_c_batch_n value = 0 }
-	set_global_variable = { name = cm_ln_c_match_n value = 0 }
-	cm_ln_c_rows_clear = yes
-}
 
 cm_ln_c_rows_clear = {
 	set_global_variable = { name = cm_ln_r_n value = 0 }
@@ -147,12 +141,10 @@ cm_ln_c_process = {
 		every_key_in_global_variable_map = {
 			variable = cm_ln_r_kind
 			save_scope_as = cm_ln_k
-			change_global_variable = { name = cm_ln_c_batch_n add = 1 }
 			cm_ln_c_row_common = yes
 			if = {
 				limit = { local_var:cm_ln_c_l > 0 }
 				"global_variable_map(cm_ln_loc_of_id|local_var:cm_ln_c_l)" = {
-					change_global_variable = { name = cm_ln_c_match_n add = 1 }
 					save_temporary_scope_as = cm_amenity_loc
 					save_temporary_scope_value_as = { name = cm_cur_market_access value = market_access }
 					# RGO rows carry no building type, and an absent key leaves the local holding
@@ -241,17 +233,4 @@ cm_ln_c_sync_check = {
 cm_ln_c_cu_end = {
 	save_scope_as = cm_ln_country
 	cm_ln_cu_end_apply = yes
-}
-
-# Root is the country. Runs at the top of the monthly cycle, so cm_q_staged is still last cycle's
-# count and can be compared against how much of the batch arrived.
-cm_ln_c_probe_report = {
-	if = {
-		limit = { exists = var:cm_q_staged }
-		cmf_log_value = { action = cm_ln_c_log_probe_staged value = var:cm_q_staged }
-		cmf_log_value = { action = cm_ln_c_log_batch value = global_var:cm_ln_c_batch_n }
-		cmf_log_value = { action = cm_ln_c_log_match value = global_var:cm_ln_c_match_n }
-		set_global_variable = { name = cm_ln_c_batch_n value = 0 }
-		set_global_variable = { name = cm_ln_c_match_n value = 0 }
-	}
 }
