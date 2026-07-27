@@ -4,13 +4,15 @@
 # ironman, so the bridge is single-player only and its drivers are gated accordingly.
 #
 # The console runs one command at a time and refuses any command issued while another is running,
-# so every item appends its command to a per-country GUI buffer and the sweep's terminal state
-# submits the buffer as one ';'-separated sequence.
+# so every item appends its call to a per-country GUI buffer and the sweep's terminal state submits
+# the whole buffer as one command.
 #
-# A console command is parsed when it runs, and parsing re-instantiates the entire expansion of
-# every scripted effect it names. Naming a scoring effect per item cost about 3400 log lines each
-# and wrote a 2.5 GB debug.log in one cycle. So the per-item effects below store their arguments
-# and do nothing else, and cm_ln_c_process does the scoring once per cycle from a single command.
+# A console command is parsed when it runs, costing a fixed ~3,385 log lines whatever it names plus
+# a term for very large named trees. Both bite: a command per item wrote 11.9 million lines across
+# two cycles, and naming the approval pass added about a million per command on top. So the
+# per-item effects below store their arguments and nothing else, cm_ln_c_process does the scoring
+# once per cycle, and cm_ln_c_sync_check reaches the approval pass through an on_action, whose leaf
+# is resolved from the loaded database instead of being re-instantiated.
 #
 # Every effect here is entered from that command, so root is the country. Values cross as integers
 # scaled by 1000, because GUI has no CFixedPoint to string function.
@@ -27,6 +29,7 @@ cm_ln_c_rows_clear = {
 	clear_global_variable_map = cm_ln_r_ctry
 	clear_global_variable_map = cm_ln_r_l
 	clear_global_variable_map = cm_ln_r_b
+	clear_global_variable_map = cm_ln_r_nb
 	clear_global_variable_map = cm_ln_r_c
 	clear_global_variable_map = cm_ln_r_i
 	clear_global_variable_map = cm_ln_r_p
@@ -49,10 +52,11 @@ cm_ln_c_row_b = {
 	add_to_global_variable_map = { name = cm_ln_r_r key = global_var:cm_ln_r_n value = $R$ }
 }
 
-# Args: B => the OBSOLETE type's cm_ln_bt_id; C and I are the replacement's.
+# Args: B => the OBSOLETE type's cm_ln_bt_id, N => the replacement's; C and I are the replacement's.
 cm_ln_c_row_u = {
 	change_global_variable = { name = cm_ln_r_n add = 1 }
 	add_to_global_variable_map = { name = cm_ln_r_kind key = global_var:cm_ln_r_n value = 2 }
+	add_to_global_variable_map = { name = cm_ln_r_nb key = global_var:cm_ln_r_n value = $N$ }
 	add_to_global_variable_map = { name = cm_ln_r_ctry key = global_var:cm_ln_r_n value = this }
 	add_to_global_variable_map = { name = cm_ln_r_l key = global_var:cm_ln_r_n value = $L$ }
 	add_to_global_variable_map = { name = cm_ln_r_b key = global_var:cm_ln_r_n value = $B$ }
@@ -181,12 +185,21 @@ cm_ln_c_process = {
 						if = {
 							limit = { exists = scope:cm_building_type }
 							scope:cm_building_type = { save_temporary_scope_as = cm_old_building_type }
-							if = {
-								limit = { is_key_in_global_variable_map = { name = cm_building_type_to_upgrade_type target = scope:cm_old_building_type } }
-								"global_variable_map(cm_building_type_to_upgrade_type|scope:cm_old_building_type)" = {
-									save_temporary_scope_as = cm_new_building_type
-									save_temporary_scope_as = cm_building_type
-								}
+						}
+						# The replacement crosses as its own id rather than being resolved from
+						# cm_building_type_to_upgrade_type. Staging decides obsolescence with the live engine
+						# trigger, so a chain unlocked after classification is obsolete while absent from that
+						# map, and the scope would keep the previous row's type.
+						set_local_variable = { name = cm_ln_c_nb value = 0 }
+						if = {
+							limit = { is_key_in_global_variable_map = { name = cm_ln_r_nb target = scope:cm_ln_k } }
+							set_local_variable = { name = cm_ln_c_nb value = "global_variable_map(cm_ln_r_nb|scope:cm_ln_k)" }
+						}
+						if = {
+							limit = { local_var:cm_ln_c_nb > 0 }
+							"global_variable_map(cm_ln_bt_of_id|local_var:cm_ln_c_nb)" = {
+								save_temporary_scope_as = cm_new_building_type
+								save_temporary_scope_as = cm_building_type
 							}
 						}
 						cm_ln_c_read_cost = yes
