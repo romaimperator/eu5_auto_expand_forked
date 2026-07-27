@@ -235,3 +235,148 @@ cm_fa_cu_reopen_cap = {
 		ceiling = yes
 	}
 }
+
+# How slow this tile is to cross: its topography movement cost plus its vegetation movement cost,
+# 2 on flat open ground. Root is the location.
+cm_fa_rd_movement_cost_value = {
+	value = 1 # Mirrors vanilla flatland movement_cost, shared by every other land topography: in_game/common/topography/00_default.txt:7
+	if = { limit = { topography = mountains } value = 2 } # Mirrors vanilla mountains movement_cost: in_game/common/topography/00_default.txt:21
+	else_if = { limit = { topography = hills } value = 1.5 } # Mirrors vanilla hills movement_cost: in_game/common/topography/00_default.txt:53
+	else_if = { limit = { topography = wetlands } value = 1.5 } # Mirrors vanilla wetlands movement_cost: in_game/common/topography/00_default.txt:103
+	else_if = { limit = { topography = plateau } value = 1.25 } # Mirrors vanilla plateau movement_cost: in_game/common/topography/00_default.txt:81
+	if = { limit = { vegetation = jungle } add = 2 } # Mirrors vanilla jungle movement_cost: in_game/common/vegetation/00_default.txt:124
+	else_if = { limit = { vegetation = forest } add = 1.5 } # Mirrors vanilla forest movement_cost: in_game/common/vegetation/00_default.txt:100
+	else_if = { limit = { vegetation = woods } add = 1.25 } # Mirrors vanilla woods movement_cost: in_game/common/vegetation/00_default.txt:78
+	else_if = { limit = { vegetation = desert } add = 1.1 } # Mirrors vanilla desert movement_cost: in_game/common/vegetation/00_default.txt:3
+	else_if = { limit = { vegetation = farmland } add = 1.1 } # Mirrors vanilla farmland movement_cost: in_game/common/vegetation/00_default.txt:57
+	else = { add = 1 } # Mirrors vanilla grasslands and sparse movement_cost: in_game/common/vegetation/00_default.txt:43
+}
+
+# The unit distance vanilla prices a road by: how far the two tiles are apart, weighted by how slow
+# they are to cross. The engine's own figure is GetRoadDistanceTo, which is GUI-only and returns
+# int32, a type MakeScopeValue nulls on, so this mirrors the shape the OGAS Optimized workshop mod
+# arrived at, the only version with evidence behind it. The two divisors are ITS fitted constants,
+# not vanilla values, so the scale is UNVERIFIED and cm_fa_rd_log_started prints each estimate to
+# be checked against the road builder's own figure.
+# Root is the location, expects scope:cm_fa_rd_from and scope:cm_fa_rd_to.
+cm_fa_rd_unit_distance_value = {
+	value = "scope:cm_fa_rd_from.distance_to(scope:cm_fa_rd_to)"
+	multiply = {
+		value = cm_fa_rd_movement_cost_value
+		add = scope:cm_fa_rd_to.cm_fa_rd_movement_cost_value
+	}
+	if = {
+		limit = { area = scope:cm_fa_rd_to.area }
+		divide = 10
+	}
+	else = {
+		divide = 20
+	}
+	min = 0.01
+}
+
+# What this market's construction-goods prices do to a road's cost, as a fraction: each good's
+# deviation from its default price weighted by how much of it a road demands, summed. Verified
+# against the game's own Build Gravel Road price tooltip (2026-07-27, Burgos market: lumber -8.33%,
+# masonry -13.79%, sand -4.71%, total -26.83%), which sums the three the same way.
+# Weights mirror vanilla build_gravel_road_demand: in_game/common/goods_demand/special_construction_demands.txt:28
+# Every road tier demands the same three; railroad adds steel, which is not modelled.
+# Root is the location.
+cm_fa_rd_goods_adjust_value = {
+	value = 0
+	add = {
+		value = "market.market_price(goods:lumber)"
+		divide = "default_price(goods:lumber)"
+		subtract = 1
+		multiply = 0.5
+	}
+	add = {
+		value = "market.market_price(goods:masonry)"
+		divide = "default_price(goods:masonry)"
+		subtract = 1
+		multiply = 1
+	}
+	add = {
+		value = "market.market_price(goods:sand)"
+		divide = "default_price(goods:sand)"
+		subtract = 1
+		multiply = 0.25
+	}
+}
+
+# Gold per unit distance for the best road type this country has unlocked, carrying that type's own
+# cost modifier and inflation. Root is the country.
+cm_fa_rd_tier_cost_value = {
+	value = 0
+	if = {
+		# railroad_advance unlocks railroad: in_game/common/advances/3_road_unlocks.txt:28
+		limit = { has_advance = railroad_advance }
+		value = 100 # Mirrors vanilla build_railroad price: in_game/common/prices/00_hardcoded.txt:23
+		multiply = { value = 1 add = modifier:build_railroad_cost_modifier }
+	}
+	else_if = {
+		# modern_road_advance unlocks modern_road: in_game/common/advances/3_road_unlocks.txt:20
+		limit = { has_advance = modern_road_advance }
+		value = 50 # Mirrors vanilla build_modern_road price: in_game/common/prices/00_hardcoded.txt:19
+		multiply = { value = 1 add = modifier:build_modern_road_cost_modifier }
+	}
+	else_if = {
+		# paved_road_advance unlocks paved_road: in_game/common/advances/3_road_unlocks.txt:12
+		limit = { has_advance = paved_road_advance }
+		value = 25 # Mirrors vanilla build_paved_road price: in_game/common/prices/00_hardcoded.txt:15
+		multiply = { value = 1 add = modifier:build_paved_road_cost_modifier }
+	}
+	else_if = {
+		# road_building unlocks gravel_road: in_game/common/advances/3_road_unlocks.txt:1
+		limit = { has_advance = road_building }
+		value = 10 # Mirrors vanilla build_gravel_road price: in_game/common/prices/00_hardcoded.txt:11
+		multiply = { value = 1 add = modifier:build_gravel_road_cost_modifier }
+	}
+	multiply = { value = 1 add = inflation }
+	min = 0
+}
+
+# Estimated gold for one road between this location and scope:cm_fa_rd_to. Vanilla's own goods
+# term is left out: its market-price weighting has no readable form, and under-estimating there
+# only slows the category down, which the treasury reserve already absorbs.
+# scope:cm_fa_rd_tier is cm_fa_rd_tier_cost_value, saved once a pass because it is the same for
+# every corridor. Root is the location, expects scope:cm_fa_rd_from, scope:cm_fa_rd_to and
+# scope:cm_fa_rd_tier.
+cm_fa_rd_cost_value = {
+	value = cm_fa_rd_unit_distance_value
+	multiply = scope:cm_fa_rd_tier
+	multiply = {
+		value = 1
+		add = cm_fa_rd_goods_adjust_value
+		min = 0
+	}
+	min = 1
+}
+
+# The tax base a road on the edge above this location would unlock, per gold it costs.
+# Root is the location, expects scope:cm_fa_rd_from, scope:cm_fa_rd_to and scope:cm_fa_rd_tier.
+cm_fa_rd_score_value = {
+	value = var:cm_fa_rd_sub
+	divide = cm_fa_rd_cost_value
+}
+
+# Ordered iterators sort high to low, so negating visits the farthest tiles first, which is every
+# child before its parent in a shortest-path tree. Root is the location.
+cm_fa_rd_leaf_order = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_pf_pb }
+		subtract = var:cm_pf_pb
+	}
+}
+
+# The tax base this tile alone would gain once the network reaches its predicted proximity.
+# Control rises 0.75 per unit of proximity and proximity runs 0-100, hence 0.0075, the same
+# conversion cm_gf_taxgain uses. Root is the location.
+cm_fa_rd_node_demand = {
+	value = var:cm_pf_pb
+	subtract = proximity
+	min = 0
+	multiply = var:cm_pf_w
+	multiply = 0.0075
+}

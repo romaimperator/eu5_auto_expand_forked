@@ -1,0 +1,325 @@
+﻿# Full-automation Roads: builds the road network that raises proximity, and through it control and
+# tax base, the most per gold. Once a year it runs the placement finder's own spread from every
+# proximity source outward with a full road network assumed, which leaves each location its best
+# reachable proximity and the parent it would reach it through. Walking that tree from the leaves up
+# gives every corridor the unrealized tax base of everything behind it. The monthly drain then buys
+# the best corridors its budget share reaches.
+
+# Roads a cycle may start.
+@cm_fa_rd_max_per_cycle = 8
+# Corridors that may be under construction at once. A road is not charged when it is ordered, it is
+# paid for as it is built, so the monthly pool alone cannot bound what the treasury has promised:
+# cm_q_planned_spend is reset every cycle and last month's unpaid roads are invisible to this one.
+# Capping how many are in flight is what bounds that, and it does not depend on the cost estimate.
+@cm_fa_rd_max_outstanding = 12
+# Orders that produced nothing before a corridor is set aside.
+@cm_fa_rd_max_tries = 3
+# How long a set-aside corridor stays out of the running.
+@cm_fa_rd_bad_days = 3650
+
+# Borrows one placement-finder setting for the plan run, remembering whether the country had one at
+# all: a lucky nation carries these only while a reorganization is using them.
+# $S$ = the setting's suffix, $V$ = the value the plan needs. Root is the country.
+cm_fa_rd_borrow_setting = {
+	if = {
+		limit = { exists = var:cm_placement_finder_$S$ }
+		set_local_variable = { name = cm_fa_rd_had_$S$ value = 1 }
+		set_local_variable = { name = cm_fa_rd_old_$S$ value = var:cm_placement_finder_$S$ }
+	}
+	else = {
+		set_local_variable = { name = cm_fa_rd_had_$S$ value = 0 }
+	}
+	set_variable = { name = cm_placement_finder_$S$ value = $V$ }
+}
+
+# $S$ = the setting's suffix. Root is the country.
+cm_fa_rd_return_setting = {
+	if = {
+		limit = { local_var:cm_fa_rd_had_$S$ = 1 }
+		set_variable = { name = cm_placement_finder_$S$ value = local_var:cm_fa_rd_old_$S$ }
+	}
+	else = {
+		remove_variable = cm_placement_finder_$S$
+	}
+}
+
+# The yearly plan. Root is the country.
+cm_fa_rd_plan = {
+	if = {
+		limit = {
+			cm_fa_master_active = yes
+			exists = var:cm_fa_roads_enabled
+			has_advance = road_building # Unlocks gravel_road: in_game/common/advances/3_road_unlocks.txt:1
+			cm_pf_river_data_is_current = yes
+			NOT = { exists = var:cm_pf_mode_open }
+			NOT = { exists = var:cm_ln_hold }
+			# cm_pf_n marks a primed run and finalize drops it while leaving cm_pf_all_done, so this
+			# pair is "primed but never finished". Re-priming under one would destroy it.
+			OR = {
+				NOT = { has_variable = cm_pf_n }
+				has_variable = cm_pf_all_done
+			}
+		}
+		save_scope_as = cm_country
+		set_variable = { name = cm_fa_rd_plan_active value = 1 }
+		cm_fa_rd_borrow_setting = { S = roads V = 2 } # Max Roads: the network the plan is pricing
+		cm_fa_rd_borrow_setting = { S = naval V = 2 } # Max Presence
+		cm_fa_rd_borrow_setting = { S = method V = 1 } # Tax Base
+		cm_fa_rd_borrow_setting = { S = accuracy V = 1 } # Exhaustive: the phased runner scores candidates, and the plan scores none
+		# The multi-source spread the plan reads runs only for the governor mode.
+		set_variable = { name = cm_pf_view_g value = 1 }
+		cm_pf_prep_core = yes
+		cm_fa_rd_value_pass = yes
+		cm_pf_clear_run_state = yes
+		remove_variable = cm_pf_view_g
+		remove_variable = cm_fa_rd_plan_active
+		cm_fa_rd_return_setting = { S = roads }
+		cm_fa_rd_return_setting = { S = naval }
+		cm_fa_rd_return_setting = { S = method }
+		cm_fa_rd_return_setting = { S = accuracy }
+		if = {
+			limit = { cm_ln_is_active = no }
+			cmf_log_value = { action = cm_fa_rd_log_planned value = var:cm_fa_rd_n }
+		}
+	}
+}
+
+# Turns the spread into corridor scores. Ordered iterators sort high to low, so the negated
+# predicted proximity visits every tile before the one it reaches the sources through, and one pass
+# carries each tile's own unrealized tax base onto every corridor behind it.
+# Root is the country, scope:cm_country set.
+cm_fa_rd_value_pass = {
+	set_variable = { name = cm_fa_rd_n value = 0 }
+	save_temporary_scope_value_as = { name = cm_fa_rd_tier value = cm_fa_rd_tier_cost_value }
+	every_owned_location = {
+		set_variable = { name = cm_fa_rd_sub value = 0 }
+		remove_variable = cm_fa_rd_par
+		remove_variable = cm_fa_rd_score
+	}
+	ordered_owned_location = {
+		order_by = cm_fa_rd_leaf_order
+		max = cm_max_guess_at_number_of_locations
+		check_range_bounds = no
+		cm_fa_rd_value_location = yes
+	}
+	every_owned_location = { remove_variable = cm_fa_rd_sub }
+}
+
+# Root is the location, scope:cm_country set.
+cm_fa_rd_value_location = {
+	change_variable = { name = cm_fa_rd_sub add = cm_fa_rd_node_demand }
+	if = {
+		limit = {
+			has_variable = cm_pf_prev
+			var:cm_pf_prev = {
+				is_land = yes
+				owner ?= scope:cm_country
+			}
+		}
+		set_local_variable = { name = cm_fa_rd_push value = var:cm_fa_rd_sub }
+		var:cm_pf_prev = {
+			change_variable = { name = cm_fa_rd_sub add = local_var:cm_fa_rd_push }
+		}
+		# A corridor already carrying the best road this country can lay needs nothing, but the tiles
+		# behind it still do, which is why the total travels up either way. A corridor with nothing
+		# behind it left to gain is not worth gold, so it never becomes a candidate.
+		if = {
+			limit = {
+				var:cm_fa_rd_sub > 0
+				NOT = { has_latest_road_to = var:cm_pf_prev }
+			}
+			save_temporary_scope_as = cm_fa_rd_from
+			var:cm_pf_prev = { save_temporary_scope_as = cm_fa_rd_to }
+			set_variable = { name = cm_fa_rd_par value = scope:cm_fa_rd_to }
+			set_variable = { name = cm_fa_rd_score value = cm_fa_rd_score_value }
+			scope:cm_country = { change_variable = { name = cm_fa_rd_n add = 1 } }
+		}
+	}
+}
+
+# Roads drain. Root is the country, scope:cm_country set.
+cm_fa_pass_roads = {
+	cm_fa_rd_check_orders = yes
+	if = {
+		limit = {
+			has_advance = road_building # Unlocks gravel_road: in_game/common/advances/3_road_unlocks.txt:1
+			modifier:overlord_blocked_from_building_roads = no
+		}
+		set_local_variable = { name = cm_fa_rd_blk value = 0 }
+		save_temporary_scope_value_as = { name = cm_fa_rd_tier value = cm_fa_rd_tier_cost_value }
+		if = {
+			limit = {
+				cm_ln_is_active = no
+				has_variable = cm_fa_rd_n
+				var:cm_fa_rd_n >= 1
+			}
+			cmf_log_value = { action = cm_fa_rd_log_pool value = var:cm_fa_pool_roads }
+		}
+		if = {
+			limit = {
+				OR = {
+					NOT = { has_variable_list = cm_fa_rd_building }
+					NOT = { variable_list_size = { name = cm_fa_rd_building value >= @cm_fa_rd_max_outstanding } }
+				}
+			}
+			cm_fa_rd_issue_pass = yes
+		}
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_fa_rd_issue_pass = {
+	ordered_owned_location = {
+		order_by = { value = var:cm_fa_rd_score }
+		max = @cm_fa_rd_max_per_cycle
+		check_range_bounds = no
+		limit = {
+			has_variable = cm_fa_rd_score
+			has_variable = cm_fa_rd_par
+			NOT = { has_variable = cm_fa_rd_bad }
+			has_road_constructions = no
+			modifier:road_building_blocked = no
+			cm_get_open_build_queue_slots > 0
+			var:cm_fa_rd_par = {
+				owner ?= scope:cm_country
+				modifier:road_building_blocked = no
+			}
+			NOT = { has_latest_road_to = var:cm_fa_rd_par }
+		}
+		cm_fa_rd_try_build = yes
+	}
+}
+
+# Root is the location, scope:cm_country set. Reads and sets the drain's local cm_fa_rd_blk.
+cm_fa_rd_try_build = {
+	if = {
+		limit = { local_var:cm_fa_rd_blk = 0 }
+		save_temporary_scope_as = cm_fa_rd_from
+		var:cm_fa_rd_par = { save_temporary_scope_as = cm_fa_rd_to }
+		save_temporary_scope_value_as = { name = cm_cost value = cm_fa_rd_cost_value }
+		if = {
+			limit = { cm_fa_can_afford = { POOL = cm_fa_pool_roads } }
+			scope:cm_country = {
+				cm_fa_rd_construct = yes
+				change_variable = { name = cm_fa_pool_roads subtract = scope:cm_cost }
+				change_variable = { name = cm_q_planned_spend add = scope:cm_cost }
+				cm_fa_rd_drop_pending = yes
+				add_to_variable_list = { name = cm_fa_rd_building target = scope:cm_fa_rd_from }
+				if = {
+					limit = { cm_ln_is_active = no }
+					cmf_log_value = { action = cm_fa_rd_log_started value = scope:cm_cost }
+				}
+			}
+		}
+		else = {
+			# Saving for the best corridor beats laying a worse one, the same stop Industry takes.
+			set_local_variable = { name = cm_fa_rd_blk value = 1 }
+		}
+	}
+}
+
+# Root is the country, expects scope:cm_fa_rd_from and scope:cm_fa_rd_to.
+cm_fa_rd_construct = {
+	if = {
+		# railroad_advance unlocks railroad: in_game/common/advances/3_road_unlocks.txt:28
+		limit = { has_advance = railroad_advance }
+		construct_road = { road_type = road_type:railroad from = scope:cm_fa_rd_from to = scope:cm_fa_rd_to }
+	}
+	else_if = {
+		# modern_road_advance unlocks modern_road: in_game/common/advances/3_road_unlocks.txt:20
+		limit = { has_advance = modern_road_advance }
+		construct_road = { road_type = road_type:modern_road from = scope:cm_fa_rd_from to = scope:cm_fa_rd_to }
+	}
+	else_if = {
+		# paved_road_advance unlocks paved_road: in_game/common/advances/3_road_unlocks.txt:12
+		limit = { has_advance = paved_road_advance }
+		construct_road = { road_type = road_type:paved_road from = scope:cm_fa_rd_from to = scope:cm_fa_rd_to }
+	}
+	else = {
+		construct_road = { road_type = road_type:gravel_road from = scope:cm_fa_rd_from to = scope:cm_fa_rd_to }
+	}
+}
+
+# Rebuilds the in-flight list and judges the orders that left it. A road order reports neither cost
+# nor result, so a construction that never appears is the only sign the engine refused one, and a
+# corridor that keeps producing nothing is set aside for a while, which is what a crossing no road
+# can span comes to. Root is the country, scope:cm_country set.
+cm_fa_rd_check_orders = {
+	if = {
+		limit = { has_variable_list = cm_fa_rd_building }
+		clear_variable_list = cm_fa_rd_keep
+		every_in_list = {
+			variable = cm_fa_rd_building
+			if = {
+				limit = { has_road_constructions = yes }
+				remove_variable = cm_fa_rd_try
+				save_temporary_scope_as = cm_fa_rd_live
+				scope:cm_country = {
+					add_to_variable_list = { name = cm_fa_rd_keep target = scope:cm_fa_rd_live }
+				}
+			}
+			else_if = {
+				limit = {
+					has_variable = cm_fa_rd_par
+					has_latest_road_to = var:cm_fa_rd_par
+				}
+				remove_variable = cm_fa_rd_try
+			}
+			else = {
+				if = {
+					limit = { has_variable = cm_fa_rd_try }
+					change_variable = { name = cm_fa_rd_try add = 1 }
+				}
+				else = {
+					set_variable = { name = cm_fa_rd_try value = 1 }
+				}
+				if = {
+					limit = { var:cm_fa_rd_try >= @cm_fa_rd_max_tries }
+					set_variable = { name = cm_fa_rd_bad value = 1 days = @cm_fa_rd_bad_days }
+					remove_variable = cm_fa_rd_try
+					remove_variable = cm_fa_rd_score
+					scope:cm_country = {
+						cm_fa_rd_drop_pending = yes
+						if = {
+							limit = { cm_ln_is_active = no }
+							cmf_log = { action = cm_fa_rd_log_dropped }
+						}
+					}
+				}
+			}
+		}
+		# The survivors are the corridors still being built; everything else has left the list.
+		clear_variable_list = cm_fa_rd_building
+		every_in_list = {
+			variable = cm_fa_rd_keep
+			save_temporary_scope_as = cm_fa_rd_live
+			scope:cm_country = {
+				add_to_variable_list = { name = cm_fa_rd_building target = scope:cm_fa_rd_live }
+			}
+		}
+		clear_variable_list = cm_fa_rd_keep
+	}
+}
+
+# One planned corridor is no longer waiting on gold, either because it was ordered or because it
+# was set aside. Root is the country.
+cm_fa_rd_drop_pending = {
+	if = {
+		limit = { has_variable = cm_fa_rd_n }
+		change_variable = { name = cm_fa_rd_n subtract = 1 }
+		# In a change_variable max is the max function, so this is the floor.
+		change_variable = { name = cm_fa_rd_n max = 0 }
+	}
+}
+
+# Root is the country. Drops the plan on a tag switch and when the master toggle goes off.
+cm_fa_rd_clear_plan = {
+	remove_variable = cm_fa_rd_n
+	clear_variable_list = cm_fa_rd_building
+	clear_variable_list = cm_fa_rd_keep
+	every_owned_location = {
+		remove_variable = cm_fa_rd_par
+		remove_variable = cm_fa_rd_score
+		remove_variable = cm_fa_rd_try
+	}
+}

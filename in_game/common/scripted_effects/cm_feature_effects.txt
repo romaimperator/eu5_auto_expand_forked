@@ -96,13 +96,17 @@ cm_run_construction_cycle = {
 				scope:cm_country = { cm_fa_stage_category = yes }
 			}
 			# The slice budget is tuned against this number.
-			if = { limit = { cm_ln_is_active = no }
+			if = {
+				limit = {
+					cm_ln_is_active = no
+					var:cm_q_staged >= 1
+				}
 				cmf_log_value = { action = cm_fa_log_staged value = var:cm_q_staged }
 			}
 		}
 		# Show the construction-queue window to construct this month's staged items.
-		# The full-automation RGO lists bypass the staged counter (no GUI scoring), so
-		# they arm the window on their own.
+		# The full-automation RGO lists and the road plan bypass the staged counter (no
+		# GUI scoring), so they arm the window on their own.
 		if = {
 			limit = {
 				OR = {
@@ -114,6 +118,10 @@ cm_run_construction_cycle = {
 					AND = {
 						has_variable_list = cm_fa_collapsar_rgo_locations
 						variable_list_size = { name = cm_fa_collapsar_rgo_locations value >= 1 }
+					}
+					AND = {
+						has_variable = cm_fa_rd_n
+						var:cm_fa_rd_n >= 1
 					}
 				}
 			}

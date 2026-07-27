@@ -15,8 +15,8 @@
 
 # --- Rings ---
 
-# Marks every owned land location within 2 hops of foreign-owned land as cm_ln_ft_bd = its hop
-# count. Root is the country, scope:cm_country set.
+# Marks every owned land location within 2 hops of land owned outside the country's own subject
+# hierarchy as cm_ln_ft_bd = its hop count. Root is the country, scope:cm_country set.
 cm_ln_ft_build_border_ring = {
 	every_owned_location = {
 		limit = { has_variable = cm_ln_ft_bd }
@@ -28,7 +28,7 @@ cm_ln_ft_build_border_ring = {
 			any_neighbor_location = {
 				is_land = yes
 				exists = owner
-				NOT = { owner = scope:cm_country }
+				NOT = { is_owned_or_owned_by_subjects_or_below_of = scope:cm_country }
 			}
 		}
 		set_variable = { name = cm_ln_ft_bd value = 1 }
@@ -249,33 +249,72 @@ cm_ln_ft_delete_pass = {
 		}
 		save_scope_as = cm_country
 		cm_ln_ft_build_border_ring = yes
+		set_local_variable = { name = cm_ln_ft_interior value = 0 }
+		set_local_variable = { name = cm_ln_ft_cand value = 0 }
+		set_local_variable = { name = cm_ln_ft_gone value = 0 }
+		set_local_variable = { name = cm_ln_ft_left value = 0 }
 		every_owned_location = {
 			limit = {
-				has_fort = yes
+				is_land = yes
 				NOT = { has_variable = cm_ln_ft_bd }
-				NOT = { this = scope:cm_country.capital }
 			}
-			save_scope_as = cm_location
-			# Collected first: destroying inside every_buildings_in_location mutates the collection
-			# being walked, and the iterator then hands out a dangling handle.
-			every_buildings_in_location = {
+			change_local_variable = { name = cm_ln_ft_interior add = 1 }
+			if = {
 				limit = {
-					owner = scope:cm_country
-					# A building reads as standing from the moment its first level is queued.
-					cm_is_not_under_construction = yes
-					building_type = { cm_ln_ft_is_chain_fort = yes }
+					has_fort = yes
+					NOT = { this = scope:cm_country.capital }
 				}
-				save_scope_as = cm_building
-				scope:cm_location = { add_to_variable_list = { name = cm_ln_ft_doomed target = scope:cm_building } }
+				change_local_variable = { name = cm_ln_ft_cand add = 1 }
+				save_scope_as = cm_location
+				# Collected as types, not building handles: destroying inside
+				# every_buildings_in_location mutates the collection being walked. A location
+				# holds one building per type per owner, so the type resolves it again.
+				every_buildings_in_location = {
+					limit = {
+						owner = scope:cm_country
+						# A building reads as standing from the moment its first level is queued.
+						cm_is_not_under_construction = yes
+						building_type = { cm_ln_ft_is_chain_fort = yes }
+					}
+					building_type = { save_scope_as = cm_ln_ft_bt }
+					scope:cm_location = { add_to_variable_list = { name = cm_ln_ft_doomed target = scope:cm_ln_ft_bt } }
+				}
+				every_in_list = {
+					variable = cm_ln_ft_doomed
+					save_scope_as = cm_ln_ft_bt
+					change_local_variable = { name = cm_ln_ft_gone add = 1 }
+					scope:cm_location = { destroy_building = "building(scope:cm_ln_ft_bt|scope:cm_country)" }
+				}
+				clear_variable_list = cm_ln_ft_doomed
+				every_buildings_in_location = {
+					limit = {
+						owner = scope:cm_country
+						cm_is_not_under_construction = yes
+						building_type = { cm_ln_ft_is_chain_fort = yes }
+					}
+					change_local_variable = { name = cm_ln_ft_left add = 1 }
+				}
 			}
-			every_in_list = {
-				variable = cm_ln_ft_doomed
-				save_scope_as = cm_building
-				scope:cm_location = { destroy_building = scope:cm_building }
-				scope:cm_country = { cmf_log = { action = cm_ln_log_ft_deleted } }
+		}
+		# The counts separate the ways this pass can do nothing: no interior, no forts in it,
+		# no chain fort among them, or a destroy that did not take.
+		if = {
+			limit = {
+				OR = {
+					local_var:cm_ln_ft_cand > 0
+					local_var:cm_ln_ft_interior = 0
+				}
 			}
-			clear_variable_list = cm_ln_ft_doomed
+			cmf_log_value = { action = cm_ln_log_ft_interior value = local_var:cm_ln_ft_interior }
+			cmf_log_value = { action = cm_ln_log_ft_cand value = local_var:cm_ln_ft_cand }
+			cmf_log_value = { action = cm_ln_log_ft_deleted value = local_var:cm_ln_ft_gone }
+			cmf_log_value = { action = cm_ln_log_ft_left value = local_var:cm_ln_ft_left }
 		}
 		cm_ln_ft_clear_rings = yes
+	}
+	# A lucky nation seeds both of these every month, so reaching here means something else
+	# cleared them.
+	else = {
+		cmf_log = { action = cm_ln_log_ft_off }
 	}
 }

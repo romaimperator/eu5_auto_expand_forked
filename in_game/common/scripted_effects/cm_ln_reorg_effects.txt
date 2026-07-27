@@ -399,6 +399,7 @@ cm_ln_open_capital_tick = {
 			if = {
 				limit = { var:cm_ln_open_wait >= @cm_ln_open_max_wait }
 				set_variable = { name = cm_ln_open_done value = 1 }
+				cmf_log = { action = cm_ln_log_open_gave_up }
 			}
 		}
 	}
@@ -423,19 +424,22 @@ cm_ln_open_capital_run = {
 		save_scope_as = cm_ln_cap_pick
 		scope:cm_country = { set_variable = { name = cm_ln_cap_target value = scope:cm_ln_cap_pick } }
 	}
+	# A capital that is itself the best location scores 1000 and falls out here, so the kept
+	# branch covers it without a separate test.
 	if = {
+		limit = { NOT = { exists = var:cm_ln_cap_target } }
+		cmf_log = { action = cm_ln_log_open_no_target }
+	}
+	else_if = {
 		limit = {
-			exists = var:cm_ln_cap_target
-			var:cm_ln_cap_target = { owner = scope:cm_country }
-			NOT = { var:cm_ln_cap_target = capital }
 			capital = {
-				trigger_if = {
-					limit = { has_variable = cm_cf_score }
-					var:cm_cf_score < @cm_ln_open_cap_keep
-				}
-				trigger_else = { always = yes }
+				has_variable = cm_cf_score
+				var:cm_cf_score >= @cm_ln_open_cap_keep
 			}
 		}
+		cmf_log_value = { action = cm_ln_log_open_kept value = capital.var:cm_cf_score }
+	}
+	else = {
 		set_capital = var:cm_ln_cap_target
 		cm_ln_open_charge_move = yes
 		cmf_log = { action = cm_ln_log_capital_moved }

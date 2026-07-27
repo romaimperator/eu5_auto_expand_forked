@@ -20,6 +20,7 @@ cm_fa_monthly_budget_refresh = {
 	cm_fa_set_category_pool = { cat = collapsar }
 	cm_fa_set_category_pool = { cat = food }
 	cm_fa_set_category_pool = { cat = utilities }
+	cm_fa_set_category_pool = { cat = roads }
 	cm_fa_set_category_pool = { cat = forts }
 	# Governors drains ahead of the shared categories.
 	if = {
@@ -28,7 +29,7 @@ cm_fa_monthly_budget_refresh = {
 	}
 }
 
-# pool = pct * available. $cat$ = industry | collapsar | food | utilities | forts.
+# pool = pct * available. $cat$ = industry | collapsar | food | utilities | roads | forts.
 # Root is the country.
 cm_fa_set_category_pool = {
 	if = {
@@ -60,9 +61,11 @@ cm_fa_clear_budget_state = {
 	set_variable = { name = cm_fa_pool_collapsar value = 0 }
 	set_variable = { name = cm_fa_pool_food value = 0 }
 	set_variable = { name = cm_fa_pool_utilities value = 0 }
+	set_variable = { name = cm_fa_pool_roads value = 0 }
 	set_variable = { name = cm_fa_pool_forts value = 0 }
 	set_variable = { name = cm_fa_pool_governors value = 0 }
 	cm_fa_clear_slice_state = yes
+	cm_fa_rd_clear_plan = yes
 }
 
 # Copies the budget state from scope:old_country on tag switch; pools are non-CMM state
@@ -72,8 +75,10 @@ cm_fa_copy_budget_state = {
 	cm_fa_copy_budget_var = { v = cm_fa_pool_collapsar }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_food }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_utilities }
+	cm_fa_copy_budget_var = { v = cm_fa_pool_roads }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_forts }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_governors }
+	cm_fa_copy_budget_var = { v = cm_fa_rd_n }
 }
 
 # $v$ = variable name. Root is the new country, expects scope:old_country.
@@ -133,6 +138,7 @@ cm_fa_drain_category = {
 		flag:cm_fa_cat_collapsar = { cm_fa_drain_one = { CAT = collapsar PASS = cm_fa_pass_collapsar } }
 		flag:cm_fa_cat_food = { cm_fa_drain_one = { CAT = food PASS = cm_fa_pass_food } }
 		flag:cm_fa_cat_utilities = { cm_fa_drain_one = { CAT = utilities PASS = cm_fa_pass_utilities } }
+		flag:cm_fa_cat_roads = { cm_fa_drain_one = { CAT = roads PASS = cm_fa_pass_roads } }
 		# Forts drains against its own pool without taking the carry, so its 5 percent share
 		# stays 5 percent even though it runs last.
 		flag:cm_fa_cat_forts = { cm_fa_pass_forts = yes }
