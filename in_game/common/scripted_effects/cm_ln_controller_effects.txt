@@ -1,0 +1,59 @@
+﻿# The two lucky-nation controller bodies, shared by the scripted guis the queue window invokes
+# and by the observer console bridge, which calls them directly with the same scopes.
+
+cm_ln_sync_check_apply = {
+	scope:cm_ln_country = {
+		if = {
+			limit = { exists = var:cm_should_construct }
+			if = {
+				limit = { var:cm_q_processed >= var:cm_q_staged }
+				if = {
+					limit = { NOT = { exists = var:cm_q_pass_done } }
+					set_variable = { name = cm_q_pass_done value = yes }
+					cm_q_approval_pass = yes
+				}
+				cm_ln_end_cycle = yes
+			} else = {
+				# Stall watchdog: progress is executor completions, the only signal here.
+				set_variable = { name = cm_q_progress_now value = var:cm_q_processed }
+				if = {
+					limit = { var:cm_q_progress_now > var:cm_q_progress_last }
+					set_variable = { name = cm_q_progress_last value = var:cm_q_progress_now }
+					set_variable = { name = cm_q_stall_rounds value = 0 }
+				} else = {
+					change_variable = { name = cm_q_stall_rounds add = 1 }
+					if = {
+						# An item widget that had not instantiated when the one sweep fired has
+						# no other way back in.
+						limit = {
+							var:cm_q_stall_rounds >= 6
+							var:cm_q_rescans < 2
+							NOT = { has_global_variable = cm_ln_scan_armed }
+						}
+						change_variable = { name = cm_q_rescans add = 1 }
+						set_variable = { name = cm_q_stall_rounds value = 0 }
+						set_global_variable = { name = cm_ln_scan_armed value = 1 }
+					} else_if = {
+						limit = { var:cm_q_stall_rounds >= { value = cm_q_give_up_rounds } }
+						cmf_log = { action = cm_ln_log_cycle_gave_up }
+						if = {
+							limit = { NOT = { exists = var:cm_q_pass_done } }
+							set_variable = { name = cm_q_pass_done value = yes }
+							cm_q_approval_pass = yes
+						}
+						cm_ln_end_cycle = yes
+					}
+				}
+			}
+		}
+	}
+}
+
+cm_ln_cu_end_apply = {
+	scope:cm_ln_country = {
+		remove_variable = cm_fa_cu_fire
+		clear_variable_list = cm_fa_cu_toggle
+	}
+	cm_ln_sync_cu_pending = yes
+}
+

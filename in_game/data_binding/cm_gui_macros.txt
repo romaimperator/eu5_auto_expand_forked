@@ -9,3 +9,60 @@ macro = {
 	definition = "CalculateScriptValue(Target,ScriptValueName)"
 	replace_with = "Target.MakeScope.ScriptValue( ScriptValueName )"
 }
+
+# Console commands carry a building type as its cm_ln_bt_id, since BuildingType has no key accessor.
+macro = {
+	description = "A building type's assigned id as a string"
+	definition = "CMBuildingTypeIdText(BuildingTypeArg)"
+	replace_with = "ToString_int32(FixedPointToInt(BuildingTypeArg.MakeScope.ScriptValue('cm_ln_bt_id_value')))"
+}
+
+macro = {
+	description = "A location's assigned id as a string"
+	definition = "CMLocationIdText(LocationArg)"
+	replace_with = "ToString_int32(FixedPointToInt(LocationArg.MakeScope.ScriptValue('cm_ln_loc_id_value')))"
+}
+
+# The console runs one command at a time and refuses any issued while one is running, so every
+# item appends its call to a per-country buffer and the sweep's terminal state submits the buffer.
+# A command costs about 3,385 log lines whatever it names, measured over 3,516 commands naming
+# nothing but the flat row effects, so the whole sweep goes in one scope block: a call per row cost
+# 11.9 million lines across two cycles. The cycle's rows are then all-or-nothing, which the probe
+# counters detect as arrivals falling short of staged, and the next cycle re-stages them.
+macro = {
+	description = "GUI variable holding a country's pending console batch"
+	definition = "CMBatchKey(CountryArg)"
+	replace_with = "Concatenate('cm_ln_c_buf_', CountryArg.GetTag)"
+}
+
+macro = {
+	description = "The country's pending console batch"
+	definition = "CMBatchRead(CountryArg)"
+	replace_with = "GetVariableSystem.Get(CMBatchKey(CountryArg))"
+}
+
+macro = {
+	description = "The country's buffered calls as one console command, empty when nothing was appended"
+	definition = "CMBatchBlock(CountryArg)"
+	replace_with = "Select_CString(And(GetVariableSystem.Exists(CMBatchKey(CountryArg)), Not(GetVariableSystem.HasValue(CMBatchKey(CountryArg), ''))), Concatenate3('effect c:', CountryArg.GetTag, Concatenate3(' = { ', CMBatchRead(CountryArg), ' };')), '')"
+}
+
+macro = {
+	description = "Appends one effect call to a country's console batch"
+	definition = "CMBatchAppend(CountryArg,CallArg)"
+	replace_with = "GetVariableSystem.Set(CMBatchKey(CountryArg), Concatenate(CMBatchRead(CountryArg), CallArg))"
+}
+
+# There is no CFixedPoint to string function, so values cross scaled by 1000 and are divided back.
+macro = {
+	description = "A value as a string, scaled by 1000 and truncated"
+	definition = "CMScaledValueText(ValueArg)"
+	replace_with = "ToString_int32(FixedPointToInt(Multiply_CFixedPoint(ValueArg, '(CFixedPoint)1000')))"
+}
+
+# This client controls a country, so Executes land and the console bridge must stay out of the way.
+macro = {
+	description = "True when the lucky-nation console bridge should drive instead of Executes"
+	definition = "CMLuckyNationBridgeActive"
+	replace_with = "And(Not(CMFHasPlayerCountry), Not(GameIsMultiplayer))"
+}

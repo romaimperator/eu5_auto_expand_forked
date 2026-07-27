@@ -297,17 +297,7 @@ cm_gui_try_urbanize = {
 		always = yes
 	}
 	effect = {
-		if = {
-			limit = {
-				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
-				is_target_in_variable_list = { name = cm_q_urbanize_building_types target = scope:cm_building_type }
-				NOT = { is_target_in_variable_list = { name = cm_q_done_urbanize_types target = scope:cm_building_type } }
-			}
-			add_to_variable_list = { name = cm_q_done_urbanize_types target = scope:cm_building_type }
-			scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
-			remove_from_variable_map = { name = cm_q_urb_costs key = scope:cm_building_type }
-			add_to_variable_map = { name = cm_q_urb_costs key = scope:cm_building_type value = scope:cm_cost }
-		}
+		cm_q_urbanize_apply = yes
 	}
 }
 # Food building construction-queue scorer. Root is the location; stores the engine cost for

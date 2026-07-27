@@ -18,6 +18,38 @@ cm_populate_building_types_to_process = {
   set_global_variable = { name = cm_process_buildings value = yes }
 }
 
+# Numeric ids for every location, in both directions. Location.GetKey returns the runtime id
+# rather than the script key, so location:<GetKey> is rejected and a command has no other way to
+# name one. Called from cm_on_init_lobby_globals, once per lobby.
+cm_ln_populate_location_ids = {
+  clear_global_variable_map = cm_ln_loc_id
+  clear_global_variable_map = cm_ln_loc_of_id
+  set_global_variable = { name = cm_ln_loc_n value = 0 }
+  every_province_definition = {
+    every_location_in_province_definition = {
+      save_temporary_scope_as = cm_ln_loc
+      change_global_variable = { name = cm_ln_loc_n add = 1 }
+      add_to_global_variable_map = { name = cm_ln_loc_id key = scope:cm_ln_loc value = global_var:cm_ln_loc_n }
+      add_to_global_variable_map = { name = cm_ln_loc_of_id key = global_var:cm_ln_loc_n value = scope:cm_ln_loc }
+    }
+  }
+}
+
+# Numeric ids for every building type, in both directions. BuildingType has no key accessor in
+# GUI, so the lucky-nation observer bridge names one by id in its command string.
+# Called from cm_on_init_lobby_globals, once per lobby.
+cm_ln_populate_building_type_ids = {
+  clear_global_variable_map = cm_ln_bt_id
+  clear_global_variable_map = cm_ln_bt_of_id
+  set_global_variable = { name = cm_ln_bt_n value = 0 }
+  every_building_type = {
+    save_temporary_scope_as = cm_ln_bt
+    change_global_variable = { name = cm_ln_bt_n add = 1 }
+    add_to_global_variable_map = { name = cm_ln_bt_id key = scope:cm_ln_bt value = global_var:cm_ln_bt_n }
+    add_to_global_variable_map = { name = cm_ln_bt_of_id key = global_var:cm_ln_bt_n value = scope:cm_ln_bt }
+  }
+}
+
 # Populates the global list of river locations for the placement finder's river-adjacency precompute
 # in the hidden window GUI. Called from cm_on_init_lobby_globals, once per lobby, not per player.
 # River adjacency is map geometry and cm_pf_river_neighbors is saved, so the harvest runs only when

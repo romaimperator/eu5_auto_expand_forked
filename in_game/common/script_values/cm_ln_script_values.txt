@@ -71,6 +71,19 @@ cm_ln_court_investment_pct = {
 	else_if = { limit = { court_maintenance >= 0.25 } add = 25 }
 }
 
+# Building type scope. The id cm_ln_populate_building_type_ids assigned, read from GUI so a
+# building type can cross into a console command as a number.
+cm_ln_bt_id_value = {
+	if = { limit = { NOT = { exists = scope:cm_ln_bt } } save_temporary_scope_as = cm_ln_bt }
+	value = "global_variable_map(cm_ln_bt_id|scope:cm_ln_bt)"
+}
+
+# Location scope. The id cm_ln_populate_location_ids assigned.
+cm_ln_loc_id_value = {
+	if = { limit = { NOT = { exists = scope:cm_ln_loc } } save_temporary_scope_as = cm_ln_loc }
+	value = "global_variable_map(cm_ln_loc_id|scope:cm_ln_loc)"
+}
+
 # Country scope. Diplomatic investment slider position as a percentage, in 25-point bands.
 cm_ln_diplomatic_investment_pct = {
 	value = 0

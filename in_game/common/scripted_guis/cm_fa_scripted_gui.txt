@@ -16,72 +16,7 @@ cm_fa_score_build = {
 		always = yes
 	}
 	effect = {
-		if = {
-			limit = {
-				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
-				is_target_in_variable_list = { name = cm_fa_b_types target = scope:cm_building_type }
-				NOT = { is_target_in_variable_list = { name = cm_fa_done_b_types target = scope:cm_building_type } }
-			}
-			add_to_variable_list = { name = cm_fa_done_b_types target = scope:cm_building_type }
-			scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
-			# The engine converts a build into the standing obsolete predecessor's upgrade;
-			# skip the item entirely when that predecessor is staged for upgrade this pulse.
-			set_local_variable = { name = cm_fa_conv_clash value = 0 }
-			if = {
-				limit = { exists = scope:cm_obsolete_building }
-				scope:cm_obsolete_building = { building_type = { save_temporary_scope_as = cm_fa_conv_type } }
-				if = {
-					limit = {
-						OR = {
-							is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_fa_conv_type }
-							is_target_in_variable_list = { name = cm_fa_u_types target = scope:cm_fa_conv_type }
-						}
-					}
-					set_local_variable = { name = cm_fa_conv_clash value = 1 }
-				} else = {
-					remove_from_variable_map = { name = cm_fa_b_conv key = scope:cm_building_type }
-					add_to_variable_map = { name = cm_fa_b_conv key = scope:cm_building_type value = scope:cm_fa_conv_type }
-				}
-			}
-			if = {
-				limit = { local_var:cm_fa_conv_clash = 0 }
-				if = {
-					limit = { cm_ln_can_place = yes }
-					remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
-					add_to_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type value = scope:cm_cost }
-				}
-				# Industry entries score; the other categories drain by category in list order.
-				if = {
-					limit = {
-						trigger_if = {
-							limit = {
-								has_variable_map = cm_fa_b_cats
-								is_key_in_variable_map = { name = cm_fa_b_cats target = scope:cm_building_type }
-							}
-							"variable_map(cm_fa_b_cats|scope:cm_building_type)" = 1
-						}
-						trigger_else = { always = no }
-						cm_fa_ind_roi_passes = { COST = scope:cm_cost }
-						cm_building_type_profitable_or_subsidized = yes
-					}
-					save_temporary_scope_value_as = { name = cm_q_score_cost value = scope:cm_cost }
-					cm_fa_compute_roi_score = yes
-					if = {
-						limit = { OR = { NOT = { has_variable = cm_fa_best_any } var:cm_fa_best_any < scope:cm_fa_score_val } }
-						set_variable = { name = cm_fa_best_any value = scope:cm_fa_score_val }
-					}
-					if = {
-						limit = { cm_ln_can_place = yes }
-						remove_from_variable_map = { name = cm_fa_b_scores key = scope:cm_building_type }
-						add_to_variable_map = { name = cm_fa_b_scores key = scope:cm_building_type value = scope:cm_fa_score_val }
-						if = {
-							limit = { OR = { NOT = { has_variable = cm_fa_b_best } var:cm_fa_b_best < scope:cm_fa_score_val } }
-							set_variable = { name = cm_fa_b_best value = scope:cm_fa_score_val }
-						}
-					}
-				}
-			}
-		}
+		cm_fa_score_build_apply = yes
 	}
 }
 
@@ -96,40 +31,7 @@ cm_fa_score_upgrade = {
 		always = yes
 	}
 	effect = {
-		if = {
-			limit = {
-				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
-				is_target_in_variable_list = { name = cm_fa_u_types target = scope:cm_old_building_type }
-				NOT = { is_target_in_variable_list = { name = cm_fa_done_u_types target = scope:cm_old_building_type } }
-			}
-			add_to_variable_list = { name = cm_fa_done_u_types target = scope:cm_old_building_type }
-			scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
-			if = {
-				limit = {
-					exists = scope:cm_new_building_type
-					cm_fa_ind_roi_passes = { COST = scope:cm_cost }
-				}
-				save_temporary_scope_value_as = { name = cm_q_score_cost value = scope:cm_cost }
-				cm_fa_compute_roi_score = yes
-				if = {
-					limit = { OR = { NOT = { has_variable = cm_fa_best_any } var:cm_fa_best_any < scope:cm_fa_score_val } }
-					set_variable = { name = cm_fa_best_any value = scope:cm_fa_score_val }
-				}
-				if = {
-					limit = { cm_ln_can_place = yes }
-					remove_from_variable_map = { name = cm_fa_u_new_types key = scope:cm_old_building_type }
-					add_to_variable_map = { name = cm_fa_u_new_types key = scope:cm_old_building_type value = scope:cm_new_building_type }
-					remove_from_variable_map = { name = cm_fa_u_scores key = scope:cm_old_building_type }
-					add_to_variable_map = { name = cm_fa_u_scores key = scope:cm_old_building_type value = scope:cm_fa_score_val }
-					remove_from_variable_map = { name = cm_fa_u_costs key = scope:cm_old_building_type }
-					add_to_variable_map = { name = cm_fa_u_costs key = scope:cm_old_building_type value = scope:cm_cost }
-					if = {
-						limit = { OR = { NOT = { has_variable = cm_fa_u_best } var:cm_fa_u_best < scope:cm_fa_score_val } }
-						set_variable = { name = cm_fa_u_best value = scope:cm_fa_score_val }
-					}
-				}
-			}
-		}
+		cm_fa_score_upgrade_apply = yes
 	}
 }
 
@@ -168,30 +70,7 @@ cm_fa_score_rgo = {
 		always = yes
 	}
 	effect = {
-		if = {
-			limit = {
-				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
-				save_temporary_scope_as = cm_q_item_loc
-				scope:cm_country = { is_target_in_variable_list = { name = cm_fa_r_locations target = scope:cm_q_item_loc } }
-				NOT = { has_variable = cm_fa_done_rgo }
-			}
-			set_variable = { name = cm_fa_done_rgo value = yes }
-			scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
-			if = {
-				limit = {
-					cm_rgo_basic_expand_eligibility = yes
-					cm_market_has_construction_goods_for_rgo = yes
-					cm_fa_ind_roi_passes = { COST = glorpui_rgo_expand_cost }
-				}
-				save_temporary_scope_value_as = { name = cm_q_score_cost value = glorpui_rgo_expand_cost }
-				cm_fa_compute_roi_score = yes
-				set_variable = { name = cm_fa_r_score value = scope:cm_fa_score_val }
-				if = {
-					limit = { OR = { NOT = { has_variable = cm_fa_best_any } var:cm_fa_best_any < scope:cm_fa_score_val } }
-					set_variable = { name = cm_fa_best_any value = scope:cm_fa_score_val }
-				}
-			}
-		}
+		cm_fa_score_rgo_apply = yes
 	}
 }
 

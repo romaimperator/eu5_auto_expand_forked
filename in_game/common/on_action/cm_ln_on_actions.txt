@@ -68,3 +68,14 @@ cm_ln_on_yearly = {
 		cm_ln_yearly_cycle = yes
 	}
 }
+
+# Scope: country. Reached from the observer bridge's console command through
+# trigger_event_silently, which resolves this leaf from the loaded on_action database rather than
+# re-instantiating it. Naming cm_ln_sync_check_apply in the command directly costs 222,000 effect
+# and trigger instantiations per cycle, since it reaches cm_q_approval_pass at two call sites.
+cm_ln_c_on_sync_check = {
+	effect = {
+		save_scope_as = cm_ln_country
+		cm_ln_sync_check_apply = yes
+	}
+}

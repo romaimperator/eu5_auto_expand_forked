@@ -1,4 +1,4 @@
-# Lucky Nations queue window: the same scoring pass cm_construct_queue_window.gui runs for the
+﻿# Lucky Nations queue window: the same scoring pass cm_construct_queue_window.gui runs for the
 # player, over a global list of AI countries instead. The engine build actions take no country
 # argument, so nothing is fired from here; approvals construct from script inside the pass and
 # only the cost, income and next-tier reads need GUI context.
@@ -16,7 +16,7 @@ widget = {
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
-			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_ln_should_scan').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			visible = "[And3(CMFHasPlayerCountry, GetPlayer.Exists, GetScriptedGui('cm_ln_should_scan').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 			state = {
 				name = _show
 				duration = 0.3
@@ -39,7 +39,7 @@ widget = {
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
-			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_ln_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			visible = "[And3(CMFHasPlayerCountry, GetPlayer.Exists, GetScriptedGui('cm_ln_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 			# Every state needs an on_finish: one without it never advances.
 			state = {
 				name = _show
@@ -65,7 +65,7 @@ widget = {
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
-			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_ln_should_toggle').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			visible = "[And3(CMFHasPlayerCountry, GetPlayer.Exists, GetScriptedGui('cm_ln_should_toggle').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 			state = {
 				name = _show
 				duration = 0.1
@@ -76,6 +76,67 @@ widget = {
 				name = cm_ln_cu_toggle_done
 				duration = 0.25
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_cu_end')]"
+			}
+		}
+		# The observer bridge's own drivers. Each mirrors the driver above and fires cm_ln_c_ state
+		# names instead, because PdxGuiTriggerAllAnimations matches tree-wide and a hidden widget's
+		# states still run, so only the trigger name can separate the two paths.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[And3(CMLuckyNationBridgeActive, GetPlayer.Exists, GetScriptedGui('cm_ln_should_scan').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			state = {
+				name = _show
+				duration = 0.3
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_construct_urbanize')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_fa_construct_build')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_fa_construct_upgrade')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_fa_construct_rgo')]"
+				next = cm_ln_c_scan_done
+			}
+			state = {
+				name = cm_ln_c_scan_done
+				duration = 0.15
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_flush')]"
+			}
+		}
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[And3(CMLuckyNationBridgeActive, GetPlayer.Exists, And(GetScriptedGui('cm_ln_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End), Not(GetScriptedGui('cm_ln_should_scan').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))))]"
+			state = {
+				name = _show
+				duration = 0.2
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_check')]"
+				next = cm_ln_c_round_b
+			}
+			state = {
+				name = cm_ln_c_round_b
+				duration = 0.2
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_check')]"
+				next = cm_ln_c_round_a
+			}
+			state = {
+				name = cm_ln_c_round_a
+				duration = 0.2
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_check')]"
+				next = cm_ln_c_round_b
+			}
+		}
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[And3(CMLuckyNationBridgeActive, GetPlayer.Exists, GetScriptedGui('cm_ln_should_toggle').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			state = {
+				name = _show
+				duration = 0.1
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_cu_toggle')]"
+				next = cm_ln_c_cu_toggle_done
+			}
+			state = {
+				name = cm_ln_c_cu_toggle_done
+				duration = 0.25
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_cu_end')]"
 			}
 		}
 		# Statically visible, so items the monthly staging adds mid-cycle still instantiate.
@@ -96,6 +157,22 @@ widget = {
 						state = {
 							name = cm_ln_cu_end
 							on_finish = "[GetScriptedGui('cm_ln_cu_end').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_ln_country', Country.MakeScope).End)]"
+						}
+						state = {
+							name = cm_ln_c_check
+							on_finish = "[ExecuteConsoleCommandsForced(Concatenate3('effect c:', Country.GetTag, ' = { cm_ln_c_sync_check = yes }'))]"
+						}
+						state = {
+							name = cm_ln_c_cu_end
+							on_finish = "[ExecuteConsoleCommandsForced(Concatenate3('effect c:', Country.GetTag, ' = { cm_ln_c_cu_end = yes }'))]"
+						}
+						# Submits the sweep as one ';'-separated sequence, so a malformed value costs its
+						# own command and not the cycle. The tail command carries no separator and clears
+						# the arm the dropped cm_ln_scan_disarm Execute would otherwise have cleared.
+						state = {
+							name = cm_ln_c_flush
+							on_finish = "[ExecuteConsoleCommandsForced(Concatenate(CMBatchBlock(Country), Concatenate3('effect c:', Country.GetTag, ' = { cm_ln_c_process = yes cm_ln_c_scan_disarm = yes cm_ln_c_sync_check = yes }')))]"
+							on_finish = "[GetVariableSystem.Set(CMBatchKey(Country), '')]"
 						}
 					}
 					# One list carries both the closes and the reopens: ToggleBuilding flips
@@ -123,6 +200,10 @@ widget = {
 									widget = {
 										datacontext = "[Scope.GetBuildingType]"
 										state = {
+											name = cm_ln_c_construct_urbanize
+											on_finish = "[CMBatchAppend(Country, Concatenate3('cm_ln_c_row_z = { L = ', CMLocationIdText(Location), Concatenate3(' B = ', CMBuildingTypeIdText(BuildingType), Concatenate3(' C = ', CMScaledValueText(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self)), ' } '))))]"
+										}
+										state = {
 											name = cm_ln_construct_urbanize
 											on_finish = "[GetScriptedGui('cm_gui_try_urbanize').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', Country.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).End)]"
 										}
@@ -142,6 +223,13 @@ widget = {
 								item = {
 									widget = {
 										datacontext = "[Scope.GetBuildingType]"
+										# Observer bridge: appends this item's call to the country's batch. Both
+										# objects cross as assigned ids, since GUI exposes no script key for
+										# either.
+										state = {
+											name = cm_ln_c_fa_construct_build
+											on_finish = "[CMBatchAppend(Country, Concatenate3('cm_ln_c_row_b = { L = ', CMLocationIdText(Location), Concatenate3(' B = ', CMBuildingTypeIdText(BuildingType), Concatenate3(' C = ', CMScaledValueText(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self)), Concatenate3(' I = ', CMScaledValueText(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self)), Concatenate3(' P = ', CMScaledValueText(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self)), Concatenate3(' T = ', CMScaledValueText(Location.GetTotalIncome), Concatenate3(' R = ', CMScaledValueText(Location.GetRGOProfitPerLevel), ' } '))))))))]"
+										}
 										state = {
 											name = cm_ln_fa_construct_build
 											on_finish = "[GetScriptedGui('cm_fa_score_build').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', Country.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))).AddScope('cm_can_build', MakeScopeBool(CanBuildOrExpandBuilding(BuildingType.Self, Location.Self))).AddScope('cm_obsolete_building', BuildingType.GetObsoleteBuildingInLocation(Location.Self, Country.Self).MakeScope).AddScope('cm_amenity_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).End)]"
@@ -162,6 +250,10 @@ widget = {
 									widget = {
 										datacontext = "[Scope.GetBuildingType]"
 										state = {
+											name = cm_ln_c_fa_construct_upgrade
+											on_finish = "[CMBatchAppend(Country, Concatenate3('cm_ln_c_row_u = { L = ', CMLocationIdText(Location), Concatenate3(' B = ', CMBuildingTypeIdText(BuildingType), Concatenate3(' C = ', CMScaledValueText(GetBuildOrExpandBuildingCost(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self)), Concatenate3(' I = ', CMScaledValueText(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self)), Concatenate3(' T = ', CMScaledValueText(Location.GetTotalIncome), Concatenate3(' R = ', CMScaledValueText(Location.GetRGOProfitPerLevel), ' } ')))))))]"
+										}
+										state = {
 											name = cm_ln_fa_construct_upgrade
 											on_finish = "[GetScriptedGui('cm_fa_score_upgrade').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_old_building_type', BuildingType.MakeScope).AddScope('cm_new_building_type', BuildingType.GetNextReplacementBuilding(Country.Self).MakeScope).AddScope('cm_building_type', BuildingType.GetNextReplacementBuilding(Country.Self).MakeScope).AddScope('cm_country', Country.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self))).AddScope('cm_can_build', MakeScopeBool(CanUpgradeToBuilding(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self))).AddScope('cm_amenity_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).End)]"
 										}
@@ -176,6 +268,10 @@ widget = {
 						item = {
 							widget = {
 								datacontext = "[Scope.GetLocation]"
+								state = {
+									name = cm_ln_c_fa_construct_rgo
+									on_finish = "[CMBatchAppend(Country, Concatenate3('cm_ln_c_row_r = { L = ', CMLocationIdText(Location), Concatenate3(' I = ', CMScaledValueText(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase))), ' } ')))]"
+								}
 								state = {
 									name = cm_ln_fa_construct_rgo
 									on_finish = "[GetScriptedGui('cm_fa_score_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_location', Location.MakeScope).AddScope('cm_country', Country.MakeScope).AddScope('cm_income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
