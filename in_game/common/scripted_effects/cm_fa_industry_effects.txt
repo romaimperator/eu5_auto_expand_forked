@@ -307,8 +307,13 @@ cm_fa_pick_best_build_item = {
 	save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_fa_b_costs|scope:cm_fa_pick_type)" }
 	market = { save_temporary_scope_as = cm_market }
 	if = {
-		# Approved by another feature this cycle: consume silently.
-		limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } } }
+		limit = {
+			# No cost key means the pick came back empty or the engine blocked the build at scoring.
+			has_variable_map = cm_fa_b_costs
+			is_key_in_variable_map = { name = cm_fa_b_costs target = scope:cm_fa_pick_type }
+			# Approved by another feature this cycle: consume silently.
+			NOT = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } }
+		}
 		if = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
