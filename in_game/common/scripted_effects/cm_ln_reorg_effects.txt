@@ -17,6 +17,12 @@
 @cm_ln_cap_keep = 900
 # Monthly income that opens a reorganization before the cadence date is reached.
 @cm_ln_income_start = 100
+# A capital scoring below this share of the best is worth the opening move.
+@cm_ln_open_cap_keep = 700
+# Months the opening move may wait on its preconditions before it is given up, so a country
+# whose search never becomes possible does not stay shut out of construction. Only the river
+# harvest can fail transiently, and it normally finishes before the first pulse.
+@cm_ln_open_max_wait = 2
 
 # Root is the country, scope:cm_country set.
 cm_ln_reorg_tick = {
@@ -362,4 +368,103 @@ cm_ln_reorg_teardown = {
 	set_variable = { name = cm_ln_slots_seen value = cm_ln_gov_slot_total }
 	set_variable = { name = cm_ln_cooldown value = 1 days = @cm_ln_cooldown_days }
 	set_variable = { name = cm_ln_phase value = 0 }
+}
+
+# --- The opening capital move ---
+#
+# One capital move at the start of the game, before the country builds anything, so it never
+# invests in a capital it is about to leave. This is the only move that costs anything; the
+# reorganization's own moves above are free.
+
+# Root is the country, scope:cm_country set.
+cm_ln_open_capital_tick = {
+	if = {
+		limit = { NOT = { exists = var:cm_ln_open_done } }
+		if = {
+			limit = { NOT = { exists = var:cm_ln_open_wait } }
+			set_variable = { name = cm_ln_open_wait value = 0 }
+		}
+		if = {
+			limit = {
+				is_multiplayer_session = no
+				exists = capital
+				cm_pf_river_data_is_current = yes
+				NOT = { has_global_variable = cm_ln_token }
+				cm_ln_no_human_search_in_flight = yes
+			}
+			cm_ln_open_capital_run = yes
+		}
+		else = {
+			change_variable = { name = cm_ln_open_wait add = 1 }
+			if = {
+				limit = { var:cm_ln_open_wait >= @cm_ln_open_max_wait }
+				set_variable = { name = cm_ln_open_done value = 1 }
+			}
+		}
+	}
+}
+
+# The search and the move both land in this tick, since no governor plan is waiting on the
+# proximity the move shifts. Root is the country, scope:cm_country set.
+cm_ln_open_capital_run = {
+	set_global_variable = { name = cm_ln_token value = 1 }
+	cm_ln_pf_settings_open = yes
+	set_variable = { name = cm_pf_view_c value = 1 }
+	remove_variable = cm_pf_view_g
+	cm_pf_prep_core = yes
+	cm_pf_run_tiered_sync = yes
+	remove_variable = cm_pf_view_c
+	remove_variable = cm_ln_cap_target
+	ordered_owned_location = {
+		order_by = { value = var:cm_cf_score }
+		position = 0
+		check_range_bounds = no
+		limit = { has_variable = cm_cf_score }
+		save_scope_as = cm_ln_cap_pick
+		scope:cm_country = { set_variable = { name = cm_ln_cap_target value = scope:cm_ln_cap_pick } }
+	}
+	if = {
+		limit = {
+			exists = var:cm_ln_cap_target
+			var:cm_ln_cap_target = { owner = scope:cm_country }
+			NOT = { var:cm_ln_cap_target = capital }
+			capital = {
+				trigger_if = {
+					limit = { has_variable = cm_cf_score }
+					var:cm_cf_score < @cm_ln_open_cap_keep
+				}
+				trigger_else = { always = yes }
+			}
+		}
+		set_capital = var:cm_ln_cap_target
+		cm_ln_open_charge_move = yes
+		cmf_log = { action = cm_ln_log_capital_moved }
+	}
+	remove_variable = cm_ln_cap_target
+	cm_ln_strip_finder_outputs = yes
+	cm_ln_pf_settings_off = yes
+	remove_global_variable = cm_ln_token
+	remove_variable = cm_ln_open_wait
+	set_variable = { name = cm_ln_open_done value = 1 }
+}
+
+# A share of the vanilla capital_movement price, which is scaled_gold 12 (120% of economic base)
+# plus stability 20: in_game/common/prices/00_hardcoded.txt:213. A player reaches 66% off the
+# gold and 33% off the stability without much effort, so the charge is what one would really
+# pay. It lands whether or not the treasury covers it. Root is the country.
+cm_ln_open_charge_move = {
+	add_gold = {
+		value = country_economical_base
+		multiply = -0.4
+	}
+	add_stability = -13
+}
+
+# Scores on the roads that actually stand, which the country has no advance to improve this
+# early. Root is the country.
+cm_ln_pf_settings_open = {
+	set_variable = { name = cm_placement_finder_accuracy value = 5 } # Fastest
+	set_variable = { name = cm_placement_finder_naval value = 1 } # Current presence
+	set_variable = { name = cm_placement_finder_roads value = 1 } # Current
+	set_variable = { name = cm_placement_finder_method value = 1 } # Tax Base
 }

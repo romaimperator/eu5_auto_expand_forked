@@ -188,18 +188,23 @@ cm_ln_seed_categories = {
 	set_variable = { name = cm_fa_forts_budget value = 5 }
 }
 
-# The monthly cycle. Root is the country.
+# The monthly cycle. Nothing is staged until the opening capital move has resolved, so a lucky
+# nation never builds into a capital it is about to leave. Root is the country.
 cm_ln_monthly_cycle = {
 	save_scope_as = cm_country
-	# Ahead of the budget refresh, so the month a reorganization claims the treasury is the
-	# month the pools go to zero.
-	cm_ln_reorg_tick = yes
+	cm_ln_open_capital_tick = yes
 	if = {
-		limit = { cm_fa_master_active = yes }
-		cm_fa_monthly_budget_refresh = yes
-		cm_fa_food_sample_markets = yes
+		limit = { exists = var:cm_ln_open_done }
+		# Ahead of the budget refresh, so the month a reorganization claims the treasury is the
+		# month the pools go to zero.
+		cm_ln_reorg_tick = yes
+		if = {
+			limit = { cm_fa_master_active = yes }
+			cm_fa_monthly_budget_refresh = yes
+			cm_fa_food_sample_markets = yes
+		}
+		cm_run_construction_cycle = yes
 	}
-	cm_run_construction_cycle = yes
 	cm_ln_sync_open_cycles = yes
 }
 
