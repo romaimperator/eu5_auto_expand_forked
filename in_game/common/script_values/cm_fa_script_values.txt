@@ -254,10 +254,13 @@ cm_fa_rd_movement_cost_value = {
 
 # The unit distance vanilla prices a road by: how far the two tiles are apart, weighted by how slow
 # they are to cross. The engine's own figure is GetRoadDistanceTo, which is GUI-only and returns
-# int32, a type MakeScopeValue nulls on, so this mirrors the shape the OGAS Optimized workshop mod
-# arrived at, the only version with evidence behind it. The two divisors are ITS fitted constants,
-# not vanilla values, so the scale is UNVERIFIED and cm_fa_rd_log_started prints each estimate to
-# be checked against the road builder's own figure.
+# int32, a type MakeScopeValue nulls on, so the shape here is the one the OGAS Optimized workshop
+# mod arrived at, and its two divisors are ITS fitted constants rather than vanilla values.
+# The 1.65 is calibrated against the game's own Build Gravel Road tooltip, measured 2026-07-27 on
+# three corridors out of Valladolid whose real distance multipliers were 12.72, 8.46 and 11.07
+# against 7.71, 5.09 and 6.74 from the terms above: ratios 1.650, 1.659 and 1.641. Both divisor
+# branches were then checked whole against real costs, same area 81 against 80.5 and across an area
+# boundary 73 against 73.5, so the 10 and the 20 are right relative to each other as well.
 # Root is the location, expects scope:cm_fa_rd_from and scope:cm_fa_rd_to.
 cm_fa_rd_unit_distance_value = {
 	value = "scope:cm_fa_rd_from.distance_to(scope:cm_fa_rd_to)"
@@ -272,6 +275,7 @@ cm_fa_rd_unit_distance_value = {
 	else = {
 		divide = 20
 	}
+	multiply = 1.65
 	min = 0.01
 }
 

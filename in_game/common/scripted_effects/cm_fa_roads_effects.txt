@@ -7,10 +7,8 @@
 
 # Roads a cycle may start.
 @cm_fa_rd_max_per_cycle = 8
-# Corridors that may be under construction at once. A road is not charged when it is ordered, it is
-# paid for as it is built, so the monthly pool alone cannot bound what the treasury has promised:
-# cm_q_planned_spend is reset every cycle and last month's unpaid roads are invisible to this one.
-# Capping how many are in flight is what bounds that, and it does not depend on the cost estimate.
+# Corridors that may be under construction at once. Gold is bounded by the pool, so this bounds the
+# other scarce thing: each road occupies its location's civil construction slot until it finishes.
 @cm_fa_rd_max_outstanding = 12
 # Orders that produced nothing before a corridor is set aside.
 @cm_fa_rd_max_tries = 3
@@ -77,10 +75,6 @@ cm_fa_rd_plan = {
 		cm_fa_rd_return_setting = { S = naval }
 		cm_fa_rd_return_setting = { S = method }
 		cm_fa_rd_return_setting = { S = accuracy }
-		if = {
-			limit = { cm_ln_is_active = no }
-			cmf_log_value = { action = cm_fa_rd_log_planned value = var:cm_fa_rd_n }
-		}
 	}
 }
 
@@ -149,14 +143,6 @@ cm_fa_pass_roads = {
 		save_temporary_scope_value_as = { name = cm_fa_rd_tier value = cm_fa_rd_tier_cost_value }
 		if = {
 			limit = {
-				cm_ln_is_active = no
-				has_variable = cm_fa_rd_n
-				var:cm_fa_rd_n >= 1
-			}
-			cmf_log_value = { action = cm_fa_rd_log_pool value = var:cm_fa_pool_roads }
-		}
-		if = {
-			limit = {
 				OR = {
 					NOT = { has_variable_list = cm_fa_rd_building }
 					NOT = { variable_list_size = { name = cm_fa_rd_building value >= @cm_fa_rd_max_outstanding } }
@@ -202,13 +188,11 @@ cm_fa_rd_try_build = {
 			scope:cm_country = {
 				cm_fa_rd_construct = yes
 				change_variable = { name = cm_fa_pool_roads subtract = scope:cm_cost }
-				change_variable = { name = cm_q_planned_spend add = scope:cm_cost }
+				# construct_road charges at once, so the gold the next corridor is tested against has
+				# already lost this one. Booking it in cm_q_planned_spend as well would take it out
+				# twice and halve the budget; that list is for the builds the queue window fires later.
 				cm_fa_rd_drop_pending = yes
 				add_to_variable_list = { name = cm_fa_rd_building target = scope:cm_fa_rd_from }
-				if = {
-					limit = { cm_ln_is_active = no }
-					cmf_log_value = { action = cm_fa_rd_log_started value = scope:cm_cost }
-				}
 			}
 		}
 		else = {
@@ -278,13 +262,7 @@ cm_fa_rd_check_orders = {
 					set_variable = { name = cm_fa_rd_bad value = 1 days = @cm_fa_rd_bad_days }
 					remove_variable = cm_fa_rd_try
 					remove_variable = cm_fa_rd_score
-					scope:cm_country = {
-						cm_fa_rd_drop_pending = yes
-						if = {
-							limit = { cm_ln_is_active = no }
-							cmf_log = { action = cm_fa_rd_log_dropped }
-						}
-					}
+					scope:cm_country = { cm_fa_rd_drop_pending = yes }
 				}
 			}
 		}
