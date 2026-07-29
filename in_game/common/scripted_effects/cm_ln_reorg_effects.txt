@@ -1,17 +1,18 @@
-﻿# Lucky Nations capital and governor reorganization: every fifty years, once income passes
+﻿# Lucky Nations capital and governor reorganization: every twenty-five years, once income passes
 # the starting threshold, or whenever a new governor slot opens, a lucky nation re-picks its
-# capital and plans a full set of governor sites, then builds roads out to them and places the
-# governors one at a time. It supersedes the full-automation Governors category for these
-# countries.
+# capital and plans a full set of governor sites, then urbanizes the ones below city rank, builds
+# roads out to them and places the governors. It supersedes the full-automation Governors category
+# for these countries.
 #
 # The plan is built one search per month so no single tick carries a whole placement finder
 # run, and each search treats the sites already committed to as proximity sources, so site
 # two is chosen knowing site one will exist.
 
-# 50 years, the reorganization cadence.
-@cm_ln_cooldown_days = 18250
-# Months a reorganization may run before it is abandoned and replanned from scratch.
-@cm_ln_reorg_max_months = 600
+# 25 years, the reorganization cadence.
+@cm_ln_cooldown_days = 9125
+# Months a reorganization may run before it is abandoned and replanned from scratch. Under the
+# cadence, so a stuck run cannot outlive the period it belongs to.
+@cm_ln_reorg_max_months = 300
 # A capital scoring below this share of the best location is worth moving. Scores are
 # normalised to 0-1000 against the best, and the gap is hysteresis against churn.
 @cm_ln_cap_keep = 900
@@ -43,6 +44,19 @@ cm_ln_reorg_tick = {
 	# month waiting on an order already charged for, and every unpaid phase all leave full
 	# automation its budget. The tick runs ahead of the budget refresh that reads it.
 	remove_variable = cm_ln_hold
+	# The urbanize and road orders serve both the placement and the relocation phase, and they run
+	# whatever the slot and credit counts are, so they sit ahead of the switch rather than inside
+	# either step. Placement claims gold after them.
+	if = {
+		limit = {
+			var:cm_ln_phase >= 5
+			var:cm_ln_phase <= 6
+		}
+		set_variable = { name = cm_ln_tick_spent value = 0 }
+		cm_ln_prune_pending = yes
+		cm_ln_road_pass = yes
+		cm_ln_rank_pass = yes
+	}
 	switch = {
 		trigger = var:cm_ln_phase
 		1 = { cm_ln_reorg_capital_search = yes }
@@ -53,6 +67,7 @@ cm_ln_reorg_tick = {
 		6 = { cm_ln_reorg_move_step = yes }
 		7 = { cm_ln_reorg_teardown = yes }
 	}
+	remove_variable = cm_ln_tick_spent
 	if = {
 		limit = {
 			var:cm_ln_phase > 0
@@ -77,9 +92,9 @@ cm_ln_reorg_try_start = {
 				AND = {
 					NOT = { exists = var:cm_ln_cooldown }
 					OR = {
-						# The fiftieth year of the grand campaign, which starts 1337.4.1
+						# The twenty-fifth year of the grand campaign, which starts 1337.4.1
 						# (START_DATE, loading_screen/common/defines/00_defines.txt:2).
-						current_date >= 1387.1.1
+						current_date >= 1362.1.1
 						monthly_income_total >= @cm_ln_income_start
 					}
 				}
@@ -110,6 +125,7 @@ cm_ln_reorg_begin = {
 		limit = { has_variable = cm_ln_plan_ord }
 		remove_variable = cm_ln_plan_ord
 		remove_variable = cm_ln_plan_naval
+		remove_variable = cm_ln_rank_wait
 	}
 	# The capital move's remove_if can destroy seats outright, and a seat lost that way is
 	# ours to replace at no cost.
@@ -387,6 +403,7 @@ cm_ln_reorg_teardown = {
 		limit = { has_variable = cm_ln_plan_ord }
 		remove_variable = cm_ln_plan_ord
 		remove_variable = cm_ln_plan_naval
+		remove_variable = cm_ln_rank_wait
 	}
 	remove_global_variable = cm_ln_token
 	cm_ln_pf_settings_off = yes

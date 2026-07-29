@@ -41,10 +41,21 @@ cm_ln_build_cost_value = {
 	min = 0
 }
 
+# Country scope. What the month's earlier reorganization orders already committed. construct_building
+# does not take its gold out of the treasury in time for the next order's check, so every threshold
+# below carries this term.
+cm_ln_tick_spent_value = {
+	if = {
+		limit = { exists = var:cm_ln_tick_spent }
+		value = var:cm_ln_tick_spent
+	}
+}
+
 # Country scope. Gold a reorganization needs before it orders its road.
 # Expects scope:cm_fa_rd_from, scope:cm_fa_rd_to and scope:cm_fa_rd_tier.
 cm_ln_road_gold_threshold = {
 	value = scope:cm_fa_rd_from.cm_fa_rd_cost_value
+	add = cm_ln_tick_spent_value
 	add = cm_fa_get_reserve
 }
 
@@ -52,6 +63,15 @@ cm_ln_road_gold_threshold = {
 # scope:cm_ln_target. Expects scope:cm_country, scope:cm_building_type and scope:cm_location.
 cm_ln_placement_gold_threshold = {
 	value = scope:cm_ln_target.cm_ln_build_cost_value
+	add = cm_ln_tick_spent_value
+	add = cm_fa_get_reserve
+}
+
+# Country scope. Gold a reorganization needs before it founds the town or city at
+# scope:cm_ln_rank_target. Expects scope:cm_country, scope:cm_building_type and scope:cm_location.
+cm_ln_rank_gold_threshold = {
+	value = scope:cm_ln_rank_target.cm_ln_build_cost_value
+	add = cm_ln_tick_spent_value
 	add = cm_fa_get_reserve
 }
 

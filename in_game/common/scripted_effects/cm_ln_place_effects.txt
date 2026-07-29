@@ -1,5 +1,6 @@
-﻿# Lucky Nations governor placement: roads out to one planned site at a time, then the
-# governor itself. A site that needs an existing seat freed is served last, and that
+﻿# Lucky Nations governor placement: three passes a month. Every planned site below city rank is
+# urbanized in parallel, one road corridor is laid at a time, and any site with both behind it
+# takes its governor. A site that needs an existing seat freed is served last, and that
 # replacement is free, because the seat it replaces was a placement the country could have
 # made correctly in the first place.
 
@@ -7,31 +8,139 @@
 @cm_ln_road_retry_months = 24
 # Re-issues before the site is given up.
 @cm_ln_road_max_tries = 5
+# Months a site may be refused its rank upgrade before it is given up.
+@cm_ln_rank_max_months = 60
 
-# Serves the best-ranked pending site. $FREE$ = yes when the placement pairs with a seat being
-# given up. Root is the country, scope:cm_country set.
+# Places at the best-ranked pending site that needs neither a road nor a rank, so a site still
+# urbanizing does not hold up the ones behind it. $FREE$ = yes when the placement pairs with a
+# seat being given up. Root is the country, scope:cm_country set.
 cm_ln_place_next = {
-	cm_ln_prune_pending = yes
 	ordered_in_list = {
 		variable = cm_ln_pending
 		order_by = var:cm_ln_plan_ord
 		position = 0
 		check_range_bounds = no
+		limit = {
+			cm_ln_target_needs_road = no
+			cm_ln_target_needs_rank = no
+		}
 		save_scope_as = cm_ln_target
 	}
 	if = {
 		limit = { exists = scope:cm_ln_target }
 		cm_ln_resolve_target_type = yes
+		cm_ln_do_placement = { FREE = $FREE$ }
+	}
+}
+
+# The one corridor a month, laid to the best-ranked pending site that has no road to the capital.
+# Root is the country, scope:cm_country set.
+cm_ln_road_pass = {
+	ordered_in_list = {
+		variable = cm_ln_pending
+		order_by = var:cm_ln_plan_ord
+		position = 0
+		check_range_bounds = no
+		limit = { cm_ln_target_needs_road = yes }
+		save_scope_as = cm_ln_road_target
+	}
+	if = {
+		limit = { exists = scope:cm_ln_road_target }
+		cm_ln_road_step = yes
+	}
+}
+
+# Every pending site short of city rank, so the plan urbanizes in parallel with the one road.
+# scope:cm_ln_rank_head is the best-ranked of them, the only one cm_ln_rank_step lets hold the
+# treasury. Root is the country, scope:cm_country set.
+cm_ln_rank_pass = {
+	ordered_in_list = {
+		variable = cm_ln_pending
+		order_by = var:cm_ln_plan_ord
+		position = 0
+		check_range_bounds = no
+		limit = { cm_ln_target_needs_rank = yes }
+		save_scope_as = cm_ln_rank_head
+	}
+	every_in_list = {
+		variable = cm_ln_pending
+		save_scope_as = cm_ln_rank_target
 		if = {
-			limit = { scope:cm_ln_target = { cm_ln_target_needs_road = yes } }
-			cm_ln_road_step = yes
-		}
-		else = {
-			cm_ln_do_placement = { FREE = $FREE$ }
+			limit = { cm_ln_target_needs_rank = yes }
+			# The walk puts the location in root, and the step writes country variables.
+			scope:cm_country = { cm_ln_rank_step = yes }
 		}
 	}
 }
 
+# Root is the country. Sets scope:cm_building_type to the Found building the site's rank calls for.
+# Expects scope:cm_ln_rank_target.
+cm_ln_resolve_rank_type = {
+	if = {
+		limit = { scope:cm_ln_rank_target = { location_rank = location_rank:rural_settlement } }
+		building_type:cm_upgrade_rural_to_town_building = { save_scope_as = cm_building_type }
+	}
+	else = {
+		building_type:cm_upgrade_town_to_city_building = { save_scope_as = cm_building_type }
+	}
+}
+
+# The urbanize pass gates on population, the RGO ignore list, the food reservation and min_discount,
+# so a planned site can sit at rank indefinitely; this path carries only the rank, already-built,
+# already-under-construction, engine-placement and gold checks. Only scope:cm_ln_rank_head may hold
+# the treasury: a plan whose every unaffordable site held it would empty full automation's pools for
+# years. Root is the country, scope:cm_country and scope:cm_ln_rank_target set.
+cm_ln_rank_step = {
+	cm_ln_resolve_rank_type = yes
+	scope:cm_ln_rank_target = { save_temporary_scope_as = cm_location }
+	if = {
+		limit = {
+			scope:cm_ln_rank_target = {
+				NOT = { has_building = scope:cm_building_type }
+				NOT = {
+					any_buildings_in_location = {
+						building_type = scope:cm_building_type
+						building_levels_under_construction > 0
+					}
+				}
+			}
+		}
+		if = {
+			limit = { scope:cm_ln_rank_target = { cm_location_allowed_to_build = { target = scope:cm_building_type } } }
+			if = {
+				limit = { cm_check_country_gold_above = { threshold = cm_ln_rank_gold_threshold } }
+				change_variable = { name = cm_ln_tick_spent add = scope:cm_ln_rank_target.cm_ln_build_cost_value }
+				scope:cm_ln_rank_target = {
+					construct_building = {
+						building_type = scope:cm_building_type
+						owner = scope:cm_country
+						payer = scope:cm_country
+					}
+					remove_variable = cm_ln_rank_wait
+				}
+				cmf_log = { action = cm_ln_log_gov_rank_up }
+			}
+			else_if = {
+				limit = { scope:cm_ln_rank_target = { this = scope:cm_ln_rank_head } }
+				set_variable = { name = cm_ln_hold value = 1 }
+			}
+		}
+		else = {
+			# The engine refuses the upgrade, which saving gold cannot fix, so the site counts months
+			# toward the cap the prune drops it at, rather than sitting in the plan until the abort.
+			scope:cm_ln_rank_target = {
+				if = {
+					limit = { NOT = { exists = var:cm_ln_rank_wait } }
+					set_variable = { name = cm_ln_rank_wait value = 0 }
+				}
+				change_variable = { name = cm_ln_rank_wait add = 1 }
+			}
+		}
+	}
+}
+
+# Also the single removal point for a site the engine keeps refusing its rank upgrade, since
+# cm_ln_rank_pass cannot drop one mid-walk without mutating the list it is iterating.
 # Root is the country, scope:cm_country set.
 cm_ln_prune_pending = {
 	clear_variable_list = cm_ln_pending_keep
@@ -43,6 +152,10 @@ cm_ln_prune_pending = {
 				scope:cm_ln_p = {
 					owner ?= scope:cm_country
 					cm_location_has_governor = no
+					trigger_if = {
+						limit = { exists = var:cm_ln_rank_wait }
+						var:cm_ln_rank_wait < @cm_ln_rank_max_months
+					}
 				}
 			}
 			scope:cm_country = { add_to_variable_list = { name = cm_ln_pending_keep target = scope:cm_ln_p } }
@@ -70,13 +183,22 @@ cm_ln_resolve_target_type = {
 
 # One corridor at a time, so the whole held treasury stands behind it. The order's duration is
 # not script-readable, so the retry is a timer rather than a check.
-# Root is the country, scope:cm_country and scope:cm_ln_target set.
+# Root is the country, scope:cm_country and scope:cm_ln_road_target set.
 cm_ln_road_step = {
+	if = {
+		# The corridor in flight was ordered for another site, so it either landed or left the queue.
+		# Its timer and its tries belong to that site and must not age out this one's order.
+		limit = {
+			exists = var:cm_ln_road_issued
+			NOT = { var:cm_ln_road_site = scope:cm_ln_road_target }
+		}
+		cm_ln_clear_road_state = yes
+	}
 	if = {
 		# road_building is the advance that unlocks gravel_road:
 		# in_game/common/advances/3_road_unlocks.txt:1
 		limit = { NOT = { has_advance = road_building } }
-		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_road_target }
 		cm_ln_clear_road_state = yes
 	}
 	else_if = {
@@ -85,16 +207,18 @@ cm_ln_road_step = {
 			NOT = { exists = var:cm_ln_road_issued }
 		}
 		capital = { save_temporary_scope_as = cm_fa_rd_from }
-		scope:cm_ln_target = { save_temporary_scope_as = cm_fa_rd_to }
+		scope:cm_ln_road_target = { save_temporary_scope_as = cm_fa_rd_to }
 		save_temporary_scope_value_as = { name = cm_fa_rd_tier value = cm_ln_road_tier_cost_value }
 		if = {
 			limit = { cm_check_country_gold_above = { threshold = cm_ln_road_gold_threshold } }
 			construct_road = {
 				road_type = road_type:gravel_road
 				from = capital
-				to = scope:cm_ln_target
+				to = scope:cm_ln_road_target
 			}
+			change_variable = { name = cm_ln_tick_spent add = scope:cm_fa_rd_from.cm_fa_rd_cost_value }
 			set_variable = { name = cm_ln_road_issued value = 1 }
+			set_variable = { name = cm_ln_road_site value = scope:cm_ln_road_target }
 			set_variable = { name = cm_ln_road_age value = 0 }
 		}
 		else = {
@@ -113,7 +237,7 @@ cm_ln_road_step = {
 			change_variable = { name = cm_ln_road_tries add = 1 }
 			if = {
 				limit = { var:cm_ln_road_tries >= @cm_ln_road_max_tries }
-				remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+				remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_road_target }
 				cm_ln_clear_road_state = yes
 			}
 		}
@@ -123,6 +247,7 @@ cm_ln_road_step = {
 # Root is the country.
 cm_ln_clear_road_state = {
 	remove_variable = cm_ln_road_issued
+	remove_variable = cm_ln_road_site
 	set_variable = { name = cm_ln_road_age value = 0 }
 	set_variable = { name = cm_ln_road_tries value = 0 }
 }
@@ -165,7 +290,6 @@ cm_ln_do_placement = {
 				cmf_log = { action = cm_ln_log_gov_placed }
 			}
 			remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
-			cm_ln_clear_road_state = yes
 		}
 		else = {
 			# Short of gold on a site that is otherwise ready, so the treasury is held until it covers

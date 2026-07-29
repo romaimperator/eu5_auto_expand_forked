@@ -83,13 +83,26 @@ cm_ln_site_is_naval = {
 	is_port = yes
 }
 
-# Root is the location. Mirrors both vanilla governor types minus the road requirement, which
-# a reorganization builds rather than demands: in_game/common/building_types/capital_buildings.txt
-# local_governor :607, naval_governor :760. Expects the run's slot counters on the owner.
+# Root is the location. Mirrors both vanilla governor types minus the road and the city rank,
+# which a reorganization builds rather than demands:
+# in_game/common/building_types/capital_buildings.txt local_governor :607, naval_governor :760.
+# Expects the run's slot counters on the owner.
 cm_ln_gov_site_eligible = {
 	OR = {
 		location_rank = location_rank:city # :620
 		location_rank = location_rank:megalopolis # :621
+		AND = {
+			OR = {
+				location_rank = location_rank:rural_settlement
+				location_rank = location_rank:town
+			}
+			# The Found City step, which the whole chain has to reach for a governor to stand here:
+			# cm_upgrade_town_to_city_building location_potential population >= 30 and
+			# allow cannot_upgrade_location,
+			# in_game/common/building_types/cm_location_upgrade_buildings.txt:26 and :23.
+			population >= 30
+			modifier:cannot_upgrade_location = no
+		}
 	}
 	NOT = { has_variable = cm_ln_plan_ord }
 	OR = {
@@ -110,6 +123,15 @@ cm_ln_gov_site_eligible = {
 cm_ln_target_needs_road = {
 	NOT = { has_variable = cm_ln_plan_naval }
 	has_road_to_capital = no
+}
+
+# Root is the location. Both governor types need city rank, so a planned site below it is
+# urbanized first: in_game/common/building_types/capital_buildings.txt:620 and :773.
+cm_ln_target_needs_rank = {
+	OR = {
+		location_rank = location_rank:rural_settlement
+		location_rank = location_rank:town
+	}
 }
 
 # Root is the country.
