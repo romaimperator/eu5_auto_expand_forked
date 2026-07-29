@@ -199,18 +199,11 @@ cm_fa_pass_industry = {
 	every_market_present_in_country = {
 		limit = { cm_fa_market_in_slice = yes }
 		save_scope_as = cm_fa_market
-		scope:cm_country = {
-			if = {
-				limit = { cm_ln_is_active = yes }
-				cm_ln_dbg_bump = { N = mkts }
-			}
-		}
 		if = {
 			limit = { local_var:cm_fa_blk_industry = 0 }
 			scope:cm_country = { cm_fa_drain_market = yes }
 		}
 	}
-	cm_ln_dbg_report = yes
 }
 
 # Drains one market's industry candidates. Root is the country, expects scope:cm_fa_market.
@@ -230,13 +223,7 @@ cm_fa_drain_market = {
 				}
 			}
 			save_scope_as = cm_fa_cand_loc
-			scope:cm_country = {
-				add_to_variable_list = { name = cm_fa_drain_cands target = scope:cm_fa_cand_loc }
-				if = {
-					limit = { cm_ln_is_active = yes }
-					cm_ln_dbg_bump = { N = cands }
-				}
-			}
+			scope:cm_country = { add_to_variable_list = { name = cm_fa_drain_cands target = scope:cm_fa_cand_loc } }
 		}
 	}
 	save_temporary_scope_value_as = { name = cm_fa_anchor value = -2000000 }
@@ -311,7 +298,6 @@ cm_fa_drain_market = {
 					scope:cm_fa_dom_b >= { value = local_var:cm_fa_thresh }
 					scope:cm_fa_dom_b > -2000000
 				}
-				if = { limit = { cm_ln_is_active = yes } cm_ln_dbg_bump = { N = pick_b } }
 				scope:cm_fa_pick_b_loc = { cm_fa_pick_best_build_item = yes }
 				set_local_variable = { name = cm_fa_mkt_more value = 1 }
 			} else_if = {
@@ -320,14 +306,12 @@ cm_fa_drain_market = {
 					scope:cm_fa_dom_u >= { value = local_var:cm_fa_thresh }
 					scope:cm_fa_dom_u > -2000000
 				}
-				if = { limit = { cm_ln_is_active = yes } cm_ln_dbg_bump = { N = pick_u } }
 				scope:cm_fa_pick_u_loc = { cm_fa_pick_best_upgrade_item = yes }
 				set_local_variable = { name = cm_fa_mkt_more value = 1 }
 			} else_if = {
 				# RGOs have no input good, so they can never be unprofitable and never steal a
 				# building's opportunity; the margin never gates them, only ROI order.
 				limit = { scope:cm_fa_dom_r > -2000000 }
-				if = { limit = { cm_ln_is_active = yes } cm_ln_dbg_bump = { N = pick_r } }
 				scope:cm_fa_pick_r_loc = { cm_fa_approve_rgo_item = yes }
 				set_local_variable = { name = cm_fa_mkt_more value = 1 }
 			}
@@ -388,7 +372,6 @@ cm_fa_pick_best_build_item = {
 					cm_fa_approve_extra_build_copies = yes
 				}
 			} else = {
-				scope:cm_country = { if = { limit = { cm_ln_is_active = yes } cm_ln_dbg_blk_trip = { C = 1 } } }
 				set_local_variable = { name = cm_fa_blk_industry value = 1 }
 			}
 		}
@@ -463,7 +446,6 @@ cm_fa_approve_extra_build_copies = {
 			cm_market_has_construction_goods_for_building = yes
 			NOT = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
 		}
-		scope:cm_country = { if = { limit = { cm_ln_is_active = yes } cm_ln_dbg_blk_trip = { C = 2 } } }
 		set_local_variable = { name = cm_fa_blk_industry value = 1 }
 	}
 }
@@ -544,7 +526,6 @@ cm_fa_pick_best_upgrade_item = {
 					cm_q_record_upgrade_approval = yes
 					scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
 				} else = {
-					scope:cm_country = { if = { limit = { cm_ln_is_active = yes } cm_ln_dbg_blk_trip = { C = 3 } } }
 					set_local_variable = { name = cm_fa_blk_industry value = 1 }
 				}
 			}
@@ -587,10 +568,6 @@ cm_fa_approve_rgo_item = {
 	remove_variable = cm_fa_r_score
 	save_temporary_scope_as = cm_location
 	if = {
-		limit = { scope:cm_country = { cm_ln_is_active = yes } }
-		cm_ln_dbg_rgo_approve_probe = yes
-	}
-	if = {
 		limit = {
 			cm_rgo_basic_expand_eligibility = yes
 			NOT = { cm_location_auto_food_supersedes_rgo = yes }
@@ -618,13 +595,7 @@ cm_fa_approve_rgo_item = {
 				}
 				set_local_variable = { name = cm_fa_rgo_cost value = glorpui_rgo_expand_cost }
 				construct_rgo_upgrade = { }
-				scope:cm_country = {
-					change_variable = { name = cm_fa_pool_industry subtract = local_var:cm_fa_rgo_cost }
-					if = {
-						limit = { cm_ln_is_active = yes }
-						cm_ln_dbg_bump = { N = built_r }
-					}
-				}
+				scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = local_var:cm_fa_rgo_cost } }
 				change_local_variable = { name = cm_fa_rgo_budget subtract = 1 }
 				change_local_variable = { name = cm_fa_rgo_done add = 1 }
 			}
@@ -637,7 +608,6 @@ cm_fa_approve_rgo_item = {
 					cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction }
 					NOT = { cm_fa_can_afford_rgo = { POOL = cm_fa_pool_industry } }
 				}
-				scope:cm_country = { if = { limit = { cm_ln_is_active = yes } cm_ln_dbg_blk_trip = { C = 4 } } }
 				set_local_variable = { name = cm_fa_blk_industry value = 1 }
 			}
 		}

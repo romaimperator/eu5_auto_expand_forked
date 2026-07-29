@@ -15,9 +15,10 @@ cm_ln_frugal_government = {
 	# No court_importance_modifier exists, so gold is the only weight reaching court spending.
 	# Vanilla's greediest ruler is 0.2 (in_game/common/traits/00_ruler.txt:773).
 	gold_importance_modifier = 5
-	# This one is the fraction itself rather than a divisor, so cancelling the country-wide 0.1
-	# baseline (in_game/common/auto_modifiers/country.txt:117) leaves nothing.
-	diplomatic_spending_cost = -0.1
+	# Max expense is economical_base * DIPLOMATIC_SPENDING_FRACTION * (1 + this), so the total must
+	# reach -1 to cost nothing: -1.1 against the +0.1 every country carries
+	# (in_game/common/auto_modifiers/country.txt:117, loading_screen/common/defines/00_defines.txt:1863).
+	diplomatic_spending_cost = -1.1
 }
 
 # Stability costs economical_base * STABILIY_EXPENSE_FACTOR / (1 + efficiency), so 99 leaves a

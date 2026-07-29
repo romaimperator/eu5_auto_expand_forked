@@ -110,7 +110,7 @@ cm_ln_reorg_begin = {
 	# The capital move's remove_if can destroy seats outright, and a seat lost that way is
 	# ours to replace at no cost.
 	every_owned_location = {
-		limit = { cm_ln_has_governor = yes }
+		limit = { cm_location_has_governor = yes }
 		save_scope_as = cm_ln_seat
 		scope:cm_country = { add_to_variable_list = { name = cm_ln_pre_seats target = scope:cm_ln_seat } }
 	}
@@ -261,7 +261,7 @@ cm_ln_reorg_classify = {
 			limit = {
 				scope:cm_ln_p = {
 					owner ?= scope:cm_country
-					cm_ln_has_governor = no
+					cm_location_has_governor = no
 				}
 			}
 			add_to_variable_list = { name = cm_ln_pending target = scope:cm_ln_p }
@@ -269,7 +269,7 @@ cm_ln_reorg_classify = {
 	}
 	every_owned_location = {
 		limit = {
-			cm_ln_has_governor = yes
+			cm_location_has_governor = yes
 			NOT = { has_variable = cm_ln_plan_ord }
 		}
 		save_scope_as = cm_ln_seat
@@ -279,7 +279,7 @@ cm_ln_reorg_classify = {
 		variable = cm_ln_pre_seats
 		save_scope_as = cm_ln_seat
 		if = {
-			limit = { scope:cm_ln_seat = { cm_ln_has_governor = no } }
+			limit = { scope:cm_ln_seat = { cm_location_has_governor = no } }
 			change_variable = { name = cm_ln_free_credits add = 1 }
 		}
 	}
