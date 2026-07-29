@@ -124,3 +124,35 @@ cm_ln_ctry_id_value = {
 	if = { limit = { NOT = { exists = scope:cm_ln_ctry } } save_temporary_scope_as = cm_ln_ctry }
 	value = "global_variable_map(cm_ln_ctry_id|scope:cm_ln_ctry)"
 }
+
+# Country scope. Court slider position in tenths, for the auto modifiers that cancel what the
+# slider pays out. court_maintenance is a trigger rather than a value, so the position can only
+# be read by comparison. Rounded down, so a cancel can never exceed the gain it mirrors.
+cm_ln_court_slider = {
+	value = 0
+	if = { limit = { court_maintenance >= 1 } add = 1 }
+	else_if = { limit = { court_maintenance >= 0.9 } add = 0.9 }
+	else_if = { limit = { court_maintenance >= 0.8 } add = 0.8 }
+	else_if = { limit = { court_maintenance >= 0.7 } add = 0.7 }
+	else_if = { limit = { court_maintenance >= 0.6 } add = 0.6 }
+	else_if = { limit = { court_maintenance >= 0.5 } add = 0.5 }
+	else_if = { limit = { court_maintenance >= 0.4 } add = 0.4 }
+	else_if = { limit = { court_maintenance >= 0.3 } add = 0.3 }
+	else_if = { limit = { court_maintenance >= 0.2 } add = 0.2 }
+	else_if = { limit = { court_maintenance >= 0.1 } add = 0.1 }
+}
+
+# Country scope.
+cm_ln_dip_slider = {
+	value = 0
+	if = { limit = { diplomatic_maintenance >= 1 } add = 1 }
+	else_if = { limit = { diplomatic_maintenance >= 0.9 } add = 0.9 }
+	else_if = { limit = { diplomatic_maintenance >= 0.8 } add = 0.8 }
+	else_if = { limit = { diplomatic_maintenance >= 0.7 } add = 0.7 }
+	else_if = { limit = { diplomatic_maintenance >= 0.6 } add = 0.6 }
+	else_if = { limit = { diplomatic_maintenance >= 0.5 } add = 0.5 }
+	else_if = { limit = { diplomatic_maintenance >= 0.4 } add = 0.4 }
+	else_if = { limit = { diplomatic_maintenance >= 0.3 } add = 0.3 }
+	else_if = { limit = { diplomatic_maintenance >= 0.2 } add = 0.2 }
+	else_if = { limit = { diplomatic_maintenance >= 0.1 } add = 0.1 }
+}

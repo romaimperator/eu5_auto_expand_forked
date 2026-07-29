@@ -17,4 +17,83 @@ cm_ln_frugal_government = {
 	# No court_importance_modifier exists, so gold is the only weight reaching court spending.
 	# Vanilla's greediest ruler is 0.2 (in_game/common/traits/00_ruler.txt:773).
 	gold_importance_modifier = 5
+	# Court and stability cost economical_base * 0.1 / (1 + this), so 99 leaves a hundredth.
+	# Exactly -1 is a divide by zero. COURT_SPENDING_FRACTON and STABILIY_EXPENSE_FACTOR (both
+	# 0.1, both spelled that way in vanilla): loading_screen/common/defines/00_defines.txt:1862, :1941
+	court_spending_efficiency = 99
+	# This one is the fraction itself rather than a divisor, so cancelling the country-wide 0.1
+	# baseline (in_game/common/auto_modifiers/country.txt:117) leaves nothing.
+	diplomatic_spending_cost = -0.1
+}
+
+# The court slider still pays out once it costs nothing, so take back what it grants. Full
+# investment gives GOV_POWER_INVEST_FACTOR 2 a month:
+# loading_screen/common/defines/00_defines.txt:1944
+# One entry per government power currency, because a country's currency follows its government
+# type and can change mid-campaign.
+cm_ln_court_no_gain_legitimacy = {
+	potential_trigger = {
+		cm_ln_is_active = yes
+		uses_government_power = legitimacy
+	}
+	scales_with = cm_ln_court_slider
+
+	monthly_legitimacy = -2
+}
+
+cm_ln_court_no_gain_republican_tradition = {
+	potential_trigger = {
+		cm_ln_is_active = yes
+		uses_government_power = republican_tradition
+	}
+	scales_with = cm_ln_court_slider
+
+	monthly_republican_tradition = -2
+}
+
+cm_ln_court_no_gain_devotion = {
+	potential_trigger = {
+		cm_ln_is_active = yes
+		uses_government_power = devotion
+	}
+	scales_with = cm_ln_court_slider
+
+	monthly_devotion = -2
+}
+
+cm_ln_court_no_gain_horde_unity = {
+	potential_trigger = {
+		cm_ln_is_active = yes
+		uses_government_power = horde_unity
+	}
+	scales_with = cm_ln_court_slider
+
+	monthly_horde_unity = -2
+}
+
+cm_ln_court_no_gain_tribal_cohesion = {
+	potential_trigger = {
+		cm_ln_is_active = yes
+		uses_government_power = tribal_cohesion
+	}
+	scales_with = cm_ln_court_slider
+
+	monthly_tribal_cohesion = -2
+}
+
+# Mirrors diplomatic_maintenance_mod, which the engine applies scaled by the same slider:
+# main_menu/common/static_modifiers/country.txt:393-405
+cm_ln_dip_no_gain = {
+	potential_trigger = {
+		cm_ln_is_active = yes
+	}
+	scales_with = cm_ln_dip_slider
+
+	monthly_diplomats = -0.4
+	max_diplomats = -3
+	subject_loyalty = -30
+	annexation_speed_base = -0.5
+	diplomatic_reputation = -3
+	monthly_complacency = 0.1
+	counter_espionage = -0.5
 }
