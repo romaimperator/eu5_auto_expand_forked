@@ -177,12 +177,27 @@ cm_ln_reorg_capital_move = {
 			}
 		}
 		set_capital = var:cm_ln_cap_target
+		capital = { cm_ln_capital_start_town_upgrade = yes }
 		cmf_log = { action = cm_ln_log_capital_moved }
 	}
 	remove_variable = cm_ln_cap_target
 	set_variable = { name = cm_ln_land_left value = cm_ln_gov_land_slots }
 	set_variable = { name = cm_ln_naval_left value = cm_ln_gov_naval_slots }
 	set_variable = { name = cm_ln_phase value = 3 }
+}
+
+# The urbanize pass gates on population, the RGO ignore list and the food reservation, so a
+# rural capital can sit at rank indefinitely. Root is the location. Expects scope:cm_country.
+cm_ln_capital_start_town_upgrade = {
+	if = {
+		limit = {
+			location_rank = location_rank:rural_settlement
+			NOT = { has_building = building_type:cm_upgrade_rural_to_town_building }
+			NOT = { any_buildings_in_location = { building_type = building_type:cm_upgrade_rural_to_town_building building_levels_under_construction > 0 } }
+			cm_location_allowed_to_build = { target = building_type:cm_upgrade_rural_to_town_building }
+		}
+		construct_building = { building_type = building_type:cm_upgrade_rural_to_town_building }
+	}
 }
 
 # One governor search a month. Root is the country, scope:cm_country set.
@@ -267,7 +282,7 @@ cm_ln_reorg_classify = {
 					cm_location_has_governor = no
 				}
 			}
-			add_to_variable_list = { name = cm_ln_pending target = scope:cm_ln_p }
+			scope:cm_country = { add_to_variable_list = { name = cm_ln_pending target = scope:cm_ln_p } }
 		}
 	}
 	every_owned_location = {
@@ -283,7 +298,7 @@ cm_ln_reorg_classify = {
 		save_scope_as = cm_ln_seat
 		if = {
 			limit = { scope:cm_ln_seat = { cm_location_has_governor = no } }
-			change_variable = { name = cm_ln_free_credits add = 1 }
+			scope:cm_country = { change_variable = { name = cm_ln_free_credits add = 1 } }
 		}
 	}
 	clear_variable_list = cm_ln_pre_seats
@@ -457,6 +472,7 @@ cm_ln_open_capital_run = {
 		}
 		set_capital = var:cm_ln_cap_target
 		cm_ln_open_charge_move = yes
+		capital = { cm_ln_capital_start_town_upgrade = yes }
 		cmf_log = { action = cm_ln_log_capital_moved }
 	}
 	remove_variable = cm_ln_cap_target
