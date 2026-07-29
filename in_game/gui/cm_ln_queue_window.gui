@@ -126,7 +126,8 @@ widget = {
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
-			visible = "[And3(CMLuckyNationBridgeActive, GetPlayer.Exists, GetScriptedGui('cm_ln_should_toggle').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			# The console takes one command at a time and drops the overlap.
+			visible = "[And3(CMLuckyNationBridgeActive, GetPlayer.Exists, And3(GetScriptedGui('cm_ln_should_toggle').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End), Not(GetScriptedGui('cm_ln_should_scan').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), Not(GetScriptedGui('cm_ln_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))))]"
 			state = {
 				name = _show
 				duration = 0.1

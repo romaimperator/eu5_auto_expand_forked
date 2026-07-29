@@ -15,6 +15,10 @@ cm_run_construction_cycle = {
 		if = { limit = { var:cm_q_skipped_pulses >= 2 }
 			cm_q_reset_cycle_state = yes
 			set_variable = { name = cm_q_skipped_pulses value = 0 }
+			# The observer bridge's disarm rides a console command the engine drops when another is running.
+			if = { limit = { cm_ln_is_active = yes }
+				remove_global_variable = cm_ln_scan_armed
+			}
 			# A lucky nation shares the player's 200-entry log, so its pacing lines stay out of it.
 			if = { limit = { cm_ln_is_active = no }
 				cmf_log = { action = cm_log_cycle_force_reset }
