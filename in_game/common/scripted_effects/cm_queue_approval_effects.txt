@@ -157,7 +157,6 @@ cm_q_approval_pass = {
 					flag:cm_feature_upgrade_all_buildings = { scope:cm_country = { cm_q_pass_upgrade_all = yes } }
 					flag:cm_feature_auto_build = { scope:cm_country = { cm_q_pass_auto_build = yes } }
 					flag:cm_feature_auto_food = { scope:cm_country = { cm_q_pass_auto_food = yes } }
-					flag:cm_feature_auto_urbanize = { scope:cm_country = { cm_q_pass_auto_urbanize = yes } }
 					flag:cm_feature_auto_build_capital = { scope:cm_country = { cm_q_pass_auto_build_capital = yes } }
 				}
 			}
@@ -183,6 +182,15 @@ cm_q_approval_pass = {
 			scope:cm_country = { cm_fa_drain_category = yes }
 		}
 		remove_variable = cm_fa_carry
+	}
+	# Auto-urbanize claims last, after every priority feature and every full-automation
+	# category, whatever its row position.
+	if = {
+		limit = {
+			has_variable_list = cm_priority_features_enabled
+			is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_urbanize }
+		}
+		cm_q_pass_auto_urbanize = yes
 	}
 }
 

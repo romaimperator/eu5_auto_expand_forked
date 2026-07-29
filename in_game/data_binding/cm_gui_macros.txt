@@ -23,8 +23,8 @@ macro = {
 	replace_with = "ToString_int32(FixedPointToInt(LocationArg.MakeScope.ScriptValue('cm_ln_loc_id_value')))"
 }
 
-# Country.GetTag returns a display tag, which for the Great Yuan is YUA while script marks CHI, so a
-# command built from it scopes to an unrelated country. A lucky nation crosses as its id instead.
+# Country.GetTag returns a display tag, which for the Great Yuan is YUA while script marks CHI. A
+# lucky nation crosses as its id instead.
 macro = {
 	description = "A lucky nation's assigned id as a string"
 	definition = "CMCountryIdText(CountryArg)"
@@ -52,7 +52,7 @@ macro = {
 macro = {
 	description = "The country's buffered calls as one console command, empty when nothing was appended"
 	definition = "CMBatchBlock(CountryArg)"
-	replace_with = "Select_CString(And(GetVariableSystem.Exists(CMBatchKey(CountryArg)), Not(GetVariableSystem.HasValue(CMBatchKey(CountryArg), ''))), Concatenate3('effect c:', CountryArg.GetTag, Concatenate3(' = { ', CMBatchRead(CountryArg), ' };')), '')"
+	replace_with = "Select_CString(And(GetVariableSystem.Exists(CMBatchKey(CountryArg)), Not(GetVariableSystem.HasValue(CMBatchKey(CountryArg), ''))), Concatenate3('effect c:', CountryArg.GetDebugTag, Concatenate3(' = { ', CMBatchRead(CountryArg), ' };')), '')"
 }
 
 macro = {

@@ -158,23 +158,23 @@ widget = {
 							name = cm_ln_cu_end
 							on_finish = "[GetScriptedGui('cm_ln_cu_end').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_ln_country', Country.MakeScope).End)]"
 						}
-						# Every console call names its country by id. Country.GetTag returns a display
-						# tag, which for the Great Yuan is YUA while script marks CHI, so the country
-						# the block is scoped to is a different one and nothing inside reads it.
+						# Every console call names its country by id, and nothing inside reads the country
+						# the block is scoped to. GetTag is a display tag and can name a country that is
+						# no longer alive (Great Wu shows WUU), which the console rejects.
 						state = {
 							name = cm_ln_c_check
-							on_finish = "[ExecuteConsoleCommandsForced(Concatenate3('effect c:', Country.GetTag, Concatenate3(' = { cm_ln_c_sync_check = { Y = ', CMCountryIdText(Country), ' } }')))]"
+							on_finish = "[ExecuteConsoleCommandsForced(Concatenate3('effect c:', Country.GetDebugTag, Concatenate3(' = { cm_ln_c_sync_check = { Y = ', CMCountryIdText(Country), ' } }')))]"
 						}
 						state = {
 							name = cm_ln_c_cu_end
-							on_finish = "[ExecuteConsoleCommandsForced(Concatenate3('effect c:', Country.GetTag, Concatenate3(' = { cm_ln_c_cu_end = { Y = ', CMCountryIdText(Country), ' } }')))]"
+							on_finish = "[ExecuteConsoleCommandsForced(Concatenate3('effect c:', Country.GetDebugTag, Concatenate3(' = { cm_ln_c_cu_end = { Y = ', CMCountryIdText(Country), ' } }')))]"
 						}
 						# Submits the sweep as one ';'-separated sequence, so a malformed value costs its
 						# own command and not the cycle. The tail command carries no separator and clears
 						# the arm the dropped cm_ln_scan_disarm Execute would otherwise have cleared.
 						state = {
 							name = cm_ln_c_flush
-							on_finish = "[ExecuteConsoleCommandsForced(Concatenate(CMBatchBlock(Country), Concatenate3('effect c:', Country.GetTag, Concatenate3(' = { cm_ln_c_process = yes cm_ln_c_scan_disarm = yes cm_ln_c_sync_check = { Y = ', CMCountryIdText(Country), ' } }'))))]"
+							on_finish = "[ExecuteConsoleCommandsForced(Concatenate(CMBatchBlock(Country), Concatenate3('effect c:', Country.GetDebugTag, Concatenate3(' = { cm_ln_c_process = yes cm_ln_c_scan_disarm = yes cm_ln_c_sync_check = { Y = ', CMCountryIdText(Country), ' } }'))))]"
 							on_finish = "[GetVariableSystem.Set(CMBatchKey(Country), '')]"
 						}
 					}

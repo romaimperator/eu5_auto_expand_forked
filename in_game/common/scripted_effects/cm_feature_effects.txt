@@ -74,7 +74,6 @@ cm_run_construction_cycle = {
 							flag:cm_feature_upgrade_all_buildings = { scope:cm_country = { cm_run_upgrade_all_buildings = yes } }
 							flag:cm_feature_auto_build = { scope:cm_country = { cm_run_auto_build = yes } }
 							flag:cm_feature_auto_food = { scope:cm_country = { cm_run_auto_food = yes } }
-							flag:cm_feature_auto_urbanize = { scope:cm_country = { cm_run_auto_urbanize = yes } }
 							flag:cm_feature_auto_build_capital = { scope:cm_country = { cm_run_auto_build_capital = yes } }
 						}
 					}
@@ -95,6 +94,16 @@ cm_run_construction_cycle = {
 				save_scope_as = cm_fa_cat
 				scope:cm_country = { cm_fa_stage_category = yes }
 			}
+		}
+		# Auto-urbanize sits outside the priority loop: it stages and drains after every
+		# other feature and after full automation, whatever its row position.
+		if = {
+			limit = {
+				cm_should_pause_auto_expand = no
+				has_variable_list = cm_priority_features_enabled
+				is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_urbanize }
+			}
+			cm_run_auto_urbanize = yes
 		}
 		# Show the construction-queue window to construct this month's staged items.
 		# The full-automation RGO lists and the road plan bypass the staged counter (no
