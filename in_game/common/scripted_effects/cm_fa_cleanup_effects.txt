@@ -13,9 +13,6 @@ cm_fa_cu_yearly_pass = {
 			exists = var:cm_fa_cleanup_enabled
 		}
 		save_scope_as = cm_country
-		set_local_variable = { name = cm_fa_cu_c_open value = 0 }
-		set_local_variable = { name = cm_fa_cu_c_elig value = 0 }
-		set_local_variable = { name = cm_fa_cu_c_acted value = 0 }
 		clear_variable_list = cm_fa_cu_toggle
 		cm_fa_cu_purge_pass = yes
 		if = {
@@ -40,11 +37,6 @@ cm_fa_cu_yearly_pass = {
 			limit = { variable_list_size = { name = cm_fa_cu_toggle value >= 1 } }
 			set_variable = { name = cm_fa_cu_fire value = 1 }
 		}
-		# A closed building looks the same on the map as one that was never touched, so without
-		# these a pass that ran and a pass that never fired are indistinguishable.
-		cmf_log_value = { action = cm_fa_log_cu_surveyed value = local_var:cm_fa_cu_c_open }
-		cmf_log_value = { action = cm_fa_log_cu_eligible value = local_var:cm_fa_cu_c_elig }
-		cmf_log_value = { action = cm_fa_log_cu_acted value = local_var:cm_fa_cu_c_acted }
 	}
 }
 
@@ -62,7 +54,6 @@ cm_fa_cu_purge_pass = {
 			}
 			save_scope_as = cm_building
 			scope:cm_location = { destroy_building = scope:cm_building }
-			scope:cm_country = { cmf_log = { action = cm_fa_log_cu_purged } }
 		}
 	}
 }
@@ -99,12 +90,10 @@ cm_fa_cu_auto_food_pass = {
 							owner = scope:cm_country
 						}
 					}
-					scope:cm_country = { cmf_log = { action = cm_fa_log_cu_af_trimmed } }
 				}
 			}
 			else = {
 				scope:cm_location = { destroy_building = scope:cm_building }
-				scope:cm_country = { cmf_log = { action = cm_fa_log_cu_af_removed } }
 			}
 		}
 	}
@@ -195,7 +184,6 @@ cm_fa_cu_survey_market = {
 				building_type = { save_scope_as = cm_building_type }
 				if = {
 					limit = { scope:cm_building = { is_opened = yes } }
-					change_local_variable = { name = cm_fa_cu_c_open add = 1 }
 					scope:cm_country = {
 						cm_fa_cu_bump_open = yes
 						if = {
@@ -249,11 +237,9 @@ cm_fa_cu_close_pass = {
 		save_scope_as = cm_building
 		building_type = { save_scope_as = cm_building_type }
 		location = { save_scope_as = cm_location }
-		change_local_variable = { name = cm_fa_cu_c_elig add = 1 }
 		# The iterator snapshots its limit; the share spent advances live.
 		if = {
 			limit = { scope:cm_country = { cm_fa_cu_group_has_room = yes } }
-			change_local_variable = { name = cm_fa_cu_c_acted add = 1 }
 			scope:cm_country = { cm_fa_cu_bump_acted = yes }
 			if = {
 				limit = { building_type = building_type:market_village }
@@ -264,17 +250,14 @@ cm_fa_cu_close_pass = {
 						owner = scope:cm_country
 					}
 				}
-				scope:cm_country = { cmf_log = { action = cm_fa_log_cu_trimmed } }
 			}
 			else_if = {
 				limit = { scope:cm_location = { cm_fa_cu_location_near_cap = yes } }
 				scope:cm_location = { destroy_building = scope:cm_building }
-				scope:cm_country = { cmf_log = { action = cm_fa_log_cu_deleted } }
 			}
 			else = {
 				scope:cm_country = {
 					add_to_variable_list = { name = cm_fa_cu_toggle target = scope:cm_building }
-					cmf_log = { action = cm_fa_log_cu_closed }
 				}
 				cm_fa_cu_track_closed = yes
 			}
@@ -311,7 +294,6 @@ cm_fa_cu_reopen_pass = {
 			scope:cm_country = {
 				cm_fa_cu_bump_reop = yes
 				add_to_variable_list = { name = cm_fa_cu_toggle target = scope:cm_building }
-				cmf_log = { action = cm_fa_log_cu_reopened }
 			}
 			cm_fa_cu_untrack = yes
 		}
@@ -337,7 +319,6 @@ cm_fa_cu_delete_closed_pass = {
 			building_type = { save_scope_as = cm_building_type }
 			scope:cm_location = { destroy_building = scope:cm_building }
 			cm_fa_cu_untrack = yes
-			scope:cm_country = { cmf_log = { action = cm_fa_log_cu_deleted } }
 		}
 	}
 }

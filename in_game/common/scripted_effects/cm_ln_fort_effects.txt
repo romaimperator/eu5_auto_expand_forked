@@ -249,22 +249,16 @@ cm_ln_ft_delete_pass = {
 		}
 		save_scope_as = cm_country
 		cm_ln_ft_build_border_ring = yes
-		set_local_variable = { name = cm_ln_ft_interior value = 0 }
-		set_local_variable = { name = cm_ln_ft_cand value = 0 }
-		set_local_variable = { name = cm_ln_ft_gone value = 0 }
-		set_local_variable = { name = cm_ln_ft_left value = 0 }
 		every_owned_location = {
 			limit = {
 				is_land = yes
 				NOT = { has_variable = cm_ln_ft_bd }
 			}
-			change_local_variable = { name = cm_ln_ft_interior add = 1 }
 			if = {
 				limit = {
 					has_fort = yes
 					NOT = { this = scope:cm_country.capital }
 				}
-				change_local_variable = { name = cm_ln_ft_cand add = 1 }
 				save_scope_as = cm_location
 				# Collected as types, not building handles: destroying inside
 				# every_buildings_in_location mutates the collection being walked. A location
@@ -282,33 +276,10 @@ cm_ln_ft_delete_pass = {
 				every_in_list = {
 					variable = cm_ln_ft_doomed
 					save_scope_as = cm_ln_ft_bt
-					change_local_variable = { name = cm_ln_ft_gone add = 1 }
 					scope:cm_location = { destroy_building = "building(scope:cm_ln_ft_bt|scope:cm_country)" }
 				}
 				clear_variable_list = cm_ln_ft_doomed
-				every_buildings_in_location = {
-					limit = {
-						owner = scope:cm_country
-						cm_is_not_under_construction = yes
-						building_type = { cm_ln_ft_is_chain_fort = yes }
-					}
-					change_local_variable = { name = cm_ln_ft_left add = 1 }
-				}
 			}
-		}
-		# The counts separate the ways this pass can do nothing: no interior, no forts in it,
-		# no chain fort among them, or a destroy that did not take.
-		if = {
-			limit = {
-				OR = {
-					local_var:cm_ln_ft_cand > 0
-					local_var:cm_ln_ft_interior = 0
-				}
-			}
-			cmf_log_value = { action = cm_ln_log_ft_interior value = local_var:cm_ln_ft_interior }
-			cmf_log_value = { action = cm_ln_log_ft_cand value = local_var:cm_ln_ft_cand }
-			cmf_log_value = { action = cm_ln_log_ft_deleted value = local_var:cm_ln_ft_gone }
-			cmf_log_value = { action = cm_ln_log_ft_left value = local_var:cm_ln_ft_left }
 		}
 		cm_ln_ft_clear_rings = yes
 	}

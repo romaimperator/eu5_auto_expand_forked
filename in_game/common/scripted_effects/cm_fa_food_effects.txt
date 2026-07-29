@@ -111,7 +111,6 @@ cm_fa_food_yearly_evaluation = {
 		every_market_present_in_country = {
 			save_scope_as = cm_fa_market
 			scope:cm_country = { cm_fa_food_compute_median = yes }
-			scope:cm_country = { cm_fa_food_log_market_numbers = yes }
 			if = {
 				limit = { local_var:cm_fa_med_below = 1 }
 				set_local_variable = { name = cm_fa_food_n value = 0 }
@@ -126,8 +125,6 @@ cm_fa_food_yearly_evaluation = {
 				}
 				if = {
 					limit = { local_var:cm_fa_food_n < 2 }
-					scope:cm_country = { cmf_log = { action = cm_fa_log_food_low } }
-					scope:cm_country = { cm_fa_food_log_candidate_diag = yes }
 					ordered_location_in_market = {
 						order_by = cm_location_food_potential
 						max = cm_max_guess_at_number_of_locations
@@ -150,7 +147,6 @@ cm_fa_food_yearly_evaluation = {
 							scope:cm_fa_cand = { set_variable = { name = cm_fa_food_marked value = yes } }
 							scope:cm_country = { add_to_variable_list = { name = cm_fa_food_locations target = scope:cm_fa_cand } }
 							change_local_variable = { name = cm_fa_food_n add = 1 }
-							scope:cm_country = { cmf_log = { action = cm_fa_log_food_picked } }
 						}
 					}
 				}
@@ -167,8 +163,8 @@ cm_fa_food_yearly_evaluation = {
 }
 
 # Reads scope:cm_fa_market's histogram, finds the median bucket (the first whose running
-# count reaches half the samples), logs it, and sets local_var:cm_fa_med_below to 1 when the
-# median bucket's lower bound is under local_var:cm_fa_food_thresh. The lower bound biases a
+# count reaches half the samples), and sets local_var:cm_fa_med_below to 1 when the median
+# bucket's lower bound is under local_var:cm_fa_food_thresh. The lower bound biases a
 # mid-bucket target toward building food, the safe direction. Root is the country.
 cm_fa_food_compute_median = {
 	set_local_variable = { name = cm_fa_c1 value = 0 }
@@ -217,7 +213,6 @@ cm_fa_food_compute_median = {
 			limit = { local_var:cm_fa_med_lb < local_var:cm_fa_food_thresh }
 			set_local_variable = { name = cm_fa_med_below value = 1 }
 		}
-		cm_fa_food_log_median = yes
 	}
 }
 
@@ -234,79 +229,6 @@ cm_fa_food_median_step = {
 		set_local_variable = { name = cm_fa_med_bucket value = $N$ }
 		set_local_variable = { name = cm_fa_med_lb value = $LB$ }
 	}
-}
-
-# Debug: re-sums scope:cm_fa_market's food supply and demand (demand from the negative
-# food_consumption, sign-flipped) and logs the raw numbers, the net balance, and the count
-# of locations summed. Root is the country, expects scope:cm_fa_market.
-cm_fa_food_log_market_numbers = {
-	set_local_variable = { name = cm_fa_dbg_supply value = 0 }
-	set_local_variable = { name = cm_fa_dbg_demand value = 0 }
-	set_local_variable = { name = cm_fa_dbg_count value = 0 }
-	scope:cm_fa_market = {
-		every_location_in_market = {
-			change_local_variable = { name = cm_fa_dbg_supply add = food_production }
-			change_local_variable = { name = cm_fa_dbg_demand subtract = food_consumption }
-			change_local_variable = { name = cm_fa_dbg_count add = 1 }
-		}
-	}
-	set_local_variable = { name = cm_fa_dbg_balance value = local_var:cm_fa_dbg_supply }
-	change_local_variable = { name = cm_fa_dbg_balance subtract = local_var:cm_fa_dbg_demand }
-	cmf_log_value = { action = cm_fa_log_food_supply value = local_var:cm_fa_dbg_supply }
-	cmf_log_value = { action = cm_fa_log_food_demand value = local_var:cm_fa_dbg_demand }
-	cmf_log_value = { action = cm_fa_log_food_balance value = local_var:cm_fa_dbg_balance }
-	cmf_log_value = { action = cm_fa_log_food_locs value = local_var:cm_fa_dbg_count }
-}
-
-# Debug: counts scope:cm_fa_market's candidate locations through each stage of the marking
-# filter and logs each count, to find which condition drops the count to zero. Root is the
-# country, expects scope:cm_fa_market.
-cm_fa_food_log_candidate_diag = {
-	set_local_variable = { name = cm_fa_diag_rgo value = 0 }
-	set_local_variable = { name = cm_fa_diag_pot value = 0 }
-	set_local_variable = { name = cm_fa_diag_access value = 0 }
-	set_local_variable = { name = cm_fa_diag_cand value = 0 }
-	scope:cm_fa_market = {
-		every_location_in_market = {
-			limit = {
-				owner ?= scope:cm_country
-				NOT = { integration_level = conquered }
-				location_rank = location_rank:rural_settlement
-				cm_fa_location_has_food_rgo = yes
-			}
-			change_local_variable = { name = cm_fa_diag_rgo add = 1 }
-			if = {
-				limit = { cm_location_food_potential >= cm_fa_food_min_potential_value }
-				change_local_variable = { name = cm_fa_diag_pot add = 1 }
-				if = {
-					limit = { cm_check_location_meets_min_market_access = yes }
-					change_local_variable = { name = cm_fa_diag_access add = 1 }
-					if = {
-						limit = {
-							NOT = { cm_fa_food_location_effectively_active = yes }
-							NOT = { exists = var:cm_auto_food_location_excluded }
-						}
-						change_local_variable = { name = cm_fa_diag_cand add = 1 }
-					}
-				}
-			}
-		}
-	}
-	cmf_log_value = { action = cm_fa_log_food_diag_rgo value = local_var:cm_fa_diag_rgo }
-	cmf_log_value = { action = cm_fa_log_food_diag_pot value = local_var:cm_fa_diag_pot }
-	cmf_log_value = { action = cm_fa_log_food_diag_access value = local_var:cm_fa_diag_access }
-	cmf_log_value = { action = cm_fa_log_food_diag_cand value = local_var:cm_fa_diag_cand }
-}
-
-# Logs the median bucket to the CMM log, one flag per bucket. Root is the country.
-cm_fa_food_log_median = {
-	if = { limit = { local_var:cm_fa_med_bucket = 1 } cmf_log = { action = cm_fa_log_food_med_1 } }
-	else_if = { limit = { local_var:cm_fa_med_bucket = 2 } cmf_log = { action = cm_fa_log_food_med_2 } }
-	else_if = { limit = { local_var:cm_fa_med_bucket = 3 } cmf_log = { action = cm_fa_log_food_med_3 } }
-	else_if = { limit = { local_var:cm_fa_med_bucket = 4 } cmf_log = { action = cm_fa_log_food_med_4 } }
-	else_if = { limit = { local_var:cm_fa_med_bucket = 5 } cmf_log = { action = cm_fa_log_food_med_5 } }
-	else_if = { limit = { local_var:cm_fa_med_bucket = 6 } cmf_log = { action = cm_fa_log_food_med_6 } }
-	else_if = { limit = { local_var:cm_fa_med_bucket = 7 } cmf_log = { action = cm_fa_log_food_med_7 } }
 }
 
 # Drops entries that stopped being valid: lost ownership (the marker stays, inert without

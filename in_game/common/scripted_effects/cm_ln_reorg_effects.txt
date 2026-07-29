@@ -424,22 +424,21 @@ cm_ln_open_capital_run = {
 		save_scope_as = cm_ln_cap_pick
 		scope:cm_country = { set_variable = { name = cm_ln_cap_target value = scope:cm_ln_cap_pick } }
 	}
-	# A capital that is itself the best location scores 1000 and falls out here, so the kept
-	# branch covers it without a separate test.
+	# A capital that is itself the best location scores 1000, so it fails the move test without
+	# a separate check.
 	if = {
 		limit = { NOT = { exists = var:cm_ln_cap_target } }
 		cmf_log = { action = cm_ln_log_open_no_target }
 	}
 	else_if = {
 		limit = {
-			capital = {
-				has_variable = cm_cf_score
-				var:cm_cf_score >= @cm_ln_open_cap_keep
+			NOT = {
+				capital = {
+					has_variable = cm_cf_score
+					var:cm_cf_score >= @cm_ln_open_cap_keep
+				}
 			}
 		}
-		cmf_log_value = { action = cm_ln_log_open_kept value = capital.var:cm_cf_score }
-	}
-	else = {
 		set_capital = var:cm_ln_cap_target
 		cm_ln_open_charge_move = yes
 		cmf_log = { action = cm_ln_log_capital_moved }
