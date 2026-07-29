@@ -97,6 +97,11 @@ cm_ln_road_step = {
 			set_variable = { name = cm_ln_road_issued value = 1 }
 			set_variable = { name = cm_ln_road_age value = 0 }
 		}
+		else = {
+			# construct_road charges the whole cost at once, so the order can only be issued out of a
+			# treasury full automation has not already spent.
+			set_variable = { name = cm_ln_hold value = 1 }
+		}
 	}
 	else_if = {
 		limit = { exists = var:cm_ln_road_issued }
@@ -126,40 +131,47 @@ cm_ln_clear_road_state = {
 cm_ln_do_placement = {
 	scope:cm_ln_target = { save_temporary_scope_as = cm_location }
 	if = {
-		limit = {
-			scope:cm_ln_target = { cm_location_allowed_to_build = { target = scope:cm_building_type } }
-			OR = {
-				always = $FREE$
-				cm_check_country_gold_above = { threshold = cm_ln_placement_gold_threshold }
-			}
-		}
+		limit = { scope:cm_ln_target = { cm_location_allowed_to_build = { target = scope:cm_building_type } } }
 		if = {
-			limit = { always = $FREE$ }
-			cm_ln_free_a_seat = yes
-			scope:cm_ln_target = {
-				construct_building = {
-					building_type = scope:cm_building_type
-					cost_multiplier = 0
-					cost_multiplier_reason = cm_ln_gov_relocation
-					instant = yes
-					owner = scope:cm_country
-					payer = scope:cm_country
+			limit = {
+				OR = {
+					always = $FREE$
+					cm_check_country_gold_above = { threshold = cm_ln_placement_gold_threshold }
 				}
 			}
-			cmf_log = { action = cm_ln_log_gov_moved }
+			if = {
+				limit = { always = $FREE$ }
+				cm_ln_free_a_seat = yes
+				scope:cm_ln_target = {
+					construct_building = {
+						building_type = scope:cm_building_type
+						cost_multiplier = 0
+						cost_multiplier_reason = cm_ln_gov_relocation
+						instant = yes
+						owner = scope:cm_country
+						payer = scope:cm_country
+					}
+				}
+				cmf_log = { action = cm_ln_log_gov_moved }
+			}
+			else = {
+				scope:cm_ln_target = {
+					construct_building = {
+						building_type = scope:cm_building_type
+						owner = scope:cm_country
+						payer = scope:cm_country
+					}
+				}
+				cmf_log = { action = cm_ln_log_gov_placed }
+			}
+			remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+			cm_ln_clear_road_state = yes
 		}
 		else = {
-			scope:cm_ln_target = {
-				construct_building = {
-					building_type = scope:cm_building_type
-					owner = scope:cm_country
-					payer = scope:cm_country
-				}
-			}
-			cmf_log = { action = cm_ln_log_gov_placed }
+			# Short of gold on a site that is otherwise ready, so the treasury is held until it covers
+			# the placement. A site the engine refuses takes no hold: no amount of saving fixes it.
+			set_variable = { name = cm_ln_hold value = 1 }
 		}
-		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
-		cm_ln_clear_road_state = yes
 	}
 }
 

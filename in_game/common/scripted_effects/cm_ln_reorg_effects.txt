@@ -39,6 +39,10 @@ cm_ln_reorg_tick = {
 		limit = { var:cm_ln_phase > 0 }
 		change_variable = { name = cm_ln_age add = 1 }
 	}
+	# The paid steps below re-set the hold each month they cannot pay, so a month that pays, a
+	# month waiting on an order already charged for, and every unpaid phase all leave full
+	# automation its budget. The tick runs ahead of the budget refresh that reads it.
+	remove_variable = cm_ln_hold
 	switch = {
 		trigger = var:cm_ln_phase
 		1 = { cm_ln_reorg_capital_search = yes }
@@ -249,7 +253,6 @@ cm_ln_reorg_record_pick = {
 # Root is the country, scope:cm_country set.
 cm_ln_reorg_classify = {
 	remove_global_variable = cm_ln_token
-	set_variable = { name = cm_ln_hold value = 1 }
 	cm_ln_strip_finder_outputs = yes
 	cm_ln_pf_settings_off = yes
 	clear_variable_list = cm_ln_pending

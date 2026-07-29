@@ -7,8 +7,8 @@
 
 # Roads a cycle may start.
 @cm_fa_rd_max_per_cycle = 8
-# Corridors that may be under construction at once. Gold is bounded by the pool, so this bounds the
-# other scarce thing: each road occupies its location's civil construction slot until it finishes.
+# Corridors that may be under construction at once. Gold is bounded by the pool, so this bounds how
+# much of the network the category may have in flight before it waits for some of it to land.
 @cm_fa_rd_max_outstanding = 12
 # Orders that produced nothing before a corridor is set aside.
 @cm_fa_rd_max_tries = 3
@@ -50,7 +50,6 @@ cm_fa_rd_plan = {
 			has_advance = road_building # Unlocks gravel_road: in_game/common/advances/3_road_unlocks.txt:1
 			cm_pf_river_data_is_current = yes
 			NOT = { exists = var:cm_pf_mode_open }
-			NOT = { exists = var:cm_ln_hold }
 			# cm_pf_n marks a primed run and finalize drops it while leaving cm_pf_all_done, so this
 			# pair is "primed but never finished". Re-priming under one would destroy it.
 			OR = {
@@ -75,6 +74,9 @@ cm_fa_rd_plan = {
 		cm_fa_rd_return_setting = { S = naval }
 		cm_fa_rd_return_setting = { S = method }
 		cm_fa_rd_return_setting = { S = accuracy }
+		# The category is otherwise silent, so a network that stops growing gives no way to tell a
+		# plan that found nothing from a drain that bought nothing.
+		cmf_log_value = { action = cm_fa_rd_log_planned value = var:cm_fa_rd_n }
 	}
 }
 
@@ -165,7 +167,6 @@ cm_fa_rd_issue_pass = {
 			NOT = { has_variable = cm_fa_rd_bad }
 			has_road_constructions = no
 			modifier:road_building_blocked = no
-			cm_get_open_build_queue_slots > 0
 			var:cm_fa_rd_par = {
 				owner ?= scope:cm_country
 				modifier:road_building_blocked = no

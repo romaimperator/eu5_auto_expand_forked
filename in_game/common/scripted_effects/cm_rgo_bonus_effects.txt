@@ -7,13 +7,20 @@
 # tail, but a batch that spills past a frame reads as stutter the FPS counter misses.
 @cm_rgob_batch_size = 48
 
-# Clears every classification intermediate. Called when classification arms and again when
-# the sweep finishes, so saves carry only cm_rgob_cov and the zeroed counters.
-cm_rgob_reset_classification = {
+# Clears the working maps of the scan and collect waves, which nothing outside those waves reads.
+# Called when the sweep finishes, leaving the pair, row and index data behind: coverage is recomputed
+# every lobby off live raw materials, while the classification that produced those maps is reused
+# from the save, so the sweep has to be able to run without the waves running first.
+cm_rgob_reset_scan_state = {
 	clear_global_variable_map = cm_rgob_best
 	clear_global_variable_map = cm_rgob_total
 	clear_global_variable_map = cm_rgob_total_claim
 	clear_global_variable_map = cm_rgob_row_claim
+}
+
+# Clears every classification intermediate. Called when classification arms.
+cm_rgob_reset_classification = {
+	cm_rgob_reset_scan_state = yes
 	clear_global_variable_map = cm_rgob_row_pm
 	clear_global_variable_map = cm_rgob_row_share
 	clear_global_variable_map = cm_rgob_row_next
@@ -164,7 +171,7 @@ cm_rgob_sweep_batch = {
 			set_global_variable = { name = cm_rgob_wl_idx value = local_var:cm_rgob_whi }
 		}
 		else = {
-			cm_rgob_reset_classification = yes
+			cm_rgob_reset_scan_state = yes
 			cm_rgob_reset_sweep = yes
 			cm_log_setup_complete_if_ready = yes
 		}

@@ -1,4 +1,20 @@
 ﻿
+# No scope. True when a completed building-type classification at the current version covers every
+# building type now in the database, so the maps script reads can be trusted without reclassifying.
+# The stamp is written only by the classification's completion branch, so a save taken mid-pass
+# reads false, and the per-type check catches a mod added since, whose types no pass ever saw.
+cm_building_classification_is_current = {
+	has_global_variable = cm_bt_class_stamp
+	global_var:cm_bt_class_stamp = cm_bt_class_version_value
+	NOT = { has_global_variable = cm_process_buildings }
+	has_global_variable_map = cm_building_type_processed
+	NOT = {
+		any_building_type = {
+			NOT = { is_key_in_global_variable_map = { name = cm_building_type_processed target = this } }
+		}
+	}
+}
+
 # Affordability gate for the construction drain.
 cm_country_can_afford_staged_cost = {
 	scope:cm_country = { gold >= { value = scope:cm_cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }

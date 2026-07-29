@@ -1,21 +1,34 @@
-﻿# Populates the global list of building types for classification by the hidden window GUI.
+﻿# Populates the global list of building types for classification by the hidden window GUI, and arms
+# that classification only when the save carries no completed one at the current version. Everything
+# the passes record is a global map that saves and reloads with the game, so a load that reuses them
+# skips five GUI passes over every building type and their nested demand and production-method
+# datamodels. Replacement tiers are the one part that cannot be reused: GetNextReplacementBuilding
+# returns only what the loading player has unlocked, so a reused classification arms the upgrade-map
+# refresh in its place. The list itself is rebuilt every time: it is the datamodel both drivers bind
+# to, and the driver that fires the refresh has to have every type under it.
 # Called from on_game_start_after_lobby and on_game_load_after_lobby, once per lobby, not per player.
-# Stateless: always rebuilds from scratch so no version tracking or migration is needed.
 cm_populate_building_types_to_process = {
   clear_global_variable_list = cm_building_types_to_process
   set_global_variable = { name = cm_building_types_to_process_count value = 0 }
-  clear_global_variable_map = cm_building_type_processed
-  clear_global_variable_list = cm_base_goods
-  # Not in cm_rgob_reset_classification: that also runs once the coverage sweep drains, and
-  # Building Cleanup reads this flag all game.
-  clear_global_variable_map = cm_fa_cu_core_in
-  cm_rgob_reset_classification = yes
   every_building_type = {
     add_to_global_variable_list = { name = cm_building_types_to_process target = this }
     change_global_variable = { name = cm_building_types_to_process_count add = 1 }
   }
-  # Trigger building classification in the hidden window GUI
-  set_global_variable = { name = cm_process_buildings value = yes }
+  if = {
+    limit = { NOT = { cm_building_classification_is_current = yes } }
+    # A partial classification's stamp must not survive the rebuild that replaces it.
+    remove_global_variable = cm_bt_class_stamp
+    clear_global_variable_map = cm_building_type_processed
+    clear_global_variable_list = cm_base_goods
+    # Written by the rgob collect wave, so it is rebuilt with the rest of the classification.
+    clear_global_variable_map = cm_fa_cu_core_in
+    cm_rgob_reset_classification = yes
+    # Trigger building classification in the hidden window GUI
+    set_global_variable = { name = cm_process_buildings value = yes }
+  }
+  else = {
+    set_global_variable = { name = cm_refresh_upgrade_types value = yes }
+  }
 }
 
 # Numeric ids for every location, in both directions. Location.GetKey returns the runtime id
