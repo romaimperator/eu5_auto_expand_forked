@@ -832,9 +832,12 @@ cm_q_pass_auto_food = {
 	}
 }
 
-# Urbanize drain: staged rank upgrades in list order, with rank eligibility re-checked at
-# approval time. Root is the country.
+# Urbanize drain: staged rank upgrades in list order (cities, then towns, then the megalopolis
+# tail call), with rank eligibility re-checked at approval time and the pass stopping once an
+# item is blocked by gold alone, so the treasury saves toward that rank step across months
+# instead of founding the cheaper ones behind it. Root is the country.
 cm_q_pass_auto_urbanize = {
+	set_local_variable = { name = cm_q_urb_budget_exhausted value = 0 }
 	if = {
 		limit = { has_variable_list = cm_q_urbanize_locations }
 		every_in_list = {
@@ -846,6 +849,7 @@ cm_q_pass_auto_urbanize = {
 				scope:cm_q_pass_loc = {
 					if = {
 						limit = {
+							local_var:cm_q_urb_budget_exhausted = 0
 							has_variable_map = cm_q_urb_costs
 							is_key_in_variable_map = { name = cm_q_urb_costs target = scope:cm_building_type }
 						}
@@ -855,21 +859,29 @@ cm_q_pass_auto_urbanize = {
 							limit = {
 								scope:cm_building_type = building_type:cm_upgrade_town_to_city_building
 								cm_location_can_mass_upgrade_to_city = yes
-								cm_country_can_afford_staged_cost = yes
 								cm_market_has_construction_goods_for_building = yes
 							}
-							construct_building = { building_type = building_type:cm_upgrade_town_to_city_building }
-							cm_commit_market_demand = yes
+							if = {
+								limit = { cm_country_can_afford_staged_cost = yes }
+								construct_building = { building_type = building_type:cm_upgrade_town_to_city_building }
+								cm_commit_market_demand = yes
+							} else = {
+								set_local_variable = { name = cm_q_urb_budget_exhausted value = 1 }
+							}
 						}
 						if = {
 							limit = {
 								scope:cm_building_type = building_type:cm_upgrade_rural_to_town_building
 								cm_location_can_mass_upgrade_to_town = yes
-								cm_country_can_afford_staged_cost = yes
 								cm_market_has_construction_goods_for_building = yes
 							}
-							construct_building = { building_type = building_type:cm_upgrade_rural_to_town_building }
-							cm_commit_market_demand = yes
+							if = {
+								limit = { cm_country_can_afford_staged_cost = yes }
+								construct_building = { building_type = building_type:cm_upgrade_rural_to_town_building }
+								cm_commit_market_demand = yes
+							} else = {
+								set_local_variable = { name = cm_q_urb_budget_exhausted value = 1 }
+							}
 						}
 						remove_from_variable_map = { name = cm_q_urb_costs key = scope:cm_building_type }
 					}
@@ -882,10 +894,14 @@ cm_q_pass_auto_urbanize = {
 
 # Megalopolis rank drain: engine-deferred rank upgrades approved into cm_q_approved_rank_locations
 # and fired once by the queue window. Affordability uses the general gold reserve; the min-discount
-# and market-goods gates use the Found building as a build_megalopolis_demand proxy. Root is the country.
+# and market-goods gates use the Found building as a build_megalopolis_demand proxy. Skipped whole
+# while cm_q_pass_auto_urbanize is saving for a rank step it could not afford. Root is the country.
 cm_q_pass_auto_rank = {
 	if = {
-		limit = { has_variable_list = cm_q_rank_locations }
+		limit = {
+			local_var:cm_q_urb_budget_exhausted = 0
+			has_variable_list = cm_q_rank_locations
+		}
 		building_type:cm_upgrade_city_to_megalopolis_building = { save_scope_as = cm_building_type }
 		every_in_list = {
 			variable = cm_q_rank_locations
