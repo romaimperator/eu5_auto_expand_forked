@@ -165,7 +165,57 @@ cm_ln_dbg_report_lines = {
 	}
 	if = {
 		limit = { has_variable = cm_ln_dbg_rj_inc }
-		cmf_log_value = { action = cm_ln_dbg_log_rj_inc value = var:cm_ln_dbg_rj_inc }
-		cmf_log_value = { action = cm_ln_dbg_log_rj_cost value = var:cm_ln_dbg_rj_cost }
+		cmf_log_value = { action = cm_ln_dbg_log_rj_inc value = { value = var:cm_ln_dbg_rj_inc multiply = 1000 } }
+		cmf_log_value = { action = cm_ln_dbg_log_rj_cost value = { value = var:cm_ln_dbg_rj_cost multiply = 1000 } }
 	}
+}
+
+# Console probe for one named location, run as
+# effect location:<key> = { cm_ln_dbg_probe_location = yes }
+# Root is the location.
+cm_ln_dbg_probe_location = {
+	save_scope_as = cm_location
+	owner = { save_scope_as = cm_country }
+	cm_ln_dbg_log_val = { A = cm_ln_dbg_log_p_cost V = glorpui_rgo_expand_cost S = 1000 }
+	cm_ln_dbg_log_flag = { A = cm_ln_dbg_log_p_elig T = cm_rgo_basic_expand_eligibility }
+	cm_ln_dbg_log_flag = { A = cm_ln_dbg_log_p_adv T = cm_is_rgo_advance_researched }
+	cm_ln_dbg_log_flag = { A = cm_ln_dbg_log_p_maxlvl T = cm_is_rgo_not_max_level_already }
+	cm_ln_dbg_log_flag = { A = cm_ln_dbg_log_p_goods T = cm_market_has_construction_goods_for_rgo }
+	cm_ln_dbg_log_flag = { A = cm_ln_dbg_log_p_food T = cm_location_auto_food_supersedes_rgo }
+	cm_ln_dbg_log_val = { A = cm_ln_dbg_log_p_slack V = cm_location_rgo_promotion_buffer_slack S = 1000 }
+	cm_ln_dbg_log_val = { A = cm_ln_dbg_log_p_slots V = cm_get_open_build_queue_slots S = 1 }
+	cm_ln_dbg_log_val = { A = cm_ln_dbg_log_p_civil V = num_civil_constructions S = 1 }
+	cm_ln_dbg_log_val = { A = cm_ln_dbg_log_p_maxcon V = cm_get_max_constructions_at_same_time S = 1 }
+	cm_ln_dbg_log_val = { A = cm_ln_dbg_log_p_floor V = cm_get_max_rgo_workers_floor S = 1000 }
+	cm_ln_dbg_log_val = { A = cm_ln_dbg_log_p_rgolvl V = cm_modifier_rgo_level S = 1000 }
+	cm_ln_dbg_log_val = { A = cm_ln_dbg_log_p_rgouc V = cm_get_rgos_under_construction S = 1000 }
+	set_local_variable = { name = cm_ln_dbg_s value = 0 }
+	if = {
+		limit = { scope:cm_country = { is_target_in_variable_list = { name = cm_fa_r_locations target = scope:cm_location } } }
+		set_local_variable = { name = cm_ln_dbg_s value = 1 }
+	}
+	scope:cm_country = { cmf_log_value = { action = cm_ln_dbg_log_p_staged value = local_var:cm_ln_dbg_s } }
+	set_local_variable = { name = cm_ln_dbg_sl value = 0 }
+	if = {
+		limit = { market = { cm_fa_market_in_slice = yes } }
+		set_local_variable = { name = cm_ln_dbg_sl value = 1 }
+	}
+	scope:cm_country = { cmf_log_value = { action = cm_ln_dbg_log_p_slice value = local_var:cm_ln_dbg_sl } }
+}
+
+# $A$ = loc key, $T$ = scripted trigger. Root is the location, expects scope:cm_country.
+cm_ln_dbg_log_flag = {
+	set_local_variable = { name = cm_ln_dbg_f value = 0 }
+	if = {
+		limit = { $T$ = yes }
+		set_local_variable = { name = cm_ln_dbg_f value = 1 }
+	}
+	scope:cm_country = { cmf_log_value = { action = $A$ value = local_var:cm_ln_dbg_f } }
+}
+
+# $A$ = loc key, $V$ = script value, $S$ = scale. Root is the location, expects scope:cm_country.
+cm_ln_dbg_log_val = {
+	set_local_variable = { name = cm_ln_dbg_v value = $V$ }
+	change_local_variable = { name = cm_ln_dbg_v multiply = $S$ }
+	scope:cm_country = { cmf_log_value = { action = $A$ value = local_var:cm_ln_dbg_v } }
 }
