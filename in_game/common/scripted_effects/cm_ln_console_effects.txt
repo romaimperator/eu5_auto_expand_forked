@@ -31,12 +31,14 @@ cm_ln_c_rows_clear = {
 	clear_global_variable_map = cm_ln_r_r
 }
 
-# Args: L => cm_ln_loc_id, B => cm_ln_bt_id, C => cost, I => income, P => profit,
-# T => location total income, R => location RGO profit per level.
+# Args: Y => cm_ln_ctry_id, L => cm_ln_loc_id, B => cm_ln_bt_id, C => cost, I => income,
+# P => profit, T => location total income, R => location RGO profit per level.
+# The country crosses as an id like the other objects, because the tag the command is scoped to is
+# a display tag and names a different country for the Great Yuan.
 cm_ln_c_row_b = {
 	change_global_variable = { name = cm_ln_r_n add = 1 }
 	add_to_global_variable_map = { name = cm_ln_r_kind key = global_var:cm_ln_r_n value = 1 }
-	add_to_global_variable_map = { name = cm_ln_r_ctry key = global_var:cm_ln_r_n value = this }
+	add_to_global_variable_map = { name = cm_ln_r_ctry key = global_var:cm_ln_r_n value = $Y$ }
 	add_to_global_variable_map = { name = cm_ln_r_l key = global_var:cm_ln_r_n value = $L$ }
 	add_to_global_variable_map = { name = cm_ln_r_b key = global_var:cm_ln_r_n value = $B$ }
 	add_to_global_variable_map = { name = cm_ln_r_c key = global_var:cm_ln_r_n value = $C$ }
@@ -51,7 +53,7 @@ cm_ln_c_row_u = {
 	change_global_variable = { name = cm_ln_r_n add = 1 }
 	add_to_global_variable_map = { name = cm_ln_r_kind key = global_var:cm_ln_r_n value = 2 }
 	add_to_global_variable_map = { name = cm_ln_r_nb key = global_var:cm_ln_r_n value = $N$ }
-	add_to_global_variable_map = { name = cm_ln_r_ctry key = global_var:cm_ln_r_n value = this }
+	add_to_global_variable_map = { name = cm_ln_r_ctry key = global_var:cm_ln_r_n value = $Y$ }
 	add_to_global_variable_map = { name = cm_ln_r_l key = global_var:cm_ln_r_n value = $L$ }
 	add_to_global_variable_map = { name = cm_ln_r_b key = global_var:cm_ln_r_n value = $B$ }
 	add_to_global_variable_map = { name = cm_ln_r_c key = global_var:cm_ln_r_n value = $C$ }
@@ -64,7 +66,7 @@ cm_ln_c_row_u = {
 cm_ln_c_row_r = {
 	change_global_variable = { name = cm_ln_r_n add = 1 }
 	add_to_global_variable_map = { name = cm_ln_r_kind key = global_var:cm_ln_r_n value = 3 }
-	add_to_global_variable_map = { name = cm_ln_r_ctry key = global_var:cm_ln_r_n value = this }
+	add_to_global_variable_map = { name = cm_ln_r_ctry key = global_var:cm_ln_r_n value = $Y$ }
 	add_to_global_variable_map = { name = cm_ln_r_l key = global_var:cm_ln_r_n value = $L$ }
 	add_to_global_variable_map = { name = cm_ln_r_i key = global_var:cm_ln_r_n value = $I$ }
 }
@@ -73,7 +75,7 @@ cm_ln_c_row_r = {
 cm_ln_c_row_z = {
 	change_global_variable = { name = cm_ln_r_n add = 1 }
 	add_to_global_variable_map = { name = cm_ln_r_kind key = global_var:cm_ln_r_n value = 4 }
-	add_to_global_variable_map = { name = cm_ln_r_ctry key = global_var:cm_ln_r_n value = this }
+	add_to_global_variable_map = { name = cm_ln_r_ctry key = global_var:cm_ln_r_n value = $Y$ }
 	add_to_global_variable_map = { name = cm_ln_r_l key = global_var:cm_ln_r_n value = $L$ }
 	add_to_global_variable_map = { name = cm_ln_r_b key = global_var:cm_ln_r_n value = $B$ }
 	add_to_global_variable_map = { name = cm_ln_r_c key = global_var:cm_ln_r_n value = $C$ }
@@ -129,7 +131,11 @@ cm_ln_c_read_rgo_profit = {
 
 # Expects scope:cm_ln_k.
 cm_ln_c_row_common = {
-	"global_variable_map(cm_ln_r_ctry|scope:cm_ln_k)" = { save_temporary_scope_as = cm_country }
+	set_local_variable = { name = cm_ln_c_y value = "global_variable_map(cm_ln_r_ctry|scope:cm_ln_k)" }
+	if = {
+		limit = { local_var:cm_ln_c_y > 0 }
+		"global_variable_map(cm_ln_ctry_of_id|local_var:cm_ln_c_y)" = { save_temporary_scope_as = cm_country }
+	}
 	set_local_variable = { name = cm_ln_c_l value = "global_variable_map(cm_ln_r_l|scope:cm_ln_k)" }
 }
 
@@ -226,11 +232,25 @@ cm_ln_c_scan_disarm = {
 	}
 }
 
+# Args: Y => cm_ln_ctry_id.
 cm_ln_c_sync_check = {
-	trigger_event_silently = { on_action = cm_ln_c_on_sync_check }
+	set_local_variable = { name = cm_ln_c_y value = $Y$ }
+	if = {
+		limit = { local_var:cm_ln_c_y > 0 }
+		"global_variable_map(cm_ln_ctry_of_id|local_var:cm_ln_c_y)" = {
+			trigger_event_silently = { on_action = cm_ln_c_on_sync_check }
+		}
+	}
 }
 
+# Args: Y => cm_ln_ctry_id.
 cm_ln_c_cu_end = {
-	save_scope_as = cm_ln_country
-	cm_ln_cu_end_apply = yes
+	set_local_variable = { name = cm_ln_c_y value = $Y$ }
+	if = {
+		limit = { local_var:cm_ln_c_y > 0 }
+		"global_variable_map(cm_ln_ctry_of_id|local_var:cm_ln_c_y)" = {
+			save_scope_as = cm_ln_country
+			cm_ln_cu_end_apply = yes
+		}
+	}
 }

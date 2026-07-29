@@ -50,6 +50,43 @@ cm_ln_populate_building_type_ids = {
   }
 }
 
+# One id per lucky nation for the observer console bridge, in both directions. Country.GetTag
+# returns a display tag, which for the Great Yuan is YUA while script marks CHI, so a command built
+# from it scopes to an unrelated country. Ids are assigned once and never reissued, so a cycle's
+# rows stay resolvable across the monthly refresh that assigns them. Root is the country.
+cm_ln_assign_country_id = {
+  save_temporary_scope_as = cm_ln_ctry
+  if = {
+    limit = { NOT = { is_key_in_global_variable_map = { name = cm_ln_ctry_id target = scope:cm_ln_ctry } } }
+    change_global_variable = { name = cm_ln_ctry_n add = 1 }
+    add_to_global_variable_map = { name = cm_ln_ctry_id key = scope:cm_ln_ctry value = global_var:cm_ln_ctry_n }
+    add_to_global_variable_map = { name = cm_ln_ctry_of_id key = global_var:cm_ln_ctry_n value = scope:cm_ln_ctry }
+  }
+}
+
+# Called from cm_on_init_lobby_globals, once per lobby.
+cm_ln_reset_country_ids = {
+  clear_global_variable_map = cm_ln_ctry_id
+  clear_global_variable_map = cm_ln_ctry_of_id
+  set_global_variable = { name = cm_ln_ctry_n value = 0 }
+}
+
+# Logs once per lobby, once building-type classification, the R.G.O. Bonus coverage sweep and the
+# river-adjacency harvest have all finished. Called from each one's completion branch, so the last
+# to land is the one that logs. Root is the country.
+cm_log_setup_complete_if_ready = {
+  if = {
+    limit = {
+      global_var:cm_setup_complete_logged = 0
+      NOT = { has_global_variable = cm_process_buildings }
+      NOT = { has_global_variable = cm_rgob_sweep }
+      cm_pf_river_data_is_current = yes
+    }
+    set_global_variable = { name = cm_setup_complete_logged value = 1 }
+    cmf_log = { action = cm_log_setup_complete }
+  }
+}
+
 # Populates the global list of river locations for the placement finder's river-adjacency precompute
 # in the hidden window GUI. Called from cm_on_init_lobby_globals, once per lobby, not per player.
 # River adjacency is map geometry and cm_pf_river_neighbors is saved, so the harvest runs only when

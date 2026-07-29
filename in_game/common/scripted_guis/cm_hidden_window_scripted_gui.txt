@@ -324,6 +324,7 @@ cm_pf_river_fill_batch = {
 				remove_variable = cm_pf_fresh_g
 				remove_variable = cm_pf_fresh_c
 			}
+			cm_log_setup_complete_if_ready = yes
 		}
 	}
 }
@@ -372,8 +373,10 @@ cm_building_type_section_buildings_init = {
 		} }
 			remove_global_variable = cm_process_buildings
 			# The rgob collect data is complete; start the per-province coverage sweep the
-			# R.G.O. Bonus filters read.
+			# R.G.O. Bonus filters read. Arm before the readiness check, so a sweep that is
+			# about to run still counts as outstanding.
 			cm_rgob_arm_sweep = yes
+			cm_log_setup_complete_if_ready = yes
 		}
 	}
 }

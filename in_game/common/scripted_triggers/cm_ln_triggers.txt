@@ -119,6 +119,17 @@ cm_ln_gov_slot_open = {
 	}
 }
 
+# Root is the country. The harvest is a real-time GUI pass while the opening move's wait counts
+# game months, so a fast game can burn the whole wait while it is still running. Its cursor moving
+# since the last pulse is what separates that from a harvest that will never finish.
+cm_ln_open_river_advancing = {
+	has_global_variable = cm_pf_river_process
+	OR = {
+		NOT = { exists = var:cm_ln_open_idx }
+		NOT = { var:cm_ln_open_idx = global_var:cm_pf_river_idx }
+	}
+}
+
 # Root is the country. cm_pf_n set with cm_pf_all_done absent is a run that was primed and
 # never finished; the finder's water state is shared, so a reorganization waits it out.
 cm_ln_no_human_search_in_flight = {

@@ -19,9 +19,10 @@
 @cm_ln_income_start = 100
 # A capital scoring below this share of the best is worth the opening move.
 @cm_ln_open_cap_keep = 700
-# Months the opening move may wait on its preconditions before it is given up, so a country
-# whose search never becomes possible does not stay shut out of construction. Only the river
-# harvest can fail transiently, and it normally finishes before the first pulse.
+# Months with no progress the opening move may wait on its preconditions before it is given up, so
+# a country whose search never becomes possible does not stay shut out of construction. A month the
+# river harvest advanced through does not count, so the wait is only spent on a harvest that has
+# stopped, which is what an observer run leaves behind.
 @cm_ln_open_max_wait = 2
 
 # Root is the country, scope:cm_country set.
@@ -394,11 +395,17 @@ cm_ln_open_capital_tick = {
 			}
 			cm_ln_open_capital_run = yes
 		}
+		else_if = {
+			limit = { cm_ln_open_river_advancing = yes }
+			set_variable = { name = cm_ln_open_wait value = 0 }
+			set_variable = { name = cm_ln_open_idx value = global_var:cm_pf_river_idx }
+		}
 		else = {
 			change_variable = { name = cm_ln_open_wait add = 1 }
 			if = {
 				limit = { var:cm_ln_open_wait >= @cm_ln_open_max_wait }
 				set_variable = { name = cm_ln_open_done value = 1 }
+				remove_variable = cm_ln_open_idx
 				cmf_log = { action = cm_ln_log_open_gave_up }
 			}
 		}
@@ -448,6 +455,7 @@ cm_ln_open_capital_run = {
 	cm_ln_pf_settings_off = yes
 	remove_global_variable = cm_ln_token
 	remove_variable = cm_ln_open_wait
+	remove_variable = cm_ln_open_idx
 	set_variable = { name = cm_ln_open_done value = 1 }
 }
 
