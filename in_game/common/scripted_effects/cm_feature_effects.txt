@@ -1067,7 +1067,7 @@ cm_run_auto_urbanize = {
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_scope_as = cm_location
-			limit = { NOT = { integration_level = conquered } cm_location_can_mass_upgrade_to_city = yes }
+			limit = { NOT = { integration_level = conquered } cm_ln_location_proximity_ok = yes cm_location_can_mass_upgrade_to_city = yes }
 			cm_stage_urbanize_candidate = { bt = cm_upgrade_town_to_city_building }
 		}
 	}
@@ -1078,7 +1078,7 @@ cm_run_auto_urbanize = {
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_scope_as = cm_location
-			limit = { NOT = { integration_level = conquered } cm_location_can_mass_upgrade_to_town = yes }
+			limit = { NOT = { integration_level = conquered } cm_ln_location_proximity_ok = yes cm_location_can_mass_upgrade_to_town = yes }
 			cm_stage_urbanize_candidate = { bt = cm_upgrade_rural_to_town_building }
 		}
 	}
@@ -1095,6 +1095,7 @@ cm_run_auto_urbanize = {
 			limit = {
 				location_rank = location_rank:city
 				NOT = { integration_level = conquered }
+				cm_ln_location_proximity_ok = yes
 				modifier:cannot_upgrade_location = no
 				population >= cm_megalopolis_stage_min_population
 			}

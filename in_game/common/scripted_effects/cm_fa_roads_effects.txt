@@ -74,9 +74,6 @@ cm_fa_rd_plan = {
 		cm_fa_rd_return_setting = { S = naval }
 		cm_fa_rd_return_setting = { S = method }
 		cm_fa_rd_return_setting = { S = accuracy }
-		# The category is otherwise silent, so a network that stops growing gives no way to tell a
-		# plan that found nothing from a drain that bought nothing.
-		cmf_log_value = { action = cm_fa_rd_log_planned value = var:cm_fa_rd_n }
 	}
 }
 
@@ -119,9 +116,15 @@ cm_fa_rd_value_location = {
 		# A corridor already carrying the best road this country can lay needs nothing, but the tiles
 		# behind it still do, which is why the total travels up either way. A corridor with nothing
 		# behind it left to gain is not worth gold, so it never becomes a candidate.
+		# A road only lowers the proximity cost across its own span, so a corridor with zero
+		# proximity at both ends can never raise it at either.
 		if = {
 			limit = {
 				var:cm_fa_rd_sub > 0
+				OR = {
+					cm_fa_location_has_proximity = yes
+					var:cm_pf_prev = { cm_fa_location_has_proximity = yes }
+				}
 				NOT = { has_latest_road_to = var:cm_pf_prev }
 			}
 			save_temporary_scope_as = cm_fa_rd_from
