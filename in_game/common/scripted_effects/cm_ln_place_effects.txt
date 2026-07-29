@@ -68,8 +68,8 @@ cm_ln_resolve_target_type = {
 	}
 }
 
-# One corridor at a time, so the whole held treasury stands behind it. The order's cost and
-# duration are not script-readable, so the retry is a timer rather than a check.
+# One corridor at a time, so the whole held treasury stands behind it. The order's duration is
+# not script-readable, so the retry is a timer rather than a check.
 # Root is the country, scope:cm_country and scope:cm_ln_target set.
 cm_ln_road_step = {
 	if = {
@@ -84,13 +84,19 @@ cm_ln_road_step = {
 			exists = capital
 			NOT = { exists = var:cm_ln_road_issued }
 		}
-		construct_road = {
-			road_type = road_type:gravel_road
-			from = capital
-			to = scope:cm_ln_target
+		capital = { save_temporary_scope_as = cm_fa_rd_from }
+		scope:cm_ln_target = { save_temporary_scope_as = cm_fa_rd_to }
+		save_temporary_scope_value_as = { name = cm_fa_rd_tier value = cm_ln_road_tier_cost_value }
+		if = {
+			limit = { cm_check_country_gold_above = { threshold = cm_ln_road_gold_threshold } }
+			construct_road = {
+				road_type = road_type:gravel_road
+				from = capital
+				to = scope:cm_ln_target
+			}
+			set_variable = { name = cm_ln_road_issued value = 1 }
+			set_variable = { name = cm_ln_road_age value = 0 }
 		}
-		set_variable = { name = cm_ln_road_issued value = 1 }
-		set_variable = { name = cm_ln_road_age value = 0 }
 	}
 	else_if = {
 		limit = { exists = var:cm_ln_road_issued }
@@ -118,8 +124,15 @@ cm_ln_clear_road_state = {
 
 # Root is the country, scope:cm_country, scope:cm_ln_target and scope:cm_building_type set.
 cm_ln_do_placement = {
+	scope:cm_ln_target = { save_temporary_scope_as = cm_location }
 	if = {
-		limit = { scope:cm_ln_target = { cm_location_allowed_to_build = { target = scope:cm_building_type } } }
+		limit = {
+			scope:cm_ln_target = { cm_location_allowed_to_build = { target = scope:cm_building_type } }
+			OR = {
+				always = $FREE$
+				cm_check_country_gold_above = { threshold = cm_ln_placement_gold_threshold }
+			}
+		}
 		if = {
 			limit = { always = $FREE$ }
 			cm_ln_free_a_seat = yes

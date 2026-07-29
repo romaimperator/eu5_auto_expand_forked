@@ -11,6 +11,49 @@ cm_ln_reserve_value = {
 	}
 }
 
+# Country scope. The gold half of cm_ln_open_charge_move, capped at the treasury so the
+# opening capital move cannot overdraw it.
+cm_ln_open_capital_charge = {
+	value = country_economical_base
+	multiply = 0.4
+	max = gold
+	min = 0
+}
+
+# Country scope. cm_ln_road_step lays gravel whatever the country has researched, so its tier
+# term is the gravel price rather than cm_fa_rd_tier_cost_value's best unlocked road.
+cm_ln_road_tier_cost_value = {
+	value = 10 # Mirrors vanilla build_gravel_road price: in_game/common/prices/00_hardcoded.txt:11
+	multiply = { value = 1 add = modifier:build_gravel_road_cost_modifier }
+	multiply = { value = 1 add = inflation }
+	min = 0
+}
+
+# Location scope. Estimated gold for one level of scope:cm_building_type here, the same shape
+# the auto-food thresholds price their buildings with. Expects scope:cm_country,
+# scope:cm_building_type and scope:cm_location.
+cm_ln_build_cost_value = {
+	scope:cm_building_type = { value = building_base_cost_in_gold }
+	multiply = { value = 1 add = cm_food_build_cost_modifier }
+	multiply = { value = 1 scope:cm_building_type = { add = cm_get_construction_cost_adjustment_for_building_type } }
+	multiply = { value = 1 add = scope:cm_country.inflation }
+	min = 0
+}
+
+# Country scope. Gold a reorganization needs before it orders its road.
+# Expects scope:cm_fa_rd_from, scope:cm_fa_rd_to and scope:cm_fa_rd_tier.
+cm_ln_road_gold_threshold = {
+	value = scope:cm_fa_rd_from.cm_fa_rd_cost_value
+	add = cm_fa_get_reserve
+}
+
+# Country scope. Gold a reorganization needs before it pays for the governor at
+# scope:cm_ln_target. Expects scope:cm_country, scope:cm_building_type and scope:cm_location.
+cm_ln_placement_gold_threshold = {
+	value = scope:cm_ln_target.cm_ln_build_cost_value
+	add = cm_fa_get_reserve
+}
+
 # Location scope. The proximity source value a reorganization's spread assumes: the live
 # sources minus the country's own governor seats, which are re-scored as candidates, plus the
 # sites the plan has already committed to.

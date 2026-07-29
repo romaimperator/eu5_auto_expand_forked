@@ -467,11 +467,12 @@ cm_ln_open_capital_run = {
 # A share of the vanilla capital_movement price, which is scaled_gold 12 (120% of economic base)
 # plus stability 20: in_game/common/prices/00_hardcoded.txt:213. A player reaches 66% off the
 # gold and 33% off the stability without much effort, so the charge is what one would really
-# pay. It lands whether or not the treasury covers it. Root is the country.
+# pay. The gold half stops at the treasury, so a country that cannot cover it pays what it has.
+# Root is the country.
 cm_ln_open_charge_move = {
 	add_gold = {
-		value = country_economical_base
-		multiply = -0.4
+		value = cm_ln_open_capital_charge
+		multiply = -1
 	}
 	add_stability = -13
 }
