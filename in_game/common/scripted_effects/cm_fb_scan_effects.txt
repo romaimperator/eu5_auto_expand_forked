@@ -93,7 +93,12 @@ cm_fb_scan_site_for_type = {
 		limit = {
 			cm_fb_type_is_allowed = yes
 			cm_fb_has_own_building = no
-			scope:cm_country = { NOT = { variable_list_size = { name = cm_fb_mass_next value >= @cm_fb_max_sites } } }
+			scope:cm_country = {
+				OR = {
+					NOT = { has_variable_list = cm_fb_mass_next }
+					NOT = { variable_list_size = { name = cm_fb_mass_next value >= @cm_fb_max_sites } }
+				}
+			}
 			cm_location_can_place_building = { target = scope:cm_building_type }
 		}
 		scope:cm_country = { add_to_variable_list = { name = cm_fb_mass_next target = scope:cm_location } }

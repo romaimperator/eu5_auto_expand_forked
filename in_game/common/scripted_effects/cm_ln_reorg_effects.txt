@@ -313,6 +313,7 @@ cm_ln_strip_finder_outputs = {
 cm_ln_reorg_place_step = {
 	if = {
 		limit = {
+			has_variable_list = cm_ln_pending
 			variable_list_size = { name = cm_ln_pending value >= 1 }
 			cm_ln_gov_slot_open = yes
 		}
@@ -328,10 +329,14 @@ cm_ln_reorg_place_step = {
 cm_ln_reorg_move_step = {
 	if = {
 		limit = {
+			has_variable_list = cm_ln_pending
 			variable_list_size = { name = cm_ln_pending value >= 1 }
 			OR = {
 				var:cm_ln_free_credits > 0
-				variable_list_size = { name = cm_ln_moves value >= 1 }
+				AND = {
+					has_variable_list = cm_ln_moves
+					variable_list_size = { name = cm_ln_moves value >= 1 }
+				}
 			}
 		}
 		cm_ln_place_next = { FREE = yes }
