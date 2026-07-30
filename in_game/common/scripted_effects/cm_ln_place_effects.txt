@@ -51,17 +51,8 @@ cm_ln_road_pass = {
 }
 
 # Every pending site short of city rank, so the plan urbanizes in parallel with the one road.
-# scope:cm_ln_rank_head is the best-ranked of them, the only one cm_ln_rank_step lets hold the
-# treasury. Root is the country, scope:cm_country set.
+# Root is the country, scope:cm_country set.
 cm_ln_rank_pass = {
-	ordered_in_list = {
-		variable = cm_ln_pending
-		order_by = var:cm_ln_plan_ord
-		position = 0
-		check_range_bounds = no
-		limit = { cm_ln_target_needs_rank = yes }
-		save_scope_as = cm_ln_rank_head
-	}
 	every_in_list = {
 		variable = cm_ln_pending
 		save_scope_as = cm_ln_rank_target
@@ -87,9 +78,8 @@ cm_ln_resolve_rank_type = {
 
 # The urbanize pass gates on population, the RGO ignore list, the food reservation and min_discount,
 # so a planned site can sit at rank indefinitely; this path carries only the rank, already-built,
-# already-under-construction, engine-placement and gold checks. Only scope:cm_ln_rank_head may hold
-# the treasury: a plan whose every unaffordable site held it would empty full automation's pools for
-# years. Root is the country, scope:cm_country and scope:cm_ln_rank_target set.
+# already-under-construction, engine-placement and gold checks. Root is the country,
+# scope:cm_country and scope:cm_ln_rank_target set.
 cm_ln_rank_step = {
 	cm_ln_resolve_rank_type = yes
 	scope:cm_ln_rank_target = { save_temporary_scope_as = cm_location }
@@ -119,10 +109,6 @@ cm_ln_rank_step = {
 					remove_variable = cm_ln_rank_wait
 				}
 				cmf_log = { action = cm_ln_log_gov_rank_up }
-			}
-			else_if = {
-				limit = { scope:cm_ln_rank_target = { this = scope:cm_ln_rank_head } }
-				set_variable = { name = cm_ln_hold value = 1 }
 			}
 		}
 		else = {
@@ -221,11 +207,6 @@ cm_ln_road_step = {
 			set_variable = { name = cm_ln_road_site value = scope:cm_ln_road_target }
 			set_variable = { name = cm_ln_road_age value = 0 }
 		}
-		else = {
-			# construct_road charges the whole cost at once, so the order can only be issued out of a
-			# treasury full automation has not already spent.
-			set_variable = { name = cm_ln_hold value = 1 }
-		}
 	}
 	else_if = {
 		limit = { exists = var:cm_ln_road_issued }
@@ -290,11 +271,6 @@ cm_ln_do_placement = {
 				cmf_log = { action = cm_ln_log_gov_placed }
 			}
 			remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
-		}
-		else = {
-			# Short of gold on a site that is otherwise ready, so the treasury is held until it covers
-			# the placement. A site the engine refuses takes no hold: no amount of saving fixes it.
-			set_variable = { name = cm_ln_hold value = 1 }
 		}
 	}
 }

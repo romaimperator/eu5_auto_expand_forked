@@ -49,9 +49,6 @@ cm_ln_reorg_tick = {
 		limit = { var:cm_ln_phase > 0 }
 		change_variable = { name = cm_ln_age add = 1 }
 	}
-	# The paid steps below re-set the hold each month they cannot pay, so a month that pays, a
-	# month waiting on an order already charged for, and every unpaid phase all leave full
-	# automation its budget. The tick runs ahead of the budget refresh that reads it.
 	remove_variable = cm_ln_hold
 	# The urbanize and road orders serve both the placement and the relocation phase, and they run
 	# whatever the slot and credit counts are, so they sit ahead of the switch rather than inside
@@ -63,6 +60,15 @@ cm_ln_reorg_tick = {
 		}
 		set_variable = { name = cm_ln_tick_spent value = 0 }
 		cm_ln_prune_pending = yes
+		# Nothing else may spend a coin until every planned governor stands. The tick runs ahead of
+		# the budget refresh and the construction cycle that read this.
+		if = {
+			limit = {
+				has_variable_list = cm_ln_pending
+				variable_list_size = { name = cm_ln_pending value >= 1 }
+			}
+			set_variable = { name = cm_ln_hold value = 1 }
+		}
 		cm_ln_road_pass = yes
 		cm_ln_rank_pass = yes
 	}
@@ -828,4 +834,43 @@ cm_ln_open_gov_resolve_type = {
 	else = {
 		building_type:local_governor = { save_scope_as = cm_building_type }
 	}
+}
+
+# --- Diagnostics ---
+
+# Run from the console: effect c:<TAG> = { cm_ln_gov_probe = yes }. Root is the country.
+cm_ln_gov_probe = {
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	if = {
+		limit = { exists = var:cm_ln_phase }
+		set_local_variable = { name = cm_ln_dbg value = var:cm_ln_phase }
+	}
+	cmf_log_value = { action = cm_log_gov_phase value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	every_in_list = {
+		variable = cm_ln_pending
+		change_local_variable = { name = cm_ln_dbg add = 1 }
+	}
+	cmf_log_value = { action = cm_log_gov_pending value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	if = {
+		limit = { exists = var:cm_ln_hold }
+		set_local_variable = { name = cm_ln_dbg value = 1 }
+	}
+	cmf_log_value = { action = cm_log_gov_hold value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = cm_ln_gov_slot_total }
+	cmf_log_value = { action = cm_log_gov_slots value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	every_owned_location = {
+		limit = { cm_location_has_governor = yes }
+		change_local_variable = { name = cm_ln_dbg add = 1 }
+	}
+	cmf_log_value = { action = cm_log_gov_seats value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = gold }
+	cmf_log_value = { action = cm_log_gov_gold value = local_var:cm_ln_dbg }
 }

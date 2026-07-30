@@ -100,10 +100,12 @@ cm_run_construction_cycle = {
 			}
 		}
 		# Auto-urbanize sits outside the priority loop: it stages and drains after every
-		# other feature and after full automation, whatever its row position.
+		# other feature and after full automation, whatever its row position. Its Found buildings
+		# are gold outside the full-automation pools cm_ln_hold zeroes, so the hold gates it here.
 		if = {
 			limit = {
 				cm_should_pause_auto_expand = no
+				NOT = { exists = var:cm_ln_hold }
 				has_variable_list = cm_priority_features_enabled
 				is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_urbanize }
 			}
