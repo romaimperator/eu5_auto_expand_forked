@@ -196,7 +196,18 @@ cm_ln_seed_categories = {
 # nation never builds into a capital it is about to leave. Root is the country.
 cm_ln_monthly_cycle = {
 	save_scope_as = cm_country
+	# set_capital shifts proximity and has_road_to_capital everywhere and the opening governor
+	# placement reads both, so it takes the month after the capital tick resolves.
+	set_local_variable = { name = cm_ln_cap_settled value = 0 }
+	if = {
+		limit = { exists = var:cm_ln_open_done }
+		set_local_variable = { name = cm_ln_cap_settled value = 1 }
+	}
 	cm_ln_open_capital_tick = yes
+	if = {
+		limit = { local_var:cm_ln_cap_settled = 1 }
+		cm_ln_open_gov_tick = yes
+	}
 	if = {
 		limit = { exists = var:cm_ln_open_done }
 		# Ahead of the budget refresh, so the month a reorganization claims the treasury is the

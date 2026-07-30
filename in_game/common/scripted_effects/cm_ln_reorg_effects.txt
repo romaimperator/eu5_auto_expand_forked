@@ -168,7 +168,10 @@ cm_ln_reorg_capital_search = {
 		order_by = { value = var:cm_cf_score }
 		position = 0
 		check_range_bounds = no
-		limit = { has_variable = cm_cf_score }
+		limit = {
+			has_variable = cm_cf_score
+			NOT = { integration_level = conquered }
+		}
 		save_scope_as = cm_ln_cap_pick
 		scope:cm_country = { set_variable = { name = cm_ln_cap_target value = scope:cm_ln_cap_pick } }
 	}
@@ -468,18 +471,20 @@ cm_ln_open_capital_run = {
 		order_by = { value = var:cm_cf_score }
 		position = 0
 		check_range_bounds = no
-		limit = { has_variable = cm_cf_score }
+		limit = {
+			has_variable = cm_cf_score
+			NOT = { integration_level = conquered }
+		}
 		save_scope_as = cm_ln_cap_pick
 		scope:cm_country = { set_variable = { name = cm_ln_cap_target value = scope:cm_ln_cap_pick } }
 	}
-	# A capital that is itself the best location scores 1000, so it fails the move test without
-	# a separate check.
 	if = {
 		limit = { NOT = { exists = var:cm_ln_cap_target } }
 		cmf_log = { action = cm_ln_log_open_no_target }
 	}
 	else_if = {
 		limit = {
+			NOT = { var:cm_ln_cap_target = capital }
 			NOT = {
 				capital = {
 					has_variable = cm_cf_score
@@ -521,4 +526,126 @@ cm_ln_pf_settings_open = {
 	set_variable = { name = cm_placement_finder_naval value = 1 } # Current presence
 	set_variable = { name = cm_placement_finder_roads value = 1 } # Current
 	set_variable = { name = cm_placement_finder_method value = 1 } # Tax Base
+}
+
+# --- The opening governor placement ---
+#
+# One governor at the start of the game, the month after the opening capital move so the search
+# reads the proximity and the roads the new capital gives. It takes the best location a governor
+# can stand on as it is, so the opening carries none of the reorganization's urbanize and road
+# steps, and the charge stops at the treasury so the placement lands whatever the country can pay.
+
+# Root is the country, scope:cm_country set.
+cm_ln_open_gov_tick = {
+	if = {
+		limit = {
+			NOT = { exists = var:cm_ln_open_gov_done }
+			is_multiplayer_session = no
+			exists = capital
+			cm_pf_river_data_is_current = yes
+			NOT = { has_global_variable = cm_ln_token }
+			cm_ln_no_human_search_in_flight = yes
+		}
+		if = {
+			limit = { cm_ln_gov_slot_open = yes }
+			cm_ln_open_gov_run = yes
+		}
+		else = {
+			cmf_log = { action = cm_ln_log_open_gov_none }
+		}
+		set_variable = { name = cm_ln_open_gov_done value = 1 }
+	}
+}
+
+# The search and the placement both land in this tick. Root is the country, scope:cm_country set.
+cm_ln_open_gov_run = {
+	set_global_variable = { name = cm_ln_token value = 1 }
+	cm_ln_pf_settings_open = yes
+	cm_ln_open_gov_filter_on = yes
+	set_variable = { name = cm_pf_view_g value = 1 }
+	remove_variable = cm_pf_view_c
+	cm_pf_prep_core = yes
+	cm_pf_run_tiered_sync = yes
+	remove_variable = cm_pf_view_g
+	cm_ln_open_gov_place = yes
+	cm_ln_open_gov_filter_off = yes
+	cm_ln_strip_finder_outputs = yes
+	cm_ln_pf_settings_off = yes
+	remove_global_variable = cm_ln_token
+}
+
+# One placement, so each counter carries at most the one slot its kind has room for.
+# Root is the country.
+cm_ln_open_gov_filter_on = {
+	set_variable = { name = cm_ln_gov_valid_only value = 1 }
+	set_variable = { name = cm_ln_land_left value = 0 }
+	if = {
+		limit = { cm_fa_gov_has_land_room = yes }
+		set_variable = { name = cm_ln_land_left value = 1 }
+	}
+	set_variable = { name = cm_ln_naval_left value = 0 }
+	if = {
+		limit = { cm_fa_gov_has_naval_room = yes }
+		set_variable = { name = cm_ln_naval_left value = 1 }
+	}
+}
+
+# Root is the country.
+cm_ln_open_gov_filter_off = {
+	remove_variable = cm_ln_gov_valid_only
+	remove_variable = cm_ln_land_left
+	remove_variable = cm_ln_naval_left
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_open_gov_place = {
+	ordered_owned_location = {
+		order_by = { value = var:cm_gf_score }
+		position = 0
+		check_range_bounds = no
+		limit = {
+			has_variable = cm_gf_score
+			cm_fa_gov_location_placeable = yes
+		}
+		save_scope_as = cm_ln_open_gov_site
+	}
+	if = {
+		limit = { exists = scope:cm_ln_open_gov_site }
+		cm_ln_open_gov_resolve_type = yes
+		scope:cm_ln_open_gov_site = { save_temporary_scope_as = cm_location }
+		# The charge stops at the treasury, so the placement lands even where the country
+		# cannot cover it.
+		add_gold = {
+			value = cm_ln_open_gov_charge
+			multiply = -1
+		}
+		scope:cm_ln_open_gov_site = {
+			construct_building = {
+				building_type = scope:cm_building_type
+				cost_multiplier = 0
+				cost_multiplier_reason = cm_ln_open_gov_placement
+				owner = scope:cm_country
+				payer = scope:cm_country
+			}
+		}
+		cmf_log = { action = cm_ln_log_open_gov_placed }
+	}
+	else = {
+		cmf_log = { action = cm_ln_log_open_gov_none }
+	}
+}
+
+# Root is the country, scope:cm_country set. Expects scope:cm_ln_open_gov_site. Sets
+# scope:cm_building_type.
+cm_ln_open_gov_resolve_type = {
+	if = {
+		limit = {
+			cm_fa_gov_has_naval_room = yes
+			scope:cm_ln_open_gov_site = { cm_location_allowed_to_build = { target = building_type:naval_governor } }
+		}
+		building_type:naval_governor = { save_scope_as = cm_building_type }
+	}
+	else = {
+		building_type:local_governor = { save_scope_as = cm_building_type }
+	}
 }

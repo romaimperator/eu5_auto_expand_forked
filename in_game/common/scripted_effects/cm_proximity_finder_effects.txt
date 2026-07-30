@@ -357,9 +357,9 @@ cm_pf_prep_core = {
 			}
 		}
 	}
-	# A reorganization ranks only the locations that can host a governor right now. Marking the
-	# rest nogain reuses the existing never-search channel, and it sits outside the headroom
-	# block above so an ineligible location still counts as somewhere a governor can serve.
+	# A lucky nation's governor run ranks only the locations that can host a governor right now.
+	# Marking the rest nogain reuses the existing never-search channel, and it sits outside the
+	# headroom block above so an ineligible location still counts as somewhere a governor can serve.
 	if = {
 		limit = {
 			var:cm_pf_run_g = 1
@@ -1371,8 +1371,8 @@ cm_pf_phase_init = {
 		set_variable = { name = cm_pf_phase value = 3 }
 	}
 	else_if = {
-		# A reorganization samples every legal site rather than one per province, so the
-		# reference phase would build an ordering key nothing reads.
+		# A lucky nation's governor run samples every legal site rather than one per province,
+		# so the reference phase would build an ordering key nothing reads.
 		limit = { exists = var:cm_ln_gov_valid_only }
 		set_variable = { name = cm_pf_ub_valid value = 0 }
 		every_owned_location = {
@@ -2356,10 +2356,10 @@ cm_pf_phase_drain_step = {
 # province (governor-only runs take the best-bound placeable one), and the capital always.
 cm_pf_phase_sample = {
 	if = {
-		# A reorganization has already marked every ineligible location done, so what is left
-		# is exactly the legal set: sampling all of it is both cheaper than one seed per
-		# province and exact, where per-province sampling would black out a province's other
-		# cities.
+		# A lucky nation's governor run has already marked every ineligible location done, so
+		# what is left is exactly the legal set: sampling all of it is both cheaper than one
+		# seed per province and exact, where per-province sampling would black out a province's
+		# other cities.
 		limit = { exists = var:cm_ln_gov_valid_only }
 		every_owned_location = {
 			limit = {
