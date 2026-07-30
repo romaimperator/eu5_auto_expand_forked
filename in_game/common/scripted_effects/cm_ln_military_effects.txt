@@ -1,0 +1,141 @@
+﻿# Lucky Nations Military: the lowest-priority full-automation category, so its pool is its own
+# share plus everything the earlier categories declined to spend. It runs the fort line
+# (cm_ln_fort_effects.txt) and the urban manpower chain, forts first.
+
+# --- Category entry points ---
+
+# Monthly staging. Root is the country, scope:cm_country set.
+cm_ln_mil_run = {
+	cm_ln_ft_run = yes
+	cm_ln_bk_run = yes
+}
+
+# Root is the country, scope:cm_country set.
+cm_fa_pass_military = {
+	cm_ln_ft_drain = yes
+	cm_ln_bk_drain = yes
+}
+
+# --- Manpower chain ---
+
+# Sets scope:cm_building_type to the manpower tier the country can build now. Seeded at the
+# chain base, so the category is inert until armory_advance and follows the chain up through
+# barracks_advance and conscription_center_advance on its own.
+# Root is the country.
+cm_ln_bk_resolve_type = {
+	building_type:armory = { save_scope_as = cm_building_type }
+	cm_auto_build_resolve_building_type = yes
+}
+
+# Stages the current manpower tier across owned locations, topping up to max level: the chain is
+# not a production chain, so neither Industry nor the upgrade features ever grow it.
+# A location holding an older tier is deliberately not skipped. A lucky nation runs no upgrade
+# feature at all, so nothing else would ever replace that tier, and the engine converts a build
+# placed over a standing obsolete predecessor.
+# Root is the country, scope:cm_country set.
+cm_ln_bk_run = {
+	cm_ln_bk_resolve_type = yes
+	ordered_owned_location = {
+		order_by = max_control
+		max = cm_max_guess_at_number_of_locations
+		check_range_bounds = no
+		limit = {
+			cm_location_market_in_fa_slice = yes
+			NOT = { integration_level = conquered }
+			cm_fa_location_has_proximity = yes
+		}
+		save_scope_as = cm_location
+		if = {
+			limit = {
+				cm_fa_utilities_type_has_room = yes
+				cm_location_allowed_to_build = { target = scope:cm_building_type }
+				cm_location_has_enough_pops_available = yes
+				cm_check_location_meets_min_market_access = yes
+				cm_get_open_build_queue_slots > 0
+			}
+			cm_fa_stage_build_candidate = { cat = 7 }
+		}
+	}
+}
+
+# Biggest towns first: manpower_max_level is 1 + population/20, so they take the most levels and
+# each level is worth the most there.
+# Root is the country, scope:cm_country set.
+cm_ln_bk_drain = {
+	cm_ln_bk_resolve_type = yes
+	if = {
+		limit = { has_variable_list = cm_fa_b_locations }
+		ordered_in_list = {
+			variable = cm_fa_b_locations
+			order_by = population
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			save_temporary_scope_as = cm_ln_bk_drain_loc
+			scope:cm_ln_bk_drain_loc = {
+				cm_fa_try_approve_build = { cat = 7 POOL = cm_fa_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
+			}
+		}
+	}
+}
+
+# --- Diagnostic ---
+
+# effect c:<TAG> = { cm_ln_mil_probe = yes }
+# The site count ignores the market slice, which only holds a cycle's markets, so it reports
+# every site rather than this month's. Gold is logged x100 because the log prints whole numbers.
+# Root is the country.
+cm_ln_mil_probe = {
+	save_scope_as = cm_country
+	cm_ln_bk_resolve_type = yes
+	set_local_variable = { name = cm_ln_mil_dbg value = 0 }
+	if = {
+		limit = { scope:cm_building_type = building_type:armory }
+		set_local_variable = { name = cm_ln_mil_dbg value = 1 }
+	}
+	if = {
+		limit = { scope:cm_building_type = building_type:barracks }
+		set_local_variable = { name = cm_ln_mil_dbg value = 2 }
+	}
+	if = {
+		limit = { scope:cm_building_type = building_type:conscription_center }
+		set_local_variable = { name = cm_ln_mil_dbg value = 3 }
+	}
+	cmf_log_value = { action = cm_log_mil_tier value = local_var:cm_ln_mil_dbg }
+
+	set_local_variable = { name = cm_ln_mil_dbg value = 0 }
+	if = {
+		limit = { can_build_building = scope:cm_building_type }
+		set_local_variable = { name = cm_ln_mil_dbg value = 1 }
+	}
+	cmf_log_value = { action = cm_log_mil_unlocked value = local_var:cm_ln_mil_dbg }
+
+	set_local_variable = { name = cm_ln_mil_dbg value = 0 }
+	if = {
+		limit = { exists = var:cm_fa_pool_military }
+		set_local_variable = { name = cm_ln_mil_dbg value = { value = var:cm_fa_pool_military multiply = 100 } }
+	}
+	cmf_log_value = { action = cm_log_mil_pool value = local_var:cm_ln_mil_dbg }
+
+	set_local_variable = { name = cm_ln_mil_sites value = 0 }
+	set_local_variable = { name = cm_ln_mil_built value = 0 }
+	every_owned_location = {
+		limit = { NOT = { integration_level = conquered } }
+		if = {
+			limit = { has_building = scope:cm_building_type }
+			change_local_variable = { name = cm_ln_mil_built add = 1 }
+		}
+		if = {
+			limit = {
+				cm_fa_location_has_proximity = yes
+				cm_fa_utilities_type_has_room = yes
+				cm_location_allowed_to_build = { target = scope:cm_building_type }
+				cm_location_has_enough_pops_available = yes
+				cm_check_location_meets_min_market_access = yes
+				cm_get_open_build_queue_slots > 0
+			}
+			change_local_variable = { name = cm_ln_mil_sites add = 1 }
+		}
+	}
+	cmf_log_value = { action = cm_log_mil_sites value = local_var:cm_ln_mil_sites }
+	cmf_log_value = { action = cm_log_mil_built value = local_var:cm_ln_mil_built }
+}

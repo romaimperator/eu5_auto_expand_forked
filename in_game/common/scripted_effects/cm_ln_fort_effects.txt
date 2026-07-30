@@ -1,6 +1,6 @@
-﻿# Lucky Nations Forts: the lowest-priority full-automation category. Monthly it builds a
-# spaced fort line along the borders of its strongest neighbors; yearly it tears down the
-# forts left far behind those borders.
+﻿# Lucky Nations forts, the first half of the Military full-automation category. Monthly it
+# builds a spaced fort line along the borders of its strongest neighbors; yearly it tears down
+# the forts left far behind those borders.
 #
 # EU5 has no hop-distance trigger (distance_to and distance_to_squared are straight-line), so
 # each ring below is built from successive one-hop expansions writing a marker variable. All
@@ -220,7 +220,10 @@ cm_ln_ft_stage_for_neighbor = {
 
 # Root is the country, scope:cm_country set. Best-ranked border site first; cm_ln_ft_prio is
 # the neighbor's strength rank with the defensive terrain as the tiebreak.
-cm_fa_pass_forts = {
+cm_ln_ft_drain = {
+	# The staging that resolved the tier ran in an earlier execution, so scope:cm_building_type
+	# has to be re-established here for cm_fa_try_approve_build's category lookup.
+	cm_ln_ft_resolve_type = yes
 	if = {
 		limit = { has_variable_list = cm_fa_b_locations }
 		ordered_in_list = {
@@ -231,7 +234,7 @@ cm_fa_pass_forts = {
 			limit = { has_variable = cm_ln_ft_prio }
 			save_temporary_scope_as = cm_ln_ft_drain_loc
 			scope:cm_ln_ft_drain_loc = {
-				cm_fa_try_approve_build = { cat = 6 POOL = cm_fa_pool_forts GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
+				cm_fa_try_approve_build = { cat = 6 POOL = cm_fa_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
 			}
 		}
 	}
@@ -245,7 +248,7 @@ cm_ln_ft_delete_pass = {
 	if = {
 		limit = {
 			cm_fa_master_active = yes
-			exists = var:cm_fa_forts_enabled
+			exists = var:cm_fa_military_enabled
 		}
 		save_scope_as = cm_country
 		cm_ln_ft_build_border_ring = yes
