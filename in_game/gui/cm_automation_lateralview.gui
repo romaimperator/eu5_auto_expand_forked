@@ -1152,8 +1152,8 @@
 							value = "[AutomatedSystemsItem.GetGoldSlider]"
 							# CM: pinned to the reserve setting while a push is pending; the forced
 							# value commits through the callbacks below.
-							mincap = "[Select_CFixedPoint(And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Not(EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value')))), GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_push_target'), '(CFixedPoint)0')]"
-							maxcap = "[Select_CFixedPoint(And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Not(EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value')))), GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_push_target'), '(CFixedPoint)1')]"
+							mincap = "[Select_CFixedPoint(And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Not(EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value')))), GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_push_target'), '(CFixedPoint)0')]"
+							maxcap = "[Select_CFixedPoint(And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Not(EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value')))), GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_push_target'), '(CFixedPoint)1')]"
 							onvaluechanged = "[AutomatedSystemsItem.OnChangedGoldSlider]"
 							onchangefinish = "[AutomatedSystemsItem.PostGoldSlider]"
 							blockoverride "economy_slider_inc_button_config"{
@@ -1201,7 +1201,7 @@
 					widget = {
 						size = { 0 0 }
 						visible_at_creation = no
-						visible = "[And(GreaterThan_CFixedPoint(AutomatedSystemsItem.GetGoldSlider, '(CFixedPoint)0'), Not(EqualTo_CFixedPoint(Divide_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, AutomatedSystemsItem.GetGoldSlider), GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_max_value'))))]"
+						visible = "[And(GreaterThan_CFixedPoint(AutomatedSystemsItem.GetGoldSlider, '(CFixedPoint)0'), Not(EqualTo_CFixedPoint(Divide_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, AutomatedSystemsItem.GetGoldSlider), GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_max_value'))))]"
 						state = {
 							name = _show
 							on_start = "[GetScriptedGui('cm_fa_reserve_max_changed').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_fa_max', MakeScopeValue(Divide_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, AutomatedSystemsItem.GetGoldSlider))).End)]"
@@ -1212,7 +1212,7 @@
 					widget = {
 						size = { 0 0 }
 						visible_at_creation = no
-						visible = "[And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Or(GreaterThan_CFixedPoint(GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_max_value'), '(CFixedPoint)0'), EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value'))))]"
+						visible = "[And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Or(GreaterThan_CFixedPoint(GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_max_value'), '(CFixedPoint)0'), EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value'))))]"
 						state = {
 							name = _show
 							duration = 0.3

@@ -6,9 +6,9 @@
  # Settings (settings) Tab
  cm__settings_name: "Settings"
  cm__pause_auto_expand_name: "Pause Automation"
- cm__pause_auto_expand_desc: "Pauses all automation features: auto-expand buildings, auto-expand RGOs, upgrade all buildings, auto-build, auto-food, and auto-urbanize."
+ cm__pause_auto_expand_desc: "Pauses all automation features: auto-expand buildings, auto-expand RGOs, upgrade all buildings, auto-build, auto-build capital buildings, auto-food, auto-urbanize, auto-grant urban rights, and Full Automation."
  cm__minimum_gold_name: "Gold Reserve"
- cm__minimum_gold_desc: "The minimum gold reserve to keep. Construction will not be queued if it would leave the treasury below this amount. Applies to all automation features."
+ cm__minimum_gold_desc: "The minimum gold reserve to keep. Construction will not be queued if it would leave the treasury below this amount. Applies to every automation feature except Full Automation."
  cm__minimum_gold_format: "[CMMV('cm__minimum_gold')]@gold!"
  cm__allowed_building_overbuild_levels_name: "Overbuild Limit"
  cm__allowed_building_overbuild_levels_desc: "How many total building levels a location may exceed its Supported Building Levels cap by before auto-expand will stop queueing new construction there. At zero, it won't allow any overbuilding. At 200+, there is no limit."
@@ -27,7 +27,7 @@
  cm__priority_list_i4_name: "Auto-Food"
  cm__priority_list_i4_desc: "Automatically builds food-producing RGOs and buildings in rural locations, picking the most food-efficient option. Configured on the Auto-Food tab."
  cm__priority_list_i5_name: "Auto-Urbanize"
- cm__priority_list_i5_desc: "Promotes location ranks each month: rural settlements to towns, and towns to cities. Rural-to-town requires 30,000 pops (immediately city-eligible) or within 1,000 of pop cap (otherwise growth would stall at the rural cap). Skips unintegrated locations. Configured on the Auto-Urbanize tab."
+ cm__priority_list_i5_desc: "Promotes location ranks each month: rural settlements to towns, towns to cities, and cities to megalopolises. Skips unintegrated locations. Configured on the Auto-Urbanize tab."
  cm__priority_list_i6_name: "Auto-Upgrade All Buildings"
  cm__priority_list_i6_desc: "Automatically upgrades every building that has become obsolete, regardless of whether auto-expand is enabled for that building."
  cm__priority_list_i7_name: "Auto-Build Capital Buildings"
@@ -186,7 +186,7 @@
  cm__auto_town_rights_name: "Urban Rights"
  ## Auto-Grant Town Rights (auto_town_rights) Group
  cm__auto_town_rights__auto_town_rights_name: "Auto-Grant Urban Rights"
- cm__auto_town_rights__auto_town_rights_desc: "Each month, grant enabled urban rights to eligible cities and megalopolises in the order configured below. Each grant costs government power."
+ cm__auto_town_rights__auto_town_rights_desc: "Each month, grant enabled urban rights to eligible towns, cities and megalopolises."
  cm__auto_grant_town_rights_name: "Enabled"
  cm__auto_grant_town_rights_desc: "Enable or disable the auto-grant pass. When off, the rights list below is ignored."
  cm__town_rights_free_grants_name: "Remove Urban Rights Costs"
@@ -195,7 +195,7 @@
  cm__town_rights_min_gov_power_desc: "Auto-grant stops granting urban rights when the next grant would drop your government power (legitimacy, republican tradition, devotion, or horde unity, depending on government type) below this value."
  ## Town Rights Priority (auto_town_rights_list) Group
  cm__auto_town_rights__auto_town_rights_list_name: "Urban Rights Priority"
- cm__auto_town_rights__auto_town_rights_list_desc: "Drag to reorder. Each month, enabled rights are granted top-to-bottom to eligible cities and megalopolises. Each grant costs government power. Rights are skipped where the location is unintegrated, already has the right, or has no free slot."
+ cm__auto_town_rights__auto_town_rights_list_desc: "Drag to reorder. Each month, enabled rights are granted top-to-bottom to eligible towns, cities and megalopolises. Each grant costs government power. Rights are skipped where the location is unintegrated, already has the right, or has no free slot."
  cm__auto_town_rights_list_item_column_name: "Urban Right"
  cm__auto_town_rights_list_i1_name: "@staple_port! [ShowTownRightsName('staple_port')]"
  cm__auto_town_rights_list_i2_name: "@granary_town! [ShowTownRightsName('granary_town')]"
@@ -265,7 +265,7 @@
  cm__fa_priority_list_i6_name: "Building Cleanup"
  cm__fa_priority_list_i6_desc: "Once a year, closes production buildings that have stopped making money and are not subsidized, and destroys them instead where the location is within ten levels of the building levels it supports. At most half of a building type's working buildings in a market are closed in one year, so an industry that is losing money everywhere keeps running at half strength rather than shutting down. Buildings it closed reopen once the type is earning again in that market, and buildings it closed are destroyed later if their location runs out of room. @market_village! [ShowBuildingTypeNameWithNoTooltip('market_village')] and @farming_village! [ShowBuildingTypeNameWithNoTooltip('farming_village')] count as infrastructure rather than industry: the farming village is left standing, and the market village is only ever cut back to one level so the location keeps its market access. It also clears production that competes with food for workers out of the locations auto-food is working."
  cm__fa_priority_list_i7_name: "Governors"
- cm__fa_priority_list_i7_desc: "Places a governor where it spreads the most [proximity|e], using the same scores as the Recommended Governor Placement map mode. One governor goes up each time those scores are recalculated, so long as a slot is free. Land governors need a road to your capital, and naval governors a port that cannot be reached from your capital overland."
+ cm__fa_priority_list_i7_desc: "Places a governor where it spreads the most [proximity|e], using the same scores as the Recommended Governor Placement map mode. One governor goes up each time those scores recalculate on their own, when a game loads or when you open the map mode, so long as a slot is free. Single-player only. Land governors need a road to your capital, and naval governors a port that cannot be reached from your capital overland."
  cm__fa_priority_list_i8_name: "Roads"
  cm__fa_priority_list_i8_desc: "Builds the [road|e] network that raises [proximity|e] the most for the gold. Once a year it works out the best route from your [capital|e] and your governors to every location you own, then each month starts the stretches that would lift the most [tax_base|e], counting everything further down the route behind them. Rough ground and thick vegetation cost more to cross, so cheap flat corridors are laid first."
  cm__fa_priority_list__budget_name: "Budget Share"
@@ -275,7 +275,7 @@
  cm__fa_priority_list__enabled_desc: "Let this category build."
  ## Industry Group
  cm__full_automation__fa_industry_name: "Industry"
- cm__full_automation__fa_industry_desc: "Builds, expands, and upgrades the production buildings and RGOs that repay their cost fastest in tax income. In each market the best opportunity sets the bar: only constructions close to it are started, so a poor building is never rushed while a much better one is about to free up."
+ cm__full_automation__fa_industry_desc: "Settings for the Industry category above."
  cm__fa_industry_algorithm_name: "Build Strategy"
  cm__fa_industry_algorithm_desc: "How industry picks what to construct."
  cm__fa_industry_algorithm_option_1_name: "Greedy"
@@ -288,7 +288,7 @@
  cm__fa_industry_min_roi_format: "[CMMV('cm__fa_industry_min_roi')]y @efficiency!"
  ## Price Collapsar Group
  cm__full_automation__fa_collapsar_name: "Price Collapsar"
- cm__full_automation__fa_collapsar_desc: "Expands production of construction materials to push their prices down, making everything cheaper to build. Materials are worked from the top of the list down, with RGOs expanded before producer buildings."
+ cm__full_automation__fa_collapsar_desc: "Settings for the Price Collapsar category above. Materials are worked from the top of the list down, with RGOs expanded before producer buildings."
  cm__fa_collapsar_target_name: "Price Target"
  cm__fa_collapsar_target_desc: "The price at which construction for a material stops, relative to its base price. At -33%, producers are built until the material trades 33% below base price. At 0%, until it reaches base price. At +33%, only while it costs more than 33% above base."
  cm__fa_collapsar_target_format: "[CMMV('cm__fa_collapsar_target')]%"
@@ -301,7 +301,7 @@
  cm__fa_collapsar__enabled_desc: "Work to lower this material's price."
  ## Food Group
  cm__full_automation__fa_food_name: "Food"
- cm__full_automation__fa_food_desc: "Watches each market's food supply over the year and, where even the best month fell short, enables auto-food on the locations with the highest food potential. Locations it picks glow like player-enabled ones, but the toggle stays yours; they are never turned off unless the location stops being a rural settlement."
+ cm__full_automation__fa_food_desc: "Settings for the Food category above."
  cm__fa_food_target_name: "Surplus Target"
  cm__fa_food_target_desc: "A market gets more food locations until its supply reaches this share of its demand. At 125%, food is expanded in any market whose best month of the year did not reach a 25% surplus. Raise it to keep more of a buffer, lower it to only help markets closer to a shortage."
  cm__fa_food_target_format: "[CMMV('cm__fa_food_target')]%"
@@ -310,7 +310,7 @@
  cm__fa_food_min_potential_format: "[CMMV('cm__fa_food_min_potential')]"
  ## Urban Rights Group
  cm__full_automation__fa_urban_rights_name: "Urban Rights"
- cm__full_automation__fa_urban_rights_desc: "Grants urban rights across your towns and cities. [ShowTownRightsNameWithNoTooltip('granary_town')] comes first, then one specialization right, drawn at random from those that suit the goods made around the location so your cities do not all specialize in the same thing. A town has a single slot, so it holds the granary until it grows into a city."
+ cm__full_automation__fa_urban_rights_desc: "Settings for the Urban Rights category above."
  cm__fa_urban_rights_window_name: "Fit Threshold"
  cm__fa_urban_rights_window_desc: "How well a specialization right must suit a location, next to the best-suited right there, to be in the running. At 50%, any right that suits it at least half as well can be drawn, and the better-suited ones are drawn more often. At 100%, only the best-suited right is granted."
  cm__fa_urban_rights_window_format: "[CMMV('cm__fa_urban_rights_window')]%"

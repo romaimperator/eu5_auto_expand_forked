@@ -9,29 +9,29 @@ cm_fa_get_reserve = {
 }
 
 # The gold reserve setting for the automation card's slider expressions. The root-scoped
-# cm_fa_get_reserve is unreachable from GuiScope. Expects scope: country.
+# cm_fa_get_reserve is unreachable from GuiScope. Expects scope: cm_country.
 cm_fa_reserve_value = {
-	value = scope:country.var:cm_fa_reserve
+	value = scope:cm_country.var:cm_fa_reserve
 }
 
 # The engine gold slider's observed scale, 0 until it has been sampled.
-# Expects scope: country.
+# Expects scope: cm_country.
 cm_fa_reserve_max_value = {
 	value = 0
 	if = {
-		limit = { scope:country = { has_variable = cm_fa_reserve_slider_max } }
-		add = scope:country.var:cm_fa_reserve_slider_max
+		limit = { scope:cm_country = { has_variable = cm_fa_reserve_slider_max } }
+		add = scope:cm_country.var:cm_fa_reserve_slider_max
 	}
 }
 
 # The reserve setting as a normalized slider position. 1 until the scale has been sampled,
-# which doubles as the calibration position. Expects scope: country.
+# which doubles as the calibration position. Expects scope: cm_country.
 cm_fa_reserve_push_target = {
 	value = 1
 	if = {
-		limit = { scope:country = { has_variable = cm_fa_reserve_slider_max } }
-		multiply = scope:country.var:cm_fa_reserve
-		divide = scope:country.var:cm_fa_reserve_slider_max
+		limit = { scope:cm_country = { has_variable = cm_fa_reserve_slider_max } }
+		multiply = scope:cm_country.var:cm_fa_reserve
+		divide = scope:cm_country.var:cm_fa_reserve_slider_max
 		min = 0
 		max = 1
 	}
