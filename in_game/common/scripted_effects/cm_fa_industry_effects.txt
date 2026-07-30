@@ -352,7 +352,7 @@ cm_fa_pick_best_build_item = {
 				cm_market_has_construction_goods_for_building = yes
 			}
 			if = {
-				limit = { cm_fa_can_afford = { POOL = cm_fa_pool_industry RESERVE = cm_fa_get_reserve } }
+				limit = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
 				cm_approve_gui_build = yes
 				scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
 				# The engine converts this build into the standing obsolete predecessor's upgrade.
@@ -370,7 +370,7 @@ cm_fa_pick_best_build_item = {
 					add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_fa_conv_pred value = scope:cm_building_type }
 				} else = {
 					# A conversion must fire exactly once.
-					cm_fa_fill_build_slots = { POOL = cm_fa_pool_industry RESERVE = cm_fa_get_reserve }
+					cm_fa_fill_build_slots = { POOL = cm_fa_pool_industry }
 					if = {
 						# The batch stopped on the pool or the treasury alone: stop all further
 						# Industry picks rather than let a worse candidate spend the funds it is
@@ -378,8 +378,12 @@ cm_fa_pick_best_build_item = {
 						limit = {
 							local_var:cm_q_copy_guard < 7
 							cm_get_open_build_queue_slots > 0
-							cm_q_copy_under_max_level = yes
-							NOT = { cm_fa_can_afford = { POOL = cm_fa_pool_industry RESERVE = cm_fa_get_reserve } }
+							scope:cm_building_type = { cm_is_building_type_production_building = yes }
+							OR = {
+								building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
+								building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_q_copy_type_levels }
+							}
+							NOT = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
 						}
 						set_local_variable = { name = cm_fa_blk_industry value = 1 }
 					}
@@ -469,7 +473,7 @@ cm_fa_pick_best_upgrade_item = {
 			if = {
 				limit = { cm_market_has_construction_goods_for_building = yes }
 				if = {
-					limit = { cm_fa_can_afford = { POOL = cm_fa_pool_industry RESERVE = cm_fa_get_reserve } }
+					limit = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
 					cm_q_record_upgrade_approval = yes
 					scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
 				} else = {

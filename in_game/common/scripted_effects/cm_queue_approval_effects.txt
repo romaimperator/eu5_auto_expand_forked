@@ -120,11 +120,9 @@ cm_fa_loc_reset_rgo_scoring = {
 	remove_variable = cm_fa_best_any
 }
 
-# Within-cycle construction slot claims and the slot-filling batch's level count, which the
-# caller's early-stop check still reads after cm_q_fill_build_slots returns. Root is the location.
+# Within-cycle construction slot claims. Root is the location.
 cm_q_loc_reset_cycle_counters = {
 	remove_variable = cm_q_slots_used
-	remove_variable = cm_q_copy_levels
 }
 
 # Root is the location.
@@ -366,7 +364,11 @@ cm_q_pick_best_build_item = {
 					limit = {
 						local_var:cm_q_copy_guard < 7
 						cm_get_open_build_queue_slots > 0
-						cm_q_copy_under_max_level = yes
+						scope:cm_building_type = { cm_is_building_type_production_building = yes }
+						OR = {
+							building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
+							building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_q_copy_type_levels }
+						}
 						cm_country_can_afford_staged_cost = no
 					}
 					set_local_variable = { name = cm_q_budget_exhausted value = 1 }
@@ -393,10 +395,9 @@ cm_q_pick_best_build_item = {
 cm_q_fill_build_slots = {
 	set_local_variable = { name = cm_q_copy_guard value = 0 }
 	# Levels the type reaches once the queued batch completes, counting the approved first copy.
-	# A location variable rather than a local, because cm_q_copy_under_max_level reads it.
 	# A subject's location can hold its owner's building of the same type, which is not the one
 	# the batch adds to.
-	set_variable = { name = cm_q_copy_levels value = 1 }
+	set_local_variable = { name = cm_q_copy_type_levels value = 1 }
 	if = {
 		limit = {
 			any_buildings_in_location = {
@@ -404,25 +405,30 @@ cm_q_fill_build_slots = {
 				building_type = scope:cm_building_type
 			}
 		}
-		set_local_variable = { name = cm_q_copy_have value = 0 }
 		"building(scope:cm_building_type|scope:cm_country)" = {
-			change_local_variable = { name = cm_q_copy_have add = building_level }
-			change_local_variable = { name = cm_q_copy_have add = building_levels_under_construction }
+			change_local_variable = { name = cm_q_copy_type_levels add = building_level }
+			change_local_variable = { name = cm_q_copy_type_levels add = building_levels_under_construction }
 		}
-		change_variable = { name = cm_q_copy_levels add = local_var:cm_q_copy_have }
 	}
 	while = {
 		limit = {
 			# One rank list per extra level, so at most 8 levels per type per cycle.
 			local_var:cm_q_copy_guard < 7
 			cm_get_open_build_queue_slots > 0
-			cm_q_copy_under_max_level = yes
+			# Only producing, multi-level types batch: a single-level type reaching this loop
+			# queued a second level of it.
+			scope:cm_building_type = { cm_is_building_type_production_building = yes }
+			# The batch's own count against the cap.
+			OR = {
+				building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
+				building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_q_copy_type_levels }
+			}
 			$AFFORD$ = yes
 		}
 		change_local_variable = { name = cm_q_copy_guard add = 1 }
 		cm_q_add_build_rank_copy = { GUARD = cm_q_copy_guard }
 		$CLAIM$ = yes
-		change_variable = { name = cm_q_copy_levels add = 1 }
+		change_local_variable = { name = cm_q_copy_type_levels add = 1 }
 	}
 }
 
