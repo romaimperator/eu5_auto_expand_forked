@@ -1,8 +1,8 @@
 ﻿# Full-automation Industry: stages expand, from-zero, obsolete-upgrade, and RGO candidates
-# on ROI Tax Income, then the greedy per-market drain approves the best of them under the
+# on ROI Tax Income, then the greedy country-wide drain approves the best of them under the
 # industry pool. Staging applies no slot, under-construction, or affordability gates: a
-# currently blocked good candidate must still score so it can anchor its market and hold
-# the margin bar against worse buildable ones.
+# currently blocked good candidate must still score so it can anchor the bar and hold it
+# against worse buildable ones.
 
 # Root is the country, scope:cm_country set.
 cm_fa_run_industry = {
@@ -205,11 +205,11 @@ cm_fa_ind_log_queued = {
 	}
 }
 
-# Greedy per-market drain: in each market the best-scored candidate, actionable or not,
-# sets the bar, and actionable builds and upgrades are approved best-first while holding
+# Greedy country-wide drain: the best-scored candidate anywhere in the slice, actionable or
+# not, sets the bar, and actionable builds and upgrades are approved best-first while holding
 # the margin share of its payback rate; RGO expansions bypass the margin and drain by ROI.
-# The affordability stop is global: the pool and treasury are country-wide, so a later market
-# would spend past the allotment on a candidate a better one was refused for.
+# Payback is cost over income in gold, both already priced in the candidate's own market, so
+# scores rank directly against each other across markets.
 # Root is the country.
 cm_fa_pass_industry = {
 	# Margin factor = 100 / margin percent; scores are negative years, so the anchor times
@@ -223,24 +223,12 @@ cm_fa_pass_industry = {
 		set_local_variable = { name = cm_fa_margin_f value = 100 }
 		change_local_variable = { name = cm_fa_margin_f divide = var:cm_fa_industry_margin }
 	}
-	# Only the markets staged this cycle: a market outside the slice holds no candidates, so
-	# draining it would just re-scan the country for nothing.
+	# The picks below run hundreds of times, so the candidate set is collected once here and
+	# re-read from the list instead of re-scanning every owned location. Only the markets
+	# staged this cycle: a market outside the slice holds no candidates.
+	clear_variable_list = cm_fa_drain_cands
 	every_market_present_in_country = {
 		limit = { cm_fa_market_in_slice = yes }
-		save_scope_as = cm_fa_market
-		if = {
-			limit = { local_var:cm_fa_cost_blocked = 0 }
-			scope:cm_country = { cm_fa_drain_market = yes }
-		}
-	}
-}
-
-# Drains one market's industry candidates. Root is the country, expects scope:cm_fa_market.
-cm_fa_drain_market = {
-	# The picks below run hundreds of times per market, so the candidate set is collected
-	# once here and re-read from the list instead of re-scanning every owned location.
-	clear_variable_list = cm_fa_drain_cands
-	scope:cm_fa_market = {
 		every_location_in_market = {
 			limit = {
 				owner ?= scope:cm_country
@@ -264,28 +252,62 @@ cm_fa_drain_market = {
 		check_range_bounds = no
 		save_temporary_scope_value_as = { name = cm_fa_anchor value = var:cm_fa_best_any }
 	}
+	# Every domain best is written alongside a cm_fa_best_any fold, so no anchor this cycle
+	# means no actionable candidate either.
 	if = {
 		limit = { scope:cm_fa_anchor > -2000000 }
+		cm_fa_ind_fold_anchor = yes
 		if = {
 			limit = { local_var:cm_fa_margin_f > 0 }
-			set_local_variable = { name = cm_fa_thresh value = scope:cm_fa_anchor }
+			set_local_variable = { name = cm_fa_thresh value = var:cm_fa_ind_anchor }
 			change_local_variable = { name = cm_fa_thresh multiply = local_var:cm_fa_margin_f }
 		} else = {
 			# Margin off: below every real score.
 			set_local_variable = { name = cm_fa_thresh value = -2000000 }
 		}
-		set_local_variable = { name = cm_fa_mkt_more value = 1 }
+		cm_fa_ind_pick_loop = yes
+	}
+	clear_variable_list = cm_fa_drain_cands
+}
+
+# Folds this cycle's best into the rotation's remembered best. change_variable's max is the
+# max function on the current value, not the ceiling clamp that max means inside a value
+# block. Root is the country, expects scope:cm_fa_anchor.
+cm_fa_ind_fold_anchor = {
+	if = {
+		limit = { NOT = { exists = var:cm_fa_ind_anchor } }
+		set_variable = { name = cm_fa_ind_anchor value = scope:cm_fa_anchor }
+	} else = {
+		change_variable = { name = cm_fa_ind_anchor max = scope:cm_fa_anchor }
+	}
+}
+
+# Approves the best candidate in the country repeatedly until nothing is left within the bar
+# or the pool cannot cover the next one. The outer batch loop is what carries the pick count
+# past a single while's 1000-iteration abort; it re-enters only while the inner loop's last
+# iteration picked something.
+# Root is the country. Expects cm_fa_drain_cands built and local_var:cm_fa_thresh set.
+cm_fa_ind_pick_loop = {
+	set_local_variable = { name = cm_fa_more value = 1 }
+	set_local_variable = { name = cm_fa_outer value = 0 }
+	while = {
+		limit = {
+			local_var:cm_fa_more = 1
+			local_var:cm_fa_cost_blocked = 0
+			local_var:cm_fa_outer < 20
+		}
+		change_local_variable = { name = cm_fa_outer add = 1 }
 		set_local_variable = { name = cm_fa_guard value = 0 }
 		while = {
 			limit = {
-				local_var:cm_fa_mkt_more = 1
+				local_var:cm_fa_more = 1
 				local_var:cm_fa_cost_blocked = 0
 				# 999 stays under the engine's 1000-iteration while abort.
 				local_var:cm_fa_guard < 999
 			}
 			change_local_variable = { name = cm_fa_guard add = 1 }
-			set_local_variable = { name = cm_fa_mkt_more value = 0 }
-			# Best actionable candidate per domain in this market.
+			set_local_variable = { name = cm_fa_more value = 0 }
+			# Best actionable candidate per domain.
 			save_temporary_scope_value_as = { name = cm_fa_dom_b value = -2000000 }
 			save_temporary_scope_value_as = { name = cm_fa_dom_u value = -2000000 }
 			save_temporary_scope_value_as = { name = cm_fa_dom_r value = -2000000 }
@@ -328,7 +350,7 @@ cm_fa_drain_market = {
 					scope:cm_fa_dom_b > -2000000
 				}
 				scope:cm_fa_pick_b_loc = { cm_fa_pick_best_build_item = yes }
-				set_local_variable = { name = cm_fa_mkt_more value = 1 }
+				set_local_variable = { name = cm_fa_more value = 1 }
 			} else_if = {
 				limit = {
 					scope:cm_fa_dom_u >= { value = scope:cm_fa_dom_r }
@@ -336,16 +358,28 @@ cm_fa_drain_market = {
 					scope:cm_fa_dom_u > -2000000
 				}
 				scope:cm_fa_pick_u_loc = { cm_fa_pick_best_upgrade_item = yes }
-				set_local_variable = { name = cm_fa_mkt_more value = 1 }
+				set_local_variable = { name = cm_fa_more value = 1 }
 			} else_if = {
 				# RGOs have no input good, so they can never be unprofitable and never steal a
 				# building's opportunity; the margin never gates them, only ROI order.
 				limit = { scope:cm_fa_dom_r > -2000000 }
 				scope:cm_fa_pick_r_loc = { cm_fa_approve_rgo_item = yes }
-				set_local_variable = { name = cm_fa_mkt_more value = 1 }
+				set_local_variable = { name = cm_fa_more value = 1 }
 			}
 		}
 	}
+}
+
+# Console diagnostic: effect c:<TAG> = { cm_fa_ind_anchor_probe = yes }
+# Root is the country.
+cm_fa_ind_anchor_probe = {
+	set_local_variable = { name = cm_fa_ianc_dbg value = 0 }
+	if = {
+		limit = { exists = var:cm_fa_ind_anchor }
+		set_local_variable = { name = cm_fa_ianc_dbg value = var:cm_fa_ind_anchor }
+	}
+	change_local_variable = { name = cm_fa_ianc_dbg multiply = -100 }
+	cmf_log_value = { action = cm_log_ind_anchor value = local_var:cm_fa_ianc_dbg }
 }
 
 # Approves the highest-scored full-automation build at this location, then consumes it;
@@ -430,7 +464,7 @@ cm_fa_pick_best_build_item = {
 	cm_fa_drain_prune_loc = yes
 }
 
-# Drops a spent location out of the market's candidate list so the picks stop reading it.
+# Drops a spent location out of the candidate list so the picks stop reading it.
 # Not gated on cm_fa_best_any: the picks never clear it, and the anchor was taken before
 # the pick loop began. Root is the location.
 cm_fa_drain_prune_loc = {
@@ -446,7 +480,7 @@ cm_fa_drain_prune_loc = {
 }
 
 # Recomputes this location's best build score after a pick; an empty map drops the best
-# marker, which is the market picks' membership filter. Root is the location.
+# marker, which is the picks' membership filter. Root is the location.
 cm_fa_refresh_build_best = {
 	save_temporary_scope_as = cm_fa_refresh_loc
 	remove_variable = cm_fa_b_best

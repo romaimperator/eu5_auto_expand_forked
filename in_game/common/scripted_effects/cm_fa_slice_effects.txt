@@ -1,8 +1,6 @@
 ﻿# Full-automation market slice: one cycle covers a rotating subset of the country's markets
 # instead of all of them, so a very large nation's staging cost matches a medium one's.
-# Markets are the slice unit because they partition the country's locations and because the
-# Industry drain is already per market, so a sliced market keeps the complete candidate set
-# its anchor and payback margin are measured against.
+# Markets are the slice unit because they partition the country's locations.
 # Markets are stored as variable-map keys rather than list targets, the shape the food
 # histograms already use.
 
@@ -21,6 +19,7 @@ cm_fa_pick_slice = {
 	if = {
 		limit = { NOT = { cm_fa_slice_has_unseen = yes } }
 		clear_variable_map = cm_fa_slice_seen
+		remove_variable = cm_fa_ind_anchor
 	}
 	cm_fa_slice_build_priority = yes
 	set_local_variable = { name = cm_fa_slice_np value = 0 }
@@ -141,4 +140,5 @@ cm_fa_clear_slice_state = {
 	clear_variable_map = cm_fa_slice_seen
 	clear_variable_list = cm_fa_slice_prio
 	remove_variable = cm_fa_slice_cursor
+	remove_variable = cm_fa_ind_anchor
 }
