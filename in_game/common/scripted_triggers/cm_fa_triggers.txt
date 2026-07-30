@@ -50,11 +50,25 @@ cm_fa_location_has_proximity = {
 	proximity > 0
 }
 
-# Affordability gate for full-automation approvals: the category pool covers the cost and
-# the treasury stays above the full-automation reserve after this drain's committed spend.
+# True while the category may buy past its allotment and owe the difference: its ledger is
+# running, which only cm_fa_drain_one starts, and the setting is on. Root is the country.
+cm_fa_may_borrow = {
+	local_var:cm_fa_ledger = 1
+	exists = var:cm_fa_save_unaffordable
+}
+
+# Affordability gate for full-automation approvals: anything left in the category pool covers a
+# borrowing category's pick, the whole cost otherwise, and the treasury stays above the
+# full-automation reserve after this drain's committed spend.
 # $POOL$ = the category pool variable name. Expects scope:cm_country, scope:cm_cost.
 cm_fa_can_afford = {
-	scope:cm_country = { var:$POOL$ >= scope:cm_cost }
+	scope:cm_country = {
+		trigger_if = {
+			limit = { cm_fa_may_borrow = yes }
+			var:$POOL$ > 0
+		}
+		trigger_else = { var:$POOL$ >= scope:cm_cost }
+	}
 	cm_fa_treasury_covers_cost = yes
 }
 
@@ -67,7 +81,13 @@ cm_fa_treasury_covers_cost = {
 # which cm_fa_fill_build_slots holds in var:cm_fa_copy_pool so one trigger serves every category.
 # Expects scope:cm_country, scope:cm_cost.
 cm_fa_copy_can_afford = {
-	scope:cm_country = { var:cm_fa_copy_pool >= scope:cm_cost }
+	scope:cm_country = {
+		trigger_if = {
+			limit = { cm_fa_may_borrow = yes }
+			var:cm_fa_copy_pool > 0
+		}
+		trigger_else = { var:cm_fa_copy_pool >= scope:cm_cost }
+	}
 	cm_fa_treasury_covers_cost = yes
 }
 
@@ -75,7 +95,11 @@ cm_fa_copy_can_afford = {
 # $POOL$ = the category pool variable name. Root is the location, expects scope:cm_country,
 # scope:cm_location.
 cm_fa_can_afford_rgo = {
-	scope:cm_country.var:$POOL$ >= glorpui_rgo_expand_cost
+	trigger_if = {
+		limit = { scope:cm_country = { cm_fa_may_borrow = yes } }
+		scope:cm_country.var:$POOL$ > 0
+	}
+	trigger_else = { scope:cm_country.var:$POOL$ >= glorpui_rgo_expand_cost }
 	cm_check_country_gold_above = { threshold = cm_fa_rgo_gold_threshold }
 }
 

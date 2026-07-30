@@ -208,8 +208,8 @@ cm_fa_ind_log_queued = {
 # Greedy per-market drain: in each market the best-scored candidate, actionable or not,
 # sets the bar, and actionable builds and upgrades are approved best-first while holding
 # the margin share of its payback rate; RGO expansions bypass the margin and drain by ROI.
-# The affordability stop is global: the pool and treasury are country-wide, so spending in
-# later markets would consume the funds a blocked better pick is saving for.
+# The affordability stop is global: the pool and treasury are country-wide, so a later market
+# would spend past the allotment on a candidate a better one was refused for.
 # Root is the country.
 cm_fa_pass_industry = {
 	# Margin factor = 100 / margin percent; scores are negative years, so the anchor times
@@ -403,8 +403,7 @@ cm_fa_pick_best_build_item = {
 					cm_fa_fill_build_slots = { POOL = cm_fa_pool_industry }
 					if = {
 						# The batch stopped on the pool or the treasury alone: stop all further
-						# Industry picks rather than let a worse candidate spend the funds it is
-						# saving for.
+						# Industry picks rather than let a worse candidate spend what is left.
 						limit = {
 							local_var:cm_q_copy_guard < 7
 							cm_get_open_build_queue_slots > 0

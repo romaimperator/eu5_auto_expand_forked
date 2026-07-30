@@ -1,31 +1,22 @@
 ﻿# Full-automation budget engine: monthly per-category pools set from the treasury above
 # the reserve, and the per-category dispatch that runs each drain and passes its unspent
-# pool down the player's category order. A category that could not afford its best pick
-# keeps its pool as a reserve instead of passing it on, and tops the reserve up with its
-# share every month until the pick is affordable. Pools and reserves are country variables
-# and persist in saves.
+# pool down the player's category order. A category buys its best pick whenever the treasury
+# covers it, and what it spent past its own allotment becomes a debt it settles out of the
+# allotments that follow. Pools and debts are country variables and persist in saves.
 
-# Sets each enabled category's pool to its own reserve plus its share of what the reserves
-# leave: split = max(0, gold - reserve - everything reserved). A treasury the reserves already
-# outrun leaves nothing to split, so they stop growing and no pool exceeds its reserve.
-# Root is the country.
+# Sets each enabled category's pool to its share of split = max(0, gold - reserve). A debt holds
+# no gold, so it takes nothing off the top. Root is the country.
 cm_fa_monthly_budget_refresh = {
 	if = {
 		# A reorganization holds the treasury until every governor its plan calls for stands, so no
-		# category gets a pool this month while the reserves keep their gold. Urban Rights spends
-		# government power and Building Cleanup spends nothing, so both keep running.
+		# category gets a pool this month. Urban Rights spends government power and Building Cleanup
+		# spends nothing, so both keep running.
 		limit = { exists = var:cm_ln_hold }
 		cm_fa_zero_pools = yes
 	}
 	else = {
 		set_local_variable = { name = cm_fa_split value = gold }
 		change_local_variable = { name = cm_fa_split subtract = cm_fa_get_reserve }
-		cm_fa_take_reserve = { cat = industry }
-		cm_fa_take_reserve = { cat = collapsar }
-		cm_fa_take_reserve = { cat = food }
-		cm_fa_take_reserve = { cat = utilities }
-		cm_fa_take_reserve = { cat = roads }
-		cm_fa_take_reserve = { cat = military }
 		change_local_variable = { name = cm_fa_split max = 0 }
 		cm_fa_set_category_pool = { cat = industry }
 		cm_fa_set_category_pool = { cat = collapsar }
@@ -41,33 +32,20 @@ cm_fa_monthly_budget_refresh = {
 	}
 }
 
-# Takes one category's reserve off the top of the amount the shares are split from.
-# $cat$ = category id. Root is the country, reads and writes the refresh's local cm_fa_split.
-cm_fa_take_reserve = {
-	if = {
-		limit = { exists = var:cm_fa_res_$cat$ }
-		change_local_variable = { name = cm_fa_split subtract = var:cm_fa_res_$cat$ }
-	}
-}
-
-# pool = reserve + pct * split. $cat$ = industry | collapsar | food | utilities | roads |
-# military. Root is the country.
+# pool = pct * split. $cat$ = industry | collapsar | food | utilities | roads | military.
+# Root is the country.
 cm_fa_set_category_pool = {
 	if = {
 		limit = { exists = var:cm_fa_$cat$_enabled }
 		set_local_variable = { name = cm_fa_inc value = local_var:cm_fa_split }
 		change_local_variable = { name = cm_fa_inc multiply = var:cm_fa_$cat$_budget }
 		change_local_variable = { name = cm_fa_inc multiply = 0.01 }
-		if = {
-			limit = { exists = var:cm_fa_res_$cat$ }
-			change_local_variable = { name = cm_fa_inc add = var:cm_fa_res_$cat$ }
-		}
 		set_variable = { name = cm_fa_pool_$cat$ value = local_var:cm_fa_inc }
 	}
 }
 
-# pool = min(pool, reserve + pct * the live treasury above the reserve). Called on
-# budget-slider change. $cat$ = category id. Root is the country.
+# pool = min(pool, pct * the live treasury above the reserve). Called on budget-slider change.
+# $cat$ = category id. Root is the country.
 cm_fa_clamp_pool = {
 	if = {
 		limit = { has_variable = cm_fa_pool_$cat$ }
@@ -76,10 +54,6 @@ cm_fa_clamp_pool = {
 		change_local_variable = { name = cm_fa_cap max = 0 }
 		change_local_variable = { name = cm_fa_cap multiply = var:cm_fa_$cat$_budget }
 		change_local_variable = { name = cm_fa_cap multiply = 0.01 }
-		if = {
-			limit = { exists = var:cm_fa_res_$cat$ }
-			change_local_variable = { name = cm_fa_cap add = var:cm_fa_res_$cat$ }
-		}
 		change_variable = { name = cm_fa_pool_$cat$ min = local_var:cm_fa_cap }
 	}
 }
@@ -87,7 +61,7 @@ cm_fa_clamp_pool = {
 # Root is the country.
 cm_fa_clear_budget_state = {
 	cm_fa_zero_pools = yes
-	cm_fa_release_reserves = yes
+	cm_fa_clear_debts = yes
 	cm_fa_clear_slice_state = yes
 	cm_fa_rd_clear_plan = yes
 }
@@ -103,63 +77,40 @@ cm_fa_zero_pools = {
 	set_variable = { name = cm_fa_pool_governors value = 0 }
 }
 
-# Hands every reserve back to the treasury for anything else to spend. Root is the country.
-cm_fa_release_reserves = {
-	remove_variable = cm_fa_res_industry
-	remove_variable = cm_fa_res_collapsar
-	remove_variable = cm_fa_res_food
-	remove_variable = cm_fa_res_utilities
-	remove_variable = cm_fa_res_roads
-	remove_variable = cm_fa_res_military
-	remove_variable = cm_fa_res_total
-}
-
-# Recomputes the standing reserve total the gates outside full automation read.
-# Root is the country.
-cm_fa_sum_reserves = {
-	set_variable = { name = cm_fa_res_total value = 0 }
-	cm_fa_add_reserve_to_total = { cat = industry }
-	cm_fa_add_reserve_to_total = { cat = collapsar }
-	cm_fa_add_reserve_to_total = { cat = food }
-	cm_fa_add_reserve_to_total = { cat = utilities }
-	cm_fa_add_reserve_to_total = { cat = roads }
-	cm_fa_add_reserve_to_total = { cat = military }
-}
-
-# $cat$ = category id. Root is the country.
-cm_fa_add_reserve_to_total = {
-	if = {
-		limit = { exists = var:cm_fa_res_$cat$ }
-		change_variable = { name = cm_fa_res_total add = var:cm_fa_res_$cat$ }
-	}
+# Writes off what every category owes. Root is the country.
+cm_fa_clear_debts = {
+	remove_variable = cm_fa_debt_industry
+	remove_variable = cm_fa_debt_collapsar
+	remove_variable = cm_fa_debt_food
+	remove_variable = cm_fa_debt_utilities
+	remove_variable = cm_fa_debt_roads
+	remove_variable = cm_fa_debt_military
 }
 
 # --- Diagnostic ---
 
-# effect c:<TAG> = { cm_fa_reserve_probe = yes }
+# effect c:<TAG> = { cm_fa_debt_probe = yes }
 # Gold is logged x100 because the log prints whole numbers. Root is the country.
-cm_fa_reserve_probe = {
-	cm_fa_log_reserve = { cat = food ACTION = cm_log_fa_res_food }
-	cm_fa_log_reserve = { cat = collapsar ACTION = cm_log_fa_res_collapsar }
-	cm_fa_log_reserve = { cat = roads ACTION = cm_log_fa_res_roads }
-	cm_fa_log_reserve = { cat = industry ACTION = cm_log_fa_res_industry }
-	cm_fa_log_reserve = { cat = utilities ACTION = cm_log_fa_res_utilities }
-	cm_fa_log_reserve = { cat = military ACTION = cm_log_fa_res_military }
-	set_local_variable = { name = cm_fa_dbg value = 0 }
-	if = {
-		limit = { exists = var:cm_fa_res_total }
-		set_local_variable = { name = cm_fa_dbg value = { value = var:cm_fa_res_total multiply = 100 } }
-	}
-	cmf_log_value = { action = cm_log_fa_res_total value = local_var:cm_fa_dbg }
+cm_fa_debt_probe = {
+	set_local_variable = { name = cm_fa_dbg_total value = 0 }
+	cm_fa_log_debt = { cat = food ACTION = cm_log_fa_debt_food }
+	cm_fa_log_debt = { cat = collapsar ACTION = cm_log_fa_debt_collapsar }
+	cm_fa_log_debt = { cat = roads ACTION = cm_log_fa_debt_roads }
+	cm_fa_log_debt = { cat = industry ACTION = cm_log_fa_debt_industry }
+	cm_fa_log_debt = { cat = utilities ACTION = cm_log_fa_debt_utilities }
+	cm_fa_log_debt = { cat = military ACTION = cm_log_fa_debt_military }
+	cmf_log_value = { action = cm_log_fa_debt_total value = local_var:cm_fa_dbg_total }
 }
 
-# $cat$ = category id, $ACTION$ = its log key. Root is the country.
-cm_fa_log_reserve = {
+# $cat$ = category id, $ACTION$ = its log key. Root is the country, accumulates the probe's
+# local cm_fa_dbg_total.
+cm_fa_log_debt = {
 	set_local_variable = { name = cm_fa_dbg value = 0 }
 	if = {
-		limit = { exists = var:cm_fa_res_$cat$ }
-		set_local_variable = { name = cm_fa_dbg value = { value = var:cm_fa_res_$cat$ multiply = 100 } }
+		limit = { exists = var:cm_fa_debt_$cat$ }
+		set_local_variable = { name = cm_fa_dbg value = { value = var:cm_fa_debt_$cat$ multiply = 100 } }
 	}
+	change_local_variable = { name = cm_fa_dbg_total add = local_var:cm_fa_dbg }
 	cmf_log_value = { action = $ACTION$ value = local_var:cm_fa_dbg }
 }
 
@@ -173,13 +124,12 @@ cm_fa_copy_budget_state = {
 	cm_fa_copy_budget_var = { v = cm_fa_pool_roads }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_military }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_governors }
-	cm_fa_copy_budget_var = { v = cm_fa_res_industry }
-	cm_fa_copy_budget_var = { v = cm_fa_res_collapsar }
-	cm_fa_copy_budget_var = { v = cm_fa_res_food }
-	cm_fa_copy_budget_var = { v = cm_fa_res_utilities }
-	cm_fa_copy_budget_var = { v = cm_fa_res_roads }
-	cm_fa_copy_budget_var = { v = cm_fa_res_military }
-	cm_fa_copy_budget_var = { v = cm_fa_res_total }
+	cm_fa_copy_budget_var = { v = cm_fa_debt_industry }
+	cm_fa_copy_budget_var = { v = cm_fa_debt_collapsar }
+	cm_fa_copy_budget_var = { v = cm_fa_debt_food }
+	cm_fa_copy_budget_var = { v = cm_fa_debt_utilities }
+	cm_fa_copy_budget_var = { v = cm_fa_debt_roads }
+	cm_fa_copy_budget_var = { v = cm_fa_debt_military }
 	cm_fa_copy_budget_var = { v = cm_fa_rd_n }
 }
 
@@ -200,8 +150,8 @@ cm_fa_copy_budget_var = {
 cm_fa_try_approve_build = {
 	if = {
 		limit = {
-			# A category that stopped on cost is saving for that pick, so it approves nothing
-			# else this cycle. cm_fa_no_hold lifts both halves for the fort line.
+			# A category that stopped on cost approves nothing else this cycle.
+			# cm_fa_no_hold lifts both halves for the fort line.
 			OR = {
 				local_var:cm_fa_cost_blocked = 0
 				local_var:cm_fa_no_hold = 1
@@ -271,8 +221,7 @@ cm_fa_claim_build_copy = {
 }
 
 # Runs one category's drain under its pool, taking in the funds earlier categories left and
-# handing on whatever it does not spend unless it is saving toward a pick it could not afford.
-# Root is the country, expects scope:cm_fa_cat.
+# handing on whatever it does not spend. Root is the country, expects scope:cm_fa_cat.
 cm_fa_drain_category = {
 	switch = {
 		trigger = scope:cm_fa_cat
@@ -281,7 +230,7 @@ cm_fa_drain_category = {
 		flag:cm_fa_cat_food = { cm_fa_drain_one = { CAT = food PASS = cm_fa_pass_food } }
 		flag:cm_fa_cat_utilities = { cm_fa_drain_one = { CAT = utilities PASS = cm_fa_pass_utilities } }
 		flag:cm_fa_cat_roads = { cm_fa_drain_one = { CAT = roads PASS = cm_fa_pass_roads } }
-		# Military takes the carry, and saves for a pick it cannot afford, only once its manpower
+		# Military takes the carry, and runs a ledger it can owe against, only once its manpower
 		# chain has a tier it can build. Until then the category is the fort line alone, which
 		# its own share covers.
 		flag:cm_fa_cat_military = {
@@ -296,27 +245,51 @@ cm_fa_drain_category = {
 	}
 }
 
-# Each category answers only for its own stop, so the signal is cleared per category rather
-# than once for the loop. $CAT$ = category id, $PASS$ = its drain effect. Root is the country.
+# Settles what the category owes out of its own allotment, then spends what is left of it plus
+# the carry, or stands the category down for the cycle while it still owes. Each category answers
+# only for its own stop, so the signal is cleared per category rather than once for the loop.
+# $CAT$ = category id, $PASS$ = its drain effect. Root is the country.
 cm_fa_drain_one = {
 	set_local_variable = { name = cm_fa_cost_blocked value = 0 }
 	if = {
 		limit = { NOT = { has_variable = cm_fa_pool_$CAT$ } }
 		set_variable = { name = cm_fa_pool_$CAT$ value = 0 }
 	}
-	change_variable = { name = cm_fa_pool_$CAT$ add = var:cm_fa_carry }
-	set_variable = { name = cm_fa_carry value = 0 }
-	$PASS$ = yes
+	set_local_variable = { name = cm_fa_paid value = 0 }
 	if = {
-		limit = {
-			local_var:cm_fa_cost_blocked = 1
-			exists = var:cm_fa_save_unaffordable
+		# Settled before the carry arrives, so only the category's own allotment pays it down.
+		limit = { exists = var:cm_fa_debt_$CAT$ }
+		set_local_variable = { name = cm_fa_paid value = var:cm_fa_pool_$CAT$ }
+		change_local_variable = { name = cm_fa_paid min = var:cm_fa_debt_$CAT$ }
+		change_variable = { name = cm_fa_debt_$CAT$ subtract = local_var:cm_fa_paid }
+		change_variable = { name = cm_fa_pool_$CAT$ subtract = local_var:cm_fa_paid }
+		if = {
+			limit = { var:cm_fa_debt_$CAT$ <= 0 }
+			remove_variable = cm_fa_debt_$CAT$
 		}
-		set_variable = { name = cm_fa_res_$CAT$ value = var:cm_fa_pool_$CAT$ }
+	}
+	if = {
+		# Still owing, so it buys nothing and the carry passes it by.
+		limit = { exists = var:cm_fa_debt_$CAT$ }
+		change_variable = { name = cm_fa_carry add = local_var:cm_fa_paid }
 	}
 	else = {
-		remove_variable = cm_fa_res_$CAT$
-		change_variable = { name = cm_fa_carry add = var:cm_fa_pool_$CAT$ }
+		change_variable = { name = cm_fa_pool_$CAT$ add = var:cm_fa_carry }
+		# The settled gold goes down the order, so it is handed on only after the pool has taken
+		# the incoming carry.
+		set_variable = { name = cm_fa_carry value = local_var:cm_fa_paid }
+		set_local_variable = { name = cm_fa_ledger value = 1 }
+		$PASS$ = yes
+		set_local_variable = { name = cm_fa_ledger value = 0 }
+		if = {
+			# It bought past its allotment, and the overspend is what it now owes.
+			limit = { var:cm_fa_pool_$CAT$ < 0 }
+			set_variable = { name = cm_fa_debt_$CAT$ value = 0 }
+			change_variable = { name = cm_fa_debt_$CAT$ subtract = var:cm_fa_pool_$CAT$ }
+		}
+		else = {
+			change_variable = { name = cm_fa_carry add = var:cm_fa_pool_$CAT$ }
+		}
 	}
 	set_variable = { name = cm_fa_pool_$CAT$ value = 0 }
 }
