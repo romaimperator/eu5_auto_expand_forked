@@ -305,6 +305,20 @@ cm_fa_ur_grant_affordable = {
 	}
 }
 
+# Root is the location, expects scope:cm_country. Below cm_fa_ur_granary_open_gold the granary
+# right is granted only where the granary stands at its level cap, the right being a percentage
+# on local_food_capacity (vanilla granary_town: in_game/common/town_rights/00_traditions.txt:29).
+cm_fa_ur_granary_gate_passes = {
+	OR = {
+		scope:cm_country = { gold >= cm_fa_ur_granary_open_gold }
+		AND = {
+			scope:cm_country = { gold >= cm_fa_ur_granary_min_gold }
+			has_building = building_type:granary
+			"building(building_type:granary|owner)" = { is_at_max_level = yes }
+		}
+	}
+}
+
 # Root is the location. No royal specialization right has been granted here yet.
 # Rights: in_game/common/town_rights/01_discovery.txt
 cm_fa_ur_has_no_specialization = {
