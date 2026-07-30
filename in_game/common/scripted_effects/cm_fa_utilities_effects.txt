@@ -5,8 +5,8 @@
 # buildings last. Runs on default thresholds and never reads or writes the player's
 # auto-build settings or toggles.
 # Every location sweep here is confined to the cycle's market slice
-# (cm_fa_slice_effects.txt), except the capital set and the bailiffs. The bailiff sweep instead
-# runs once every four years.
+# (cm_fa_slice_effects.txt), except the capital set and the bailiffs. Bailiffs survey once
+# every four years into a pick list that stages monthly until it empties.
 
 # Four years, the bailiff survey cadence.
 @cm_fa_bailiff_days = 1460
@@ -94,8 +94,9 @@ cm_fa_run_utilities = {
 	if = {
 		limit = { NOT = { exists = var:cm_fa_bailiff_cd } }
 		set_variable = { name = cm_fa_bailiff_cd value = 1 days = @cm_fa_bailiff_days }
-		cm_fa_stage_bailiffs = yes
+		cm_fa_pick_bailiffs = yes
 	}
+	cm_fa_stage_bailiffs = yes
 	cm_fa_stage_marketplaces = yes
 	# The generic local_disease_resistance buildings, most resistance first (game
 	# in_game/common/building_types/town_buildings.txt: medical_school 0.33, lazaretto 0.25,
@@ -157,14 +158,16 @@ cm_fa_stage_utility_everywhere = {
 	}
 }
 
-# Bailiffs, wealthiest locations first: local_max_control earns tax base in proportion to
-# the location's wealth. The country-wide num_bailiffs modifier caps how many can stand
-# (game in_game/common/building_types/rural_buildings.txt, bailiff allow), so staging stops
-# at the remaining room and the cap goes to the best locations. That cap is also why this
-# sweep is not sliced: a permanent cap handed to one slice's best would never reach the
-# country's. The cap fills slowly enough that re-ranking every owned location every month
-# changes nothing, hence the four-year cadence on the call. Root is the country.
-cm_fa_stage_bailiffs = {
+# The four-yearly bailiff survey, wealthiest locations first: local_max_control earns tax
+# base in proportion to the location's wealth. The country-wide num_bailiffs modifier caps
+# how many can stand (game in_game/common/building_types/rural_buildings.txt, bailiff
+# allow), so the survey stops at the remaining room and the cap goes to the best locations.
+# That cap is also why this sweep is not sliced: a permanent cap handed to one slice's best
+# would never reach the country's. The cap fills slowly enough that re-ranking every owned
+# location every month changes nothing, hence the four-year cadence on the call.
+# Root is the country.
+cm_fa_pick_bailiffs = {
+	clear_variable_list = cm_fa_bailiff_picks
 	building_type:bailiff = { save_scope_as = cm_building_type }
 	set_local_variable = { name = cm_fa_bailiff_room value = modifier:num_bailiffs }
 	change_local_variable = { name = cm_fa_bailiff_room subtract = total_building_levels_including_construction:bailiff }
@@ -172,20 +175,66 @@ cm_fa_stage_bailiffs = {
 		order_by = cm_location_raw_wealth
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
-		limit = { NOT = { integration_level = conquered } }
 		save_scope_as = cm_location
 		if = {
 			limit = {
 				local_var:cm_fa_bailiff_room >= 1
-				NOT = { has_building = scope:cm_building_type }
-				cm_location_allowed_to_build = { target = scope:cm_building_type }
-				cm_location_has_enough_pops_available = yes
-				cm_check_location_meets_min_market_access = yes
-				cm_get_open_build_queue_slots > 0
-				NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+				cm_fa_bailiff_site_ok = yes
 			}
-			cm_fa_stage_build_candidate = { cat = 4 }
+			scope:cm_country = { add_to_variable_list = { name = cm_fa_bailiff_picks target = scope:cm_location } }
 			change_local_variable = { name = cm_fa_bailiff_room subtract = 1 }
+		}
+	}
+}
+
+# Stages the surveyed picks the country can act on this month, wealthiest first. A pick the
+# Utilities pool cannot cover is left in the list and staged again next month, so a survey
+# landing on a poor month is not lost; the room is re-read each month because bailiffs
+# finished since the survey have taken part of the cap. Root is the country.
+cm_fa_stage_bailiffs = {
+	if = {
+		limit = { variable_list_size = { name = cm_fa_bailiff_picks value >= 1 } }
+		building_type:bailiff = { save_scope_as = cm_building_type }
+		cm_fa_prune_bailiff_picks = yes
+		set_local_variable = { name = cm_fa_bailiff_room value = modifier:num_bailiffs }
+		change_local_variable = { name = cm_fa_bailiff_room subtract = total_building_levels_including_construction:bailiff }
+		ordered_in_list = {
+			variable = cm_fa_bailiff_picks
+			order_by = cm_location_raw_wealth
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			save_scope_as = cm_location
+			if = {
+				limit = {
+					local_var:cm_fa_bailiff_room >= 1
+					cm_fa_bailiff_site_ok = yes
+				}
+				cm_fa_stage_build_candidate = { cat = 4 }
+				change_local_variable = { name = cm_fa_bailiff_room subtract = 1 }
+			}
+		}
+	}
+}
+
+# Drops picks a bailiff will never reach, so the list shrinks to empty over the four years:
+# lost to another owner, already carrying one (has_building holds from the moment the first
+# level is queued), or urbanized out of reach - bailiff lists only rural_settlement among
+# the four rank fields (game in_game/common/building_types/rural_buildings.txt:10), so a
+# rank upgrade retires the site for good. Root is the country, expects scope:cm_country,
+# scope:cm_building_type.
+cm_fa_prune_bailiff_picks = {
+	every_in_list = {
+		variable = cm_fa_bailiff_picks
+		save_scope_as = cm_fa_bailiff_pick
+		if = {
+			limit = {
+				OR = {
+					NOT = { owner ?= scope:cm_country }
+					has_building = scope:cm_building_type
+					NOT = { location_rank = location_rank:rural_settlement }
+				}
+			}
+			scope:cm_country = { remove_list_variable = { name = cm_fa_bailiff_picks target = scope:cm_fa_bailiff_pick } }
 		}
 	}
 }

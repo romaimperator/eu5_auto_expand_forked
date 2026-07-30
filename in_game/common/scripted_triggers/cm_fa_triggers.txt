@@ -133,6 +133,19 @@ cm_fa_utilities_rgo_req_met = {
 	}
 }
 
+# A bailiff can go up here right now. The survey and the monthly staging share it so a pick
+# is only ever made on the terms it will later be staged on. Root is the location, expects
+# scope:cm_country, scope:cm_building_type.
+cm_fa_bailiff_site_ok = {
+	NOT = { integration_level = conquered }
+	NOT = { has_building = scope:cm_building_type }
+	cm_location_allowed_to_build = { target = scope:cm_building_type }
+	cm_location_has_enough_pops_available = yes
+	cm_check_location_meets_min_market_access = yes
+	cm_get_open_build_queue_slots > 0
+	NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+}
+
 # True when scope:cm_fa_good_t already trades at or below the target price in
 # scope:cm_fa_market: market price <= default price * (100 + target markup) / 100,
 # the min-discount markup convention (negative = below base, positive = above).
