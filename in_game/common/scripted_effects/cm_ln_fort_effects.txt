@@ -1,6 +1,6 @@
 ﻿# Lucky Nations forts, the first half of the Military full-automation category. Monthly it
 # builds a spaced fort line along the borders of its strongest neighbors; yearly it tears down
-# the forts left far behind those borders.
+# the forts left far behind those borders and one of every adjacent pair.
 #
 # EU5 has no hop-distance trigger (distance_to and distance_to_squared are straight-line), so
 # each ring below is built from successive one-hop expansions writing a marker variable. All
@@ -129,6 +129,7 @@ cm_ln_ft_clear_rings = {
 		if = { limit = { has_variable = cm_ln_ft_bd } remove_variable = cm_ln_ft_bd }
 		if = { limit = { has_variable = cm_ln_ft_nd } remove_variable = cm_ln_ft_nd }
 		if = { limit = { has_variable = cm_ln_ft_zx } remove_variable = cm_ln_ft_zx }
+		if = { limit = { has_variable = cm_ln_ft_kp } remove_variable = cm_ln_ft_kp }
 	}
 }
 
@@ -243,7 +244,8 @@ cm_ln_ft_drain = {
 # --- Yearly teardown ---
 
 # Destroys every main-chain fort that is neither the capital's nor inside the 2-hop border
-# band. Spends nothing, so it needs no pool and no drain arm. Root is the country.
+# band, then thins the ones left standing a hop apart. Spends nothing, so it needs no pool and
+# no drain arm. Root is the country.
 cm_ln_ft_delete_pass = {
 	if = {
 		limit = {
@@ -262,28 +264,10 @@ cm_ln_ft_delete_pass = {
 					has_fort = yes
 					NOT = { this = scope:cm_country.capital }
 				}
-				save_scope_as = cm_location
-				# Collected as types, not building handles: destroying inside
-				# every_buildings_in_location mutates the collection being walked. A location
-				# holds one building per type per owner, so the type resolves it again.
-				every_buildings_in_location = {
-					limit = {
-						owner = scope:cm_country
-						# A building reads as standing from the moment its first level is queued.
-						cm_is_not_under_construction = yes
-						building_type = { cm_ln_ft_is_chain_fort = yes }
-					}
-					building_type = { save_scope_as = cm_ln_ft_bt }
-					scope:cm_location = { add_to_variable_list = { name = cm_ln_ft_doomed target = scope:cm_ln_ft_bt } }
-				}
-				every_in_list = {
-					variable = cm_ln_ft_doomed
-					save_scope_as = cm_ln_ft_bt
-					scope:cm_location = { destroy_building = "building(scope:cm_ln_ft_bt|scope:cm_country)" }
-				}
-				clear_variable_list = cm_ln_ft_doomed
+				cm_ln_ft_destroy_chain_forts = yes
 			}
 		}
+		cm_ln_ft_delete_adjacent = yes
 		cm_ln_ft_clear_rings = yes
 	}
 	# A lucky nation seeds both of these every month, so reaching here means something else
@@ -291,4 +275,62 @@ cm_ln_ft_delete_pass = {
 	else = {
 		cmf_log = { action = cm_ln_log_ft_off }
 	}
+}
+
+# One of every adjacent pair goes. Staging spaces its own picks 3 hops apart, so a pair here
+# came from conquest or from forts that were already standing; which of the two is kept is the
+# order the sweep reaches them in.
+# Root is the country, scope:cm_country set.
+cm_ln_ft_delete_adjacent = {
+	if = {
+		limit = {
+			exists = capital
+			capital = { cm_ln_ft_has_chain_fort = yes }
+		}
+		# The keep rule names the capital a legitimate fort site.
+		capital = { set_variable = { name = cm_ln_ft_kp value = 1 } }
+	}
+	every_owned_location = {
+		limit = {
+			is_land = yes
+			NOT = { has_variable = cm_ln_ft_kp }
+			cm_ln_ft_has_chain_fort = yes
+		}
+		if = {
+			limit = {
+				any_neighbor_location = {
+					owner ?= scope:cm_country
+					has_variable = cm_ln_ft_kp
+				}
+			}
+			cm_ln_ft_destroy_chain_forts = yes
+		}
+		else = {
+			set_variable = { name = cm_ln_ft_kp value = 1 }
+		}
+	}
+}
+
+# Root is the location. Expects scope:cm_country.
+cm_ln_ft_destroy_chain_forts = {
+	save_scope_as = cm_location
+	# Collected as types, not building handles: destroying inside every_buildings_in_location
+	# mutates the collection being walked. A location holds one building per type per owner, so
+	# the type resolves it again.
+	every_buildings_in_location = {
+		limit = {
+			owner = scope:cm_country
+			# A building reads as standing from the moment its first level is queued.
+			cm_is_not_under_construction = yes
+			building_type = { cm_ln_ft_is_chain_fort = yes }
+		}
+		building_type = { save_scope_as = cm_ln_ft_bt }
+		scope:cm_location = { add_to_variable_list = { name = cm_ln_ft_doomed target = scope:cm_ln_ft_bt } }
+	}
+	every_in_list = {
+		variable = cm_ln_ft_doomed
+		save_scope_as = cm_ln_ft_bt
+		scope:cm_location = { destroy_building = "building(scope:cm_ln_ft_bt|scope:cm_country)" }
+	}
+	clear_variable_list = cm_ln_ft_doomed
 }
