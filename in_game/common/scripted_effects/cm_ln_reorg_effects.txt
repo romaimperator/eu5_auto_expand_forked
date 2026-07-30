@@ -804,10 +804,12 @@ cm_ln_pf_settings_open = {
 
 # --- The opening governor placement ---
 #
-# One governor at the start of the game, the month after the opening capital move so the search
-# reads the proximity and the roads the new capital gives. It takes the best location a governor
-# can stand on as it is, so the opening carries none of the reorganization's urbanize and road
-# steps, and the charge stops at the treasury so the placement lands whatever the country can pay.
+# Every governor slot the country starts with, one a month from the month after the opening capital
+# move so the search reads the proximity and the roads the new capital gives. Each site is picked by
+# its own search, which sees the sites already committed to as proximity sources, so a second
+# governor is never planted beside the first. It takes the best location a governor can stand on as
+# it is, so the opening carries none of the reorganization's urbanize and road steps, and the charge
+# stops at the treasury so the placement lands whatever the country can pay.
 
 # Root is the country, scope:cm_country set.
 cm_ln_open_gov_tick = {
@@ -820,15 +822,44 @@ cm_ln_open_gov_tick = {
 			NOT = { has_global_variable = cm_ln_token }
 			cm_ln_no_human_search_in_flight = yes
 		}
+		# Bounded by the room the country opens with rather than by the live slot count, so a
+		# placement the engine takes no slot for cannot re-run the search every month forever.
 		if = {
-			limit = { cm_ln_gov_slot_open = yes }
+			limit = { NOT = { exists = var:cm_ln_open_gov_left } }
+			set_variable = { name = cm_ln_open_gov_left value = cm_ln_gov_land_free }
+			change_variable = { name = cm_ln_open_gov_left add = cm_ln_gov_naval_free }
+			if = {
+				limit = { var:cm_ln_open_gov_left <= 0 }
+				cmf_log = { action = cm_ln_log_open_gov_none }
+			}
+		}
+		if = {
+			limit = {
+				var:cm_ln_open_gov_left > 0
+				cm_ln_gov_slot_open = yes
+			}
+			change_variable = { name = cm_ln_open_gov_left subtract = 1 }
 			cm_ln_open_gov_run = yes
 		}
-		else = {
-			cmf_log = { action = cm_ln_log_open_gov_none }
+		# construct_building counts against the slot immediately, so the last placement of the
+		# opening closes it in its own tick rather than a month later.
+		if = {
+			limit = {
+				OR = {
+					var:cm_ln_open_gov_left <= 0
+					cm_ln_gov_slot_open = no
+				}
+			}
+			cm_ln_open_gov_finish = yes
 		}
-		set_variable = { name = cm_ln_open_gov_done value = 1 }
 	}
+}
+
+# Root is the country.
+cm_ln_open_gov_finish = {
+	set_variable = { name = cm_ln_open_gov_done value = 1 }
+	remove_variable = cm_ln_open_gov_left
+	clear_variable_list = cm_ln_open_gov_sites
 }
 
 # The search and the placement both land in this tick. Root is the country, scope:cm_country set.
@@ -880,6 +911,7 @@ cm_ln_open_gov_place = {
 		limit = {
 			has_variable = cm_gf_score
 			cm_fa_gov_location_placeable = yes
+			NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_ln_open_gov_sites target = prev } } }
 		}
 		save_scope_as = cm_ln_open_gov_site
 	}
@@ -902,9 +934,15 @@ cm_ln_open_gov_place = {
 				payer = scope:cm_country
 			}
 		}
+		# The governor is months from standing, so the next search reads this site as a source
+		# from here rather than from the live proximity.
+		add_to_variable_list = { name = cm_ln_open_gov_sites target = scope:cm_ln_open_gov_site }
 		cmf_log = { action = cm_ln_log_open_gov_placed }
 	}
 	else = {
+		# Nothing the search would take, so the slots that are left stay empty for the
+		# reorganization to fill.
+		set_variable = { name = cm_ln_open_gov_left value = 0 }
 		cmf_log = { action = cm_ln_log_open_gov_none }
 	}
 }

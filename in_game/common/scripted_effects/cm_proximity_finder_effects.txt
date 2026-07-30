@@ -306,6 +306,47 @@ cm_pf_prep_core = {
 			remove_variable = cm_pf_d
 		}
 	}
+	# The opening governor placement commits one site a month while the last one is still under
+	# construction, so its 80 is not in the live proximity read yet. A source floors a tile rather
+	# than adding to it, so spreading the committed sites on their own and taking the higher of the
+	# two leaves every source the engine already reports exactly as it stands. A reorganization
+	# de-seats its own governors to re-score them, and flooring them back would drop every seat as
+	# nogain, so its searches are left out.
+	if = {
+		limit = {
+			var:cm_pf_run_g = 1
+			NOT = { exists = var:cm_ln_replan }
+			has_variable_list = cm_ln_open_gov_sites
+			variable_list_size = { name = cm_ln_open_gov_sites value >= 1 }
+		}
+		every_in_list = {
+			variable = cm_ln_open_gov_sites
+			# 100 (the stacked-sources cap, main_menu/common/static_modifiers/location.txt:330)
+			# less the governor's 80 (in_game/common/building_types/capital_buildings.txt:681).
+			set_variable = { name = cm_pf_d value = 20 }
+		}
+		cm_pf_bellman_g = { BUDGET = 100 } # Capital source value: main_menu/common/static_modifiers/location.txt:330
+		every_owned_location = {
+			limit = { has_variable = cm_pf_d }
+			set_local_variable = {
+				name = cm_pf_vp
+				value = {
+					value = 100 # Capital source value: main_menu/common/static_modifiers/location.txt:330
+					subtract = var:cm_pf_d
+				}
+			}
+			if = {
+				limit = { local_var:cm_pf_vp > var:cm_pf_pb }
+				set_variable = { name = cm_pf_pb value = local_var:cm_pf_vp }
+				set_variable = { name = cm_pf_t value = cm_pf_gf_seed_value }
+			}
+			remove_variable = cm_pf_d
+		}
+		every_in_list = {
+			variable = cm_pf_water_set
+			remove_variable = cm_pf_d
+		}
+	}
 	# A proximity source only floors its own tile, so a candidate with no effective headroom
 	# (its stacked source value minus its basis proximity) can never add proximity anywhere.
 	# The road plan skips this: it searches no candidates, and cm_pf_drop_gov_outputs below would
