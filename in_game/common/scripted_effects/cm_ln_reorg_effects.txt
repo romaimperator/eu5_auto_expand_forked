@@ -152,6 +152,7 @@ cm_ln_reorg_begin = {
 		remove_variable = cm_ln_plan_naval
 		remove_variable = cm_ln_rank_wait
 		remove_variable = cm_ln_place_tries
+		remove_variable = cm_ln_paid
 	}
 	# The capital move's remove_if can destroy seats outright, and a seat lost that way is
 	# ours to replace at no cost.
@@ -568,25 +569,28 @@ cm_ln_reorg_confirm_step = {
 		variable = cm_ln_plan
 		save_scope_as = cm_ln_p
 		if = {
-			limit = { scope:cm_ln_p = { cm_location_has_governor = no } }
-			if = {
-				limit = { scope:cm_ln_p = { NOT = { owner ?= scope:cm_country } } }
-				scope:cm_country = {
-					cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 2 }
-					add_to_variable_list = { name = cm_ln_plan_drop target = scope:cm_ln_p }
-				}
+			limit = { scope:cm_ln_p = { NOT = { owner ?= scope:cm_country } } }
+			scope:cm_country = {
+				cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 2 }
+				add_to_variable_list = { name = cm_ln_plan_drop target = scope:cm_ln_p }
 			}
-			else_if = {
-				limit = { scope:cm_ln_p = { cm_ln_site_gov_under_construction = yes } }
-				set_local_variable = { name = cm_ln_cf_building value = 1 }
-			}
-			else = {
-				# The order went in and left nothing behind, which is not a shape anything in the plan
-				# accounts for, so it is logged as the failure it is rather than only retried.
-				scope:cm_country = {
-					cmf_log = { action = cm_ln_log_gov_place_no_show }
-					cm_ln_place_retry_or_drop = { SITE = scope:cm_ln_p }
-				}
+		}
+		else_if = {
+			# Delivered, so the order it was paid for owes the country nothing.
+			limit = { scope:cm_ln_p = { cm_location_has_governor = yes } }
+			scope:cm_ln_p = { remove_variable = cm_ln_paid }
+		}
+		else_if = {
+			limit = { scope:cm_ln_p = { cm_ln_site_gov_under_construction = yes } }
+			set_local_variable = { name = cm_ln_cf_building value = 1 }
+		}
+		else = {
+			# The order went in and left nothing behind, which is not a shape anything in the plan
+			# accounts for, so it is logged as the failure it is rather than only retried.
+			scope:cm_country = {
+				cmf_log = { action = cm_ln_log_gov_place_no_show }
+				cm_ln_bank_paid_credit = { SITE = scope:cm_ln_p }
+				cm_ln_place_retry_or_drop = { SITE = scope:cm_ln_p }
 			}
 		}
 	}
@@ -676,6 +680,7 @@ cm_ln_reorg_teardown = {
 		remove_variable = cm_ln_plan_naval
 		remove_variable = cm_ln_rank_wait
 		remove_variable = cm_ln_place_tries
+		remove_variable = cm_ln_paid
 	}
 	remove_global_variable = cm_ln_token
 	cm_ln_pf_settings_off = yes
@@ -950,6 +955,13 @@ cm_ln_gov_probe = {
 		set_local_variable = { name = cm_ln_dbg value = 1 }
 	}
 	cmf_log_value = { action = cm_log_gov_hold value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	if = {
+		limit = { exists = var:cm_ln_paid_credits }
+		set_local_variable = { name = cm_ln_dbg value = var:cm_ln_paid_credits }
+	}
+	cmf_log_value = { action = cm_log_gov_credits value = local_var:cm_ln_dbg }
 
 	set_local_variable = { name = cm_ln_dbg value = cm_ln_gov_slot_total }
 	cmf_log_value = { action = cm_log_gov_slots value = local_var:cm_ln_dbg }

@@ -178,6 +178,33 @@ cm_fa_compute_roi_score = {
 	save_temporary_scope_value_as = { name = cm_fa_score_val value = local_var:cm_fa_sc }
 }
 
+# Temporary diagnostic: one CMM log line per Industry approval. The income is recovered
+# from the score and the cost, so it is the adjusted income the ROI was computed from.
+# Root is the location. Expects scope:cm_country, scope:cm_building_type, scope:cm_cost,
+# and scope:cm_fa_ilog_score as the item's stored score.
+cm_fa_ind_log_queued = {
+	set_local_variable = { name = cm_fa_ilog_roi value = scope:cm_fa_ilog_score }
+	change_local_variable = { name = cm_fa_ilog_roi multiply = -1 }
+	set_local_variable = { name = cm_fa_ilog_inc value = 0 }
+	if = {
+		limit = { local_var:cm_fa_ilog_roi > 0 }
+		set_local_variable = { name = cm_fa_ilog_inc value = scope:cm_cost }
+		change_local_variable = { name = cm_fa_ilog_inc multiply = 1000 }
+		change_local_variable = { name = cm_fa_ilog_inc divide = local_var:cm_fa_ilog_roi }
+		change_local_variable = { name = cm_fa_ilog_inc divide = 12 }
+	}
+	change_local_variable = { name = cm_fa_ilog_roi multiply = 100 }
+	save_scope_as = cmf_log_loc
+	scope:cm_building_type = { save_scope_as = cmf_log_bt }
+	scope:cm_country = {
+		cmf_log_with_building_location = {
+			action = cm_log_ind_queued
+			value = local_var:cm_fa_ilog_roi
+			value2 = local_var:cm_fa_ilog_inc
+		}
+	}
+}
+
 # Greedy per-market drain: in each market the best-scored candidate, actionable or not,
 # sets the bar, and actionable builds and upgrades are approved best-first while holding
 # the margin share of its payback rate; RGO expansions bypass the margin and drain by ROI.
@@ -355,6 +382,8 @@ cm_fa_pick_best_build_item = {
 			if = {
 				limit = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
 				cm_approve_gui_build = yes
+				save_temporary_scope_value_as = { name = cm_fa_ilog_score value = "variable_map(cm_fa_b_scores|scope:cm_fa_pick_type)" }
+				cm_fa_ind_log_queued = yes
 				scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
 				# The engine converts this build into the standing obsolete predecessor's upgrade.
 				if = {
@@ -476,6 +505,8 @@ cm_fa_pick_best_upgrade_item = {
 				if = {
 					limit = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
 					cm_q_record_upgrade_approval = yes
+					save_temporary_scope_value_as = { name = cm_fa_ilog_score value = "variable_map(cm_fa_u_scores|scope:cm_fa_pick_type)" }
+					cm_fa_ind_log_queued = yes
 					scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
 				} else = {
 					set_local_variable = { name = cm_fa_cost_blocked value = 1 }

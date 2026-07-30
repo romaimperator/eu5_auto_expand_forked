@@ -256,6 +256,7 @@ cm_ln_apply_plan_drops = {
 # because cm_ln_prune_pending rebuilds it rather than mutating it mid-walk.
 # Root is the country, scope:cm_country set. $SITE$ = the location.
 cm_ln_drop_plan_site = {
+	cm_ln_bank_paid_credit = { SITE = $SITE$ }
 	remove_list_variable = { name = cm_ln_plan target = $SITE$ }
 	$SITE$ = {
 		remove_variable = cm_ln_plan_ord
@@ -350,43 +351,39 @@ cm_ln_clear_road_state = {
 	set_variable = { name = cm_ln_road_tries value = 0 }
 }
 
+# Three ways a governor lands here: a relocation gives up a seat and rebuilds free, a country owed a
+# governor it already paid for spends that credit and is not charged twice, and anything else pays.
 # Root is the country, scope:cm_country, scope:cm_ln_target and scope:cm_building_type set.
 cm_ln_do_placement = {
 	scope:cm_ln_target = { save_temporary_scope_as = cm_location }
 	if = {
 		limit = { scope:cm_ln_target = { cm_location_allowed_to_build = { target = scope:cm_building_type } } }
 		if = {
-			limit = {
-				OR = {
-					always = $FREE$
-					cm_check_country_gold_above = { threshold = cm_ln_placement_gold_threshold }
+			limit = { always = $FREE$ }
+			cm_ln_free_a_seat = yes
+			cm_ln_construct_governor_free = { REASON = cm_ln_gov_relocation }
+			cmf_log = { action = cm_ln_log_gov_moved }
+			remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+		}
+		else_if = {
+			limit = { cm_ln_has_paid_credit = yes }
+			change_variable = { name = cm_ln_paid_credits subtract = 1 }
+			cm_ln_construct_governor_free = { REASON = cm_ln_gov_paid_replacement }
+			cmf_log = { action = cm_ln_log_gov_replaced }
+			remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+		}
+		else_if = {
+			limit = { cm_check_country_gold_above = { threshold = cm_ln_placement_gold_threshold } }
+			scope:cm_ln_target = {
+				construct_building = {
+					building_type = scope:cm_building_type
+					owner = scope:cm_country
+					payer = scope:cm_country
 				}
+				# What makes the retry free if this order comes to nothing.
+				set_variable = { name = cm_ln_paid value = 1 }
 			}
-			if = {
-				limit = { always = $FREE$ }
-				cm_ln_free_a_seat = yes
-				scope:cm_ln_target = {
-					construct_building = {
-						building_type = scope:cm_building_type
-						cost_multiplier = 0
-						cost_multiplier_reason = cm_ln_gov_relocation
-						instant = yes
-						owner = scope:cm_country
-						payer = scope:cm_country
-					}
-				}
-				cmf_log = { action = cm_ln_log_gov_moved }
-			}
-			else = {
-				scope:cm_ln_target = {
-					construct_building = {
-						building_type = scope:cm_building_type
-						owner = scope:cm_country
-						payer = scope:cm_country
-					}
-				}
-				cmf_log = { action = cm_ln_log_gov_placed }
-			}
+			cmf_log = { action = cm_ln_log_gov_placed }
 			remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
 		}
 	}
@@ -396,6 +393,37 @@ cm_ln_do_placement = {
 		cm_ln_place_fail_reason = yes
 		cmf_log_value = { action = cm_ln_log_gov_place_refused value = local_var:cm_ln_fail }
 		cm_ln_place_retry_or_drop = { SITE = scope:cm_ln_target }
+	}
+}
+
+# Instant, so an AI that cancels its own construction cannot take this one away either.
+# Root is the country, scope:cm_country, scope:cm_ln_target and scope:cm_building_type set.
+# $REASON$ = the cost modifier reason loc key.
+cm_ln_construct_governor_free = {
+	scope:cm_ln_target = {
+		construct_building = {
+			building_type = scope:cm_building_type
+			cost_multiplier = 0
+			cost_multiplier_reason = $REASON$
+			instant = yes
+			owner = scope:cm_country
+			payer = scope:cm_country
+		}
+	}
+}
+
+# Banks the gold a lost order already spent. The credit is country-side rather than left on the
+# site, so it still covers the replacement when the site itself is given up.
+# Root is the country, scope:cm_country set. $SITE$ = the location.
+cm_ln_bank_paid_credit = {
+	if = {
+		limit = { $SITE$ = { exists = var:cm_ln_paid } }
+		$SITE$ = { remove_variable = cm_ln_paid }
+		if = {
+			limit = { NOT = { exists = var:cm_ln_paid_credits } }
+			set_variable = { name = cm_ln_paid_credits value = 0 }
+		}
+		change_variable = { name = cm_ln_paid_credits add = 1 }
 	}
 }
 
