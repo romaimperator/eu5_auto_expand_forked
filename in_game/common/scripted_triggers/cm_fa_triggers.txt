@@ -64,10 +64,10 @@ cm_fa_treasury_covers_cost = {
 }
 
 # Per-level affordability for a full-automation batch: the pool balance the batch has left,
-# which cm_fa_fill_build_slots tracks in a local so one trigger serves every category.
+# which cm_fa_fill_build_slots holds in var:cm_fa_copy_pool so one trigger serves every category.
 # Expects scope:cm_country, scope:cm_cost.
 cm_fa_copy_can_afford = {
-	local_var:cm_fa_copy_pool >= scope:cm_cost
+	scope:cm_country = { var:cm_fa_copy_pool >= scope:cm_cost }
 	cm_fa_treasury_covers_cost = yes
 }
 
@@ -406,7 +406,7 @@ cm_fa_cu_core_goods_applies = {
 	cm_fa_cu_produces_core_good = no
 }
 
-# Destroyed on sight, whatever it earns: the goods it draws are worth more elsewhere.
+# Destroyed on sight and never built, whatever it earns: the goods it draws are worth more elsewhere.
 # fruit_orchard turns lumber 0.167 into fruit 0.3 per level
 # (in_game/common/building_types/common_buildings.txt:591). Root is the building type.
 cm_fa_cu_is_always_delete = {

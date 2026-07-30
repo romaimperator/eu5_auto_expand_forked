@@ -529,9 +529,11 @@ cm_q_add_build_rank_copy = {
 # Per-level claims shared by the base copy and the rank copies.
 # Root is the location. Expects scope:cm_country, scope:cm_cost.
 cm_q_claim_build_copy = {
-	scope:cm_country = { change_variable = { name = cm_q_planned_spend add = scope:cm_cost } }
+	# An immediate construct has already taken the gold and the slot, the way construct_road
+	# does; only a deferred approval still has both to reserve.
 	if = {
 		limit = { cm_q_build_is_deferred = yes }
+		scope:cm_country = { change_variable = { name = cm_q_planned_spend add = scope:cm_cost } }
 		if = {
 			limit = { NOT = { has_variable = cm_q_slots_used } }
 			set_variable = { name = cm_q_slots_used value = 0 }

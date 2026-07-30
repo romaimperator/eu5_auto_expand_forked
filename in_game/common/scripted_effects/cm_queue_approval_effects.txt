@@ -120,9 +120,11 @@ cm_fa_loc_reset_rgo_scoring = {
 	remove_variable = cm_fa_best_any
 }
 
-# Within-cycle construction slot claims. Root is the location.
+# Within-cycle construction slot claims and the slot-filling batch's level count, which the
+# caller's early-stop check still reads after cm_q_fill_build_slots returns. Root is the location.
 cm_q_loc_reset_cycle_counters = {
 	remove_variable = cm_q_slots_used
+	remove_variable = cm_q_copy_levels
 }
 
 # Root is the location.
@@ -311,7 +313,6 @@ cm_q_fb_build_levels = {
 			change_local_variable = { name = cm_fb_guard add = 1 }
 			change_local_variable = { name = cm_fb_lvl add = 1 }
 			construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
-			scope:cm_country = { change_variable = { name = cm_q_planned_spend add = scope:cm_cost } }
 		}
 	}
 }
@@ -392,9 +393,10 @@ cm_q_pick_best_build_item = {
 cm_q_fill_build_slots = {
 	set_local_variable = { name = cm_q_copy_guard value = 0 }
 	# Levels the type reaches once the queued batch completes, counting the approved first copy.
+	# A location variable rather than a local, because cm_q_copy_under_max_level reads it.
 	# A subject's location can hold its owner's building of the same type, which is not the one
 	# the batch adds to.
-	set_local_variable = { name = cm_q_copy_type_levels value = 1 }
+	set_variable = { name = cm_q_copy_levels value = 1 }
 	if = {
 		limit = {
 			any_buildings_in_location = {
@@ -402,10 +404,12 @@ cm_q_fill_build_slots = {
 				building_type = scope:cm_building_type
 			}
 		}
+		set_local_variable = { name = cm_q_copy_have value = 0 }
 		"building(scope:cm_building_type|scope:cm_country)" = {
-			change_local_variable = { name = cm_q_copy_type_levels add = building_level }
-			change_local_variable = { name = cm_q_copy_type_levels add = building_levels_under_construction }
+			change_local_variable = { name = cm_q_copy_have add = building_level }
+			change_local_variable = { name = cm_q_copy_have add = building_levels_under_construction }
 		}
+		change_variable = { name = cm_q_copy_levels add = local_var:cm_q_copy_have }
 	}
 	while = {
 		limit = {
@@ -418,7 +422,7 @@ cm_q_fill_build_slots = {
 		change_local_variable = { name = cm_q_copy_guard add = 1 }
 		cm_q_add_build_rank_copy = { GUARD = cm_q_copy_guard }
 		$CLAIM$ = yes
-		change_local_variable = { name = cm_q_copy_type_levels add = 1 }
+		change_variable = { name = cm_q_copy_levels add = 1 }
 	}
 }
 
@@ -551,11 +555,12 @@ cm_q_record_upgrade_approval = {
 				add_to_variable_list = { name = cm_q_approved_upgrade_locations target = scope:cm_approved_location }
 				scope:cm_approved_location = { clear_variable_list = cm_q_seen_upgrade_types }
 			}
-			change_variable = { name = cm_q_planned_spend add = scope:cm_cost }
 		}
-		# An upgrade occupies a construction slot while it converts.
+		# A deferred upgrade still has its gold to reserve, and occupies a construction slot while
+		# it converts; the immediate construct below has already taken both.
 		if = {
 			limit = { cm_q_build_is_deferred = yes }
+			scope:cm_country = { change_variable = { name = cm_q_planned_spend add = scope:cm_cost } }
 			if = {
 				limit = { NOT = { has_variable = cm_q_slots_used } }
 				set_variable = { name = cm_q_slots_used value = 0 }

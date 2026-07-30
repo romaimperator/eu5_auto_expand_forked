@@ -29,14 +29,14 @@ cm_q_build_is_deferred = {
 	scope:cm_country = { cm_ln_is_active = no }
 }
 
-# Root is the location. Expects scope:cm_building_type and local_var:cm_q_copy_type_levels = the
-# levels the type reaches once the batch lands. max_levels of 0 or less reads as uncapped;
+# Root is the location. Expects scope:cm_building_type and var:cm_q_copy_levels = the levels the
+# type reaches once the batch lands. max_levels of 0 or less reads as uncapped;
 # building_type_max_level logs a heuristics warning when its params read saved scopes, so the
 # owner goes in as the link.
 cm_q_copy_under_max_level = {
 	OR = {
 		building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
-		building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_q_copy_type_levels }
+		building_type_max_level = { building_type = scope:cm_building_type owner = owner value > var:cm_q_copy_levels }
 	}
 }
 

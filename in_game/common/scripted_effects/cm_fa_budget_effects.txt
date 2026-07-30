@@ -138,16 +138,19 @@ cm_fa_try_approve_build = {
 # $POOL$ = the category pool variable name. Root is the location.
 # Expects scope:cm_country, scope:cm_building_type, scope:cm_cost.
 cm_fa_fill_build_slots = {
-	set_local_variable = { name = cm_fa_copy_pool value = scope:cm_country.var:$POOL$ }
+	scope:cm_country = { set_variable = { name = cm_fa_copy_pool value = var:$POOL$ } }
 	cm_q_fill_build_slots = { AFFORD = cm_fa_copy_can_afford CLAIM = cm_fa_claim_build_copy }
-	scope:cm_country = { set_variable = { name = $POOL$ value = local_var:cm_fa_copy_pool } }
+	scope:cm_country = {
+		set_variable = { name = $POOL$ value = var:cm_fa_copy_pool }
+		remove_variable = cm_fa_copy_pool
+	}
 }
 
 # Per-level claim for a full-automation batch: the shared claim plus the pool draw.
 # Root is the location. Expects scope:cm_country, scope:cm_cost.
 cm_fa_claim_build_copy = {
 	cm_q_claim_build_copy = yes
-	change_local_variable = { name = cm_fa_copy_pool subtract = scope:cm_cost }
+	scope:cm_country = { change_variable = { name = cm_fa_copy_pool subtract = scope:cm_cost } }
 }
 
 # Runs one category's drain under its pool, taking in the funds earlier categories left

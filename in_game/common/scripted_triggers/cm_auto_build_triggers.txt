@@ -129,8 +129,12 @@ cm_auto_build_will_auto_build = {
 # can_build_building does not filter them out, and every gate downstream of this reads the
 # location owner's data, which is the wrong country for a foreign build. The foreign path
 # calls cm_location_can_place_building directly instead.
+# Building Cleanup destroys the always-delete types on sight.
 cm_location_allowed_to_build = {
-	$target$ = { is_foreign = no }
+	$target$ = {
+		is_foreign = no
+		cm_fa_cu_is_always_delete = no
+	}
 	cm_location_can_place_building = { target = $target$ }
 }
 
