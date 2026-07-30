@@ -7,6 +7,11 @@
 # The plan is built one search per month so no single tick carries a whole placement finder
 # run, and each search treats the sites already committed to as proximity sources, so site
 # two is chosen knowing site one will exist.
+#
+# Both searches hold their pick un-committed for a couple of months and re-run before acting on
+# it, because a location can score far above the field for a single month and be ranked poorly
+# again afterwards. A site that does not survive the re-check is dropped for the rest of the run
+# and the next best takes its place.
 
 # 25 years, the reorganization cadence.
 @cm_ln_cooldown_days = 9125
@@ -20,6 +25,10 @@
 @cm_ln_income_start = 100
 # A capital scoring below this share of the best is worth the opening move.
 @cm_ln_open_cap_keep = 700
+# Months a pick waits before it is scored again.
+@cm_ln_probe_months = 2
+# Share of its first score a pick must still reach on the re-check to be kept.
+@cm_ln_probe_keep = 700
 # Months with no progress the opening move may wait on its preconditions before it is given up, so
 # a country whose search never becomes possible does not stay shut out of construction. A month the
 # river harvest advanced through does not count, so the wait is only spent on a harvest that has
@@ -117,6 +126,8 @@ cm_ln_reorg_begin = {
 	clear_variable_list = cm_ln_moves
 	clear_variable_list = cm_ln_pre_seats
 	cm_ln_clear_road_state = yes
+	cm_ln_probe_end = yes
+	cm_ln_probe_clear_rejects = yes
 	# Governors is superseded while a reorganization owns the placements.
 	remove_variable = cm_fa_gov_armed
 	remove_variable = cm_fa_gov_loc
@@ -156,14 +167,112 @@ cm_ln_pf_settings_off = {
 	remove_variable = cm_placement_finder_method
 }
 
+# --- The pick probation ---
+#
+# One slot serves the capital search and the governor plan, which never hold a pick at the
+# same time.
+
+# Root is the country. Expects scope:cm_ln_probe_pick.
+cm_ln_probe_start = {
+	set_variable = { name = cm_ln_probe_site value = scope:cm_ln_probe_pick }
+	set_variable = { name = cm_ln_probe_score value = scope:cm_ln_probe_pick.var:$SCORE$ }
+	set_variable = { name = cm_ln_probe_wait value = @cm_ln_probe_months }
+}
+
+# The pick's fresh score out of the 1000 its first one was normalised to. A site the run left
+# unscored and one that changed hands, which keeps the earlier run's score, both read as zero.
+# Root is the country, scope:cm_country set. Leaves scope:cm_ln_probe_l and scope:cm_ln_probe_now.
+cm_ln_probe_share = {
+	var:cm_ln_probe_site = { save_temporary_scope_as = cm_ln_probe_l }
+	if = {
+		limit = {
+			scope:cm_ln_probe_l = {
+				owner ?= scope:cm_country
+				has_variable = $SCORE$
+			}
+		}
+		save_temporary_scope_value_as = {
+			name = cm_ln_probe_now
+			value = {
+				value = scope:cm_ln_probe_l.var:$SCORE$
+				multiply = 1000 # Scores are 0 to 1000 against the run's best: cm_pf_finalize.
+				divide = {
+					value = var:cm_ln_probe_score
+					min = 0.001
+				}
+			}
+		}
+	}
+	else = {
+		save_temporary_scope_value_as = { name = cm_ln_probe_now value = 0 }
+	}
+}
+
+# Root is the country.
+cm_ln_probe_end = {
+	remove_variable = cm_ln_probe_site
+	remove_variable = cm_ln_probe_score
+	remove_variable = cm_ln_probe_wait
+}
+
+# Root is the country, scope:cm_country set. Expects scope:cm_ln_probe_l and scope:cm_ln_probe_now.
+cm_ln_probe_drop = {
+	if = {
+		limit = { scope:cm_ln_probe_l = { owner ?= scope:cm_country } }
+		scope:cm_ln_probe_l = { set_variable = { name = cm_ln_probe_reject value = 1 } }
+	}
+	cmf_log_value = { action = cm_ln_log_probe_dropped value = scope:cm_ln_probe_now }
+	cm_ln_probe_end = yes
+}
+
+# Root is the country.
+cm_ln_probe_clear_rejects = {
+	every_owned_location = {
+		limit = { has_variable = cm_ln_probe_reject }
+		remove_variable = cm_ln_probe_reject
+	}
+}
+
 # Root is the country, scope:cm_country set.
 cm_ln_reorg_capital_search = {
+	if = {
+		limit = { exists = var:cm_ln_probe_site }
+		if = {
+			limit = { var:cm_ln_probe_wait > 0 }
+			change_variable = { name = cm_ln_probe_wait subtract = 1 }
+		}
+		if = {
+			limit = {
+				var:cm_ln_probe_wait <= 0
+				cm_ln_no_human_search_in_flight = yes
+				cm_pf_river_data_is_current = yes
+			}
+			cm_ln_reorg_cap_search_run = yes
+			cm_ln_reorg_cap_probe_check = yes
+		}
+	}
+	else_if = {
+		limit = {
+			cm_ln_no_human_search_in_flight = yes
+			cm_pf_river_data_is_current = yes
+		}
+		cm_ln_reorg_cap_search_run = yes
+		cm_ln_reorg_cap_probe_open = yes
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_cap_search_run = {
 	set_variable = { name = cm_pf_view_c value = 1 }
 	remove_variable = cm_pf_view_g
 	cm_pf_prep_core = yes
 	cm_pf_run_tiered_sync = yes
 	remove_variable = cm_pf_view_c
-	remove_variable = cm_ln_cap_target
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_cap_probe_open = {
+	set_local_variable = { name = cm_ln_picked value = 0 }
 	ordered_owned_location = {
 		order_by = { value = var:cm_cf_score }
 		position = 0
@@ -171,11 +280,32 @@ cm_ln_reorg_capital_search = {
 		limit = {
 			has_variable = cm_cf_score
 			NOT = { integration_level = conquered }
+			NOT = { has_variable = cm_ln_probe_reject }
 		}
-		save_scope_as = cm_ln_cap_pick
-		scope:cm_country = { set_variable = { name = cm_ln_cap_target value = scope:cm_ln_cap_pick } }
+		save_scope_as = cm_ln_probe_pick
+		set_local_variable = { name = cm_ln_picked value = 1 }
+		scope:cm_country = { cm_ln_probe_start = { SCORE = cm_cf_score } }
 	}
-	set_variable = { name = cm_ln_phase value = 2 }
+	if = {
+		limit = { local_var:cm_ln_picked = 0 }
+		set_variable = { name = cm_ln_phase value = 2 }
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_cap_probe_check = {
+	cm_ln_probe_share = { SCORE = cm_cf_score }
+	if = {
+		limit = { scope:cm_ln_probe_now >= @cm_ln_probe_keep }
+		set_variable = { name = cm_ln_cap_target value = var:cm_ln_probe_site }
+		cmf_log_value = { action = cm_ln_log_probe_kept value = scope:cm_ln_probe_now }
+		cm_ln_probe_end = yes
+		set_variable = { name = cm_ln_phase value = 2 }
+	}
+	else = {
+		cm_ln_probe_drop = yes
+		cm_ln_reorg_cap_probe_open = yes
+	}
 }
 
 # The move ends the month: set_capital shifts every location's proximity, the country's
@@ -200,6 +330,8 @@ cm_ln_reorg_capital_move = {
 		cmf_log = { action = cm_ln_log_capital_moved }
 	}
 	remove_variable = cm_ln_cap_target
+	# A capital reject says nothing about the same site as a governor spot.
+	cm_ln_probe_clear_rejects = yes
 	set_variable = { name = cm_ln_land_left value = cm_ln_gov_land_slots }
 	set_variable = { name = cm_ln_naval_left value = cm_ln_gov_naval_slots }
 	set_variable = { name = cm_ln_phase value = 3 }
@@ -219,9 +351,26 @@ cm_ln_capital_start_town_upgrade = {
 	}
 }
 
-# One governor search a month. Root is the country, scope:cm_country set.
+# One governor search a month. A pick on probation has taken no slot yet, so the re-check run
+# still scores it as a candidate. Root is the country, scope:cm_country set.
 cm_ln_reorg_plan_step = {
 	if = {
+		limit = { exists = var:cm_ln_probe_site }
+		if = {
+			limit = { var:cm_ln_probe_wait > 0 }
+			change_variable = { name = cm_ln_probe_wait subtract = 1 }
+		}
+		if = {
+			limit = {
+				var:cm_ln_probe_wait <= 0
+				cm_ln_no_human_search_in_flight = yes
+				cm_pf_river_data_is_current = yes
+			}
+			cm_ln_reorg_gov_search_run = yes
+			cm_ln_reorg_gov_probe_check = yes
+		}
+	}
+	else_if = {
 		limit = {
 			OR = {
 				var:cm_ln_land_left > 0
@@ -230,30 +379,8 @@ cm_ln_reorg_plan_step = {
 			cm_ln_no_human_search_in_flight = yes
 			cm_pf_river_data_is_current = yes
 		}
-		set_variable = { name = cm_pf_view_g value = 1 }
-		remove_variable = cm_pf_view_c
-		set_variable = { name = cm_ln_replan value = 1 }
-		set_variable = { name = cm_ln_gov_valid_only value = 1 }
-		cm_pf_prep_core = yes
-		cm_pf_run_tiered_sync = yes
-		remove_variable = cm_pf_view_g
-		remove_variable = cm_ln_replan
-		remove_variable = cm_ln_gov_valid_only
-		set_local_variable = { name = cm_ln_picked value = 0 }
-		ordered_owned_location = {
-			order_by = { value = var:cm_gf_score }
-			position = 0
-			check_range_bounds = no
-			limit = { has_variable = cm_gf_score }
-			save_scope_as = cm_ln_pick
-			set_local_variable = { name = cm_ln_picked value = 1 }
-			scope:cm_country = { cm_ln_reorg_record_pick = yes }
-		}
-		# Nothing left the search would take, so the plan is as full as the map allows.
-		if = {
-			limit = { local_var:cm_ln_picked = 0 }
-			set_variable = { name = cm_ln_phase value = 4 }
-		}
+		cm_ln_reorg_gov_search_run = yes
+		cm_ln_reorg_gov_probe_open = yes
 	}
 	else_if = {
 		limit = {
@@ -261,6 +388,57 @@ cm_ln_reorg_plan_step = {
 			var:cm_ln_naval_left <= 0
 		}
 		set_variable = { name = cm_ln_phase value = 4 }
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_gov_search_run = {
+	set_variable = { name = cm_pf_view_g value = 1 }
+	remove_variable = cm_pf_view_c
+	set_variable = { name = cm_ln_replan value = 1 }
+	set_variable = { name = cm_ln_gov_valid_only value = 1 }
+	cm_pf_prep_core = yes
+	cm_pf_run_tiered_sync = yes
+	remove_variable = cm_pf_view_g
+	remove_variable = cm_ln_replan
+	remove_variable = cm_ln_gov_valid_only
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_gov_probe_open = {
+	set_local_variable = { name = cm_ln_picked value = 0 }
+	ordered_owned_location = {
+		order_by = { value = var:cm_gf_score }
+		position = 0
+		check_range_bounds = no
+		limit = {
+			has_variable = cm_gf_score
+			NOT = { has_variable = cm_ln_probe_reject }
+		}
+		save_scope_as = cm_ln_probe_pick
+		set_local_variable = { name = cm_ln_picked value = 1 }
+		scope:cm_country = { cm_ln_probe_start = { SCORE = cm_gf_score } }
+	}
+	# Nothing left the search would take, so the plan is as full as the map allows.
+	if = {
+		limit = { local_var:cm_ln_picked = 0 }
+		set_variable = { name = cm_ln_phase value = 4 }
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_ln_reorg_gov_probe_check = {
+	cm_ln_probe_share = { SCORE = cm_gf_score }
+	if = {
+		limit = { scope:cm_ln_probe_now >= @cm_ln_probe_keep }
+		scope:cm_ln_probe_l = { save_scope_as = cm_ln_pick }
+		cmf_log_value = { action = cm_ln_log_probe_kept value = scope:cm_ln_probe_now }
+		cm_ln_probe_end = yes
+		cm_ln_reorg_record_pick = yes
+	}
+	else = {
+		cm_ln_probe_drop = yes
+		cm_ln_reorg_gov_probe_open = yes
 	}
 }
 
@@ -395,6 +573,8 @@ cm_ln_reorg_teardown = {
 	remove_variable = cm_ln_plan_n
 	remove_variable = cm_ln_replan
 	remove_variable = cm_ln_gov_valid_only
+	cm_ln_probe_end = yes
+	cm_ln_probe_clear_rejects = yes
 	remove_variable = cm_pf_view_g
 	remove_variable = cm_pf_view_c
 	cm_ln_clear_road_state = yes
