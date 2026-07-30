@@ -144,7 +144,6 @@ cm_fa_pass_roads = {
 			has_advance = road_building # Unlocks gravel_road: in_game/common/advances/3_road_unlocks.txt:1
 			modifier:overlord_blocked_from_building_roads = no
 		}
-		set_local_variable = { name = cm_fa_rd_blk value = 0 }
 		save_temporary_scope_value_as = { name = cm_fa_rd_tier value = cm_fa_rd_tier_cost_value }
 		if = {
 			limit = {
@@ -180,10 +179,10 @@ cm_fa_rd_issue_pass = {
 	}
 }
 
-# Root is the location, scope:cm_country set. Reads and sets the drain's local cm_fa_rd_blk.
+# Root is the location, scope:cm_country set. Reads and sets the category's cost-block signal.
 cm_fa_rd_try_build = {
 	if = {
-		limit = { local_var:cm_fa_rd_blk = 0 }
+		limit = { local_var:cm_fa_cost_blocked = 0 }
 		save_temporary_scope_as = cm_fa_rd_from
 		var:cm_fa_rd_par = { save_temporary_scope_as = cm_fa_rd_to }
 		save_temporary_scope_value_as = { name = cm_cost value = cm_fa_rd_cost_value }
@@ -201,7 +200,7 @@ cm_fa_rd_try_build = {
 		}
 		else = {
 			# Saving for the best corridor beats laying a worse one, the same stop Industry takes.
-			set_local_variable = { name = cm_fa_rd_blk value = 1 }
+			set_local_variable = { name = cm_fa_cost_blocked value = 1 }
 		}
 	}
 }

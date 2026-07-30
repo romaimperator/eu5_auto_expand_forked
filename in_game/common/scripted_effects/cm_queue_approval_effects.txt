@@ -161,19 +161,21 @@ cm_q_approval_pass = {
 			}
 		}
 	}
-	# Full-automation category drains after every priority feature has claimed, in the
-	# player's category order, each category's unspent funds carrying into the next one.
+	# Full-automation category drains after every priority feature has claimed, in the player's
+	# category order, each category's unspent funds carrying into the next one unless it is
+	# saving toward a pick it could not afford.
 	if = {
 		limit = {
 			cm_fa_master_active = yes
 			has_variable_list = cm_fa_categories_enabled
 		}
+		set_local_variable = { name = cm_fa_cost_blocked value = 0 }
+		set_local_variable = { name = cm_fa_no_hold value = 0 }
 		# Governors takes no budget share.
 		if = {
 			limit = { exists = var:cm_fa_governors_enabled }
 			cm_fa_pass_governors = yes
 		}
-		set_local_variable = { name = cm_fa_blk_industry value = 0 }
 		set_variable = { name = cm_fa_carry value = 0 }
 		every_in_list = {
 			variable = cm_fa_categories_enabled
@@ -181,6 +183,8 @@ cm_q_approval_pass = {
 			scope:cm_country = { cm_fa_drain_category = yes }
 		}
 		remove_variable = cm_fa_carry
+		# Auto-urbanize drains after this and reads the total.
+		cm_fa_sum_reserves = yes
 	}
 	# Auto-urbanize claims last, after every priority feature and every full-automation
 	# category, whatever its row position.
@@ -871,7 +875,7 @@ cm_q_pass_auto_urbanize = {
 								cm_market_has_construction_goods_for_building = yes
 							}
 							if = {
-								limit = { cm_country_can_afford_staged_cost = yes }
+								limit = { cm_country_can_afford_urbanize_cost = yes }
 								construct_building = { building_type = building_type:cm_upgrade_town_to_city_building }
 								cm_commit_market_demand = yes
 							} else = {
@@ -885,7 +889,7 @@ cm_q_pass_auto_urbanize = {
 								cm_market_has_construction_goods_for_building = yes
 							}
 							if = {
-								limit = { cm_country_can_afford_staged_cost = yes }
+								limit = { cm_country_can_afford_urbanize_cost = yes }
 								construct_building = { building_type = building_type:cm_upgrade_rural_to_town_building }
 								cm_commit_market_demand = yes
 							} else = {
@@ -923,7 +927,7 @@ cm_q_pass_auto_rank = {
 					if = {
 						limit = {
 							cm_mass_upgrade_city_to_megalopolis_discount_check = yes
-							cm_country_can_afford_staged_cost = yes
+							cm_country_can_afford_urbanize_cost = yes
 							cm_market_has_construction_goods_for_building = yes
 						}
 						cm_q_approve_rank_location = yes

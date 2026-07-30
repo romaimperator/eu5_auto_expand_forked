@@ -339,7 +339,10 @@ cm_fa_stage_food_rgo = {
 # per cycle. Root is the country.
 cm_fa_pass_food = {
 	if = {
-		limit = { has_variable_list = cm_fa_b_locations }
+		limit = {
+			local_var:cm_fa_cost_blocked = 0
+			has_variable_list = cm_fa_b_locations
+		}
 		every_in_list = {
 			variable = cm_fa_b_locations
 			save_temporary_scope_as = cm_fa_drain_loc
@@ -355,13 +358,17 @@ cm_fa_pass_food = {
 		}
 	}
 	if = {
-		limit = { has_variable_list = cm_fa_food_rgo_locations }
+		limit = {
+			local_var:cm_fa_cost_blocked = 0
+			has_variable_list = cm_fa_food_rgo_locations
+		}
 		every_in_list = {
 			variable = cm_fa_food_rgo_locations
 			save_temporary_scope_as = cm_location
 			scope:cm_location = {
 				if = {
 					limit = {
+						local_var:cm_fa_cost_blocked = 0
 						cm_get_open_build_queue_slots > 0
 						cm_is_rgo_not_max_level_already = yes
 						cm_is_rgo_under_construction = no
@@ -384,6 +391,19 @@ cm_fa_pass_food = {
 						construct_rgo_upgrade = { }
 						scope:cm_country = { change_variable = { name = cm_fa_pool_food subtract = local_var:cm_fa_rgo_cost } }
 					}
+				}
+				else_if = {
+					# The room is there and the level is wanted, so the cost is the only thing that
+					# failed and the category saves toward it.
+					limit = {
+						local_var:cm_fa_cost_blocked = 0
+						cm_get_open_build_queue_slots > 0
+						cm_is_rgo_not_max_level_already = yes
+						cm_is_rgo_under_construction = no
+						cm_location_rgo_promotion_buffer_slack >= 0
+						cm_market_has_construction_goods_for_rgo = yes
+					}
+					set_local_variable = { name = cm_fa_cost_blocked value = 1 }
 				}
 			}
 		}

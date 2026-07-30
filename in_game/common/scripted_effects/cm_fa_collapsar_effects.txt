@@ -257,7 +257,11 @@ cm_fa_pass_collapsar = {
 		every_in_list = {
 			variable = cm_fa_collapsar_goods_enabled
 			save_scope_as = cm_fa_collapsar_item
-			scope:cm_country = { cm_fa_drain_collapsar_good = yes }
+			# An iterator limit cannot see what its own body sets, so the stop is tested inside.
+			if = {
+				limit = { local_var:cm_fa_cost_blocked = 0 }
+				scope:cm_country = { cm_fa_drain_collapsar_good = yes }
+			}
 		}
 	}
 }
@@ -296,7 +300,10 @@ cm_fa_drain_collapsar_good = {
 # Root is the country.
 cm_fa_collapsar_drain_rgos = {
 	if = {
-		limit = { has_variable_list = cm_fa_collapsar_rgo_locations }
+		limit = {
+			local_var:cm_fa_cost_blocked = 0
+			has_variable_list = cm_fa_collapsar_rgo_locations
+		}
 		every_in_list = {
 			variable = cm_fa_collapsar_rgo_locations
 			limit = { raw_material ?= goods:$good$ }
@@ -324,6 +331,7 @@ cm_fa_collapsar_drain_rgo = {
 			}
 			if = {
 				limit = {
+					local_var:cm_fa_cost_blocked = 0
 					cm_get_open_build_queue_slots > 0
 					cm_fa_can_afford_rgo = { POOL = cm_fa_pool_collapsar }
 				}
@@ -349,6 +357,15 @@ cm_fa_collapsar_drain_rgo = {
 					}
 				}
 			}
+			else_if = {
+				# The room is there and the level is wanted, so the cost is the only thing that
+				# failed and the category saves toward it.
+				limit = {
+					local_var:cm_fa_cost_blocked = 0
+					cm_get_open_build_queue_slots > 0
+				}
+				set_local_variable = { name = cm_fa_cost_blocked value = 1 }
+			}
 		}
 	}
 }
@@ -358,7 +375,10 @@ cm_fa_collapsar_drain_rgo = {
 # for the target re-check.
 cm_fa_collapsar_drain_type = {
 	if = {
-		limit = { has_variable_list = cm_fa_b_locations }
+		limit = {
+			local_var:cm_fa_cost_blocked = 0
+			has_variable_list = cm_fa_b_locations
+		}
 		every_in_list = {
 			variable = cm_fa_b_locations
 			save_temporary_scope_as = cm_fa_drain_loc

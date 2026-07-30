@@ -746,6 +746,22 @@ cm_register_cmf_mod = {
 		setting_id = fa_reserve
 	}
 
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = fa_save_unaffordable
+		tab_id = full_automation
+		group_id = full_automation
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__fa_save_unaffordable
+		alias = cm_fa_save_unaffordable
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_save_unaffordable
+	}
+
 	## Priorities (fa_priority_list) Group
 	cmm_register_settings_list = {
 		mod_id = cm
@@ -1227,6 +1243,12 @@ cm_handle_cmf_callback = {
 				}
 				# Picked up by the push widgets in cm_automation_lateralview.gui.
 				set_variable = cm_fa_reserve_from_cmm
+			}
+		}
+		flag:cm__fa_save_unaffordable = {
+			cmm_sync_bool_alias = {
+				setting = cm__fa_save_unaffordable
+				alias = cm_fa_save_unaffordable
 			}
 		}
 		## Industry (fa_industry) Group

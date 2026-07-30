@@ -438,8 +438,9 @@ cm_fa_rd_place_row = {
 }
 
 # Projects one category's row into the per-category variables the budget engine and the
-# settings-row visibility read. Turning a category off zeroes its pool; the monthly refresh
-# skips it while off. $cat$ = industry | collapsar | food | utilities. Scope: country
+# settings-row visibility read. Turning a category off zeroes its pool and releases its reserve;
+# the monthly refresh skips it while off.
+# $cat$ = industry | collapsar | food | utilities | roads. Scope: country
 cm_fa_sync_category = {
 	# A macro never resolves inside a quoted lookup, so the key goes through a local.
 	set_local_variable = { name = cm_fa_cat_key value = flag:cm_fa_cat_$cat$ }
@@ -458,6 +459,8 @@ cm_fa_sync_category = {
 	else = {
 		remove_variable = cm_fa_$cat$_enabled
 		set_variable = { name = cm_fa_pool_$cat$ value = 0 }
+		# A category that will never spend again must not keep gold out of the monthly split.
+		remove_variable = cm_fa_res_$cat$
 	}
 }
 

@@ -60,15 +60,7 @@ cm_ln_reorg_tick = {
 		}
 		set_variable = { name = cm_ln_tick_spent value = 0 }
 		cm_ln_prune_pending = yes
-		# Nothing else may spend a coin until every planned governor stands. The tick runs ahead of
-		# the budget refresh and the construction cycle that read this.
-		if = {
-			limit = {
-				has_variable_list = cm_ln_pending
-				variable_list_size = { name = cm_ln_pending value >= 1 }
-			}
-			set_variable = { name = cm_ln_hold value = 1 }
-		}
+		cm_ln_apply_plan_drops = yes
 		cm_ln_road_pass = yes
 		cm_ln_rank_pass = yes
 	}
@@ -80,7 +72,8 @@ cm_ln_reorg_tick = {
 		4 = { cm_ln_reorg_classify = yes }
 		5 = { cm_ln_reorg_place_step = yes }
 		6 = { cm_ln_reorg_move_step = yes }
-		7 = { cm_ln_reorg_teardown = yes }
+		7 = { cm_ln_reorg_confirm_step = yes }
+		8 = { cm_ln_reorg_teardown = yes }
 	}
 	remove_variable = cm_ln_tick_spent
 	if = {
@@ -89,6 +82,19 @@ cm_ln_reorg_tick = {
 			var:cm_ln_age >= @cm_ln_reorg_max_months
 		}
 		cm_ln_reorg_teardown = yes
+	}
+	# Nothing else may spend a coin while a planned governor is still to be ordered, and nothing is
+	# owed while one is merely building, which is why this reads cm_ln_pending rather than the phase
+	# alone. It sits after the switch so a site the confirm step just handed back is covered this
+	# month, and the whole tick runs ahead of the budget refresh and the construction cycle.
+	if = {
+		limit = {
+			var:cm_ln_phase >= 5
+			var:cm_ln_phase <= 6
+			has_variable_list = cm_ln_pending
+			variable_list_size = { name = cm_ln_pending value >= 1 }
+		}
+		set_variable = { name = cm_ln_hold value = 1 }
 	}
 }
 
@@ -127,7 +133,9 @@ cm_ln_reorg_begin = {
 	set_variable = { name = cm_ln_age value = 0 }
 	set_variable = { name = cm_ln_free_credits value = 0 }
 	set_variable = { name = cm_ln_plan_n value = 0 }
+	remove_variable = cm_ln_plan_exhausted
 	clear_variable_list = cm_ln_plan
+	clear_variable_list = cm_ln_plan_drop
 	clear_variable_list = cm_ln_pending
 	clear_variable_list = cm_ln_moves
 	clear_variable_list = cm_ln_pre_seats
@@ -143,6 +151,7 @@ cm_ln_reorg_begin = {
 		remove_variable = cm_ln_plan_ord
 		remove_variable = cm_ln_plan_naval
 		remove_variable = cm_ln_rank_wait
+		remove_variable = cm_ln_place_tries
 	}
 	# The capital move's remove_if can destroy seats outright, and a seat lost that way is
 	# ours to replace at no cost.
@@ -425,9 +434,11 @@ cm_ln_reorg_gov_probe_open = {
 		set_local_variable = { name = cm_ln_picked value = 1 }
 		scope:cm_country = { cm_ln_probe_start = { SCORE = cm_gf_score } }
 	}
-	# Nothing left the search would take, so the plan is as full as the map allows.
+	# Nothing left the search would take, so the plan is as full as the map allows and the confirm
+	# step is free to end the run with the remaining room unfilled.
 	if = {
 		limit = { local_var:cm_ln_picked = 0 }
+		set_variable = { name = cm_ln_plan_exhausted value = 1 }
 		set_variable = { name = cm_ln_phase value = 4 }
 	}
 }
@@ -546,6 +557,75 @@ cm_ln_reorg_place_step = {
 	}
 }
 
+# Holds the run open until every planned governor physically stands. A site whose governor is still
+# building is left alone and owes nothing, so the treasury is free that month. A site that has no
+# governor and nothing building goes back to the placement phase with the treasury behind it again,
+# and one that has swallowed @cm_ln_place_max_tries orders, or has changed hands, is given up so a
+# fresh search can put the slot somewhere buildable. Root is the country, scope:cm_country set.
+cm_ln_reorg_confirm_step = {
+	set_local_variable = { name = cm_ln_cf_building value = 0 }
+	every_in_list = {
+		variable = cm_ln_plan
+		save_scope_as = cm_ln_p
+		if = {
+			limit = { scope:cm_ln_p = { cm_location_has_governor = no } }
+			if = {
+				limit = { scope:cm_ln_p = { NOT = { owner ?= scope:cm_country } } }
+				scope:cm_country = {
+					cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 2 }
+					add_to_variable_list = { name = cm_ln_plan_drop target = scope:cm_ln_p }
+				}
+			}
+			else_if = {
+				limit = { scope:cm_ln_p = { cm_ln_site_gov_under_construction = yes } }
+				set_local_variable = { name = cm_ln_cf_building value = 1 }
+			}
+			else = {
+				# The order went in and left nothing behind, which is not a shape anything in the plan
+				# accounts for, so it is logged as the failure it is rather than only retried.
+				scope:cm_country = {
+					cmf_log = { action = cm_ln_log_gov_place_no_show }
+					cm_ln_place_retry_or_drop = { SITE = scope:cm_ln_p }
+				}
+			}
+		}
+	}
+	cm_ln_apply_plan_drops = yes
+	if = {
+		limit = {
+			has_variable_list = cm_ln_pending
+			variable_list_size = { name = cm_ln_pending value >= 1 }
+		}
+		set_variable = { name = cm_ln_phase value = 5 }
+	}
+	else_if = {
+		limit = {
+			local_var:cm_ln_cf_building = 0
+			cm_ln_gov_slot_open = yes
+			NOT = { exists = var:cm_ln_plan_exhausted }
+			NOT = { has_global_variable = cm_ln_token }
+			cm_ln_no_human_search_in_flight = yes
+			cm_pf_river_data_is_current = yes
+		}
+		# A slot with no plan site behind it, so the search runs again for the room that is left.
+		set_global_variable = { name = cm_ln_token value = 1 }
+		cm_ln_pf_settings_on = yes
+		set_variable = { name = cm_ln_land_left value = cm_ln_gov_land_free }
+		set_variable = { name = cm_ln_naval_left value = cm_ln_gov_naval_free }
+		set_variable = { name = cm_ln_phase value = 3 }
+	}
+	else_if = {
+		limit = {
+			local_var:cm_ln_cf_building = 0
+			OR = {
+				cm_ln_gov_slot_open = no
+				exists = var:cm_ln_plan_exhausted
+			}
+		}
+		set_variable = { name = cm_ln_phase value = 8 }
+	}
+}
+
 # Every site left needs a seat freed first, or a credit for one the capital move destroyed.
 # Root is the country, scope:cm_country set.
 cm_ln_reorg_move_step = {
@@ -577,6 +657,7 @@ cm_ln_reorg_teardown = {
 	remove_variable = cm_ln_naval_left
 	remove_variable = cm_ln_free_credits
 	remove_variable = cm_ln_plan_n
+	remove_variable = cm_ln_plan_exhausted
 	remove_variable = cm_ln_replan
 	remove_variable = cm_ln_gov_valid_only
 	cm_ln_probe_end = yes
@@ -585,6 +666,7 @@ cm_ln_reorg_teardown = {
 	remove_variable = cm_pf_view_c
 	cm_ln_clear_road_state = yes
 	clear_variable_list = cm_ln_plan
+	clear_variable_list = cm_ln_plan_drop
 	clear_variable_list = cm_ln_pending
 	clear_variable_list = cm_ln_moves
 	clear_variable_list = cm_ln_pre_seats
@@ -593,6 +675,7 @@ cm_ln_reorg_teardown = {
 		remove_variable = cm_ln_plan_ord
 		remove_variable = cm_ln_plan_naval
 		remove_variable = cm_ln_rank_wait
+		remove_variable = cm_ln_place_tries
 	}
 	remove_global_variable = cm_ln_token
 	cm_ln_pf_settings_off = yes
@@ -853,6 +936,13 @@ cm_ln_gov_probe = {
 		change_local_variable = { name = cm_ln_dbg add = 1 }
 	}
 	cmf_log_value = { action = cm_log_gov_pending value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	every_in_list = {
+		variable = cm_ln_plan
+		change_local_variable = { name = cm_ln_dbg add = 1 }
+	}
+	cmf_log_value = { action = cm_log_gov_planned value = local_var:cm_ln_dbg }
 
 	set_local_variable = { name = cm_ln_dbg value = 0 }
 	if = {

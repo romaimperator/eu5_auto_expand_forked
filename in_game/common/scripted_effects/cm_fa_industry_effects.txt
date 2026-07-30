@@ -202,7 +202,7 @@ cm_fa_pass_industry = {
 		limit = { cm_fa_market_in_slice = yes }
 		save_scope_as = cm_fa_market
 		if = {
-			limit = { local_var:cm_fa_blk_industry = 0 }
+			limit = { local_var:cm_fa_cost_blocked = 0 }
 			scope:cm_country = { cm_fa_drain_market = yes }
 		}
 	}
@@ -252,7 +252,7 @@ cm_fa_drain_market = {
 		while = {
 			limit = {
 				local_var:cm_fa_mkt_more = 1
-				local_var:cm_fa_blk_industry = 0
+				local_var:cm_fa_cost_blocked = 0
 				# 999 stays under the engine's 1000-iteration while abort.
 				local_var:cm_fa_guard < 999
 			}
@@ -386,11 +386,11 @@ cm_fa_pick_best_build_item = {
 							}
 							NOT = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
 						}
-						set_local_variable = { name = cm_fa_blk_industry value = 1 }
+						set_local_variable = { name = cm_fa_cost_blocked value = 1 }
 					}
 				}
 			} else = {
-				set_local_variable = { name = cm_fa_blk_industry value = 1 }
+				set_local_variable = { name = cm_fa_cost_blocked value = 1 }
 			}
 		}
 	}
@@ -478,7 +478,7 @@ cm_fa_pick_best_upgrade_item = {
 					cm_q_record_upgrade_approval = yes
 					scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
 				} else = {
-					set_local_variable = { name = cm_fa_blk_industry value = 1 }
+					set_local_variable = { name = cm_fa_cost_blocked value = 1 }
 				}
 			}
 		}
@@ -560,7 +560,7 @@ cm_fa_approve_rgo_item = {
 					cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction }
 					NOT = { cm_fa_can_afford_rgo = { POOL = cm_fa_pool_industry } }
 				}
-				set_local_variable = { name = cm_fa_blk_industry value = 1 }
+				set_local_variable = { name = cm_fa_cost_blocked value = 1 }
 			}
 		}
 	}

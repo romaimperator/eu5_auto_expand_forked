@@ -12,9 +12,17 @@ cm_ln_mil_run = {
 	cm_ln_bk_run = yes
 }
 
+# Until the manpower chain has a tier to build, the fort line neither stops nor saves for a fort
+# it cannot afford: it yields to the next one instead, since nothing downstream of the category
+# would gain from the gold being held.
 # Root is the country, scope:cm_country set.
 cm_fa_pass_military = {
+	if = {
+		limit = { NOT = { exists = var:cm_ln_bk_active } }
+		set_local_variable = { name = cm_fa_no_hold value = 1 }
+	}
 	cm_ln_ft_drain = yes
+	set_local_variable = { name = cm_fa_no_hold value = 0 }
 	if = {
 		limit = { exists = var:cm_ln_bk_active }
 		cm_ln_bk_drain = yes
@@ -76,7 +84,10 @@ cm_ln_bk_run = {
 cm_ln_bk_drain = {
 	cm_ln_bk_resolve_type = yes
 	if = {
-		limit = { has_variable_list = cm_fa_b_locations }
+		limit = {
+			local_var:cm_fa_cost_blocked = 0
+			has_variable_list = cm_fa_b_locations
+		}
 		ordered_in_list = {
 			variable = cm_fa_b_locations
 			order_by = population

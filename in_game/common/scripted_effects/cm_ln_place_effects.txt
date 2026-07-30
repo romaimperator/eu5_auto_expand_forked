@@ -10,6 +10,8 @@
 @cm_ln_road_max_tries = 5
 # Months a site may be refused its rank upgrade before it is given up.
 @cm_ln_rank_max_months = 60
+# Placements a site may swallow without a governor appearing before it is given up.
+@cm_ln_place_max_tries = 5
 
 # Places at the best-ranked pending site that needs neither a road nor a rank, so a site still
 # urbanizing does not hold up the ones behind it. $FREE$ = yes when the placement pairs with a
@@ -146,6 +148,21 @@ cm_ln_prune_pending = {
 			}
 			scope:cm_country = { add_to_variable_list = { name = cm_ln_pending_keep target = scope:cm_ln_p } }
 		}
+		else_if = {
+			# Lost, or refused its rank upgrade for good. Either way the plan gives the site up so the
+			# confirm step can send the search after a replacement for its slot.
+			limit = { scope:cm_ln_p = { cm_location_has_governor = no } }
+			scope:cm_country = {
+				if = {
+					limit = { scope:cm_ln_p = { owner ?= scope:cm_country } }
+					cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 3 }
+				}
+				else = {
+					cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 2 }
+				}
+				cm_ln_drop_plan_site = { SITE = scope:cm_ln_p }
+			}
+		}
 	}
 	clear_variable_list = cm_ln_pending
 	every_in_list = {
@@ -154,6 +171,102 @@ cm_ln_prune_pending = {
 		scope:cm_country = { add_to_variable_list = { name = cm_ln_pending target = scope:cm_ln_p } }
 	}
 	clear_variable_list = cm_ln_pending_keep
+}
+
+# Codes the first condition the refused site fails, so a refusal in the log says which one instead
+# of only that one happened. Mirrors the two vanilla governor allow blocks:
+# in_game/common/building_types/capital_buildings.txt local_governor :607, naval_governor :760.
+# Root is the country, scope:cm_country and scope:cm_ln_target set. Leaves local_var:cm_ln_fail.
+cm_ln_place_fail_reason = {
+	set_local_variable = { name = cm_ln_fail value = 6 }
+	if = {
+		limit = { scope:cm_ln_target = { has_variable = cm_ln_plan_naval } }
+		if = {
+			limit = { cm_fa_gov_has_naval_room = no }
+			set_local_variable = { name = cm_ln_fail value = 1 }
+		}
+		else_if = {
+			limit = { scope:cm_ln_target = { cm_ln_site_is_naval = no } }
+			set_local_variable = { name = cm_ln_fail value = 5 }
+		}
+	}
+	else_if = {
+		limit = { cm_fa_gov_has_land_room = no }
+		set_local_variable = { name = cm_ln_fail value = 1 }
+	}
+	else_if = {
+		limit = { scope:cm_ln_target = capital }
+		set_local_variable = { name = cm_ln_fail value = 2 }
+	}
+	else_if = {
+		limit = { scope:cm_ln_target = { NOT = { is_connected_to = owner.capital } } }
+		set_local_variable = { name = cm_ln_fail value = 4 }
+	}
+	# cm_ln_target_needs_rank keeps a site below city rank out of the placement, so reaching here
+	# means the rank went away after the plan committed to it.
+	if = {
+		limit = {
+			local_var:cm_ln_fail = 6
+			scope:cm_ln_target = { cm_ln_target_needs_rank = yes }
+		}
+		set_local_variable = { name = cm_ln_fail value = 3 }
+	}
+}
+
+# Counts one placement at a planned site that produced no governor and routes the site: back onto
+# cm_ln_pending for another go, or onto cm_ln_plan_drop once the tries run out, so the slot ends up
+# somewhere the engine will actually take it. An order the engine refused and an order that left no
+# building behind are the same kind of failure and share the count.
+# Root is the country, scope:cm_country set. $SITE$ = the location.
+cm_ln_place_retry_or_drop = {
+	$SITE$ = {
+		if = {
+			limit = { NOT = { exists = var:cm_ln_place_tries } }
+			set_variable = { name = cm_ln_place_tries value = 0 }
+		}
+		change_variable = { name = cm_ln_place_tries add = 1 }
+	}
+	if = {
+		limit = { $SITE$ = { var:cm_ln_place_tries < @cm_ln_place_max_tries } }
+		add_to_variable_list = { name = cm_ln_pending target = $SITE$ }
+	}
+	else = {
+		cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 1 }
+		add_to_variable_list = { name = cm_ln_plan_drop target = $SITE$ }
+	}
+}
+
+# Applies the give-ups staged on cm_ln_plan_drop. Staged rather than immediate because the confirm
+# step decides them while iterating cm_ln_plan, which cm_ln_drop_plan_site removes from.
+# Root is the country, scope:cm_country set.
+cm_ln_apply_plan_drops = {
+	every_in_list = {
+		variable = cm_ln_plan_drop
+		save_scope_as = cm_ln_p
+		scope:cm_country = {
+			remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_p }
+			cm_ln_drop_plan_site = { SITE = scope:cm_ln_p }
+		}
+	}
+	clear_variable_list = cm_ln_plan_drop
+}
+
+# Gives up on a planned site. The reject mark keeps this run's searches off it, so the replacement
+# the confirm step sends them after is somewhere else. cm_ln_pending is the caller's to handle,
+# because cm_ln_prune_pending rebuilds it rather than mutating it mid-walk.
+# Root is the country, scope:cm_country set. $SITE$ = the location.
+cm_ln_drop_plan_site = {
+	remove_list_variable = { name = cm_ln_plan target = $SITE$ }
+	$SITE$ = {
+		remove_variable = cm_ln_plan_ord
+		remove_variable = cm_ln_plan_naval
+		remove_variable = cm_ln_rank_wait
+		remove_variable = cm_ln_place_tries
+		if = {
+			limit = { owner ?= scope:cm_country }
+			set_variable = { name = cm_ln_probe_reject value = 1 }
+		}
+	}
 }
 
 # Root is the country, expects scope:cm_ln_target. Sets scope:cm_building_type.
@@ -185,6 +298,8 @@ cm_ln_road_step = {
 		# in_game/common/advances/3_road_unlocks.txt:1
 		limit = { NOT = { has_advance = road_building } }
 		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_road_target }
+		cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 4 }
+		cm_ln_drop_plan_site = { SITE = scope:cm_ln_road_target }
 		cm_ln_clear_road_state = yes
 	}
 	else_if = {
@@ -219,6 +334,8 @@ cm_ln_road_step = {
 			if = {
 				limit = { var:cm_ln_road_tries >= @cm_ln_road_max_tries }
 				remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_road_target }
+				cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 4 }
+				cm_ln_drop_plan_site = { SITE = scope:cm_ln_road_target }
 				cm_ln_clear_road_state = yes
 			}
 		}
@@ -272,6 +389,13 @@ cm_ln_do_placement = {
 			}
 			remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
 		}
+	}
+	else = {
+		# The engine refuses this site, which saving gold cannot fix, so it spends a try and the
+		# plan gives it up once they run out rather than holding the treasury against it forever.
+		cm_ln_place_fail_reason = yes
+		cmf_log_value = { action = cm_ln_log_gov_place_refused value = local_var:cm_ln_fail }
+		cm_ln_place_retry_or_drop = { SITE = scope:cm_ln_target }
 	}
 }
 
