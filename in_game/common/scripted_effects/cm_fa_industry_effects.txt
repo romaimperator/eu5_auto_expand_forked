@@ -370,7 +370,19 @@ cm_fa_pick_best_build_item = {
 					add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_fa_conv_pred value = scope:cm_building_type }
 				} else = {
 					# A conversion must fire exactly once.
-					cm_fa_approve_extra_build_copies = yes
+					cm_fa_fill_build_slots = { POOL = cm_fa_pool_industry }
+					if = {
+						# The batch stopped on the pool or the treasury alone: stop all further
+						# Industry picks rather than let a worse candidate spend the funds it is
+						# saving for.
+						limit = {
+							local_var:cm_q_copy_guard < 7
+							cm_get_open_build_queue_slots > 0
+							cm_q_copy_under_max_level = yes
+							NOT = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
+						}
+						set_local_variable = { name = cm_fa_blk_industry value = 1 }
+					}
 				}
 			} else = {
 				set_local_variable = { name = cm_fa_blk_industry value = 1 }
@@ -383,72 +395,6 @@ cm_fa_pick_best_build_item = {
 	remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_fa_pick_type }
 	cm_fa_refresh_build_best = yes
 	cm_fa_drain_prune_loc = yes
-}
-
-# Full-automation twin of cm_q_approve_extra_build_copies: the same rank lists and claims,
-# with the industry pool as the affordability gate and per-copy pool spend. No rank
-# collision is possible: the pick's dedup keeps this off types the player's features
-# approved at the location, so this batch always starts at x2 for its own type.
-# Root is the location. Expects scope:cm_country, scope:cm_building_type, scope:cm_cost,
-# scope:cm_market.
-cm_fa_approve_extra_build_copies = {
-	set_local_variable = { name = cm_fa_copy_guard value = 0 }
-	set_local_variable = { name = cm_fa_copy_emp value = scope:cm_building_type.employment_size }
-	set_local_variable = { name = cm_fa_copy_batch_emp value = local_var:cm_fa_copy_emp }
-	# Levels the type reaches once the queued batch completes, counting the approved first copy.
-	set_local_variable = { name = cm_fa_copy_type_levels value = 1 }
-	if = {
-		limit = { has_building = scope:cm_building_type }
-		"building(scope:cm_building_type|scope:cm_country)" = {
-			change_local_variable = { name = cm_fa_copy_type_levels add = building_level }
-			change_local_variable = { name = cm_fa_copy_type_levels add = building_levels_under_construction }
-		}
-	}
-	while = {
-		limit = {
-			# One rank list per extra level, so at most 8 levels per type per cycle.
-			local_var:cm_fa_copy_guard < 7
-			cm_get_open_build_queue_slots > 0
-			var:cm_q_levels_used < { value = cm_get_remaining_free_building_levels_allowed ceiling = yes }
-			OR = {
-				building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
-				building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_fa_copy_type_levels }
-			}
-			# Each extra copy needs the pop room the copies before it left free.
-			OR = {
-				cm_location_unemployed_for_building_type > local_var:cm_fa_copy_batch_emp
-				cm_location_promotion_buffer_slack >= local_var:cm_fa_copy_batch_emp
-			}
-			cm_fa_can_afford = { POOL = cm_fa_pool_industry }
-			cm_market_has_construction_goods_for_building = yes
-		}
-		change_local_variable = { name = cm_fa_copy_guard add = 1 }
-		cm_q_add_build_rank_copy = { GUARD = cm_fa_copy_guard }
-		cm_q_claim_build_copy = yes
-		scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
-		change_local_variable = { name = cm_fa_copy_batch_emp add = local_var:cm_fa_copy_emp }
-		change_local_variable = { name = cm_fa_copy_type_levels add = 1 }
-	}
-	if = {
-		# Same non-affordability conditions as the while above, affordability negated: true
-		# only when the pool or treasury alone stopped this batch.
-		limit = {
-			local_var:cm_fa_copy_guard < 7
-			cm_get_open_build_queue_slots > 0
-			var:cm_q_levels_used < { value = cm_get_remaining_free_building_levels_allowed ceiling = yes }
-			OR = {
-				building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
-				building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_fa_copy_type_levels }
-			}
-			OR = {
-				cm_location_unemployed_for_building_type > local_var:cm_fa_copy_batch_emp
-				cm_location_promotion_buffer_slack >= local_var:cm_fa_copy_batch_emp
-			}
-			cm_market_has_construction_goods_for_building = yes
-			NOT = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
-		}
-		set_local_variable = { name = cm_fa_blk_industry value = 1 }
-	}
 }
 
 # Drops a spent location out of the market's candidate list so the picks stop reading it.

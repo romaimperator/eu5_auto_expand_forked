@@ -20,6 +20,26 @@ cm_country_can_afford_staged_cost = {
 	scope:cm_country = { gold >= { value = scope:cm_cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }
 }
 
+# Root is the location, expects scope:cm_country. True when the queue window's fire pass builds
+# this approval later, which is what makes cm_q_slots_used the stand-in for the construction the
+# location does not carry yet. A lucky nation and a subject's location both construct at approval
+# instead, so num_civil_constructions already counts them and a claim would double count.
+cm_q_build_is_deferred = {
+	owner = scope:cm_country
+	scope:cm_country = { cm_ln_is_active = no }
+}
+
+# Root is the location. Expects scope:cm_building_type and local_var:cm_q_copy_type_levels = the
+# levels the type reaches once the batch lands. max_levels of 0 or less reads as uncapped;
+# building_type_max_level logs a heuristics warning when its params read saved scopes, so the
+# owner goes in as the link.
+cm_q_copy_under_max_level = {
+	OR = {
+		building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
+		building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_q_copy_type_levels }
+	}
+}
+
 # Affordability gate for the auto-expand tooltips.
 cm_country_can_afford_predicted_cost = {
 	scope:cm_country = { gold >= { value = scope:cm_cost add = cm_get_minimum_gold } }

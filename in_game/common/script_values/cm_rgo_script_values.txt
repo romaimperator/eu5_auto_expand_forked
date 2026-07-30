@@ -1,4 +1,6 @@
-﻿# Expects scopes: country, location
+﻿@cm_build_slot_buffer = 1 # Levels queued past the location's capacity, waiting for a slot to free.
+
+# Expects scopes: country, location
 cm_expected_gold_available_for_rgo_auto_expand = {
 	value = glorpui_rgo_expand_cost
 	if = { limit = { exists = scope:cm_country.var:cm_minimum_gold }
@@ -38,7 +40,7 @@ cm_get_max_constructions_at_same_time = {
 cm_get_open_build_queue_slots = {
 	value = cm_get_max_constructions_at_same_time
 	subtract = num_civil_constructions
-	# Approved builds claim their slot before the fire pass runs; the owner gate skips counters a dead country never reset.
+	# Deferred approvals claim their slot before the fire pass runs; the owner gate skips counters a dead country never reset.
 	if = {
 		limit = {
 			exists = var:cm_q_slots_used
@@ -46,6 +48,9 @@ cm_get_open_build_queue_slots = {
 		}
 		subtract = var:cm_q_slots_used
 	}
+	# The buffer level starts the moment a construction finishes, instead of idling until the
+	# next monthly cycle stages one.
+	add = @cm_build_slot_buffer
 }
 
 # Root scope is the location

@@ -471,21 +471,21 @@ cm_q_approve_build_copy = {
 		}
 	}
 	cm_q_claim_build_copy = yes
-	cm_ln_construct_approved_build = yes
+	cm_q_construct_immediate_build = yes
 }
 
-# The engine build action the approved lists feed is the player's, so a lucky nation
-# constructs its own approvals here instead. Root is the location.
+# The engine build action the approved lists feed is the player's own, so an approval it cannot
+# carry is constructed here instead. Root is the location.
 # Expects scope:cm_country, scope:cm_building_type.
-cm_ln_construct_approved_build = {
+cm_q_construct_immediate_build = {
 	if = {
-		limit = { scope:cm_country = { cm_ln_is_active = yes } }
-		cm_ln_construct_build = yes
+		limit = { cm_q_build_is_deferred = no }
+		cm_q_construct_build_now = yes
 	}
 }
 
 # Root is the location. Expects scope:cm_country, scope:cm_building_type.
-cm_ln_construct_build = {
+cm_q_construct_build_now = {
 	construct_building = {
 		building_type = scope:cm_building_type
 		owner = scope:cm_country
@@ -493,14 +493,14 @@ cm_ln_construct_build = {
 	}
 }
 
-# One extra level of an approved build. A variable list holds each target once, so the
-# player's batch sends every level to a rank list of its own; a lucky nation has no fire pass
-# and constructs it here. $GUARD$ is the caller's copy counter.
+# One extra level of an approved build. A variable list holds each target once, so a deferred
+# batch sends every level to a rank list of its own; an immediate one constructs it here.
+# $GUARD$ is the caller's copy counter.
 # Root is the location. Expects scope:cm_country, scope:cm_building_type.
 cm_q_add_build_rank_copy = {
 	if = {
-		limit = { scope:cm_country = { cm_ln_is_active = yes } }
-		cm_ln_construct_build = yes
+		limit = { cm_q_build_is_deferred = no }
+		cm_q_construct_build_now = yes
 	} else = {
 		if = {
 			limit = { local_var:$GUARD$ = 1 }
@@ -531,15 +531,13 @@ cm_q_add_build_rank_copy = {
 cm_q_claim_build_copy = {
 	scope:cm_country = { change_variable = { name = cm_q_planned_spend add = scope:cm_cost } }
 	if = {
-		limit = { NOT = { has_variable = cm_q_slots_used } }
-		set_variable = { name = cm_q_slots_used value = 0 }
+		limit = { cm_q_build_is_deferred = yes }
+		if = {
+			limit = { NOT = { has_variable = cm_q_slots_used } }
+			set_variable = { name = cm_q_slots_used value = 0 }
+		}
+		change_variable = { name = cm_q_slots_used add = 1 }
 	}
-	change_variable = { name = cm_q_slots_used add = 1 }
-	if = {
-		limit = { NOT = { has_variable = cm_q_levels_used } }
-		set_variable = { name = cm_q_levels_used value = 0 }
-	}
-	change_variable = { name = cm_q_levels_used add = 1 }
 	cm_commit_market_demand = yes
 }
 
@@ -988,7 +986,7 @@ cm_run_upgrade_all_buildings = {
 }
 
 # --- Auto Build ---
-# Auto-constructs one-per-location buildings in priority order.
+# Auto-constructs the roster's buildings in priority order.
 cm_run_auto_build = {
 	cm_reset_locations_lists = { }
 	every_in_list = {

@@ -120,10 +120,9 @@ cm_fa_loc_reset_rgo_scoring = {
 	remove_variable = cm_fa_best_any
 }
 
-# Within-cycle construction slot and level claims. Root is the location.
+# Within-cycle construction slot claims. Root is the location.
 cm_q_loc_reset_cycle_counters = {
 	remove_variable = cm_q_slots_used
-	remove_variable = cm_q_levels_used
 }
 
 # Root is the location.
@@ -359,7 +358,18 @@ cm_q_pick_best_build_item = {
 				add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_build_obsolete_type value = scope:cm_building_type }
 			} else = {
 				# A conversion must fire exactly once.
-				cm_q_approve_extra_build_copies = yes
+				cm_q_fill_build_slots = { AFFORD = cm_country_can_afford_staged_cost CLAIM = cm_q_claim_build_copy }
+				if = {
+					# The batch stopped on gold alone: stop picking rather than substitute a worse
+					# candidate.
+					limit = {
+						local_var:cm_q_copy_guard < 7
+						cm_get_open_build_queue_slots > 0
+						cm_q_copy_under_max_level = yes
+						cm_country_can_afford_staged_cost = no
+					}
+					set_local_variable = { name = cm_q_budget_exhausted value = 1 }
+				}
 			}
 		} else = {
 			set_local_variable = { name = cm_q_budget_exhausted value = 1 }
@@ -371,16 +381,27 @@ cm_q_pick_best_build_item = {
 	cm_q_refresh_build_best = yes
 }
 
-# Approves extra levels of the just-approved expand item. Root is the location.
-# Expects scope:cm_country, scope:cm_building_type, scope:cm_cost, scope:cm_market.
-cm_q_approve_extra_build_copies = {
+# Queues further levels of a just-approved build until the location's construction room is
+# spent or the type reaches its cap. Approving the first level settled the rest, so pops, the
+# promotion buffer, the overbuild allowance and the market goods gate do not stop a level that
+# would otherwise leave a construction slot idle.
+# $AFFORD$ = the per-level affordability trigger, $CLAIM$ = the per-level claim effect.
+# Leaves local_var:cm_q_copy_guard = the levels queued and local_var:cm_q_copy_type_levels = the
+# type's level count once the batch lands, which callers with an early stop read back.
+# Root is the location. Expects scope:cm_country, scope:cm_building_type, scope:cm_cost.
+cm_q_fill_build_slots = {
 	set_local_variable = { name = cm_q_copy_guard value = 0 }
-	set_local_variable = { name = cm_q_copy_emp value = scope:cm_building_type.employment_size }
-	set_local_variable = { name = cm_q_copy_batch_emp value = local_var:cm_q_copy_emp }
 	# Levels the type reaches once the queued batch completes, counting the approved first copy.
+	# A subject's location can hold its owner's building of the same type, which is not the one
+	# the batch adds to.
 	set_local_variable = { name = cm_q_copy_type_levels value = 1 }
 	if = {
-		limit = { has_building = scope:cm_building_type }
+		limit = {
+			any_buildings_in_location = {
+				owner = scope:cm_country
+				building_type = scope:cm_building_type
+			}
+		}
 		"building(scope:cm_building_type|scope:cm_country)" = {
 			change_local_variable = { name = cm_q_copy_type_levels add = building_level }
 			change_local_variable = { name = cm_q_copy_type_levels add = building_levels_under_construction }
@@ -391,47 +412,13 @@ cm_q_approve_extra_build_copies = {
 			# One rank list per extra level, so at most 8 levels per type per cycle.
 			local_var:cm_q_copy_guard < 7
 			cm_get_open_build_queue_slots > 0
-			var:cm_q_levels_used < { value = cm_get_remaining_free_building_levels_allowed ceiling = yes }
-			# max_levels of 0 or less reads as uncapped. building_type_max_level logs a
-			# heuristics warning when its params read saved scopes; the location's owner is
-			# scope:cm_country here.
-			OR = {
-				building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
-				building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_q_copy_type_levels }
-			}
-			# Each extra copy needs the pop room the copies before it left free.
-			OR = {
-				cm_location_unemployed_for_building_type > local_var:cm_q_copy_batch_emp
-				cm_location_promotion_buffer_slack >= local_var:cm_q_copy_batch_emp
-			}
-			cm_country_can_afford_staged_cost = yes
-			cm_market_has_construction_goods_for_building = yes
+			cm_q_copy_under_max_level = yes
+			$AFFORD$ = yes
 		}
 		change_local_variable = { name = cm_q_copy_guard add = 1 }
 		cm_q_add_build_rank_copy = { GUARD = cm_q_copy_guard }
-		cm_q_claim_build_copy = yes
-		change_local_variable = { name = cm_q_copy_batch_emp add = local_var:cm_q_copy_emp }
+		$CLAIM$ = yes
 		change_local_variable = { name = cm_q_copy_type_levels add = 1 }
-	}
-	if = {
-		# Same non-gold conditions as the while above, gold negated: true only when gold alone
-		# stopped this batch, whether zero copies were approved or several were.
-		limit = {
-			local_var:cm_q_copy_guard < 7
-			cm_get_open_build_queue_slots > 0
-			var:cm_q_levels_used < { value = cm_get_remaining_free_building_levels_allowed ceiling = yes }
-			OR = {
-				building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
-				building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_q_copy_type_levels }
-			}
-			OR = {
-				cm_location_unemployed_for_building_type > local_var:cm_q_copy_batch_emp
-				cm_location_promotion_buffer_slack >= local_var:cm_q_copy_batch_emp
-			}
-			cm_market_has_construction_goods_for_building = yes
-			cm_country_can_afford_staged_cost = no
-		}
-		set_local_variable = { name = cm_q_budget_exhausted value = 1 }
 	}
 }
 
@@ -568,16 +555,19 @@ cm_q_record_upgrade_approval = {
 		}
 		# An upgrade occupies a construction slot while it converts.
 		if = {
-			limit = { NOT = { has_variable = cm_q_slots_used } }
-			set_variable = { name = cm_q_slots_used value = 0 }
+			limit = { cm_q_build_is_deferred = yes }
+			if = {
+				limit = { NOT = { has_variable = cm_q_slots_used } }
+				set_variable = { name = cm_q_slots_used value = 0 }
+			}
+			change_variable = { name = cm_q_slots_used add = 1 }
 		}
-		change_variable = { name = cm_q_slots_used add = 1 }
 		cm_commit_market_demand = yes
 		# The engine upgrade action is the player's. Building the replacement over the standing
 		# obsolete predecessor is the same conversion, which is why every scorer skips a build
 		# whose predecessor is staged for upgrade.
 		if = {
-			limit = { scope:cm_country = { cm_ln_is_active = yes } }
+			limit = { cm_q_build_is_deferred = no }
 			construct_building = {
 				building_type = scope:cm_new_building_type
 				owner = scope:cm_country
@@ -727,6 +717,7 @@ cm_q_drain_ungated_type = {
 						construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
 						cm_commit_market_demand = yes
 					}
+					cm_q_fill_build_slots = { AFFORD = cm_country_can_afford_staged_cost CLAIM = cm_q_claim_build_copy }
 				}
 				remove_from_variable_map = { name = cm_q_ungated_costs key = scope:cm_building_type }
 			}
@@ -806,6 +797,7 @@ cm_q_pass_auto_food = {
 								construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
 								cm_commit_market_demand = yes
 							}
+							cm_q_fill_build_slots = { AFFORD = cm_q_food_can_afford_staged_cost CLAIM = cm_q_claim_build_copy }
 						}
 						remove_from_variable_map = { name = cm_q_food_costs key = scope:cm_building_type }
 					}
@@ -820,11 +812,17 @@ cm_q_pass_auto_food = {
 			if = {
 				limit = { has_variable = cm_q_food_rgo_ok }
 				remove_variable = cm_q_food_rgo_ok
-				if = {
+				set_local_variable = { name = cm_q_food_rgo_guard value = 0 }
+				while = {
 					limit = {
+						# 99 stays under the engine's 1000-iteration while abort; the construction
+						# room below is what ends the batch.
+						local_var:cm_q_food_rgo_guard < 99
 						cm_get_open_build_queue_slots > 0
+						cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction }
 						cm_check_country_gold_above = { threshold = cm_food_gold_threshold_plus_planned_spend }
 					}
+					change_local_variable = { name = cm_q_food_rgo_guard add = 1 }
 					construct_rgo_upgrade = { }
 				}
 			}

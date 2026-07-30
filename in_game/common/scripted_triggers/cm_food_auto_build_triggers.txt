@@ -1,6 +1,12 @@
 ﻿# Food auto-build triggers - eligibility, affordability, pop, and cap checks.
 # Gold threshold checks are done in the effects file via per-building script values.
 
+# Affordability gate for the auto-food drain, in the form cm_q_fill_build_slots takes.
+# Root is the location. Expects scope:cm_country, scope:cm_location.
+cm_q_food_can_afford_staged_cost = {
+	cm_check_country_gold_above = { threshold = cm_food_gold_threshold_plus_planned_spend }
+}
+
 # Root is the location. Expects $target$ = a building_type.
 # For 1-level buildings such as windmill, the max-level check also subsumes NOT has_building.
 cm_food_location_buildable_for_building_type = {

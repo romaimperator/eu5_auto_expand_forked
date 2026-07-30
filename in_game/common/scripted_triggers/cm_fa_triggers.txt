@@ -54,10 +54,21 @@ cm_fa_location_has_proximity = {
 # the treasury stays above the full-automation reserve after this drain's committed spend.
 # $POOL$ = the category pool variable name. Expects scope:cm_country, scope:cm_cost.
 cm_fa_can_afford = {
-	scope:cm_country = {
-		var:$POOL$ >= scope:cm_cost
-		gold >= { value = scope:cm_cost add = cm_fa_get_reserve add = var:cm_q_planned_spend }
-	}
+	scope:cm_country = { var:$POOL$ >= scope:cm_cost }
+	cm_fa_treasury_covers_cost = yes
+}
+
+# The treasury half of cm_fa_can_afford. Expects scope:cm_country, scope:cm_cost.
+cm_fa_treasury_covers_cost = {
+	scope:cm_country = { gold >= { value = scope:cm_cost add = cm_fa_get_reserve add = var:cm_q_planned_spend } }
+}
+
+# Per-level affordability for a full-automation batch: the pool balance the batch has left,
+# which cm_fa_fill_build_slots tracks in a local so one trigger serves every category.
+# Expects scope:cm_country, scope:cm_cost.
+cm_fa_copy_can_afford = {
+	local_var:cm_fa_copy_pool >= scope:cm_cost
+	cm_fa_treasury_covers_cost = yes
 }
 
 # RGO twin of cm_fa_can_afford: the cost is the live glorpui_rgo_expand_cost.
@@ -133,17 +144,48 @@ cm_fa_utilities_rgo_req_met = {
 	}
 }
 
-# A bailiff can go up here right now. The survey and the monthly staging share it so a pick
-# is only ever made on the terms it will later be staged on. Root is the location, expects
-# scope:cm_country, scope:cm_building_type.
-cm_fa_bailiff_site_ok = {
+# Root is unused. Expects scope:cm_building_type. market_village's value is almost entirely its
+# first level, which puts burghers in the location and so makes their literacy bonus apply there
+# at all; further levels add little.
+cm_fa_type_is_single_level = {
+	scope:cm_building_type = building_type:market_village
+}
+
+# Room for another level of the roster type here. Root is the location, expects
+# scope:cm_building_type.
+cm_fa_utilities_type_has_room = {
+	trigger_if = {
+		limit = { cm_fa_type_is_single_level = yes }
+		NOT = { has_building = scope:cm_building_type }
+	}
+	trigger_else = {
+		cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
+	}
+}
+
+# A max-control building can go up here right now: the bailiff survey, the bailiff monthly
+# staging and the unique types all share it, so a pick is only ever made on the terms it will
+# later be staged on. Not slot-gated, so a location takes its bailiff and its unique type in
+# the same pass. Root is the location, expects scope:cm_country, scope:cm_building_type.
+cm_fa_max_control_site_ok = {
 	NOT = { integration_level = conquered }
 	NOT = { has_building = scope:cm_building_type }
 	cm_location_allowed_to_build = { target = scope:cm_building_type }
 	cm_location_has_enough_pops_available = yes
 	cm_check_location_meets_min_market_access = yes
-	cm_get_open_build_queue_slots > 0
 	NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+}
+
+# The country side of scope:cm_building_type's placement rules, which for a unique type is
+# its country_potential and its advance unlock. Root is the country.
+cm_fa_country_can_build_type = {
+	save_temporary_scope_as = actor
+	can_build_building = scope:cm_building_type
+}
+
+# Root is the location.
+cm_fa_location_has_open_build_slot = {
+	cm_get_open_build_queue_slots > 0
 }
 
 # True when scope:cm_fa_good_t already trades at or below the target price in

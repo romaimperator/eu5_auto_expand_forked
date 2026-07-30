@@ -255,10 +255,22 @@ cm_fa_collapsar_drain_rgo = {
 					cm_get_open_build_queue_slots > 0
 					cm_fa_can_afford_rgo = { POOL = cm_fa_pool_collapsar }
 				}
-				set_local_variable = { name = cm_fa_rgo_cost value = glorpui_rgo_expand_cost }
-				construct_rgo_upgrade = { }
+				set_local_variable = { name = cm_fa_collapsar_rgo_guard value = 0 }
+				while = {
+					limit = {
+						# 99 stays under the engine's 1000-iteration while abort; the construction
+						# room below is what ends the batch.
+						local_var:cm_fa_collapsar_rgo_guard < 99
+						cm_get_open_build_queue_slots > 0
+						cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction }
+						cm_fa_can_afford_rgo = { POOL = cm_fa_pool_collapsar }
+					}
+					change_local_variable = { name = cm_fa_collapsar_rgo_guard add = 1 }
+					set_local_variable = { name = cm_fa_rgo_cost value = glorpui_rgo_expand_cost }
+					construct_rgo_upgrade = { }
+					scope:cm_country = { change_variable = { name = cm_fa_pool_collapsar subtract = local_var:cm_fa_rgo_cost } }
+				}
 				scope:cm_country = {
-					change_variable = { name = cm_fa_pool_collapsar subtract = local_var:cm_fa_rgo_cost }
 					if = {
 						limit = { NOT = { is_target_in_variable_list = { name = cm_fa_collapsar_pending_locs target = scope:cm_location } } }
 						add_to_variable_list = { name = cm_fa_collapsar_pending_locs target = scope:cm_location }
@@ -300,7 +312,7 @@ cm_fa_collapsar_drain_type = {
 						remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
 						remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type }
 					} else = {
-						cm_fa_try_approve_build = { cat = 2 POOL = cm_fa_pool_collapsar GOODS_GATE = always }
+						cm_fa_try_approve_build = { cat = 2 POOL = cm_fa_pool_collapsar GOODS_GATE = always SLOTS_GATE = cm_fa_location_has_open_build_slot }
 						if = {
 							limit = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } }
 							save_temporary_scope_as = cm_fa_pend_loc

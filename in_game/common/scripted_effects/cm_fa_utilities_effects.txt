@@ -1,12 +1,12 @@
 ﻿# Full-automation Utilities: the capital-only set (from cm_run_auto_build_capital), the
 # auto_build_list roster (cm_cmm_effects.txt), granaries, mercury patios, the vanilla
 # market-center buildings (game in_game/common/building_types/market_buildings.txt, the
-# is_market_center-gated set), bailiffs, the marketplace chain, and the disease-resistance
-# buildings last. Runs on default thresholds and never reads or writes the player's
-# auto-build settings or toggles.
+# is_market_center-gated set), bailiffs and the unique local_max_control buildings, the
+# marketplace chain, and the disease-resistance buildings last. Runs on default thresholds and
+# never reads or writes the player's auto-build settings or toggles.
 # Every location sweep here is confined to the cycle's market slice
-# (cm_fa_slice_effects.txt), except the capital set and the bailiffs. Bailiffs survey once
-# every four years into a pick list that stages monthly until it empties.
+# (cm_fa_slice_effects.txt), except the capital set and the max-control buildings. Bailiffs
+# survey once every four years into a pick list that stages monthly until it empties.
 
 # Four years, the bailiff survey cadence.
 @cm_fa_bailiff_days = 1460
@@ -50,8 +50,6 @@ cm_fa_run_utilities = {
 	cm_fa_stage_utility_everywhere = { bt = fortress_granary }
 	cm_fa_stage_utility_everywhere = { bt = confucian_academy }
 	cm_fa_stage_utility_everywhere = { bt = confucian_school }
-	cm_fa_stage_utility_everywhere = { bt = zhixian }
-	cm_fa_stage_utility_everywhere = { bt = tambo }
 	cm_fa_stage_utility_everywhere = { bt = dock }
 	# Granary is not in the auto_build_list roster.
 	cm_fa_stage_utility_everywhere = { bt = granary }
@@ -97,6 +95,15 @@ cm_fa_run_utilities = {
 		cm_fa_pick_bailiffs = yes
 	}
 	cm_fa_stage_bailiffs = yes
+	# The unique local_max_control buildings, most control first (game
+	# in_game/common/building_types/unique_buildings.txt: ostrog 0.10, zhixian 0.10,
+	# tur_kodjabashi_office 0.1, eng_royal_forest 0.05, eghabho_nore_mansion 0.05, tambo 0.05).
+	cm_fa_stage_max_control_type = { bt = ostrog }
+	cm_fa_stage_max_control_type = { bt = zhixian }
+	cm_fa_stage_max_control_type = { bt = tur_kodjabashi_office }
+	cm_fa_stage_max_control_type = { bt = eng_royal_forest }
+	cm_fa_stage_max_control_type = { bt = eghabho_nore_mansion }
+	cm_fa_stage_max_control_type = { bt = tambo }
 	cm_fa_stage_marketplaces = yes
 	# The generic local_disease_resistance buildings, most resistance first (game
 	# in_game/common/building_types/town_buildings.txt: medical_school 0.33, lazaretto 0.25,
@@ -126,9 +133,9 @@ cm_fa_stage_utility_type_here = {
 }
 
 # Stages one utility type across owned locations; chain bases resolve to the current tier,
-# and a location holding an older tier is left to the upgrade features. One level per
-# location, matching the auto-build feature the roster comes from.
-# Root is the country. $bt$ = the raw type key.
+# and a location holding an older tier is left to the upgrade features. Tops up to max level,
+# since nothing else in full automation grows these types: Industry only touches production
+# buildings. Root is the country. $bt$ = the raw type key.
 cm_fa_stage_utility_everywhere = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes
@@ -144,7 +151,7 @@ cm_fa_stage_utility_everywhere = {
 		save_scope_as = cm_location
 		if = {
 			limit = {
-				NOT = { has_building = scope:cm_building_type }
+				cm_fa_utilities_type_has_room = yes
 				cm_location_allowed_to_build = { target = scope:cm_building_type }
 				cm_location_has_no_auto_build_chain_predecessor = yes
 				cm_location_has_enough_pops_available = yes
@@ -179,7 +186,7 @@ cm_fa_pick_bailiffs = {
 		if = {
 			limit = {
 				local_var:cm_fa_bailiff_room >= 1
-				cm_fa_bailiff_site_ok = yes
+				cm_fa_max_control_site_ok = yes
 			}
 			scope:cm_country = { add_to_variable_list = { name = cm_fa_bailiff_picks target = scope:cm_location } }
 			change_local_variable = { name = cm_fa_bailiff_room subtract = 1 }
@@ -207,7 +214,7 @@ cm_fa_stage_bailiffs = {
 			if = {
 				limit = {
 					local_var:cm_fa_bailiff_room >= 1
-					cm_fa_bailiff_site_ok = yes
+					cm_fa_max_control_site_ok = yes
 				}
 				cm_fa_stage_build_candidate = { cat = 4 }
 				change_local_variable = { name = cm_fa_bailiff_room subtract = 1 }
@@ -235,6 +242,28 @@ cm_fa_prune_bailiff_picks = {
 				}
 			}
 			scope:cm_country = { remove_list_variable = { name = cm_fa_bailiff_picks target = scope:cm_fa_bailiff_pick } }
+		}
+	}
+}
+
+# Stages one unique local_max_control type across owned locations, wealthiest first, on the
+# bailiff's terms: tax base over control is what a control building earns, and neither the
+# proximity gate nor the market slice applies. No country-wide cap limits these, so they take
+# no survey and a location newly meeting the type's own rules stages the next month. One level
+# per location. Root is the country. $bt$ = the type key.
+cm_fa_stage_max_control_type = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	if = {
+		limit = { cm_fa_country_can_build_type = yes }
+		ordered_owned_location = {
+			order_by = cm_location_raw_wealth
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			save_scope_as = cm_location
+			if = {
+				limit = { cm_fa_max_control_site_ok = yes }
+				cm_fa_stage_build_candidate = { cat = 4 }
+			}
 		}
 	}
 }
@@ -272,8 +301,8 @@ cm_fa_stage_marketplaces = {
 }
 
 # Utilities drain, type-major in the assembly order: the capital set, the auto-build
-# roster, granaries, mercury patios, the market-center buildings, bailiffs, marketplaces,
-# then the disease-resistance buildings. Root is the country.
+# roster, granaries, mercury patios, the market-center buildings, the max-control buildings,
+# marketplaces, then the disease-resistance buildings. Root is the country.
 cm_fa_pass_utilities = {
 	cm_fa_drain_utility_type = { bt = royal_court }
 	cm_fa_drain_utility_type = { bt = house_of_parliament }
@@ -303,8 +332,6 @@ cm_fa_pass_utilities = {
 	cm_fa_drain_utility_roster_type = { bt = fortress_granary }
 	cm_fa_drain_utility_roster_type = { bt = confucian_academy }
 	cm_fa_drain_utility_roster_type = { bt = confucian_school }
-	cm_fa_drain_utility_roster_type = { bt = zhixian }
-	cm_fa_drain_utility_roster_type = { bt = tambo }
 	cm_fa_drain_utility_roster_type = { bt = dock }
 	cm_fa_drain_utility_roster_type = { bt = granary }
 	cm_fa_drain_utility_type = { bt = mercury_patio }
@@ -314,7 +341,13 @@ cm_fa_pass_utilities = {
 	cm_fa_drain_utility_type = { bt = stock_exchange }
 	cm_fa_drain_utility_type = { bt = clearing_house }
 	cm_fa_drain_utility_type = { bt = market_warehouse }
-	cm_fa_drain_bailiffs = yes
+	cm_fa_drain_max_control_type = { bt = bailiff }
+	cm_fa_drain_max_control_type = { bt = ostrog }
+	cm_fa_drain_max_control_type = { bt = zhixian }
+	cm_fa_drain_max_control_type = { bt = tur_kodjabashi_office }
+	cm_fa_drain_max_control_type = { bt = eng_royal_forest }
+	cm_fa_drain_max_control_type = { bt = eghabho_nore_mansion }
+	cm_fa_drain_max_control_type = { bt = tambo }
 	cm_fa_drain_marketplaces = yes
 	cm_fa_drain_utility_roster_type = { bt = medical_school }
 	cm_fa_drain_utility_roster_type = { bt = lazaretto }
@@ -334,9 +367,11 @@ cm_fa_drain_utility_roster_type = {
 	cm_fa_drain_utility_resolved = yes
 }
 
-# Bailiffs, wealthiest locations first. Root is the country.
-cm_fa_drain_bailiffs = {
-	building_type:bailiff = { save_scope_as = cm_building_type }
+# One max-control type, wealthiest locations first and past the location's open slots, so a
+# bailiff and a unique type both reach the queue in the pass that staged them.
+# Root is the country. $bt$ = the type key.
+cm_fa_drain_max_control_type = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
 	if = {
 		limit = { has_variable_list = cm_fa_b_locations }
 		ordered_in_list = {
@@ -346,7 +381,7 @@ cm_fa_drain_bailiffs = {
 			check_range_bounds = no
 			save_temporary_scope_as = cm_fa_drain_loc
 			scope:cm_fa_drain_loc = {
-				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building }
+				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = always }
 			}
 		}
 	}
@@ -365,7 +400,7 @@ cm_fa_drain_marketplaces = {
 			check_range_bounds = no
 			save_temporary_scope_as = cm_fa_drain_loc
 			scope:cm_fa_drain_loc = {
-				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building }
+				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
 			}
 		}
 	}
@@ -379,7 +414,7 @@ cm_fa_drain_utility_resolved = {
 			variable = cm_fa_b_locations
 			save_temporary_scope_as = cm_fa_drain_loc
 			scope:cm_fa_drain_loc = {
-				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building }
+				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
 			}
 		}
 	}

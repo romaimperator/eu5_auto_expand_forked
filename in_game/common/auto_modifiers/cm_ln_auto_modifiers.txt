@@ -24,9 +24,10 @@ cm_ln_frugal_government = {
 # Stability costs economical_base * STABILIY_EXPENSE_FACTOR / (1 + efficiency), so 99 leaves a
 # hundredth (loading_screen/common/defines/00_defines.txt:1941), and full investment grants
 # STABILITY_INVEST_FACTOR 0.5 a month (:1940).
-# The slider position cannot be read from script, so the cancel is the full-slider amount rather
-# than a scaled one, and the limit is what keeps that safe: at 5 the whole modifier lifts and the
-# AI recovers stability at the ordinary price.
+# There is no stability counterpart to the diplomatic_maintenance trigger, so the slider position
+# cannot be read and the cancel is flat: 0.15 sits under the 0.17 a 35% slider grants, leaving the
+# AI a little stability for the gold it still pays. The limit is what keeps a lower slider safe:
+# at 5 the whole modifier lifts and the AI recovers stability at the ordinary price.
 cm_ln_stab_no_gain = {
 	potential_trigger = {
 		cm_ln_is_active = yes
@@ -36,7 +37,7 @@ cm_ln_stab_no_gain = {
 	}
 
 	stability_cost_efficiency = 99
-	stability_investment = -0.5
+	stability_investment = -0.15
 }
 
 # Mirrors diplomatic_maintenance_mod, which the engine applies scaled by the same slider:
