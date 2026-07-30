@@ -178,29 +178,32 @@ cm_fa_compute_roi_score = {
 	save_temporary_scope_value_as = { name = cm_fa_score_val value = local_var:cm_fa_sc }
 }
 
-# Temporary diagnostic: one CMM log line per Industry approval. The income is recovered
-# from the score and the cost, so it is the adjusted income the ROI was computed from.
-# Root is the location. Expects scope:cm_country, scope:cm_building_type, scope:cm_cost,
-# and scope:cm_fa_ilog_score as the item's stored negated years-to-recoup.
+# Temporary diagnostic, currently off: one CMM log line per Industry approval. The income
+# is recovered from the score and the cost, so it is the adjusted income the ROI was
+# computed from. Root is the location. Expects scope:cm_country, scope:cm_building_type,
+# scope:cm_cost, and scope:cm_fa_ilog_score as the item's stored negated years-to-recoup.
 cm_fa_ind_log_queued = {
-	set_local_variable = { name = cm_fa_ilog_roi value = scope:cm_fa_ilog_score }
-	change_local_variable = { name = cm_fa_ilog_roi multiply = -1 }
-	set_local_variable = { name = cm_fa_ilog_inc value = 0 }
 	if = {
-		limit = { local_var:cm_fa_ilog_roi > 0 }
-		set_local_variable = { name = cm_fa_ilog_inc value = scope:cm_cost }
-		change_local_variable = { name = cm_fa_ilog_inc divide = local_var:cm_fa_ilog_roi }
-		change_local_variable = { name = cm_fa_ilog_inc divide = 12 }
-	}
-	save_scope_as = cmf_log_loc
-	scope:cm_building_type = { save_scope_as = cmf_log_bt }
-	scope:cm_country = {
-		cmf_log_with_building_location = {
-			action = cm_log_ind_queued
-			arg1 = cm_log_ind_roi
-			arg2 = cm_log_ind_income
-			value = local_var:cm_fa_ilog_roi
-			value2 = local_var:cm_fa_ilog_inc
+		limit = { always = no }
+		set_local_variable = { name = cm_fa_ilog_roi value = scope:cm_fa_ilog_score }
+		change_local_variable = { name = cm_fa_ilog_roi multiply = -1 }
+		set_local_variable = { name = cm_fa_ilog_inc value = 0 }
+		if = {
+			limit = { local_var:cm_fa_ilog_roi > 0 }
+			set_local_variable = { name = cm_fa_ilog_inc value = scope:cm_cost }
+			change_local_variable = { name = cm_fa_ilog_inc divide = local_var:cm_fa_ilog_roi }
+			change_local_variable = { name = cm_fa_ilog_inc divide = 12 }
+		}
+		save_scope_as = cmf_log_loc
+		scope:cm_building_type = { save_scope_as = cmf_log_bt }
+		scope:cm_country = {
+			cmf_log_with_building_location = {
+				action = cm_log_ind_queued
+				arg1 = cm_log_ind_roi
+				arg2 = cm_log_ind_income
+				value = local_var:cm_fa_ilog_roi
+				value2 = local_var:cm_fa_ilog_inc
+			}
 		}
 	}
 }
