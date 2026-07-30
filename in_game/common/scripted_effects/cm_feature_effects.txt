@@ -761,7 +761,7 @@ cm_run_auto_expand_buildings = {
 				if = {
 					limit = {
 						# The mass list holds foreign types too; cm_run_auto_expand_foreign owns those,
-						# and this loop would otherwise stage another country's building at our location.
+						# and this loop would otherwise stage another country's building at an owned location.
 						scope:cm_current_building_type = { is_foreign = no }
 						# Building type is mass-toggled for this country
 						scope:cm_country = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_current_building_type } }
@@ -875,8 +875,7 @@ cm_run_auto_expand_rgos = {
 }
 
 # Clears cm_upgrade_in_progress for scope:cm_building_type at scope:cm_location when the
-# previously queued upgrade construction has finished or was cancelled. This allows
-# the next monthly pulse to queue another upgrade for the same building type.
+# previously queued upgrade construction has finished or was cancelled.
 # Expects: scope:cm_building_type, scope:cm_location, scope:cm_country
 cm_clear_finished_upgrade_in_progress = {
 	if = {
