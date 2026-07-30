@@ -1,9 +1,9 @@
 ﻿# Full-automation Utilities: the capital-only set (from cm_run_auto_build_capital), the
-# auto_build_list roster (cm_cmm_effects.txt), granaries, mercury patios, the vanilla
-# market-center buildings (game in_game/common/building_types/market_buildings.txt, the
-# is_market_center-gated set), bailiffs and the unique local_max_control buildings, the
-# marketplace chain, and the disease-resistance buildings last. Runs on default thresholds and
-# never reads or writes the player's auto-build settings or toggles.
+# auto_build_list roster (cm_cmm_effects.txt), mercury patios, the vanilla market-center
+# buildings (game in_game/common/building_types/market_buildings.txt, the is_market_center-gated
+# set), bailiffs and the unique local_max_control buildings, the marketplace chain, the
+# disease-resistance buildings, and granaries last. Runs on default thresholds and never reads
+# or writes the player's auto-build settings or toggles.
 # Every location sweep here is confined to the cycle's market slice
 # (cm_fa_slice_effects.txt), except the capital set and the max-control buildings. Bailiffs
 # survey once every four years into a pick list that stages monthly until it empties.
@@ -51,8 +51,6 @@ cm_fa_run_utilities = {
 	cm_fa_stage_utility_everywhere = { bt = confucian_academy }
 	cm_fa_stage_utility_everywhere = { bt = confucian_school }
 	cm_fa_stage_utility_everywhere = { bt = dock }
-	# Granary is not in the auto_build_list roster.
-	cm_fa_stage_utility_everywhere = { bt = granary }
 	# Mercury patio stands only on gold and silver RGOs (game
 	# in_game/common/building_types/common_buildings.txt, mercury_patio location_potential).
 	ordered_owned_location = {
@@ -111,6 +109,8 @@ cm_fa_run_utilities = {
 	cm_fa_stage_utility_everywhere = { bt = medical_school }
 	cm_fa_stage_utility_everywhere = { bt = lazaretto }
 	cm_fa_stage_utility_everywhere = { bt = hospital }
+	# Granary is not in the auto_build_list roster.
+	cm_fa_stage_utility_everywhere = { bt = granary }
 }
 
 # Stages one utility type at this location when it fits; the capital and market-center
@@ -300,9 +300,9 @@ cm_fa_stage_marketplaces = {
 	}
 }
 
-# Utilities drain, type-major in the assembly order: the capital set, the auto-build
-# roster, granaries, mercury patios, the market-center buildings, the max-control buildings,
-# marketplaces, then the disease-resistance buildings. Root is the country.
+# Utilities drain, type-major in the assembly order: the capital set, the auto-build roster,
+# mercury patios, the market-center buildings, the max-control buildings, marketplaces, the
+# disease-resistance buildings, then granaries. Root is the country.
 cm_fa_pass_utilities = {
 	cm_fa_drain_utility_type = { bt = royal_court }
 	cm_fa_drain_utility_type = { bt = house_of_parliament }
@@ -333,7 +333,6 @@ cm_fa_pass_utilities = {
 	cm_fa_drain_utility_roster_type = { bt = confucian_academy }
 	cm_fa_drain_utility_roster_type = { bt = confucian_school }
 	cm_fa_drain_utility_roster_type = { bt = dock }
-	cm_fa_drain_utility_roster_type = { bt = granary }
 	cm_fa_drain_utility_type = { bt = mercury_patio }
 	cm_fa_drain_utility_type = { bt = entrepot }
 	cm_fa_drain_utility_type = { bt = trading_hub }
@@ -352,6 +351,7 @@ cm_fa_pass_utilities = {
 	cm_fa_drain_utility_roster_type = { bt = medical_school }
 	cm_fa_drain_utility_roster_type = { bt = lazaretto }
 	cm_fa_drain_utility_roster_type = { bt = hospital }
+	cm_fa_drain_utility_roster_type = { bt = granary }
 }
 
 # Root is the country. $bt$ = a type key with no chain.
@@ -381,7 +381,7 @@ cm_fa_drain_max_control_type = {
 			check_range_bounds = no
 			save_temporary_scope_as = cm_fa_drain_loc
 			scope:cm_fa_drain_loc = {
-				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = always }
+				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities RESERVE = cm_fa_get_utilities_reserve GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = always }
 			}
 		}
 	}
@@ -400,7 +400,7 @@ cm_fa_drain_marketplaces = {
 			check_range_bounds = no
 			save_temporary_scope_as = cm_fa_drain_loc
 			scope:cm_fa_drain_loc = {
-				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
+				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities RESERVE = cm_fa_get_utilities_reserve GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
 			}
 		}
 	}
@@ -414,7 +414,7 @@ cm_fa_drain_utility_resolved = {
 			variable = cm_fa_b_locations
 			save_temporary_scope_as = cm_fa_drain_loc
 			scope:cm_fa_drain_loc = {
-				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
+				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities RESERVE = cm_fa_get_utilities_reserve GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
 			}
 		}
 	}

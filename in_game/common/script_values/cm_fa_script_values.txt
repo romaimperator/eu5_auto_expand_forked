@@ -8,6 +8,14 @@ cm_fa_get_reserve = {
 	}
 }
 
+# Root is the country. The Utilities gold floor, half again the reserve every other category
+# holds to: utilities are the cheapest things full automation builds, so gold a costlier
+# category could not spend is kept for it instead of going here.
+cm_fa_get_utilities_reserve = {
+	value = cm_fa_get_reserve
+	multiply = 1.5
+}
+
 # The gold reserve setting for the automation card's slider expressions. The root-scoped
 # cm_fa_get_reserve is unreachable from GuiScope. Expects scope: country.
 cm_fa_reserve_value = {
@@ -88,6 +96,55 @@ cm_fa_collapsar_market_cap = {
 	multiply = 0.1
 	ceiling = yes
 	min = 6
+}
+
+# The price scope:cm_fa_good_t is being pushed to: its default price at the target markup, the
+# min-discount markup convention (negative = below base, positive = above).
+# Expects scope:cm_fa_good_t and scope:cm_country.
+cm_fa_collapsar_goal_price = {
+	value = "default_price(scope:cm_fa_good_t)"
+	multiply = {
+		value = 100
+		add = scope:cm_country.var:cm_fa_collapsar_target
+		divide = 100
+	}
+}
+
+# How much of scope:cm_fa_good_t this market has to cover for itself. Imports meet the physical
+# requirement in full but are discounted when the price forms
+# (BURGHER_TRADE_IMPACT_ON_SUPPLY_SCALE 0.1 and TRADE_IMPACT_ON_SUPPLY_SCALE 0.75,
+# game/loading_screen/common/defines/00_defines.txt:1760-1761), so the shortfall is measured
+# against what is produced here. Root is the market.
+cm_fa_collapsar_shortfall = {
+	value = "goods_demand_in_market(scope:cm_fa_good_t)"
+	subtract = "produced_in_market(scope:cm_fa_good_t)"
+	min = 0
+}
+
+# Levels one location finishes inside the two-year window. Every collapsar producer builds in
+# 365 days (guild_build_time and rural_build_time, game/main_menu/common/script_values/default_values.txt:1094
+# and :1116) and a location starts with one construction slot
+# (game/main_menu/common/static_modifiers/location.txt:14).
+@cm_fa_collapsar_fill_rounds = 2
+
+# Locations this market needs building on to close scope:cm_fa_good_t's shortfall inside the
+# window, never fewer than the flat cap. Concentrating the levels on fewer locations would take
+# longer than the shortfall stays worth chasing. Falls back to the flat cap before
+# classification has recorded the producer's output.
+# Root is the market, expects scope:cm_fa_good_t and scope:cm_building_type.
+cm_fa_collapsar_locations_wanted = {
+	value = cm_fa_collapsar_market_cap
+	if = {
+		limit = {
+			has_global_variable_map = cm_bt_output
+			is_key_in_global_variable_map = { name = cm_bt_output target = scope:cm_building_type }
+		}
+		value = cm_fa_collapsar_shortfall
+		divide = "global_variable_map(cm_bt_output|scope:cm_building_type)"
+		divide = @cm_fa_collapsar_fill_rounds
+		ceiling = yes
+		min = cm_fa_collapsar_market_cap
+	}
 }
 
 # Root is the country. The urban-rights score window as a fraction: the

@@ -1,10 +1,12 @@
 ﻿# Full-automation Price Collapsar: builds producers of masonry, lumber, sand, and glass
 # to push their market prices down to the target price. Materials are staged and drained
 # in the player's list order; within a material, RGO expansions come before producer
-# buildings. Staging in each market stops at max(10% of its locations, 6) locations
-# whose collapsar constructions have not been absorbed yet (still building, or built but
-# not yet employed, with levels remaining). Collapsar approvals skip the market
-# construction-goods gates: a shortage of those goods is exactly what the builds cure.
+# buildings. Each market runs enough locations at once to close the gap between what it
+# produces of a material and what it demands inside two years, and never fewer than
+# max(10% of its locations, 6); locations whose collapsar constructions have not been
+# absorbed yet (still building, or built but not yet employed, with levels remaining)
+# count against that. Collapsar approvals skip the market construction-goods gates: a
+# shortage of those goods is exactly what the builds cure.
 
 # Root is the country, scope:cm_country set.
 cm_fa_run_collapsar = {
@@ -16,10 +18,20 @@ cm_fa_run_collapsar = {
 	}
 }
 
-# Stages one market's candidates while room remains under its cap.
+# Stages one market's candidates while room remains. Room is the largest of the enabled
+# materials' needs, floored at the flat cap, less the locations still absorbing.
 # Root is the country, expects scope:cm_fa_market.
 cm_fa_stage_collapsar_market = {
 	set_local_variable = { name = cm_fa_room value = scope:cm_fa_market.cm_fa_collapsar_market_cap }
+	if = {
+		limit = { has_variable_list = cm_fa_collapsar_goods_enabled }
+		every_in_list = {
+			variable = cm_fa_collapsar_goods_enabled
+			save_scope_as = cm_fa_collapsar_item
+			scope:cm_country = { cm_fa_collapsar_size_good = yes }
+			change_local_variable = { name = cm_fa_room max = local_var:cm_fa_collapsar_want }
+		}
+	}
 	every_in_list = {
 		variable = cm_fa_collapsar_pending_locs
 		limit = { market = scope:cm_fa_market }
@@ -38,42 +50,96 @@ cm_fa_stage_collapsar_market = {
 	}
 }
 
+# Console diagnostic: the capital market's masonry numbers, run on demand rather than from the
+# cycle so it costs the 200-entry log nothing during play.
+# effect c:<TAG> = { cm_fa_collapsar_probe_masonry = yes }
+# produced_in_market and target_price both fail by returning a number rather than by erroring,
+# so reading them out is the only way to know they work. Amounts and prices are logged x100
+# because the log prints whole numbers. Root is the country.
+cm_fa_collapsar_probe_masonry = {
+	save_scope_as = cm_country
+	capital.market = { save_scope_as = cm_fa_market }
+	goods:masonry = { save_temporary_scope_as = cm_fa_good_t }
+	building_type:mason = { save_scope_as = cm_building_type }
+	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.goods_supply_in_market(scope:cm_fa_good_t)" multiply = 100 } }
+	cmf_log_value = { action = cm_log_cs_supply value = local_var:cm_fa_dbg }
+	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.produced_in_market(scope:cm_fa_good_t)" multiply = 100 } }
+	cmf_log_value = { action = cm_log_cs_produced value = local_var:cm_fa_dbg }
+	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.goods_demand_in_market(scope:cm_fa_good_t)" multiply = 100 } }
+	cmf_log_value = { action = cm_log_cs_demand value = local_var:cm_fa_dbg }
+	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.market_price(scope:cm_fa_good_t)" multiply = 100 } }
+	cmf_log_value = { action = cm_log_cs_price value = local_var:cm_fa_dbg }
+	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.target_price(scope:cm_fa_good_t)" multiply = 100 } }
+	cmf_log_value = { action = cm_log_cs_target value = local_var:cm_fa_dbg }
+	set_local_variable = { name = cm_fa_dbg value = { value = cm_fa_collapsar_goal_price multiply = 100 } }
+	cmf_log_value = { action = cm_log_cs_goal value = local_var:cm_fa_dbg }
+	set_local_variable = { name = cm_fa_dbg value = scope:cm_fa_market.cm_fa_collapsar_market_cap }
+	cmf_log_value = { action = cm_log_cs_cap value = local_var:cm_fa_dbg }
+	set_local_variable = { name = cm_fa_dbg value = scope:cm_fa_market.cm_fa_collapsar_locations_wanted }
+	cmf_log_value = { action = cm_log_cs_wanted value = local_var:cm_fa_dbg }
+}
+
+# Sets local_var:cm_fa_collapsar_want to the locations scope:cm_fa_collapsar_item's shortfall
+# needs in scope:cm_fa_market, and 0 once its goal price is reached. Leaves
+# scope:cm_building_type on the material's lead producer, whose per-level output is what turns
+# a goods shortfall into a level count. Root is the country, expects scope:cm_fa_market and
+# scope:cm_fa_collapsar_item.
+cm_fa_collapsar_size_good = {
+	set_local_variable = { name = cm_fa_collapsar_want value = 0 }
+	scope:cm_fa_collapsar_item = { save_temporary_scope_as = cm_fa_good_t }
+	if = {
+		limit = { NOT = { cm_fa_collapsar_target_met = yes } }
+		if = {
+			limit = { scope:cm_fa_collapsar_item = goods:masonry }
+			building_type:mason = { save_scope_as = cm_building_type }
+		}
+		else_if = {
+			limit = { scope:cm_fa_collapsar_item = goods:lumber }
+			building_type:lumber_mill = { save_scope_as = cm_building_type }
+		}
+		else_if = {
+			limit = { scope:cm_fa_collapsar_item = goods:sand }
+			building_type:sand_pit = { save_scope_as = cm_building_type }
+		}
+		else_if = {
+			limit = { scope:cm_fa_collapsar_item = goods:glass }
+			building_type:glass_guild = { save_scope_as = cm_building_type }
+			cm_auto_build_resolve_building_type = yes
+		}
+		set_local_variable = { name = cm_fa_collapsar_want value = scope:cm_fa_market.cm_fa_collapsar_locations_wanted }
+	}
+}
+
 # Stages one material's candidates. The shared market room is a local, so an earlier
-# material in the list takes it first. Root is the country, expects scope:cm_fa_market
+# material in the list takes it first; the per-material room is that material's own need,
+# which is 0 once its goal price is reached. Root is the country, expects scope:cm_fa_market
 # and scope:cm_fa_collapsar_item.
 cm_fa_stage_collapsar_good = {
+	cm_fa_collapsar_size_good = yes
+	set_local_variable = { name = cm_fa_good_room value = local_var:cm_fa_collapsar_want }
 	if = {
-		limit = {
-			scope:cm_fa_collapsar_item = goods:masonry
-			cm_fa_collapsar_good_wanted = { good = masonry }
+		limit = { local_var:cm_fa_good_room > 0 }
+		if = {
+			limit = { scope:cm_fa_collapsar_item = goods:masonry }
+			cm_fa_stage_collapsar_building = { bt = mason }
 		}
-		cm_fa_stage_collapsar_building = { bt = mason }
-	}
-	else_if = {
-		limit = {
-			scope:cm_fa_collapsar_item = goods:lumber
-			cm_fa_collapsar_good_wanted = { good = lumber }
+		else_if = {
+			limit = { scope:cm_fa_collapsar_item = goods:lumber }
+			goods:lumber = { save_scope_as = cm_fa_good }
+			cm_fa_stage_collapsar_rgos = yes
+			cm_fa_stage_collapsar_building = { bt = lumber_mill }
 		}
-		goods:lumber = { save_scope_as = cm_fa_good }
-		cm_fa_stage_collapsar_rgos = yes
-		cm_fa_stage_collapsar_building = { bt = lumber_mill }
-	}
-	else_if = {
-		limit = {
-			scope:cm_fa_collapsar_item = goods:sand
-			cm_fa_collapsar_good_wanted = { good = sand }
+		else_if = {
+			limit = { scope:cm_fa_collapsar_item = goods:sand }
+			goods:sand = { save_scope_as = cm_fa_good }
+			cm_fa_stage_collapsar_rgos = yes
+			cm_fa_stage_collapsar_building = { bt = sand_pit }
 		}
-		goods:sand = { save_scope_as = cm_fa_good }
-		cm_fa_stage_collapsar_rgos = yes
-		cm_fa_stage_collapsar_building = { bt = sand_pit }
-	}
-	else_if = {
-		limit = {
-			scope:cm_fa_collapsar_item = goods:glass
-			cm_fa_collapsar_good_wanted = { good = glass }
+		else_if = {
+			limit = { scope:cm_fa_collapsar_item = goods:glass }
+			cm_fa_stage_collapsar_building = { bt = glass_guild }
+			cm_fa_stage_collapsar_building = { bt = rural_glassmaker }
 		}
-		cm_fa_stage_collapsar_building = { bt = glass_guild }
-		cm_fa_stage_collapsar_building = { bt = rural_glassmaker }
 	}
 }
 
@@ -92,7 +158,7 @@ cm_fa_stage_collapsar_rgos = {
 				raw_material ?= scope:cm_fa_good
 				cm_is_rgo_not_max_level_already = yes
 				cm_is_rgo_under_construction = no
-				cm_location_rgo_promotion_buffer_slack >= 0
+				cm_fa_collapsar_rgo_pops_ok = yes
 				NOT = { exists = var:cm_fa_collapsar_touched }
 				NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_fa_collapsar_pending_locs target = prev } } }
 				# The player's RGO auto-expand staged it this cycle.
@@ -100,7 +166,10 @@ cm_fa_stage_collapsar_rgos = {
 			}
 			save_scope_as = cm_location
 			if = {
-				limit = { local_var:cm_fa_room > 0 }
+				limit = {
+					local_var:cm_fa_room > 0
+					local_var:cm_fa_good_room > 0
+				}
 				scope:cm_country = {
 					if = {
 						limit = { NOT = { is_target_in_variable_list = { name = cm_fa_collapsar_rgo_locations target = scope:cm_location } } }
@@ -109,6 +178,7 @@ cm_fa_stage_collapsar_rgos = {
 				}
 				scope:cm_location = { set_variable = { name = cm_fa_collapsar_touched value = yes } }
 				change_local_variable = { name = cm_fa_room subtract = 1 }
+				change_local_variable = { name = cm_fa_good_room subtract = 1 }
 			}
 		}
 	}
@@ -133,11 +203,12 @@ cm_fa_stage_collapsar_building = {
 			if = {
 				limit = {
 					local_var:cm_fa_room > 0
+					local_var:cm_fa_good_room > 0
 					cm_location_allowed_to_build = { target = scope:cm_building_type }
 					cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
 					# A standing older tier would turn this build into its upgrade.
 					cm_location_has_no_auto_build_chain_predecessor = yes
-					cm_location_has_enough_pops_available = yes
+					cm_fa_collapsar_pops_ok = yes
 					cm_check_location_meets_min_market_access = yes
 					cm_get_open_build_queue_slots > 0
 					NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:cm_building_type } }
@@ -149,6 +220,7 @@ cm_fa_stage_collapsar_building = {
 					set_variable = { name = cm_fa_collapsar_touched value = yes }
 				}
 				change_local_variable = { name = cm_fa_room subtract = 1 }
+				change_local_variable = { name = cm_fa_good_room subtract = 1 }
 			}
 		}
 	}
@@ -248,7 +320,7 @@ cm_fa_collapsar_drain_rgo = {
 				# Also the dedup vs the player's RGO drain and Industry, which ran earlier
 				# this pass and construct immediately.
 				cm_is_rgo_under_construction = no
-				cm_location_rgo_promotion_buffer_slack >= 0
+				cm_fa_collapsar_rgo_pops_ok = yes
 			}
 			if = {
 				limit = {
@@ -312,7 +384,7 @@ cm_fa_collapsar_drain_type = {
 						remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
 						remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type }
 					} else = {
-						cm_fa_try_approve_build = { cat = 2 POOL = cm_fa_pool_collapsar GOODS_GATE = always SLOTS_GATE = cm_fa_location_has_open_build_slot }
+						cm_fa_try_approve_build = { cat = 2 POOL = cm_fa_pool_collapsar RESERVE = cm_fa_get_reserve GOODS_GATE = always SLOTS_GATE = cm_fa_location_has_open_build_slot }
 						if = {
 							limit = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } }
 							save_temporary_scope_as = cm_fa_pend_loc

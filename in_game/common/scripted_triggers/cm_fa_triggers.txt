@@ -51,24 +51,27 @@ cm_fa_location_has_proximity = {
 }
 
 # Affordability gate for full-automation approvals: the category pool covers the cost and
-# the treasury stays above the full-automation reserve after this drain's committed spend.
-# $POOL$ = the category pool variable name. Expects scope:cm_country, scope:cm_cost.
+# the treasury stays above the category's gold floor after this drain's committed spend.
+# $POOL$ = the category pool variable name, $RESERVE$ = its gold floor.
+# Expects scope:cm_country, scope:cm_cost.
 cm_fa_can_afford = {
 	scope:cm_country = { var:$POOL$ >= scope:cm_cost }
-	cm_fa_treasury_covers_cost = yes
+	cm_fa_treasury_covers_cost = { RESERVE = $RESERVE$ }
 }
 
-# The treasury half of cm_fa_can_afford. Expects scope:cm_country, scope:cm_cost.
+# The treasury half of cm_fa_can_afford. $RESERVE$ = the gold floor.
+# Expects scope:cm_country, scope:cm_cost.
 cm_fa_treasury_covers_cost = {
-	scope:cm_country = { gold >= { value = scope:cm_cost add = cm_fa_get_reserve add = var:cm_q_planned_spend } }
+	scope:cm_country = { gold >= { value = scope:cm_cost add = $RESERVE$ add = var:cm_q_planned_spend } }
 }
 
 # Per-level affordability for a full-automation batch: the pool balance the batch has left,
-# which cm_fa_fill_build_slots holds in var:cm_fa_copy_pool so one trigger serves every category.
+# which cm_fa_fill_build_slots holds in var:cm_fa_copy_pool beside the category's gold floor in
+# var:cm_fa_copy_reserve so one trigger serves every category.
 # Expects scope:cm_country, scope:cm_cost.
 cm_fa_copy_can_afford = {
 	scope:cm_country = { var:cm_fa_copy_pool >= scope:cm_cost }
-	cm_fa_treasury_covers_cost = yes
+	cm_fa_treasury_covers_cost = { RESERVE = var:cm_fa_copy_reserve }
 }
 
 # RGO twin of cm_fa_can_afford: the cost is the live glorpui_rgo_expand_cost.
@@ -188,26 +191,43 @@ cm_fa_location_has_open_build_slot = {
 	cm_get_open_build_queue_slots > 0
 }
 
-# True when scope:cm_fa_good_t already trades at or below the target price in
-# scope:cm_fa_market: market price <= default price * (100 + target markup) / 100,
-# the min-discount markup convention (negative = below base, positive = above).
+# True when scope:cm_fa_good_t has reached its goal price in scope:cm_fa_market, either at the
+# price it trades at now or at the one it is converging to. Market price closes only 5% of that
+# gap a month (MONTHLY_PRICE_CHANGE, game/loading_screen/common/defines/00_defines.txt:1755), so
+# without the second branch a market keeps being built into for over a year after its supply is
+# already enough. The > 0 guard keeps a target_price of 0 from reading as every goal met.
 # Expects scope:cm_fa_market, scope:cm_fa_good_t, scope:cm_country.
 cm_fa_collapsar_target_met = {
-	"scope:cm_fa_market.market_price(scope:cm_fa_good_t)" <= {
-		value = "default_price(scope:cm_fa_good_t)"
-		multiply = {
-			value = 100
-			add = scope:cm_country.var:cm_fa_collapsar_target
-			divide = 100
+	OR = {
+		"scope:cm_fa_market.market_price(scope:cm_fa_good_t)" <= cm_fa_collapsar_goal_price
+		AND = {
+			"scope:cm_fa_market.target_price(scope:cm_fa_good_t)" > 0
+			"scope:cm_fa_market.target_price(scope:cm_fa_good_t)" <= cm_fa_collapsar_goal_price
 		}
 	}
 }
 
-# The good still trades above its target in scope:cm_fa_market. Root is the country.
-# $good$ = the good key.
-cm_fa_collapsar_good_wanted = {
-	goods:$good$ = { save_temporary_scope_as = cm_fa_good_t }
-	NOT = { cm_fa_collapsar_target_met = yes }
+# Root is the location, expects scope:cm_building_type. The collapsar's pop gate: unemployed
+# pops of the building's own type, or pops here that promote into it. Dropping the three-year
+# projection cm_location_has_enough_pops_available applies is deliberate and stays confined to
+# this category - a location short of one of the four core construction goods is often exactly
+# the one whose pops are furthest behind, and those goods block every other build when they run
+# out. Open jobs do not convert to promotions one for one, so this is not a general relaxation.
+cm_fa_collapsar_pops_ok = {
+	has_global_variable_map = cm_building_type_to_pop_type
+	is_key_in_global_variable_map = { name = cm_building_type_to_pop_type target = scope:cm_building_type }
+	OR = {
+		cm_location_unemployed_for_building_type > 0
+		cm_location_promotion_source_pool_for_building_type > 0
+	}
+}
+
+# Root is the location. The RGO twin of cm_fa_collapsar_pops_ok.
+cm_fa_collapsar_rgo_pops_ok = {
+	OR = {
+		cm_location_laborers_or_slaves_available > 0
+		cm_location_laborers_promotion_source_pool > 0
+	}
 }
 
 # Root is the location. Nothing collapsar-relevant is still hiring or building here: the

@@ -1,6 +1,6 @@
 ﻿# Lucky Nations hooks. The vanilla country pulses fire for every country in the world, so the
 # leaf trigger is the whole gate: with the rule off no country carries cm_ln_active and a
-# month costs one absent-variable lookup per country.
+# pulse costs one absent-variable lookup per country.
 
 on_game_start_after_lobby = {
 	on_actions = {
@@ -34,8 +34,11 @@ weather_monthly_pulse = {
 	}
 }
 
+# Marking runs first, so a country the rule designates this month is given its id and its settings
+# in the same tick.
 cm_ln_monthly_global = {
 	effect = {
+		cm_ln_seed_marks = yes
 		cm_ln_refresh_countries = yes
 	}
 }

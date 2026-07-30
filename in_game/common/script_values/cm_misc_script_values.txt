@@ -8,7 +8,7 @@ cm_max_guess_at_number_of_buildings = 1000000
 # Version of the building-type classification. Bump when any of the hidden window's classification
 # passes changes what it records, so every save reclassifies once on its next load. A mod adding
 # building types needs no bump: cm_building_classification_is_current checks each one.
-cm_bt_class_version_value = 1
+cm_bt_class_version_value = 2
 
 # Rounds of no progress before a construction cycle gives up and fires whatever verified.
 # The scorer sweep dispatches once per cycle, so a round can make no progress simply
@@ -274,6 +274,18 @@ cm_location_soldiers_promotion_source_pool = {
 }
 cm_location_peasants_promotion_source_pool = {
   value = "unemployed_pops_of_pop_type_in_location(pop_type:tribesmen)"
+}
+
+# The source pool for the building type's pop type. Slaves and tribesmen promote from nothing and stay 0.
+# Root is the location, expects scope:cm_building_type.
+cm_location_promotion_source_pool_for_building_type = {
+  value = 0
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:nobles }   value = cm_location_nobles_promotion_source_pool }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:clergy }   value = cm_location_clergy_promotion_source_pool }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:burghers } value = cm_location_burghers_promotion_source_pool }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:laborers } value = cm_location_laborers_promotion_source_pool }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:soldiers } value = cm_location_soldiers_promotion_source_pool }
+  if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:peasants } value = cm_location_peasants_promotion_source_pool }
 }
 
 # Projected three-year pop slack for the building pop type: location surplus plus three years at the current

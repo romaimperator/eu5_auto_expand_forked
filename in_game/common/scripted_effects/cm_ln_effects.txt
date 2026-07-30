@@ -2,12 +2,14 @@
 # The engine build actions in cm_construct_queue_window.gui take no country argument, so a
 # lucky nation scores its queues in cm_ln_queue_window.gui and constructs from script.
 
-# Marks the lucky set from the game rule. Clears first, so a rule change or a mod update
-# converges on the next load. No scope.
+# Marks the lucky set from the game rule, at lobby and every month, so a rule change in the pause
+# menu applies without a reload. The rule's answer is staged in cm_ln_want and diffed against the
+# marks, so a country losing the mark is handed to cm_ln_undesignate rather than dropped silently.
+# No scope.
 cm_ln_seed_marks = {
 	every_country = {
-		limit = { exists = var:cm_ln_active }
-		remove_variable = cm_ln_active
+		limit = { exists = var:cm_ln_want }
+		remove_variable = cm_ln_want
 	}
 	if = {
 		limit = {
@@ -19,7 +21,7 @@ cm_ln_seed_marks = {
 			# Marking a human would have the seeded values overwrite their own settings.
 			if = {
 				limit = { is_ai = yes }
-				set_variable = { name = cm_ln_active value = yes }
+				set_variable = { name = cm_ln_want value = yes }
 			}
 		}
 	}
@@ -32,9 +34,27 @@ cm_ln_seed_marks = {
 		c:CHI = {
 			if = {
 				limit = { is_ai = yes }
-				set_variable = { name = cm_ln_active value = yes }
+				set_variable = { name = cm_ln_want value = yes }
 			}
 		}
+	}
+	# Nothing else on designation: cm_ln_open_done is never removed, so a country marked for the
+	# first time runs the opening capital move from its own next monthly pulse, and one marked
+	# again after a rule change correctly does not repeat it.
+	every_country = {
+		limit = {
+			exists = var:cm_ln_want
+			NOT = { exists = var:cm_ln_active }
+		}
+		set_variable = { name = cm_ln_active value = yes }
+	}
+	every_country = {
+		limit = {
+			exists = var:cm_ln_active
+			NOT = { exists = var:cm_ln_want }
+		}
+		remove_variable = cm_ln_active
+		cm_ln_undesignate = yes
 	}
 }
 
@@ -238,4 +258,28 @@ cm_ln_yearly_cycle = {
 cm_ln_end_cycle = {
 	cm_q_reset_cycle_state = yes
 	cm_ln_sync_open_cycles = yes
+}
+
+# Stops a country the rule no longer marks. The reorganization holds the global cm_ln_token across
+# months through its search phases, so a country dropped part-way through one would hold it for the
+# rest of the session and no lucky nation could search again. Root is the country.
+cm_ln_undesignate = {
+	save_scope_as = cm_country
+	if = {
+		limit = { exists = var:cm_ln_phase }
+		if = {
+			limit = { var:cm_ln_phase > 0 }
+			cm_ln_reorg_teardown = yes
+		}
+	}
+	remove_variable = cm_fa_cu_fire
+	clear_variable_list = cm_fa_cu_toggle
+	cm_ln_end_cycle = yes
+	cm_ln_sync_cu_pending = yes
+	# Only the scan driver's own disarm clears this global, so an arm carried out of the set would
+	# leave the gate true and no later cycle could make the hidden->shown edge that scans.
+	if = {
+		limit = { NOT = { has_global_variable = cm_ln_open_cycles } }
+		remove_global_variable = cm_ln_scan_armed
+	}
 }

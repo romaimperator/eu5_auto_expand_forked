@@ -92,8 +92,9 @@ cm_fa_copy_budget_var = {
 # Approves one staged full-automation build at this location under its category's pool,
 # then consumes its keys; a key missing from cm_fa_b_costs means the engine blocked the
 # build at scoring and the item is skipped. Callers iterate their own category's entries.
-# $cat$ = category code, $POOL$ = pool variable, $GOODS_GATE$ = the market
-# construction-goods gate trigger, $SLOTS_GATE$ = the open-construction-slot gate trigger.
+# $cat$ = category code, $POOL$ = pool variable, $RESERVE$ = the category's gold floor,
+# $GOODS_GATE$ = the market construction-goods gate trigger, $SLOTS_GATE$ = the
+# open-construction-slot gate trigger.
 # Root is the location. Expects scope:cm_country, scope:cm_building_type.
 cm_fa_try_approve_build = {
 	if = {
@@ -118,13 +119,13 @@ cm_fa_try_approve_build = {
 				limit = {
 					$SLOTS_GATE$ = yes
 					$GOODS_GATE$ = yes
-					cm_fa_can_afford = { POOL = $POOL$ }
+					cm_fa_can_afford = { POOL = $POOL$ RESERVE = $RESERVE$ }
 				}
 				cm_approve_gui_build = yes
 				scope:cm_country = { change_variable = { name = $POOL$ subtract = scope:cm_cost } }
 				if = {
 					limit = { cm_fa_type_is_single_level = no }
-					cm_fa_fill_build_slots = { POOL = $POOL$ }
+					cm_fa_fill_build_slots = { POOL = $POOL$ RESERVE = $RESERVE$ }
 				}
 			}
 		}
@@ -134,15 +135,19 @@ cm_fa_try_approve_build = {
 }
 
 # Full-automation entry to cm_q_fill_build_slots: the batch draws its category pool down in a
-# local so one affordability trigger serves every category, then writes the balance back.
-# $POOL$ = the category pool variable name. Root is the location.
-# Expects scope:cm_country, scope:cm_building_type, scope:cm_cost.
+# scratch variable so one affordability trigger serves every category, then writes the balance
+# back. $POOL$ = the category pool variable name, $RESERVE$ = its gold floor.
+# Root is the location. Expects scope:cm_country, scope:cm_building_type, scope:cm_cost.
 cm_fa_fill_build_slots = {
-	scope:cm_country = { set_variable = { name = cm_fa_copy_pool value = var:$POOL$ } }
+	scope:cm_country = {
+		set_variable = { name = cm_fa_copy_pool value = var:$POOL$ }
+		set_variable = { name = cm_fa_copy_reserve value = $RESERVE$ }
+	}
 	cm_q_fill_build_slots = { AFFORD = cm_fa_copy_can_afford CLAIM = cm_fa_claim_build_copy }
 	scope:cm_country = {
 		set_variable = { name = $POOL$ value = var:cm_fa_copy_pool }
 		remove_variable = cm_fa_copy_pool
+		remove_variable = cm_fa_copy_reserve
 	}
 }
 
