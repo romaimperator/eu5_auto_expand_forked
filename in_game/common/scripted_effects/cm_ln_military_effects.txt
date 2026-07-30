@@ -1,6 +1,8 @@
-﻿# Lucky Nations Military: the lowest-priority full-automation category, so its pool is its own
-# share plus everything the earlier categories declined to spend. It runs the fort line
-# (cm_ln_fort_effects.txt) and the urban manpower chain, forts first.
+﻿# Lucky Nations Military: the lowest-priority full-automation category. It runs the fort line
+# (cm_ln_fort_effects.txt) and the urban manpower chain, forts first. The fort line lives inside
+# the category's own share; only the manpower chain draws on the carry, and only once it has a
+# tier it can build, which cm_ln_bk_run projects into var:cm_ln_bk_active for the drain fork in
+# cm_fa_drain_category.
 
 # --- Category entry points ---
 
@@ -13,7 +15,10 @@ cm_ln_mil_run = {
 # Root is the country, scope:cm_country set.
 cm_fa_pass_military = {
 	cm_ln_ft_drain = yes
-	cm_ln_bk_drain = yes
+	if = {
+		limit = { exists = var:cm_ln_bk_active }
+		cm_ln_bk_drain = yes
+	}
 }
 
 # --- Manpower chain ---
@@ -35,26 +40,33 @@ cm_ln_bk_resolve_type = {
 # Root is the country, scope:cm_country set.
 cm_ln_bk_run = {
 	cm_ln_bk_resolve_type = yes
-	ordered_owned_location = {
-		order_by = max_control
-		max = cm_max_guess_at_number_of_locations
-		check_range_bounds = no
-		limit = {
-			cm_location_market_in_fa_slice = yes
-			NOT = { integration_level = conquered }
-			cm_fa_location_has_proximity = yes
-		}
-		save_scope_as = cm_location
-		if = {
+	if = {
+		limit = { can_build_building = scope:cm_building_type }
+		set_variable = { name = cm_ln_bk_active value = yes }
+		ordered_owned_location = {
+			order_by = max_control
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
 			limit = {
-				cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
-				cm_location_allowed_to_build = { target = scope:cm_building_type }
-				cm_location_has_enough_pops_available = yes
-				cm_check_location_meets_min_market_access = yes
-				cm_get_open_build_queue_slots > 0
+				cm_location_market_in_fa_slice = yes
+				NOT = { integration_level = conquered }
+				cm_fa_location_has_proximity = yes
 			}
-			cm_fa_stage_build_candidate = { cat = 7 }
+			save_scope_as = cm_location
+			if = {
+				limit = {
+					cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
+					cm_location_allowed_to_build = { target = scope:cm_building_type }
+					cm_location_has_enough_pops_available = yes
+					cm_check_location_meets_min_market_access = yes
+					cm_get_open_build_queue_slots > 0
+				}
+				cm_fa_stage_build_candidate = { cat = 7 }
+			}
 		}
+	}
+	else = {
+		remove_variable = cm_ln_bk_active
 	}
 }
 
