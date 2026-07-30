@@ -307,6 +307,9 @@ cm_fa_stage_marketplaces = {
 # mercury patios, the market-center buildings, the max-control buildings, marketplaces, the
 # disease-resistance buildings, then granaries. Root is the country.
 cm_fa_pass_utilities = {
+	# Food, Collapsar, Governors and Forts share cm_fa_try_approve_build and may have drained
+	# earlier in this execution.
+	set_local_variable = { name = cm_fa_cost_blocked value = 0 }
 	cm_fa_drain_utility_type = { bt = royal_court }
 	cm_fa_drain_utility_type = { bt = house_of_parliament }
 	cm_fa_drain_utility_type = { bt = order_headquarters }
@@ -351,10 +354,17 @@ cm_fa_pass_utilities = {
 	cm_fa_drain_max_control_type = { bt = eghabho_nore_mansion }
 	cm_fa_drain_max_control_type = { bt = tambo }
 	cm_fa_drain_marketplaces = yes
-	cm_fa_drain_utility_roster_type = { bt = medical_school }
-	cm_fa_drain_utility_roster_type = { bt = lazaretto }
-	cm_fa_drain_utility_roster_type = { bt = hospital }
-	cm_fa_drain_utility_roster_type = { bt = granary }
+	cm_fa_drain_utility_tail_type = { bt = medical_school }
+	cm_fa_drain_utility_tail_type = { bt = lazaretto }
+	cm_fa_drain_utility_tail_type = { bt = hospital }
+	cm_fa_drain_utility_tail_type = { bt = granary }
+	if = {
+		limit = {
+			local_var:cm_fa_cost_blocked = 1
+			cm_ln_is_active = no
+		}
+		cmf_log_value = { action = cm_log_fa_utilities_tail_held value = var:cm_fa_pool_utilities }
+	}
 }
 
 # Root is the country. $bt$ = a type key with no chain.
@@ -368,6 +378,15 @@ cm_fa_drain_utility_roster_type = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes
 	cm_fa_drain_utility_resolved = yes
+}
+
+# The category's cheapest types, held back once something dearer went unbought this cycle.
+# Root is the country. $bt$ = a raw type key.
+cm_fa_drain_utility_tail_type = {
+	if = {
+		limit = { local_var:cm_fa_cost_blocked = 0 }
+		cm_fa_drain_utility_roster_type = { bt = $bt$ }
+	}
 }
 
 # One max-control type, wealthiest locations first and past the location's open slots, so a

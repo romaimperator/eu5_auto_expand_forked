@@ -127,6 +127,15 @@ cm_fa_try_approve_build = {
 					cm_fa_fill_build_slots = { POOL = $POOL$ }
 				}
 			}
+			else_if = {
+				# The two gates pass here, so the cost is the only thing that failed. Read by
+				# Utilities to hold its cheapest types back.
+				limit = {
+					$SLOTS_GATE$ = yes
+					$GOODS_GATE$ = yes
+				}
+				set_local_variable = { name = cm_fa_cost_blocked value = 1 }
+			}
 		}
 		remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
 		remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type }
