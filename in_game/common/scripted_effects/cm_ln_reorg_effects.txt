@@ -1,8 +1,8 @@
-﻿# Lucky Nations capital and governor reorganization: every twenty-five years, once income passes
-# the starting threshold, or whenever a new governor slot opens, a lucky nation re-picks its
-# capital and plans a full set of governor sites, then urbanizes the ones below city rank, builds
-# roads out to them and places the governors. It supersedes the full-automation Governors category
-# for these countries.
+﻿# Lucky Nations capital and governor reorganization: every twenty-five years, every five years
+# while a governor slot stands empty, once income passes the starting threshold, or whenever a new
+# governor slot opens, a lucky nation re-picks its capital and plans a full set of governor sites,
+# then urbanizes the ones below city rank, builds roads out to them and places the governors. It
+# supersedes the full-automation Governors category for these countries.
 #
 # The plan is built one search per month so no single tick carries a whole placement finder
 # run, and each search treats the sites already committed to as proximity sources, so site
@@ -15,8 +15,10 @@
 
 # 25 years, the reorganization cadence.
 @cm_ln_cooldown_days = 9125
+# 5 years, the shorter cadence for a country holding a governor slot it has not filled.
+@cm_ln_gov_cooldown_days = 1825
 # Months a reorganization may run before it is abandoned and replanned from scratch. Under the
-# cadence, so a stuck run cannot outlive the period it belongs to.
+# twenty-five-year cadence, so a stuck run cannot outlive the period it belongs to.
 @cm_ln_reorg_max_months = 300
 # A capital scoring below this share of the best location is worth moving. Scores are
 # normalised to 0-1000 against the best, and the gap is hysteresis against churn.
@@ -111,12 +113,18 @@ cm_ln_reorg_try_start = {
 			cm_ln_no_human_search_in_flight = yes
 			OR = {
 				AND = {
-					NOT = { exists = var:cm_ln_cooldown }
 					OR = {
 						# The twenty-fifth year of the grand campaign, which starts 1337.4.1
 						# (START_DATE, loading_screen/common/defines/00_defines.txt:2).
 						current_date >= 1362.1.1
 						monthly_income_total >= @cm_ln_income_start
+					}
+					OR = {
+						NOT = { exists = var:cm_ln_cooldown }
+						AND = {
+							NOT = { exists = var:cm_ln_gov_cooldown }
+							cm_ln_gov_slot_open = yes
+						}
 					}
 				}
 				cm_ln_gov_slots_grew = yes
@@ -130,6 +138,7 @@ cm_ln_reorg_try_start = {
 cm_ln_reorg_begin = {
 	set_global_variable = { name = cm_ln_token value = 1 }
 	set_variable = { name = cm_ln_cooldown value = 1 days = @cm_ln_cooldown_days }
+	set_variable = { name = cm_ln_gov_cooldown value = 1 days = @cm_ln_gov_cooldown_days }
 	set_variable = { name = cm_ln_age value = 0 }
 	set_variable = { name = cm_ln_free_credits value = 0 }
 	set_variable = { name = cm_ln_plan_n value = 0 }
@@ -686,6 +695,7 @@ cm_ln_reorg_teardown = {
 	cm_ln_pf_settings_off = yes
 	set_variable = { name = cm_ln_slots_seen value = cm_ln_gov_slot_total }
 	set_variable = { name = cm_ln_cooldown value = 1 days = @cm_ln_cooldown_days }
+	set_variable = { name = cm_ln_gov_cooldown value = 1 days = @cm_ln_gov_cooldown_days }
 	set_variable = { name = cm_ln_phase value = 0 }
 }
 
