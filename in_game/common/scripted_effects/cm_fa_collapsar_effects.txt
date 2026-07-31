@@ -53,9 +53,9 @@ cm_fa_stage_collapsar_market = {
 # Console diagnostic: the capital market's masonry numbers, run on demand rather than from the
 # cycle so it costs the 200-entry log nothing during play.
 # effect c:<TAG> = { cm_fa_collapsar_probe_masonry = yes }
-# produced_in_market and target_price both fail by returning a number rather than by erroring,
-# so reading them out is the only way to know they work. Amounts and prices are logged x100
-# because the log prints whole numbers. Root is the country.
+# target_price fails by returning a number rather than by erroring, so reading it out is the only
+# way to know it works. Amounts and prices are logged x100 because the log prints whole numbers.
+# Root is the country.
 cm_fa_collapsar_probe_masonry = {
 	save_scope_as = cm_country
 	capital.market = { save_scope_as = cm_fa_market }
@@ -63,7 +63,7 @@ cm_fa_collapsar_probe_masonry = {
 	building_type:mason = { save_scope_as = cm_building_type }
 	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.goods_supply_in_market(scope:cm_fa_good_t)" multiply = 100 } }
 	cmf_log_value = { action = cm_log_cs_supply value = local_var:cm_fa_dbg }
-	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.produced_in_market(scope:cm_fa_good_t)" multiply = 100 } }
+	set_local_variable = { name = cm_fa_dbg value = { value = scope:cm_fa_market.produced_in_market:masonry multiply = 100 } }
 	cmf_log_value = { action = cm_log_cs_produced value = local_var:cm_fa_dbg }
 	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.goods_demand_in_market(scope:cm_fa_good_t)" multiply = 100 } }
 	cmf_log_value = { action = cm_log_cs_demand value = local_var:cm_fa_dbg }

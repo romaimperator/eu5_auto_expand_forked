@@ -107,9 +107,25 @@ cm_fa_collapsar_goal_price = {
 # (BURGHER_TRADE_IMPACT_ON_SUPPLY_SCALE 0.1 and TRADE_IMPACT_ON_SUPPLY_SCALE 0.75,
 # game/loading_screen/common/defines/00_defines.txt:1760-1761), so the shortfall is measured
 # against what is produced here. Root is the market.
+# produced_in_market takes a literal goods key, never a scope.
 cm_fa_collapsar_shortfall = {
 	value = "goods_demand_in_market(scope:cm_fa_good_t)"
-	subtract = "produced_in_market(scope:cm_fa_good_t)"
+	if = {
+		limit = { scope:cm_fa_good_t = goods:masonry }
+		subtract = produced_in_market:masonry
+	}
+	else_if = {
+		limit = { scope:cm_fa_good_t = goods:lumber }
+		subtract = produced_in_market:lumber
+	}
+	else_if = {
+		limit = { scope:cm_fa_good_t = goods:sand }
+		subtract = produced_in_market:sand
+	}
+	else_if = {
+		limit = { scope:cm_fa_good_t = goods:glass }
+		subtract = produced_in_market:glass
+	}
 	min = 0
 }
 
