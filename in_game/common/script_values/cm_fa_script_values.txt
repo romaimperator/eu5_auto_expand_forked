@@ -81,15 +81,6 @@ cm_fa_market_access_inverted = {
 	subtract = market_access
 }
 
-# max(ceil(10% of the market's locations), 6): the cap on this market's locations with
-# collapsar constructions still being absorbed. Root is the market.
-cm_fa_collapsar_market_cap = {
-	value = market_location_count
-	multiply = 0.1
-	ceiling = yes
-	min = 6
-}
-
 # The price scope:cm_fa_good_t is being pushed to: its default price at the target markup, the
 # min-discount markup convention (negative = below base, positive = above).
 # Expects scope:cm_fa_good_t and scope:cm_country.
@@ -129,19 +120,21 @@ cm_fa_collapsar_shortfall = {
 	min = 0
 }
 
-# Levels one location finishes inside the two-year window. Every collapsar producer builds in
-# 365 days (guild_build_time and rural_build_time, game/main_menu/common/script_values/default_values.txt:1094
-# and :1116) and a location starts with one construction slot
-# (game/main_menu/common/static_modifiers/location.txt:14).
-@cm_fa_collapsar_fill_rounds = 2
+# Levels are sized past the measured shortfall by a tenth, because construction the country
+# starts inside the window raises its own demand for the material.
+@cm_fa_collapsar_overshoot = 1.1
 
-# Locations this market needs building on to close scope:cm_fa_good_t's shortfall inside the
-# window, never fewer than the flat cap. Concentrating the levels on fewer locations would take
-# longer than the shortfall stays worth chasing. Falls back to the flat cap before
-# classification has recorded the producer's output.
+# Levels queued per construction slot. Chosen rather than derived: a slot finishes one level a
+# year (guild_build_time and rural_build_time,
+# game/main_menu/common/script_values/default_values.txt:1094 and :1116), so four is a deeper
+# queue than the two-year window on its own would give.
+@cm_fa_collapsar_slot_rounds = 4
+
+# Producer levels this market needs to close scope:cm_fa_good_t's shortfall, plus the overshoot.
+# Reads 0 before classification has recorded the producer's output.
 # Root is the market, expects scope:cm_fa_good_t and scope:cm_building_type.
-cm_fa_collapsar_locations_wanted = {
-	value = cm_fa_collapsar_market_cap
+cm_fa_collapsar_levels_wanted = {
+	value = 0
 	if = {
 		limit = {
 			has_global_variable_map = cm_bt_output
@@ -149,9 +142,105 @@ cm_fa_collapsar_locations_wanted = {
 		}
 		value = cm_fa_collapsar_shortfall
 		divide = "global_variable_map(cm_bt_output|scope:cm_building_type)"
-		divide = @cm_fa_collapsar_fill_rounds
+		multiply = @cm_fa_collapsar_overshoot
 		ceiling = yes
-		min = cm_fa_collapsar_market_cap
+	}
+}
+
+# Levels of scope:cm_building_type here that are paid for but not yet producing: under
+# construction, or standing with a level's worth of jobs unfilled.
+# Root is the location, expects scope:cm_building_type and scope:cm_country.
+cm_fa_collapsar_type_inflight = {
+	value = 0
+	if = {
+		limit = {
+			any_buildings_in_location = {
+				owner = scope:cm_country
+				building_type = scope:cm_building_type
+			}
+		}
+		"building(scope:cm_building_type|scope:cm_country)" = {
+			add = building_levels_under_construction
+			add = {
+				value = building_employment_size_amount
+				subtract = building_employed_amount
+				divide = building_type.employment_size
+				floor = yes
+			}
+		}
+	}
+}
+
+# Levels of scope:cm_building_type this location may still be given. What other features have
+# queued here is deliberately not counted: the four construction goods gate every other build,
+# so the collapsar takes the slots rather than waiting for them.
+# Root is the location, expects scope:cm_building_type and scope:cm_country.
+cm_fa_collapsar_type_room = {
+	value = modifier:max_constructions_at_same_time
+	multiply = @cm_fa_collapsar_slot_rounds
+	subtract = cm_fa_collapsar_type_inflight
+	min = 0
+}
+
+# The RGO's share of the slot-rounds allowance, less the levels under construction and the ones
+# standing unstaffed. Root is the location.
+cm_fa_collapsar_rgo_slot_room = {
+	value = modifier:max_constructions_at_same_time
+	multiply = @cm_fa_collapsar_slot_rounds
+	subtract = cm_get_rgos_under_construction
+	subtract = {
+		value = rgo_level
+		subtract = rgo_workers
+		min = 0
+	}
+}
+
+# RGO levels this location may still be given: worker headroom, held to the slot-rounds
+# allowance. Root is the location.
+cm_fa_collapsar_rgo_room = {
+	value = cm_get_max_rgo_workers_floor
+	subtract = cm_modifier_rgo_level
+	subtract = cm_get_rgos_under_construction
+	max = cm_fa_collapsar_rgo_slot_room
+	min = 0
+}
+
+# This location's efficiency for scope:cm_building_type, which is the per-level output the
+# collapsar is buying. building_efficiency takes a literal type key, never a scope, hence the
+# chain. Root is the location, expects scope:cm_building_type.
+cm_fa_collapsar_efficiency_order = {
+	value = 0
+	if = {
+		limit = { scope:cm_building_type = building_type:mason }
+		value = "building_efficiency(building_type:mason)"
+	}
+	else_if = {
+		limit = { scope:cm_building_type = building_type:lumber_mill }
+		value = "building_efficiency(building_type:lumber_mill)"
+	}
+	else_if = {
+		limit = { scope:cm_building_type = building_type:sand_pit }
+		value = "building_efficiency(building_type:sand_pit)"
+	}
+	else_if = {
+		limit = { scope:cm_building_type = building_type:glass_guild }
+		value = "building_efficiency(building_type:glass_guild)"
+	}
+	else_if = {
+		limit = { scope:cm_building_type = building_type:glass_workshop }
+		value = "building_efficiency(building_type:glass_workshop)"
+	}
+	else_if = {
+		limit = { scope:cm_building_type = building_type:glassworks }
+		value = "building_efficiency(building_type:glassworks)"
+	}
+	else_if = {
+		limit = { scope:cm_building_type = building_type:glass_mill }
+		value = "building_efficiency(building_type:glass_mill)"
+	}
+	else_if = {
+		limit = { scope:cm_building_type = building_type:rural_glassmaker }
+		value = "building_efficiency(building_type:rural_glassmaker)"
 	}
 }
 

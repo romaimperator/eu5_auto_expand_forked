@@ -251,56 +251,27 @@ cm_fa_collapsar_rgo_pops_ok = {
 	}
 }
 
-# Root is the location. Nothing collapsar-relevant is still hiring or building here: the
-# RGO is neither hiring nor expanding, and no producer building has levels under
-# construction or more than one level's worth of vacancies (the staffing tolerance from
-# cm_food_building_type_is_staffed).
-cm_fa_collapsar_location_absorbed = {
-	NOT = {
-		AND = {
-			OR = {
-				raw_material = goods:lumber
-				raw_material = goods:sand
-			}
-			rgo_workers < rgo_level
-		}
-	}
-	cm_is_rgo_under_construction = no
-	NOT = {
-		any_buildings_in_location = {
-			OR = {
-				building_type = building_type:lumber_mill
-				building_type = building_type:sand_pit
-				building_type = building_type:mason
-				building_type = building_type:glass_guild
-				building_type = building_type:glass_workshop
-				building_type = building_type:glassworks
-				building_type = building_type:glass_mill
-				building_type = building_type:rural_glassmaker
-			}
-			OR = {
-				building_levels_under_construction > 0
-				AND = {
-					is_opened = yes
-					building_employed_amount <= { value = building_employment_size_amount subtract = building_type.employment_size }
-				}
-			}
-		}
-	}
+# Root is the location. Locations the collapsar leaves alone: the capital and anything food
+# automation is working are both short of construction slots, and a level placed there
+# displaces work that has nowhere else to go.
+cm_fa_collapsar_candidate_ok = {
+	is_capital = no
+	cm_fa_food_location_effectively_active = no
 }
 
-# Root is the location. The location can still take another collapsar construction: RGO
-# headroom on the collapsar RGO goods, or free building levels.
-cm_fa_collapsar_location_has_levels = {
-	OR = {
-		AND = {
-			OR = {
-				raw_material = goods:lumber
-				raw_material = goods:sand
-			}
-			cm_is_rgo_not_max_level_already = yes
+# Root is the location, expects scope:cm_building_type and scope:cm_profit. The collapsar's
+# profitability gate, applied where the GUI-only profit read reaches script. Every other
+# category is exempt.
+cm_fa_collapsar_score_profit_ok = {
+	trigger_if = {
+		limit = {
+			has_variable_map = cm_fa_b_cats
+			is_key_in_variable_map = { name = cm_fa_b_cats target = scope:cm_building_type }
 		}
-		cm_get_remaining_free_building_levels_allowed >= 1
+		trigger_if = {
+			limit = { "variable_map(cm_fa_b_cats|scope:cm_building_type)" = 2 }
+			cm_building_type_profitable_or_subsidized = yes
+		}
 	}
 }
 
