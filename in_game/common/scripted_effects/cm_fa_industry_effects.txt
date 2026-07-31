@@ -178,14 +178,71 @@ cm_fa_compute_roi_score = {
 	save_temporary_scope_value_as = { name = cm_fa_score_val value = local_var:cm_fa_sc }
 }
 
-# Temporary diagnostic, currently off: one CMM log line per Industry approval. The income
-# is recovered from the score and the cost, so it is the adjusted income the ROI was
-# computed from. Root is the location. Expects scope:cm_country, scope:cm_building_type,
-# scope:cm_cost, and scope:cm_fa_ilog_score as the item's stored negated years-to-recoup.
+# Folds a scored candidate into its building type's rotation-remembered best payback. Called
+# before the placement gate, so a candidate whose location goes to another building still sets
+# its own type's bar. Root is the country. Expects scope:cm_fa_anchor_type,
+# scope:cm_fa_anchor_loc and scope:cm_fa_score_val.
+cm_fa_ind_fold_bt_anchor = {
+	if = {
+		limit = {
+			trigger_if = {
+				limit = {
+					has_variable_map = cm_fa_ind_bt_anchor
+					is_key_in_variable_map = { name = cm_fa_ind_bt_anchor target = scope:cm_fa_anchor_type }
+				}
+				"variable_map(cm_fa_ind_bt_anchor|scope:cm_fa_anchor_type)" < scope:cm_fa_score_val
+			}
+			trigger_else = { always = yes }
+		}
+		remove_from_variable_map = { name = cm_fa_ind_bt_anchor key = scope:cm_fa_anchor_type }
+		add_to_variable_map = { name = cm_fa_ind_bt_anchor key = scope:cm_fa_anchor_type value = scope:cm_fa_score_val }
+		remove_from_variable_map = { name = cm_fa_ind_bt_loc key = scope:cm_fa_anchor_type }
+		add_to_variable_map = { name = cm_fa_ind_bt_loc key = scope:cm_fa_anchor_type value = scope:cm_fa_anchor_loc }
+	}
+}
+
+# Margin factor = 100 / margin percent; scores are negative years, so a type's anchor times
+# the factor is the bar for holding margin percent of that type's payback rate. 0 = off.
+# Root is the country. Result in local_var:cm_fa_margin_f.
+cm_fa_ind_margin_factor = {
+	set_local_variable = { name = cm_fa_margin_f value = 0 }
+	if = {
+		limit = {
+			exists = var:cm_fa_industry_margin
+			var:cm_fa_industry_margin > 0
+		}
+		set_local_variable = { name = cm_fa_margin_f value = 100 }
+		change_local_variable = { name = cm_fa_margin_f divide = var:cm_fa_industry_margin }
+	}
+}
+
+# One building type's admission bar: its anchor scaled by the margin factor, on the negative
+# years scale. Stays at the sentinel when the margin is off or the type has no anchor yet,
+# which admits every score. Expects scope:cm_country, scope:cm_fa_anchor_type and
+# local_var:cm_fa_margin_f. Result in local_var:cm_fa_bt_bar.
+cm_fa_ind_bt_bar = {
+	set_local_variable = { name = cm_fa_bt_bar value = -2000000 }
+	if = {
+		limit = {
+			local_var:cm_fa_margin_f > 0
+			scope:cm_country = {
+				has_variable_map = cm_fa_ind_bt_anchor
+				is_key_in_variable_map = { name = cm_fa_ind_bt_anchor target = scope:cm_fa_anchor_type }
+			}
+		}
+		set_local_variable = { name = cm_fa_bt_bar value = "scope:cm_country.variable_map(cm_fa_ind_bt_anchor|scope:cm_fa_anchor_type)" }
+		change_local_variable = { name = cm_fa_bt_bar multiply = local_var:cm_fa_margin_f }
+	}
+}
+
+# Temporary diagnostic: one CMM log line per Industry approval. The income is recovered from
+# the score and the cost, so it is the adjusted income the ROI was computed from. Root is the
+# location. Expects scope:cm_country, scope:cm_building_type, scope:cm_cost, and
+# scope:cm_fa_pick_score as the item's stored negated years-to-recoup.
 cm_fa_ind_log_queued = {
 	if = {
-		limit = { always = no }
-		set_local_variable = { name = cm_fa_ilog_roi value = scope:cm_fa_ilog_score }
+		limit = { always = yes }
+		set_local_variable = { name = cm_fa_ilog_roi value = scope:cm_fa_pick_score }
 		change_local_variable = { name = cm_fa_ilog_roi multiply = -1 }
 		set_local_variable = { name = cm_fa_ilog_inc value = 0 }
 		if = {
@@ -208,24 +265,14 @@ cm_fa_ind_log_queued = {
 	}
 }
 
-# Greedy country-wide drain: the best-scored candidate anywhere in the slice, actionable or
-# not, sets the bar, and actionable builds and upgrades are approved best-first while holding
-# the margin share of its payback rate; RGO expansions bypass the margin and drain by ROI.
-# Payback is cost over income in gold, both already priced in the candidate's own market, so
-# scores rank directly against each other across markets.
+# Greedy country-wide drain: actionable builds and upgrades are approved best-first, each held
+# to the margin share of the best payback rate recorded for its own building type; RGO
+# expansions bypass the margin and drain by ROI. Payback is cost over income in gold, both
+# already priced in the candidate's own market, so scores rank directly against each other
+# across markets.
 # Root is the country.
 cm_fa_pass_industry = {
-	# Margin factor = 100 / margin percent; scores are negative years, so the anchor times
-	# the factor is the bar for holding margin percent of the best payback rate. 0 = off.
-	set_local_variable = { name = cm_fa_margin_f value = 0 }
-	if = {
-		limit = {
-			exists = var:cm_fa_industry_margin
-			var:cm_fa_industry_margin > 0
-		}
-		set_local_variable = { name = cm_fa_margin_f value = 100 }
-		change_local_variable = { name = cm_fa_margin_f divide = var:cm_fa_industry_margin }
-	}
+	cm_fa_ind_margin_factor = yes
 	# The picks below run hundreds of times, so the candidate set is collected once here and
 	# re-read from the list instead of re-scanning every owned location. Only the markets
 	# staged this cycle: a market outside the slice holds no candidates.
@@ -236,7 +283,6 @@ cm_fa_pass_industry = {
 			limit = {
 				owner ?= scope:cm_country
 				OR = {
-					has_variable = cm_fa_best_any
 					has_variable = cm_fa_b_best
 					has_variable = cm_fa_u_best
 					has_variable = cm_fa_r_score
@@ -246,50 +292,15 @@ cm_fa_pass_industry = {
 			scope:cm_country = { add_to_variable_list = { name = cm_fa_drain_cands target = scope:cm_fa_cand_loc } }
 		}
 	}
-	save_temporary_scope_value_as = { name = cm_fa_anchor value = -2000000 }
-	ordered_in_list = {
-		variable = cm_fa_drain_cands
-		limit = { has_variable = cm_fa_best_any }
-		order_by = { value = var:cm_fa_best_any }
-		position = 0
-		check_range_bounds = no
-		save_temporary_scope_value_as = { name = cm_fa_anchor value = var:cm_fa_best_any }
-	}
-	# Every domain best is written alongside a cm_fa_best_any fold, so no anchor this cycle
-	# means no actionable candidate either.
-	if = {
-		limit = { scope:cm_fa_anchor > -2000000 }
-		cm_fa_ind_fold_anchor = yes
-		if = {
-			limit = { local_var:cm_fa_margin_f > 0 }
-			set_local_variable = { name = cm_fa_thresh value = var:cm_fa_ind_anchor }
-			change_local_variable = { name = cm_fa_thresh multiply = local_var:cm_fa_margin_f }
-		} else = {
-			# Margin off: below every real score.
-			set_local_variable = { name = cm_fa_thresh value = -2000000 }
-		}
-		cm_fa_ind_pick_loop = yes
-	}
+	cm_fa_ind_pick_loop = yes
 	clear_variable_list = cm_fa_drain_cands
 }
 
-# Folds this cycle's best into the rotation's remembered best. change_variable's max is the
-# max function on the current value, not the ceiling clamp that max means inside a value
-# block. Root is the country, expects scope:cm_fa_anchor.
-cm_fa_ind_fold_anchor = {
-	if = {
-		limit = { NOT = { exists = var:cm_fa_ind_anchor } }
-		set_variable = { name = cm_fa_ind_anchor value = scope:cm_fa_anchor }
-	} else = {
-		change_variable = { name = cm_fa_ind_anchor max = scope:cm_fa_anchor }
-	}
-}
-
-# Approves the best candidate in the country repeatedly until nothing is left within the bar
-# or the pool cannot cover the next one. The outer batch loop is what carries the pick count
-# past a single while's 1000-iteration abort; it re-enters only while the inner loop's last
-# iteration picked something.
-# Root is the country. Expects cm_fa_drain_cands built and local_var:cm_fa_thresh set.
+# Approves the best candidate in the country repeatedly until every candidate map is spent or
+# the pool cannot cover the next one; each pick tests its own building type's bar. The outer
+# batch loop is what carries the pick count past a single while's 1000-iteration abort; it
+# re-enters only while the inner loop's last iteration picked something.
+# Root is the country. Expects cm_fa_drain_cands built and local_var:cm_fa_margin_f set.
 cm_fa_ind_pick_loop = {
 	set_local_variable = { name = cm_fa_more value = 1 }
 	set_local_variable = { name = cm_fa_outer value = 0 }
@@ -349,7 +360,6 @@ cm_fa_ind_pick_loop = {
 				limit = {
 					scope:cm_fa_dom_b >= { value = scope:cm_fa_dom_u }
 					scope:cm_fa_dom_b >= { value = scope:cm_fa_dom_r }
-					scope:cm_fa_dom_b >= { value = local_var:cm_fa_thresh }
 					scope:cm_fa_dom_b > -2000000
 				}
 				scope:cm_fa_pick_b_loc = { cm_fa_pick_best_build_item = yes }
@@ -357,7 +367,6 @@ cm_fa_ind_pick_loop = {
 			} else_if = {
 				limit = {
 					scope:cm_fa_dom_u >= { value = scope:cm_fa_dom_r }
-					scope:cm_fa_dom_u >= { value = local_var:cm_fa_thresh }
 					scope:cm_fa_dom_u > -2000000
 				}
 				scope:cm_fa_pick_u_loc = { cm_fa_pick_best_upgrade_item = yes }
@@ -374,15 +383,33 @@ cm_fa_ind_pick_loop = {
 }
 
 # Console diagnostic: effect c:<TAG> = { cm_fa_ind_anchor_probe = yes }
-# Root is the country.
+# One line per building type that has an anchor this rotation. Root is the country.
 cm_fa_ind_anchor_probe = {
-	set_local_variable = { name = cm_fa_ianc_dbg value = 0 }
-	if = {
-		limit = { exists = var:cm_fa_ind_anchor }
-		set_local_variable = { name = cm_fa_ianc_dbg value = var:cm_fa_ind_anchor }
+	save_temporary_scope_as = cm_fa_probe_country
+	cm_fa_ind_margin_factor = yes
+	every_key_in_variable_map = {
+		variable = cm_fa_ind_bt_anchor
+		save_scope_as = cmf_log_bt
+		# The iterator makes the key the scope, so the map reads have to name their owner.
+		set_local_variable = { name = cm_fa_ianc_dbg value = "scope:cm_fa_probe_country.variable_map(cm_fa_ind_bt_anchor|scope:cmf_log_bt)" }
+		set_local_variable = { name = cm_fa_ibar_dbg value = local_var:cm_fa_ianc_dbg }
+		if = {
+			limit = { local_var:cm_fa_margin_f > 0 }
+			change_local_variable = { name = cm_fa_ibar_dbg multiply = local_var:cm_fa_margin_f }
+		}
+		change_local_variable = { name = cm_fa_ianc_dbg multiply = -1 }
+		change_local_variable = { name = cm_fa_ibar_dbg multiply = -1 }
+		"scope:cm_fa_probe_country.variable_map(cm_fa_ind_bt_loc|scope:cmf_log_bt)" = { save_scope_as = cmf_log_loc }
+		scope:cm_fa_probe_country = {
+			cmf_log_with_building_location = {
+				action = cm_log_ind_anchor
+				arg1 = cm_log_ind_anchor_best
+				arg2 = cm_log_ind_anchor_bar
+				value = local_var:cm_fa_ianc_dbg
+				value2 = local_var:cm_fa_ibar_dbg
+			}
+		}
 	}
-	change_local_variable = { name = cm_fa_ianc_dbg multiply = -100 }
-	cmf_log_value = { action = cm_log_ind_anchor value = local_var:cm_fa_ianc_dbg }
 }
 
 # Approves the highest-scored full-automation build at this location, then consumes it;
@@ -400,14 +427,20 @@ cm_fa_pick_best_build_item = {
 		check_range_bounds = no
 		save_temporary_scope_as = cm_fa_pick_type
 	}
-	scope:cm_fa_pick_type = { save_scope_as = cm_building_type }
+	scope:cm_fa_pick_type = {
+		save_scope_as = cm_building_type
+		save_temporary_scope_as = cm_fa_anchor_type
+	}
 	save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_fa_b_costs|scope:cm_fa_pick_type)" }
+	save_temporary_scope_value_as = { name = cm_fa_pick_score value = "variable_map(cm_fa_b_scores|scope:cm_fa_pick_type)" }
+	cm_fa_ind_bt_bar = yes
 	market = { save_temporary_scope_as = cm_market }
 	if = {
 		limit = {
 			# No cost key means the pick came back empty or the engine blocked the build at scoring.
 			has_variable_map = cm_fa_b_costs
 			is_key_in_variable_map = { name = cm_fa_b_costs target = scope:cm_fa_pick_type }
+			scope:cm_fa_pick_score >= { value = local_var:cm_fa_bt_bar }
 			# Approved by another feature this cycle: consume silently.
 			NOT = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } }
 		}
@@ -419,7 +452,6 @@ cm_fa_pick_best_build_item = {
 			if = {
 				limit = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
 				cm_approve_gui_build = yes
-				save_temporary_scope_value_as = { name = cm_fa_ilog_score value = "variable_map(cm_fa_b_scores|scope:cm_fa_pick_type)" }
 				cm_fa_ind_log_queued = yes
 				scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
 				# The engine converts this build into the standing obsolete predecessor's upgrade.
@@ -468,8 +500,7 @@ cm_fa_pick_best_build_item = {
 }
 
 # Drops a spent location out of the candidate list so the picks stop reading it.
-# Not gated on cm_fa_best_any: the picks never clear it, and the anchor was taken before
-# the pick loop began. Root is the location.
+# Root is the location.
 cm_fa_drain_prune_loc = {
 	save_temporary_scope_as = cm_fa_prune_loc
 	if = {
@@ -527,12 +558,20 @@ cm_fa_pick_best_upgrade_item = {
 		}
 		scope:cm_fa_pick_type = { save_scope_as = cm_old_building_type }
 		"variable_map(cm_fa_u_new_types|scope:cm_fa_pick_type)" = { save_scope_as = cm_new_building_type }
-		scope:cm_new_building_type = { save_scope_as = cm_building_type }
+		# The replacement is what gets built, so it shares its tier's bar with from-zero builds.
+		scope:cm_new_building_type = {
+			save_scope_as = cm_building_type
+			save_temporary_scope_as = cm_fa_anchor_type
+		}
 		save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_fa_u_costs|scope:cm_fa_pick_type)" }
+		save_temporary_scope_value_as = { name = cm_fa_pick_score value = "variable_map(cm_fa_u_scores|scope:cm_fa_pick_type)" }
+		cm_fa_ind_bt_bar = yes
 		market = { save_temporary_scope_as = cm_market }
 		if = {
-			# Approved or already converting via another feature: consume silently.
+			# Outside its tier's bar, approved, or already converting via another feature:
+			# consume silently.
 			limit = {
+				scope:cm_fa_pick_score >= { value = local_var:cm_fa_bt_bar }
 				NOT = { is_target_in_variable_list = { name = cm_q_approved_upgrade_types target = scope:cm_old_building_type } }
 				NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_old_building_type } }
 			}
@@ -541,7 +580,6 @@ cm_fa_pick_best_upgrade_item = {
 				if = {
 					limit = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
 					cm_q_record_upgrade_approval = yes
-					save_temporary_scope_value_as = { name = cm_fa_ilog_score value = "variable_map(cm_fa_u_scores|scope:cm_fa_pick_type)" }
 					cm_fa_ind_log_queued = yes
 					scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
 				} else = {
