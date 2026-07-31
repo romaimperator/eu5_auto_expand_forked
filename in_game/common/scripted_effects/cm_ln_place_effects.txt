@@ -155,10 +155,10 @@ cm_ln_prune_pending = {
 			scope:cm_country = {
 				if = {
 					limit = { scope:cm_ln_p = { owner ?= scope:cm_country } }
-					cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 3 }
+					cmf_log = { action = cm_ln_log_given_up_rank }
 				}
 				else = {
-					cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 2 }
+					cmf_log = { action = cm_ln_log_given_up_lost }
 				}
 				cm_ln_drop_plan_site = { SITE = scope:cm_ln_p }
 			}
@@ -231,7 +231,7 @@ cm_ln_place_retry_or_drop = {
 		add_to_variable_list = { name = cm_ln_pending target = $SITE$ }
 	}
 	else = {
-		cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 1 }
+		cmf_log = { action = cm_ln_log_given_up_placements }
 		add_to_variable_list = { name = cm_ln_plan_drop target = $SITE$ }
 	}
 }
@@ -299,7 +299,7 @@ cm_ln_road_step = {
 		# in_game/common/advances/3_road_unlocks.txt:1
 		limit = { NOT = { has_advance = road_building } }
 		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_road_target }
-		cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 4 }
+		cmf_log = { action = cm_ln_log_given_up_road }
 		cm_ln_drop_plan_site = { SITE = scope:cm_ln_road_target }
 		cm_ln_clear_road_state = yes
 	}
@@ -335,7 +335,7 @@ cm_ln_road_step = {
 			if = {
 				limit = { var:cm_ln_road_tries >= @cm_ln_road_max_tries }
 				remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_road_target }
-				cmf_log_value = { action = cm_ln_log_gov_site_given_up value = 4 }
+				cmf_log = { action = cm_ln_log_given_up_road }
 				cm_ln_drop_plan_site = { SITE = scope:cm_ln_road_target }
 				cm_ln_clear_road_state = yes
 			}
@@ -391,8 +391,36 @@ cm_ln_do_placement = {
 		# The engine refuses this site, which saving gold cannot fix, so it spends a try and the
 		# plan gives it up once they run out rather than holding the treasury against it forever.
 		cm_ln_place_fail_reason = yes
-		cmf_log_value = { action = cm_ln_log_gov_place_refused value = local_var:cm_ln_fail }
+		cm_ln_log_place_refused = yes
 		cm_ln_place_retry_or_drop = { SITE = scope:cm_ln_target }
+	}
+}
+
+# Root is the country. Expects local_var:cm_ln_fail. One key per reason rather than a trailing code,
+# because the log pane truncates the entry text before a value.
+cm_ln_log_place_refused = {
+	if = {
+		limit = { local_var:cm_ln_fail = 1 }
+		cmf_log = { action = cm_ln_log_refused_slot }
+	}
+	else_if = {
+		limit = { local_var:cm_ln_fail = 2 }
+		cmf_log = { action = cm_ln_log_refused_capital }
+	}
+	else_if = {
+		limit = { local_var:cm_ln_fail = 3 }
+		cmf_log = { action = cm_ln_log_refused_rank }
+	}
+	else_if = {
+		limit = { local_var:cm_ln_fail = 4 }
+		cmf_log = { action = cm_ln_log_refused_route }
+	}
+	else_if = {
+		limit = { local_var:cm_ln_fail = 5 }
+		cmf_log = { action = cm_ln_log_refused_naval }
+	}
+	else = {
+		cmf_log = { action = cm_ln_log_refused_unknown }
 	}
 }
 
