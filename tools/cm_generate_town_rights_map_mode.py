@@ -985,9 +985,12 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
             if gi == 1:
                 continue
             lines.append(f"\t# {gate_comment(opts)}")
-            lines.append("\tif = {")
-            lines.append(f"\t\tlimit = {{ {gate} }}")
-            lines.append(f"\t\tmin = cm_trmm_covp_{good}_g{gi}")
+            lines.append("\tmin = {")
+            lines.append("\t\tvalue = 0")
+            lines.append("\t\tif = {")
+            lines.append(f"\t\t\tlimit = {{ {gate} }}")
+            lines.append(f"\t\t\tadd = cm_trmm_covp_{good}_g{gi}")
+            lines.append("\t\t}")
             lines.append("\t}")
         if good in self_goods:
             lines.append("\t# The right's output modifier also boosts this raw material's own RGO, so")
@@ -1032,10 +1035,13 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
     lines.append("cm_trmm_granted_best = {")
     lines.append("\tvalue = 0")
     for right in ROYAL_RIGHTS:
-        lines.append("\tif = {")
+        lines.append("\tmin = {")
+        lines.append("\t\tvalue = 0")
+        lines.append("\t\tif = {")
         lines.append(
-            f"\t\tlimit = {{ has_town_rights = town_rights_type:{right} }}")
-        lines.append(f"\t\tmin = cm_trmm_right_{aliases[right]}")
+            f"\t\t\tlimit = {{ has_town_rights = town_rights_type:{right} }}")
+        lines.append(f"\t\t\tadd = cm_trmm_right_{aliases[right]}")
+        lines.append("\t\t}")
         lines.append("\t}")
     lines.append("}")
     lines.append("cm_trmm_granted_miss = {")
