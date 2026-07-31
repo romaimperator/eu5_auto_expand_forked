@@ -140,7 +140,6 @@ cm_ln_reorg_begin = {
 	set_variable = { name = cm_ln_cooldown value = 1 days = @cm_ln_cooldown_days }
 	set_variable = { name = cm_ln_gov_cooldown value = 1 days = @cm_ln_gov_cooldown_days }
 	set_variable = { name = cm_ln_age value = 0 }
-	set_variable = { name = cm_ln_free_credits value = 0 }
 	set_variable = { name = cm_ln_plan_n value = 0 }
 	remove_variable = cm_ln_plan_exhausted
 	clear_variable_list = cm_ln_plan
@@ -162,6 +161,10 @@ cm_ln_reorg_begin = {
 		remove_variable = cm_ln_rank_wait
 		remove_variable = cm_ln_place_tries
 		remove_variable = cm_ln_paid
+	}
+	every_owned_location = {
+		limit = { has_variable = cm_ln_seat_score }
+		remove_variable = cm_ln_seat_score
 	}
 	# The capital move's remove_if can destroy seats outright, and a seat lost that way is
 	# ours to replace at no cost.
@@ -492,6 +495,7 @@ cm_ln_reorg_record_pick = {
 # Root is the country, scope:cm_country set.
 cm_ln_reorg_classify = {
 	remove_global_variable = cm_ln_token
+	cm_ln_record_seat_scores = yes
 	cm_ln_strip_finder_outputs = yes
 	cm_ln_pf_settings_off = yes
 	clear_variable_list = cm_ln_pending
@@ -522,11 +526,25 @@ cm_ln_reorg_classify = {
 		save_scope_as = cm_ln_seat
 		if = {
 			limit = { scope:cm_ln_seat = { cm_location_has_governor = no } }
-			scope:cm_country = { change_variable = { name = cm_ln_free_credits add = 1 } }
+			scope:cm_country = { cm_ln_grant_gov_credit = yes }
 		}
 	}
 	clear_variable_list = cm_ln_pre_seats
 	set_variable = { name = cm_ln_phase value = 5 }
+}
+
+# cm_ln_free_a_seat ranks the seats the plan did not pick by the finder's own governor score, and
+# cm_ln_strip_finder_outputs is about to remove it, so every standing seat keeps a copy.
+# Root is the country.
+cm_ln_record_seat_scores = {
+	every_owned_location = {
+		limit = { cm_location_has_governor = yes }
+		set_variable = { name = cm_ln_seat_score value = 0 }
+		if = {
+			limit = { has_variable = cm_gf_score }
+			set_variable = { name = cm_ln_seat_score value = var:cm_gf_score }
+		}
+	}
 }
 
 # A conquered location would otherwise hand the player an AI's scores until their own run
@@ -552,13 +570,14 @@ cm_ln_strip_finder_outputs = {
 	remove_variable = cm_pf_fresh_c
 }
 
-# Root is the country, scope:cm_country set.
+# No slot test here: cm_ln_gov_slot_open answers for land or naval room anywhere, which says nothing
+# about the kind the best pending site needs, and a site whose own kind is capped is what the
+# placement hands to the relocation phase. Root is the country, scope:cm_country set.
 cm_ln_reorg_place_step = {
 	if = {
 		limit = {
 			has_variable_list = cm_ln_pending
 			variable_list_size = { name = cm_ln_pending value >= 1 }
-			cm_ln_gov_slot_open = yes
 		}
 		cm_ln_place_next = { FREE = no }
 	}
@@ -639,20 +658,15 @@ cm_ln_reorg_confirm_step = {
 	}
 }
 
-# Every site left needs a seat freed first, or a credit for one the capital move destroyed.
-# Root is the country, scope:cm_country set.
+# Every site left is one the engine refuses until a seat goes, so this phase is the placement again
+# with permission to give one up. Root is the country, scope:cm_country set.
 cm_ln_reorg_move_step = {
 	if = {
 		limit = {
 			has_variable_list = cm_ln_pending
 			variable_list_size = { name = cm_ln_pending value >= 1 }
-			OR = {
-				var:cm_ln_free_credits > 0
-				AND = {
-					has_variable_list = cm_ln_moves
-					variable_list_size = { name = cm_ln_moves value >= 1 }
-				}
-			}
+			has_variable_list = cm_ln_moves
+			variable_list_size = { name = cm_ln_moves value >= 1 }
 		}
 		cm_ln_place_next = { FREE = yes }
 	}
@@ -668,7 +682,6 @@ cm_ln_reorg_teardown = {
 	remove_variable = cm_ln_cap_target
 	remove_variable = cm_ln_land_left
 	remove_variable = cm_ln_naval_left
-	remove_variable = cm_ln_free_credits
 	remove_variable = cm_ln_plan_n
 	remove_variable = cm_ln_plan_exhausted
 	remove_variable = cm_ln_replan
@@ -690,6 +703,10 @@ cm_ln_reorg_teardown = {
 		remove_variable = cm_ln_rank_wait
 		remove_variable = cm_ln_place_tries
 		remove_variable = cm_ln_paid
+	}
+	every_owned_location = {
+		limit = { has_variable = cm_ln_seat_score }
+		remove_variable = cm_ln_seat_score
 	}
 	remove_global_variable = cm_ln_token
 	cm_ln_pf_settings_off = yes
@@ -1006,8 +1023,8 @@ cm_ln_gov_probe = {
 
 	set_local_variable = { name = cm_ln_dbg value = 0 }
 	if = {
-		limit = { exists = var:cm_ln_paid_credits }
-		set_local_variable = { name = cm_ln_dbg value = var:cm_ln_paid_credits }
+		limit = { exists = var:cm_ln_gov_credits }
+		set_local_variable = { name = cm_ln_dbg value = var:cm_ln_gov_credits }
 	}
 	cmf_log_value = { action = cm_log_gov_credits value = local_var:cm_ln_dbg }
 

@@ -119,6 +119,17 @@ cm_ln_gov_naval_slots = {
 	min = 0
 }
 
+# Location scope. Negated so ordered_in_list at position 0 takes the lowest-scoring seat, the same
+# shape cm_fa_cu_close_pass uses with cm_fa_cu_neg_profit to take the worst first. A seat the run
+# never scored reads 0 and is given up before any that did.
+cm_ln_seat_neg_score = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_ln_seat_score }
+		subtract = var:cm_ln_seat_score
+	}
+}
+
 # Country scope. The room a replan has left to fill: the same counts cm_fa_gov_has_land_room and
 # cm_fa_gov_has_naval_room compare, as a number rather than a verdict.
 cm_ln_gov_land_free = {

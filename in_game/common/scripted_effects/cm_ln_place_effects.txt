@@ -14,8 +14,8 @@
 @cm_ln_place_max_tries = 5
 
 # Places at the best-ranked pending site that needs neither a road nor a rank, so a site still
-# urbanizing does not hold up the ones behind it. $FREE$ = yes when the placement pairs with a
-# seat being given up. Root is the country, scope:cm_country set.
+# urbanizing does not hold up the ones behind it. $FREE$ = yes grants permission to give up a seat
+# to make room. Root is the country, scope:cm_country set.
 cm_ln_place_next = {
 	ordered_in_list = {
 		variable = cm_ln_pending
@@ -351,48 +351,74 @@ cm_ln_clear_road_state = {
 	set_variable = { name = cm_ln_road_tries value = 0 }
 }
 
-# Three ways a governor lands here: a relocation gives up a seat and rebuilds free, a country owed a
-# governor it already paid for spends that credit and is not charged twice, and anything else pays.
+# $FREE$ = yes grants permission to give up a seat when the engine refuses the site, which is what
+# the relocation phase passes; it does not make the placement itself free. Credits do that.
 # Root is the country, scope:cm_country, scope:cm_ln_target and scope:cm_building_type set.
 cm_ln_do_placement = {
 	scope:cm_ln_target = { save_temporary_scope_as = cm_location }
 	if = {
 		limit = { scope:cm_ln_target = { cm_location_allowed_to_build = { target = scope:cm_building_type } } }
+		cm_ln_place_allowed_target = yes
+	}
+	else_if = {
+		# The governor cap lives inside vanilla's own allow block, so the engine keeps refusing until
+		# the seat the plan does not want is gone: in_game/common/building_types/capital_buildings.txt
+		# local_governor allow :622. Freeing it here rather than ahead of the check is the whole
+		# difference between a relocation landing and the site being refused until it is given up.
+		limit = {
+			always = $FREE$
+			has_variable_list = cm_ln_moves
+			variable_list_size = { name = cm_ln_moves value >= 1 }
+		}
+		cm_ln_free_a_seat = yes
+		cmf_log = { action = cm_ln_log_gov_moved }
 		if = {
-			limit = { always = $FREE$ }
-			cm_ln_free_a_seat = yes
-			cm_ln_construct_governor_free = { REASON = cm_ln_gov_relocation }
-			cmf_log = { action = cm_ln_log_gov_moved }
-			remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
-		}
-		else_if = {
-			limit = { cm_ln_has_paid_credit = yes }
-			change_variable = { name = cm_ln_paid_credits subtract = 1 }
-			cm_ln_construct_governor_free = { REASON = cm_ln_gov_paid_replacement }
-			cmf_log = { action = cm_ln_log_gov_replaced }
-			remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
-		}
-		else_if = {
-			limit = { cm_check_country_gold_above = { threshold = cm_ln_placement_gold_threshold } }
-			scope:cm_ln_target = {
-				construct_building = {
-					building_type = scope:cm_building_type
-					owner = scope:cm_country
-					payer = scope:cm_country
-				}
-				# What makes the retry free if this order comes to nothing.
-				set_variable = { name = cm_ln_paid value = 1 }
-			}
-			cmf_log = { action = cm_ln_log_gov_placed }
-			remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+			limit = { scope:cm_ln_target = { cm_location_allowed_to_build = { target = scope:cm_building_type } } }
+			cm_ln_place_allowed_target = yes
 		}
 	}
 	else = {
-		# The engine refuses this site, which saving gold cannot fix, so it spends a try and the
-		# plan gives it up once they run out rather than holding the treasury against it forever.
 		cm_ln_place_fail_reason = yes
 		cm_ln_log_place_refused = yes
-		cm_ln_place_retry_or_drop = { SITE = scope:cm_ln_target }
+		if = {
+			# The slot cap is the one refusal giving up a seat fixes, so the site moves to the phase
+			# that can free one instead of spending a try where nothing can.
+			limit = {
+				local_var:cm_ln_fail = 1
+				NOT = { always = $FREE$ }
+			}
+			set_variable = { name = cm_ln_phase value = 6 }
+		}
+		else = {
+			cm_ln_place_retry_or_drop = { SITE = scope:cm_ln_target }
+		}
+	}
+}
+
+# The placement itself, once the engine has agreed to the site: free on a credit the country is owed,
+# paid otherwise. Root is the country, scope:cm_country, scope:cm_ln_target and
+# scope:cm_building_type set.
+cm_ln_place_allowed_target = {
+	if = {
+		limit = { cm_ln_has_gov_credit = yes }
+		change_variable = { name = cm_ln_gov_credits subtract = 1 }
+		cm_ln_construct_governor_free = yes
+		cmf_log = { action = cm_ln_log_gov_replaced }
+		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+	}
+	else_if = {
+		limit = { cm_check_country_gold_above = { threshold = cm_ln_placement_gold_threshold } }
+		scope:cm_ln_target = {
+			construct_building = {
+				building_type = scope:cm_building_type
+				owner = scope:cm_country
+				payer = scope:cm_country
+			}
+			# What makes the retry free if this order comes to nothing.
+			set_variable = { name = cm_ln_paid value = 1 }
+		}
+		cmf_log = { action = cm_ln_log_gov_placed }
+		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
 	}
 }
 
@@ -426,13 +452,12 @@ cm_ln_log_place_refused = {
 
 # Instant, so an AI that cancels its own construction cannot take this one away either.
 # Root is the country, scope:cm_country, scope:cm_ln_target and scope:cm_building_type set.
-# $REASON$ = the cost modifier reason loc key.
 cm_ln_construct_governor_free = {
 	scope:cm_ln_target = {
 		construct_building = {
 			building_type = scope:cm_building_type
 			cost_multiplier = 0
-			cost_multiplier_reason = $REASON$
+			cost_multiplier_reason = cm_ln_gov_paid_replacement
 			instant = yes
 			owner = scope:cm_country
 			payer = scope:cm_country
@@ -440,47 +465,60 @@ cm_ln_construct_governor_free = {
 	}
 }
 
-# Banks the gold a lost order already spent. The credit is country-side rather than left on the
-# site, so it still covers the replacement when the site itself is given up.
-# Root is the country, scope:cm_country set. $SITE$ = the location.
+# Root is the country. $SITE$ = the location.
 cm_ln_bank_paid_credit = {
 	if = {
 		limit = { $SITE$ = { exists = var:cm_ln_paid } }
 		$SITE$ = { remove_variable = cm_ln_paid }
-		if = {
-			limit = { NOT = { exists = var:cm_ln_paid_credits } }
-			set_variable = { name = cm_ln_paid_credits value = 0 }
-		}
-		change_variable = { name = cm_ln_paid_credits add = 1 }
+		cm_ln_grant_gov_credit = yes
 	}
 }
 
-# Gives up one seat the plan does not want, or spends a credit for one the capital move
-# already destroyed. Root is the country, scope:cm_country set.
-cm_ln_free_a_seat = {
+# One governor the country may place at no cost. Country-side rather than left on the site it was
+# earned at, so it still covers the replacement when that site is given up.
+# Root is the country.
+cm_ln_grant_gov_credit = {
 	if = {
-		limit = {
-			has_variable_list = cm_ln_moves
-			variable_list_size = { name = cm_ln_moves value >= 1 }
-		}
-		ordered_in_list = {
-			variable = cm_ln_moves
-			order_by = max_control
-			position = 0
-			check_range_bounds = no
-			save_scope_as = cm_ln_seat
-			every_buildings_in_location = {
-				limit = {
-					owner = scope:cm_country
-					building_type = { cm_ln_is_governor_type = yes }
-				}
-				save_scope_as = cm_ln_bld
-				scope:cm_ln_seat = { destroy_building = scope:cm_ln_bld }
+		limit = { NOT = { exists = var:cm_ln_gov_credits } }
+		set_variable = { name = cm_ln_gov_credits value = 0 }
+	}
+	change_variable = { name = cm_ln_gov_credits add = 1 }
+}
+
+# Gives up the lowest-scoring seat the plan does not want and banks the credit for it, the seat
+# having been a placement the country could have made correctly in the first place. The plan's own
+# governor scores are the ranking; cm_ln_record_seat_scores keeps a copy of them because
+# cm_ln_strip_finder_outputs removes cm_gf_score at classify.
+# Root is the country, scope:cm_country set.
+cm_ln_free_a_seat = {
+	set_local_variable = { name = cm_ln_freed value = 0 }
+	ordered_in_list = {
+		variable = cm_ln_moves
+		order_by = cm_ln_seat_neg_score
+		position = 0
+		check_range_bounds = no
+		# cm_ln_moves is built once at classify and a seat can lose its governor to a war or to
+		# vanilla's own remove_if afterwards, so only one still standing can make room.
+		limit = { cm_location_has_governor = yes }
+		save_scope_as = cm_ln_seat
+		set_local_variable = { name = cm_ln_freed value = 1 }
+		every_buildings_in_location = {
+			limit = {
+				owner = scope:cm_country
+				building_type = { cm_ln_is_governor_type = yes }
 			}
+			save_scope_as = cm_ln_bld
+			scope:cm_ln_seat = { destroy_building = scope:cm_ln_bld }
 		}
+	}
+	if = {
+		limit = { local_var:cm_ln_freed = 1 }
 		remove_list_variable = { name = cm_ln_moves target = scope:cm_ln_seat }
+		cm_ln_grant_gov_credit = yes
 	}
 	else = {
-		change_variable = { name = cm_ln_free_credits subtract = 1 }
+		# Nothing in the list still holds a governor, so there is no room here to make and the
+		# relocation phase should stop asking for one.
+		clear_variable_list = cm_ln_moves
 	}
 }
