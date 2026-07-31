@@ -292,10 +292,8 @@ cm_q_fb_build_levels = {
 				# what actually ends the batch.
 				local_var:cm_fb_guard < 99
 				cm_country_can_afford_staged_cost = yes
-				# max_levels of 0 or less reads as uncapped. The owner param is omitted because
-				# building_type_max_level accepts only a link there, and no link reaches the builder
-				# from a location it does not own. Every foreign cap either ignores scope:owner or
-				# reads the bare owner link anyway, so the host stands in harmlessly;
+				# max_levels of 0 or less reads as uncapped. Every foreign cap either ignores
+				# scope:owner or reads the bare owner link anyway, so the host stands in harmlessly;
 				# hanseatic_shipwright_guild_max_level is the one that reads scope:owner.modifier and
 				# under-reports here, which the third branch turns into one level per cycle.
 				OR = {
@@ -366,8 +364,8 @@ cm_q_pick_best_build_item = {
 						cm_get_open_build_queue_slots > 0
 						scope:cm_building_type = { cm_is_building_type_production_building = yes }
 						OR = {
-							building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
-							building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_q_copy_type_levels }
+							building_type_max_level = { building_type = scope:cm_building_type value <= 0 }
+							building_type_max_level = { building_type = scope:cm_building_type value > local_var:cm_q_copy_type_levels }
 						}
 						cm_country_can_afford_staged_cost = no
 					}
@@ -420,8 +418,8 @@ cm_q_fill_build_slots = {
 			scope:cm_building_type = { cm_is_building_type_production_building = yes }
 			# The batch's own count against the cap.
 			OR = {
-				building_type_max_level = { building_type = scope:cm_building_type owner = owner value <= 0 }
-				building_type_max_level = { building_type = scope:cm_building_type owner = owner value > local_var:cm_q_copy_type_levels }
+				building_type_max_level = { building_type = scope:cm_building_type value <= 0 }
+				building_type_max_level = { building_type = scope:cm_building_type value > local_var:cm_q_copy_type_levels }
 			}
 			$AFFORD$ = yes
 		}
