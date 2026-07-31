@@ -1,0 +1,352 @@
+﻿# Auto-urbanize rejection probe, read in the CMM log pane:
+#
+#   effect c:<TAG> = { cm_urb_probe = yes }
+#   effect location:<key> = { cm_urb_site_probe = yes }
+#
+# The country probe buckets every owned town and rural settlement by the first staging gate it
+# fails; the site probe runs the same classification over one location. Both then print the gold
+# state, any country gate that is off, and what the last drain did with the items it was handed.
+# A bucket prints only when its count is nonzero, so an absent line means zero.
+
+# Zeroes the staging classification counters so cm_urb_dbg_line can read every one. Root is the
+# country.
+cm_urb_dbg_reset = {
+	set_variable = { name = cm_urb_dbg_towns value = 0 }
+	set_variable = { name = cm_urb_dbg_c_conq value = 0 }
+	set_variable = { name = cm_urb_dbg_c_prox value = 0 }
+	set_variable = { name = cm_urb_dbg_c_pop value = 0 }
+	set_variable = { name = cm_urb_dbg_c_lock value = 0 }
+	set_variable = { name = cm_urb_dbg_c_have value = 0 }
+	set_variable = { name = cm_urb_dbg_c_disc value = 0 }
+	set_variable = { name = cm_urb_dbg_c_place value = 0 }
+	set_variable = { name = cm_urb_dbg_c_ok value = 0 }
+	set_variable = { name = cm_urb_dbg_rurals value = 0 }
+	set_variable = { name = cm_urb_dbg_t_conq value = 0 }
+	set_variable = { name = cm_urb_dbg_t_prox value = 0 }
+	set_variable = { name = cm_urb_dbg_t_pop value = 0 }
+	set_variable = { name = cm_urb_dbg_t_rgo value = 0 }
+	set_variable = { name = cm_urb_dbg_t_food value = 0 }
+	set_variable = { name = cm_urb_dbg_t_fapick value = 0 }
+	set_variable = { name = cm_urb_dbg_t_lock value = 0 }
+	set_variable = { name = cm_urb_dbg_t_have value = 0 }
+	set_variable = { name = cm_urb_dbg_t_disc value = 0 }
+	set_variable = { name = cm_urb_dbg_t_place value = 0 }
+	set_variable = { name = cm_urb_dbg_t_ok value = 0 }
+}
+
+cm_urb_dbg_clear = {
+	remove_variable = cm_urb_dbg_towns
+	remove_variable = cm_urb_dbg_c_conq
+	remove_variable = cm_urb_dbg_c_prox
+	remove_variable = cm_urb_dbg_c_pop
+	remove_variable = cm_urb_dbg_c_lock
+	remove_variable = cm_urb_dbg_c_have
+	remove_variable = cm_urb_dbg_c_disc
+	remove_variable = cm_urb_dbg_c_place
+	remove_variable = cm_urb_dbg_c_ok
+	remove_variable = cm_urb_dbg_rurals
+	remove_variable = cm_urb_dbg_t_conq
+	remove_variable = cm_urb_dbg_t_prox
+	remove_variable = cm_urb_dbg_t_pop
+	remove_variable = cm_urb_dbg_t_rgo
+	remove_variable = cm_urb_dbg_t_food
+	remove_variable = cm_urb_dbg_t_fapick
+	remove_variable = cm_urb_dbg_t_lock
+	remove_variable = cm_urb_dbg_t_have
+	remove_variable = cm_urb_dbg_t_disc
+	remove_variable = cm_urb_dbg_t_place
+	remove_variable = cm_urb_dbg_t_ok
+}
+
+# Buckets one town-rank location by the first town-to-city gate it fails, in the order
+# cm_location_can_mass_upgrade_to_city tests them. The Found building is saved into
+# cm_building_type so the discount check reads this path's type rather than one an earlier
+# location left behind. Root is the location, expects scope:cm_country.
+cm_urb_dbg_classify_city = {
+	building_type:cm_upgrade_town_to_city_building = { save_temporary_scope_as = cm_building_type }
+	scope:cm_country = { change_variable = { name = cm_urb_dbg_towns add = 1 } }
+	if = {
+		limit = { integration_level = conquered }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_c_conq add = 1 } }
+	}
+	else_if = {
+		limit = { NOT = { cm_ln_location_proximity_ok = yes } }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_c_prox add = 1 } }
+	}
+	else_if = {
+		limit = { population < 30 }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_c_pop add = 1 } }
+	}
+	else_if = {
+		limit = { modifier:cannot_upgrade_location = yes }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_c_lock add = 1 } }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_building = building_type:cm_upgrade_town_to_city_building
+				any_buildings_in_location = { building_type = building_type:cm_upgrade_town_to_city_building building_levels_under_construction > 0 }
+			}
+		}
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_c_have add = 1 } }
+	}
+	else_if = {
+		limit = { NOT = { cm_mass_upgrade_town_to_city_discount_check = yes } }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_c_disc add = 1 } }
+	}
+	else_if = {
+		limit = { NOT = { cm_location_allowed_to_build = { target = building_type:cm_upgrade_town_to_city_building } } }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_c_place add = 1 } }
+	}
+	else = {
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_c_ok add = 1 } }
+	}
+}
+
+# Buckets one rural settlement by the first rural-to-town gate it fails, in the order
+# cm_location_can_mass_upgrade_to_town tests them. Root is the location, expects scope:cm_country.
+cm_urb_dbg_classify_town = {
+	building_type:cm_upgrade_rural_to_town_building = { save_temporary_scope_as = cm_building_type }
+	scope:cm_country = { change_variable = { name = cm_urb_dbg_rurals add = 1 } }
+	if = {
+		limit = { integration_level = conquered }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_t_conq add = 1 } }
+	}
+	else_if = {
+		limit = { NOT = { cm_ln_location_proximity_ok = yes } }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_t_prox add = 1 } }
+	}
+	else_if = {
+		limit = {
+			population < 30
+			cm_location_pop_at_or_near_cap = no
+		}
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_t_pop add = 1 } }
+	}
+	else_if = {
+		limit = { NOT = { cm_rural_to_town_rgo_not_ignored = yes } }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_t_rgo add = 1 } }
+	}
+	else_if = {
+		limit = { cm_location_reserved_by_mass_auto_food = yes }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_t_food add = 1 } }
+	}
+	else_if = {
+		limit = { cm_fa_location_is_system_food_picked = yes }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_t_fapick add = 1 } }
+	}
+	else_if = {
+		limit = { modifier:cannot_upgrade_location = yes }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_t_lock add = 1 } }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_building = building_type:cm_upgrade_rural_to_town_building
+				any_buildings_in_location = { building_type = building_type:cm_upgrade_rural_to_town_building building_levels_under_construction > 0 }
+			}
+		}
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_t_have add = 1 } }
+	}
+	else_if = {
+		limit = { NOT = { cm_mass_upgrade_rural_to_town_discount_check = yes } }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_t_disc add = 1 } }
+	}
+	else_if = {
+		limit = { NOT = { cm_location_allowed_to_build = { target = building_type:cm_upgrade_rural_to_town_building } } }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_t_place add = 1 } }
+	}
+	else = {
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_t_ok add = 1 } }
+	}
+}
+
+# Zeroes the drain counters. Called at the top of every urbanize drain, so the counts a probe
+# reads describe the cycle that ran most recently. Root is the country.
+cm_urb_dbg_drain_reset = {
+	set_variable = { name = cm_urb_dbg_d_items value = 0 }
+	set_variable = { name = cm_urb_dbg_d_noscore value = 0 }
+	set_variable = { name = cm_urb_dbg_d_stop value = 0 }
+	set_variable = { name = cm_urb_dbg_d_inelig value = 0 }
+	set_variable = { name = cm_urb_dbg_d_goods value = 0 }
+	set_variable = { name = cm_urb_dbg_d_gold value = 0 }
+	set_variable = { name = cm_urb_dbg_d_pass value = 0 }
+	remove_variable = cm_urb_dbg_d_cost
+}
+
+# Buckets one staged drain item by the gate it stops at, mirroring the drain body it runs ahead of.
+# Root is the location, expects scope:cm_country and scope:cm_building_type.
+cm_urb_dbg_drain_item = {
+	scope:cm_country = { change_variable = { name = cm_urb_dbg_d_items add = 1 } }
+	if = {
+		limit = {
+			OR = {
+				NOT = { has_variable_map = cm_q_urb_costs }
+				NOT = { is_key_in_variable_map = { name = cm_q_urb_costs target = scope:cm_building_type } }
+			}
+		}
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_d_noscore add = 1 } }
+	}
+	else_if = {
+		limit = { local_var:cm_q_urb_budget_exhausted = 1 }
+		scope:cm_country = { change_variable = { name = cm_urb_dbg_d_stop add = 1 } }
+	}
+	else = {
+		save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_q_urb_costs|scope:cm_building_type)" }
+		market = { save_temporary_scope_as = cm_market }
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						scope:cm_building_type = building_type:cm_upgrade_town_to_city_building
+						cm_location_can_mass_upgrade_to_city = yes
+					}
+					AND = {
+						scope:cm_building_type = building_type:cm_upgrade_rural_to_town_building
+						cm_location_can_mass_upgrade_to_town = yes
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { cm_market_has_construction_goods_for_building = yes } }
+				scope:cm_country = { change_variable = { name = cm_urb_dbg_d_goods add = 1 } }
+			}
+			else_if = {
+				limit = { NOT = { cm_country_can_afford_staged_cost = yes } }
+				scope:cm_country = {
+					change_variable = { name = cm_urb_dbg_d_gold add = 1 }
+					if = {
+						limit = { NOT = { exists = var:cm_urb_dbg_d_cost } }
+						set_variable = { name = cm_urb_dbg_d_cost value = scope:cm_cost }
+					}
+				}
+			}
+			else = {
+				scope:cm_country = { change_variable = { name = cm_urb_dbg_d_pass add = 1 } }
+			}
+		} else = {
+			scope:cm_country = { change_variable = { name = cm_urb_dbg_d_inelig add = 1 } }
+		}
+	}
+}
+
+# Prints one bucket, skipping it when nothing landed in it. Root is the country.
+cm_urb_dbg_line = {
+	if = {
+		limit = { var:$V$ > 0 }
+		cmf_log_value = { action = $ACTION$ value = var:$V$ }
+	}
+}
+
+# Prints the probe result. Root is the country.
+cm_urb_dbg_log = {
+	cmf_log_value = { action = cm_log_urb_gold value = gold }
+	cmf_log_value = { action = cm_log_urb_reserve value = cm_get_minimum_gold }
+	if = {
+		limit = { exists = var:cm_q_planned_spend }
+		cmf_log_value = { action = cm_log_urb_planned value = var:cm_q_planned_spend }
+	}
+	if = {
+		limit = { cm_should_pause_auto_expand = yes }
+		cmf_log = { action = cm_log_urb_paused }
+	}
+	if = {
+		limit = { exists = var:cm_ln_hold }
+		cmf_log = { action = cm_log_urb_hold }
+	}
+	if = {
+		limit = {
+			NOT = {
+				AND = {
+					has_variable_list = cm_priority_features_enabled
+					is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_urbanize }
+				}
+			}
+		}
+		cmf_log = { action = cm_log_urb_feature }
+	}
+	if = {
+		limit = { NOT = { exists = var:cm_urbanize_town_to_city } }
+		cmf_log = { action = cm_log_urb_city_off }
+	}
+	if = {
+		limit = { NOT = { exists = var:cm_urbanize_rural_to_town } }
+		cmf_log = { action = cm_log_urb_town_off }
+	}
+	cmf_log_value = { action = cm_log_urb_towns value = var:cm_urb_dbg_towns }
+	cm_urb_dbg_line = { V = cm_urb_dbg_c_conq ACTION = cm_log_urb_c_conq }
+	cm_urb_dbg_line = { V = cm_urb_dbg_c_prox ACTION = cm_log_urb_c_prox }
+	cm_urb_dbg_line = { V = cm_urb_dbg_c_pop ACTION = cm_log_urb_c_pop }
+	cm_urb_dbg_line = { V = cm_urb_dbg_c_lock ACTION = cm_log_urb_c_lock }
+	cm_urb_dbg_line = { V = cm_urb_dbg_c_have ACTION = cm_log_urb_c_have }
+	cm_urb_dbg_line = { V = cm_urb_dbg_c_disc ACTION = cm_log_urb_c_disc }
+	cm_urb_dbg_line = { V = cm_urb_dbg_c_place ACTION = cm_log_urb_c_place }
+	cmf_log_value = { action = cm_log_urb_c_ok value = var:cm_urb_dbg_c_ok }
+	cmf_log_value = { action = cm_log_urb_rurals value = var:cm_urb_dbg_rurals }
+	cm_urb_dbg_line = { V = cm_urb_dbg_t_conq ACTION = cm_log_urb_t_conq }
+	cm_urb_dbg_line = { V = cm_urb_dbg_t_prox ACTION = cm_log_urb_t_prox }
+	cm_urb_dbg_line = { V = cm_urb_dbg_t_pop ACTION = cm_log_urb_t_pop }
+	cm_urb_dbg_line = { V = cm_urb_dbg_t_rgo ACTION = cm_log_urb_t_rgo }
+	cm_urb_dbg_line = { V = cm_urb_dbg_t_food ACTION = cm_log_urb_t_food }
+	cm_urb_dbg_line = { V = cm_urb_dbg_t_fapick ACTION = cm_log_urb_t_fapick }
+	cm_urb_dbg_line = { V = cm_urb_dbg_t_lock ACTION = cm_log_urb_t_lock }
+	cm_urb_dbg_line = { V = cm_urb_dbg_t_have ACTION = cm_log_urb_t_have }
+	cm_urb_dbg_line = { V = cm_urb_dbg_t_disc ACTION = cm_log_urb_t_disc }
+	cm_urb_dbg_line = { V = cm_urb_dbg_t_place ACTION = cm_log_urb_t_place }
+	cmf_log_value = { action = cm_log_urb_t_ok value = var:cm_urb_dbg_t_ok }
+	if = {
+		limit = { exists = var:cm_urb_dbg_d_items }
+		cmf_log_value = { action = cm_log_urb_d_items value = var:cm_urb_dbg_d_items }
+		cm_urb_dbg_line = { V = cm_urb_dbg_d_noscore ACTION = cm_log_urb_d_noscore }
+		cm_urb_dbg_line = { V = cm_urb_dbg_d_stop ACTION = cm_log_urb_d_stop }
+		cm_urb_dbg_line = { V = cm_urb_dbg_d_inelig ACTION = cm_log_urb_d_inelig }
+		cm_urb_dbg_line = { V = cm_urb_dbg_d_goods ACTION = cm_log_urb_d_goods }
+		cm_urb_dbg_line = { V = cm_urb_dbg_d_gold ACTION = cm_log_urb_d_gold }
+		cm_urb_dbg_line = { V = cm_urb_dbg_d_pass ACTION = cm_log_urb_d_pass }
+	}
+	if = {
+		limit = { exists = var:cm_urb_dbg_d_cost }
+		cmf_log_value = { action = cm_log_urb_d_cost value = var:cm_urb_dbg_d_cost }
+	}
+}
+
+# effect c:<TAG> = { cm_urb_probe = yes }
+# Root is the country.
+cm_urb_probe = {
+	save_scope_as = cm_country
+	cm_urb_dbg_reset = yes
+	every_owned_location = {
+		limit = { location_rank = location_rank:town }
+		cm_urb_dbg_classify_city = yes
+	}
+	every_owned_location = {
+		limit = { location_rank = location_rank:rural_settlement }
+		cm_urb_dbg_classify_town = yes
+	}
+	cm_urb_dbg_log = yes
+	cm_urb_dbg_clear = yes
+}
+
+# effect location:<key> = { cm_urb_site_probe = yes }
+# Root is the location.
+cm_urb_site_probe = {
+	if = {
+		limit = { exists = owner }
+		owner = {
+			save_scope_as = cm_country
+			cm_urb_dbg_reset = yes
+		}
+		if = {
+			limit = { location_rank = location_rank:town }
+			cm_urb_dbg_classify_city = yes
+		}
+		else_if = {
+			limit = { location_rank = location_rank:rural_settlement }
+			cm_urb_dbg_classify_town = yes
+		}
+		scope:cm_country = {
+			cm_urb_dbg_log = yes
+			cm_urb_dbg_clear = yes
+		}
+	}
+}

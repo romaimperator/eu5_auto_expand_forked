@@ -1,0 +1,57 @@
+﻿# Counters behind cm_q_stop_probe, which confirms the batch stop-reason rework and says whether
+# the two remaining building_type_max_level call sites ran at all. Counting rather than logging
+# per event keeps the 200-entry CMM log free during play. The counters are GLOBAL so a drain run
+# by a lucky nation lands in the same place as the player's; on the country they would only ever
+# be readable from the country that ran the drain. Delete this file and its call sites once the
+# paths are confirmed.
+
+# $V$ = the counter name. Root is anything.
+cm_q_dbg_bump = {
+	if = {
+		limit = { NOT = { has_global_variable = $V$ } }
+		set_global_variable = { name = $V$ value = 0 }
+	}
+	change_global_variable = { name = $V$ add = 1 }
+}
+
+# Records why a cm_q_fill_build_slots batch ended. Expects local_var:cm_q_copy_stop.
+cm_q_dbg_record_stop = {
+	if = {
+		limit = { local_var:cm_q_copy_stop = 2 }
+		cm_q_dbg_bump = { V = cm_q_dbg_stop_gold }
+	}
+	else_if = {
+		limit = { local_var:cm_q_copy_stop = 1 }
+		cm_q_dbg_bump = { V = cm_q_dbg_stop_room }
+	}
+	else = {
+		cm_q_dbg_bump = { V = cm_q_dbg_stop_rank }
+	}
+}
+
+# Reads every counter out in one command, then clears them so a second run measures a fresh
+# window rather than the whole game.
+# effect c:<TAG> = { cm_q_stop_probe = yes }
+# Root is anything.
+cm_q_stop_probe = {
+	cm_q_dbg_log = { V = cm_q_dbg_stop_gold ACTION = cm_log_dbg_stop_gold }
+	cm_q_dbg_log = { V = cm_q_dbg_stop_room ACTION = cm_log_dbg_stop_room }
+	cm_q_dbg_log = { V = cm_q_dbg_stop_rank ACTION = cm_log_dbg_stop_rank }
+	cm_q_dbg_log = { V = cm_q_dbg_early_expand ACTION = cm_log_dbg_early_expand }
+	cm_q_dbg_log = { V = cm_q_dbg_early_industry ACTION = cm_log_dbg_early_industry }
+	cm_q_dbg_log = { V = cm_q_dbg_fb_levels ACTION = cm_log_dbg_fb_levels }
+	cm_q_dbg_log = { V = cm_q_dbg_batch_now ACTION = cm_log_dbg_batch_now }
+	cm_q_dbg_log = { V = cm_q_dbg_maxlevel_evals ACTION = cm_log_dbg_maxlevel_evals }
+}
+
+# $V$ = the counter name, $ACTION$ = its log key. An absent counter reads 0 rather than being
+# skipped, so a missing line never has to be told apart from a zero.
+cm_q_dbg_log = {
+	set_local_variable = { name = cm_q_dbg_v value = 0 }
+	if = {
+		limit = { has_global_variable = $V$ }
+		set_local_variable = { name = cm_q_dbg_v value = global_var:$V$ }
+		remove_global_variable = $V$
+	}
+	cmf_log_value = { action = $ACTION$ value = local_var:cm_q_dbg_v }
+}

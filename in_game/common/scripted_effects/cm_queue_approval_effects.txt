@@ -265,51 +265,24 @@ cm_q_pass_foreign = {
 	}
 }
 
-# Queues every level the site can still take, one construct_building per level. Its owner and
-# payer params are what make the player the owner of a building in someone else's location,
-# and because each call queues immediately there is no eight-level ceiling like the approved
-# rank lists impose on the engine build action.
+# Queues ONE level at the site. Its owner and payer params are what make the player the owner
+# of a building in someone else's location. One per cycle rather than a batch because
+# construct_building validates nothing: it places a level whatever the type's allow block,
+# need_good_relation or level cap say, so every level has to come through this gate
+# individually and the gate is checked immediately before the only construct. The batch that
+# used to live here bounded itself on building_type_max_level, whose error reads its
+# value <= 0 branch as uncapped; that put 33 trade office levels into a 3-slot location the
+# player had no relations to build in at all. The monthly top-up grows the site from here.
 # Root is the location. Expects scope:cm_country, scope:cm_building_type and scope:cm_cost.
 cm_q_fb_build_levels = {
 	if = {
 		limit = {
 			cm_fb_type_is_allowed = yes
 			cm_fb_location_can_expand = yes
+			cm_country_can_afford_staged_cost = yes
 		}
-		# Levels the type reaches once the batch completes.
-		set_local_variable = { name = cm_fb_lvl value = 0 }
-		if = {
-			limit = { cm_fb_has_own_building = yes }
-			"building(scope:cm_building_type|scope:cm_country)" = {
-				change_local_variable = { name = cm_fb_lvl add = building_level }
-				change_local_variable = { name = cm_fb_lvl add = building_levels_under_construction }
-			}
-		}
-		set_local_variable = { name = cm_fb_guard value = 0 }
-		while = {
-			limit = {
-				# 99 stays under the engine's 1000-iteration while abort; the level cap below is
-				# what actually ends the batch.
-				local_var:cm_fb_guard < 99
-				cm_country_can_afford_staged_cost = yes
-				# max_levels of 0 or less reads as uncapped. Every foreign cap either ignores
-				# scope:owner or reads the bare owner link anyway, so the host stands in harmlessly;
-				# hanseatic_shipwright_guild_max_level is the one that reads scope:owner.modifier and
-				# under-reports here, which the third branch turns into one level per cycle.
-				OR = {
-					building_type_max_level = { building_type = scope:cm_building_type value <= 0 }
-					building_type_max_level = { building_type = scope:cm_building_type value > local_var:cm_fb_lvl }
-					AND = {
-						local_var:cm_fb_guard = 0
-						cm_fb_has_own_building = yes
-						"building(scope:cm_building_type|scope:cm_country)" = { is_at_max_level = no }
-					}
-				}
-			}
-			change_local_variable = { name = cm_fb_guard add = 1 }
-			change_local_variable = { name = cm_fb_lvl add = 1 }
-			construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
-		}
+		construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
+		cm_q_dbg_bump = { V = cm_q_dbg_fb_levels }
 	}
 }
 
@@ -361,6 +334,7 @@ cm_q_pick_best_build_item = {
 					# candidate.
 					limit = { local_var:cm_q_copy_stop = 2 }
 					set_local_variable = { name = cm_q_budget_exhausted value = 1 }
+					cm_q_dbg_bump = { V = cm_q_dbg_early_expand }
 				}
 			}
 		} else = {
@@ -407,6 +381,7 @@ cm_q_fill_build_slots = {
 			local_var:cm_q_copy_guard < 7
 			local_var:cm_q_copy_stop = 0
 		}
+		cm_q_dbg_bump = { V = cm_q_dbg_maxlevel_evals }
 		if = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
@@ -432,6 +407,7 @@ cm_q_fill_build_slots = {
 			set_local_variable = { name = cm_q_copy_stop value = 1 }
 		}
 	}
+	cm_q_dbg_record_stop = yes
 }
 
 # Recomputes this location's best expand score after a pick, or retires the location from
@@ -849,6 +825,7 @@ cm_q_pass_auto_food = {
 # instead of founding the cheaper ones behind it. Root is the country.
 cm_q_pass_auto_urbanize = {
 	set_local_variable = { name = cm_q_urb_budget_exhausted value = 0 }
+	cm_urb_dbg_drain_reset = yes
 	if = {
 		limit = { has_variable_list = cm_q_urbanize_locations }
 		every_in_list = {
@@ -858,6 +835,7 @@ cm_q_pass_auto_urbanize = {
 				variable = cm_q_urbanize_building_types
 				save_scope_as = cm_building_type
 				scope:cm_q_pass_loc = {
+					cm_urb_dbg_drain_item = yes
 					if = {
 						limit = {
 							local_var:cm_q_urb_budget_exhausted = 0
