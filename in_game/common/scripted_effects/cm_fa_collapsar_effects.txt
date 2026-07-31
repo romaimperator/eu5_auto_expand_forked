@@ -30,35 +30,6 @@ cm_fa_stage_collapsar_market = {
 	}
 }
 
-# Console diagnostic: the capital market's masonry numbers, run on demand rather than from the
-# cycle so it costs the 200-entry log nothing during play.
-# effect c:<TAG> = { cm_fa_collapsar_probe_masonry = yes }
-# target_price fails by returning a number rather than by erroring, so reading it out is the only
-# way to know it works. Amounts and prices are logged x100 because the log prints whole numbers.
-# Root is the country.
-cm_fa_collapsar_probe_masonry = {
-	save_scope_as = cm_country
-	capital.market = { save_scope_as = cm_fa_market }
-	goods:masonry = { save_temporary_scope_as = cm_fa_good_t }
-	building_type:mason = { save_scope_as = cm_building_type }
-	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.goods_supply_in_market(scope:cm_fa_good_t)" multiply = 100 } }
-	cmf_log_value = { action = cm_log_cs_supply value = local_var:cm_fa_dbg }
-	set_local_variable = { name = cm_fa_dbg value = { value = scope:cm_fa_market.produced_in_market:masonry multiply = 100 } }
-	cmf_log_value = { action = cm_log_cs_produced value = local_var:cm_fa_dbg }
-	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.goods_demand_in_market(scope:cm_fa_good_t)" multiply = 100 } }
-	cmf_log_value = { action = cm_log_cs_demand value = local_var:cm_fa_dbg }
-	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.market_price(scope:cm_fa_good_t)" multiply = 100 } }
-	cmf_log_value = { action = cm_log_cs_price value = local_var:cm_fa_dbg }
-	set_local_variable = { name = cm_fa_dbg value = { value = "scope:cm_fa_market.target_price(scope:cm_fa_good_t)" multiply = 100 } }
-	cmf_log_value = { action = cm_log_cs_target value = local_var:cm_fa_dbg }
-	set_local_variable = { name = cm_fa_dbg value = { value = cm_fa_collapsar_goal_price multiply = 100 } }
-	cmf_log_value = { action = cm_log_cs_goal value = local_var:cm_fa_dbg }
-	set_local_variable = { name = cm_fa_dbg value = scope:cm_fa_market.cm_fa_collapsar_levels_wanted }
-	cmf_log_value = { action = cm_log_cs_wanted value = local_var:cm_fa_dbg }
-	set_local_variable = { name = cm_fa_dbg value = capital.cm_fa_collapsar_type_room }
-	cmf_log_value = { action = cm_log_cs_room value = local_var:cm_fa_dbg }
-}
-
 # Sets local_var:cm_fa_collapsar_want to the producer levels scope:cm_fa_collapsar_item's
 # shortfall needs in scope:cm_fa_market, and 0 once its goal price is reached. Leaves
 # scope:cm_building_type on the material's lead producer, whose per-level output is what turns
@@ -179,6 +150,8 @@ cm_fa_stage_collapsar_building = {
 	scope:cm_fa_market = {
 		ordered_location_in_market = {
 			order_by = cm_fa_collapsar_efficiency_order
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
 			limit = {
 				owner ?= scope:cm_country
 				NOT = { integration_level = conquered }
@@ -405,10 +378,7 @@ cm_fa_collapsar_approve_build = {
 				while = {
 					limit = {
 						local_var:cm_fa_collapsar_bld_guard < var:cm_fa_collapsar_levels
-						OR = {
-							building_type_max_level = { building_type = scope:cm_building_type value <= 0 }
-							building_type_max_level = { building_type = scope:cm_building_type value > local_var:cm_fa_collapsar_bld_levels }
-						}
+						local_var:cm_fa_collapsar_bld_levels < cm_fa_collapsar_type_cap
 						cm_fa_can_afford = { POOL = cm_fa_pool_collapsar }
 					}
 					change_local_variable = { name = cm_fa_collapsar_bld_guard add = 1 }

@@ -205,6 +205,52 @@ cm_fa_collapsar_rgo_room = {
 	min = 0
 }
 
+# The engine level cap for scope:cm_building_type here, read as the vanilla script value that
+# type's max_levels names. The building_type_max_level trigger answers the same question but logs
+# a script system error on every evaluation inside the collapsar's construct loop. An unmapped
+# type reads 0, which stops the loop rather than overbuilding.
+# Root is the location, expects scope:cm_building_type.
+cm_fa_collapsar_type_cap = {
+	value = 0
+	if = {
+		# mason: in_game/common/building_types/common_buildings.txt:118, glass_guild:
+		# production_glass.txt:7, rural_glassmaker: rural_buildings.txt:280
+		limit = {
+			OR = {
+				scope:cm_building_type = building_type:mason
+				scope:cm_building_type = building_type:glass_guild
+				scope:cm_building_type = building_type:rural_glassmaker
+			}
+		}
+		value = guild_max_level
+	}
+	else_if = {
+		# lumber_mill: common_buildings.txt:340, sand_pit: common_buildings.txt:428
+		limit = {
+			OR = {
+				scope:cm_building_type = building_type:lumber_mill
+				scope:cm_building_type = building_type:sand_pit
+			}
+		}
+		value = rural_building_cap
+	}
+	else_if = {
+		# production_glass.txt:65
+		limit = { scope:cm_building_type = building_type:glass_workshop }
+		value = workshop_max_level
+	}
+	else_if = {
+		# production_glass.txt:110
+		limit = { scope:cm_building_type = building_type:glassworks }
+		value = manufactory_max_level
+	}
+	else_if = {
+		# production_glass.txt:156
+		limit = { scope:cm_building_type = building_type:glass_mill }
+		value = mills_max_level
+	}
+}
+
 # This location's efficiency for scope:cm_building_type, which is the per-level output the
 # collapsar is buying. building_efficiency takes a literal type key, never a scope, hence the
 # chain. Root is the location, expects scope:cm_building_type.
