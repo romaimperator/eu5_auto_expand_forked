@@ -944,7 +944,7 @@ cm_ln_open_gov_place = {
 	}
 	if = {
 		limit = { exists = scope:cm_ln_open_gov_site }
-		cm_ln_open_gov_resolve_type = yes
+		cm_ln_resolve_placeable_type = { SITE = scope:cm_ln_open_gov_site }
 		scope:cm_ln_open_gov_site = { save_temporary_scope_as = cm_location }
 		# The charge stops at the treasury, so the placement lands even where the country
 		# cannot cover it.
@@ -964,6 +964,7 @@ cm_ln_open_gov_place = {
 		# The governor is months from standing, so the next search reads this site as a source
 		# from here rather than from the live proximity.
 		add_to_variable_list = { name = cm_ln_open_gov_sites target = scope:cm_ln_open_gov_site }
+		add_to_variable_list = { name = cm_ln_seats target = scope:cm_ln_open_gov_site }
 		cmf_log = { action = cm_ln_log_open_gov_placed }
 	}
 	else = {
@@ -971,21 +972,6 @@ cm_ln_open_gov_place = {
 		# reorganization to fill.
 		set_variable = { name = cm_ln_open_gov_left value = 0 }
 		cmf_log = { action = cm_ln_log_open_gov_none }
-	}
-}
-
-# Root is the country, scope:cm_country set. Expects scope:cm_ln_open_gov_site. Sets
-# scope:cm_building_type.
-cm_ln_open_gov_resolve_type = {
-	if = {
-		limit = {
-			cm_fa_gov_has_naval_room = yes
-			scope:cm_ln_open_gov_site = { cm_location_allowed_to_build = { target = building_type:naval_governor } }
-		}
-		building_type:naval_governor = { save_scope_as = cm_building_type }
-	}
-	else = {
-		building_type:local_governor = { save_scope_as = cm_building_type }
 	}
 }
 
@@ -1037,6 +1023,13 @@ cm_ln_gov_probe = {
 		change_local_variable = { name = cm_ln_dbg add = 1 }
 	}
 	cmf_log_value = { action = cm_log_gov_seats value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	every_in_list = {
+		variable = cm_ln_seats
+		change_local_variable = { name = cm_ln_dbg add = 1 }
+	}
+	cmf_log_value = { action = cm_log_gov_tracked value = local_var:cm_ln_dbg }
 
 	set_local_variable = { name = cm_ln_dbg value = gold }
 	cmf_log_value = { action = cm_log_gov_gold value = local_var:cm_ln_dbg }

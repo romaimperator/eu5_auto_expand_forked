@@ -12,6 +12,8 @@
 @cm_ln_rank_max_months = 60
 # Placements a site may swallow without a governor appearing before it is given up.
 @cm_ln_place_max_tries = 5
+# Yearly rebuilds a seat may be refused before it is given up.
+@cm_ln_seat_max_tries = 5
 
 # Places at the best-ranked pending site that needs neither a road nor a rank, so a site still
 # urbanizing does not hold up the ones behind it. $FREE$ = yes grants permission to give up a seat
@@ -258,11 +260,13 @@ cm_ln_apply_plan_drops = {
 cm_ln_drop_plan_site = {
 	cm_ln_bank_paid_credit = { SITE = $SITE$ }
 	remove_list_variable = { name = cm_ln_plan target = $SITE$ }
+	remove_list_variable = { name = cm_ln_seats target = $SITE$ }
 	$SITE$ = {
 		remove_variable = cm_ln_plan_ord
 		remove_variable = cm_ln_plan_naval
 		remove_variable = cm_ln_rank_wait
 		remove_variable = cm_ln_place_tries
+		remove_variable = cm_ln_seat_wait
 		if = {
 			limit = { owner ?= scope:cm_country }
 			set_variable = { name = cm_ln_probe_reject value = 1 }
@@ -274,6 +278,21 @@ cm_ln_drop_plan_site = {
 cm_ln_resolve_target_type = {
 	if = {
 		limit = { scope:cm_ln_target = { has_variable = cm_ln_plan_naval } }
+		building_type:naval_governor = { save_scope_as = cm_building_type }
+	}
+	else = {
+		building_type:local_governor = { save_scope_as = cm_building_type }
+	}
+}
+
+# The kind the engine will take at the site as it stands now, rather than the kind the plan recorded.
+# Root is the country, scope:cm_country set. $SITE$ = the location. Sets scope:cm_building_type.
+cm_ln_resolve_placeable_type = {
+	if = {
+		limit = {
+			cm_fa_gov_has_naval_room = yes
+			$SITE$ = { cm_location_allowed_to_build = { target = building_type:naval_governor } }
+		}
 		building_type:naval_governor = { save_scope_as = cm_building_type }
 	}
 	else = {
@@ -405,6 +424,7 @@ cm_ln_place_allowed_target = {
 		cm_ln_construct_governor_free = yes
 		cmf_log = { action = cm_ln_log_gov_replaced }
 		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+		add_to_variable_list = { name = cm_ln_seats target = scope:cm_ln_target }
 	}
 	else_if = {
 		limit = { cm_check_country_gold_above = { threshold = cm_ln_placement_gold_threshold } }
@@ -419,6 +439,7 @@ cm_ln_place_allowed_target = {
 		}
 		cmf_log = { action = cm_ln_log_gov_placed }
 		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
+		add_to_variable_list = { name = cm_ln_seats target = scope:cm_ln_target }
 	}
 }
 
@@ -514,6 +535,7 @@ cm_ln_free_a_seat = {
 	if = {
 		limit = { local_var:cm_ln_freed = 1 }
 		remove_list_variable = { name = cm_ln_moves target = scope:cm_ln_seat }
+		remove_list_variable = { name = cm_ln_seats target = scope:cm_ln_seat }
 		cm_ln_grant_gov_credit = yes
 	}
 	else = {
@@ -521,4 +543,88 @@ cm_ln_free_a_seat = {
 		# relocation phase should stop asking for one.
 		clear_variable_list = cm_ln_moves
 	}
+}
+
+# Rebuilds the governors that have gone missing from the seats this country was given, at no cost
+# because it already paid for each of them once. Stands aside while a reorganization runs, which
+# gives seats up on purpose and re-places them itself. Root is the country.
+cm_ln_seat_restore_pass = {
+	if = {
+		limit = {
+			has_variable_list = cm_ln_seats
+			OR = {
+				NOT = { exists = var:cm_ln_phase }
+				var:cm_ln_phase = 0
+			}
+		}
+		save_scope_as = cm_country
+		every_in_list = {
+			variable = cm_ln_seats
+			save_scope_as = cm_ln_target
+			# The walk puts the location in root, and the step writes country variables.
+			scope:cm_country = { cm_ln_seat_restore_step = yes }
+		}
+		cm_ln_apply_seat_drops = yes
+	}
+}
+
+# Root is the country, scope:cm_country and scope:cm_ln_target set.
+cm_ln_seat_restore_step = {
+	if = {
+		limit = { scope:cm_ln_target = { NOT = { owner ?= scope:cm_country } } }
+		add_to_variable_list = { name = cm_ln_seat_drop target = scope:cm_ln_target }
+	}
+	else_if = {
+		limit = {
+			scope:cm_ln_target = {
+				OR = {
+					cm_location_has_governor = yes
+					cm_ln_site_gov_under_construction = yes
+				}
+			}
+		}
+		scope:cm_ln_target = { remove_variable = cm_ln_seat_wait }
+	}
+	else_if = {
+		limit = { scope:cm_ln_target = { cm_fa_gov_location_placeable = yes } }
+		cm_ln_resolve_placeable_type = { SITE = scope:cm_ln_target }
+		cm_ln_construct_governor_free = yes
+		scope:cm_ln_target = { remove_variable = cm_ln_seat_wait }
+		cmf_log = { action = cm_ln_log_seat_restored }
+	}
+	else = {
+		scope:cm_ln_target = {
+			if = {
+				limit = { NOT = { exists = var:cm_ln_seat_wait } }
+				set_variable = { name = cm_ln_seat_wait value = 0 }
+			}
+			change_variable = { name = cm_ln_seat_wait add = 1 }
+		}
+		if = {
+			limit = { scope:cm_ln_target = { var:cm_ln_seat_wait >= @cm_ln_seat_max_tries } }
+			add_to_variable_list = { name = cm_ln_seat_drop target = scope:cm_ln_target }
+			cmf_log = { action = cm_ln_log_seat_given_up }
+		}
+	}
+}
+
+# Staged rather than immediate because the restore step decides them while cm_ln_seats is being
+# walked. Root is the country, scope:cm_country set.
+cm_ln_apply_seat_drops = {
+	every_in_list = {
+		variable = cm_ln_seat_drop
+		save_scope_as = cm_ln_s
+		remove_variable = cm_ln_seat_wait
+		scope:cm_country = { remove_list_variable = { name = cm_ln_seats target = scope:cm_ln_s } }
+	}
+	clear_variable_list = cm_ln_seat_drop
+}
+
+# Root is the country.
+cm_ln_clear_seats = {
+	every_in_list = {
+		variable = cm_ln_seats
+		remove_variable = cm_ln_seat_wait
+	}
+	clear_variable_list = cm_ln_seats
 }
