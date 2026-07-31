@@ -1,0 +1,135 @@
+﻿# Lucky Nations government upkeep: the two things outside construction a lucky nation is left to
+# the vanilla AI for. Monthly it sheds a bureaucracy it is over the limit on, and it takes the
+# three estate emergency actions on the mod's own conditions.
+
+# Each floor is vanilla's LOW_SATISFACTION_THRESHOLD, 0.5
+# (loading_screen/common/defines/00_defines.txt:1649), plus the action's own satisfaction cost, so
+# the estate lands at 0.5 rather than below it.
+
+# ask_burghers_for_loan costs 0.1: in_game/common/generic_actions/estate_emergency_actions.txt:505
+@cm_ln_est_burghers_floor = 0.6
+# ask_clergy_for_legitimacy costs 0.15: same file :324
+@cm_ln_est_clergy_floor = 0.65
+# ask_commoners_for_stability costs 0.2: same file :563
+@cm_ln_est_commoners_floor = 0.7
+
+# Below this the AI enters saving mode: AI_SAVING_MODE_GOVERNMENT_POWER_THRESHOLD,
+# loading_screen/common/defines/00_defines.txt:1396
+@cm_ln_est_gov_power_max = 85
+# Well above the stability < 10 the vanilla AI waits for
+# (in_game/common/generic_actions/estate_emergency_actions.txt:569), so the appeal is taken while
+# the country still has room to recover.
+@cm_ln_est_stability_max = 20
+
+# --- Bureaucracies ---
+
+# Sheds one bureaucracy a month while the country is over its limit. Mirrors the over-limit test in
+# vanilla's over_bureaucracy_limit auto modifier (in_game/common/auto_modifiers/country.txt:1493),
+# whose stability and court penalties scale with the overage.
+# remove_bureaucracy takes no price; the stability = 50 removal cost lives in the
+# remove_bureaucracy_action wrapper (in_game/common/generic_actions/bureaucracy_actions.txt:75).
+# Root is the country.
+cm_ln_bur_trim = {
+	if = {
+		limit = { max_bureaucracy_slots < num_bureaucracies }
+		save_scope_as = cm_ln_bur_ctry
+		# remove_bureaucracy is country scope and takes the bureaucracy as its target, the vanilla
+		# idiom at in_game/events/DHE/flavor_chi.txt:5203.
+		random_current_bureaucracy = {
+			scope:cm_ln_bur_ctry = { remove_bureaucracy = prev }
+		}
+		cmf_log = { action = cm_ln_log_bureaucracy_removed }
+	}
+}
+
+# --- Estate emergency actions ---
+
+# Fires one estate emergency action. can_do_generic_action carries the action's own potential and
+# allow, which is what keeps the burghers' minimum-pool arithmetic out of the mod; the cooldown is
+# checked by hand beside it, as vanilla does at in_game/common/generic_actions/mayan.txt:115.
+# $ACTION$ the generic action, $COOLDOWN$ its cooldown type, $EST$ the scope holding the estate to
+# target, $LOG$ the log key.
+# Root is the country, scope:cm_ln_est_ctry set.
+cm_ln_est_fire = {
+	if = {
+		limit = {
+			exists = scope:$EST$
+			NOT = { has_cooldown = $COOLDOWN$ }
+			can_do_generic_action = {
+				generic_action = generic_action:$ACTION$
+				target = scope:$EST$
+			}
+		}
+		fire_generic_action = {
+			type = $ACTION$
+			actor = scope:cm_ln_est_ctry
+			target = scope:$EST$
+		}
+		cmf_log = { action = $LOG$ }
+	}
+}
+
+# Root is the country.
+cm_ln_est_run = {
+	save_scope_as = cm_ln_est_ctry
+
+	every_estate = {
+		limit = {
+			estate_type = estate_type:burghers_estate
+			satisfaction >= @cm_ln_est_burghers_floor
+		}
+		save_scope_as = cm_ln_est_burghers
+	}
+	cm_ln_est_fire = {
+		ACTION = ask_burghers_for_loan
+		COOLDOWN = ask_burghers_for_loan_cooldown
+		EST = cm_ln_est_burghers
+		LOG = cm_ln_log_est_grant
+	}
+
+	if = {
+		limit = { government_power < @cm_ln_est_gov_power_max }
+		every_estate = {
+			limit = {
+				estate_type = estate_type:clergy_estate
+				satisfaction >= @cm_ln_est_clergy_floor
+			}
+			save_scope_as = cm_ln_est_clergy
+		}
+		cm_ln_est_fire = {
+			ACTION = ask_clergy_for_legitimacy
+			COOLDOWN = ask_clergy_for_legitimacy_cooldown
+			EST = cm_ln_est_clergy
+			LOG = cm_ln_log_est_endorsement
+		}
+	}
+
+	if = {
+		limit = { stability < @cm_ln_est_stability_max }
+		# The action takes either commoner estate, so the floor has to apply to the one actually
+		# targeted. Peasants first, dhimmi only where peasants do not clear it.
+		every_estate = {
+			limit = {
+				estate_type = estate_type:peasants_estate
+				satisfaction >= @cm_ln_est_commoners_floor
+			}
+			save_scope_as = cm_ln_est_commoners
+		}
+		if = {
+			limit = { NOT = { exists = scope:cm_ln_est_commoners } }
+			every_estate = {
+				limit = {
+					estate_type = estate_type:dhimmi_estate
+					satisfaction >= @cm_ln_est_commoners_floor
+				}
+				save_scope_as = cm_ln_est_commoners
+			}
+		}
+		cm_ln_est_fire = {
+			ACTION = ask_commoners_for_stability
+			COOLDOWN = ask_commoners_for_stability_cooldown
+			EST = cm_ln_est_commoners
+			LOG = cm_ln_log_est_appeal
+		}
+	}
+}
