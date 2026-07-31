@@ -473,16 +473,7 @@ cm_fa_pick_best_build_item = {
 					if = {
 						# The batch stopped on the pool or the treasury alone: stop all further
 						# Industry picks rather than let a worse candidate spend what is left.
-						limit = {
-							local_var:cm_q_copy_guard < 7
-							cm_get_open_build_queue_slots > 0
-							scope:cm_building_type = { cm_is_building_type_production_building = yes }
-							OR = {
-								building_type_max_level = { building_type = scope:cm_building_type value <= 0 }
-								building_type_max_level = { building_type = scope:cm_building_type value > local_var:cm_q_copy_type_levels }
-							}
-							NOT = { cm_fa_can_afford = { POOL = cm_fa_pool_industry } }
-						}
+						limit = { local_var:cm_q_copy_stop = 2 }
 						set_local_variable = { name = cm_fa_cost_blocked value = 1 }
 					}
 				}
