@@ -1,0 +1,89 @@
+﻿# Measured pop inflow per location, read by the cm_location_fill_rate_for_* script values.
+# The engine exposes no promotion, demotion or pop-growth value to script in location scope, and
+# the per-pop-type figures the game itself displays are all CString in GUI, so the rate is taken
+# from the pop counts themselves: this month's num_pop_type minus last month's, over the months
+# between. That covers promotion, births, demotions and migration in one number.
+
+# weather_monthly_pulse is the one engine periodic that fires globally rather than once per
+# country, so a location's stamp counts the same months whoever owned it in between.
+cm_pop_month_tick = {
+	effect = {
+		change_global_variable = { name = cm_pop_month add = 1 }
+	}
+}
+
+# $T$ = pop type key. Root is the location. Expects local_var:cm_pop_span.
+cm_pop_sample_type = {
+	set_variable = { name = cm_pop_rate_$T$ value = { value = num_pop_type:$T$ subtract = var:cm_pop_last_$T$ divide = local_var:cm_pop_span } }
+	set_variable = { name = cm_pop_last_$T$ value = num_pop_type:$T$ }
+}
+
+# $T$ = pop type key. Root is the location.
+cm_pop_seed_type = {
+	set_variable = { name = cm_pop_last_$T$ value = num_pop_type:$T$ }
+}
+
+# Root is the location. Tribesmen are left out because no buffer branch reads them; slaves are in
+# for the combined laborers/slaves RGO pool. Idempotent within a month.
+cm_pop_sample = {
+	if = {
+		limit = { NOT = { exists = var:cm_pop_stamp } }
+		cm_pop_seed_type = { T = nobles }
+		cm_pop_seed_type = { T = clergy }
+		cm_pop_seed_type = { T = burghers }
+		cm_pop_seed_type = { T = laborers }
+		cm_pop_seed_type = { T = soldiers }
+		cm_pop_seed_type = { T = peasants }
+		cm_pop_seed_type = { T = slaves }
+		set_variable = { name = cm_pop_stamp value = global_var:cm_pop_month }
+	} else_if = {
+		limit = { var:cm_pop_stamp < global_var:cm_pop_month }
+		set_local_variable = { name = cm_pop_span value = { value = global_var:cm_pop_month subtract = var:cm_pop_stamp } }
+		cm_pop_sample_type = { T = nobles }
+		cm_pop_sample_type = { T = clergy }
+		cm_pop_sample_type = { T = burghers }
+		cm_pop_sample_type = { T = laborers }
+		cm_pop_sample_type = { T = soldiers }
+		cm_pop_sample_type = { T = peasants }
+		cm_pop_sample_type = { T = slaves }
+		set_variable = { name = cm_pop_stamp value = global_var:cm_pop_month }
+	}
+}
+
+# Root is the location. Expects scope:cm_country. Puts the location in reach of next month's
+# sampler. A map rather than a list because the staging loops call this once per location per
+# feature and list insertion cost grows with the list's length.
+cm_pop_track = {
+	save_temporary_scope_as = cm_pop_loc
+	scope:cm_country = { add_to_variable_map = { name = cm_pop_tracked key = scope:cm_pop_loc value = 1 } }
+}
+
+# Root is the country. Runs at the top of the construction cycle so every rate is current before
+# staging reads it. Locations the country can no longer act in are collected first and dropped
+# afterwards, never during the iteration.
+cm_pop_sample_pass = {
+	if = {
+		limit = { has_variable_map = cm_pop_tracked }
+		every_key_in_variable_map = {
+			variable = cm_pop_tracked
+			save_scope_as = cm_pop_pass_loc
+			if = {
+				limit = {
+					OR = {
+						owner = scope:cm_country
+						owner = { is_subject_or_below_of = scope:cm_country }
+					}
+				}
+				cm_pop_sample = yes
+			} else = {
+				scope:cm_country = { add_to_variable_list = { name = cm_pop_untrack target = scope:cm_pop_pass_loc } }
+			}
+		}
+		every_in_list = {
+			variable = cm_pop_untrack
+			save_scope_as = cm_pop_pass_loc
+			scope:cm_country = { remove_from_variable_map = { name = cm_pop_tracked key = scope:cm_pop_pass_loc } }
+		}
+		clear_variable_list = cm_pop_untrack
+	}
+}

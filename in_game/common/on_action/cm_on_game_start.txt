@@ -29,6 +29,12 @@ cm_on_init_lobby_globals = {
 			limit = { cm_building_classification_is_current = yes }
 			cm_rgob_arm_sweep = yes
 		}
+		# Seeded only when absent: resetting it would put every location's sample stamp in the
+		# future, and the sampler would never take another reading.
+		if = {
+			limit = { NOT = { exists = global_var:cm_pop_month } }
+			set_global_variable = { name = cm_pop_month value = 0 }
+		}
 		cm_initialize_goods_globals = {}
 		cm_amenity_populate_grant_maps = yes
 		cm_trmm_recompute_all = yes

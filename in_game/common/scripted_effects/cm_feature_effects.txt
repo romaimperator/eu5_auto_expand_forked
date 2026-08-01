@@ -30,6 +30,8 @@ cm_run_construction_cycle = {
 		}
 	} else = {
 		set_variable = { name = cm_q_skipped_pulses value = 0 }
+		# Ahead of staging, so every gate this cycle reads a rate taken this month.
+		cm_pop_sample_pass = yes
 		# Start a fresh construction queue each cycle, drained once by the queue window.
 		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_locations LOCATION_LIST = cm_q_building_types }
 		clear_variable_list = cm_q_rgo_locations
@@ -756,6 +758,7 @@ cm_run_auto_expand_buildings = {
 			check_range_bounds = no
 			limit = { NOT = { integration_level = conquered } }
 			save_scope_as = cm_location
+			cm_pop_track = yes
 			ordered_buildings_in_location = {
 				order_by = building_index
 				max = 100
@@ -802,6 +805,7 @@ cm_run_auto_expand_buildings = {
 		check_range_bounds = no
 		limit = { NOT = { integration_level = conquered } has_variable_list = cm_auto_expand_registered_building_types }
 		save_scope_as = cm_location
+		cm_pop_track = yes
 		# Upgrades for standing obsolete buildings whose replacement is registered
 		ordered_buildings_in_location = {
 			order_by = building_index
@@ -859,6 +863,7 @@ cm_run_auto_expand_rgos = {
 			check_range_bounds = no
 			limit = { NOT = { exists = var:cm_auto_expand_rgo_excluded } NOT = { integration_level = conquered } }
 			save_scope_as = cm_location
+			cm_pop_track = yes
 			if = {
 				limit = { cm_should_rgo_auto_expand = yes }
 				cm_stage_rgo_candidate = yes
@@ -872,6 +877,7 @@ cm_run_auto_expand_rgos = {
 			check_range_bounds = no
 			limit = { exists = var:cm_auto_expand_rgo NOT = { integration_level = conquered } }
 			save_scope_as = cm_location
+			cm_pop_track = yes
 			if = {
 				limit = { cm_should_rgo_auto_expand = yes }
 				cm_stage_rgo_candidate = yes
@@ -937,6 +943,7 @@ cm_run_upgrade_all_buildings = {
 		check_range_bounds = no
 		limit = { NOT = { integration_level = conquered } }
 		save_scope_as = cm_location
+		cm_pop_track = yes
 		ordered_buildings_in_location = {
 			order_by = building_index
 			max = 100
@@ -1018,6 +1025,7 @@ cm_run_auto_build = {
 						check_range_bounds = no
 						limit = { NOT = { integration_level = conquered } }
 						save_scope_as = cm_location
+						cm_pop_track = yes
 						if = {
 							limit = { AND = { cm_get_open_build_queue_slots > 0 cm_location_can_auto_build = yes } }
 							cm_stage_ungated_candidate = yes
@@ -1027,6 +1035,7 @@ cm_run_auto_build = {
 					every_in_list = {
 						variable = cm_all_locations_including_subjects_list
 						save_scope_as = cm_location
+						cm_pop_track = yes
 						if = {
 							limit = { AND = { NOT = { integration_level = conquered } cm_get_open_build_queue_slots > 0 cm_location_can_auto_build = yes } }
 							cm_stage_ungated_candidate = yes
