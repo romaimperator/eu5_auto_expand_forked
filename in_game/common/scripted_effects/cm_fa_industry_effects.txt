@@ -202,6 +202,169 @@ cm_fa_ind_fold_bt_anchor = {
 	}
 }
 
+# Clears what a market's last visit left behind, both the anchors its locations set and the best
+# candidate it was remembered by. Called as the market enters a slice, so the fresh scores that
+# follow are what the market is judged on.
+# Root is the country, expects scope:cm_fa_slice_mkt.
+cm_fa_ind_drop_market_memory = {
+	remove_from_variable_map = { name = cm_fa_ind_mkt_best key = scope:cm_fa_slice_mkt }
+	remove_from_variable_map = { name = cm_fa_ind_mkt_cost key = scope:cm_fa_slice_mkt }
+	save_temporary_scope_as = cm_fa_anchor_owner
+	# Collected first: removing a key inside the walk would mutate the map being walked.
+	clear_variable_list = cm_fa_ind_drop
+	if = {
+		limit = { has_variable_map = cm_fa_ind_bt_loc }
+		every_key_in_variable_map = {
+			variable = cm_fa_ind_bt_loc
+			save_scope_as = cm_fa_drop_bt
+			# The iterator makes the key the scope, so the map read has to name its owner.
+			"scope:cm_fa_anchor_owner.variable_map(cm_fa_ind_bt_loc|scope:cm_fa_drop_bt)" = { save_temporary_scope_as = cm_fa_drop_loc }
+			if = {
+				limit = { scope:cm_fa_drop_loc = { market = { this = scope:cm_fa_slice_mkt } } }
+				scope:cm_fa_anchor_owner = { add_to_variable_list = { name = cm_fa_ind_drop target = scope:cm_fa_drop_bt } }
+			}
+		}
+	}
+	every_in_list = {
+		variable = cm_fa_ind_drop
+		save_scope_as = cm_fa_drop_bt
+		scope:cm_fa_anchor_owner = {
+			remove_from_variable_map = { name = cm_fa_ind_bt_anchor key = scope:cm_fa_drop_bt }
+			remove_from_variable_map = { name = cm_fa_ind_bt_loc key = scope:cm_fa_drop_bt }
+		}
+	}
+	clear_variable_list = cm_fa_ind_drop
+}
+
+# The best candidate still standing at this location and what it costs, as local_var:cm_fa_rec_s
+# and local_var:cm_fa_rec_c; the score stays at the sentinel where nothing is left.
+# Root is the location.
+cm_fa_ind_loc_best = {
+	save_temporary_scope_as = cm_fa_rec_loc
+	set_local_variable = { name = cm_fa_rec_s value = -2000000 }
+	set_local_variable = { name = cm_fa_rec_c value = 0 }
+	if = {
+		limit = {
+			has_variable = cm_fa_b_best
+			has_variable_map = cm_fa_b_scores
+			var:cm_fa_b_best > local_var:cm_fa_rec_s
+		}
+		ordered_key_in_variable_map = {
+			variable = cm_fa_b_scores
+			order_by = {
+				save_temporary_scope_as = cm_fa_try_type
+				value = "scope:cm_fa_rec_loc.variable_map(cm_fa_b_scores|scope:cm_fa_try_type)"
+			}
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_fa_rec_type
+		}
+		if = {
+			limit = {
+				has_variable_map = cm_fa_b_costs
+				is_key_in_variable_map = { name = cm_fa_b_costs target = scope:cm_fa_rec_type }
+			}
+			set_local_variable = { name = cm_fa_rec_s value = var:cm_fa_b_best }
+			set_local_variable = { name = cm_fa_rec_c value = "variable_map(cm_fa_b_costs|scope:cm_fa_rec_type)" }
+		}
+	}
+	if = {
+		limit = {
+			has_variable = cm_fa_u_best
+			has_variable_map = cm_fa_u_scores
+			var:cm_fa_u_best > local_var:cm_fa_rec_s
+		}
+		ordered_key_in_variable_map = {
+			variable = cm_fa_u_scores
+			order_by = {
+				save_temporary_scope_as = cm_fa_try_type
+				value = "scope:cm_fa_rec_loc.variable_map(cm_fa_u_scores|scope:cm_fa_try_type)"
+			}
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_fa_rec_type
+		}
+		if = {
+			limit = {
+				has_variable_map = cm_fa_u_costs
+				is_key_in_variable_map = { name = cm_fa_u_costs target = scope:cm_fa_rec_type }
+			}
+			set_local_variable = { name = cm_fa_rec_s value = var:cm_fa_u_best }
+			set_local_variable = { name = cm_fa_rec_c value = "variable_map(cm_fa_u_costs|scope:cm_fa_rec_type)" }
+		}
+	}
+	if = {
+		limit = {
+			has_variable = cm_fa_r_score
+			var:cm_fa_r_score > local_var:cm_fa_rec_s
+		}
+		set_local_variable = { name = cm_fa_rec_s value = var:cm_fa_r_score }
+		# glorpui_rgo_expand_cost reads the location by name, not from the root.
+		save_temporary_scope_as = cm_location
+		set_local_variable = { name = cm_fa_rec_c value = glorpui_rgo_expand_cost }
+	}
+}
+
+# Remembers the best candidate each slice market still held when the drain stopped, so a market
+# the rotation has moved off still weighs against the ones it can act on. Anything the pick loop
+# consumed is gone from the maps by now, which is what keeps a bought or refused candidate out.
+# Root is the country.
+cm_fa_ind_record_market_best = {
+	save_temporary_scope_as = cm_fa_rec_ctry
+	every_in_list = {
+		variable = cm_fa_drain_cands
+		cm_fa_ind_loc_best = yes
+		if = {
+			limit = { local_var:cm_fa_rec_s > -2000000 }
+			market = { save_scope_as = cm_fa_rec_mkt }
+			scope:cm_fa_rec_ctry = {
+				if = {
+					limit = {
+						trigger_if = {
+							limit = {
+								has_variable_map = cm_fa_ind_mkt_best
+								is_key_in_variable_map = { name = cm_fa_ind_mkt_best target = scope:cm_fa_rec_mkt }
+							}
+							"variable_map(cm_fa_ind_mkt_best|scope:cm_fa_rec_mkt)" < local_var:cm_fa_rec_s
+						}
+						trigger_else = { always = yes }
+					}
+					remove_from_variable_map = { name = cm_fa_ind_mkt_best key = scope:cm_fa_rec_mkt }
+					add_to_variable_map = { name = cm_fa_ind_mkt_best key = scope:cm_fa_rec_mkt value = local_var:cm_fa_rec_s }
+					remove_from_variable_map = { name = cm_fa_ind_mkt_cost key = scope:cm_fa_rec_mkt }
+					add_to_variable_map = { name = cm_fa_ind_mkt_cost key = scope:cm_fa_rec_mkt value = local_var:cm_fa_rec_c }
+				}
+			}
+		}
+	}
+}
+
+# The best candidate remembered in a market this cycle cannot reach, as local_var:cm_fa_off_best
+# and local_var:cm_fa_off_cost. Root is the country, expects scope:cm_country.
+cm_fa_ind_off_slice_best = {
+	save_temporary_scope_as = cm_fa_off_ctry
+	set_local_variable = { name = cm_fa_off_best value = -2000000 }
+	set_local_variable = { name = cm_fa_off_cost value = 0 }
+	if = {
+		limit = { has_variable_map = cm_fa_ind_mkt_best }
+		every_key_in_variable_map = {
+			variable = cm_fa_ind_mkt_best
+			save_scope_as = cm_fa_off_mkt
+			# The iterator makes the key the scope, so the map reads have to name their owner.
+			set_local_variable = { name = cm_fa_off_v value = "scope:cm_fa_off_ctry.variable_map(cm_fa_ind_mkt_best|scope:cm_fa_off_mkt)" }
+			if = {
+				limit = {
+					local_var:cm_fa_off_v > local_var:cm_fa_off_best
+					NOT = { cm_fa_market_in_slice = yes }
+					scope:cm_fa_off_ctry = { is_key_in_variable_map = { name = cm_fa_ind_mkt_cost target = scope:cm_fa_off_mkt } }
+				}
+				set_local_variable = { name = cm_fa_off_best value = local_var:cm_fa_off_v }
+				set_local_variable = { name = cm_fa_off_cost value = "scope:cm_fa_off_ctry.variable_map(cm_fa_ind_mkt_cost|scope:cm_fa_off_mkt)" }
+			}
+		}
+	}
+}
+
 # Margin factor = 100 / margin percent; scores are negative years, so a type's anchor times
 # the factor is the bar for holding margin percent of that type's payback rate. 0 = off.
 # Root is the country. Result in local_var:cm_fa_margin_f.
@@ -293,7 +456,9 @@ cm_fa_pass_industry = {
 			scope:cm_country = { add_to_variable_list = { name = cm_fa_drain_cands target = scope:cm_fa_cand_loc } }
 		}
 	}
+	cm_fa_ind_off_slice_best = yes
 	cm_fa_ind_pick_loop = yes
+	cm_fa_ind_record_market_best = yes
 	clear_variable_list = cm_fa_drain_cands
 }
 
@@ -353,10 +518,24 @@ cm_fa_ind_pick_loop = {
 				save_temporary_scope_as = cm_fa_pick_r_loc
 				save_temporary_scope_value_as = { name = cm_fa_dom_r value = var:cm_fa_r_score }
 			}
+			set_local_variable = { name = cm_fa_win value = scope:cm_fa_dom_b }
+			change_local_variable = { name = cm_fa_win max = scope:cm_fa_dom_u }
+			change_local_variable = { name = cm_fa_win max = scope:cm_fa_dom_r }
 			# The picks prune cm_fa_drain_cands, which is only safe because they run after
 			# all three scans above have closed. Moving one inside a scan body would mutate
 			# the list mid-iteration.
 			if = {
+				# A market the rotation has moved off holds a better candidate, so the pool waits
+				# for it instead of buying down the order here.
+				limit = {
+					local_var:cm_fa_win > -2000000
+					local_var:cm_fa_off_best > local_var:cm_fa_win
+				}
+				cm_fa_stop_on_cost = { COST = local_var:cm_fa_off_cost }
+				set_local_variable = { name = cm_fa_hold_dbg value = { value = local_var:cm_fa_off_best multiply = -1 } }
+				cm_dbg_log_decimal = { CAT = industry action = cm_log_fa_hold value = local_var:cm_fa_hold_dbg }
+			}
+			else_if = {
 				# Ties go to the build domain, then upgrades.
 				limit = {
 					scope:cm_fa_dom_b >= { value = scope:cm_fa_dom_u }

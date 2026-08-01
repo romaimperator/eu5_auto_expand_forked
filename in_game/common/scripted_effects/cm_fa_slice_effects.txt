@@ -19,8 +19,6 @@ cm_fa_pick_slice = {
 	if = {
 		limit = { NOT = { cm_fa_slice_has_unseen = yes } }
 		clear_variable_map = cm_fa_slice_seen
-		clear_variable_map = cm_fa_ind_bt_anchor
-		clear_variable_map = cm_fa_ind_bt_loc
 	}
 	cm_fa_slice_build_priority = yes
 	set_local_variable = { name = cm_fa_slice_np value = 0 }
@@ -130,6 +128,9 @@ cm_fa_slice_admit = {
 		scope:cm_fa_slice_country = {
 			add_to_variable_map = { name = cm_fa_slice_now key = scope:cm_fa_slice_mkt value = 1 }
 			add_to_variable_map = { name = cm_fa_slice_seen key = scope:cm_fa_slice_mkt value = 1 }
+			# This cycle re-scores the market, so what its last visit recorded goes now rather than
+			# at the rotation boundary.
+			cm_fa_ind_drop_market_memory = yes
 		}
 	}
 }
@@ -143,4 +144,6 @@ cm_fa_clear_slice_state = {
 	remove_variable = cm_fa_slice_cursor
 	clear_variable_map = cm_fa_ind_bt_anchor
 	clear_variable_map = cm_fa_ind_bt_loc
+	clear_variable_map = cm_fa_ind_mkt_best
+	clear_variable_map = cm_fa_ind_mkt_cost
 }
