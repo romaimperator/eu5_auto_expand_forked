@@ -120,7 +120,7 @@ cm_fa_budget_probe = {
 	cm_fa_log_balance = { cat = industry ACTION = cm_log_fa_bal_industry }
 	cm_fa_log_balance = { cat = utilities ACTION = cm_log_fa_bal_utilities }
 	cm_fa_log_balance = { cat = military ACTION = cm_log_fa_bal_military }
-	cm_dbg_log_decimal = { CAT = budget action = cm_log_fa_bal_total value = local_var:cm_fa_dbg_total }
+	cmf_log_decimal_value = { action = cm_log_fa_bal_total value = local_var:cm_fa_dbg_total }
 	save_temporary_scope_as = cm_country
 	cm_fa_ind_off_slice_best = yes
 	if = {
@@ -130,8 +130,8 @@ cm_fa_budget_probe = {
 	else = {
 		set_local_variable = { name = cm_fa_off_best value = 0 }
 	}
-	cm_dbg_log_decimal = { CAT = budget action = cm_log_fa_off_best value = local_var:cm_fa_off_best }
-	cm_dbg_log_decimal = { CAT = budget action = cm_log_fa_off_cost value = local_var:cm_fa_off_cost }
+	cmf_log_decimal_value = { action = cm_log_fa_off_best value = local_var:cm_fa_off_best }
+	cmf_log_decimal_value = { action = cm_log_fa_off_cost value = local_var:cm_fa_off_cost }
 }
 
 # One category's balance, positive where it is holding an allotment and negative where it owes;
@@ -149,7 +149,7 @@ cm_fa_log_balance = {
 		change_local_variable = { name = cm_fa_dbg subtract = var:cm_fa_debt_$cat$ }
 	}
 	change_local_variable = { name = cm_fa_dbg_total add = local_var:cm_fa_dbg }
-	cm_dbg_log_decimal = { CAT = budget action = $ACTION$ value = local_var:cm_fa_dbg }
+	cmf_log_decimal_value = { action = $ACTION$ value = local_var:cm_fa_dbg }
 }
 
 # Copies the budget state from scope:old_country on tag switch; pools are non-CMM state

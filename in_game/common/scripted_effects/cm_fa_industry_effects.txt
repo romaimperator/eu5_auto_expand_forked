@@ -418,7 +418,7 @@ cm_fa_ind_log_queued = {
 		save_scope_as = cmf_log_loc
 		scope:cm_building_type = { save_scope_as = cmf_log_bt }
 		scope:cm_country = {
-			cm_dbg_log_bld = { CAT = industry
+			cm_dbg_log_bld = { cat = industry
 				action = cm_log_ind_queued
 				arg1 = cm_log_ind_roi
 				arg2 = cm_log_ind_income
@@ -532,8 +532,8 @@ cm_fa_ind_pick_loop = {
 					local_var:cm_fa_off_best > local_var:cm_fa_win
 				}
 				cm_fa_stop_on_cost = { COST = local_var:cm_fa_off_cost }
-				set_local_variable = { name = cm_fa_hold_dbg value = { value = local_var:cm_fa_off_best multiply = -1 } }
-				cm_dbg_log_decimal = { CAT = industry action = cm_log_fa_hold value = local_var:cm_fa_hold_dbg }
+				save_temporary_scope_value_as = { name = cm_fa_hold_dbg value = { value = local_var:cm_fa_off_best multiply = -1 } }
+				cm_dbg_log_decimal = { cat = industry action = cm_log_fa_hold value = scope:cm_fa_hold_dbg }
 			}
 			else_if = {
 				# Ties go to the build domain, then upgrades.
@@ -581,7 +581,7 @@ cm_fa_ind_anchor_probe = {
 		change_local_variable = { name = cm_fa_ibar_dbg multiply = -1 }
 		"scope:cm_fa_probe_country.variable_map(cm_fa_ind_bt_loc|scope:cmf_log_bt)" = { save_scope_as = cmf_log_loc }
 		scope:cm_fa_probe_country = {
-			cm_dbg_log_bld = { CAT = industry
+			cm_dbg_log_bld = { cat = industry
 				action = cm_log_ind_anchor
 				arg1 = cm_log_ind_anchor_best
 				arg2 = cm_log_ind_anchor_bar
@@ -608,26 +608,26 @@ cm_fa_rgo_why_probe = {
 	if = {
 		limit = { integration_level = conquered }
 		change_local_variable = { name = cm_fa_why add = 1 }
-		scope:cm_country = { cm_dbg_log = { CAT = industry action = cm_log_rgo_conquered } }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = cm_log_rgo_conquered } }
 	}
 	if = {
 		limit = { cm_location_auto_food_supersedes_rgo = yes }
 		change_local_variable = { name = cm_fa_why add = 1 }
-		scope:cm_country = { cm_dbg_log = { CAT = industry action = cm_log_rgo_food } }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = cm_log_rgo_food } }
 	}
 	if = {
 		limit = { NOT = { cm_get_open_build_queue_slots > 0 } }
 		change_local_variable = { name = cm_fa_why add = 1 }
-		scope:cm_country = { cm_dbg_log = { CAT = industry action = cm_log_rgo_slots } }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = cm_log_rgo_slots } }
 	}
 	if = {
 		limit = { NOT = { cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction } } }
 		change_local_variable = { name = cm_fa_why add = 1 }
-		scope:cm_country = { cm_dbg_log = { CAT = industry action = cm_log_rgo_room } }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = cm_log_rgo_room } }
 	}
 	if = {
 		limit = { local_var:cm_fa_why = 0 }
-		scope:cm_country = { cm_dbg_log = { CAT = industry action = cm_log_rgo_pass } }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = cm_log_rgo_pass } }
 	}
 }
 
@@ -637,7 +637,7 @@ cm_fa_rgo_why_line = {
 	if = {
 		limit = { NOT = { $COND$ = yes } }
 		change_local_variable = { name = cm_fa_why add = 1 }
-		scope:cm_country = { cm_dbg_log = { CAT = industry action = $ACTION$ } }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = $ACTION$ } }
 	}
 }
 
@@ -842,10 +842,12 @@ cm_fa_refresh_upg_best = {
 # drain's slot, headroom, and laborer budget; consumes the score first so the pick loop
 # always advances. Root is the location.
 cm_fa_approve_rgo_item = {
-	set_local_variable = { name = cm_fa_rgo_dbg value = 0 }
 	if = {
 		limit = { has_variable = cm_fa_r_score }
-		set_local_variable = { name = cm_fa_rgo_dbg value = { value = var:cm_fa_r_score multiply = -1 } }
+		save_temporary_scope_value_as = { name = cm_fa_rgo_dbg value = { value = var:cm_fa_r_score multiply = -1 } }
+	}
+	else = {
+		save_temporary_scope_value_as = { name = cm_fa_rgo_dbg value = 0 }
 	}
 	remove_variable = cm_fa_r_score
 	save_temporary_scope_as = cm_location
@@ -923,10 +925,10 @@ cm_fa_approve_rgo_item = {
 
 # One CMM log line per Industry RGO drain outcome, naming the location and the candidate's
 # payback in years. $ACTION$ = the outcome's log key. Root is the location, expects
-# scope:cm_country and local_var:cm_fa_rgo_dbg.
+# scope:cm_country and scope:cm_fa_rgo_dbg.
 cm_fa_rgo_log = {
 	save_scope_as = cmf_log_loc
 	scope:cm_country = {
-		cm_dbg_log_loc = { CAT = industry action = $ACTION$ arg1 = cm_log_rgo_payback value = local_var:cm_fa_rgo_dbg }
+		cm_dbg_log_loc = { cat = industry action = $ACTION$ arg1 = cm_log_rgo_payback value = scope:cm_fa_rgo_dbg }
 	}
 }
