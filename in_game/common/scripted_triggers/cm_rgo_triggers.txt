@@ -10,6 +10,11 @@ cm_rgo_basic_expand_eligibility = {
 
 # This trigger is used by the GUI to see if the prerequisites for auto expanding RGO are met
 # Expects scopes: country, location, income, profit
+# Every RGO verdict line and every tooltip row reads this one trigger, so the verdict and the
+# reasons cannot disagree; a condition added here needs its own row. The auto-food supersede is
+# deliberately NOT here: it is a pre-emptive branch with its own tooltip line
+# (CM_AUTO_EXPAND_RGO_AUTO_FOOD_ACTIVE), so every surface pairs this trigger with it rather than
+# folding it in, which would leave the requirements list open with every row green.
 cm_is_able_to_auto_expand_rgo = {
 	AND = {
 		owner = {

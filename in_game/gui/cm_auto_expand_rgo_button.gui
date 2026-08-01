@@ -242,7 +242,7 @@ template cm_RGO_Autoexpand_Tooltip {
 				}
 			}
 			TooltipListBase = {
-				visible = "[Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('cm_income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))]"
+				visible = "[And(Not(GetScriptedGui('cm_location_auto_food_supersedes_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('cm_income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)))]"
 				blockoverride "block_title" {
 					text = "CM_AUTO_EXPAND_REQ_HEADER"
 				}
@@ -459,7 +459,7 @@ template cm_RGO_Autoexpand_Tooltip {
 			}
 
 			TooltipTextBlock = {
-				visible = "[And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('cm_income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)))]"
+				visible = "[And(Not(GetScriptedGui('cm_location_auto_food_supersedes_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End)), And(GetScriptedGui('cm_set_auto_expand_for_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).End), Not(GetScriptedGui('cm_is_able_to_auto_expand_rgo').IsShown(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_profit', MakeScopeValue(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl))).AddScope('cm_income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End))))]"
 				blockoverride "text" {
 					text = "CM_AUTO_EXPAND_RGO_WILL_NOT_EXPAND"
 				}
