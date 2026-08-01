@@ -344,39 +344,39 @@ cm_location_fill_rate_for_laborers_or_slaves = {
   }
 }
 
-# Projected three-year pop slack for the building pop type: location surplus plus three years at the
-# location's fill rate. Negative means the deficit will not fill within three years.
+# Projected six-year pop slack for the building pop type: location surplus plus six years at the
+# location's fill rate. Negative means the deficit will not fill within six years.
 # Root is the location, expects scope:cm_building_type.
 cm_location_promotion_buffer_slack = {
   value = 0
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:nobles }
     add = cm_location_nobles_available
-    add = { value = cm_location_fill_rate_for_nobles multiply = 36 }
+    add = { value = cm_location_fill_rate_for_nobles multiply = 72 }
   }
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:clergy }
     add = cm_location_clergy_available
-    add = { value = cm_location_fill_rate_for_clergy multiply = 36 }
+    add = { value = cm_location_fill_rate_for_clergy multiply = 72 }
   }
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:burghers }
     add = cm_location_burghers_available
-    add = { value = cm_location_fill_rate_for_burghers multiply = 36 }
+    add = { value = cm_location_fill_rate_for_burghers multiply = 72 }
   }
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:laborers }
     add = cm_location_laborers_available
-    add = { value = cm_location_fill_rate_for_laborers multiply = 36 }
+    add = { value = cm_location_fill_rate_for_laborers multiply = 72 }
   }
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:soldiers }
     add = cm_location_soldiers_available
-    add = { value = cm_location_fill_rate_for_soldiers multiply = 36 }
+    add = { value = cm_location_fill_rate_for_soldiers multiply = 72 }
   }
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:peasants }
     add = cm_location_peasants_available
-    add = { value = cm_location_fill_rate_for_peasants multiply = 36 }
+    add = { value = cm_location_fill_rate_for_peasants multiply = 72 }
   }
 }
 
-# Projected three-year laborers/slaves slack for RGO expansion. Root is the location.
+# Projected six-year laborers/slaves slack for RGO expansion. Root is the location.
 cm_location_rgo_promotion_buffer_slack = {
   value = cm_location_laborers_or_slaves_available
-  add = { value = cm_location_fill_rate_for_laborers_or_slaves multiply = 36 }
+  add = { value = cm_location_fill_rate_for_laborers_or_slaves multiply = 72 }
 }
