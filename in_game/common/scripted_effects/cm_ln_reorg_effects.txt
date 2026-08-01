@@ -54,7 +54,7 @@ cm_ln_reorg_tick = {
 	remove_variable = cm_ln_hold
 	set_local_variable = { name = cm_ln_gold_wait value = 0 }
 	# The urbanize and road orders serve both the placement and the relocation phase, and they run
-	# whatever the slot and credit counts are, so they sit ahead of the switch rather than inside
+	# whatever the slot count is, so they sit ahead of the switch rather than inside
 	# either step. Placement claims gold after them.
 	if = {
 		limit = {
@@ -150,7 +150,6 @@ cm_ln_reorg_begin = {
 	clear_variable_list = cm_ln_plan_drop
 	clear_variable_list = cm_ln_pending
 	clear_variable_list = cm_ln_moves
-	clear_variable_list = cm_ln_pre_seats
 	cm_ln_clear_road_state = yes
 	cm_ln_probe_end = yes
 	cm_ln_probe_clear_rejects = yes
@@ -164,18 +163,10 @@ cm_ln_reorg_begin = {
 		remove_variable = cm_ln_plan_naval
 		remove_variable = cm_ln_rank_wait
 		remove_variable = cm_ln_place_tries
-		remove_variable = cm_ln_paid
 	}
 	every_owned_location = {
 		limit = { has_variable = cm_ln_seat_score }
 		remove_variable = cm_ln_seat_score
-	}
-	# The capital move's remove_if can destroy seats outright, and a seat lost that way is
-	# ours to replace at no cost.
-	every_owned_location = {
-		limit = { cm_location_has_governor = yes }
-		save_scope_as = cm_ln_seat
-		scope:cm_country = { add_to_variable_list = { name = cm_ln_pre_seats target = scope:cm_ln_seat } }
 	}
 	cm_ln_pf_settings_on = yes
 	set_variable = { name = cm_ln_phase value = 1 }
@@ -525,15 +516,6 @@ cm_ln_reorg_classify = {
 		save_scope_as = cm_ln_seat
 		scope:cm_country = { add_to_variable_list = { name = cm_ln_moves target = scope:cm_ln_seat } }
 	}
-	every_in_list = {
-		variable = cm_ln_pre_seats
-		save_scope_as = cm_ln_seat
-		if = {
-			limit = { scope:cm_ln_seat = { cm_location_has_governor = no } }
-			scope:cm_country = { cm_ln_grant_gov_credit = yes }
-		}
-	}
-	clear_variable_list = cm_ln_pre_seats
 	set_variable = { name = cm_ln_phase value = 5 }
 }
 
@@ -608,20 +590,17 @@ cm_ln_reorg_confirm_step = {
 			}
 		}
 		else_if = {
-			# Delivered, so the order it was paid for owes the country nothing.
-			limit = { scope:cm_ln_p = { cm_location_has_governor = yes } }
-			scope:cm_ln_p = { remove_variable = cm_ln_paid }
-		}
-		else_if = {
+			# Ahead of any read of whether a governor stands, because has_building answers yes from
+			# the moment a level is queued.
 			limit = { scope:cm_ln_p = { cm_ln_site_gov_under_construction = yes } }
 			set_local_variable = { name = cm_ln_cf_building value = 1 }
 		}
-		else = {
+		else_if = {
 			# The order went in and left nothing behind, which is not a shape anything in the plan
 			# accounts for, so it is logged as the failure it is rather than only retried.
+			limit = { scope:cm_ln_p = { cm_location_has_governor = no } }
 			scope:cm_country = {
 				cm_dbg_log = { CAT = governors action = cm_ln_log_gov_place_no_show }
-				cm_ln_bank_paid_credit = { SITE = scope:cm_ln_p }
 				cm_ln_place_retry_or_drop = { SITE = scope:cm_ln_p }
 			}
 		}
@@ -663,14 +642,14 @@ cm_ln_reorg_confirm_step = {
 }
 
 # Every site left is one the engine refuses until a seat goes, so this phase is the placement again
-# with permission to give one up. Root is the country, scope:cm_country set.
+# with permission to give one up. The pending list alone decides whether it runs, so a site with no
+# seat left to take is refused and counted here rather than handed to the confirm step unserved.
+# Root is the country, scope:cm_country set.
 cm_ln_reorg_move_step = {
 	if = {
 		limit = {
 			has_variable_list = cm_ln_pending
 			variable_list_size = { name = cm_ln_pending value >= 1 }
-			has_variable_list = cm_ln_moves
-			variable_list_size = { name = cm_ln_moves value >= 1 }
 		}
 		cm_ln_place_next = { FREE = yes }
 	}
@@ -699,14 +678,12 @@ cm_ln_reorg_teardown = {
 	clear_variable_list = cm_ln_plan_drop
 	clear_variable_list = cm_ln_pending
 	clear_variable_list = cm_ln_moves
-	clear_variable_list = cm_ln_pre_seats
 	every_owned_location = {
 		limit = { has_variable = cm_ln_plan_ord }
 		remove_variable = cm_ln_plan_ord
 		remove_variable = cm_ln_plan_naval
 		remove_variable = cm_ln_rank_wait
 		remove_variable = cm_ln_place_tries
-		remove_variable = cm_ln_paid
 	}
 	every_owned_location = {
 		limit = { has_variable = cm_ln_seat_score }
@@ -1013,10 +990,10 @@ cm_ln_gov_probe = {
 
 	set_local_variable = { name = cm_ln_dbg value = 0 }
 	if = {
-		limit = { exists = var:cm_ln_gov_credits }
-		set_local_variable = { name = cm_ln_dbg value = var:cm_ln_gov_credits }
+		limit = { exists = var:cm_ln_gov_paid_seats }
+		set_local_variable = { name = cm_ln_dbg value = var:cm_ln_gov_paid_seats }
 	}
-	cmf_log_value = { action = cm_log_gov_credits value = local_var:cm_ln_dbg }
+	cmf_log_value = { action = cm_log_gov_paid value = local_var:cm_ln_dbg }
 
 	set_local_variable = { name = cm_ln_dbg value = cm_ln_gov_slot_total }
 	cmf_log_value = { action = cm_log_gov_slots value = local_var:cm_ln_dbg }

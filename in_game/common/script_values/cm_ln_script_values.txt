@@ -105,6 +105,14 @@ cm_ln_gov_replan_source_value = {
 	max = 100 # Stacked-sources cap: main_menu/common/static_modifiers/location.txt:330
 }
 
+# Country scope. Governors of both kinds standing or on order, which is what the paid-seat count is
+# reconciled against. Lieutenancies are left out: they take land governor slots but are not
+# governors the country ever placed.
+cm_ln_gov_seated_value = {
+	value = total_building_levels_including_construction:local_governor
+	add = total_building_levels_including_construction:naval_governor
+}
+
 # Country scope. Land governors share their pool with lieutenancies.
 # Vanilla allow: in_game/common/building_types/capital_buildings.txt:611
 cm_ln_gov_land_slots = {
@@ -119,14 +127,25 @@ cm_ln_gov_naval_slots = {
 	min = 0
 }
 
-# Location scope. Negated so ordered_in_list at position 0 takes the lowest-scoring seat, the same
-# shape cm_fa_cu_close_pass uses with cm_fa_cu_neg_profit to take the worst first. A seat the run
-# never scored reads 0 and is given up before any that did.
-cm_ln_seat_neg_score = {
+# Location scope. Negated so the highest rank is the seat given up first: the lowest-scoring one,
+# the same shape cm_fa_cu_close_pass uses with cm_fa_cu_neg_profit to take the worst first. A seat
+# the run never scored reads 0, and the seats a plan site supersedes are exactly the ones it leaves
+# unscored, so the distance term decides between them. Expects scope:cm_ln_seat_c and
+# scope:cm_ln_target.
+cm_ln_seat_give_up_rank = {
 	value = 0
 	if = {
 		limit = { has_variable = cm_ln_seat_score }
 		subtract = var:cm_ln_seat_score
+	}
+	multiply = 1000
+	# Stays under one whole point of score, so it only separates seats the run scored the same.
+	add = {
+		value = 999
+		divide = {
+			value = 1
+			add = "scope:cm_ln_seat_c.distance_to(scope:cm_ln_target)"
+		}
 	}
 }
 
