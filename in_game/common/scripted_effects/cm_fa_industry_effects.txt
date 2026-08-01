@@ -592,6 +592,55 @@ cm_fa_ind_anchor_probe = {
 	}
 }
 
+# Console diagnostic: effect location:<key> = { cm_fa_rgo_why_probe = yes }
+# One line per Industry RGO gate this location fails, covering the staging gates the drain log
+# never reaches, and one pass line when it fails none. Root is the location.
+cm_fa_rgo_why_probe = {
+	owner = { save_scope_as = cm_country }
+	save_temporary_scope_as = cm_location
+	set_local_variable = { name = cm_fa_why value = 0 }
+	cm_fa_rgo_why_line = { COND = cm_location_market_in_fa_slice ACTION = cm_log_rgo_slice }
+	cm_fa_rgo_why_line = { COND = cm_fa_location_has_proximity ACTION = cm_log_rgo_prox }
+	cm_fa_rgo_why_line = { COND = cm_location_auto_food_workers_ok ACTION = cm_log_rgo_workers }
+	cm_fa_rgo_why_line = { COND = cm_rgo_basic_expand_eligibility ACTION = cm_log_rgo_elig }
+	cm_fa_rgo_why_line = { COND = cm_location_rgo_free_this_cycle ACTION = cm_log_rgo_served }
+	cm_fa_rgo_why_line = { COND = cm_market_has_construction_goods_for_rgo ACTION = cm_log_rgo_goods }
+	if = {
+		limit = { integration_level = conquered }
+		change_local_variable = { name = cm_fa_why add = 1 }
+		scope:cm_country = { cm_dbg_log = { CAT = industry action = cm_log_rgo_conquered } }
+	}
+	if = {
+		limit = { cm_location_auto_food_supersedes_rgo = yes }
+		change_local_variable = { name = cm_fa_why add = 1 }
+		scope:cm_country = { cm_dbg_log = { CAT = industry action = cm_log_rgo_food } }
+	}
+	if = {
+		limit = { NOT = { cm_get_open_build_queue_slots > 0 } }
+		change_local_variable = { name = cm_fa_why add = 1 }
+		scope:cm_country = { cm_dbg_log = { CAT = industry action = cm_log_rgo_slots } }
+	}
+	if = {
+		limit = { NOT = { cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction } } }
+		change_local_variable = { name = cm_fa_why add = 1 }
+		scope:cm_country = { cm_dbg_log = { CAT = industry action = cm_log_rgo_room } }
+	}
+	if = {
+		limit = { local_var:cm_fa_why = 0 }
+		scope:cm_country = { cm_dbg_log = { CAT = industry action = cm_log_rgo_pass } }
+	}
+}
+
+# One probe line for a gate stated as a passing condition. $COND$ = the trigger, $ACTION$ = its
+# log key. Root is the location, expects scope:cm_country and local_var:cm_fa_why.
+cm_fa_rgo_why_line = {
+	if = {
+		limit = { NOT = { $COND$ = yes } }
+		change_local_variable = { name = cm_fa_why add = 1 }
+		scope:cm_country = { cm_dbg_log = { CAT = industry action = $ACTION$ } }
+	}
+}
+
 # Approves the highest-scored full-automation build at this location, then consumes it;
 # the key is removed even when the gates fail, so every pick shrinks a map. Root is the
 # location.
@@ -793,15 +842,30 @@ cm_fa_refresh_upg_best = {
 # drain's slot, headroom, and laborer budget; consumes the score first so the pick loop
 # always advances. Root is the location.
 cm_fa_approve_rgo_item = {
+	set_local_variable = { name = cm_fa_rgo_dbg value = 0 }
+	if = {
+		limit = { has_variable = cm_fa_r_score }
+		set_local_variable = { name = cm_fa_rgo_dbg value = { value = var:cm_fa_r_score multiply = -1 } }
+	}
 	remove_variable = cm_fa_r_score
 	save_temporary_scope_as = cm_location
 	if = {
-		limit = {
-			cm_rgo_basic_expand_eligibility = yes
-			cm_location_rgo_free_this_cycle = yes
-			NOT = { cm_location_auto_food_supersedes_rgo = yes }
-			cm_market_has_construction_goods_for_rgo = yes
-		}
+		limit = { NOT = { cm_rgo_basic_expand_eligibility = yes } }
+		cm_fa_rgo_log = { ACTION = cm_log_rgo_elig }
+	}
+	else_if = {
+		limit = { NOT = { cm_location_rgo_free_this_cycle = yes } }
+		cm_fa_rgo_log = { ACTION = cm_log_rgo_served }
+	}
+	else_if = {
+		limit = { cm_location_auto_food_supersedes_rgo = yes }
+		cm_fa_rgo_log = { ACTION = cm_log_rgo_food }
+	}
+	else_if = {
+		limit = { NOT = { cm_market_has_construction_goods_for_rgo = yes } }
+		cm_fa_rgo_log = { ACTION = cm_log_rgo_goods }
+	}
+	else = {
 		if = {
 			limit = { cm_get_open_build_queue_slots > 0 }
 			set_local_variable = { name = cm_fa_rgo_budget value = cm_get_open_build_queue_slots }
@@ -838,12 +902,31 @@ cm_fa_approve_rgo_item = {
 					NOT = { cm_fa_can_afford_rgo = { POOL = cm_fa_pool_industry } }
 				}
 				cm_fa_stop_on_cost = { COST = glorpui_rgo_expand_cost }
+				cm_fa_rgo_log = { ACTION = cm_log_rgo_gold }
 			}
 			if = {
 				limit = { local_var:cm_fa_rgo_done > 0 }
 				cm_q_mark_rgo_served = yes
+				cm_fa_rgo_log = { ACTION = cm_log_rgo_ok }
 			}
+			else_if = {
+				limit = { local_var:cm_fa_cost_blocked = 0 }
+				cm_fa_rgo_log = { ACTION = cm_log_rgo_room }
+			}
+		}
+		else = {
+			cm_fa_rgo_log = { ACTION = cm_log_rgo_slots }
 		}
 	}
 	cm_fa_drain_prune_loc = yes
+}
+
+# One CMM log line per Industry RGO drain outcome, naming the location and the candidate's
+# payback in years. $ACTION$ = the outcome's log key. Root is the location, expects
+# scope:cm_country and local_var:cm_fa_rgo_dbg.
+cm_fa_rgo_log = {
+	save_scope_as = cmf_log_loc
+	scope:cm_country = {
+		cm_dbg_log_loc = { CAT = industry action = $ACTION$ arg1 = cm_log_rgo_payback value = local_var:cm_fa_rgo_dbg }
+	}
 }
