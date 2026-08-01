@@ -4,14 +4,6 @@
 # from the pop counts themselves: this month's num_pop_type minus last month's, over the months
 # between. That covers promotion, births, demotions and migration in one number.
 
-# weather_monthly_pulse is the one engine periodic that fires globally rather than once per
-# country, so a location's stamp counts the same months whoever owned it in between.
-cm_pop_month_tick = {
-	effect = {
-		change_global_variable = { name = cm_pop_month add = 1 }
-	}
-}
-
 # $T$ = pop type key. Root is the location. Expects local_var:cm_pop_span.
 cm_pop_sample_type = {
 	set_variable = { name = cm_pop_rate_$T$ value = { value = num_pop_type:$T$ subtract = var:cm_pop_last_$T$ divide = local_var:cm_pop_span } }
