@@ -110,7 +110,7 @@ cm_ln_rank_step = {
 					}
 					remove_variable = cm_ln_rank_wait
 				}
-				cmf_log = { action = cm_ln_log_gov_rank_up }
+				cm_dbg_log = { CAT = governors action = cm_ln_log_gov_rank_up }
 			}
 		}
 		else = {
@@ -155,10 +155,10 @@ cm_ln_prune_pending = {
 			scope:cm_country = {
 				if = {
 					limit = { scope:cm_ln_p = { owner ?= scope:cm_country } }
-					cmf_log = { action = cm_ln_log_given_up_rank }
+					cm_dbg_log = { CAT = governors action = cm_ln_log_given_up_rank }
 				}
 				else = {
-					cmf_log = { action = cm_ln_log_given_up_lost }
+					cm_dbg_log = { CAT = governors action = cm_ln_log_given_up_lost }
 				}
 				cm_ln_drop_plan_site = { SITE = scope:cm_ln_p }
 			}
@@ -231,7 +231,7 @@ cm_ln_place_retry_or_drop = {
 		add_to_variable_list = { name = cm_ln_pending target = $SITE$ }
 	}
 	else = {
-		cmf_log = { action = cm_ln_log_given_up_placements }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_given_up_placements }
 		add_to_variable_list = { name = cm_ln_plan_drop target = $SITE$ }
 	}
 }
@@ -315,7 +315,7 @@ cm_ln_road_step = {
 		# in_game/common/advances/3_road_unlocks.txt:1
 		limit = { NOT = { has_advance = road_building } }
 		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_road_target }
-		cmf_log = { action = cm_ln_log_given_up_road }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_given_up_road }
 		cm_ln_drop_plan_site = { SITE = scope:cm_ln_road_target }
 		cm_ln_clear_road_state = yes
 	}
@@ -351,7 +351,7 @@ cm_ln_road_step = {
 			if = {
 				limit = { var:cm_ln_road_tries >= @cm_ln_road_max_tries }
 				remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_road_target }
-				cmf_log = { action = cm_ln_log_given_up_road }
+				cm_dbg_log = { CAT = governors action = cm_ln_log_given_up_road }
 				cm_ln_drop_plan_site = { SITE = scope:cm_ln_road_target }
 				cm_ln_clear_road_state = yes
 			}
@@ -387,7 +387,7 @@ cm_ln_do_placement = {
 			variable_list_size = { name = cm_ln_moves value >= 1 }
 		}
 		cm_ln_free_a_seat = yes
-		cmf_log = { action = cm_ln_log_gov_moved }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_gov_moved }
 		if = {
 			limit = { scope:cm_ln_target = { cm_location_allowed_to_build = { target = scope:cm_building_type } } }
 			cm_ln_place_allowed_target = yes
@@ -419,7 +419,7 @@ cm_ln_place_allowed_target = {
 		limit = { cm_ln_has_gov_credit = yes }
 		change_variable = { name = cm_ln_gov_credits subtract = 1 }
 		cm_ln_construct_governor_free = yes
-		cmf_log = { action = cm_ln_log_gov_replaced }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_gov_replaced }
 		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
 		add_to_variable_list = { name = cm_ln_seats target = scope:cm_ln_target }
 	}
@@ -434,7 +434,7 @@ cm_ln_place_allowed_target = {
 			# What makes the retry free if this order comes to nothing.
 			set_variable = { name = cm_ln_paid value = 1 }
 		}
-		cmf_log = { action = cm_ln_log_gov_placed }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_gov_placed }
 		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
 		add_to_variable_list = { name = cm_ln_seats target = scope:cm_ln_target }
 	}
@@ -445,26 +445,26 @@ cm_ln_place_allowed_target = {
 cm_ln_log_place_refused = {
 	if = {
 		limit = { local_var:cm_ln_fail = 1 }
-		cmf_log = { action = cm_ln_log_refused_slot }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_refused_slot }
 	}
 	else_if = {
 		limit = { local_var:cm_ln_fail = 2 }
-		cmf_log = { action = cm_ln_log_refused_capital }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_refused_capital }
 	}
 	else_if = {
 		limit = { local_var:cm_ln_fail = 3 }
-		cmf_log = { action = cm_ln_log_refused_rank }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_refused_rank }
 	}
 	else_if = {
 		limit = { local_var:cm_ln_fail = 4 }
-		cmf_log = { action = cm_ln_log_refused_route }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_refused_route }
 	}
 	else_if = {
 		limit = { local_var:cm_ln_fail = 5 }
-		cmf_log = { action = cm_ln_log_refused_naval }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_refused_naval }
 	}
 	else = {
-		cmf_log = { action = cm_ln_log_refused_unknown }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_refused_unknown }
 	}
 }
 
@@ -580,7 +580,7 @@ cm_ln_seat_restore_step = {
 		}
 		cm_ln_resolve_placeable_type = { SITE = scope:cm_ln_target }
 		cm_ln_construct_governor_free = yes
-		cmf_log = { action = cm_ln_log_seat_restored }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_seat_restored }
 	}
 }
 

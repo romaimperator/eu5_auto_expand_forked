@@ -249,7 +249,7 @@ cm_ln_probe_drop = {
 		limit = { scope:cm_ln_probe_l = { owner ?= scope:cm_country } }
 		scope:cm_ln_probe_l = { set_variable = { name = cm_ln_probe_reject value = 1 } }
 	}
-	cmf_log_value = { action = cm_ln_log_probe_dropped value = scope:cm_ln_probe_now }
+	cm_dbg_log_value = { CAT = governors action = cm_ln_log_probe_dropped value = scope:cm_ln_probe_now }
 	cm_ln_probe_end = yes
 }
 
@@ -326,7 +326,7 @@ cm_ln_reorg_cap_probe_check = {
 	if = {
 		limit = { scope:cm_ln_probe_now >= @cm_ln_probe_keep }
 		set_variable = { name = cm_ln_cap_target value = var:cm_ln_probe_site }
-		cmf_log_value = { action = cm_ln_log_probe_kept value = scope:cm_ln_probe_now }
+		cm_dbg_log_value = { CAT = governors action = cm_ln_log_probe_kept value = scope:cm_ln_probe_now }
 		cm_ln_probe_end = yes
 		set_variable = { name = cm_ln_phase value = 2 }
 	}
@@ -355,7 +355,7 @@ cm_ln_reorg_capital_move = {
 		}
 		set_capital = var:cm_ln_cap_target
 		capital = { cm_ln_capital_start_town_upgrade = yes }
-		cmf_log = { action = cm_ln_log_capital_moved }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_capital_moved }
 	}
 	remove_variable = cm_ln_cap_target
 	# A capital reject says nothing about the same site as a governor spot.
@@ -462,7 +462,7 @@ cm_ln_reorg_gov_probe_check = {
 	if = {
 		limit = { scope:cm_ln_probe_now >= @cm_ln_probe_keep }
 		scope:cm_ln_probe_l = { save_scope_as = cm_ln_pick }
-		cmf_log_value = { action = cm_ln_log_probe_kept value = scope:cm_ln_probe_now }
+		cm_dbg_log_value = { CAT = governors action = cm_ln_log_probe_kept value = scope:cm_ln_probe_now }
 		cm_ln_probe_end = yes
 		cm_ln_reorg_record_pick = yes
 	}
@@ -599,7 +599,7 @@ cm_ln_reorg_confirm_step = {
 		if = {
 			limit = { scope:cm_ln_p = { NOT = { owner ?= scope:cm_country } } }
 			scope:cm_country = {
-				cmf_log = { action = cm_ln_log_given_up_lost }
+				cm_dbg_log = { CAT = governors action = cm_ln_log_given_up_lost }
 				add_to_variable_list = { name = cm_ln_plan_drop target = scope:cm_ln_p }
 			}
 		}
@@ -616,7 +616,7 @@ cm_ln_reorg_confirm_step = {
 			# The order went in and left nothing behind, which is not a shape anything in the plan
 			# accounts for, so it is logged as the failure it is rather than only retried.
 			scope:cm_country = {
-				cmf_log = { action = cm_ln_log_gov_place_no_show }
+				cm_dbg_log = { CAT = governors action = cm_ln_log_gov_place_no_show }
 				cm_ln_bank_paid_credit = { SITE = scope:cm_ln_p }
 				cm_ln_place_retry_or_drop = { SITE = scope:cm_ln_p }
 			}
@@ -751,7 +751,7 @@ cm_ln_open_capital_tick = {
 				limit = { var:cm_ln_open_wait >= @cm_ln_open_max_wait }
 				set_variable = { name = cm_ln_open_done value = 1 }
 				remove_variable = cm_ln_open_idx
-				cmf_log = { action = cm_ln_log_open_gave_up }
+				cm_dbg_log = { CAT = governors action = cm_ln_log_open_gave_up }
 			}
 		}
 	}
@@ -781,7 +781,7 @@ cm_ln_open_capital_run = {
 	}
 	if = {
 		limit = { NOT = { exists = var:cm_ln_cap_target } }
-		cmf_log = { action = cm_ln_log_open_no_target }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_open_no_target }
 	}
 	else_if = {
 		limit = {
@@ -796,7 +796,7 @@ cm_ln_open_capital_run = {
 		set_capital = var:cm_ln_cap_target
 		cm_ln_open_charge_move = yes
 		capital = { cm_ln_capital_start_town_upgrade = yes }
-		cmf_log = { action = cm_ln_log_capital_moved }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_capital_moved }
 	}
 	remove_variable = cm_ln_cap_target
 	cm_ln_strip_finder_outputs = yes
@@ -857,7 +857,7 @@ cm_ln_open_gov_tick = {
 			change_variable = { name = cm_ln_open_gov_left add = cm_ln_gov_naval_free }
 			if = {
 				limit = { var:cm_ln_open_gov_left <= 0 }
-				cmf_log = { action = cm_ln_log_open_gov_none }
+				cm_dbg_log = { CAT = governors action = cm_ln_log_open_gov_none }
 			}
 		}
 		if = {
@@ -965,13 +965,13 @@ cm_ln_open_gov_place = {
 		# from here rather than from the live proximity.
 		add_to_variable_list = { name = cm_ln_open_gov_sites target = scope:cm_ln_open_gov_site }
 		add_to_variable_list = { name = cm_ln_seats target = scope:cm_ln_open_gov_site }
-		cmf_log = { action = cm_ln_log_open_gov_placed }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_open_gov_placed }
 	}
 	else = {
 		# Nothing the search would take, so the slots that are left stay empty for the
 		# reorganization to fill.
 		set_variable = { name = cm_ln_open_gov_left value = 0 }
-		cmf_log = { action = cm_ln_log_open_gov_none }
+		cm_dbg_log = { CAT = governors action = cm_ln_log_open_gov_none }
 	}
 }
 
