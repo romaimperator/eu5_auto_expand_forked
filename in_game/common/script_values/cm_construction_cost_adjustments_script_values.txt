@@ -13,13 +13,54 @@ cm_get_standard_construction_cost_adjustment_for_building_type = {
 }
 
 # Per-feature min discount thresholds. Read from the cm_priority_min_discount variable map.
+# The key is absent until CMM registration has rebuilt the map, which a toggle clicked during
+# loading beats, and an unguarded quoted read of a missing key logs two errors per evaluation from
+# every glow and tooltip on screen. Absent reads as the engine's MAX_PRICE_IMPACT so the gate
+# passes, matching what cm_building_meets_minimum_discount already does when the whole map is gone.
 # Expects scope: country.
-cm_get_min_discount_for_auto_expand_buildings = { value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_auto_expand_buildings)" }
-cm_get_min_discount_for_auto_expand_rgos = { value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_auto_expand_rgos)" }
-cm_get_min_discount_for_auto_food = { value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_auto_food)" }
-cm_get_min_discount_for_upgrade_all_buildings = { value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_upgrade_all_buildings)" }
-cm_get_min_discount_for_auto_urbanize = { value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_auto_urbanize)" }
-cm_get_min_discount_for_auto_build_capital = { value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_auto_build_capital)" }
+@cm_min_discount_absent = 3
+cm_get_min_discount_for_auto_expand_buildings = {
+	value = @cm_min_discount_absent
+	if = {
+		limit = { scope:cm_country = { has_variable_map = cm_priority_min_discount is_key_in_variable_map = { name = cm_priority_min_discount target = flag:cm_feature_auto_expand_buildings } } }
+		value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_auto_expand_buildings)"
+	}
+}
+cm_get_min_discount_for_auto_expand_rgos = {
+	value = @cm_min_discount_absent
+	if = {
+		limit = { scope:cm_country = { has_variable_map = cm_priority_min_discount is_key_in_variable_map = { name = cm_priority_min_discount target = flag:cm_feature_auto_expand_rgos } } }
+		value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_auto_expand_rgos)"
+	}
+}
+cm_get_min_discount_for_auto_food = {
+	value = @cm_min_discount_absent
+	if = {
+		limit = { scope:cm_country = { has_variable_map = cm_priority_min_discount is_key_in_variable_map = { name = cm_priority_min_discount target = flag:cm_feature_auto_food } } }
+		value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_auto_food)"
+	}
+}
+cm_get_min_discount_for_upgrade_all_buildings = {
+	value = @cm_min_discount_absent
+	if = {
+		limit = { scope:cm_country = { has_variable_map = cm_priority_min_discount is_key_in_variable_map = { name = cm_priority_min_discount target = flag:cm_feature_upgrade_all_buildings } } }
+		value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_upgrade_all_buildings)"
+	}
+}
+cm_get_min_discount_for_auto_urbanize = {
+	value = @cm_min_discount_absent
+	if = {
+		limit = { scope:cm_country = { has_variable_map = cm_priority_min_discount is_key_in_variable_map = { name = cm_priority_min_discount target = flag:cm_feature_auto_urbanize } } }
+		value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_auto_urbanize)"
+	}
+}
+cm_get_min_discount_for_auto_build_capital = {
+	value = @cm_min_discount_absent
+	if = {
+		limit = { scope:cm_country = { has_variable_map = cm_priority_min_discount is_key_in_variable_map = { name = cm_priority_min_discount target = flag:cm_feature_auto_build_capital } } }
+		value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_auto_build_capital)"
+	}
+}
 
 # Cost modifier calculation using per-good construction demand maps.
 # These maps are populated by the hidden window GUI for all building types.
