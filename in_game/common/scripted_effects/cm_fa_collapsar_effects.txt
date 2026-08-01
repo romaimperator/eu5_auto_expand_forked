@@ -297,7 +297,7 @@ cm_fa_collapsar_drain_rgo = {
 				# The level is wanted, so the cost is the only thing that failed and the category
 				# stops here.
 				limit = { local_var:cm_fa_cost_blocked = 0 }
-				set_local_variable = { name = cm_fa_cost_blocked value = 1 }
+				cm_fa_stop_on_cost = { COST = glorpui_rgo_expand_cost }
 			}
 		}
 	}
@@ -396,7 +396,7 @@ cm_fa_collapsar_approve_build = {
 			else_if = {
 				# The level is wanted, so the cost is the only thing that failed.
 				limit = { exists = var:cm_fa_collapsar_levels }
-				set_local_variable = { name = cm_fa_cost_blocked value = 1 }
+				cm_fa_stop_on_cost = { COST = scope:cm_cost }
 			}
 		}
 		remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }

@@ -475,11 +475,11 @@ cm_fa_pick_best_build_item = {
 						# The batch stopped on the pool or the treasury alone: stop all further
 						# Industry picks rather than let a worse candidate spend what is left.
 						limit = { local_var:cm_q_copy_stop = 2 }
-						set_local_variable = { name = cm_fa_cost_blocked value = 1 }
+						cm_fa_stop_on_cost = { COST = scope:cm_cost }
 					}
 				}
 			} else = {
-				set_local_variable = { name = cm_fa_cost_blocked value = 1 }
+				cm_fa_stop_on_cost = { COST = scope:cm_cost }
 			}
 		}
 	}
@@ -575,7 +575,7 @@ cm_fa_pick_best_upgrade_item = {
 					cm_fa_ind_log_queued = yes
 					scope:cm_country = { change_variable = { name = cm_fa_pool_industry subtract = scope:cm_cost } }
 				} else = {
-					set_local_variable = { name = cm_fa_cost_blocked value = 1 }
+					cm_fa_stop_on_cost = { COST = scope:cm_cost }
 				}
 			}
 		}
@@ -658,7 +658,7 @@ cm_fa_approve_rgo_item = {
 					cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction }
 					NOT = { cm_fa_can_afford_rgo = { POOL = cm_fa_pool_industry } }
 				}
-				set_local_variable = { name = cm_fa_cost_blocked value = 1 }
+				cm_fa_stop_on_cost = { COST = glorpui_rgo_expand_cost }
 			}
 			if = {
 				limit = { local_var:cm_fa_rgo_done > 0 }
