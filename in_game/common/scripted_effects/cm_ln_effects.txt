@@ -238,6 +238,9 @@ cm_ln_monthly_cycle = {
 	}
 	if = {
 		limit = { exists = var:cm_ln_open_done }
+		# Ahead of the reorganization tick, so a seat rebuilt this month closes the open slot that
+		# would otherwise start a run.
+		cm_ln_seat_restore_pass = yes
 		# Ahead of the budget refresh, so the month a reorganization claims the treasury is the
 		# month the pools go to zero.
 		cm_ln_reorg_tick = yes
@@ -259,7 +262,6 @@ cm_ln_yearly_cycle = {
 	cm_fa_rd_plan = yes
 	cm_ln_sync_cu_pending = yes
 	cm_ln_ft_delete_pass = yes
-	cm_ln_seat_restore_pass = yes
 }
 
 # Ends a lucky nation's cycle. Root is the country.
