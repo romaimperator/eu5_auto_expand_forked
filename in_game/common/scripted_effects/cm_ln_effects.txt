@@ -11,33 +11,9 @@ cm_ln_seed_marks = {
 		limit = { exists = var:cm_ln_want }
 		remove_variable = cm_ln_want
 	}
-	if = {
-		limit = {
-			has_game_rule = cm_ln_lucky_nations_castile
-			is_multiplayer_session = no
-			country_exists = c:CAS
-		}
-		c:CAS = {
-			# Marking a human would have the seeded values overwrite their own settings.
-			if = {
-				limit = { is_ai = yes }
-				set_variable = { name = cm_ln_want value = yes }
-			}
-		}
-	}
-	if = {
-		limit = {
-			has_game_rule = cm_ln_lucky_nations_china
-			is_multiplayer_session = no
-			country_exists = c:CHI
-		}
-		c:CHI = {
-			if = {
-				limit = { is_ai = yes }
-				set_variable = { name = cm_ln_want value = yes }
-			}
-		}
-	}
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_castile TAG = CAS }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_china TAG = CHI }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_england TAG = ENG }
 	# Nothing else on designation: cm_ln_open_done is never removed, so a country marked for the
 	# first time runs the opening capital move from its own next monthly pulse, and one marked
 	# again after a rule change correctly does not repeat it.
@@ -55,6 +31,34 @@ cm_ln_seed_marks = {
 		}
 		remove_variable = cm_ln_active
 		cm_ln_undesignate = yes
+	}
+}
+
+# Stages the want mark for one rule setting. Forming a country changes its tag and keeps the
+# country itself, so the rule follows a seat variable planted on the starting tag rather than the
+# tag: Castile keeps the seat as Spain, and c:CAS takes it back only once no living country holds
+# it. No scope.
+cm_ln_seed_mark_seat = {
+	if = {
+		limit = {
+			has_game_rule = $RULE$
+			is_multiplayer_session = no
+		}
+		if = {
+			limit = {
+				NOT = { any_country = { exists = var:cm_ln_seat_$TAG$ } }
+				country_exists = c:$TAG$
+			}
+			c:$TAG$ = { set_variable = { name = cm_ln_seat_$TAG$ value = yes } }
+		}
+		every_country = {
+			# Marking a human would have the seeded values overwrite their own settings.
+			limit = {
+				exists = var:cm_ln_seat_$TAG$
+				is_ai = yes
+			}
+			set_variable = { name = cm_ln_want value = yes }
+		}
 	}
 }
 
@@ -296,4 +300,33 @@ cm_ln_undesignate = {
 		limit = { NOT = { has_global_variable = cm_ln_open_cycles } }
 		remove_global_variable = cm_ln_scan_armed
 	}
+}
+
+# --- Diagnostics ---
+
+# Run from the console: effect c:<TAG> = { cm_ln_mark_probe = yes }. Reporting the seat beside the
+# mark separates a seat the country never held from one it holds while the mark is refused.
+# Root is the country.
+cm_ln_mark_probe = {
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	if = {
+		limit = { exists = var:cm_ln_active }
+		set_local_variable = { name = cm_ln_dbg value = 1 }
+	}
+	cmf_log_value = { action = cm_log_mark_active value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	if = {
+		limit = { exists = var:cm_ln_seat_CAS }
+		set_local_variable = { name = cm_ln_dbg value = 1 }
+	}
+	else_if = {
+		limit = { exists = var:cm_ln_seat_CHI }
+		set_local_variable = { name = cm_ln_dbg value = 2 }
+	}
+	else_if = {
+		limit = { exists = var:cm_ln_seat_ENG }
+		set_local_variable = { name = cm_ln_dbg value = 3 }
+	}
+	cmf_log_value = { action = cm_log_mark_seat value = local_var:cm_ln_dbg }
 }
