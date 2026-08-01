@@ -270,8 +270,8 @@ cm_q_pass_foreign = {
 # construct_building validates nothing: it places a level whatever the type's allow block,
 # need_good_relation or level cap say, so every level has to come through this gate
 # individually and the gate is checked immediately before the only construct. The batch that
-# used to live here bounded itself on building_type_max_level, whose error reads its
-# value <= 0 branch as uncapped; that put 33 trade office levels into a 3-slot location the
+# used to live here bounded itself on building_type_max_level, whose value reads 0 and leaves
+# its value <= 0 branch always true; that put 33 trade office levels into a 3-slot location the
 # player had no relations to build in at all. The monthly top-up grows the site from here.
 # Root is the location. Expects scope:cm_country, scope:cm_building_type and scope:cm_cost.
 cm_q_fb_build_levels = {
@@ -348,9 +348,9 @@ cm_q_pick_best_build_item = {
 }
 
 # Queues further levels of a just-approved build until the location's construction room is
-# spent or the type reaches its cap. Approving the first level settled the rest, so pops, the
-# promotion buffer, the overbuild allowance and the market goods gate do not stop a level that
-# would otherwise leave a construction slot idle.
+# spent. Approving the first level settled the rest, so pops, the promotion buffer, the overbuild
+# allowance and the market goods gate do not stop a level that would otherwise leave a
+# construction slot idle.
 # $AFFORD$ = the per-level affordability trigger, $CLAIM$ = the per-level claim effect.
 # Leaves local_var:cm_q_copy_stop = 2 when affordability alone ended the batch, which is what a
 # caller with an early stop reads; 1 when the room gates closed and 0 when it ran to the rank
@@ -359,22 +359,6 @@ cm_q_pick_best_build_item = {
 cm_q_fill_build_slots = {
 	set_local_variable = { name = cm_q_copy_guard value = 0 }
 	set_local_variable = { name = cm_q_copy_stop value = 0 }
-	# Levels the type reaches once the queued batch completes, counting the approved first copy.
-	# A subject's location can hold its owner's building of the same type, which is not the one
-	# the batch adds to.
-	set_local_variable = { name = cm_q_copy_type_levels value = 1 }
-	if = {
-		limit = {
-			any_buildings_in_location = {
-				owner = scope:cm_country
-				building_type = scope:cm_building_type
-			}
-		}
-		"building(scope:cm_building_type|scope:cm_country)" = {
-			change_local_variable = { name = cm_q_copy_type_levels add = building_level }
-			change_local_variable = { name = cm_q_copy_type_levels add = building_levels_under_construction }
-		}
-	}
 	while = {
 		limit = {
 			# One rank list per extra level, so at most 8 levels per type per cycle.
@@ -388,18 +372,12 @@ cm_q_fill_build_slots = {
 				# Only producing, multi-level types batch: a single-level type reaching this loop
 				# queued a second level of it.
 				scope:cm_building_type = { cm_is_building_type_production_building = yes }
-				# The batch's own count against the cap.
-				OR = {
-					building_type_max_level = { building_type = scope:cm_building_type value <= 0 }
-					building_type_max_level = { building_type = scope:cm_building_type value > local_var:cm_q_copy_type_levels }
-				}
 			}
 			if = {
 				limit = { $AFFORD$ = yes }
 				change_local_variable = { name = cm_q_copy_guard add = 1 }
 				cm_q_add_build_rank_copy = { GUARD = cm_q_copy_guard }
 				$CLAIM$ = yes
-				change_local_variable = { name = cm_q_copy_type_levels add = 1 }
 			} else = {
 				set_local_variable = { name = cm_q_copy_stop value = 2 }
 			}

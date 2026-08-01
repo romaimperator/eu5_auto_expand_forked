@@ -907,6 +907,22 @@ def province_check(good):
     return f"any_location_in_province_definition = {{ raw_material ?= goods:{good} }}"
 
 
+def province_cov_read(var, gate=None):
+    """Location-scope read of a stored per-province coverage variable, guarded
+    on the variable existing. The sweep writes these only where
+    cm_trmm_province_definition_has_any_input holds, so an unguarded read logs
+    a fetch failure per good per evaluation on every other province."""
+    limit = f"province = {{ has_variable = {var} }}"
+    if gate is not None:
+        limit = f"{gate} {limit}"
+    return [
+        "\tif = {",
+        f"\t\tlimit = {{ {limit} }}",
+        f"\t\tprovince = {{ add = var:{var} }}",
+        "\t}",
+    ]
+
+
 def _diff_var(x, y, aliases):
     """Name of the stored pairwise diff for the pair (x, y) and whether it
     already reads as score(x) - score(y): cm_trmm_diff_a__b is only stored
@@ -967,20 +983,17 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
                 continue
             lines.append(f"cm_trmm_covp_{good}_g{gi} = {{")
             lines.append("\tvalue = 0")
-            lines.append(
-                f"\tprovince = {{ add = var:cm_trmm_cov_{good}_g{gi} }}")
+            lines.extend(province_cov_read(f"cm_trmm_cov_{good}_g{gi}"))
             lines.append("}")
         lines.append(f"cm_trmm_cov_{good} = {{")
         lines.append("\tvalue = 0")
         first_gate, first_opts = groups[0]
         if first_gate is None:
-            lines.append(f"\tprovince = {{ add = var:cm_trmm_cov_{good} }}")
+            lines.extend(province_cov_read(f"cm_trmm_cov_{good}"))
         else:
             lines.append(f"\t# {gate_comment(first_opts)}")
-            lines.append("\tif = {")
-            lines.append(f"\t\tlimit = {{ {first_gate} }}")
-            lines.append(f"\t\tprovince = {{ add = var:cm_trmm_cov_{good} }}")
-            lines.append("\t}")
+            lines.extend(
+                province_cov_read(f"cm_trmm_cov_{good}", gate=first_gate))
         for gi, (gate, opts) in enumerate(groups, start=1):
             if gi == 1:
                 continue

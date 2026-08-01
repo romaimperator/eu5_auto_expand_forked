@@ -478,13 +478,13 @@ cm_location_will_auto_expand_from_zero_levels = {
 	is_shown = {
 		save_temporary_scope_as = cm_location
 		scope:cm_country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_expand_buildings } }
-		cm_location_will_auto_expand_from_zero_levels = yes
 		trigger_if = {
 			limit = { scope:cm_building_type = { is_foreign = yes } }
-			cm_fb_type_is_allowed = yes
-			cm_country_can_afford_predicted_cost = yes
+			cm_fb_site_requirements_pass = yes
 		}
 		trigger_else = {
+			# Ends in cm_location_allowed_to_build, which vetoes every foreign type.
+			cm_location_will_auto_expand_from_zero_levels = yes
 			cm_gui_metric_gate_passes = yes
 			cm_building_type_profitable_or_subsidized = yes
 			cm_country_can_afford_predicted_cost = yes
@@ -495,15 +495,12 @@ cm_location_will_auto_expand_from_zero_levels = {
 
 # Foreign auto-expand tooltip rows. Root is the location; expects scope:cm_building_type,
 # scope:cm_country and, for the gold row, scope:cm_cost.
-# The aggregate is the exact conjunction of the four row checks below plus the pause toggle, so
-# the met message and the failing-row list stay complements.
+# The aggregate is the exact conjunction of the row checks below, so the met message and the
+# failing-row list stay complements.
 cm_fb_site_requirements_met = {
 	is_shown = {
-		scope:cm_country = { cm_should_pause_auto_expand = no }
 		scope:cm_country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_expand_buildings } }
-		cm_fb_type_is_allowed = yes
-		cm_location_can_place_building = { target = scope:cm_building_type }
-		cm_country_can_afford_predicted_cost = yes
+		cm_fb_site_requirements_pass = yes
 	}
 }
 
@@ -516,6 +513,24 @@ cm_fb_type_is_allowed = {
 cm_fb_can_place_building = {
 	is_shown = {
 		cm_location_can_place_building = { target = scope:cm_building_type }
+	}
+}
+
+cm_fb_relations_ok = {
+	is_shown = {
+		cm_fb_relations_ok = yes
+	}
+}
+
+cm_fb_no_level_in_flight = {
+	is_shown = {
+		cm_fb_no_level_in_flight = yes
+	}
+}
+
+cm_fb_has_level_room = {
+	is_shown = {
+		cm_fb_has_level_room = yes
 	}
 }
 
@@ -537,10 +552,7 @@ cm_is_building_able_to_auto_expand = {
 		owner = { is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_expand_buildings } }
 		trigger_if = {
 			limit = { scope:cm_building_type = { is_foreign = yes } }
-			cm_fb_type_is_allowed = yes
-			is_at_max_level = no
-			location = { cm_fb_location_can_expand = yes }
-			cm_country_can_afford_predicted_cost = yes
+			location = { cm_fb_site_requirements_pass = yes }
 		}
 		trigger_else = {
 			location = { NOT = { integration_level = conquered } }

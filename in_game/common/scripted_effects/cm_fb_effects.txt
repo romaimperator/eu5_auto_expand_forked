@@ -29,6 +29,23 @@ cm_fb_populate_excluded_types = {
 	add_to_global_variable_list = { name = cm_fb_excluded_types target = building_type:merchant_guild_chapel }
 }
 
+# The foreign types the 100-opinion gate does not apply to, which is every vanilla one whose
+# relation requirement is something else. missionary_building goes in empty locations and has no
+# owner to hold an opinion (in_empty = empty, vanilla
+# in_game/common/building_types/foreign_buildings.txt:114); the other four want stronger power
+# projection instead (foreign_buildings.txt:168 slave_center, :233 overseas_trading_post,
+# :401 viceroyalty, unique_buildings.txt:4685 por_feitoria). The trade company types and the HRE
+# armory answer to their own gates and are excluded outright above.
+# Called from cm_on_init_lobby_globals, once per lobby, not per player.
+cm_fb_populate_no_relation_types = {
+	clear_global_variable_list = cm_fb_no_relation_types
+	add_to_global_variable_list = { name = cm_fb_no_relation_types target = building_type:missionary_building }
+	add_to_global_variable_list = { name = cm_fb_no_relation_types target = building_type:slave_center }
+	add_to_global_variable_list = { name = cm_fb_no_relation_types target = building_type:overseas_trading_post }
+	add_to_global_variable_list = { name = cm_fb_no_relation_types target = building_type:viceroyalty }
+	add_to_global_variable_list = { name = cm_fb_no_relation_types target = building_type:por_feitoria }
+}
+
 # Root is the location. Expects scope:cm_country and scope:cm_building_type.
 cm_fb_register_here = {
 	save_temporary_scope_as = cm_fb_site
@@ -144,7 +161,8 @@ cm_run_auto_expand_foreign = {
 			save_scope_as = cm_location
 			if = {
 				limit = {
-					scope:cm_fb_building = { is_at_max_level = no }
+					cm_fb_has_level_room = yes
+					cm_fb_no_level_in_flight = yes
 					cm_location_is_auto_expand_active_for_building_type = yes
 					cm_fb_type_is_allowed = yes
 					cm_fb_location_can_expand = yes

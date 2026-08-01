@@ -2,6 +2,9 @@
 # its per-location toggle state is keyed by location on the acting country rather than stored
 # on the location: the location's own variables are shared with every other player.
 
+# GOOD_RELATION_THRESHOLD_FOR_BUILDINGS, loading_screen/common/defines/00_defines.txt:2025
+@cm_fb_good_relation = 100
+
 # Root is the location. Expects scope:cm_country and scope:cm_building_type.
 cm_fb_is_registered_here = {
 	save_temporary_scope_as = cm_fb_site
@@ -49,14 +52,80 @@ cm_fb_type_is_allowed = {
 	trigger_else = { always = yes }
 }
 
+# Expects scope:cm_building_type. Root scope is unused.
+# The list holds the exceptions rather than the types that need relations: 33 of vanilla's 42
+# foreign types carry need_good_relation, and a type the mod cannot read the field on is held
+# back rather than built somewhere the engine may refuse it.
+cm_fb_type_needs_good_relation = {
+	trigger_if = {
+		limit = { has_global_variable_list = cm_fb_no_relation_types }
+		NOT = { is_target_in_global_variable_list = { name = cm_fb_no_relation_types target = scope:cm_building_type } }
+	}
+	trigger_else = { always = yes }
+}
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+# can_build_building reads neither direction of the relations rule (cmf-engine-test 140/141, with
+# 155 as the raised-opinion control) and construct_building places the level regardless (142), so
+# the threshold is modelled here. The rule is ONE-WAY, the host's opinion of the builder, per the
+# engine's own refusal text: "We can only build a Trade Office in a foreign Location where the
+# owner has at least a 100 opinion of us."
+cm_fb_relations_ok = {
+	trigger_if = {
+		limit = { cm_fb_type_needs_good_relation = yes }
+		exists = owner
+		owner = { opinion = { target = scope:cm_country value >= @cm_fb_good_relation } }
+	}
+	trigger_else = { always = yes }
+}
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+# is_at_max_level counts standing levels only, so a site whose remaining room is all queued still
+# reads as having room (cmf-engine-test 131/132/135) while construct_building places past the cap
+# anyway (133). One level in flight is the bound the cap itself cannot give.
+cm_fb_no_level_in_flight = {
+	NOT = {
+		any_foreign_buildings_in_location = {
+			owner = scope:cm_country
+			building_type = scope:cm_building_type
+			building_levels_under_construction > 0
+		}
+	}
+}
+
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+# Location-rooted so the from-zero surfaces, where no building of the type stands yet, ask it the
+# same way the building-rooted one does.
+cm_fb_has_level_room = {
+	NOT = {
+		any_foreign_buildings_in_location = {
+			owner = scope:cm_country
+			building_type = scope:cm_building_type
+			is_at_max_level = yes
+		}
+	}
+}
+
 # Root is the location. Expects scope:cm_country and scope:cm_building_type.
 # A foreign building sits outside the country, imports its own pop from the capital
 # (pop_size_created), and is placed to claim the host's building slots ahead of their own
 # construction, so the pop, slot, level-limit, discount and market gates do not apply to it.
-# The engine's placement check carries the type's relation and trade-range requirements.
 cm_fb_location_can_expand = {
 	scope:cm_country = { cm_should_pause_auto_expand = no }
 	cm_location_can_place_building = { target = scope:cm_building_type }
+	cm_fb_relations_ok = yes
+}
+
+# Root is the location. Expects scope:cm_country, scope:cm_building_type and scope:cm_cost.
+# The whole foreign eligibility set bar the feature toggle, which every caller checks alongside its
+# owned branch. Every surface that renders a verdict for a foreign type reads this one trigger, so
+# the verdict and the tooltip's row list cannot disagree.
+cm_fb_site_requirements_pass = {
+	cm_fb_type_is_allowed = yes
+	cm_fb_location_can_expand = yes
+	cm_fb_has_level_room = yes
+	cm_fb_no_level_in_flight = yes
+	cm_country_can_afford_predicted_cost = yes
 }
 
 # Root is the country. Expects scope:cm_building_type.
