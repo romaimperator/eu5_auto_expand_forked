@@ -282,7 +282,6 @@ cm_q_fb_build_levels = {
 			cm_country_can_afford_staged_cost = yes
 		}
 		construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
-		cm_q_dbg_bump = { V = cm_q_dbg_fb_levels }
 	}
 }
 
@@ -334,7 +333,6 @@ cm_q_pick_best_build_item = {
 					# candidate.
 					limit = { local_var:cm_q_copy_stop = 2 }
 					set_local_variable = { name = cm_q_budget_exhausted value = 1 }
-					cm_q_dbg_bump = { V = cm_q_dbg_early_expand }
 				}
 			}
 		} else = {
@@ -359,25 +357,56 @@ cm_q_pick_best_build_item = {
 cm_q_fill_build_slots = {
 	set_local_variable = { name = cm_q_copy_guard value = 0 }
 	set_local_variable = { name = cm_q_copy_stop value = 0 }
+	# Levels the type reaches once the queued batch completes, counting the approved first copy.
+	# A subject's location can hold its owner's building of the same type, which is not the one
+	# the batch adds to.
+	set_local_variable = { name = cm_q_copy_type_levels value = 1 }
+	if = {
+		limit = {
+			any_buildings_in_location = {
+				owner = scope:cm_country
+				building_type = scope:cm_building_type
+			}
+		}
+		"building(scope:cm_building_type|scope:cm_country)" = {
+			change_local_variable = { name = cm_q_copy_type_levels add = building_level }
+			change_local_variable = { name = cm_q_copy_type_levels add = building_levels_under_construction }
+		}
+	}
 	while = {
 		limit = {
 			# One rank list per extra level, so at most 8 levels per type per cycle.
 			local_var:cm_q_copy_guard < 7
 			local_var:cm_q_copy_stop = 0
 		}
-		cm_q_dbg_bump = { V = cm_q_dbg_maxlevel_evals }
 		if = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
 				# Only producing, multi-level types batch: a single-level type reaching this loop
 				# queued a second level of it.
 				scope:cm_building_type = { cm_is_building_type_production_building = yes }
+				# The batch's own count against the engine cap. building_max_level is building scope
+				# and reports correctly where building_type_max_level reads 0 (cmf-engine-test 176),
+				# so a type with nothing of ours standing here yet cannot be read and is left to the
+				# construction-room bound.
+				OR = {
+					NOT = {
+						any_buildings_in_location = {
+							owner = scope:cm_country
+							building_type = scope:cm_building_type
+						}
+					}
+					"building(scope:cm_building_type|scope:cm_country)" = {
+						building_max_level > local_var:cm_q_copy_type_levels
+					}
+				}
 			}
 			if = {
 				limit = { $AFFORD$ = yes }
 				change_local_variable = { name = cm_q_copy_guard add = 1 }
 				cm_q_add_build_rank_copy = { GUARD = cm_q_copy_guard }
 				$CLAIM$ = yes
+				change_local_variable = { name = cm_q_copy_type_levels add = 1 }
 			} else = {
 				set_local_variable = { name = cm_q_copy_stop value = 2 }
 			}
@@ -385,7 +414,6 @@ cm_q_fill_build_slots = {
 			set_local_variable = { name = cm_q_copy_stop value = 1 }
 		}
 	}
-	cm_q_dbg_record_stop = yes
 }
 
 # Recomputes this location's best expand score after a pick, or retires the location from
@@ -803,7 +831,6 @@ cm_q_pass_auto_food = {
 # instead of founding the cheaper ones behind it. Root is the country.
 cm_q_pass_auto_urbanize = {
 	set_local_variable = { name = cm_q_urb_budget_exhausted value = 0 }
-	cm_urb_dbg_drain_reset = yes
 	if = {
 		limit = { has_variable_list = cm_q_urbanize_locations }
 		every_in_list = {
@@ -813,7 +840,6 @@ cm_q_pass_auto_urbanize = {
 				variable = cm_q_urbanize_building_types
 				save_scope_as = cm_building_type
 				scope:cm_q_pass_loc = {
-					cm_urb_dbg_drain_item = yes
 					if = {
 						limit = {
 							local_var:cm_q_urb_budget_exhausted = 0
