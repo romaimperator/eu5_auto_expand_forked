@@ -52,6 +52,7 @@ cm_ln_reorg_tick = {
 		change_variable = { name = cm_ln_age add = 1 }
 	}
 	remove_variable = cm_ln_hold
+	set_local_variable = { name = cm_ln_gold_wait value = 0 }
 	# The urbanize and road orders serve both the placement and the relocation phase, and they run
 	# whatever the slot and credit counts are, so they sit ahead of the switch rather than inside
 	# either step. Placement claims gold after them.
@@ -85,14 +86,17 @@ cm_ln_reorg_tick = {
 		}
 		cm_ln_reorg_teardown = yes
 	}
-	# Nothing else may spend a coin while a planned governor is still to be ordered, and nothing is
-	# owed while one is merely building, which is why this reads cm_ln_pending rather than the phase
-	# alone. It sits after the switch so a site the confirm step just handed back is covered this
-	# month, and the whole tick runs ahead of the budget refresh and the construction cycle.
+	# Nothing else may spend a coin while gold is the only thing keeping a planned governor from
+	# being ordered, which is what cm_ln_gold_wait marks: a rank upgrade, a road or the placement
+	# itself refused this tick on its gold gate alone. A site merely waiting on something it has
+	# already paid for owes nothing, and an engine refusal is not something saving can fix. It sits
+	# after the switch so a site the confirm step just handed back is covered this month, and the
+	# whole tick runs ahead of the budget refresh and the construction cycle.
 	if = {
 		limit = {
 			var:cm_ln_phase >= 5
 			var:cm_ln_phase <= 6
+			local_var:cm_ln_gold_wait = 1
 			has_variable_list = cm_ln_pending
 			variable_list_size = { name = cm_ln_pending value >= 1 }
 		}

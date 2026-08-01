@@ -112,6 +112,9 @@ cm_ln_rank_step = {
 				}
 				cm_dbg_log = { CAT = governors action = cm_ln_log_gov_rank_up }
 			}
+			else = {
+				set_local_variable = { name = cm_ln_gold_wait value = 1 }
+			}
 		}
 		else = {
 			# The engine refuses the upgrade, which saving gold cannot fix, so the site counts months
@@ -339,6 +342,9 @@ cm_ln_road_step = {
 			set_variable = { name = cm_ln_road_site value = scope:cm_ln_road_target }
 			set_variable = { name = cm_ln_road_age value = 0 }
 		}
+		else = {
+			set_local_variable = { name = cm_ln_gold_wait value = 1 }
+		}
 	}
 	else_if = {
 		limit = { exists = var:cm_ln_road_issued }
@@ -437,6 +443,9 @@ cm_ln_place_allowed_target = {
 		cm_dbg_log = { CAT = governors action = cm_ln_log_gov_placed }
 		remove_list_variable = { name = cm_ln_pending target = scope:cm_ln_target }
 		add_to_variable_list = { name = cm_ln_seats target = scope:cm_ln_target }
+	}
+	else = {
+		set_local_variable = { name = cm_ln_gold_wait value = 1 }
 	}
 }
 
