@@ -619,6 +619,7 @@ cm_fa_approve_rgo_item = {
 	if = {
 		limit = {
 			cm_rgo_basic_expand_eligibility = yes
+			cm_location_rgo_free_this_cycle = yes
 			NOT = { cm_location_auto_food_supersedes_rgo = yes }
 			cm_market_has_construction_goods_for_rgo = yes
 		}
@@ -658,6 +659,10 @@ cm_fa_approve_rgo_item = {
 					NOT = { cm_fa_can_afford_rgo = { POOL = cm_fa_pool_industry } }
 				}
 				set_local_variable = { name = cm_fa_cost_blocked value = 1 }
+			}
+			if = {
+				limit = { local_var:cm_fa_rgo_done > 0 }
+				cm_q_mark_rgo_served = yes
 			}
 		}
 	}

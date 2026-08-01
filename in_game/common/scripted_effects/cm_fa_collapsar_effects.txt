@@ -268,6 +268,7 @@ cm_fa_collapsar_drain_rgo = {
 				# Also the dedup vs the player's RGO drain and Industry, which ran earlier
 				# this pass and construct immediately.
 				cm_is_rgo_under_construction = no
+				cm_location_rgo_free_this_cycle = yes
 				cm_fa_collapsar_rgo_pops_ok = yes
 			}
 			if = {
@@ -286,6 +287,10 @@ cm_fa_collapsar_drain_rgo = {
 					set_local_variable = { name = cm_fa_rgo_cost value = glorpui_rgo_expand_cost }
 					construct_rgo_upgrade = { }
 					scope:cm_country = { change_variable = { name = cm_fa_pool_collapsar subtract = local_var:cm_fa_rgo_cost } }
+				}
+				if = {
+					limit = { local_var:cm_fa_collapsar_rgo_guard > 0 }
+					cm_q_mark_rgo_served = yes
 				}
 			}
 			else_if = {

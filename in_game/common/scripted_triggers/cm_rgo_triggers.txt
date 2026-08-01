@@ -121,6 +121,12 @@ cm_is_rgo_under_construction = {
 	cm_get_rgos_under_construction > 0
 }
 
+# Root is the location. False once a drain has taken this location's RGO this cycle, so two
+# features cannot batch levels onto one RGO in one pass.
+cm_location_rgo_free_this_cycle = {
+	NOT = { exists = var:cm_q_rgo_served }
+}
+
 # Root is location
 # Expects scopes: country
 cm_is_rgo_advance_researched = {

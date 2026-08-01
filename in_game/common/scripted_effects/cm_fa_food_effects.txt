@@ -372,16 +372,18 @@ cm_fa_pass_food = {
 						cm_get_open_build_queue_slots > 0
 						cm_is_rgo_not_max_level_already = yes
 						cm_is_rgo_under_construction = no
+						cm_location_rgo_free_this_cycle = yes
 						cm_location_rgo_promotion_buffer_slack >= 0
 						cm_market_has_construction_goods_for_rgo = yes
 						cm_fa_can_afford_rgo = { POOL = cm_fa_pool_food }
 					}
 					set_local_variable = { name = cm_fa_food_rgo_guard value = 0 }
+					# Counted down rather than left to the room read, which the batch's own
+					# constructs are what move.
+					set_local_variable = { name = cm_fa_food_rgo_budget value = cm_get_open_build_queue_slots }
 					while = {
 						limit = {
-							# 99 stays under the engine's 1000-iteration while abort; the construction
-							# room below is what ends the batch.
-							local_var:cm_fa_food_rgo_guard < 99
+							local_var:cm_fa_food_rgo_guard < local_var:cm_fa_food_rgo_budget
 							cm_get_open_build_queue_slots > 0
 							cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction }
 							cm_fa_can_afford_rgo = { POOL = cm_fa_pool_food }
@@ -390,6 +392,10 @@ cm_fa_pass_food = {
 						set_local_variable = { name = cm_fa_rgo_cost value = glorpui_rgo_expand_cost }
 						construct_rgo_upgrade = { }
 						scope:cm_country = { change_variable = { name = cm_fa_pool_food subtract = local_var:cm_fa_rgo_cost } }
+					}
+					if = {
+						limit = { local_var:cm_fa_food_rgo_guard > 0 }
+						cm_q_mark_rgo_served = yes
 					}
 				}
 				else_if = {
@@ -400,6 +406,7 @@ cm_fa_pass_food = {
 						cm_get_open_build_queue_slots > 0
 						cm_is_rgo_not_max_level_already = yes
 						cm_is_rgo_under_construction = no
+						cm_location_rgo_free_this_cycle = yes
 						cm_location_rgo_promotion_buffer_slack >= 0
 						cm_market_has_construction_goods_for_rgo = yes
 					}

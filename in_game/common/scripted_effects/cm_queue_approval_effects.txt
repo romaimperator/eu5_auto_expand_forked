@@ -123,6 +123,22 @@ cm_q_loc_reset_cycle_counters = {
 	remove_variable = cm_q_slots_used
 }
 
+# Claims this location's RGO for the cycle. Root is the location, expects scope:cm_country.
+cm_q_mark_rgo_served = {
+	set_variable = { name = cm_q_rgo_served value = yes }
+	scope:cm_country = { add_to_variable_list = { name = cm_q_rgo_served_locations target = prev } }
+}
+
+# Root is the country.
+cm_q_clear_rgo_served = {
+	every_in_list = {
+		variable = cm_q_rgo_served_locations
+		save_scope_as = cm_q_clear_loc
+		scope:cm_q_clear_loc = { remove_variable = cm_q_rgo_served }
+	}
+	clear_variable_list = cm_q_rgo_served_locations
+}
+
 # Root is the location.
 cm_q_loc_clear_build_ranks = {
 	clear_variable_list = cm_q_approved_build_x2
@@ -616,6 +632,7 @@ cm_q_pass_auto_expand_rgos = {
 			check_range_bounds = no
 			limit = {
 				has_variable = cm_q_rgo_score
+				cm_location_rgo_free_this_cycle = yes
 				local_var:cm_q_rgo_budget_exhausted = 0
 			}
 			save_temporary_scope_as = cm_location
@@ -642,6 +659,10 @@ cm_q_pass_auto_expand_rgos = {
 				construct_rgo_upgrade = { }
 				change_local_variable = { name = cm_q_rgo_budget subtract = 1 }
 				change_local_variable = { name = cm_q_rgo_done add = 1 }
+			}
+			if = {
+				limit = { local_var:cm_q_rgo_done > 0 }
+				cm_q_mark_rgo_served = yes
 			}
 			if = {
 				# Same non-gold conditions as the while above, gold negated: true only when gold
@@ -805,20 +826,28 @@ cm_q_pass_auto_food = {
 		every_in_list = {
 			variable = cm_q_food_rgo_locations
 			if = {
-				limit = { has_variable = cm_q_food_rgo_ok }
+				limit = {
+					has_variable = cm_q_food_rgo_ok
+					cm_location_rgo_free_this_cycle = yes
+				}
 				remove_variable = cm_q_food_rgo_ok
 				set_local_variable = { name = cm_q_food_rgo_guard value = 0 }
+				# Counted down rather than left to the room read, which the batch's own
+				# constructs are what move.
+				set_local_variable = { name = cm_q_food_rgo_budget value = cm_get_open_build_queue_slots }
 				while = {
 					limit = {
-						# 99 stays under the engine's 1000-iteration while abort; the construction
-						# room below is what ends the batch.
-						local_var:cm_q_food_rgo_guard < 99
+						local_var:cm_q_food_rgo_guard < local_var:cm_q_food_rgo_budget
 						cm_get_open_build_queue_slots > 0
 						cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction }
 						cm_check_country_gold_above = { threshold = cm_food_gold_threshold_plus_planned_spend }
 					}
 					change_local_variable = { name = cm_q_food_rgo_guard add = 1 }
 					construct_rgo_upgrade = { }
+				}
+				if = {
+					limit = { local_var:cm_q_food_rgo_guard > 0 }
+					cm_q_mark_rgo_served = yes
 				}
 			}
 		}
