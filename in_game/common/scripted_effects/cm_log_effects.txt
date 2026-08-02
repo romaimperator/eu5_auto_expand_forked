@@ -52,3 +52,35 @@ cm_dbg_log_bld = {
 		}
 	}
 }
+
+# Console: effect location:<key> = { owner = { cm_dbg_alias_probe = yes } }
+# The collapsar category as the gate above sees it, beside the value the settings menu shows, so a
+# category that reads on in the menu and off at the gate is separable from one that is simply off.
+# Ungated, or it could not report a category being off. Root is the country.
+cm_dbg_alias_probe = {
+	save_temporary_scope_value_as = {
+		name = cm_dbg_alias_gate
+		value = {
+			value = 0
+			if = {
+				limit = { exists = global_var:cm_dbg_collapsar }
+				value = 1
+			}
+		}
+	}
+	save_temporary_scope_value_as = {
+		name = cm_dbg_alias_stored
+		value = {
+			value = -1
+			if = {
+				limit = {
+					has_global_variable_map = cmm
+					is_key_in_global_variable_map = { name = cmm target = flag:cm__log_collapsar }
+				}
+				value = "global_variable_map(cmm|flag:cm__log_collapsar)"
+			}
+		}
+	}
+	cmf_log_value = { action = cm_log_dbg_gate value = scope:cm_dbg_alias_gate }
+	cmf_log_value = { action = cm_log_dbg_stored value = scope:cm_dbg_alias_stored }
+}
