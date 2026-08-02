@@ -430,6 +430,83 @@ cm_fa_collapsar_efficiency_order = {
 	}
 }
 
+# The market survey's tallies, read back out of the locals its walk accumulated.
+cm_fa_col_survey_owned = { value = local_var:cm_fa_col_n_owned }
+cm_fa_col_survey_eligible = { value = local_var:cm_fa_col_n_limit }
+cm_fa_col_survey_placeable = { value = local_var:cm_fa_col_n_full }
+cm_fa_col_survey_room = { value = local_var:cm_fa_col_n_room }
+cm_fa_col_survey_ord_lo = { value = local_var:cm_fa_col_ord_lo }
+cm_fa_col_survey_ord_hi = { value = local_var:cm_fa_col_ord_hi }
+cm_fa_col_survey_inflight = { value = local_var:cm_fa_col_n_infl }
+
+# What the sweep has left to place after every visited location has taken its in-flight levels
+# off the want.
+cm_fa_col_survey_left = {
+	value = scope:cm_fa_market.cm_fa_collapsar_levels_wanted
+	subtract = local_var:cm_fa_col_n_infl
+}
+
+# The probe's raw engine readings, each paired against the collapsar value derived from it.
+# Root is the location, expects scope:cm_building_type, scope:cm_fa_market and scope:cm_fa_good_t.
+cm_fa_col_engine_laborers = {
+	value = "unemployed_pops_of_pop_type_in_location(pop_type:laborers)"
+}
+
+# Paired against the whole order key, so the gap between the two is the province's raw-material
+# coverage plus the material's own output modifier.
+cm_fa_col_engine_efficiency = {
+	value = modifier:local_production_efficiency
+}
+
+cm_fa_col_max_constructions = {
+	value = modifier:max_constructions_at_same_time
+}
+
+cm_fa_col_civil_constructions = {
+	value = num_civil_constructions
+}
+
+cm_fa_col_market_access = {
+	value = market_access
+}
+
+cm_fa_col_proximity = {
+	value = proximity
+}
+
+cm_fa_col_standing_levels = {
+	value = 0
+	if = {
+		limit = {
+			any_buildings_in_location = {
+				owner = scope:cm_country
+				building_type = scope:cm_building_type
+			}
+		}
+		"building(scope:cm_building_type|scope:cm_country)" = { value = building_level }
+	}
+}
+
+cm_fa_col_market_shortfall = {
+	value = scope:cm_fa_market.cm_fa_collapsar_shortfall
+}
+
+cm_fa_col_bt_output = {
+	value = 0
+	if = {
+		limit = { is_key_in_global_variable_map = { name = cm_bt_output target = scope:cm_building_type } }
+		value = "global_variable_map(cm_bt_output|scope:cm_building_type)"
+	}
+}
+
+cm_fa_col_market_want = {
+	value = scope:cm_fa_market.cm_fa_collapsar_levels_wanted
+}
+
+cm_fa_col_market_price = {
+	value = "scope:cm_fa_market.market_price(scope:cm_fa_good_t)"
+}
+
 # Root is the country. The urban-rights score window as a fraction: the
 # fa_urban_rights_window percent setting over 100 (50 -> 0.5).
 cm_fa_ur_window_ratio = {

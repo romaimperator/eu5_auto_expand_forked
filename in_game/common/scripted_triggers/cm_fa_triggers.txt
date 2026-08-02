@@ -259,6 +259,105 @@ cm_fa_collapsar_candidate_ok = {
 	cm_fa_food_location_effectively_active = no
 }
 
+# Root is the location, expects scope:cm_country. The collapsar trace follows one location
+# through a whole cycle, so the log stays inside its 200 entries.
+cm_fa_col_watched = {
+	save_temporary_scope_as = cm_fa_col_loc
+	scope:cm_country = {
+		exists = var:cm_fa_col_watch_loc
+		var:cm_fa_col_watch_loc = { this = scope:cm_fa_col_loc }
+	}
+}
+
+# Root is the market, expects scope:cm_country.
+cm_fa_col_market_watched = {
+	save_temporary_scope_as = cm_fa_col_mkt
+	scope:cm_country = {
+		exists = var:cm_fa_col_watch_loc
+		var:cm_fa_col_watch_loc = { market ?= scope:cm_fa_col_mkt }
+	}
+}
+
+# The staging conditions the trace reports one at a time, each wrapped so the skip-line helper
+# can take it by name. Root is the location, expects scope:cm_building_type.
+cm_fa_col_room_left = {
+	local_var:cm_fa_good_room > 0
+}
+
+cm_fa_col_untouched = {
+	NOT = { exists = var:cm_fa_collapsar_touched }
+}
+
+cm_fa_col_type_has_room = {
+	cm_fa_collapsar_type_room > 0
+}
+
+cm_fa_col_not_at_max = {
+	cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
+}
+
+cm_fa_col_placeable = {
+	cm_location_allowed_to_build = { target = scope:cm_building_type }
+}
+
+cm_fa_col_not_claimed = {
+	NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:cm_building_type } }
+	NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+	NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
+}
+
+# The probe's remaining verdicts. Root is the location, expects scope:cm_country,
+# scope:cm_building_type, scope:cm_fa_market and scope:cm_fa_good_t.
+cm_fa_col_has_pop_type = {
+	has_global_variable_map = cm_building_type_to_pop_type
+	is_key_in_global_variable_map = { name = cm_building_type_to_pop_type target = scope:cm_building_type }
+}
+
+cm_fa_col_market_center_owned = {
+	scope:cm_fa_market = { location = { owner ?= scope:cm_country } }
+}
+
+cm_fa_col_target_met_here = {
+	cm_fa_collapsar_target_met = yes
+}
+
+cm_fa_col_collapsar_enabled = {
+	scope:cm_country = {
+		has_variable_list = cm_fa_collapsar_goods_enabled
+		is_target_in_variable_list = { name = cm_fa_collapsar_goods_enabled target = scope:cm_fa_good_t }
+	}
+}
+
+# The iterator's own limit, split so the trace names which one kept the location out of the
+# sweep entirely. Root is the location, expects scope:cm_country.
+cm_fa_col_owned = {
+	owner ?= scope:cm_country
+}
+
+cm_fa_col_unconquered = {
+	NOT = { integration_level = conquered }
+}
+
+# The two drain-side conditions, split so the trace names which one dropped the item.
+cm_fa_col_claimed_by_collapsar = {
+	cm_fa_col_cat_key_present = yes
+}
+
+cm_fa_col_cat_key_present = {
+	has_variable_map = cm_fa_b_cat_2
+	is_key_in_variable_map = { name = cm_fa_b_cat_2 target = scope:cm_building_type }
+}
+
+cm_fa_col_industry_also_wants = {
+	has_variable_map = cm_fa_b_cat_1
+	is_key_in_variable_map = { name = cm_fa_b_cat_1 target = scope:cm_building_type }
+}
+
+cm_fa_col_has_cost_key = {
+	has_variable_map = cm_fa_b_costs
+	is_key_in_variable_map = { name = cm_fa_b_costs target = scope:cm_building_type }
+}
+
 # Root is the location. The full-automation food system picked this location; membership
 # in the owner's list is the authority, so a stale marker after an ownership change is
 # inert and never clobbers the new owner's own pick.

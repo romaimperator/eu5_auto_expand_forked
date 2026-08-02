@@ -4,12 +4,14 @@
 # scripted gui in cm_fa_scripted_gui.txt and cm_scripted_gui.txt.
 
 cm_fa_score_build_apply = {
+	scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_enter V = 1 } }
 	if = {
 		limit = {
 			scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
 			is_target_in_variable_list = { name = cm_fa_b_types target = scope:cm_building_type }
 			NOT = { is_target_in_variable_list = { name = cm_fa_done_b_types target = scope:cm_building_type } }
 		}
+		scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_limit V = 1 } }
 		add_to_variable_list = { name = cm_fa_done_b_types target = scope:cm_building_type }
 		scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
 		# The engine converts a build into the standing obsolete predecessor's upgrade;
@@ -39,6 +41,41 @@ cm_fa_score_build_apply = {
 				add_to_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type value = scope:cm_cost }
 				remove_from_variable_map = { name = cm_fa_b_profit key = scope:cm_building_type }
 				add_to_variable_map = { name = cm_fa_b_profit key = scope:cm_building_type value = scope:cm_profit }
+				if = {
+					limit = {
+						exists = global_var:cm_dbg_collapsar
+						cm_fa_col_claimed_by_collapsar = yes
+					}
+					scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_score_ok V = 1 } }
+				}
+				if = {
+					limit = { cm_fa_col_watched = yes }
+					save_temporary_scope_as = cmf_log_loc
+					scope:cm_building_type = { save_temporary_scope_as = cmf_log_bt }
+					scope:cm_country = {
+						cm_dbg_log_bld = {
+							cat = collapsar
+							action = cm_log_col_scored
+							arg1 = cm_log_col_a_cost
+							arg2 = cm_log_col_a_profit
+							value = scope:cm_cost
+							value2 = scope:cm_profit
+						}
+					}
+				}
+			}
+			else = {
+				if = {
+					limit = {
+						exists = global_var:cm_dbg_collapsar
+						cm_fa_col_claimed_by_collapsar = yes
+					}
+					scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_score_no V = 1 } }
+				}
+				if = {
+					limit = { cm_fa_col_watched = yes }
+					cm_fa_col_skip_line = { COND = cm_ln_can_place ACTION = cm_log_col_score_place }
+				}
 			}
 			# Industry entries score; the other categories drain by category in list order.
 			if = {

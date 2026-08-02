@@ -8,12 +8,282 @@
 # so the price it collapses is one it holds. Collapsar approvals skip the market
 # construction-goods gates: a shortage of those goods is exactly what the builds cure.
 
+# Console: effect location:<key> = { cm_fa_col_probe = yes }
+# Every number masonry staging reads at this location, each beside the engine reading it is
+# derived from, so a condition answering differently from the game shows up as a mismatched
+# pair rather than as a verdict to be taken on trust. Root is the location.
+cm_fa_col_probe = {
+	owner = { save_scope_as = cm_country }
+	building_type:mason = { save_scope_as = cm_building_type }
+	goods:masonry = { save_scope_as = cm_fa_good_t }
+	market = { save_scope_as = cm_fa_market }
+	save_scope_as = cm_location
+	scope:cm_country = { cm_auto_build_resolve_building_type = yes }
+	save_temporary_scope_as = cmf_log_loc
+	scope:cm_building_type = { save_temporary_scope_as = cmf_log_bt }
+
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_pops
+		V1 = cm_location_unemployed_for_building_type
+		V2 = cm_fa_col_engine_laborers
+	}
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_promo
+		V1 = cm_location_promotion_source_pool_for_building_type
+		V2 = cm_location_laborers_or_slaves_available
+	}
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_order
+		V1 = cm_fa_collapsar_efficiency_order
+		V2 = cm_fa_col_engine_efficiency
+	}
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_infl
+		V1 = cm_fa_collapsar_type_inflight
+		V2 = cm_fa_collapsar_type_room
+	}
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_slots
+		V1 = cm_fa_col_max_constructions
+		V2 = cm_fa_col_civil_constructions
+	}
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_access
+		V1 = cm_fa_col_market_access
+		V2 = cm_fa_col_proximity
+	}
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_cap
+		V1 = cm_fa_collapsar_type_cap
+		V2 = cm_fa_col_standing_levels
+	}
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_market
+		V1 = cm_fa_col_market_shortfall
+		V2 = cm_fa_col_bt_output
+	}
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_want
+		V1 = cm_fa_col_market_want
+		V2 = cm_fa_col_market_price
+	}
+
+	cm_fa_col_verdict = { COND = cm_fa_col_has_pop_type ACTION = cm_log_colp_v_poptype }
+	cm_fa_col_verdict = { COND = cm_fa_collapsar_pops_ok ACTION = cm_log_colp_v_pops }
+	cm_fa_col_verdict = { COND = cm_fa_col_placeable ACTION = cm_log_colp_v_place }
+	cm_fa_col_verdict = { COND = cm_fa_col_not_at_max ACTION = cm_log_colp_v_max }
+	cm_fa_col_verdict = { COND = cm_fa_collapsar_candidate_ok ACTION = cm_log_colp_v_candidate }
+	cm_fa_col_verdict = { COND = cm_location_has_no_auto_build_chain_predecessor ACTION = cm_log_colp_v_pred }
+	cm_fa_col_verdict = { COND = cm_check_location_meets_min_market_access ACTION = cm_log_colp_v_access }
+	cm_fa_col_verdict = { COND = cm_fa_location_has_proximity ACTION = cm_log_colp_v_prox }
+	cm_fa_col_verdict = { COND = cm_fa_col_not_claimed ACTION = cm_log_colp_v_claimed }
+	cm_fa_col_verdict = { COND = cm_fa_col_owned ACTION = cm_log_colp_v_owned }
+	cm_fa_col_verdict = { COND = cm_fa_col_unconquered ACTION = cm_log_colp_v_conquered }
+	cm_fa_col_verdict = { COND = cm_location_market_in_fa_slice ACTION = cm_log_colp_v_slice }
+	cm_fa_col_verdict = { COND = cm_fa_col_market_center_owned ACTION = cm_log_colp_v_center }
+	cm_fa_col_verdict = { COND = cm_fa_col_target_met_here ACTION = cm_log_colp_v_target }
+	cm_fa_col_verdict = { COND = cm_fa_col_collapsar_enabled ACTION = cm_log_colp_v_enabled }
+	cm_fa_col_market_survey = yes
+}
+
+# Walks this location's whole market the way staging does and reports what one cycle could
+# absorb, plus the spread of the order key: an order key whose lowest and highest readings
+# match ranks nothing, so the sweep takes locations in whatever order the engine hands them.
+# Root is the location, expects scope:cm_country, scope:cm_building_type and scope:cm_fa_market.
+cm_fa_col_market_survey = {
+	set_local_variable = { name = cm_fa_col_n_owned value = 0 }
+	set_local_variable = { name = cm_fa_col_n_limit value = 0 }
+	set_local_variable = { name = cm_fa_col_n_full value = 0 }
+	set_local_variable = { name = cm_fa_col_n_room value = 0 }
+	set_local_variable = { name = cm_fa_col_ord_lo value = 999999 }
+	set_local_variable = { name = cm_fa_col_ord_hi value = -999999 }
+	set_local_variable = { name = cm_fa_col_n_infl value = 0 }
+	scope:cm_fa_market = {
+		every_location_in_market = {
+			limit = { owner ?= scope:cm_country }
+			save_scope_as = cm_location
+			change_local_variable = { name = cm_fa_col_n_owned add = 1 }
+			change_local_variable = { name = cm_fa_col_ord_lo min = cm_fa_collapsar_efficiency_order }
+			change_local_variable = { name = cm_fa_col_ord_hi max = cm_fa_collapsar_efficiency_order }
+			if = {
+				limit = {
+					cm_fa_col_unconquered = yes
+					cm_fa_location_has_proximity = yes
+					cm_fa_collapsar_candidate_ok = yes
+				}
+				change_local_variable = { name = cm_fa_col_n_limit add = 1 }
+				change_local_variable = { name = cm_fa_col_n_infl add = cm_fa_collapsar_type_inflight }
+				if = {
+					limit = {
+						cm_fa_col_placeable = yes
+						cm_fa_col_not_at_max = yes
+						cm_location_has_no_auto_build_chain_predecessor = yes
+						cm_fa_collapsar_pops_ok = yes
+						cm_check_location_meets_min_market_access = yes
+						cm_fa_collapsar_type_room > 0
+						cm_fa_col_not_claimed = yes
+					}
+					change_local_variable = { name = cm_fa_col_n_full add = 1 }
+					change_local_variable = { name = cm_fa_col_n_room add = cm_fa_collapsar_type_room }
+				}
+			}
+		}
+	}
+	save_temporary_scope_as = cmf_log_loc
+	scope:cm_building_type = { save_temporary_scope_as = cmf_log_bt }
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_m_counts
+		V1 = cm_fa_col_survey_owned
+		V2 = cm_fa_col_survey_eligible
+	}
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_m_room
+		V1 = cm_fa_col_survey_placeable
+		V2 = cm_fa_col_survey_room
+	}
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_m_order
+		V1 = cm_fa_col_survey_ord_lo
+		V2 = cm_fa_col_survey_ord_hi
+	}
+	cm_fa_col_pair = {
+		ACTION = cm_log_colp_m_infl
+		V1 = cm_fa_col_survey_inflight
+		V2 = cm_fa_col_survey_left
+	}
+}
+
+# Logs $V1$ and $V2$ on one line. Root is the location, expects scope:cm_country,
+# scope:cmf_log_bt and scope:cmf_log_loc.
+cm_fa_col_pair = {
+	save_temporary_scope_value_as = { name = cm_fa_col_v1 value = $V1$ }
+	save_temporary_scope_value_as = { name = cm_fa_col_v2 value = $V2$ }
+	scope:cm_country = {
+		cm_dbg_log_bld = {
+			cat = collapsar
+			action = $ACTION$
+			arg1 = cm_log_colp_a_mod
+			arg2 = cm_log_colp_a_engine
+			value = scope:cm_fa_col_v1
+			value2 = scope:cm_fa_col_v2
+		}
+	}
+}
+
+# Logs $COND$ as 1 or 0. Root is the location, expects scope:cm_country.
+cm_fa_col_verdict = {
+	save_temporary_scope_value_as = {
+		name = cm_fa_col_vd
+		value = {
+			value = 0
+			if = {
+				limit = { $COND$ = yes }
+				value = 1
+			}
+		}
+	}
+	scope:cm_country = {
+		cm_dbg_log_value = { cat = collapsar action = $ACTION$ value = scope:cm_fa_col_vd }
+	}
+}
+
+# Console: effect location:<key> = { cm_fa_col_watch_on = yes }
+# Root is the location.
+cm_fa_col_watch_on = {
+	save_temporary_scope_as = cm_fa_col_target
+	owner = { set_variable = { name = cm_fa_col_watch_loc value = scope:cm_fa_col_target } }
+}
+
+# Console: effect location:<key> = { cm_fa_col_watch_off = yes }
+# Root is the location.
+cm_fa_col_watch_off = {
+	owner = { remove_variable = cm_fa_col_watch_loc }
+}
+
+# Staging, scoring and the drain each run in their own execution, so the cycle's tallies are
+# country variables rather than locals. Root is the country.
+cm_fa_col_reset_counts = {
+	if = {
+		limit = { exists = global_var:cm_dbg_collapsar }
+		set_variable = { name = cm_fa_col_c_stage_locs value = 0 }
+		set_variable = { name = cm_fa_col_c_stage_lvls value = 0 }
+		set_variable = { name = cm_fa_col_c_score_ok value = 0 }
+		set_variable = { name = cm_fa_col_c_score_no value = 0 }
+		set_variable = { name = cm_fa_col_c_drain_hit value = 0 }
+		set_variable = { name = cm_fa_col_c_built value = 0 }
+		set_variable = { name = cm_fa_col_c_rows value = 0 }
+		set_variable = { name = cm_fa_col_c_rows_b value = 0 }
+		set_variable = { name = cm_fa_col_c_enter value = 0 }
+		set_variable = { name = cm_fa_col_c_limit value = 0 }
+		set_variable = { name = cm_fa_col_c_mark_end value = 0 }
+		set_variable = { name = cm_fa_col_c_walk value = 0 }
+		set_variable = { name = cm_fa_col_c_cat2 value = 0 }
+		set_variable = { name = cm_fa_col_c_cost value = 0 }
+		set_variable = { name = cm_fa_col_c_claim_ok value = 0 }
+		set_variable = { name = cm_fa_col_c_held_1 value = 0 }
+		set_variable = { name = cm_fa_col_c_held_2 value = 0 }
+	}
+}
+
+# Which category already holds this location's mark for the type the collapsar is about to
+# claim, recorded before the claim so a refusal names the holder rather than just failing.
+# Root is the location, expects scope:cm_country and scope:cm_building_type.
+cm_fa_col_claim_outcome = {
+	if = {
+		limit = { exists = global_var:cm_dbg_collapsar }
+		if = {
+			limit = { NOT = { cm_fa_col_cat_key_present = yes } }
+			scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_claim_ok V = 1 } }
+		}
+		else = {
+			scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_held_2 V = 1 } }
+		}
+		if = {
+			limit = { cm_fa_col_industry_also_wants = yes }
+			scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_held_1 V = 1 } }
+		}
+	}
+}
+
+# Root is the country.
+cm_fa_col_count = {
+	if = {
+		limit = {
+			exists = global_var:cm_dbg_collapsar
+			exists = var:$N$
+		}
+		change_variable = { name = $N$ add = $V$ }
+	}
+}
+
 # Root is the country, scope:cm_country set.
 cm_fa_run_collapsar = {
+	cm_fa_col_reset_counts = yes
 	every_market_center_in_country = {
 		limit = { cm_fa_market_in_slice = yes }
 		save_scope_as = cm_fa_market
 		scope:cm_country = { cm_fa_stage_collapsar_market = yes }
+	}
+	cm_fa_col_count_marks = yes
+}
+
+# Locations still carrying the collapsar's own mark for mason once staging has finished, which
+# is what the scorer and the drain both look for. Root is the country.
+cm_fa_col_count_marks = {
+	if = {
+		limit = {
+			exists = global_var:cm_dbg_collapsar
+			has_variable_list = cm_fa_b_locations
+		}
+		building_type:mason = { save_temporary_scope_as = cm_fa_col_mk }
+		every_in_list = {
+			variable = cm_fa_b_locations
+			limit = {
+				has_variable_map = cm_fa_b_cat_2
+				is_key_in_variable_map = { name = cm_fa_b_cat_2 target = scope:cm_fa_col_mk }
+			}
+			scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_mark_end V = 1 } }
+		}
 	}
 }
 
@@ -58,6 +328,47 @@ cm_fa_collapsar_size_good = {
 			cm_auto_build_resolve_building_type = yes
 		}
 		set_local_variable = { name = cm_fa_collapsar_want value = scope:cm_fa_market.cm_fa_collapsar_levels_wanted }
+		if = {
+			limit = { scope:cm_fa_market = { cm_fa_col_market_watched = yes } }
+			save_temporary_scope_value_as = { name = cm_fa_col_short value = scope:cm_fa_market.cm_fa_collapsar_shortfall }
+			save_temporary_scope_value_as = { name = cm_fa_col_out value = "global_variable_map(cm_bt_output|scope:cm_building_type)" }
+			save_temporary_scope_value_as = { name = cm_fa_col_need value = scope:cm_fa_market.cm_fa_collapsar_supply_wanted }
+			save_temporary_scope_value_as = { name = cm_fa_col_dem value = "scope:cm_fa_market.goods_demand_in_market(scope:cm_fa_good_t)" }
+			scope:cm_building_type = { save_temporary_scope_as = cmf_log_bt }
+			var:cm_fa_col_watch_loc = { save_temporary_scope_as = cmf_log_loc }
+			cm_dbg_log_bld = {
+				cat = collapsar
+				action = cm_log_col_size
+				arg1 = cm_log_col_a_short
+				arg2 = cm_log_col_a_out
+				value = scope:cm_fa_col_short
+				value2 = scope:cm_fa_col_out
+			}
+			cm_dbg_log_bld = {
+				cat = collapsar
+				action = cm_log_col_supply
+				arg1 = cm_log_col_a_need
+				arg2 = cm_log_col_a_demand
+				value = scope:cm_fa_col_need
+				value2 = scope:cm_fa_col_dem
+			}
+			cm_dbg_log_value = {
+				cat = collapsar
+				action = cm_log_col_want
+				value = local_var:cm_fa_collapsar_want
+			}
+		}
+	}
+	else_if = {
+		limit = { scope:cm_fa_market = { cm_fa_col_market_watched = yes } }
+		save_temporary_scope_value_as = { name = cm_fa_col_price value = "scope:cm_fa_market.market_price(scope:cm_fa_good_t)" }
+		var:cm_fa_col_watch_loc = { save_temporary_scope_as = cmf_log_loc }
+		cm_dbg_log_loc = {
+			cat = collapsar
+			action = cm_log_col_target_met
+			arg1 = cm_log_col_a_price
+			value = scope:cm_fa_col_price
+		}
 	}
 }
 
@@ -147,6 +458,7 @@ cm_fa_stage_collapsar_rgos = {
 cm_fa_stage_collapsar_building = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes
+	set_local_variable = { name = cm_fa_col_seen value = 0 }
 	scope:cm_fa_market = {
 		ordered_location_in_market = {
 			order_by = cm_fa_collapsar_efficiency_order
@@ -159,6 +471,25 @@ cm_fa_stage_collapsar_building = {
 				cm_fa_collapsar_candidate_ok = yes
 			}
 			save_scope_as = cm_location
+			if = {
+				limit = { cm_fa_col_watched = yes }
+				set_local_variable = { name = cm_fa_col_seen value = 1 }
+				save_temporary_scope_value_as = { name = cm_fa_col_infl value = cm_fa_collapsar_type_inflight }
+				save_temporary_scope_as = cmf_log_loc
+				scope:cm_country = {
+					cm_dbg_log_loc = {
+						cat = collapsar
+						action = cm_log_col_visit
+						arg1 = cm_log_col_a_infl
+						value = scope:cm_fa_col_infl
+					}
+					cm_dbg_log_value = {
+						cat = collapsar
+						action = cm_log_col_room_in
+						value = local_var:cm_fa_good_room
+					}
+				}
+			}
 			change_local_variable = { name = cm_fa_good_room subtract = cm_fa_collapsar_type_inflight }
 			if = {
 				limit = {
@@ -177,14 +508,61 @@ cm_fa_stage_collapsar_building = {
 				}
 				set_local_variable = { name = cm_fa_lvl value = cm_fa_collapsar_type_room }
 				change_local_variable = { name = cm_fa_lvl min = local_var:cm_fa_good_room }
+				cm_fa_col_claim_outcome = yes
 				cm_fa_stage_build_candidate = { cat = 2 }
 				scope:cm_location = {
 					set_variable = { name = cm_fa_collapsar_touched value = yes }
 					set_variable = { name = cm_fa_collapsar_levels value = local_var:cm_fa_lvl }
 				}
 				change_local_variable = { name = cm_fa_good_room subtract = local_var:cm_fa_lvl }
+				scope:cm_country = {
+					cm_fa_col_count = { N = cm_fa_col_c_stage_locs V = 1 }
+					cm_fa_col_count = { N = cm_fa_col_c_stage_lvls V = local_var:cm_fa_lvl }
+				}
+				if = {
+					limit = { cm_fa_col_watched = yes }
+					scope:cm_country = {
+						cm_dbg_log_value = {
+							cat = collapsar
+							action = cm_log_col_staged
+							value = local_var:cm_fa_lvl
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = { cm_fa_col_watched = yes }
+				cm_fa_col_skip_line = { COND = cm_fa_col_room_left ACTION = cm_log_col_no_room }
+				cm_fa_col_skip_line = { COND = cm_fa_col_untouched ACTION = cm_log_col_touched }
+				cm_fa_col_skip_line = { COND = cm_fa_collapsar_pops_ok ACTION = cm_log_col_pops }
+				cm_fa_col_skip_line = { COND = cm_fa_col_type_has_room ACTION = cm_log_col_type_room }
+				cm_fa_col_skip_line = { COND = cm_check_location_meets_min_market_access ACTION = cm_log_col_access }
+				cm_fa_col_skip_line = { COND = cm_location_has_no_auto_build_chain_predecessor ACTION = cm_log_col_predecessor }
+				cm_fa_col_skip_line = { COND = cm_fa_col_not_at_max ACTION = cm_log_col_max_level }
+				cm_fa_col_skip_line = { COND = cm_fa_col_placeable ACTION = cm_log_col_place }
+				cm_fa_col_skip_line = { COND = cm_fa_col_not_claimed ACTION = cm_log_col_claimed }
 			}
 		}
+	}
+	if = {
+		limit = {
+			local_var:cm_fa_col_seen = 0
+			scope:cm_fa_market = { cm_fa_col_market_watched = yes }
+		}
+		var:cm_fa_col_watch_loc = {
+			cm_fa_col_skip_line = { COND = cm_fa_col_owned ACTION = cm_log_col_not_ours }
+			cm_fa_col_skip_line = { COND = cm_fa_col_unconquered ACTION = cm_log_col_conquered }
+			cm_fa_col_skip_line = { COND = cm_fa_location_has_proximity ACTION = cm_log_col_prox }
+			cm_fa_col_skip_line = { COND = cm_fa_collapsar_candidate_ok ACTION = cm_log_col_candidate }
+		}
+	}
+}
+
+# Logs $ACTION$ when $COND$ is false at this location. Root is the location.
+cm_fa_col_skip_line = {
+	if = {
+		limit = { NOT = { $COND$ = yes } }
+		scope:cm_country = { cm_dbg_log = { cat = collapsar action = $ACTION$ } }
 	}
 }
 
@@ -203,6 +581,36 @@ cm_fa_pass_collapsar = {
 				scope:cm_country = { cm_fa_drain_collapsar_good = yes }
 			}
 		}
+	}
+	cm_fa_col_log_counts = yes
+}
+
+# One cycle's tallies across all four materials, so the stage the levels are lost at is the one
+# whose count drops. Root is the country.
+cm_fa_col_log_counts = {
+	if = {
+		limit = {
+			exists = var:cm_fa_col_c_stage_locs
+			var:cm_fa_col_c_stage_locs > 0
+		}
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_stage_locs value = var:cm_fa_col_c_stage_locs }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_stage_lvls value = var:cm_fa_col_c_stage_lvls }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_claim_ok value = var:cm_fa_col_c_claim_ok }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_held_1 value = var:cm_fa_col_c_held_1 }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_held_2 value = var:cm_fa_col_c_held_2 }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_mark_end value = var:cm_fa_col_c_mark_end }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_rows value = var:cm_fa_col_c_rows }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_rows_b value = var:cm_fa_col_c_rows_b }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_enter value = var:cm_fa_col_c_enter }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_limit value = var:cm_fa_col_c_limit }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_score_ok value = var:cm_fa_col_c_score_ok }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_score_no value = var:cm_fa_col_c_score_no }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_walk value = var:cm_fa_col_c_walk }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_cat2 value = var:cm_fa_col_c_cat2 }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_cost value = var:cm_fa_col_c_cost }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_drain_hit value = var:cm_fa_col_c_drain_hit }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_built value = var:cm_fa_col_c_built }
+		cm_dbg_log_value = { cat = collapsar action = cm_log_colc_blocked value = local_var:cm_fa_cost_blocked }
 	}
 }
 
@@ -316,6 +724,15 @@ cm_fa_collapsar_drain_type = {
 			variable = cm_fa_b_locations
 			save_temporary_scope_as = cm_fa_drain_loc
 			scope:cm_fa_drain_loc = {
+				scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_walk V = 1 } }
+				if = {
+					limit = { cm_fa_col_claimed_by_collapsar = yes }
+					scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_cat2 V = 1 } }
+				}
+				if = {
+					limit = { cm_fa_col_has_cost_key = yes }
+					scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_cost V = 1 } }
+				}
 				if = {
 					limit = {
 						has_variable_map = cm_fa_b_cat_2
@@ -330,11 +747,24 @@ cm_fa_collapsar_drain_type = {
 						# Opportunity gone: drop the entry.
 						remove_from_variable_map = { name = cm_fa_b_cat_2 key = scope:cm_building_type }
 					} else = {
+						scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_drain_hit V = 1 } }
 						cm_fa_collapsar_approve_build = yes
 					}
 				}
+				else_if = {
+					limit = { cm_fa_col_watched = yes }
+					cm_fa_col_skip_line = { COND = cm_fa_col_claimed_by_collapsar ACTION = cm_log_col_drain_cat }
+					cm_fa_col_skip_line = { COND = cm_fa_col_has_cost_key ACTION = cm_log_col_drain_cost }
+				}
 			}
 		}
+	}
+	else_if = {
+		limit = {
+			NOT = { local_var:cm_fa_cost_blocked = 0 }
+			exists = var:cm_fa_col_watch_loc
+		}
+		cm_dbg_log = { cat = collapsar action = cm_log_col_drain_blocked }
 	}
 }
 
@@ -387,6 +817,24 @@ cm_fa_collapsar_approve_build = {
 					cm_q_construct_build_now = yes
 					cm_commit_market_demand = yes
 					scope:cm_country = { change_variable = { name = cm_fa_pool_collapsar subtract = scope:cm_cost } }
+				}
+				scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_built V = local_var:cm_fa_collapsar_bld_guard } }
+				if = {
+					limit = { cm_fa_col_watched = yes }
+					save_temporary_scope_as = cmf_log_loc
+					scope:cm_country = {
+						cm_dbg_log_loc = {
+							cat = collapsar
+							action = cm_log_col_built
+							arg1 = cm_log_col_a_pool
+							value = var:cm_fa_pool_collapsar
+						}
+						cm_dbg_log_value = {
+							cat = collapsar
+							action = cm_log_col_built_n
+							value = local_var:cm_fa_collapsar_bld_guard
+						}
+					}
 				}
 			}
 			else_if = {

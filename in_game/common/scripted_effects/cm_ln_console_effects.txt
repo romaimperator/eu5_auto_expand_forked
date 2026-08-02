@@ -149,6 +149,17 @@ cm_ln_c_process = {
 			save_scope_as = cm_ln_k
 			cm_ln_c_row_common = yes
 			if = {
+				limit = {
+					exists = global_var:cm_dbg_collapsar
+					exists = scope:cm_country
+				}
+				scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_rows V = 1 } }
+				if = {
+					limit = { "global_variable_map(cm_ln_r_kind|scope:cm_ln_k)" = 1 }
+					scope:cm_country = { cm_fa_col_count = { N = cm_fa_col_c_rows_b V = 1 } }
+				}
+			}
+			if = {
 				limit = { local_var:cm_ln_c_l > 0 }
 				"global_variable_map(cm_ln_loc_of_id|local_var:cm_ln_c_l)" = {
 					save_temporary_scope_as = cm_amenity_loc
