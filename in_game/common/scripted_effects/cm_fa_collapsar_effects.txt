@@ -357,12 +357,15 @@ cm_fa_collapsar_approve_build = {
 	if = {
 		limit = { local_var:cm_fa_cost_blocked = 0 }
 		save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_fa_b_costs|scope:cm_building_type)" }
+		# Written beside the cost, so a cost key present means a profit key present.
+		save_temporary_scope_value_as = { name = cm_profit value = "variable_map(cm_fa_b_profit|scope:cm_building_type)" }
 		if = {
 			# Approved by another feature this cycle: consume silently.
 			limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } } }
 			if = {
 				limit = {
 					exists = var:cm_fa_collapsar_levels
+					cm_building_type_profitable_or_subsidized = yes
 					cm_fa_can_afford = { POOL = cm_fa_pool_collapsar }
 				}
 				set_local_variable = { name = cm_fa_collapsar_bld_guard value = 0 }
@@ -394,8 +397,11 @@ cm_fa_collapsar_approve_build = {
 				}
 			}
 			else_if = {
-				# The level is wanted, so the cost is the only thing that failed.
-				limit = { exists = var:cm_fa_collapsar_levels }
+				# The level is wanted and profitable, so the cost is the only thing that failed.
+				limit = {
+					exists = var:cm_fa_collapsar_levels
+					cm_building_type_profitable_or_subsidized = yes
+				}
 				cm_fa_stop_on_cost = { COST = scope:cm_cost }
 			}
 		}

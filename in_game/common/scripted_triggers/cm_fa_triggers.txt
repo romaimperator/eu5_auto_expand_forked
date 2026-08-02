@@ -259,22 +259,6 @@ cm_fa_collapsar_candidate_ok = {
 	cm_fa_food_location_effectively_active = no
 }
 
-# Root is the location, expects scope:cm_building_type and scope:cm_profit. The collapsar's
-# profitability gate, applied where the GUI-only profit read reaches script. Every other
-# category is exempt.
-cm_fa_collapsar_score_profit_ok = {
-	trigger_if = {
-		limit = {
-			has_variable_map = cm_fa_b_cats
-			is_key_in_variable_map = { name = cm_fa_b_cats target = scope:cm_building_type }
-		}
-		trigger_if = {
-			limit = { "variable_map(cm_fa_b_cats|scope:cm_building_type)" = 2 }
-			cm_building_type_profitable_or_subsidized = yes
-		}
-	}
-}
-
 # Root is the location. The full-automation food system picked this location; membership
 # in the owner's list is the authority, so a stale marker after an ownership change is
 # inert and never clobbers the new owner's own pick.
