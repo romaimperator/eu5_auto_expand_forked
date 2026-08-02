@@ -303,6 +303,7 @@ cm_ln_reorg_cap_probe_open = {
 		limit = {
 			has_variable = cm_cf_score
 			NOT = { integration_level = conquered }
+			NOT = { cm_location_deurbanize_would_undo = yes }
 			NOT = { has_variable = cm_ln_probe_reject }
 		}
 		save_scope_as = cm_ln_probe_pick
@@ -342,7 +343,10 @@ cm_ln_reorg_capital_move = {
 			NOT = { var:cm_ln_cap_target = capital }
 			capital = {
 				trigger_if = {
-					limit = { has_variable = cm_cf_score }
+					limit = {
+						has_variable = cm_cf_score
+						cm_location_deurbanize_would_undo = no
+					}
 					var:cm_cf_score < @cm_ln_cap_keep
 				}
 				trigger_else = { always = yes }
@@ -756,6 +760,7 @@ cm_ln_open_capital_run = {
 		limit = {
 			has_variable = cm_cf_score
 			NOT = { integration_level = conquered }
+			NOT = { cm_location_deurbanize_would_undo = yes }
 		}
 		save_scope_as = cm_ln_cap_pick
 		scope:cm_country = { set_variable = { name = cm_ln_cap_target value = scope:cm_ln_cap_pick } }
@@ -769,6 +774,7 @@ cm_ln_open_capital_run = {
 			NOT = { var:cm_ln_cap_target = capital }
 			NOT = {
 				capital = {
+					cm_location_deurbanize_would_undo = no
 					has_variable = cm_cf_score
 					var:cm_cf_score >= @cm_ln_open_cap_keep
 				}

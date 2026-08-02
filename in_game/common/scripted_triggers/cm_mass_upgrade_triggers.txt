@@ -43,14 +43,15 @@ cm_location_can_mass_upgrade_to_town = {
 	}
 }
 
-# Root is the location, expects scope:cm_country.
-# True when the location's RGO good is checked in the player's do-not-urbanize list.
+# Root is the location. Reads the owner rather than scope:cm_country because the finder's
+# governor filter calls it from a sweep that sets no scope.
+# True when the location's RGO good is checked in the owner's do-not-urbanize list.
 cm_location_rgo_blocks_urbanize = {
 	raw_material = { save_temporary_scope_as = cm_rgo_good }
-	scope:cm_country = { is_target_in_variable_list = { name = cm_auto_urbanize_ignored_rgo_goods target = scope:cm_rgo_good } }
+	owner = { is_target_in_variable_list = { name = cm_auto_urbanize_ignored_rgo_goods target = scope:cm_rgo_good } }
 }
 
-# Root is the location, expects scope:cm_country.
+# Root is the location.
 # True when the location holds a rank the do-not-urbanize list says it should not have.
 cm_location_deurbanize_target = {
 	NOT = { location_rank = location_rank:rural_settlement }
@@ -58,7 +59,7 @@ cm_location_deurbanize_target = {
 	cm_location_rgo_blocks_urbanize = yes
 }
 
-# Root is the location, expects scope:cm_country.
+# Root is the location.
 cm_location_can_deurbanize = {
 	cm_location_deurbanize_target = yes
 	is_capital = no
@@ -67,6 +68,14 @@ cm_location_can_deurbanize = {
 	NOT = { has_building = building_type:naval_governor }
 	# A lucky nation's reorganization urbanizes its own planned governor sites.
 	NOT = { has_variable = cm_ln_plan_ord }
+}
+
+# Root is the location. Ground the de-urbanizer will take the rank off, asked of a site a capital
+# or a governor is about to be placed on. Carries no rank test: a governor site below city rank is
+# one the plan urbanizes first, which is exactly the case worth refusing.
+cm_location_deurbanize_would_undo = {
+	owner = { exists = var:cm_deurbanize }
+	cm_location_rgo_blocks_urbanize = yes
 }
 
 # Root is the location, expects scope:cm_country.
