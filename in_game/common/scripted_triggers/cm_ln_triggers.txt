@@ -144,6 +144,20 @@ cm_ln_target_needs_rank = {
 	}
 }
 
+# Root is the country. A planned site with its rank and its road behind it, which is what
+# cm_ln_place_next takes a governor's room for this tick.
+cm_ln_gov_move_is_due = {
+	exists = var:cm_ln_phase
+	var:cm_ln_phase >= 5
+	var:cm_ln_phase <= 6
+	has_variable_list = cm_ln_pending
+	any_in_list = {
+		variable = cm_ln_pending
+		cm_ln_target_needs_road = no
+		cm_ln_target_needs_rank = no
+	}
+}
+
 # Root is the location. Expects scope:cm_country. A governor ordered here that the engine has not
 # finished, which the confirm step waits on rather than ordering a second one.
 cm_ln_site_gov_under_construction = {

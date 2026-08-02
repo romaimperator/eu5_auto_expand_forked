@@ -554,17 +554,13 @@ cm_ln_free_a_seat = {
 
 # Rebuilds the governors that have gone missing from the seats this country was given, at no cost
 # because it already paid for each of them once. A seat is watched until it is given up on purpose,
-# so one the engine refuses for years still comes back the month it stops refusing. Stands aside
-# while a reorganization runs, which gives seats up on purpose and re-places them itself.
+# so one the engine refuses for years still comes back the month it stops refusing.
 # Root is the country.
 cm_ln_seat_restore_pass = {
 	if = {
 		limit = {
 			has_variable_list = cm_ln_seats
-			OR = {
-				NOT = { exists = var:cm_ln_phase }
-				var:cm_ln_phase = 0
-			}
+			cm_ln_gov_move_is_due = no
 		}
 		save_scope_as = cm_country
 		every_in_list = {
@@ -590,6 +586,16 @@ cm_ln_seat_restore_step = {
 		cm_ln_resolve_placeable_type = { SITE = scope:cm_ln_target }
 		cm_ln_construct_governor_free = yes
 		cm_dbg_log = { cat = governors action = cm_ln_log_seat_restored }
+		# cm_ln_moves is built at classify and cm_ln_free_a_seat frees only what is on it, so a seat
+		# rebuilt after that joins it or it holds the cap against the plan for good.
+		if = {
+			limit = {
+				exists = var:cm_ln_phase
+				var:cm_ln_phase >= 5
+				scope:cm_ln_target = { NOT = { has_variable = cm_ln_plan_ord } }
+			}
+			add_to_variable_list = { name = cm_ln_moves target = scope:cm_ln_target }
+		}
 	}
 }
 
