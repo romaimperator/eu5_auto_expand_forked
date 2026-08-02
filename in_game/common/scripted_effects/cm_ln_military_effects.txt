@@ -1,7 +1,8 @@
-﻿# Lucky Nations Military: the lowest-priority full-automation category. It runs the fort line
-# (cm_ln_fort_effects.txt) and the urban manpower chain, forts first. The fort line lives inside
-# the category's own share; only the manpower chain draws on the carry, and only once it has a
-# tier it can build, which cm_ln_bk_run projects into var:cm_ln_bk_active for the drain fork in
+﻿# Lucky Nations Military: the lowest-priority full-automation category. It runs the border fort
+# line (cm_ln_fort_effects.txt), coastal forts, the capital manpower building and the urban
+# manpower chain, in that order. The two fort lines and the capital building live inside the
+# category's own share; only the chain draws on the carry, and only once it has a tier it can
+# build, which cm_ln_bk_run projects into var:cm_ln_bk_active for the drain fork in
 # cm_fa_drain_category.
 
 # --- Category entry points ---
@@ -9,6 +10,9 @@
 # Monthly staging. Root is the country, scope:cm_country set.
 cm_ln_mil_run = {
 	cm_ln_ft_run = yes
+	cm_ln_coast_run = yes
+	cm_ln_bk_stage_capital_type = { bt = sergeantry }
+	cm_ln_bk_stage_capital_type = { bt = city_guard }
 	cm_ln_bk_run = yes
 }
 
@@ -22,21 +26,143 @@ cm_fa_pass_military = {
 		set_local_variable = { name = cm_fa_no_hold value = 1 }
 	}
 	cm_ln_ft_drain = yes
+	cm_ln_coast_drain = yes
 	set_local_variable = { name = cm_fa_no_hold value = 0 }
+	cm_ln_bk_drain_capital_type = { bt = sergeantry }
+	cm_ln_bk_drain_capital_type = { bt = city_guard }
 	if = {
 		limit = { exists = var:cm_ln_bk_active }
 		cm_ln_bk_drain = yes
 	}
 }
 
-# --- Manpower chain ---
+# --- Coastal forts ---
+
+# Sets scope:cm_building_type to the coastal fort tier the country can build now.
+# Root is the country.
+cm_ln_coast_resolve_type = {
+	building_type:coastal_fort = { save_scope_as = cm_building_type }
+	cm_auto_build_resolve_building_type = yes
+}
+
+# Stages the current coastal fort tier across owned ports, most controlled first. The chain is the
+# only generic source of local_maritime_presence (game
+# in_game/common/building_types/coastal_forts.txt: coastal_fort 0.15 :44, naval_battery 0.3 :93),
+# and an AI left to raise its presence with fleets does it badly. The sweep carries no proximity
+# gate, in the same way the border rings do not: a port the land network never reached is exactly
+# where the presence is missing. A location holding an older tier is deliberately not skipped, for
+# the reason cm_ln_bk_run gives.
+# Root is the country, scope:cm_country set.
+cm_ln_coast_run = {
+	cm_ln_coast_resolve_type = yes
+	if = {
+		limit = { can_build_building = scope:cm_building_type }
+		ordered_owned_location = {
+			order_by = max_control
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			limit = {
+				cm_location_market_in_fa_slice = yes
+				NOT = { integration_level = conquered }
+			}
+			save_scope_as = cm_location
+			cm_pop_track = yes
+			if = {
+				limit = {
+					cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
+					cm_location_allowed_to_build = { target = scope:cm_building_type }
+					cm_location_has_enough_pops_available = yes
+					cm_check_location_meets_min_market_access = yes
+					cm_get_open_build_queue_slots > 0
+				}
+				cm_fa_stage_build_candidate = { cat = 6 }
+			}
+		}
+	}
+}
+
+# Most controlled first, the order the staging swept in. The tier is re-resolved for the same
+# reason cm_ln_ft_drain re-resolves its own.
+# Root is the country, scope:cm_country set.
+cm_ln_coast_drain = {
+	cm_ln_coast_resolve_type = yes
+	if = {
+		limit = { has_variable_list = cm_fa_b_locations }
+		ordered_in_list = {
+			variable = cm_fa_b_locations
+			order_by = max_control
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			save_temporary_scope_as = cm_ln_coast_drain_loc
+			scope:cm_ln_coast_drain_loc = {
+				cm_fa_try_approve_build = { cat = 6 POOL = cm_fa_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
+			}
+		}
+	}
+}
+
+# --- Manpower buildings ---
+
+# Stages one capital-only manpower building. sergeantry and city_guard stand at the country
+# capital and nowhere else, and split the governments between them (game
+# in_game/common/building_types/manpower_buildings.txt: monarchy and republic country_potential
+# over an is_capital location_potential), so both are offered and the one site is reached
+# directly instead of by a sweep.
+# Root is the country, scope:cm_country set. $bt$ = the type key.
+cm_ln_bk_stage_capital_type = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	if = {
+		limit = {
+			can_build_building = scope:cm_building_type
+			exists = capital
+		}
+		capital = {
+			save_scope_as = cm_location
+			cm_pop_track = yes
+			if = {
+				limit = {
+					NOT = { integration_level = conquered }
+					cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
+					cm_location_allowed_to_build = { target = scope:cm_building_type }
+					cm_location_has_enough_pops_available = yes
+					cm_check_location_meets_min_market_access = yes
+					cm_get_open_build_queue_slots > 0
+				}
+				cm_fa_stage_build_candidate = { cat = 7 }
+			}
+		}
+	}
+}
+
+# Drains ahead of the chain: one level at one location, bought once and then never a candidate
+# again, where the chain would otherwise outbid it every month for the rest of the game.
+# Root is the country, scope:cm_country set. $bt$ = the type key.
+cm_ln_bk_drain_capital_type = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	if = {
+		limit = { exists = capital }
+		capital = {
+			cm_fa_try_approve_build = { cat = 7 POOL = cm_fa_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
+		}
+	}
+}
 
 # Sets scope:cm_building_type to the manpower tier the country can build now. Seeded at the
-# chain base, so the category is inert until armory_advance and follows the chain up through
-# barracks_advance and conscription_center_advance on its own.
+# country's own chain base, the unique barracks armory replaces where the country has one
+# (game in_game/common/building_types/manpower_buildings.txt, armory obsolete) and armory
+# otherwise, then follows the chain up through barracks_advance and conscription_center_advance
+# on its own.
 # Root is the country.
 cm_ln_bk_resolve_type = {
 	building_type:armory = { save_scope_as = cm_building_type }
+	if = {
+		limit = { can_build_building = building_type:provincial_garrison }
+		building_type:provincial_garrison = { save_scope_as = cm_building_type }
+	}
+	else_if = {
+		limit = { can_build_building = building_type:korean_barracks }
+		building_type:korean_barracks = { save_scope_as = cm_building_type }
+	}
 	cm_auto_build_resolve_building_type = yes
 }
 
@@ -124,6 +250,14 @@ cm_ln_mil_probe = {
 		limit = { scope:cm_building_type = building_type:conscription_center }
 		set_local_variable = { name = cm_ln_mil_dbg value = 3 }
 	}
+	if = {
+		limit = { scope:cm_building_type = building_type:provincial_garrison }
+		set_local_variable = { name = cm_ln_mil_dbg value = 4 }
+	}
+	if = {
+		limit = { scope:cm_building_type = building_type:korean_barracks }
+		set_local_variable = { name = cm_ln_mil_dbg value = 5 }
+	}
 	cmf_log_value = { action = cm_log_mil_tier value = local_var:cm_ln_mil_dbg }
 
 	set_local_variable = { name = cm_ln_mil_dbg value = 0 }
@@ -132,6 +266,29 @@ cm_ln_mil_probe = {
 		set_local_variable = { name = cm_ln_mil_dbg value = 1 }
 	}
 	cmf_log_value = { action = cm_log_mil_unlocked value = local_var:cm_ln_mil_dbg }
+
+	set_local_variable = { name = cm_ln_mil_dbg value = 0 }
+	if = {
+		limit = {
+			OR = {
+				can_build_building = building_type:sergeantry
+				can_build_building = building_type:city_guard
+			}
+		}
+		set_local_variable = { name = cm_ln_mil_dbg value = 1 }
+	}
+	if = {
+		limit = {
+			capital ?= {
+				OR = {
+					has_building = building_type:sergeantry
+					has_building = building_type:city_guard
+				}
+			}
+		}
+		set_local_variable = { name = cm_ln_mil_dbg value = 2 }
+	}
+	cmf_log_value = { action = cm_log_mil_capital value = local_var:cm_ln_mil_dbg }
 
 	set_local_variable = { name = cm_ln_mil_dbg value = 0 }
 	if = {
