@@ -11,9 +11,13 @@ cm_ln_seed_marks = {
 		limit = { exists = var:cm_ln_want }
 		remove_variable = cm_ln_want
 	}
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_brandenburg TAG = BRA }
 	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_castile TAG = CAS }
 	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_china TAG = CHI }
 	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_england TAG = ENG }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_ottomans TAG = TUR }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_europe_centric TAG = BRA }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_europe_centric TAG = TUR }
 	# Nothing else on designation: cm_ln_open_done is never removed, so a country marked for the
 	# first time runs the opening capital move from its own next monthly pulse, and one marked
 	# again after a rule change correctly does not repeat it.
@@ -331,6 +335,14 @@ cm_ln_mark_probe = {
 	else_if = {
 		limit = { exists = var:cm_ln_seat_ENG }
 		set_local_variable = { name = cm_ln_dbg value = 3 }
+	}
+	else_if = {
+		limit = { exists = var:cm_ln_seat_BRA }
+		set_local_variable = { name = cm_ln_dbg value = 4 }
+	}
+	else_if = {
+		limit = { exists = var:cm_ln_seat_TUR }
+		set_local_variable = { name = cm_ln_dbg value = 5 }
 	}
 	cmf_log_value = { action = cm_log_mark_seat value = local_var:cm_ln_dbg }
 }

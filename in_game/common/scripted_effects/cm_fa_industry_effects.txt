@@ -112,9 +112,12 @@ cm_fa_run_industry = {
 # 7 manpower.
 # Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_fa_stage_build_candidate = {
-	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_fa_b_locations LOCATION_LIST = cm_fa_b_types DONE_LIST = cm_fa_done_b_types }
-	scope:cm_location = {
-		add_to_variable_map = { name = cm_fa_b_cat_$cat$ key = scope:cm_building_type value = 1 }
+	if = {
+		limit = { scope:cm_building_type = { cm_fa_type_is_never_built = no } }
+		cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_fa_b_locations LOCATION_LIST = cm_fa_b_types DONE_LIST = cm_fa_done_b_types }
+		scope:cm_location = {
+			add_to_variable_map = { name = cm_fa_b_cat_$cat$ key = scope:cm_building_type value = 1 }
+		}
 	}
 }
 
@@ -136,6 +139,7 @@ cm_fa_stage_upgrade_candidate = {
 	set_local_variable = { name = cm_fa_upg_ok value = 0 }
 	if = {
 		limit = {
+			scope:cm_current_building_type = { cm_fa_type_is_never_built = no }
 			scope:cm_building = { cm_is_not_under_construction = yes }
 			scope:cm_location = {
 				cm_location_building_type_not_under_construction = yes
@@ -462,27 +466,24 @@ cm_fa_ind_bt_bar = {
 # location. Expects scope:cm_country, scope:cm_building_type, scope:cm_cost, and
 # scope:cm_fa_pick_score as the item's stored negated years-to-recoup.
 cm_fa_ind_log_queued = {
+	set_local_variable = { name = cm_fa_ilog_roi value = scope:cm_fa_pick_score }
+	change_local_variable = { name = cm_fa_ilog_roi multiply = -1 }
+	set_local_variable = { name = cm_fa_ilog_inc value = 0 }
 	if = {
-		limit = { always = yes }
-		set_local_variable = { name = cm_fa_ilog_roi value = scope:cm_fa_pick_score }
-		change_local_variable = { name = cm_fa_ilog_roi multiply = -1 }
-		set_local_variable = { name = cm_fa_ilog_inc value = 0 }
-		if = {
-			limit = { local_var:cm_fa_ilog_roi > 0 }
-			set_local_variable = { name = cm_fa_ilog_inc value = scope:cm_cost }
-			change_local_variable = { name = cm_fa_ilog_inc divide = local_var:cm_fa_ilog_roi }
-			change_local_variable = { name = cm_fa_ilog_inc divide = 12 }
-		}
-		save_scope_as = cmf_log_loc
-		scope:cm_building_type = { save_scope_as = cmf_log_bt }
-		scope:cm_country = {
-			cm_dbg_log_bld = { cat = industry
-				action = cm_log_ind_queued
-				arg1 = cm_log_ind_roi
-				arg2 = cm_log_ind_income
-				value = local_var:cm_fa_ilog_roi
-				value2 = local_var:cm_fa_ilog_inc
-			}
+		limit = { local_var:cm_fa_ilog_roi > 0 }
+		set_local_variable = { name = cm_fa_ilog_inc value = scope:cm_cost }
+		change_local_variable = { name = cm_fa_ilog_inc divide = local_var:cm_fa_ilog_roi }
+		change_local_variable = { name = cm_fa_ilog_inc divide = 12 }
+	}
+	save_scope_as = cmf_log_loc
+	scope:cm_building_type = { save_scope_as = cmf_log_bt }
+	scope:cm_country = {
+		cm_dbg_log_bld = { cat = industry
+			action = cm_log_ind_queued
+			arg1 = cm_log_ind_roi
+			arg2 = cm_log_ind_income
+			value = local_var:cm_fa_ilog_roi
+			value2 = local_var:cm_fa_ilog_inc
 		}
 	}
 }
@@ -514,26 +515,11 @@ cm_fa_pass_industry = {
 			scope:cm_country = { add_to_variable_list = { name = cm_fa_drain_cands target = scope:cm_fa_cand_loc } }
 		}
 	}
-	cm_fa_ind_off_slice_best = yes
 	cm_fa_ind_build_off_bars = yes
 	cm_fa_ind_pick_loop = yes
-	cm_fa_ind_hold_off_slice = yes
 	cm_fa_ind_record_market_best = yes
 	clear_variable_map = cm_fa_ind_off_bt
 	clear_variable_list = cm_fa_drain_cands
-}
-
-# Sets aside what the best off-slice pick costs so the gold is there when its market comes round.
-# It records the cost without setting cm_fa_cost_blocked, which is what leaves every other
-# candidate free to buy in the meantime; the bar that actually holds a candidate back is per type,
-# in cm_fa_ind_bt_bar. Root is the country, expects cm_fa_ind_off_slice_best's locals.
-cm_fa_ind_hold_off_slice = {
-	if = {
-		limit = { local_var:cm_fa_off_best > -2000000 }
-		set_local_variable = { name = cm_fa_hold_cost value = local_var:cm_fa_off_cost }
-		save_temporary_scope_value_as = { name = cm_fa_hold_dbg value = { value = local_var:cm_fa_off_best multiply = -1 } }
-		cm_dbg_log_decimal = { cat = industry action = cm_log_fa_hold value = scope:cm_fa_hold_dbg }
-	}
 }
 
 # Approves the best candidate in the country repeatedly until every candidate map is spent or
