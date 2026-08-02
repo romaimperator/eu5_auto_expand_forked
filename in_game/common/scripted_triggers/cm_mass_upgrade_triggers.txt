@@ -52,14 +52,21 @@ cm_location_rgo_blocks_urbanize = {
 
 # Root is the location, expects scope:cm_country.
 # True when the location holds a rank the do-not-urbanize list says it should not have.
-cm_location_can_deurbanize = {
+cm_location_deurbanize_target = {
 	NOT = { location_rank = location_rank:rural_settlement }
 	NOT = { integration_level = conquered }
-	# Governor seats need city rank, and the capital carries the same modifier: main_menu/common/static_modifiers/location.txt:330.
-	NOT = { modifier:local_proximity_source > 0 }
+	cm_location_rgo_blocks_urbanize = yes
+}
+
+# Root is the location, expects scope:cm_country.
+cm_location_can_deurbanize = {
+	cm_location_deurbanize_target = yes
+	is_capital = no
+	# has_building answers from the moment a level is queued, so a governor merely ordered counts.
+	NOT = { has_building = building_type:local_governor }
+	NOT = { has_building = building_type:naval_governor }
 	# A lucky nation's reorganization urbanizes its own planned governor sites.
 	NOT = { has_variable = cm_ln_plan_ord }
-	cm_location_rgo_blocks_urbanize = yes
 }
 
 # Root is the location, expects scope:cm_country.
