@@ -114,10 +114,7 @@ cm_fa_run_industry = {
 cm_fa_stage_build_candidate = {
 	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_fa_b_locations LOCATION_LIST = cm_fa_b_types DONE_LIST = cm_fa_done_b_types }
 	scope:cm_location = {
-		if = {
-			limit = { NOT = { is_key_in_variable_map = { name = cm_fa_b_cats target = scope:cm_building_type } } }
-			add_to_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type value = $cat$ }
-		}
+		add_to_variable_map = { name = cm_fa_b_cat_$cat$ key = scope:cm_building_type value = 1 }
 	}
 }
 
@@ -712,9 +709,8 @@ cm_fa_pick_best_build_item = {
 		}
 	}
 	remove_from_variable_map = { name = cm_fa_b_scores key = scope:cm_fa_pick_type }
-	remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_fa_pick_type }
 	remove_from_variable_map = { name = cm_fa_b_conv key = scope:cm_fa_pick_type }
-	remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_fa_pick_type }
+	remove_from_variable_map = { name = cm_fa_b_cat_1 key = scope:cm_fa_pick_type }
 	cm_fa_refresh_build_best = yes
 	cm_fa_drain_prune_loc = yes
 }

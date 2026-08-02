@@ -200,14 +200,8 @@ cm_fa_try_approve_build = {
 				local_var:cm_fa_cost_blocked = 0
 				local_var:cm_fa_no_hold = 1
 			}
-			trigger_if = {
-				limit = {
-					has_variable_map = cm_fa_b_cats
-					is_key_in_variable_map = { name = cm_fa_b_cats target = scope:cm_building_type }
-				}
-				"variable_map(cm_fa_b_cats|scope:cm_building_type)" = $cat$
-			}
-			trigger_else = { always = no }
+			has_variable_map = cm_fa_b_cat_$cat$
+			is_key_in_variable_map = { name = cm_fa_b_cat_$cat$ target = scope:cm_building_type }
 			has_variable_map = cm_fa_b_costs
 			is_key_in_variable_map = { name = cm_fa_b_costs target = scope:cm_building_type }
 		}
@@ -239,8 +233,7 @@ cm_fa_try_approve_build = {
 				cm_fa_stop_on_cost = { COST = scope:cm_cost }
 			}
 		}
-		remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
-		remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type }
+		remove_from_variable_map = { name = cm_fa_b_cat_$cat$ key = scope:cm_building_type }
 	}
 }
 

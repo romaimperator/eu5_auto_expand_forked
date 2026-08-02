@@ -318,14 +318,8 @@ cm_fa_collapsar_drain_type = {
 			scope:cm_fa_drain_loc = {
 				if = {
 					limit = {
-						trigger_if = {
-							limit = {
-								has_variable_map = cm_fa_b_cats
-								is_key_in_variable_map = { name = cm_fa_b_cats target = scope:cm_building_type }
-							}
-							"variable_map(cm_fa_b_cats|scope:cm_building_type)" = 2
-						}
-						trigger_else = { always = no }
+						has_variable_map = cm_fa_b_cat_2
+						is_key_in_variable_map = { name = cm_fa_b_cat_2 target = scope:cm_building_type }
 						has_variable_map = cm_fa_b_costs
 						is_key_in_variable_map = { name = cm_fa_b_costs target = scope:cm_building_type }
 					}
@@ -334,8 +328,7 @@ cm_fa_collapsar_drain_type = {
 					if = {
 						limit = { cm_fa_collapsar_target_met = yes }
 						# Opportunity gone: drop the entry.
-						remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
-						remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type }
+						remove_from_variable_map = { name = cm_fa_b_cat_2 key = scope:cm_building_type }
 					} else = {
 						cm_fa_collapsar_approve_build = yes
 					}
@@ -405,7 +398,6 @@ cm_fa_collapsar_approve_build = {
 				cm_fa_stop_on_cost = { COST = scope:cm_cost }
 			}
 		}
-		remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
-		remove_from_variable_map = { name = cm_fa_b_cats key = scope:cm_building_type }
+		remove_from_variable_map = { name = cm_fa_b_cat_2 key = scope:cm_building_type }
 	}
 }
