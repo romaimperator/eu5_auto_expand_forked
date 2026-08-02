@@ -1,10 +1,10 @@
-﻿# Full-automation Food: samples each market's food supply against demand monthly, once a
-# year enables auto-food on the best food-potential locations in markets whose median month
-# still fell short, and stages the system-picked locations through the food option engine
-# under the food pool. System picks never turn off except when the location stops being a
-# rural settlement or leaves the country.
+﻿# Full-automation Food: samples food supply against demand monthly in every market whose
+# center the country owns, once a year enables auto-food on the best food-potential locations
+# in those markets whose median month still fell short, and stages the system-picked locations
+# through the food option engine under the food pool. System picks never turn off except when
+# the location stops being a rural settlement, leaves the country, or loses the market center.
 
-# Samples each market's monthly supply/demand ratio into a 7-bucket histogram (the maps
+# Samples each covered market's monthly supply/demand ratio into a 7-bucket histogram (the maps
 # cm_fa_food_h1..h7 keyed by market), from which the yearly evaluation reads the median.
 # A histogram gives a spike-robust central value that EU5's lack of numeric arrays makes
 # hard to compute exactly: the transient 100x-demand bug (and any demand-near-zero month)
@@ -14,7 +14,7 @@
 cm_fa_food_sample_markets = {
 	if = {
 		limit = { exists = var:cm_fa_food_enabled }
-		every_market_present_in_country = {
+		every_market_center_in_country = {
 			save_scope_as = cm_fa_market
 			set_local_variable = { name = cm_fa_supply value = 0 }
 			set_local_variable = { name = cm_fa_demand value = 0 }
@@ -94,10 +94,10 @@ cm_fa_food_hist_add = {
 	}
 }
 
-# Yearly per-market check: where the median food month stayed below the fa_food_target
-# surplus ratio, enable auto-food on the top food-potential locations until two active
-# locations can still expand, the player's own included. The median bucket is logged for
-# every market. Marking only; construction runs through the monthly staging.
+# Yearly check over the markets whose center the country owns: where the median food month
+# stayed below the fa_food_target surplus ratio, enable auto-food on the top food-potential
+# locations until two active locations can still expand, the player's own included.
+# Marking only; construction runs through the monthly staging.
 # Root is the country.
 cm_fa_food_yearly_evaluation = {
 	if = {
@@ -108,7 +108,7 @@ cm_fa_food_yearly_evaluation = {
 		save_scope_as = cm_country
 		set_local_variable = { name = cm_fa_food_thresh value = cm_fa_food_target_ratio }
 		cm_fa_food_cleanup = yes
-		every_market_present_in_country = {
+		every_market_center_in_country = {
 			save_scope_as = cm_fa_market
 			scope:cm_country = { cm_fa_food_compute_median = yes }
 			if = {
@@ -233,7 +233,8 @@ cm_fa_food_median_step = {
 }
 
 # Drops entries that stopped being valid: lost ownership (the marker stays, inert without
-# list membership) or left rural rank. Never removes for any other reason.
+# list membership), left rural rank, or sits in a market the country no longer holds the
+# center of. Never removes for any other reason.
 # Root is the country.
 cm_fa_food_cleanup = {
 	save_scope_as = cm_fa_chk_country
@@ -245,6 +246,10 @@ cm_fa_food_cleanup = {
 			scope:cm_fa_chk_country = { remove_list_variable = { name = cm_fa_food_locations target = scope:cm_fa_chk } }
 		} else_if = {
 			limit = { scope:cm_fa_chk = { NOT = { location_rank = location_rank:rural_settlement } } }
+			scope:cm_fa_chk = { remove_variable = cm_fa_food_marked }
+			scope:cm_fa_chk_country = { remove_list_variable = { name = cm_fa_food_locations target = scope:cm_fa_chk } }
+		} else_if = {
+			limit = { scope:cm_fa_chk = { NOT = { market = { location = { owner ?= scope:cm_fa_chk_country } } } } }
 			scope:cm_fa_chk = { remove_variable = cm_fa_food_marked }
 			scope:cm_fa_chk_country = { remove_list_variable = { name = cm_fa_food_locations target = scope:cm_fa_chk } }
 		}
