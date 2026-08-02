@@ -27,7 +27,7 @@ cm_cmm_post_registration = {
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = budget item = 2 value = 20 }
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = budget item = 3 value = 50 }
 
-	cm_fa_rd_place_row = yes
+	cm_fa_place_default_rows = yes
 
 	# Urban Rights, Building Cleanup and Governors start off; cleanup is the only category that
 	# closes and destroys what the player already has.
@@ -423,18 +423,21 @@ cm_fa_rebuild_category_lookups = {
 	} # end guard
 }
 
-# Item numbers key each row's stored settings, so Roads registers as the last one and takes its
-# place here instead, once, leaving a later reorder alone.
+# Item numbers key each row's stored settings, so the rows whose registration number differs from
+# their default display position take their places here instead, once, leaving a later reorder
+# alone. The result is the order lucky nations run (cm_ln_seed_categories): Food, Industry, Price
+# Collapsar, Roads, Utilities, Urban Rights, Building Cleanup, Governors.
 # Scope: country
-cm_fa_rd_place_row = {
+cm_fa_place_default_rows = {
 	if = {
 		limit = {
 			NOT = { exists = var:cm_fa_rd_row_placed }
 			has_variable_list = cmm_list_items_cm__fa_priority_list
 		}
 		set_variable = { name = cm_fa_rd_row_placed value = 1 }
-		# Display index 2: under Food and Price Collapsar, over Industry.
-		cmm_move_list_item = { setting = cm__fa_priority_list item = 8 position = 2 }
+		# Industry over Price Collapsar, then Roads between Price Collapsar and Utilities.
+		cmm_move_list_item = { setting = cm__fa_priority_list item = 3 position = 1 }
+		cmm_move_list_item = { setting = cm__fa_priority_list item = 8 position = 3 }
 	}
 }
 
