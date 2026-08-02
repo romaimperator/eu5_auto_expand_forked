@@ -377,42 +377,56 @@ cm_fa_collapsar_type_cap = {
 	}
 }
 
-# This location's efficiency for scope:cm_building_type, which is the per-level output the
-# collapsar is buying. building_efficiency takes a literal type key, never a scope, hence the
-# chain. Root is the location, expects scope:cm_building_type.
-cm_fa_collapsar_efficiency_order = {
+# scope:cm_building_type's coverage of the province's raw materials, the Local Access to Raw
+# Materials bonus the R.G.O. Bonus filters show, read straight off the map the rgob sweep bakes per
+# province rather than through cm_rgob_coverage, which needs a standing building. Types without an
+# entry read 0. Root is the location, expects scope:cm_building_type.
+cm_fa_collapsar_rgo_bonus = {
 	value = 0
+	province = {
+		if = {
+			limit = {
+				has_variable_map = cm_rgob_cov
+				is_key_in_variable_map = { name = cm_rgob_cov target = scope:cm_building_type }
+			}
+			add = "variable_map(cm_rgob_cov|scope:cm_building_type)"
+		}
+	}
+	multiply = cm_rgob_modifier_at_location
+}
+
+# The production efficiency scope:cm_building_type runs at here, which is the per-level output the
+# collapsar is buying: the raw materials the province gives it, plus the location half of Production
+# Efficiency and the material's own output modifier. The country half,
+# global_production_efficiency, reads the same at every location the sweep visits and so would move
+# every reading by the same amount and rank nothing.
+# Root is the location, expects scope:cm_building_type.
+cm_fa_collapsar_efficiency_order = {
+	value = cm_fa_collapsar_rgo_bonus
+	add = modifier:local_production_efficiency
 	if = {
 		limit = { scope:cm_building_type = building_type:mason }
-		value = "building_efficiency(building_type:mason)"
+		add = modifier:local_masonry_output_modifier
 	}
 	else_if = {
 		limit = { scope:cm_building_type = building_type:lumber_mill }
-		value = "building_efficiency(building_type:lumber_mill)"
+		add = modifier:local_lumber_output_modifier
 	}
 	else_if = {
 		limit = { scope:cm_building_type = building_type:sand_pit }
-		value = "building_efficiency(building_type:sand_pit)"
+		add = modifier:local_sand_output_modifier
 	}
 	else_if = {
-		limit = { scope:cm_building_type = building_type:glass_guild }
-		value = "building_efficiency(building_type:glass_guild)"
-	}
-	else_if = {
-		limit = { scope:cm_building_type = building_type:glass_workshop }
-		value = "building_efficiency(building_type:glass_workshop)"
-	}
-	else_if = {
-		limit = { scope:cm_building_type = building_type:glassworks }
-		value = "building_efficiency(building_type:glassworks)"
-	}
-	else_if = {
-		limit = { scope:cm_building_type = building_type:glass_mill }
-		value = "building_efficiency(building_type:glass_mill)"
-	}
-	else_if = {
-		limit = { scope:cm_building_type = building_type:rural_glassmaker }
-		value = "building_efficiency(building_type:rural_glassmaker)"
+		limit = {
+			OR = {
+				scope:cm_building_type = building_type:glass_guild
+				scope:cm_building_type = building_type:glass_workshop
+				scope:cm_building_type = building_type:glassworks
+				scope:cm_building_type = building_type:glass_mill
+				scope:cm_building_type = building_type:rural_glassmaker
+			}
+		}
+		add = modifier:local_glass_output_modifier
 	}
 }
 
