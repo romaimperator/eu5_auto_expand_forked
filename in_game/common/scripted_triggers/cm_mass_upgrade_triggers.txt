@@ -78,6 +78,21 @@ cm_location_deurbanize_would_undo = {
 	cm_location_rgo_blocks_urbanize = yes
 }
 
+# Root is the location. A rank the de-urbanizer wants gone that a capital or a governor is sitting
+# on, which reopens the reorganization plan ahead of its cadence. cm_ln_deurb_tried is set on every
+# match when a run begins, so a seat the plan cannot move reopens it once rather than every month
+# for the rest of the game.
+cm_location_deurbanize_blocked_by_seat = {
+	cm_location_deurbanize_target = yes
+	owner = { exists = var:cm_deurbanize }
+	NOT = { has_variable = cm_ln_deurb_tried }
+	OR = {
+		is_capital = yes
+		has_building = building_type:local_governor
+		has_building = building_type:naval_governor
+	}
+}
+
 # Root is the location, expects scope:cm_country.
 # True when the auto-food feature is enabled and this location's RGO good is mass-covered.
 cm_location_reserved_by_mass_auto_food = {

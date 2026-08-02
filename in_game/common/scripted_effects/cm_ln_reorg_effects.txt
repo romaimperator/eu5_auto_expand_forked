@@ -132,6 +132,9 @@ cm_ln_reorg_try_start = {
 					}
 				}
 				cm_ln_gov_slots_grew = yes
+				# A capital or governor standing where the de-urbanizer wants the rank gone,
+				# which the searches below will now plan around.
+				any_owned_location = { cm_location_deurbanize_blocked_by_seat = yes }
 			}
 		}
 		cm_ln_reorg_begin = yes
@@ -167,6 +170,10 @@ cm_ln_reorg_begin = {
 	every_owned_location = {
 		limit = { has_variable = cm_ln_seat_score }
 		remove_variable = cm_ln_seat_score
+	}
+	every_owned_location = {
+		limit = { cm_location_deurbanize_blocked_by_seat = yes }
+		set_variable = { name = cm_ln_deurb_tried value = 1 }
 	}
 	cm_ln_pf_settings_on = yes
 	set_variable = { name = cm_ln_phase value = 1 }
