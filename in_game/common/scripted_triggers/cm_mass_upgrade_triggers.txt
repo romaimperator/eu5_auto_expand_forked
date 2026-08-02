@@ -12,6 +12,7 @@ cm_location_can_mass_upgrade_to_city = {
 	AND = {
 		location_rank = location_rank:town
 		population >= 30
+		NOT = { cm_location_rgo_blocks_urbanize = yes }
 		modifier:cannot_upgrade_location = no
 		NOT = { has_building = building_type:cm_upgrade_town_to_city_building }
 		NOT = { any_buildings_in_location = { building_type = building_type:cm_upgrade_town_to_city_building building_levels_under_construction > 0 } }
@@ -29,7 +30,7 @@ cm_location_can_mass_upgrade_to_town = {
 			population >= 30
 			cm_location_pop_at_or_near_cap = yes
 		}
-		cm_rural_to_town_rgo_not_ignored = yes
+		NOT = { cm_location_rgo_blocks_urbanize = yes }
 		NOT = { cm_location_reserved_by_mass_auto_food = yes }
 		# A full-automation food pick blocks only the automatic path; manual upgrades stay open.
 		NOT = { cm_fa_location_is_system_food_picked = yes }
@@ -43,10 +44,22 @@ cm_location_can_mass_upgrade_to_town = {
 }
 
 # Root is the location, expects scope:cm_country.
-# True when the location's RGO good is not in the player-configured ignore list.
-cm_rural_to_town_rgo_not_ignored = {
+# True when the location's RGO good is checked in the player's do-not-urbanize list.
+cm_location_rgo_blocks_urbanize = {
 	raw_material = { save_temporary_scope_as = cm_rgo_good }
-	NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_auto_urbanize_ignored_rgo_goods target = scope:cm_rgo_good } } }
+	scope:cm_country = { is_target_in_variable_list = { name = cm_auto_urbanize_ignored_rgo_goods target = scope:cm_rgo_good } }
+}
+
+# Root is the location, expects scope:cm_country.
+# True when the location holds a rank the do-not-urbanize list says it should not have.
+cm_location_can_deurbanize = {
+	NOT = { location_rank = location_rank:rural_settlement }
+	NOT = { integration_level = conquered }
+	# Governor seats need city rank, and the capital carries the same modifier: main_menu/common/static_modifiers/location.txt:330.
+	NOT = { modifier:local_proximity_source > 0 }
+	# A lucky nation's reorganization urbanizes its own planned governor sites.
+	NOT = { has_variable = cm_ln_plan_ord }
+	cm_location_rgo_blocks_urbanize = yes
 }
 
 # Root is the location, expects scope:cm_country.

@@ -1072,9 +1072,17 @@ cm_run_auto_food = {
 }
 
 # --- Auto Urbanize ---
-# Promotes location ranks: towns to cities, and rural settlements to towns.
-# Each upgrade type is gated by its own sub-toggle on the Urbanize tab.
+# Promotes location ranks: towns to cities, and rural settlements to towns, and takes
+# do-not-urbanize locations back down to rural. Each pass is gated by its own sub-toggle
+# on the Urbanize tab.
 cm_run_auto_urbanize = {
+	if = {
+		limit = { exists = var:cm_deurbanize }
+		every_owned_location = {
+			limit = { cm_location_can_deurbanize = yes }
+			change_location_rank = location_rank:rural_settlement
+		}
+	}
 	if = {
 		limit = { exists = var:cm_urbanize_town_to_city }
 		ordered_owned_location = {
@@ -1111,6 +1119,7 @@ cm_run_auto_urbanize = {
 				location_rank = location_rank:city
 				NOT = { integration_level = conquered }
 				cm_ln_location_proximity_ok = yes
+				NOT = { cm_location_rgo_blocks_urbanize = yes }
 				modifier:cannot_upgrade_location = no
 				population >= cm_megalopolis_stage_min_population
 			}
