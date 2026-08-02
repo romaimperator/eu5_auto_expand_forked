@@ -106,14 +106,127 @@ cm_fa_collapsar_goal_price = {
 	}
 }
 
-# How much of scope:cm_fa_good_t this market has to cover for itself. Imports meet the physical
-# requirement in full but are discounted when the price forms
+# The natural log of the current age's price_stability, the proportion of base price the target
+# price scales toward at overwhelming supply, and whose reciprocal it scales toward at overwhelming
+# demand (game_concept_target_price_desc,
+# game/main_menu/localization/english/game_concepts_l_english.yml:1350). Held as a log because the
+# exponent the model below wants is a log ratio and script has no log operator, and because the
+# series further down only converges near 1, which price_stability never is. The values it is the
+# log of: age_1_traditions 0.1 (game/in_game/common/age/00_default.txt:3), age_2_renaissance 0.1
+# (:52), age_3_discovery 0.08 (:110), age_4_reformation 0.06 (:169), age_5_absolutism 0.04 (:232),
+# age_6_revolutions 0.02 (:308). Four decimals because the script value parser rejects a literal
+# carrying six, logging jomini_scriptvalue.h:498 "Badly read script value" and leaving the value
+# unset; vanilla's own script values never go past four.
+cm_fa_collapsar_ln_price_stability = {
+	value = -2.3026
+	if = {
+		limit = { current_age = age_3_discovery }
+		value = -2.5257
+	}
+	else_if = {
+		limit = { current_age = age_4_reformation }
+		value = -2.8134
+	}
+	else_if = {
+		limit = { current_age = age_5_absolutism }
+		value = -3.2189
+	}
+	else_if = {
+		limit = { current_age = age_6_revolutions }
+		value = -3.9120
+	}
+}
+
+# The goal price as a proportion of base, written as (M - 1) / (M + 1) for the series below. M is
+# (100 + target) / 100, so the whole thing reduces to target / (200 + target).
+# Expects scope:cm_country.
+cm_fa_collapsar_goal_u = {
+	value = scope:cm_country.var:cm_fa_collapsar_target
+	divide = {
+		value = 200
+		add = scope:cm_country.var:cm_fa_collapsar_target
+	}
+}
+
+cm_fa_collapsar_goal_u2 = {
+	value = cm_fa_collapsar_goal_u
+	multiply = cm_fa_collapsar_goal_u
+}
+
+# The natural log of the goal price as a proportion of base, by the series
+# ln(M) = 2u + 2u^3/3 + 2u^5/5 in Horner form. The Price Target spans -33 to +33 percent, so u never
+# leaves +-0.198 and the fifth-order truncation is good to a millionth.
+# Expects scope:cm_country.
+cm_fa_collapsar_ln_goal = {
+	value = cm_fa_collapsar_goal_u2
+	multiply = 0.4
+	add = 0.6667
+	multiply = cm_fa_collapsar_goal_u2
+	add = 2
+	multiply = cm_fa_collapsar_goal_u
+}
+
+# How much of the supply-versus-demand scale the engine spends moving the price, measured off six
+# markets of one save on 2026-08-02 by solving each one's own supply, demand and target price for
+# it: Jinjiang 0.701, Ozato 0.693 and Hangzhou 0.709 with demand over supply, Kyoto 0.753, Akita
+# 0.745 and Chengdu 0.745 with supply over demand. The split by direction is wider than the two
+# decimals those target prices are displayed to, so it is a real asymmetry rather than rounding.
+# Which side applies follows the Price Target's own sign, since a goal under base price is reached
+# with supply over demand and a goal over it with demand over supply.
+@cm_fa_collapsar_scale_supply = 0.745
+@cm_fa_collapsar_scale_demand = 0.7
+
+cm_fa_collapsar_balance_scale = {
+	value = @cm_fa_collapsar_scale_supply
+	if = {
+		limit = { scope:cm_country.var:cm_fa_collapsar_target > 0 }
+		value = @cm_fa_collapsar_scale_demand
+	}
+}
+
+# Where the goal price sits on the engine's supply-versus-demand scale: the exponent x for which
+# price_stability raised to x is the goal price as a proportion of base. Zero at the base price,
+# positive below it, negative above. Expects scope:cm_country.
+cm_fa_collapsar_price_exponent = {
+	value = cm_fa_collapsar_ln_goal
+	divide = cm_fa_collapsar_ln_price_stability
+	divide = cm_fa_collapsar_balance_scale
+}
+
+# Added to supply and to demand before the price model takes their ratio
+# (SUPPLY_AND_DEMAND_STABILITY_OFFSET_CONSTANT,
+# game/loading_screen/common/defines/00_defines.txt:1907).
+@cm_fa_collapsar_price_offset = 1
+
+# The local production of scope:cm_fa_good_t that puts this market at the goal price, taking the
+# market's own production and demand as the whole of what forms the price. The engine reads the
+# scale as (supply - demand) / (supply + demand + 2), so this inverts that for supply at the
+# exponent the goal sits on. Root is the market, expects scope:cm_fa_good_t and scope:cm_country.
+cm_fa_collapsar_supply_wanted = {
+	value = "goods_demand_in_market(scope:cm_fa_good_t)"
+	multiply = {
+		value = 1
+		add = cm_fa_collapsar_price_exponent
+	}
+	add = {
+		value = @cm_fa_collapsar_price_offset
+		multiply = 2
+		multiply = cm_fa_collapsar_price_exponent
+	}
+	divide = {
+		value = 1
+		subtract = cm_fa_collapsar_price_exponent
+	}
+}
+
+# How much of scope:cm_fa_good_t this market has to add to its own production to reach the goal
+# price. Imports meet the physical requirement in full but are discounted when the price forms
 # (BURGHER_TRADE_IMPACT_ON_SUPPLY_SCALE 0.1 and TRADE_IMPACT_ON_SUPPLY_SCALE 0.75,
 # game/loading_screen/common/defines/00_defines.txt:1760-1761), so the shortfall is measured
 # against what is produced here. Root is the market.
 # produced_in_market takes a literal goods key, never a scope.
 cm_fa_collapsar_shortfall = {
-	value = "goods_demand_in_market(scope:cm_fa_good_t)"
+	value = cm_fa_collapsar_supply_wanted
 	if = {
 		limit = { scope:cm_fa_good_t = goods:masonry }
 		subtract = produced_in_market:masonry
