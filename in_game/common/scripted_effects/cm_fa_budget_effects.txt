@@ -312,6 +312,8 @@ cm_fa_drain_one = {
 		change_variable = { name = cm_fa_carry add = local_var:cm_fa_paid }
 	}
 	else = {
+		# Caps the hold below: gold that trickles down can be spent this month but never banked.
+		set_local_variable = { name = cm_fa_own value = var:cm_fa_pool_$CAT$ }
 		change_variable = { name = cm_fa_pool_$CAT$ add = var:cm_fa_carry }
 		# The settled gold goes down the order, so it is handed on only after the pool has taken
 		# the incoming carry.
@@ -326,15 +328,17 @@ cm_fa_drain_one = {
 			change_variable = { name = cm_fa_debt_$CAT$ subtract = var:cm_fa_pool_$CAT$ }
 		}
 		else_if = {
-			# It stopped on a pick it could not reach, so it holds what that pick costs and hands
-			# down only the rest.
+			# It stopped on a pick it could not reach, so it holds toward that pick and hands
+			# down the rest.
 			limit = {
 				local_var:cm_fa_cost_blocked = 1
 				local_var:cm_fa_hold_cost > 0
+				local_var:cm_fa_own > 0
 				var:cm_fa_pool_$CAT$ > 0
 			}
 			set_local_variable = { name = cm_fa_keep value = var:cm_fa_pool_$CAT$ }
 			change_local_variable = { name = cm_fa_keep min = local_var:cm_fa_hold_cost }
+			change_local_variable = { name = cm_fa_keep min = local_var:cm_fa_own }
 			set_variable = { name = cm_fa_resv_$CAT$ value = local_var:cm_fa_keep }
 			change_variable = { name = cm_fa_pool_$CAT$ subtract = local_var:cm_fa_keep }
 			change_variable = { name = cm_fa_carry add = var:cm_fa_pool_$CAT$ }
