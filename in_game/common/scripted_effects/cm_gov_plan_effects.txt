@@ -20,8 +20,6 @@
 @cm_gov_income_start = 100
 # Months a pick waits before it is scored again.
 @cm_gov_probe_months = 2
-# Share of its first score a pick must still reach on the re-check to be kept.
-@cm_gov_probe_keep = 700
 
 # Root is the country, scope:cm_country set.
 cm_gov_reorg_tick = {
@@ -389,7 +387,7 @@ cm_gov_reorg_probe_open = {
 cm_gov_reorg_probe_check = {
 	cm_gov_probe_share = { SCORE = cm_gf_score }
 	if = {
-		limit = { scope:cm_gov_probe_now >= @cm_gov_probe_keep }
+		limit = { scope:cm_gov_probe_now >= cm_gov_probe_keep_value }
 		scope:cm_gov_probe_l = { save_scope_as = cm_gov_pick }
 		cm_dbg_log_value = { cat = governors action = cm_gov_log_probe_kept value = scope:cm_gov_probe_now }
 		cm_gov_probe_end = yes
