@@ -167,8 +167,6 @@ cm_auto_build_check_meets_minimum_market_price_impact = {
 
 # --- Auto Build Capital triggers ---
 # Root is the capital location. Expects scope:cm_building_type, scope:cm_country.
-# Reads min_discount from the per-feature priority list field
-# cm_priority_min_discount keyed on flag:cm_feature_auto_build_capital.
 # Allows multi-level capital buildings such as chancery to be queued up to their cap:
 # cm_location_building_type_is_not_at_max_level passes when the building doesn't
 # exist yet OR exists below max with no level currently under construction.
@@ -179,19 +177,6 @@ cm_capital_location_can_auto_build = {
 	cm_location_allowed_to_build = { target = scope:cm_building_type }
 	cm_location_has_enough_pops_available = yes
 	cm_check_location_meets_min_market_access = yes
-	cm_capital_meets_min_discount = yes
 	cm_get_open_build_queue_slots > 0
-}
-
-# Expects scopes: country, location, building_type.
-# Discount setting is read from the priority list's per-feature min_discount field.
-# Demand-only buildings with zero standard construction demand always pass.
-# 0.005 tolerance matches the auto_build_list discount check so a -33% slider
-# accepts a -32.5% real cost adjustment without float-rounding misses.
-cm_capital_meets_min_discount = {
-	OR = {
-		scope:cm_building_type = { save_temporary_scope_as = cm_building_type cm_get_standard_construction_demand_total = 0 }
-		scope:cm_building_type = { cm_get_standard_construction_cost_adjustment_for_building_type <= { value = cm_get_min_discount_for_auto_build_capital add = 0.005 } }
-	}
 }
 

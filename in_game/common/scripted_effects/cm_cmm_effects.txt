@@ -6,7 +6,7 @@ cm_register_cmf_mod = {
 		mod_id = cm
 		setting_id = priority_list
 		tab_id = settings
-		item_count = 7
+		item_count = 6
 		is_ordered = 1
 	}
 
@@ -16,7 +16,8 @@ cm_register_cmf_mod = {
 	cmm_set_list_item_value = { mod_id = cm setting_id = priority_list item = 4 value = flag:cm_feature_auto_food }
 	cmm_set_list_item_value = { mod_id = cm setting_id = priority_list item = 5 value = flag:cm_feature_auto_urbanize }
 	cmm_set_list_item_value = { mod_id = cm setting_id = priority_list item = 6 value = flag:cm_feature_upgrade_all_buildings }
-	cmm_set_list_item_value = { mod_id = cm setting_id = priority_list item = 7 value = flag:cm_feature_auto_build_capital }
+	# A save from before the capital row moved to the Auto-Build tab still carries item 7.
+	cmm_hide_list_item = { mod_id = cm setting_id = priority_list item = 7 }
 
 	# Widest bounds of any metric: registration re-runs on every load and clamps stored values.
 	cmm_register_list_numeric_field = {
@@ -33,7 +34,6 @@ cm_register_cmf_mod = {
 	cmm_disable_list_field_for_item = { mod_id = cm setting_id = priority_list field_id = min_profit item = 4 }
 	cmm_disable_list_field_for_item = { mod_id = cm setting_id = priority_list field_id = min_profit item = 5 }
 	cmm_disable_list_field_for_item = { mod_id = cm setting_id = priority_list field_id = min_profit item = 6 }
-	cmm_disable_list_field_for_item = { mod_id = cm setting_id = priority_list field_id = min_profit item = 7 }
 
 	cmm_register_list_numeric_field = {
 		mod_id = cm
@@ -113,6 +113,19 @@ cm_register_cmf_mod = {
 
 	# Auto-Build (auto_build) Tab
 	## Auto-Build Buildings (auto_build_list) Group
+	# Registered ahead of the list so it renders above it in the same group.
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = auto_build_capital
+		tab_id = auto_build
+		group_id = auto_build_list
+		default_value = 0
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__auto_build_capital
+		alias = cm_auto_build_capital
+	}
+
 	cmm_register_settings_list = {
 		mod_id = cm
 		setting_id = auto_build_list
@@ -1333,6 +1346,14 @@ cm_handle_cmf_callback = {
 		}
 		flag:cm__expand_metric = {
 			cm_apply_expand_metric_change = yes
+		}
+		# Auto-Build (auto_build) Tab
+		## Auto-Build Buildings (auto_build_list) Group
+		flag:cm__auto_build_capital = {
+			cmm_sync_bool_alias = {
+				setting = cm__auto_build_capital
+				alias = cm_auto_build_capital
+			}
 		}
 		# Auto Urbanize (auto_urbanize) Tab
 		## Auto Urbanize Settings (auto_urbanize) Group

@@ -81,7 +81,6 @@ cm_run_construction_cycle = {
 							flag:cm_feature_upgrade_all_buildings = { scope:cm_country = { cm_run_upgrade_all_buildings = yes } }
 							flag:cm_feature_auto_build = { scope:cm_country = { cm_run_auto_build = yes } }
 							flag:cm_feature_auto_food = { scope:cm_country = { cm_run_auto_food = yes } }
-							flag:cm_feature_auto_build_capital = { scope:cm_country = { cm_run_auto_build_capital = yes } }
 						}
 					}
 				}
@@ -1001,8 +1000,11 @@ cm_run_upgrade_all_buildings = {
 }
 
 # --- Auto Build ---
-# Auto-constructs the roster's buildings in priority order.
+# Auto-constructs the roster's buildings in priority order, capital-only buildings first.
 cm_run_auto_build = {
+	if = { limit = { exists = var:cm_auto_build_capital }
+		cm_run_auto_build_capital = yes
+	}
 	cm_reset_locations_lists = { }
 	every_in_list = {
 		variable = cm_auto_build_building_types_list
