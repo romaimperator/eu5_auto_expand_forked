@@ -19,17 +19,17 @@ cm_fa_run_utilities = {
 		if = {
 			limit = { scope:cm_location = { NOT = { integration_level = conquered } } }
 			scope:cm_location = {
-				cm_fa_stage_utility_type_here = { bt = royal_court }
-				cm_fa_stage_utility_type_here = { bt = house_of_parliament }
-				cm_fa_stage_utility_type_here = { bt = order_headquarters }
-				cm_fa_stage_utility_type_here = { bt = admiralty }
-				cm_fa_stage_utility_type_here = { bt = war_college }
-				cm_fa_stage_utility_type_here = { bt = tax_assessor }
-				cm_fa_stage_utility_type_here = { bt = supreme_court }
-				cm_fa_stage_utility_type_here = { bt = chancery }
-				cm_fa_stage_utility_type_here = { bt = republican_assembly }
-				cm_fa_stage_utility_type_here = { bt = royal_garden }
-				cm_fa_stage_utility_type_here = { bt = pirate_stronghold }
+				cm_fa_stage_capital_type_here = { bt = royal_court }
+				cm_fa_stage_capital_type_here = { bt = house_of_parliament }
+				cm_fa_stage_capital_type_here = { bt = order_headquarters }
+				cm_fa_stage_capital_type_here = { bt = admiralty }
+				cm_fa_stage_capital_type_here = { bt = war_college }
+				cm_fa_stage_capital_type_here = { bt = tax_assessor }
+				cm_fa_stage_capital_type_here = { bt = supreme_court }
+				cm_fa_stage_capital_type_here = { bt = chancery }
+				cm_fa_stage_capital_type_here = { bt = republican_assembly }
+				cm_fa_stage_capital_type_here = { bt = royal_garden }
+				cm_fa_stage_capital_type_here = { bt = pirate_stronghold }
 			}
 		}
 	}
@@ -127,6 +127,25 @@ cm_fa_stage_utility_type_here = {
 			cm_location_has_enough_pops_available = yes
 			cm_check_location_meets_min_market_access = yes
 			cm_get_open_build_queue_slots > 0
+			NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
+		}
+		cm_fa_stage_build_candidate = { cat = 4 }
+	}
+}
+
+# Stages one capital-only type at the capital. Not slot-gated, so the set reaches the queue
+# whatever the capital is already building and gold is the only thing that can stop it, which is
+# what lets the category hold its allotment for one it cannot yet afford. Root is the location.
+# Expects scope:cm_country, scope:cm_location; $bt$ = the type key.
+cm_fa_stage_capital_type_here = {
+	cm_pop_track = yes
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	if = {
+		limit = {
+			cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
+			cm_location_allowed_to_build = { target = scope:cm_building_type }
+			cm_location_has_enough_pops_available = yes
+			cm_check_location_meets_min_market_access = yes
 			NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
 		}
 		cm_fa_stage_build_candidate = { cat = 4 }
@@ -310,17 +329,17 @@ cm_fa_stage_marketplaces = {
 # mercury patios, the market-center buildings, the max-control buildings, marketplaces, the
 # disease-resistance buildings, then granaries. Root is the country.
 cm_fa_pass_utilities = {
-	cm_fa_drain_utility_type = { bt = royal_court }
-	cm_fa_drain_utility_type = { bt = house_of_parliament }
-	cm_fa_drain_utility_type = { bt = order_headquarters }
-	cm_fa_drain_utility_type = { bt = admiralty }
-	cm_fa_drain_utility_type = { bt = war_college }
-	cm_fa_drain_utility_type = { bt = tax_assessor }
-	cm_fa_drain_utility_type = { bt = supreme_court }
-	cm_fa_drain_utility_type = { bt = chancery }
-	cm_fa_drain_utility_type = { bt = republican_assembly }
-	cm_fa_drain_utility_type = { bt = royal_garden }
-	cm_fa_drain_utility_type = { bt = pirate_stronghold }
+	cm_fa_drain_capital_type = { bt = royal_court }
+	cm_fa_drain_capital_type = { bt = house_of_parliament }
+	cm_fa_drain_capital_type = { bt = order_headquarters }
+	cm_fa_drain_capital_type = { bt = admiralty }
+	cm_fa_drain_capital_type = { bt = war_college }
+	cm_fa_drain_capital_type = { bt = tax_assessor }
+	cm_fa_drain_capital_type = { bt = supreme_court }
+	cm_fa_drain_capital_type = { bt = chancery }
+	cm_fa_drain_capital_type = { bt = republican_assembly }
+	cm_fa_drain_capital_type = { bt = royal_garden }
+	cm_fa_drain_capital_type = { bt = pirate_stronghold }
 	cm_fa_drain_utility_roster_type = { bt = early_council_hall }
 	cm_fa_drain_utility_roster_type = { bt = minting_office }
 	cm_fa_drain_utility_roster_type = { bt = settlement_building }
@@ -358,6 +377,27 @@ cm_fa_pass_utilities = {
 	cm_fa_drain_utility_roster_type = { bt = lazaretto }
 	cm_fa_drain_utility_roster_type = { bt = hospital }
 	cm_fa_drain_utility_roster_type = { bt = granary }
+}
+
+# One capital-only type, past the capital's open slots on the max-control buildings' terms, so
+# gold is the only thing that can stop it and the category holds for one it cannot afford. The
+# staged location is walked rather than reached through capital, since a capital moved between
+# staging and this drain would leave the entry unconsumed. Root is the country. $bt$ = the type key.
+cm_fa_drain_capital_type = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	if = {
+		limit = {
+			local_var:cm_fa_cost_blocked = 0
+			has_variable_list = cm_fa_b_locations
+		}
+		every_in_list = {
+			variable = cm_fa_b_locations
+			save_temporary_scope_as = cm_fa_drain_loc
+			scope:cm_fa_drain_loc = {
+				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = always }
+			}
+		}
+	}
 }
 
 # Root is the country. $bt$ = a type key with no chain.
