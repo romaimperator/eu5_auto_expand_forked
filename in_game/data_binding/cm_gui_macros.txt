@@ -62,6 +62,62 @@ macro = {
 	replace_with = "GetVariableSystem.Set(CMBatchKey(CountryArg), Concatenate(CMBatchRead(CountryArg), CallArg))"
 }
 
+# The round's state sits inside the country datamodel and fires once per lucky nation, and the
+# console refuses any command issued while another is running, so every call goes to one buffer the
+# whole list shares.
+macro = {
+	description = "GUI variable holding the round's pending console batch"
+	definition = "CMRoundKey"
+	replace_with = "'cm_ln_c_round_buf'"
+}
+
+macro = {
+	description = "The round's pending console batch"
+	definition = "CMRoundRead"
+	replace_with = "GetVariableSystem.Get(CMRoundKey)"
+}
+
+macro = {
+	description = "The round's buffered calls as one console command, empty when nothing was appended"
+	definition = "CMRoundBlock"
+	replace_with = "Select_CString(And(GetVariableSystem.Exists(CMRoundKey), Not(GetVariableSystem.HasValue(CMRoundKey, ''))), Concatenate3('effect hidden_effect = { ', CMRoundRead, ' };'), '')"
+}
+
+macro = {
+	description = "Appends one effect call to the round's console batch"
+	definition = "CMRoundAppend(CallArg)"
+	replace_with = "GetVariableSystem.Set(CMRoundKey, Concatenate(CMRoundRead, CallArg))"
+}
+
+# A hidden widget's state machine keeps running, so a visibility gate cannot keep two drivers off
+# the console and the second call of any instant was refused. Every bridge state appends its
+# finished, ';'-terminated command here and one widget submits the queue.
+macro = {
+	description = "GUI variable holding every console command the bridge has queued"
+	definition = "CMQueueKey"
+	replace_with = "'cm_ln_c_queue'"
+}
+
+macro = {
+	description = "The queued console commands, ';'-separated as ExecuteConsoleCommandsForced takes them"
+	definition = "CMQueueRead"
+	replace_with = "GetVariableSystem.Get(CMQueueKey)"
+}
+
+macro = {
+	description = "Appends one finished console command to the queue"
+	definition = "CMQueueAppend(CommandArg)"
+	replace_with = "GetVariableSystem.Set(CMQueueKey, Concatenate(CMQueueRead, CommandArg))"
+}
+
+# Submitting an empty string logs a console failure rather than doing nothing, so the loop shows
+# only while it has something to send.
+macro = {
+	description = "True while the console queue holds a command"
+	definition = "CMQueuePending"
+	replace_with = "And(GetVariableSystem.Exists(CMQueueKey), Not(GetVariableSystem.HasValue(CMQueueKey, '')))"
+}
+
 # There is no CFixedPoint to string function, so values cross scaled by 1000 and are divided back.
 macro = {
 	description = "A value as a string, scaled by 1000 and truncated"

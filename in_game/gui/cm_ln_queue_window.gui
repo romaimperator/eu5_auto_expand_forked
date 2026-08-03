@@ -78,9 +78,43 @@ widget = {
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_cu_end')]"
 			}
 		}
+		# The one widget allowed to touch the console. The three bridge drivers below run on their
+		# own timers and each used to submit for itself, and the console refuses whichever call of
+		# an instant arrives second.
+		# They queue their commands and this loop submits the queue. The longest command measured
+		# ran under two seconds, so 1.5s between submissions leaves one time to finish. Showing
+		# only while the queue holds something keeps an idle loop from submitting an empty string,
+		# which the console logs as a failure.
+		widget = {
+			size = { 0 0 }
+			visible_at_creation = no
+			visible = "[And3(CMLuckyNationBridgeActive, GetPlayer.Exists, CMQueuePending)]"
+			state = {
+				name = _show
+				duration = 1.5
+				on_finish = "[ExecuteConsoleCommandsForced(CMQueueRead)]"
+				on_finish = "[GetVariableSystem.Set(CMQueueKey, '')]"
+				next = cm_ln_c_queue_b
+			}
+			state = {
+				name = cm_ln_c_queue_b
+				duration = 1.5
+				on_finish = "[ExecuteConsoleCommandsForced(CMQueueRead)]"
+				on_finish = "[GetVariableSystem.Set(CMQueueKey, '')]"
+				next = cm_ln_c_queue_a
+			}
+			state = {
+				name = cm_ln_c_queue_a
+				duration = 1.5
+				on_finish = "[ExecuteConsoleCommandsForced(CMQueueRead)]"
+				on_finish = "[GetVariableSystem.Set(CMQueueKey, '')]"
+				next = cm_ln_c_queue_b
+			}
+		}
 		# The observer bridge's own drivers. Each mirrors the driver above and fires cm_ln_c_ state
 		# names instead, because PdxGuiTriggerAllAnimations matches tree-wide and a hidden widget's
-		# states still run, so only the trigger name can separate the two paths.
+		# states still run, so only the trigger name can separate the two paths. None of them calls
+		# the console; they append to the queue the widget above submits.
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
@@ -103,31 +137,33 @@ widget = {
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
-			visible = "[And3(CMLuckyNationBridgeActive, GetPlayer.Exists, And(GetScriptedGui('cm_ln_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End), Not(GetScriptedGui('cm_ln_should_scan').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))))]"
+			visible = "[And3(CMLuckyNationBridgeActive, GetPlayer.Exists, GetScriptedGui('cm_ln_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			# A round's calls all land in one buffer and cm_ln_c_round_send wraps them into a single
+			# queued command, so one round costs one command however many lucky nations there are.
 			state = {
 				name = _show
-				duration = 0.2
+				duration = 0.5
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_check')]"
-				next = cm_ln_c_round_b
+				next = cm_ln_c_round_send
 			}
 			state = {
-				name = cm_ln_c_round_b
-				duration = 0.2
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_check')]"
-				next = cm_ln_c_round_a
+				name = cm_ln_c_round_send
+				duration = 0.5
+				on_finish = "[CMQueueAppend(CMRoundBlock)]"
+				on_finish = "[GetVariableSystem.Set(CMRoundKey, '')]"
+				next = cm_ln_c_round_fill
 			}
 			state = {
-				name = cm_ln_c_round_a
-				duration = 0.2
+				name = cm_ln_c_round_fill
+				duration = 0.5
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_check')]"
-				next = cm_ln_c_round_b
+				next = cm_ln_c_round_send
 			}
 		}
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
-			# The console takes one command at a time and drops the overlap.
-			visible = "[And3(CMLuckyNationBridgeActive, GetPlayer.Exists, And3(GetScriptedGui('cm_ln_should_toggle').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End), Not(GetScriptedGui('cm_ln_should_scan').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), Not(GetScriptedGui('cm_ln_should_construct').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))))]"
+			visible = "[And3(CMLuckyNationBridgeActive, GetPlayer.Exists, GetScriptedGui('cm_ln_should_toggle').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 			state = {
 				name = _show
 				duration = 0.1
@@ -164,18 +200,18 @@ widget = {
 						# the Great Yuan and one that is not alive at all for the Great Wu.
 						state = {
 							name = cm_ln_c_check
-							on_finish = "[ExecuteConsoleCommandsForced(Concatenate3('effect cm_ln_c_sync_check = { Y = ', CMCountryIdText(Country), ' }'))]"
+							on_finish = "[CMRoundAppend(Concatenate3('cm_ln_c_sync_check = { Y = ', CMCountryIdText(Country), ' } '))]"
 						}
 						state = {
 							name = cm_ln_c_cu_end
-							on_finish = "[ExecuteConsoleCommandsForced(Concatenate3('effect cm_ln_c_cu_end = { Y = ', CMCountryIdText(Country), ' }'))]"
+							on_finish = "[CMQueueAppend(Concatenate3('effect cm_ln_c_cu_end = { Y = ', CMCountryIdText(Country), ' };'))]"
 						}
-						# Submits the sweep as one ';'-separated sequence, so a malformed value costs its
-						# own command and not the cycle. The tail command carries no separator and clears
-						# the arm the dropped cm_ln_scan_disarm Execute would otherwise have cleared.
+						# Queues the sweep as its own ';'-separated commands, so a malformed value costs
+						# its own command and not the cycle. The tail clears the arm the dropped
+						# cm_ln_scan_disarm Execute would otherwise have cleared.
 						state = {
 							name = cm_ln_c_flush
-							on_finish = "[ExecuteConsoleCommandsForced(Concatenate(CMBatchBlock(Country), Concatenate3('effect hidden_effect = { cm_ln_c_process = yes cm_ln_c_scan_disarm = yes cm_ln_c_sync_check = { Y = ', CMCountryIdText(Country), ' } }')))]"
+							on_finish = "[CMQueueAppend(Concatenate(CMBatchBlock(Country), Concatenate3('effect hidden_effect = { cm_ln_c_process = yes cm_ln_c_scan_disarm = yes cm_ln_c_sync_check = { Y = ', CMCountryIdText(Country), ' } };')))]"
 							on_finish = "[GetVariableSystem.Set(CMBatchKey(Country), '')]"
 						}
 					}

@@ -2493,23 +2493,27 @@ cm_pf_phase_marked_drain_step = {
 }
 
 # Country scope. Marks the unevaluated owned neighbors of the position-$POS$ location by
-# raw metric $RAW$; local cm_pf_marks counts the new marks.
+# raw metric $RAW$; local cm_pf_marks counts the new marks. A run computing one mode leaves the
+# other's list empty, and picking past the end of a list logs a warning.
 cm_pf_refine_mark_top = {
-	ordered_owned_location = {
-		limit = { has_variable = cm_pf_$RAW$ }
-		order_by = { value = var:cm_pf_$RAW$ }
-		position = $POS$
-		check_range_bounds = no
-		every_neighbor_location = {
-			limit = {
-				is_land = yes
-				owner ?= scope:cm_pf_c
-				has_variable = cm_pf_cl_g
-				NOT = { has_variable = cm_pf_done }
-				NOT = { has_variable = cm_pf_samp }
+	if = {
+		limit = { any_owned_location = { has_variable = cm_pf_$RAW$ count > $POS$ } }
+		ordered_owned_location = {
+			limit = { has_variable = cm_pf_$RAW$ }
+			order_by = { value = var:cm_pf_$RAW$ }
+			position = $POS$
+			check_range_bounds = no
+			every_neighbor_location = {
+				limit = {
+					is_land = yes
+					owner ?= scope:cm_pf_c
+					has_variable = cm_pf_cl_g
+					NOT = { has_variable = cm_pf_done }
+					NOT = { has_variable = cm_pf_samp }
+				}
+				set_variable = { name = cm_pf_samp value = 1 }
+				change_local_variable = { name = cm_pf_marks add = 1 }
 			}
-			set_variable = { name = cm_pf_samp value = 1 }
-			change_local_variable = { name = cm_pf_marks add = 1 }
 		}
 	}
 }
@@ -2649,6 +2653,22 @@ cm_pf_run_tiered_sync = {
 	}
 }
 
+# Country scope. Marks the position-$POS$ location by raw metric cm_pf_$M$_raw as rank $RANK$.
+# A run computing one mode leaves the other's list empty, and picking past the end of a list
+# logs a warning.
+cm_pf_rank_top = {
+	if = {
+		limit = { any_owned_location = { has_variable = cm_pf_$M$_raw count > $POS$ } }
+		ordered_owned_location = {
+			limit = { has_variable = cm_pf_$M$_raw }
+			order_by = { value = var:cm_pf_$M$_raw }
+			position = $POS$
+			check_range_bounds = no
+			set_variable = { name = cm_$M$_top value = $RANK$ }
+		}
+	}
+}
+
 # Country scope. Expects scope:cm_pf_c. Bakes the persistent outputs, then strips every transient.
 cm_pf_finalize = {
 	# Run modes, read again after cleanup strips the run vars.
@@ -2743,48 +2763,12 @@ cm_pf_finalize = {
 		}
 	}
 	# Rank the three best locations in each mode: 1 gold, 2 silver, 3 bronze.
-	ordered_owned_location = {
-		limit = { has_variable = cm_pf_gf_raw }
-		order_by = { value = var:cm_pf_gf_raw }
-		position = 0
-		check_range_bounds = no
-		set_variable = { name = cm_gf_top value = 1 }
-	}
-	ordered_owned_location = {
-		limit = { has_variable = cm_pf_gf_raw }
-		order_by = { value = var:cm_pf_gf_raw }
-		position = 1
-		check_range_bounds = no
-		set_variable = { name = cm_gf_top value = 2 }
-	}
-	ordered_owned_location = {
-		limit = { has_variable = cm_pf_gf_raw }
-		order_by = { value = var:cm_pf_gf_raw }
-		position = 2
-		check_range_bounds = no
-		set_variable = { name = cm_gf_top value = 3 }
-	}
-	ordered_owned_location = {
-		limit = { has_variable = cm_pf_cf_raw }
-		order_by = { value = var:cm_pf_cf_raw }
-		position = 0
-		check_range_bounds = no
-		set_variable = { name = cm_cf_top value = 1 }
-	}
-	ordered_owned_location = {
-		limit = { has_variable = cm_pf_cf_raw }
-		order_by = { value = var:cm_pf_cf_raw }
-		position = 1
-		check_range_bounds = no
-		set_variable = { name = cm_cf_top value = 2 }
-	}
-	ordered_owned_location = {
-		limit = { has_variable = cm_pf_cf_raw }
-		order_by = { value = var:cm_pf_cf_raw }
-		position = 2
-		check_range_bounds = no
-		set_variable = { name = cm_cf_top value = 3 }
-	}
+	cm_pf_rank_top = { M = gf POS = 0 RANK = 1 }
+	cm_pf_rank_top = { M = gf POS = 1 RANK = 2 }
+	cm_pf_rank_top = { M = gf POS = 2 RANK = 3 }
+	cm_pf_rank_top = { M = cf POS = 0 RANK = 1 }
+	cm_pf_rank_top = { M = cf POS = 1 RANK = 2 }
+	cm_pf_rank_top = { M = cf POS = 2 RANK = 3 }
 	# Flag a local maximum for the secondary_map_color stripe: score at or above 80% of the best
 	# (800 on the 0-1000 scale) and strictly higher than every owned scored neighbor. Gated per
 	# run mode: an unrun mode's scores persist from its own last run and its flags stand as-is.
