@@ -55,6 +55,15 @@ cm_fa_monthly_budget = {
 		save_scope_as = cm_country
 		if = {
 			limit = { cm_fa_master_active = yes }
+			# Ahead of the refresh, so the month the governor plan claims the treasury is the month
+			# the pools go to zero. A lucky nation ticks its own plan from cm_ln_monthly_cycle.
+			if = {
+				limit = {
+					cm_ln_is_active = no
+					exists = var:cm_fa_governors_enabled
+				}
+				cm_gov_reorg_tick = yes
+			}
 			cm_fa_monthly_budget_refresh = yes
 			cm_fa_food_sample_markets = yes
 		}

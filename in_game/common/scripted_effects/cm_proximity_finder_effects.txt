@@ -37,6 +37,32 @@
 # Below this many owned locations the bound machinery costs more than it can skip.
 @cm_pf_min_n_prune = 30
 
+# Borrows one placement-finder setting for the plan run, remembering whether the country had one at
+# all: a lucky nation carries these only while a reorganization is using them.
+# $S$ = the setting's suffix, $V$ = the value the plan needs. Root is the country.
+cm_pf_borrow_setting = {
+	if = {
+		limit = { exists = var:cm_placement_finder_$S$ }
+		set_local_variable = { name = cm_pf_had_$S$ value = 1 }
+		set_local_variable = { name = cm_pf_old_$S$ value = var:cm_placement_finder_$S$ }
+	}
+	else = {
+		set_local_variable = { name = cm_pf_had_$S$ value = 0 }
+	}
+	set_variable = { name = cm_placement_finder_$S$ value = $V$ }
+}
+
+# $S$ = the setting's suffix. Root is the country.
+cm_pf_return_setting = {
+	if = {
+		limit = { local_var:cm_pf_had_$S$ = 1 }
+		set_variable = { name = cm_placement_finder_$S$ value = local_var:cm_pf_old_$S$ }
+	}
+	else = {
+		remove_variable = cm_placement_finder_$S$
+	}
+}
+
 # Country scope. GUI entry fired on mapmode open (cm_pf_prep_gov / cm_pf_prep_cap set the
 # view flag first). Reuses the viewed mode's cached scores while its cm_pf_fresh_g /
 # cm_pf_fresh_c is live (set for 4 years at each compute); otherwise sets up a fresh run,
@@ -72,7 +98,6 @@ cm_pf_prep_gated = {
 		# In multiplayer, compute only on the manual refresh button, never on open.
 		limit = { is_multiplayer_session = no }
 		cm_pf_prep_core = yes
-		set_variable = { name = cm_fa_gov_auto_run value = 1 }
 	}
 }
 
@@ -108,7 +133,6 @@ cm_pf_recompute_now = {
 		remove_variable = cm_pf_view_g
 		remove_variable = cm_pf_view_c
 		cm_pf_prep_core = yes
-		set_variable = { name = cm_fa_gov_auto_run value = 1 }
 		if = {
 			limit = { var:cm_pf_acc <= 1 }
 			every_owned_location = {
@@ -146,8 +170,6 @@ cm_pf_prep_core = {
 	save_scope_as = cm_pf_c
 	# Strip any interrupted run before rebuilding.
 	cm_pf_clear_run_state = yes
-	# Only an automatically started run arms the full-automation governor pick.
-	remove_variable = cm_fa_gov_auto_run
 	if = {
 		limit = { cm_pf_roads_is_current = yes }
 		set_variable = { name = cm_pf_roads_current value = 1 }
@@ -245,20 +267,20 @@ cm_pf_prep_core = {
 			}
 		}
 		if = {
-			limit = { exists = var:cm_ln_replan }
+			limit = { exists = var:cm_gov_replan }
 			# A reorganization re-scores its own governor seats as candidates and treats the
 			# sites it has already committed to as sources, so the seed value replaces the
 			# live source read. Without that the seats sit at 80 or above, take zero headroom,
 			# and drop out as nogain, which would make every standing governor read as keep.
 			every_owned_location = {
-				set_local_variable = { name = cm_ln_src value = cm_ln_gov_replan_source_value }
+				set_local_variable = { name = cm_gov_src value = cm_gov_replan_source_value }
 				if = {
-					limit = { local_var:cm_ln_src > 0 }
+					limit = { local_var:cm_gov_src > 0 }
 					set_variable = {
 						name = cm_pf_d
 						value = {
 							value = 100 # Capital source value (and the stacked-sources cap): main_menu/common/static_modifiers/location.txt:330
-							subtract = local_var:cm_ln_src
+							subtract = local_var:cm_gov_src
 						}
 					}
 				}
@@ -315,7 +337,7 @@ cm_pf_prep_core = {
 	if = {
 		limit = {
 			var:cm_pf_run_g = 1
-			NOT = { exists = var:cm_ln_replan }
+			NOT = { exists = var:cm_gov_replan }
 			has_variable_list = cm_ln_open_gov_sites
 			variable_list_size = { name = cm_ln_open_gov_sites value >= 1 }
 		}
@@ -404,12 +426,12 @@ cm_pf_prep_core = {
 	if = {
 		limit = {
 			var:cm_pf_run_g = 1
-			exists = var:cm_ln_gov_valid_only
+			exists = var:cm_gov_valid_only
 		}
 		every_owned_location = {
 			limit = {
 				NOT = { has_variable = cm_gf_nogain }
-				cm_ln_gov_site_eligible = no
+				cm_gov_site_eligible = no
 			}
 			set_variable = { name = cm_gf_nogain value = 1 }
 			cm_pf_drop_gov_outputs = yes
@@ -1414,7 +1436,7 @@ cm_pf_phase_init = {
 	else_if = {
 		# A lucky nation's governor run samples every legal site rather than one per province,
 		# so the reference phase would build an ordering key nothing reads.
-		limit = { exists = var:cm_ln_gov_valid_only }
+		limit = { exists = var:cm_gov_valid_only }
 		set_variable = { name = cm_pf_ub_valid value = 0 }
 		every_owned_location = {
 			limit = { has_variable = cm_pf_cl_g }
@@ -2401,7 +2423,7 @@ cm_pf_phase_sample = {
 		# what is left is exactly the legal set: sampling all of it is both cheaper than one
 		# seed per province and exact, where per-province sampling would black out a province's
 		# other cities.
-		limit = { exists = var:cm_ln_gov_valid_only }
+		limit = { exists = var:cm_gov_valid_only }
 		every_owned_location = {
 			limit = {
 				has_variable = cm_pf_cl_g
@@ -2884,15 +2906,6 @@ cm_pf_finalize = {
 		limit = { local_var:cm_pf_ran_c = 1 }
 		set_variable = { name = cm_pf_fresh_c value = 1 days = 1460 }
 	}
-	# Hand fresh governor scores to full automation, which picks from them on its next pulse.
-	if = {
-		limit = {
-			local_var:cm_pf_ran_g = 1
-			exists = var:cm_fa_gov_auto_run
-		}
-		set_variable = { name = cm_fa_gov_armed value = 1 }
-	}
-	remove_variable = cm_fa_gov_auto_run
 }
 
 # Location scope.

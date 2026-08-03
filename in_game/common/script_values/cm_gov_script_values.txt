@@ -1,0 +1,153 @@
+﻿# Governor plan values: the slot counts the two vanilla governor types answer to, the gold each of
+# the plan's three spends needs, and the keys its searches and give-ups rank by.
+
+# Share of the seat it takes over from a site must beat before it is worth moving a governor.
+@cm_gov_displace_margin = 110
+
+# Country scope. cm_gov_road_step lays gravel whatever the country has researched, so its tier
+# term is the gravel price rather than cm_fa_rd_tier_cost_value's best unlocked road.
+cm_gov_road_tier_cost_value = {
+	value = 10 # Mirrors vanilla build_gravel_road price: in_game/common/prices/00_hardcoded.txt:11
+	multiply = { value = 1 add = modifier:build_gravel_road_cost_modifier }
+	multiply = { value = 1 add = inflation }
+	min = 0
+}
+
+# Location scope. Estimated gold for one level of scope:cm_building_type here, the same shape
+# the auto-food thresholds price their buildings with. Expects scope:cm_country,
+# scope:cm_building_type and scope:cm_location.
+cm_gov_build_cost_value = {
+	scope:cm_building_type = { value = building_base_cost_in_gold }
+	multiply = { value = 1 add = cm_food_build_cost_modifier }
+	multiply = { value = 1 scope:cm_building_type = { add = cm_get_construction_cost_adjustment_for_building_type } }
+	multiply = { value = 1 add = scope:cm_country.inflation }
+	min = 0
+}
+
+# Country scope. What the month's earlier reorganization orders already committed. construct_building
+# does not take its gold out of the treasury in time for the next order's check, so every threshold
+# below carries this term.
+cm_gov_tick_spent_value = {
+	if = {
+		limit = { exists = var:cm_gov_tick_spent }
+		value = var:cm_gov_tick_spent
+	}
+}
+
+# Country scope. Gold a reorganization needs before it orders its road.
+# Expects scope:cm_fa_rd_from, scope:cm_fa_rd_to and scope:cm_fa_rd_tier.
+cm_gov_road_gold_threshold = {
+	value = scope:cm_fa_rd_from.cm_fa_rd_cost_value
+	add = cm_gov_tick_spent_value
+	add = cm_fa_get_reserve
+}
+
+# Country scope. Gold a reorganization needs before it pays for the governor at
+# scope:cm_gov_target. Expects scope:cm_country, scope:cm_building_type and scope:cm_location.
+cm_gov_placement_gold_threshold = {
+	value = scope:cm_gov_target.cm_gov_build_cost_value
+	add = cm_gov_tick_spent_value
+	add = cm_fa_get_reserve
+}
+
+# Country scope. Gold a reorganization needs before it founds the town or city at
+# scope:cm_gov_rank_target. Expects scope:cm_country, scope:cm_building_type and scope:cm_location.
+cm_gov_rank_gold_threshold = {
+	value = scope:cm_gov_rank_target.cm_gov_build_cost_value
+	add = cm_gov_tick_spent_value
+	add = cm_fa_get_reserve
+}
+
+# Location scope. The proximity source value a reorganization's spread assumes: the live
+# sources minus the country's own governor seats, which are re-scored as candidates, plus the
+# sites the plan has already committed to.
+cm_gov_replan_source_value = {
+	value = modifier:local_proximity_source
+	if = {
+		limit = { has_building = building_type:local_governor }
+		subtract = 80 # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+	}
+	if = {
+		limit = { has_building = building_type:naval_governor }
+		subtract = 80 # Governor source value: in_game/common/building_types/capital_buildings.txt:840
+	}
+	min = 0
+	if = {
+		limit = { has_variable = cm_gov_plan_ord }
+		add = 80 # Governor source value: in_game/common/building_types/capital_buildings.txt:681
+	}
+	max = 100 # Stacked-sources cap: main_menu/common/static_modifiers/location.txt:330
+}
+
+# Country scope. Governors of both kinds standing or on order, which is what the paid-seat count is
+# reconciled against. Lieutenancies are left out: they take land governor slots but are not
+# governors the country ever placed.
+cm_gov_seated_value = {
+	value = total_building_levels_including_construction:local_governor
+	add = total_building_levels_including_construction:naval_governor
+}
+
+# Country scope. Land governors share their pool with lieutenancies.
+# Vanilla allow: in_game/common/building_types/capital_buildings.txt:611
+cm_gov_land_slots = {
+	value = modifier:num_local_governors
+	subtract = total_building_levels_including_construction:lieutenancy
+	min = 0
+}
+
+# Country scope. Vanilla allow: in_game/common/building_types/capital_buildings.txt:792
+cm_gov_naval_slots = {
+	value = modifier:num_naval_governors
+	min = 0
+}
+
+# Location scope. Negated so the highest rank is the seat given up first: the lowest-scoring one,
+# the same shape cm_fa_cu_close_pass uses with cm_fa_cu_neg_profit to take the worst first. A seat
+# the run never scored reads 0, and the seats a plan site supersedes are exactly the ones it leaves
+# unscored, so the distance term decides between them. Expects scope:cm_gov_seat_c and
+# scope:cm_gov_target.
+cm_gov_seat_give_up_rank = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_gov_seat_score }
+		subtract = var:cm_gov_seat_score
+	}
+	multiply = 1000
+	# Stays under one whole point of score, so it only separates seats the run scored the same.
+	add = {
+		value = 999
+		divide = {
+			value = 1
+			add = "scope:cm_gov_seat_c.distance_to(scope:cm_gov_target)"
+		}
+	}
+}
+
+# Country scope. The room a replan has left to fill: the same counts cm_fa_gov_has_land_room and
+# cm_fa_gov_has_naval_room compare, as a number rather than a verdict.
+cm_gov_land_free = {
+	value = cm_gov_land_slots
+	subtract = total_building_levels_including_construction:local_governor
+	min = 0
+}
+
+# Country scope.
+cm_gov_naval_free = {
+	value = cm_gov_naval_slots
+	subtract = total_building_levels_including_construction:naval_governor
+	min = 0
+}
+
+# Country scope.
+cm_gov_slot_total = {
+	value = cm_gov_land_slots
+	add = cm_gov_naval_slots
+}
+
+# Any scope. What a site must score to be worth taking a standing seat over, on the scale of the run
+# that scored both. Expects scope:cm_gov_worst_seat.
+cm_gov_displace_bar = {
+	value = scope:cm_gov_worst_seat
+	multiply = @cm_gov_displace_margin
+	divide = 100
+}

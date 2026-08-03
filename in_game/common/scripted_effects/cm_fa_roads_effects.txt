@@ -15,32 +15,6 @@
 # How long a set-aside corridor stays out of the running.
 @cm_fa_rd_bad_days = 3650
 
-# Borrows one placement-finder setting for the plan run, remembering whether the country had one at
-# all: a lucky nation carries these only while a reorganization is using them.
-# $S$ = the setting's suffix, $V$ = the value the plan needs. Root is the country.
-cm_fa_rd_borrow_setting = {
-	if = {
-		limit = { exists = var:cm_placement_finder_$S$ }
-		set_local_variable = { name = cm_fa_rd_had_$S$ value = 1 }
-		set_local_variable = { name = cm_fa_rd_old_$S$ value = var:cm_placement_finder_$S$ }
-	}
-	else = {
-		set_local_variable = { name = cm_fa_rd_had_$S$ value = 0 }
-	}
-	set_variable = { name = cm_placement_finder_$S$ value = $V$ }
-}
-
-# $S$ = the setting's suffix. Root is the country.
-cm_fa_rd_return_setting = {
-	if = {
-		limit = { local_var:cm_fa_rd_had_$S$ = 1 }
-		set_variable = { name = cm_placement_finder_$S$ value = local_var:cm_fa_rd_old_$S$ }
-	}
-	else = {
-		remove_variable = cm_placement_finder_$S$
-	}
-}
-
 # The yearly plan. Root is the country.
 cm_fa_rd_plan = {
 	if = {
@@ -59,10 +33,10 @@ cm_fa_rd_plan = {
 		}
 		save_scope_as = cm_country
 		set_variable = { name = cm_fa_rd_plan_active value = 1 }
-		cm_fa_rd_borrow_setting = { S = roads V = 2 } # Max Roads: the network the plan is pricing
-		cm_fa_rd_borrow_setting = { S = naval V = 2 } # Max Presence
-		cm_fa_rd_borrow_setting = { S = method V = 1 } # Tax Base
-		cm_fa_rd_borrow_setting = { S = accuracy V = 1 } # Exhaustive: the phased runner scores candidates, and the plan scores none
+		cm_pf_borrow_setting = { S = roads V = 2 } # Max Roads: the network the plan is pricing
+		cm_pf_borrow_setting = { S = naval V = 2 } # Max Presence
+		cm_pf_borrow_setting = { S = method V = 1 } # Tax Base
+		cm_pf_borrow_setting = { S = accuracy V = 1 } # Exhaustive: the phased runner scores candidates, and the plan scores none
 		# The multi-source spread the plan reads runs only for the governor mode.
 		set_variable = { name = cm_pf_view_g value = 1 }
 		cm_pf_prep_core = yes
@@ -70,10 +44,10 @@ cm_fa_rd_plan = {
 		cm_pf_clear_run_state = yes
 		remove_variable = cm_pf_view_g
 		remove_variable = cm_fa_rd_plan_active
-		cm_fa_rd_return_setting = { S = roads }
-		cm_fa_rd_return_setting = { S = naval }
-		cm_fa_rd_return_setting = { S = method }
-		cm_fa_rd_return_setting = { S = accuracy }
+		cm_pf_return_setting = { S = roads }
+		cm_pf_return_setting = { S = naval }
+		cm_pf_return_setting = { S = method }
+		cm_pf_return_setting = { S = accuracy }
 	}
 }
 

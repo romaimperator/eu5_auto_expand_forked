@@ -1,0 +1,79 @@
+﻿# The lucky-nation seat ledger: the count of governors the country has bought, which only ever
+# rises, and the pass that rebuilds one that has gone missing. Between them a lucky nation is never
+# charged twice for the same governor. The player pays for every placement instead, so nothing here
+# runs for one.
+
+# Puts a placed site on the watch list the restore pass walks. Only a lucky nation is owed a rebuild,
+# so a player's placements are not watched. Root is the country. $SITE$ = the location.
+cm_ln_watch_seat = {
+	if = {
+		limit = { cm_ln_is_active = yes }
+		add_to_variable_list = { name = cm_ln_seats target = $SITE$ }
+	}
+}
+
+# The count of governors this country has bought, which only ever rises: it takes in the ones it
+# started with, the ones the plan paid for and any the vanilla AI put up itself, simply by never
+# falling below how many are seated. Everything the placement chain needs follows from that one
+# number, since a seated count below it is a governor already paid for and not standing, whatever
+# took it - a capital move stranding a seat, vanilla's own remove_if, an order that came to nothing,
+# or a seat the plan gave up on purpose. Root is the country.
+cm_ln_sync_paid_seats = {
+	if = {
+		limit = { NOT = { exists = var:cm_ln_gov_paid_seats } }
+		set_variable = { name = cm_ln_gov_paid_seats value = 0 }
+	}
+	change_variable = { name = cm_ln_gov_paid_seats max = cm_gov_seated_value }
+}
+
+# Rebuilds the governors that have gone missing from the seats this country was given, at no cost
+# because it already paid for each of them once. A seat is watched until it is given up on purpose,
+# so one the engine refuses for years still comes back the month it stops refusing.
+# Root is the country.
+cm_ln_seat_restore_pass = {
+	if = {
+		limit = {
+			has_variable_list = cm_ln_seats
+			cm_gov_move_is_due = no
+		}
+		save_scope_as = cm_country
+		every_in_list = {
+			variable = cm_ln_seats
+			save_scope_as = cm_gov_target
+			# The walk puts the location in root, and the step reads the country's slot room.
+			scope:cm_country = { cm_ln_seat_restore_step = yes }
+		}
+	}
+}
+
+# A site the country no longer owns fails the placement check, both governor types carrying
+# owner = scope:actor in their allow block, so it waits here against a reconquest.
+# Root is the country, scope:cm_country and scope:cm_gov_target set.
+cm_ln_seat_restore_step = {
+	if = {
+		limit = {
+			scope:cm_gov_target = {
+				cm_location_has_governor = no
+				cm_fa_gov_location_placeable = yes
+			}
+		}
+		cm_gov_resolve_placeable_type = { SITE = scope:cm_gov_target }
+		cm_gov_construct_governor_free = yes
+		cm_dbg_log = { cat = governors action = cm_ln_log_seat_restored }
+		# cm_gov_moves is built at classify and cm_gov_free_a_seat frees only what is on it, so a seat
+		# rebuilt after that joins it or it holds the cap against the plan for good.
+		if = {
+			limit = {
+				exists = var:cm_gov_phase
+				var:cm_gov_phase >= 5
+				scope:cm_gov_target = { NOT = { has_variable = cm_gov_plan_ord } }
+			}
+			add_to_variable_list = { name = cm_gov_moves target = scope:cm_gov_target }
+		}
+	}
+}
+
+# Root is the country.
+cm_ln_clear_seats = {
+	clear_variable_list = cm_ln_seats
+}

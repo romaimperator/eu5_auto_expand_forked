@@ -11,7 +11,7 @@ cm_fa_monthly_budget_refresh = {
 		# A reorganization holds the treasury until every governor its plan calls for stands, so no
 		# category gets a pool this month. Urban Rights spends government power and Building Cleanup
 		# spends nothing, so both keep running.
-		limit = { exists = var:cm_ln_hold }
+		limit = { exists = var:cm_gov_hold }
 		cm_fa_zero_pools = yes
 	}
 	else = {
@@ -27,11 +27,6 @@ cm_fa_monthly_budget_refresh = {
 		cm_fa_set_category_pool = { cat = utilities }
 		cm_fa_set_category_pool = { cat = roads }
 		cm_fa_set_category_pool = { cat = military }
-		# Governors drains ahead of the shared categories.
-		if = {
-			limit = { exists = var:cm_fa_governors_enabled }
-			set_variable = { name = cm_fa_pool_governors value = local_var:cm_fa_split }
-		}
 	}
 }
 
@@ -85,7 +80,6 @@ cm_fa_zero_pools = {
 	set_variable = { name = cm_fa_pool_utilities value = 0 }
 	set_variable = { name = cm_fa_pool_roads value = 0 }
 	set_variable = { name = cm_fa_pool_military value = 0 }
-	set_variable = { name = cm_fa_pool_governors value = 0 }
 }
 
 # Writes off what every category owes. Root is the country.
@@ -165,7 +159,6 @@ cm_fa_copy_budget_state = {
 	cm_fa_copy_budget_var = { v = cm_fa_pool_utilities }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_roads }
 	cm_fa_copy_budget_var = { v = cm_fa_pool_military }
-	cm_fa_copy_budget_var = { v = cm_fa_pool_governors }
 	cm_fa_copy_budget_var = { v = cm_fa_debt_industry }
 	cm_fa_copy_budget_var = { v = cm_fa_debt_collapsar }
 	cm_fa_copy_budget_var = { v = cm_fa_debt_food }
@@ -370,7 +363,6 @@ cm_fa_stage_category = {
 		flag:cm_fa_cat_food = { cm_fa_run_food = yes }
 		flag:cm_fa_cat_utilities = { cm_fa_run_utilities = yes }
 		flag:cm_fa_cat_urban_rights = { cm_fa_run_urban_rights = yes }
-		flag:cm_fa_cat_governors = { cm_fa_run_governors = yes }
 		flag:cm_fa_cat_military = { cm_ln_mil_run = yes }
 	}
 }

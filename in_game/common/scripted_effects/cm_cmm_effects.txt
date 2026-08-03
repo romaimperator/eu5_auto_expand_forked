@@ -565,7 +565,7 @@ cm_register_cmf_mod = {
 		mod_id = cm
 		setting_id = auto_urbanize_ignore_list
 		tab_id = auto_urbanize
-		item_count = 19
+		item_count = 20
 		is_ordered = 0
 	}
 
@@ -593,6 +593,7 @@ cm_register_cmf_mod = {
 	# Other
 	cmm_set_list_item_value = { mod_id = cm setting_id = auto_urbanize_ignore_list item = 9 value = goods:lumber }
 	cmm_set_list_item_value = { mod_id = cm setting_id = auto_urbanize_ignore_list item = 18 value = goods:horses }
+	cmm_set_list_item_value = { mod_id = cm setting_id = auto_urbanize_ignore_list item = 20 value = goods:wool }
 	
 
 	cmm_register_list_bool_field = {
@@ -1063,6 +1064,39 @@ cm_register_cmf_mod = {
 		setting_id = fa_cleanup_auto_food
 	}
 
+	## Governors (fa_governors) Group
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = fa_gov_move_seats
+		tab_id = full_automation
+		group_id = fa_governors
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__fa_gov_move_seats
+		alias = cm_fa_gov_move_seats
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_gov_move_seats
+	}
+
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = fa_gov_prepare_sites
+		tab_id = full_automation
+		group_id = fa_governors
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__fa_gov_prepare_sites
+		alias = cm_fa_gov_prepare_sites
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_gov_prepare_sites
+	}
+
 	# Mapmodes (map_modes) Tab
 	## Placement Finder (placement_finder) Group
 	cmm_register_dropdown_setting = {
@@ -1184,7 +1218,7 @@ cm_register_cmf_mod = {
 		setting_id = log_governors
 		tab_id = debug
 		group_id = logging
-		default_value = 0
+		default_value = 1
 	}
 	cmm_sync_bool_alias = {
 		setting = cm__log_governors
@@ -1453,6 +1487,19 @@ cm_handle_cmf_callback = {
 			cmm_sync_bool_alias = {
 				setting = cm__fa_cleanup_auto_food
 				alias = cm_fa_cleanup_auto_food
+			}
+		}
+		## Governors (fa_governors) Group
+		flag:cm__fa_gov_move_seats = {
+			cmm_sync_bool_alias = {
+				setting = cm__fa_gov_move_seats
+				alias = cm_fa_gov_move_seats
+			}
+		}
+		flag:cm__fa_gov_prepare_sites = {
+			cmm_sync_bool_alias = {
+				setting = cm__fa_gov_prepare_sites
+				alias = cm_fa_gov_prepare_sites
 			}
 		}
 		# Mapmodes (map_modes) Tab

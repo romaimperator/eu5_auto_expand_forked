@@ -169,6 +169,8 @@ cm_ln_seed_settings = {
 	set_variable = { name = cm_fa_urban_rights_expand value = yes }
 	set_variable = { name = cm_fa_cleanup_core_goods value = yes }
 	set_variable = { name = cm_fa_cleanup_auto_food value = yes }
+	set_variable = { name = cm_fa_gov_move_seats value = yes }
+	set_variable = { name = cm_fa_gov_prepare_sites value = yes }
 
 	clear_variable_list = cm_fa_collapsar_goods_enabled
 	add_to_variable_list = { name = cm_fa_collapsar_goods_enabled target = goods:masonry }
@@ -263,7 +265,7 @@ cm_ln_monthly_cycle = {
 		cm_ln_seat_restore_pass = yes
 		# Ahead of the budget refresh, so the month a reorganization claims the treasury is the
 		# month the pools go to zero.
-		cm_ln_reorg_tick = yes
+		cm_gov_reorg_tick = yes
 		if = {
 			limit = { cm_fa_master_active = yes }
 			cm_fa_monthly_budget_refresh = yes
@@ -290,16 +292,16 @@ cm_ln_end_cycle = {
 	cm_ln_sync_open_cycles = yes
 }
 
-# Stops a country the rule no longer marks. The reorganization holds the global cm_ln_token across
+# Stops a country the rule no longer marks. The reorganization holds the global cm_gov_token across
 # months through its search phases, so a country dropped part-way through one would hold it for the
 # rest of the session and no lucky nation could search again. Root is the country.
 cm_ln_undesignate = {
 	save_scope_as = cm_country
 	if = {
-		limit = { exists = var:cm_ln_phase }
+		limit = { exists = var:cm_gov_phase }
 		if = {
-			limit = { var:cm_ln_phase > 0 }
-			cm_ln_reorg_teardown = yes
+			limit = { var:cm_gov_phase > 0 }
+			cm_gov_reorg_teardown = yes
 		}
 	}
 	remove_variable = cm_fa_cu_fire

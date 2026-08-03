@@ -67,7 +67,7 @@ cm_location_can_deurbanize = {
 	NOT = { has_building = building_type:local_governor }
 	NOT = { has_building = building_type:naval_governor }
 	# A lucky nation's reorganization urbanizes its own planned governor sites.
-	NOT = { has_variable = cm_ln_plan_ord }
+	NOT = { has_variable = cm_gov_plan_ord }
 }
 
 # Root is the location. Ground the de-urbanizer will take the rank off, asked of a site a capital
@@ -79,13 +79,13 @@ cm_location_deurbanize_would_undo = {
 }
 
 # Root is the location. A rank the de-urbanizer wants gone that a capital or a governor is sitting
-# on, which reopens the reorganization plan ahead of its cadence. cm_ln_deurb_tried is set on every
+# on, which reopens the reorganization plan ahead of its cadence. cm_gov_deurb_tried is set on every
 # match when a run begins, so a seat the plan cannot move reopens it once rather than every month
 # for the rest of the game.
 cm_location_deurbanize_blocked_by_seat = {
 	cm_location_deurbanize_target = yes
 	owner = { exists = var:cm_deurbanize }
-	NOT = { has_variable = cm_ln_deurb_tried }
+	NOT = { has_variable = cm_gov_deurb_tried }
 	OR = {
 		is_capital = yes
 		has_building = building_type:local_governor

@@ -1,0 +1,734 @@
+﻿# The governor plan: a country re-scores every location as a governor site, plans a full set one
+# search a month with each committed site treated as a proximity source, then urbanizes what it
+# picked, builds roads out to it and places the governors. A lucky nation runs a capital search and
+# move in front of it as phases 1 and 2 (cm_ln_reorg_effects.txt); the player's run starts at phase
+# 3 and never moves the capital.
+#
+# Both searches hold their pick un-committed for a couple of months and re-run before acting on
+# it, because a location can score far above the field for a single month and be ranked poorly
+# again afterwards. A site that does not survive the re-check is dropped for the rest of the run
+# and the next best takes its place.
+
+# 25 years, the reorganization cadence.
+@cm_gov_cooldown_days = 9125
+# 5 years, the shorter cadence for a country holding a governor slot it has not filled.
+@cm_gov_slot_cooldown_days = 1825
+# Months a reorganization may run before it is abandoned and replanned from scratch. Under the
+# twenty-five-year cadence, so a stuck run cannot outlive the period it belongs to.
+@cm_gov_reorg_max_months = 300
+# Monthly income that opens a reorganization before the cadence date is reached.
+@cm_gov_income_start = 100
+# Months a pick waits before it is scored again.
+@cm_gov_probe_months = 2
+# Share of its first score a pick must still reach on the re-check to be kept.
+@cm_gov_probe_keep = 700
+
+# Root is the country, scope:cm_country set.
+cm_gov_reorg_tick = {
+	if = {
+		limit = { NOT = { exists = var:cm_gov_phase } }
+		set_variable = { name = cm_gov_phase value = 0 }
+	}
+	if = {
+		limit = { var:cm_gov_phase = 0 }
+		cm_gov_reorg_try_start = yes
+	}
+	if = {
+		limit = { var:cm_gov_phase > 0 }
+		change_variable = { name = cm_gov_age add = 1 }
+	}
+	remove_variable = cm_gov_hold
+	set_local_variable = { name = cm_gov_gold_wait value = 0 }
+	# The urbanize and road orders serve both the placement and the relocation phase, and they run
+	# whatever the slot count is, so they sit ahead of the switch rather than inside
+	# either step. Placement claims gold after them.
+	if = {
+		limit = {
+			var:cm_gov_phase >= 5
+			var:cm_gov_phase <= 6
+		}
+		set_variable = { name = cm_gov_tick_spent value = 0 }
+		cm_gov_prune_pending = yes
+		cm_gov_apply_plan_drops = yes
+		if = {
+			limit = { exists = var:cm_fa_gov_prepare_sites }
+			cm_gov_road_pass = yes
+			cm_gov_rank_pass = yes
+		}
+	}
+	switch = {
+		trigger = var:cm_gov_phase
+		1 = { cm_ln_reorg_capital_search = yes }
+		2 = { cm_ln_reorg_capital_move = yes }
+		3 = { cm_gov_reorg_plan_step = yes }
+		4 = { cm_gov_reorg_classify = yes }
+		5 = { cm_gov_reorg_place_step = yes }
+		6 = { cm_gov_reorg_move_step = yes }
+		7 = { cm_gov_reorg_confirm_step = yes }
+		8 = { cm_gov_reorg_teardown = yes }
+	}
+	remove_variable = cm_gov_tick_spent
+	if = {
+		limit = {
+			var:cm_gov_phase > 0
+			var:cm_gov_age >= @cm_gov_reorg_max_months
+		}
+		cm_gov_reorg_teardown = yes
+	}
+	# Nothing else may spend a coin while gold is the only thing keeping a planned governor from
+	# being ordered, which is what cm_gov_gold_wait marks: a rank upgrade, a road or the placement
+	# itself refused this tick on its gold gate alone. A site merely waiting on something it has
+	# already paid for owes nothing, and an engine refusal is not something saving can fix. It sits
+	# after the switch so a site the confirm step just handed back is covered this month, and the
+	# whole tick runs ahead of the budget refresh and the construction cycle.
+	if = {
+		limit = {
+			var:cm_gov_phase >= 5
+			var:cm_gov_phase <= 6
+			local_var:cm_gov_gold_wait = 1
+			has_variable_list = cm_gov_pending
+			variable_list_size = { name = cm_gov_pending value >= 1 }
+		}
+		set_variable = { name = cm_gov_hold value = 1 }
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_gov_reorg_try_start = {
+	if = {
+		limit = {
+			is_multiplayer_session = no
+			at_war = no
+			in_civil_war = no
+			exists = capital
+			cm_pf_river_data_is_current = yes
+			NOT = { has_global_variable = cm_gov_token }
+			cm_gov_no_finder_run_in_flight = yes
+			OR = {
+				AND = {
+					OR = {
+						# A lucky nation waits for the twenty-fifth year of the grand campaign,
+						# which starts 1337.4.1 (START_DATE,
+						# loading_screen/common/defines/00_defines.txt:2), or for the income that
+						# says it is strong enough sooner. The player turned the category on, so
+						# their first run is due from that month.
+						cm_ln_is_active = no
+						current_date >= 1362.1.1
+						monthly_income_total >= @cm_gov_income_start
+					}
+					OR = {
+						NOT = { exists = var:cm_gov_cooldown }
+						AND = {
+							NOT = { exists = var:cm_gov_slot_cooldown }
+							cm_gov_slot_open = yes
+						}
+					}
+				}
+				cm_gov_slots_grew = yes
+				# A capital or governor standing where the de-urbanizer wants the rank gone,
+				# which the searches below will now plan around.
+				any_owned_location = { cm_location_deurbanize_blocked_by_seat = yes }
+			}
+		}
+		cm_gov_reorg_begin = yes
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_gov_reorg_begin = {
+	set_global_variable = { name = cm_gov_token value = 1 }
+	set_variable = { name = cm_gov_cooldown value = 1 days = @cm_gov_cooldown_days }
+	set_variable = { name = cm_gov_slot_cooldown value = 1 days = @cm_gov_slot_cooldown_days }
+	set_variable = { name = cm_gov_age value = 0 }
+	set_variable = { name = cm_gov_plan_n value = 0 }
+	remove_variable = cm_gov_plan_exhausted
+	clear_variable_list = cm_gov_plan
+	clear_variable_list = cm_gov_plan_drop
+	clear_variable_list = cm_gov_pending
+	clear_variable_list = cm_gov_moves
+	cm_gov_clear_road_state = yes
+	cm_gov_probe_end = yes
+	cm_gov_probe_clear_rejects = yes
+	every_owned_location = {
+		limit = { has_variable = cm_gov_plan_ord }
+		remove_variable = cm_gov_plan_ord
+		remove_variable = cm_gov_plan_naval
+		remove_variable = cm_gov_rank_wait
+		remove_variable = cm_gov_place_tries
+	}
+	every_owned_location = {
+		limit = { has_variable = cm_gov_seat_score }
+		remove_variable = cm_gov_seat_score
+	}
+	every_owned_location = {
+		limit = { cm_location_deurbanize_blocked_by_seat = yes }
+		set_variable = { name = cm_gov_deurb_tried value = 1 }
+	}
+	# A lucky nation opens with the capital search, whose move settles the proximity and the roads
+	# the governor plan reads. The player's capital is theirs to place, so their run starts at the
+	# plan itself with the slot counters phase 2 would have seeded.
+	if = {
+		limit = { cm_ln_is_active = yes }
+		cm_ln_pf_settings_on = yes
+		set_variable = { name = cm_gov_phase value = 1 }
+	}
+	else = {
+		cm_gov_seed_slot_counters = yes
+		set_variable = { name = cm_gov_phase value = 3 }
+	}
+}
+
+# The room the plan is filling. Moving governors plans over the whole set, so a site can take a
+# standing seat over; without it the plan only fills what is empty. The free counters are what tell
+# a pick that will displace a seat from one that will not.
+# Root is the country.
+cm_gov_seed_slot_counters = {
+	set_variable = { name = cm_gov_land_free_left value = cm_gov_land_free }
+	set_variable = { name = cm_gov_naval_free_left value = cm_gov_naval_free }
+	if = {
+		limit = { exists = var:cm_fa_gov_move_seats }
+		set_variable = { name = cm_gov_land_left value = cm_gov_land_slots }
+		set_variable = { name = cm_gov_naval_left value = cm_gov_naval_slots }
+	}
+	else = {
+		set_variable = { name = cm_gov_land_left value = cm_gov_land_free }
+		set_variable = { name = cm_gov_naval_left value = cm_gov_naval_free }
+	}
+}
+
+# --- The pick probation ---
+#
+# One slot serves the capital search and the governor plan, which never hold a pick at the
+# same time.
+
+# Root is the country. Expects scope:cm_gov_probe_pick.
+cm_gov_probe_start = {
+	set_variable = { name = cm_gov_probe_site value = scope:cm_gov_probe_pick }
+	set_variable = { name = cm_gov_probe_score value = scope:cm_gov_probe_pick.var:$SCORE$ }
+	set_variable = { name = cm_gov_probe_wait value = @cm_gov_probe_months }
+}
+
+# The pick's fresh score out of the 1000 its first one was normalised to. A site the run left
+# unscored and one that changed hands, which keeps the earlier run's score, both read as zero.
+# Root is the country, scope:cm_country set. Leaves scope:cm_gov_probe_l and scope:cm_gov_probe_now.
+cm_gov_probe_share = {
+	var:cm_gov_probe_site = { save_temporary_scope_as = cm_gov_probe_l }
+	if = {
+		limit = {
+			scope:cm_gov_probe_l = {
+				owner ?= scope:cm_country
+				has_variable = $SCORE$
+			}
+		}
+		save_temporary_scope_value_as = {
+			name = cm_gov_probe_now
+			value = {
+				value = scope:cm_gov_probe_l.var:$SCORE$
+				multiply = 1000 # Scores are 0 to 1000 against the run's best: cm_pf_finalize.
+				divide = {
+					value = var:cm_gov_probe_score
+					min = 0.001
+				}
+			}
+		}
+	}
+	else = {
+		save_temporary_scope_value_as = { name = cm_gov_probe_now value = 0 }
+	}
+}
+
+# Root is the country.
+cm_gov_probe_end = {
+	remove_variable = cm_gov_probe_site
+	remove_variable = cm_gov_probe_score
+	remove_variable = cm_gov_probe_wait
+}
+
+# Root is the country, scope:cm_country set. Expects scope:cm_gov_probe_l and scope:cm_gov_probe_now.
+cm_gov_probe_drop = {
+	if = {
+		limit = { scope:cm_gov_probe_l = { owner ?= scope:cm_country } }
+		scope:cm_gov_probe_l = { set_variable = { name = cm_gov_probe_reject value = 1 } }
+	}
+	cm_dbg_log_value = { cat = governors action = cm_gov_log_probe_dropped value = scope:cm_gov_probe_now }
+	cm_gov_probe_end = yes
+}
+
+# Root is the country.
+cm_gov_probe_clear_rejects = {
+	every_owned_location = {
+		limit = { has_variable = cm_gov_probe_reject }
+		remove_variable = cm_gov_probe_reject
+	}
+}
+
+# One governor search a month. A pick on probation has taken no slot yet, so the re-check run
+# still scores it as a candidate. Root is the country, scope:cm_country set.
+cm_gov_reorg_plan_step = {
+	if = {
+		limit = { exists = var:cm_gov_probe_site }
+		if = {
+			limit = { var:cm_gov_probe_wait > 0 }
+			change_variable = { name = cm_gov_probe_wait subtract = 1 }
+		}
+		if = {
+			limit = {
+				var:cm_gov_probe_wait <= 0
+				cm_gov_no_finder_run_in_flight = yes
+				cm_pf_river_data_is_current = yes
+			}
+			cm_gov_reorg_search_run = yes
+			cm_gov_reorg_probe_check = yes
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				var:cm_gov_land_left > 0
+				var:cm_gov_naval_left > 0
+			}
+			cm_gov_no_finder_run_in_flight = yes
+			cm_pf_river_data_is_current = yes
+		}
+		cm_gov_reorg_search_run = yes
+		cm_gov_reorg_probe_open = yes
+	}
+	else_if = {
+		limit = {
+			var:cm_gov_land_left <= 0
+			var:cm_gov_naval_left <= 0
+		}
+		set_variable = { name = cm_gov_phase value = 4 }
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_gov_reorg_search_run = {
+	set_variable = { name = cm_pf_view_g value = 1 }
+	remove_variable = cm_pf_view_c
+	# De-seating the country's own governors is what lets the run judge whether one is worth moving.
+	# With moving off they keep their spots and read as sources, so the run looks past them.
+	if = {
+		limit = { exists = var:cm_fa_gov_move_seats }
+		set_variable = { name = cm_gov_replan value = 1 }
+	}
+	set_variable = { name = cm_gov_valid_only value = 1 }
+	# A lucky nation carries the whole set of finder settings for its run. The player's are theirs to
+	# choose, so only the accuracy is borrowed, and only far enough to keep a search that runs
+	# synchronously every month from stalling a large country.
+	if = {
+		limit = {
+			cm_ln_is_active = no
+			num_locations >= 200
+		}
+		cm_pf_borrow_setting = { S = accuracy V = 5 } # Fastest
+	}
+	else_if = {
+		limit = { cm_ln_is_active = no }
+		cm_pf_borrow_setting = { S = accuracy V = 4 } # Quick
+	}
+	cm_pf_prep_core = yes
+	cm_pf_run_tiered_sync = yes
+	if = {
+		limit = { cm_ln_is_active = no }
+		cm_pf_return_setting = { S = accuracy }
+	}
+	remove_variable = cm_pf_view_g
+	remove_variable = cm_gov_replan
+	remove_variable = cm_gov_valid_only
+}
+
+# Root is the country, scope:cm_country set.
+cm_gov_reorg_probe_open = {
+	cm_gov_worst_seat_score = yes
+	set_local_variable = { name = cm_gov_picked value = 0 }
+	ordered_owned_location = {
+		order_by = { value = var:cm_gf_score }
+		position = 0
+		check_range_bounds = no
+		limit = {
+			has_variable = cm_gf_score
+			NOT = { has_variable = cm_gov_probe_reject }
+			# Once the free room is gone every further site has to take a standing seat over, and the
+			# player pays again for the governor it puts back up. So the move has to earn itself: the
+			# site is already a city, where it costs only the governor, or it scores far enough above
+			# the seat it takes over from to carry the rank upgrade too. Both scores come from this
+			# run, so they share its scale. The two kinds of room are read together rather than one
+			# per kind, since a country holding naval slots at all is the rare case; where it does,
+			# the bar does not apply. A lucky nation rebuilds a seat it has already bought for free
+			# and takes no bar.
+			trigger_if = {
+				limit = {
+					scope:cm_country = {
+						cm_ln_is_active = no
+						var:cm_gov_land_free_left <= 0
+						var:cm_gov_naval_free_left <= 0
+					}
+				}
+				OR = {
+					location_rank = location_rank:city
+					location_rank = location_rank:megalopolis
+					var:cm_gf_score >= cm_gov_displace_bar
+				}
+			}
+		}
+		save_scope_as = cm_gov_probe_pick
+		set_local_variable = { name = cm_gov_picked value = 1 }
+		scope:cm_country = { cm_gov_probe_start = { SCORE = cm_gf_score } }
+	}
+	# Nothing left the search would take, so the plan is as full as the map allows and the confirm
+	# step is free to end the run with the remaining room unfilled.
+	if = {
+		limit = { local_var:cm_gov_picked = 0 }
+		set_variable = { name = cm_gov_plan_exhausted value = 1 }
+		set_variable = { name = cm_gov_phase value = 4 }
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_gov_reorg_probe_check = {
+	cm_gov_probe_share = { SCORE = cm_gf_score }
+	if = {
+		limit = { scope:cm_gov_probe_now >= @cm_gov_probe_keep }
+		scope:cm_gov_probe_l = { save_scope_as = cm_gov_pick }
+		cm_dbg_log_value = { cat = governors action = cm_gov_log_probe_kept value = scope:cm_gov_probe_now }
+		cm_gov_probe_end = yes
+		cm_gov_reorg_record_pick = yes
+	}
+	else = {
+		cm_gov_probe_drop = yes
+		cm_gov_reorg_probe_open = yes
+	}
+}
+
+# The seat a displacement would take over from: the lowest-scoring one the plan has not picked,
+# which is what cm_gov_free_a_seat gives up. A run that scored no standing seat leaves 0, so the
+# bar it feeds passes and the pick is judged by the placement itself, as it was before.
+# Root is the country, scope:cm_country set. Leaves scope:cm_gov_worst_seat.
+cm_gov_worst_seat_score = {
+	save_temporary_scope_value_as = { name = cm_gov_worst_seat value = 0 }
+	ordered_owned_location = {
+		order_by = {
+			value = var:cm_gf_score
+			multiply = -1
+		}
+		position = 0
+		check_range_bounds = no
+		limit = {
+			has_variable = cm_gf_score
+			cm_location_has_governor = yes
+			NOT = { has_variable = cm_gov_plan_ord }
+		}
+		save_temporary_scope_value_as = { name = cm_gov_worst_seat value = var:cm_gf_score }
+	}
+}
+
+# Root is the country, scope:cm_country and scope:cm_gov_pick set.
+cm_gov_reorg_record_pick = {
+	add_to_variable_list = { name = cm_gov_plan target = scope:cm_gov_pick }
+	change_variable = { name = cm_gov_plan_n add = 1 }
+	set_local_variable = { name = cm_gov_ord value = 1000 }
+	change_local_variable = { name = cm_gov_ord subtract = var:cm_gov_plan_n }
+	scope:cm_gov_pick = { set_variable = { name = cm_gov_plan_ord value = local_var:cm_gov_ord } }
+	if = {
+		limit = {
+			var:cm_gov_naval_left > 0
+			scope:cm_gov_pick = { cm_gov_site_is_naval = yes }
+		}
+		scope:cm_gov_pick = { set_variable = { name = cm_gov_plan_naval value = 1 } }
+		change_variable = { name = cm_gov_naval_left subtract = 1 }
+		change_variable = { name = cm_gov_naval_free_left subtract = 1 }
+	}
+	else = {
+		change_variable = { name = cm_gov_land_left subtract = 1 }
+		change_variable = { name = cm_gov_land_free_left subtract = 1 }
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_gov_reorg_classify = {
+	remove_global_variable = cm_gov_token
+	cm_gov_record_seat_scores = yes
+	cm_gov_strip_finder_outputs = yes
+	if = {
+		limit = { cm_ln_is_active = yes }
+		cm_ln_pf_settings_off = yes
+	}
+	clear_variable_list = cm_gov_pending
+	clear_variable_list = cm_gov_moves
+	every_in_list = {
+		variable = cm_gov_plan
+		save_scope_as = cm_gov_p
+		if = {
+			limit = {
+				scope:cm_gov_p = {
+					owner ?= scope:cm_country
+					cm_location_has_governor = no
+				}
+			}
+			scope:cm_country = { add_to_variable_list = { name = cm_gov_pending target = scope:cm_gov_p } }
+		}
+	}
+	every_owned_location = {
+		limit = {
+			cm_location_has_governor = yes
+			NOT = { has_variable = cm_gov_plan_ord }
+		}
+		save_scope_as = cm_gov_seat
+		scope:cm_country = { add_to_variable_list = { name = cm_gov_moves target = scope:cm_gov_seat } }
+	}
+	set_variable = { name = cm_gov_phase value = 5 }
+}
+
+# cm_gov_free_a_seat ranks the seats the plan did not pick by the finder's own governor score, and
+# cm_gov_strip_finder_outputs is about to remove it, so every standing seat keeps a copy.
+# Root is the country.
+cm_gov_record_seat_scores = {
+	every_owned_location = {
+		limit = { cm_location_has_governor = yes }
+		set_variable = { name = cm_gov_seat_score value = 0 }
+		if = {
+			limit = { has_variable = cm_gf_score }
+			set_variable = { name = cm_gov_seat_score value = var:cm_gf_score }
+		}
+	}
+}
+
+# A conquered location would otherwise hand the player an AI's scores until their own run
+# overwrites them. Root is the country.
+cm_gov_strip_finder_outputs = {
+	every_owned_location = {
+		remove_variable = cm_gf_score
+		remove_variable = cm_gf_avg
+		remove_variable = cm_gf_taxgain
+		remove_variable = cm_gf_top
+		remove_variable = cm_gf_localmax
+		remove_variable = cm_gf_skip
+		remove_variable = cm_gf_inelig
+		remove_variable = cm_gf_nogain
+		remove_variable = cm_cf_score
+		remove_variable = cm_cf_avg
+		remove_variable = cm_cf_taxgain
+		remove_variable = cm_cf_top
+		remove_variable = cm_cf_localmax
+		remove_variable = cm_cf_skip
+	}
+	remove_variable = cm_pf_fresh_g
+	remove_variable = cm_pf_fresh_c
+}
+
+# No slot test here: cm_gov_slot_open answers for land or naval room anywhere, which says nothing
+# about the kind the best pending site needs, and a site whose own kind is capped is what the
+# placement hands to the relocation phase. Root is the country, scope:cm_country set.
+cm_gov_reorg_place_step = {
+	if = {
+		limit = {
+			has_variable_list = cm_gov_pending
+			variable_list_size = { name = cm_gov_pending value >= 1 }
+		}
+		cm_gov_place_next = { FREE = no }
+	}
+	else_if = {
+		limit = { exists = var:cm_fa_gov_move_seats }
+		set_variable = { name = cm_gov_phase value = 6 }
+	}
+	else = {
+		set_variable = { name = cm_gov_phase value = 7 }
+	}
+}
+
+# Holds the run open until every planned governor physically stands. A site whose governor is still
+# building is left alone and owes nothing, so the treasury is free that month. A site that has no
+# governor and nothing building goes back to the placement phase with the treasury behind it again,
+# and one that has swallowed @cm_gov_place_max_tries orders, or has changed hands, is given up so a
+# fresh search can put the slot somewhere buildable. Root is the country, scope:cm_country set.
+cm_gov_reorg_confirm_step = {
+	set_local_variable = { name = cm_gov_cf_building value = 0 }
+	every_in_list = {
+		variable = cm_gov_plan
+		save_scope_as = cm_gov_p
+		if = {
+			limit = { scope:cm_gov_p = { NOT = { owner ?= scope:cm_country } } }
+			scope:cm_country = {
+				cm_dbg_log = { cat = governors action = cm_gov_log_given_up_lost }
+				add_to_variable_list = { name = cm_gov_plan_drop target = scope:cm_gov_p }
+			}
+		}
+		else_if = {
+			# Ahead of any read of whether a governor stands, because has_building answers yes from
+			# the moment a level is queued.
+			limit = { scope:cm_gov_p = { cm_gov_site_under_construction = yes } }
+			set_local_variable = { name = cm_gov_cf_building value = 1 }
+		}
+		else_if = {
+			# The order went in and left nothing behind, which is not a shape anything in the plan
+			# accounts for, so it is logged as the failure it is rather than only retried.
+			limit = { scope:cm_gov_p = { cm_location_has_governor = no } }
+			scope:cm_country = {
+				cm_dbg_log = { cat = governors action = cm_gov_log_place_no_show }
+				cm_gov_place_retry_or_drop = { SITE = scope:cm_gov_p }
+			}
+		}
+	}
+	cm_gov_apply_plan_drops = yes
+	if = {
+		limit = {
+			has_variable_list = cm_gov_pending
+			variable_list_size = { name = cm_gov_pending value >= 1 }
+		}
+		set_variable = { name = cm_gov_phase value = 5 }
+	}
+	else_if = {
+		limit = {
+			local_var:cm_gov_cf_building = 0
+			cm_gov_slot_open = yes
+			NOT = { exists = var:cm_gov_plan_exhausted }
+			NOT = { has_global_variable = cm_gov_token }
+			cm_gov_no_finder_run_in_flight = yes
+			cm_pf_river_data_is_current = yes
+		}
+		# A slot with no plan site behind it, so the search runs again for the room that is left.
+		set_global_variable = { name = cm_gov_token value = 1 }
+		if = {
+			limit = { cm_ln_is_active = yes }
+			cm_ln_pf_settings_on = yes
+		}
+		set_variable = { name = cm_gov_land_left value = cm_gov_land_free }
+		set_variable = { name = cm_gov_naval_left value = cm_gov_naval_free }
+		set_variable = { name = cm_gov_land_free_left value = cm_gov_land_free }
+		set_variable = { name = cm_gov_naval_free_left value = cm_gov_naval_free }
+		set_variable = { name = cm_gov_phase value = 3 }
+	}
+	else_if = {
+		limit = {
+			local_var:cm_gov_cf_building = 0
+			OR = {
+				cm_gov_slot_open = no
+				exists = var:cm_gov_plan_exhausted
+			}
+		}
+		set_variable = { name = cm_gov_phase value = 8 }
+	}
+}
+
+# Every site left is one the engine refuses until a seat goes, so this phase is the placement again
+# with permission to give one up. The pending list alone decides whether it runs, so a site with no
+# seat left to take is refused and counted here rather than handed to the confirm step unserved.
+# Root is the country, scope:cm_country set.
+cm_gov_reorg_move_step = {
+	if = {
+		limit = {
+			exists = var:cm_fa_gov_move_seats
+			has_variable_list = cm_gov_pending
+			variable_list_size = { name = cm_gov_pending value >= 1 }
+		}
+		cm_gov_place_next = { FREE = yes }
+	}
+	else = {
+		set_variable = { name = cm_gov_phase value = 7 }
+	}
+}
+
+# Root is the country, scope:cm_country set.
+cm_gov_reorg_teardown = {
+	remove_variable = cm_gov_hold
+	remove_variable = cm_gov_age
+	remove_variable = cm_ln_cap_target
+	remove_variable = cm_gov_land_left
+	remove_variable = cm_gov_naval_left
+	remove_variable = cm_gov_land_free_left
+	remove_variable = cm_gov_naval_free_left
+	remove_variable = cm_gov_plan_n
+	remove_variable = cm_gov_plan_exhausted
+	remove_variable = cm_gov_replan
+	remove_variable = cm_gov_valid_only
+	cm_gov_probe_end = yes
+	cm_gov_probe_clear_rejects = yes
+	remove_variable = cm_pf_view_g
+	remove_variable = cm_pf_view_c
+	cm_gov_clear_road_state = yes
+	clear_variable_list = cm_gov_plan
+	clear_variable_list = cm_gov_plan_drop
+	clear_variable_list = cm_gov_pending
+	clear_variable_list = cm_gov_moves
+	every_owned_location = {
+		limit = { has_variable = cm_gov_plan_ord }
+		remove_variable = cm_gov_plan_ord
+		remove_variable = cm_gov_plan_naval
+		remove_variable = cm_gov_rank_wait
+		remove_variable = cm_gov_place_tries
+	}
+	every_owned_location = {
+		limit = { has_variable = cm_gov_seat_score }
+		remove_variable = cm_gov_seat_score
+	}
+	remove_global_variable = cm_gov_token
+	if = {
+		limit = { cm_ln_is_active = yes }
+		cm_ln_pf_settings_off = yes
+	}
+	set_variable = { name = cm_gov_slots_seen value = cm_gov_slot_total }
+	set_variable = { name = cm_gov_cooldown value = 1 days = @cm_gov_cooldown_days }
+	set_variable = { name = cm_gov_slot_cooldown value = 1 days = @cm_gov_slot_cooldown_days }
+	set_variable = { name = cm_gov_phase value = 0 }
+}
+
+# --- Diagnostics ---
+
+# Run from the console: effect c:<TAG> = { cm_gov_plan_probe = yes }. Root is the country.
+cm_gov_plan_probe = {
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	if = {
+		limit = { exists = var:cm_gov_phase }
+		set_local_variable = { name = cm_ln_dbg value = var:cm_gov_phase }
+	}
+	cmf_log_value = { action = cm_log_gov_phase value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	every_in_list = {
+		variable = cm_gov_pending
+		change_local_variable = { name = cm_ln_dbg add = 1 }
+	}
+	cmf_log_value = { action = cm_log_gov_pending value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	every_in_list = {
+		variable = cm_gov_plan
+		change_local_variable = { name = cm_ln_dbg add = 1 }
+	}
+	cmf_log_value = { action = cm_log_gov_planned value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	if = {
+		limit = { exists = var:cm_gov_hold }
+		set_local_variable = { name = cm_ln_dbg value = 1 }
+	}
+	cmf_log_value = { action = cm_log_gov_hold value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	if = {
+		limit = { exists = var:cm_ln_gov_paid_seats }
+		set_local_variable = { name = cm_ln_dbg value = var:cm_ln_gov_paid_seats }
+	}
+	cmf_log_value = { action = cm_log_gov_paid value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = cm_gov_slot_total }
+	cmf_log_value = { action = cm_log_gov_slots value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	every_owned_location = {
+		limit = { cm_location_has_governor = yes }
+		change_local_variable = { name = cm_ln_dbg add = 1 }
+	}
+	cmf_log_value = { action = cm_log_gov_seats value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = 0 }
+	every_in_list = {
+		variable = cm_ln_seats
+		change_local_variable = { name = cm_ln_dbg add = 1 }
+	}
+	cmf_log_value = { action = cm_log_gov_tracked value = local_var:cm_ln_dbg }
+
+	set_local_variable = { name = cm_ln_dbg value = gold }
+	cmf_log_value = { action = cm_log_gov_gold value = local_var:cm_ln_dbg }
+}

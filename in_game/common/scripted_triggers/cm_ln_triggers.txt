@@ -74,114 +74,12 @@ cm_ln_ft_site_eligible = {
 	cm_ln_ft_site_placeable = yes
 }
 
-# --- Capital and governor reorganization ---
-
-# Root is the building type.
-cm_ln_is_governor_type = {
-	OR = {
-		this = building_type:local_governor
-		this = building_type:naval_governor
-	}
-}
-
-# Root is the location. A site a land governor could never reach, which is exactly what the
-# naval type is for: in_game/common/building_types/capital_buildings.txt:799-803.
-cm_ln_site_is_naval = {
-	NOT = { is_connected_to_through_realm = owner.capital }
-	is_overseas_for_owner = no
-	is_port = yes
-}
-
-# Root is the location. Mirrors both vanilla governor types minus the road and the city rank,
-# which a reorganization builds rather than demands:
-# in_game/common/building_types/capital_buildings.txt local_governor :607, naval_governor :760.
-# Expects the run's slot counters on the owner.
-cm_ln_gov_site_eligible = {
-	OR = {
-		location_rank = location_rank:city # :620
-		location_rank = location_rank:megalopolis # :621
-		AND = {
-			OR = {
-				location_rank = location_rank:rural_settlement
-				location_rank = location_rank:town
-			}
-			# The Found City step, which the whole chain has to reach for a governor to stand here:
-			# cm_upgrade_town_to_city_building location_potential population >= 30 and
-			# allow cannot_upgrade_location,
-			# in_game/common/building_types/cm_location_upgrade_buildings.txt:26 and :23.
-			population >= 30
-			modifier:cannot_upgrade_location = no
-		}
-	}
-	NOT = { has_variable = cm_ln_plan_ord }
-	NOT = { cm_location_deurbanize_would_undo = yes }
-	OR = {
-		AND = {
-			owner = { var:cm_ln_land_left > 0 }
-			owner.capital != this # location_potential: :642
-			NOT = { has_building = building_type:seljuk_mint } # allow: :634
-			is_connected_to = owner.capital
-		}
-		AND = {
-			owner = { var:cm_ln_naval_left > 0 }
-			cm_ln_site_is_naval = yes
-		}
-	}
-}
-
-# Root is the location.
-cm_ln_target_needs_road = {
-	NOT = { has_variable = cm_ln_plan_naval }
-	has_road_to_capital = no
-}
-
-# Root is the location. Both governor types need city rank, so a planned site below it is
-# urbanized first: in_game/common/building_types/capital_buildings.txt:620 and :773.
-cm_ln_target_needs_rank = {
-	OR = {
-		location_rank = location_rank:rural_settlement
-		location_rank = location_rank:town
-	}
-}
-
-# Root is the country. A planned site with its rank and its road behind it, which is what
-# cm_ln_place_next takes a governor's room for this tick.
-cm_ln_gov_move_is_due = {
-	exists = var:cm_ln_phase
-	var:cm_ln_phase >= 5
-	var:cm_ln_phase <= 6
-	has_variable_list = cm_ln_pending
-	any_in_list = {
-		variable = cm_ln_pending
-		cm_ln_target_needs_road = no
-		cm_ln_target_needs_rank = no
-	}
-}
-
-# Root is the location. Expects scope:cm_country. A governor ordered here that the engine has not
-# finished, which the confirm step waits on rather than ordering a second one.
-cm_ln_site_gov_under_construction = {
-	any_buildings_in_location = {
-		owner = scope:cm_country
-		building_type = { cm_ln_is_governor_type = yes }
-		building_levels_under_construction > 0
-	}
-}
-
 # Root is the country. A governor the country has bought and does not have. cm_ln_gov_paid_seats only
 # ever rises, so a seated count below it is a seat already paid for however it came to be missing,
 # and the next placement is not charged again.
 cm_ln_gov_seat_is_prepaid = {
 	exists = var:cm_ln_gov_paid_seats
-	var:cm_ln_gov_paid_seats > cm_ln_gov_seated_value
-}
-
-# Root is the country.
-cm_ln_gov_slot_open = {
-	OR = {
-		cm_fa_gov_has_land_room = yes
-		cm_fa_gov_has_naval_room = yes
-	}
+	var:cm_ln_gov_paid_seats > cm_gov_seated_value
 }
 
 # Root is the country. The harvest is a real-time GUI pass while the opening move's wait counts
@@ -193,23 +91,4 @@ cm_ln_open_river_advancing = {
 		NOT = { exists = var:cm_ln_open_idx }
 		NOT = { var:cm_ln_open_idx = global_var:cm_pf_river_idx }
 	}
-}
-
-# Root is the country. cm_pf_n set with cm_pf_all_done absent is a run that was primed and
-# never finished; the finder's water state is shared, so a reorganization waits it out.
-cm_ln_no_human_search_in_flight = {
-	NOT = {
-		any_country = {
-			is_ai = no
-			has_variable = cm_pf_n
-			NOT = { has_variable = cm_pf_all_done }
-		}
-	}
-}
-
-# Root is the country. An advance or a rank-up granting a slot reopens the plan without
-# waiting out the cadence.
-cm_ln_gov_slots_grew = {
-	exists = var:cm_ln_slots_seen
-	cm_ln_gov_slot_total > var:cm_ln_slots_seen
 }
