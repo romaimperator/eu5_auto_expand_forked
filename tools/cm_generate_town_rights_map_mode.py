@@ -2722,6 +2722,8 @@ def emit_grant_section(aliases):
             ".AddScope('cm_country', GetPlayer.MakeScope).End")
     player = "GuiScope.SetRoot(GetPlayer.MakeScope).End"
     loc = "GuiScope.SetRoot(Location.MakeScope).End"
+    unlocked = (f"GetScriptedGui('cm_trmm_specialization_unlocked')"
+                f".IsShown({player})")
     best_pair = ("Or(GetMapMode('cm_best_town_right').IsActive, "
                  "GetMapMode('cm_best_town_right_refresh').IsActive)")
     # Per-mode "a grant button would show" terms: the searched right's IsShown in
@@ -2810,14 +2812,15 @@ def emit_grant_section(aliases):
             lines.append("\t\t\t\tclick_mode = single")
             lines.append(f"\t\t\t\ttitle = \"cm_trmm_grant_title_{alias}\"")
             lines.append(
-                "\t\t\t\tconditions = \"[AddLocalizationIf("
-                "Not(ShowGrantLocationTownRights(Location.Self)), 'TWR_NOT_CAPABLE')]\"")
+                f"\t\t\t\tconditions = \"[AddLocalizationIf(Not(And("
+                f"ShowGrantLocationTownRights(Location.Self), {unlocked})), "
+                f"'TWR_NOT_CAPABLE')]\"")
             lines.append(
                 f"\t\t\t\tconditions = \"[AddLocalizationIf(Not(GetScriptedGui("
                 f"'cm_trmm_grant_can_afford').IsShown({player})), 'CM_TRMM_GRANT_CANT_AFFORD')]\"")
             lines.append(
-                f"\t\t\t\tconditions = \"[AddLocalizationIf(And3("
-                f"ShowGrantLocationTownRights(Location.Self), "
+                f"\t\t\t\tconditions = \"[AddLocalizationIf(And4("
+                f"ShowGrantLocationTownRights(Location.Self), {unlocked}, "
                 f"GetScriptedGui('cm_trmm_grant_can_afford').IsShown({player}), "
                 f"Not({gui}.IsValid({root}))), 'CM_TRMM_GRANT_REQUIREMENTS')]\"")
             lines.append(f"\t\t\t\tenabled = \"[{gui}.IsValid({root})]\"")
