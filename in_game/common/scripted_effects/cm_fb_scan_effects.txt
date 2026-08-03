@@ -105,6 +105,27 @@ cm_fb_scan_site_for_type = {
 	}
 }
 
+# A market already marked seen this cycle is not revisited, so a type mass-enabled now can wait
+# out the rest of the year before the sweep hands it anywhere to build. The build panel's own
+# candidate rows go straight into the site list on the mass toggle and the sweep finds the rest.
+# Root is the location. Expects scope:cm_country and scope:cm_building_type.
+cm_fb_add_mass_site = {
+	if = {
+		limit = {
+			scope:cm_building_type = { is_foreign = yes }
+			scope:cm_country = {
+				cm_fb_type_is_mass_enabled = yes
+				OR = {
+					NOT = { has_variable_list = cm_fb_mass_sites }
+					NOT = { variable_list_size = { name = cm_fb_mass_sites value >= @cm_fb_max_sites } }
+				}
+			}
+		}
+		save_temporary_scope_as = cm_fb_site
+		scope:cm_country = { add_to_variable_list = { name = cm_fb_mass_sites target = scope:cm_fb_site } }
+	}
+}
+
 # Swapping the finished pass in whole is what keeps a site building every month while the
 # sweep is still part-way through the world.
 cm_fb_scan_publish = {
