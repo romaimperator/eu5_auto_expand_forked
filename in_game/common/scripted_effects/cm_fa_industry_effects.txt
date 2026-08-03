@@ -180,26 +180,48 @@ cm_fa_compute_roi_score = {
 	save_temporary_scope_value_as = { name = cm_fa_score_val value = local_var:cm_fa_sc }
 }
 
-# Folds a scored candidate into its building type's rotation-remembered best payback. Called
-# before the placement gate, so a candidate whose location goes to another building still sets
-# its own type's bar. Root is the country. Expects scope:cm_fa_anchor_type,
-# scope:cm_fa_anchor_loc and scope:cm_fa_score_val.
-cm_fa_ind_fold_bt_anchor = {
+# The good a candidate's building type makes, as scope:cm_fa_anchor_good, with
+# local_var:cm_fa_has_good telling the callers whether the classification recorded one; without
+# it the candidate is left unanchored and unbarred rather than keyed by something arbitrary.
+# Expects scope:cm_fa_anchor_type.
+cm_fa_ind_resolve_good = {
+	set_local_variable = { name = cm_fa_has_good value = 0 }
 	if = {
 		limit = {
-			trigger_if = {
-				limit = {
-					has_variable_map = cm_fa_ind_bt_anchor
-					is_key_in_variable_map = { name = cm_fa_ind_bt_anchor target = scope:cm_fa_anchor_type }
-				}
-				"variable_map(cm_fa_ind_bt_anchor|scope:cm_fa_anchor_type)" < scope:cm_fa_score_val
-			}
-			trigger_else = { always = yes }
+			has_global_variable_map = cm_building_type_to_produced_good
+			is_key_in_global_variable_map = { name = cm_building_type_to_produced_good target = scope:cm_fa_anchor_type }
 		}
-		remove_from_variable_map = { name = cm_fa_ind_bt_anchor key = scope:cm_fa_anchor_type }
-		add_to_variable_map = { name = cm_fa_ind_bt_anchor key = scope:cm_fa_anchor_type value = scope:cm_fa_score_val }
-		remove_from_variable_map = { name = cm_fa_ind_bt_loc key = scope:cm_fa_anchor_type }
-		add_to_variable_map = { name = cm_fa_ind_bt_loc key = scope:cm_fa_anchor_type value = scope:cm_fa_anchor_loc }
+		"global_variable_map(cm_building_type_to_produced_good|scope:cm_fa_anchor_type)" = { save_temporary_scope_as = cm_fa_anchor_good }
+		set_local_variable = { name = cm_fa_has_good value = 1 }
+	}
+}
+
+# Folds a scored candidate into its good's rotation-remembered best payback, so every building
+# making that good answers to one anchor. Called before the placement gate, so a candidate whose
+# location goes to another building still sets its good's bar. Root is the country. Expects
+# scope:cm_fa_anchor_type, scope:cm_fa_anchor_loc and scope:cm_fa_score_val.
+cm_fa_ind_fold_gd_anchor = {
+	cm_fa_ind_resolve_good = yes
+	if = {
+		limit = { local_var:cm_fa_has_good = 1 }
+		if = {
+			limit = {
+				trigger_if = {
+					limit = {
+						has_variable_map = cm_fa_ind_gd_anchor
+						is_key_in_variable_map = { name = cm_fa_ind_gd_anchor target = scope:cm_fa_anchor_good }
+					}
+					"variable_map(cm_fa_ind_gd_anchor|scope:cm_fa_anchor_good)" < scope:cm_fa_score_val
+				}
+				trigger_else = { always = yes }
+			}
+			remove_from_variable_map = { name = cm_fa_ind_gd_anchor key = scope:cm_fa_anchor_good }
+			add_to_variable_map = { name = cm_fa_ind_gd_anchor key = scope:cm_fa_anchor_good value = scope:cm_fa_score_val }
+			remove_from_variable_map = { name = cm_fa_ind_gd_loc key = scope:cm_fa_anchor_good }
+			add_to_variable_map = { name = cm_fa_ind_gd_loc key = scope:cm_fa_anchor_good value = scope:cm_fa_anchor_loc }
+			remove_from_variable_map = { name = cm_fa_ind_gd_bt key = scope:cm_fa_anchor_good }
+			add_to_variable_map = { name = cm_fa_ind_gd_bt key = scope:cm_fa_anchor_good value = scope:cm_fa_anchor_type }
+		}
 	}
 }
 
@@ -215,24 +237,25 @@ cm_fa_ind_drop_market_memory = {
 	# Collected first: removing a key inside the walk would mutate the map being walked.
 	clear_variable_list = cm_fa_ind_drop
 	if = {
-		limit = { has_variable_map = cm_fa_ind_bt_loc }
+		limit = { has_variable_map = cm_fa_ind_gd_loc }
 		every_key_in_variable_map = {
-			variable = cm_fa_ind_bt_loc
-			save_scope_as = cm_fa_drop_bt
+			variable = cm_fa_ind_gd_loc
+			save_scope_as = cm_fa_drop_gd
 			# The iterator makes the key the scope, so the map read has to name its owner.
-			"scope:cm_fa_anchor_owner.variable_map(cm_fa_ind_bt_loc|scope:cm_fa_drop_bt)" = { save_temporary_scope_as = cm_fa_drop_loc }
+			"scope:cm_fa_anchor_owner.variable_map(cm_fa_ind_gd_loc|scope:cm_fa_drop_gd)" = { save_temporary_scope_as = cm_fa_drop_loc }
 			if = {
 				limit = { scope:cm_fa_drop_loc = { market = { this = scope:cm_fa_slice_mkt } } }
-				scope:cm_fa_anchor_owner = { add_to_variable_list = { name = cm_fa_ind_drop target = scope:cm_fa_drop_bt } }
+				scope:cm_fa_anchor_owner = { add_to_variable_list = { name = cm_fa_ind_drop target = scope:cm_fa_drop_gd } }
 			}
 		}
 	}
 	every_in_list = {
 		variable = cm_fa_ind_drop
-		save_scope_as = cm_fa_drop_bt
+		save_scope_as = cm_fa_drop_gd
 		scope:cm_fa_anchor_owner = {
-			remove_from_variable_map = { name = cm_fa_ind_bt_anchor key = scope:cm_fa_drop_bt }
-			remove_from_variable_map = { name = cm_fa_ind_bt_loc key = scope:cm_fa_drop_bt }
+			remove_from_variable_map = { name = cm_fa_ind_gd_anchor key = scope:cm_fa_drop_gd }
+			remove_from_variable_map = { name = cm_fa_ind_gd_loc key = scope:cm_fa_drop_gd }
+			remove_from_variable_map = { name = cm_fa_ind_gd_bt key = scope:cm_fa_drop_gd }
 		}
 	}
 	clear_variable_list = cm_fa_ind_drop
@@ -242,8 +265,8 @@ cm_fa_ind_drop_market_memory = {
 # local_var:cm_fa_rec_c and scope:cm_fa_rec_bt, with local_var:cm_fa_rec_has_bt marking whether
 # that scope belongs to this location rather than the previous one the caller walked.
 # The RGO domain is deliberately absent: an RGO bars nothing, so it has no place in the off-slice
-# memory this feeds. The type reported is the one cm_fa_ind_bt_bar keys on, so an upgrade reports
-# its replacement tier. Root is the location.
+# memory this feeds. The type reported is the one the off-slice bar resolves its good from, so an
+# upgrade reports its replacement tier. Root is the location.
 cm_fa_ind_loc_best = {
 	save_temporary_scope_as = cm_fa_rec_loc
 	set_local_variable = { name = cm_fa_rec_s value = -2000000 }
@@ -349,7 +372,7 @@ cm_fa_ind_record_market_best = {
 # The best candidate remembered in a market this cycle cannot reach, as local_var:cm_fa_off_best
 # and local_var:cm_fa_off_cost. Builds and upgrades only, the memory holding nothing else.
 # What it sizes is the gold set aside for that pick; the bar it holds candidates to is
-# cm_fa_ind_build_off_bars, keyed per building type. Root is the country, expects scope:cm_country.
+# cm_fa_ind_build_off_bars, keyed per good. Root is the country, expects scope:cm_country.
 cm_fa_ind_off_slice_best = {
 	save_temporary_scope_as = cm_fa_off_ctry
 	set_local_variable = { name = cm_fa_off_best value = -2000000 }
@@ -374,13 +397,13 @@ cm_fa_ind_off_slice_best = {
 	}
 }
 
-# Folds the off-slice memory into cm_fa_ind_off_bt, one bar per building type, so a candidate is
-# only ever held back by a better one of its own type waiting in a market the rotation has moved
-# off. A market whose remembered entry lost its type is skipped rather than applied blindly.
+# Folds the off-slice memory into cm_fa_ind_off_gd, one bar per good, so a candidate is only ever
+# held back by a better maker of the same good waiting in a market the rotation has moved off.
+# A market whose remembered entry lost its type is skipped rather than applied blindly.
 # Root is the country, expects scope:cm_country.
 cm_fa_ind_build_off_bars = {
 	save_temporary_scope_as = cm_fa_offb_ctry
-	clear_variable_map = cm_fa_ind_off_bt
+	clear_variable_map = cm_fa_ind_off_gd
 	if = {
 		limit = { has_variable_map = cm_fa_ind_mkt_best }
 		every_key_in_variable_map = {
@@ -395,21 +418,25 @@ cm_fa_ind_build_off_bars = {
 				}
 				# The iterator makes the key the scope, so the map reads have to name their owner.
 				set_local_variable = { name = cm_fa_offb_v value = "scope:cm_fa_offb_ctry.variable_map(cm_fa_ind_mkt_best|scope:cm_fa_offb_mkt)" }
-				"scope:cm_fa_offb_ctry.variable_map(cm_fa_ind_mkt_bt|scope:cm_fa_offb_mkt)" = { save_temporary_scope_as = cm_fa_offb_bt }
-				scope:cm_fa_offb_ctry = {
-					if = {
-						limit = {
-							trigger_if = {
-								limit = {
-									has_variable_map = cm_fa_ind_off_bt
-									is_key_in_variable_map = { name = cm_fa_ind_off_bt target = scope:cm_fa_offb_bt }
+				"scope:cm_fa_offb_ctry.variable_map(cm_fa_ind_mkt_bt|scope:cm_fa_offb_mkt)" = { save_temporary_scope_as = cm_fa_anchor_type }
+				cm_fa_ind_resolve_good = yes
+				if = {
+					limit = { local_var:cm_fa_has_good = 1 }
+					scope:cm_fa_offb_ctry = {
+						if = {
+							limit = {
+								trigger_if = {
+									limit = {
+										has_variable_map = cm_fa_ind_off_gd
+										is_key_in_variable_map = { name = cm_fa_ind_off_gd target = scope:cm_fa_anchor_good }
+									}
+									"variable_map(cm_fa_ind_off_gd|scope:cm_fa_anchor_good)" < local_var:cm_fa_offb_v
 								}
-								"variable_map(cm_fa_ind_off_bt|scope:cm_fa_offb_bt)" < local_var:cm_fa_offb_v
+								trigger_else = { always = yes }
 							}
-							trigger_else = { always = yes }
+							remove_from_variable_map = { name = cm_fa_ind_off_gd key = scope:cm_fa_anchor_good }
+							add_to_variable_map = { name = cm_fa_ind_off_gd key = scope:cm_fa_anchor_good value = local_var:cm_fa_offb_v }
 						}
-						remove_from_variable_map = { name = cm_fa_ind_off_bt key = scope:cm_fa_offb_bt }
-						add_to_variable_map = { name = cm_fa_ind_off_bt key = scope:cm_fa_offb_bt value = local_var:cm_fa_offb_v }
 					}
 				}
 			}
@@ -417,8 +444,8 @@ cm_fa_ind_build_off_bars = {
 	}
 }
 
-# Margin factor = 100 / margin percent; scores are negative years, so a type's anchor times
-# the factor is the bar for holding margin percent of that type's payback rate. 0 = off.
+# Margin factor = 100 / margin percent; scores are negative years, so a good's anchor times
+# the factor is the bar for holding margin percent of that good's payback rate. 0 = off.
 # Root is the country. Result in local_var:cm_fa_margin_f.
 cm_fa_ind_margin_factor = {
 	set_local_variable = { name = cm_fa_margin_f value = 0 }
@@ -432,32 +459,36 @@ cm_fa_ind_margin_factor = {
 	}
 }
 
-# One building type's admission bar, on the negative years scale: the stricter of its anchor
-# scaled by the margin factor and the best score of its own type waiting off-slice. Stays at the
-# sentinel when neither applies, which admits every score. Expects scope:cm_country,
-# scope:cm_fa_anchor_type and local_var:cm_fa_margin_f. Result in local_var:cm_fa_bt_bar.
-cm_fa_ind_bt_bar = {
-	set_local_variable = { name = cm_fa_bt_bar value = -2000000 }
+# One good's admission bar, on the negative years scale: the stricter of its anchor scaled by the
+# margin factor and the best score of the same good waiting off-slice. Stays at the sentinel when
+# neither applies, which admits every score. Expects scope:cm_country, scope:cm_fa_anchor_type as
+# the candidate's building type, and local_var:cm_fa_margin_f. Result in local_var:cm_fa_gd_bar.
+cm_fa_ind_gd_bar = {
+	set_local_variable = { name = cm_fa_gd_bar value = -2000000 }
+	cm_fa_ind_resolve_good = yes
 	if = {
-		limit = {
-			local_var:cm_fa_margin_f > 0
-			scope:cm_country = {
-				has_variable_map = cm_fa_ind_bt_anchor
-				is_key_in_variable_map = { name = cm_fa_ind_bt_anchor target = scope:cm_fa_anchor_type }
+		limit = { local_var:cm_fa_has_good = 1 }
+		if = {
+			limit = {
+				local_var:cm_fa_margin_f > 0
+				scope:cm_country = {
+					has_variable_map = cm_fa_ind_gd_anchor
+					is_key_in_variable_map = { name = cm_fa_ind_gd_anchor target = scope:cm_fa_anchor_good }
+				}
 			}
+			set_local_variable = { name = cm_fa_gd_bar value = "scope:cm_country.variable_map(cm_fa_ind_gd_anchor|scope:cm_fa_anchor_good)" }
+			change_local_variable = { name = cm_fa_gd_bar multiply = local_var:cm_fa_margin_f }
 		}
-		set_local_variable = { name = cm_fa_bt_bar value = "scope:cm_country.variable_map(cm_fa_ind_bt_anchor|scope:cm_fa_anchor_type)" }
-		change_local_variable = { name = cm_fa_bt_bar multiply = local_var:cm_fa_margin_f }
-	}
-	if = {
-		limit = {
-			scope:cm_country = {
-				has_variable_map = cm_fa_ind_off_bt
-				is_key_in_variable_map = { name = cm_fa_ind_off_bt target = scope:cm_fa_anchor_type }
+		if = {
+			limit = {
+				scope:cm_country = {
+					has_variable_map = cm_fa_ind_off_gd
+					is_key_in_variable_map = { name = cm_fa_ind_off_gd target = scope:cm_fa_anchor_good }
+				}
 			}
+			set_local_variable = { name = cm_fa_off_bar value = "scope:cm_country.variable_map(cm_fa_ind_off_gd|scope:cm_fa_anchor_good)" }
+			change_local_variable = { name = cm_fa_gd_bar max = local_var:cm_fa_off_bar }
 		}
-		set_local_variable = { name = cm_fa_off_bar value = "scope:cm_country.variable_map(cm_fa_ind_off_bt|scope:cm_fa_anchor_type)" }
-		change_local_variable = { name = cm_fa_bt_bar max = local_var:cm_fa_off_bar }
 	}
 }
 
@@ -489,7 +520,7 @@ cm_fa_ind_log_queued = {
 }
 
 # Greedy country-wide drain: actionable builds and upgrades are approved best-first, each held
-# to the margin share of the best payback rate recorded for its own building type; RGO
+# to the margin share of the best payback rate recorded for the good it makes; RGO
 # expansions bypass the margin and drain by ROI. Payback is cost over income in gold, both
 # already priced in the candidate's own market, so scores rank directly against each other
 # across markets.
@@ -518,12 +549,12 @@ cm_fa_pass_industry = {
 	cm_fa_ind_build_off_bars = yes
 	cm_fa_ind_pick_loop = yes
 	cm_fa_ind_record_market_best = yes
-	clear_variable_map = cm_fa_ind_off_bt
+	clear_variable_map = cm_fa_ind_off_gd
 	clear_variable_list = cm_fa_drain_cands
 }
 
 # Approves the best candidate in the country repeatedly until every candidate map is spent or
-# the pool cannot cover the next one; each pick tests its own building type's bar. The outer
+# the pool cannot cover the next one; each pick tests the bar of the good it makes. The outer
 # batch loop is what carries the pick count past a single while's 1000-iteration abort; it
 # re-enters only while the inner loop's last iteration picked something.
 # Root is the country. Expects cm_fa_drain_cands built and local_var:cm_fa_margin_f set.
@@ -609,15 +640,16 @@ cm_fa_ind_pick_loop = {
 }
 
 # Console diagnostic: effect c:<TAG> = { cm_fa_ind_anchor_probe = yes }
-# One line per building type that has an anchor this rotation. Root is the country.
+# One line per good that has an anchor this rotation, naming the building and location that set
+# it. Root is the country.
 cm_fa_ind_anchor_probe = {
 	save_temporary_scope_as = cm_fa_probe_country
 	cm_fa_ind_margin_factor = yes
 	every_key_in_variable_map = {
-		variable = cm_fa_ind_bt_anchor
-		save_scope_as = cmf_log_bt
+		variable = cm_fa_ind_gd_anchor
+		save_scope_as = cm_fa_probe_good
 		# The iterator makes the key the scope, so the map reads have to name their owner.
-		set_local_variable = { name = cm_fa_ianc_dbg value = "scope:cm_fa_probe_country.variable_map(cm_fa_ind_bt_anchor|scope:cmf_log_bt)" }
+		set_local_variable = { name = cm_fa_ianc_dbg value = "scope:cm_fa_probe_country.variable_map(cm_fa_ind_gd_anchor|scope:cm_fa_probe_good)" }
 		set_local_variable = { name = cm_fa_ibar_dbg value = local_var:cm_fa_ianc_dbg }
 		if = {
 			limit = { local_var:cm_fa_margin_f > 0 }
@@ -625,7 +657,8 @@ cm_fa_ind_anchor_probe = {
 		}
 		change_local_variable = { name = cm_fa_ianc_dbg multiply = -1 }
 		change_local_variable = { name = cm_fa_ibar_dbg multiply = -1 }
-		"scope:cm_fa_probe_country.variable_map(cm_fa_ind_bt_loc|scope:cmf_log_bt)" = { save_scope_as = cmf_log_loc }
+		"scope:cm_fa_probe_country.variable_map(cm_fa_ind_gd_bt|scope:cm_fa_probe_good)" = { save_scope_as = cmf_log_bt }
+		"scope:cm_fa_probe_country.variable_map(cm_fa_ind_gd_loc|scope:cm_fa_probe_good)" = { save_scope_as = cmf_log_loc }
 		scope:cm_fa_probe_country = {
 			cm_dbg_log_bld = { cat = industry
 				action = cm_log_ind_anchor
@@ -708,14 +741,14 @@ cm_fa_pick_best_build_item = {
 	}
 	save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_fa_b_costs|scope:cm_fa_pick_type)" }
 	save_temporary_scope_value_as = { name = cm_fa_pick_score value = "variable_map(cm_fa_b_scores|scope:cm_fa_pick_type)" }
-	cm_fa_ind_bt_bar = yes
+	cm_fa_ind_gd_bar = yes
 	market = { save_temporary_scope_as = cm_market }
 	if = {
 		limit = {
 			# No cost key means the pick came back empty or the engine blocked the build at scoring.
 			has_variable_map = cm_fa_b_costs
 			is_key_in_variable_map = { name = cm_fa_b_costs target = scope:cm_fa_pick_type }
-			scope:cm_fa_pick_score >= { value = local_var:cm_fa_bt_bar }
+			scope:cm_fa_pick_score >= { value = local_var:cm_fa_gd_bar }
 			# Approved by another feature this cycle: consume silently.
 			NOT = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } }
 		}
@@ -823,20 +856,20 @@ cm_fa_pick_best_upgrade_item = {
 		}
 		scope:cm_fa_pick_type = { save_scope_as = cm_old_building_type }
 		"variable_map(cm_fa_u_new_types|scope:cm_fa_pick_type)" = { save_scope_as = cm_new_building_type }
-		# The replacement is what gets built, so it shares its tier's bar with from-zero builds.
+		# The replacement is what gets built, so its own good is what the bar comes from.
 		scope:cm_new_building_type = {
 			save_scope_as = cm_building_type
 			save_temporary_scope_as = cm_fa_anchor_type
 		}
 		save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_fa_u_costs|scope:cm_fa_pick_type)" }
 		save_temporary_scope_value_as = { name = cm_fa_pick_score value = "variable_map(cm_fa_u_scores|scope:cm_fa_pick_type)" }
-		cm_fa_ind_bt_bar = yes
+		cm_fa_ind_gd_bar = yes
 		market = { save_temporary_scope_as = cm_market }
 		if = {
-			# Outside its tier's bar, approved, or already converting via another feature:
+			# Outside its good's bar, approved, or already converting via another feature:
 			# consume silently.
 			limit = {
-				scope:cm_fa_pick_score >= { value = local_var:cm_fa_bt_bar }
+				scope:cm_fa_pick_score >= { value = local_var:cm_fa_gd_bar }
 				NOT = { is_target_in_variable_list = { name = cm_q_approved_upgrade_types target = scope:cm_old_building_type } }
 				NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_old_building_type } }
 			}
