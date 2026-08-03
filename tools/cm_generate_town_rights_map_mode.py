@@ -126,6 +126,8 @@ PRODUCTION_METHODS_SUBDIR = os.path.join(
     "in_game", "common", "production_methods")
 GOODS_SUBDIR = os.path.join("in_game", "common", "goods")
 ADVANCES_SUBDIR = os.path.join("in_game", "common", "advances")
+COUNTRY_AUTO_MODIFIERS = os.path.join(
+    "in_game", "common", "auto_modifiers", "country.txt")
 NAMED_COLORS_SUBDIRS = [
     os.path.join("main_menu", "common", "named_colors"),
     os.path.join("in_game", "common", "named_colors"),
@@ -258,6 +260,13 @@ OPEN_SLOT_STRIPE = "rgb { 0 100 255 }"
 FULL_NO_SPEC_STRIPE = "rgb { 170 70 210 }"
 
 OUTPUT_MODIFIER = re.compile(r"^local_([a-z0-9_]+)_output_modifier$")
+# The Local Access to Raw Materials bonus, the unit a location output modifier
+# is converted into. Only its durable sources are collected: the country base
+# and the advances granting it. The two parliament issue modifiers
+# (main_menu/common/static_modifiers/country.txt) and the event-applied
+# local_quality_standards_modifier (.../location.txt) are temporary, so leaving
+# static modifiers unparsed is what keeps them out.
+RGO_IMPACT_MODIFIER = "raw_material_in_province_impact"
 ASSIGN_BLOCK = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*=\s*\{")
 ASSIGN_SCALAR = re.compile(
     r"^\s*([A-Za-z_][A-Za-z0-9_.:]*)\s*=\s*([^\s{}]+)\s*$", re.MULTILINE)
@@ -426,23 +435,47 @@ COLOR_INLINE = re.compile(
     r"^\s*color\s*=\s*(rgb|hsv|hsv360)\s*\{([^}]*)\}", re.MULTILINE)
 
 
+def right_output_modifiers(body, goods_categories):
+    """Yield (good, value_text) for each local_<good>_output_modifier in a town
+    right's location_modifier block, in order of appearance."""
+    for child, inner, _ in child_blocks(body):
+        if child != "location_modifier":
+            continue
+        for key, value in scalar_assignments(inner):
+            match = OUTPUT_MODIFIER.match(key)
+            if match and match.group(1) in goods_categories:
+                yield match.group(1), value
+
+
 def parse_town_rights(town_rights_dir, goods_categories):
-    """Return {right: {goods, color_token, color_inline, file, line}}."""
+    """Return ({royal right: {goods, color_token, color_inline, file, line}},
+    {good: [(right, value, ref)]}, warnings). The second index covers EVERY
+    town right, not just the royal ones, because a granted right raises the
+    same local_<good>_output_modifier the location bonus term reads."""
     rights = {}
+    boosts = {}
+    warnings = []
     for name, path in iter_db_files(town_rights_dir):
         rel = os.path.join(TOWN_RIGHTS_SUBDIR, name).replace(os.sep, "/")
         text = read_pdx(path)
         for right, body, line in child_blocks(text):
+            boosted = []
+            for good, value in right_output_modifiers(body, goods_categories):
+                boosted.append(good)
+                try:
+                    amount = float(value)
+                except ValueError:
+                    warnings.append(
+                        f"{right} ({rel}:{line}) grants "
+                        f"local_{good}_output_modifier = {value}, which is not "
+                        f"a number; it is left out of the location bonus "
+                        f"correction and a location holding that right scores "
+                        f"its own bonus")
+                    continue
+                boosts.setdefault(good, []).append(
+                    (right, amount, f"{rel}:{line}"))
             if right not in ROYAL_RIGHTS:
                 continue
-            boosted = []
-            for child, inner, _ in child_blocks(body):
-                if child != "location_modifier":
-                    continue
-                for key, _value in scalar_assignments(inner):
-                    match = OUTPUT_MODIFIER.match(key)
-                    if match and match.group(1) in goods_categories:
-                        boosted.append(match.group(1))
             color_token = None
             for key, value in scalar_assignments(body):
                 if key == "color":
@@ -456,7 +489,7 @@ def parse_town_rights(town_rights_dir, goods_categories):
                 "file": rel,
                 "line": line,
             }
-    return rights
+    return rights, boosts, warnings
 
 
 def parse_pm_body(pm_body, goods_categories):
@@ -571,6 +604,7 @@ def parse_advances(game_dir):
             requires = []
             unlock_pms = []
             unlock_buildings = []
+            rgo_impact = None
             for key, value in scalar_assignments(body):
                 if key == "requires":
                     requires.append(value)
@@ -580,14 +614,34 @@ def parse_advances(game_dir):
                     unlock_buildings.append(value)
                 elif key in ("government", "country_type"):
                     tokens.add(key)
+                elif key == RGO_IMPACT_MODIFIER:
+                    rgo_impact = value
             advances[adv] = {
                 "gate_tokens": sorted(tokens),
                 "requires": requires,
                 "unlock_pms": unlock_pms,
                 "unlock_buildings": unlock_buildings,
+                "rgo_impact": rgo_impact,
                 "ref": f"{rel}:{line}",
             }
     return advances
+
+
+def parse_base_rgo_impact(game_dir):
+    """Return (value, ref) for the raw_material_in_province_impact every country
+    carries from the country auto modifiers."""
+    rel = COUNTRY_AUTO_MODIFIERS.replace(os.sep, "/")
+    pattern = re.compile(rf"^\s*{RGO_IMPACT_MODIFIER}\s*=\s*([0-9.]+)\s*$")
+    found = []
+    text = read_pdx(os.path.join(game_dir, COUNTRY_AUTO_MODIFIERS))
+    for idx, line in enumerate(text.splitlines(), start=1):
+        match = pattern.match(line)
+        if match:
+            found.append((float(match.group(1)), f"{rel}:{idx}"))
+    if len(found) != 1:
+        sys.exit(f"Expected exactly one {RGO_IMPACT_MODIFIER} in {rel}, "
+                 f"found {len(found)}")
+    return found[0]
 
 
 def resolve_advance_restrictions(advances):
@@ -946,8 +1000,53 @@ def greater_trigger(x, y, aliases):
     return f"{name} {'> 0' if positive else '< 0'}"
 
 
+def emit_rgo_unit(base_rgo, rgo_advances):
+    """The Local Access to Raw Materials bonus a fully covered province grants,
+    the unit a location output modifier converts into."""
+    base_value, base_ref = base_rgo
+    lines = [
+        "# One coverage unit in Local Access to Raw Materials terms: the bonus a",
+        "# fully covered province grants. Only the durable sources count, so a",
+        "# parliament issue's temporary share cannot shrink a location's bonus, and",
+        "# the country base floors it on an unowned location. Root is the location.",
+        "cm_trmm_rgo_unit = {",
+        f"\t# {base_ref}",
+        f"\tvalue = {fmt_amount(base_value)}",
+    ]
+    for advance, value, ref in rgo_advances:
+        lines.append("\tif = {")
+        lines.append(f"\t\t# {ref}")
+        lines.append("\t\tlimit = {")
+        lines.append("\t\t\texists = owner")
+        lines.append(f"\t\t\towner = {{ has_advance = {advance} }}")
+        lines.append("\t\t}")
+        lines.append(f"\t\tadd = {fmt_amount(value)}")
+        lines.append("\t}")
+    lines.append("}")
+    return lines
+
+
+def emit_location_bonus(good, boosts):
+    """The location's own output bonus for one good, in coverage units."""
+    lines = [
+        f"cm_trmm_lm_{good} = {{",
+        f"\tvalue = modifier:local_{good}_output_modifier",
+    ]
+    for right, value, ref in boosts.get(good, []):
+        lines.append("\tif = {")
+        lines.append(f"\t\t# {right}: {ref}")
+        lines.append(
+            f"\t\tlimit = {{ has_town_rights = town_rights_type:{right} }}")
+        lines.append(f"\t\tsubtract = {fmt_amount(value)}")
+        lines.append("\t}")
+    lines.append("\tdivide = cm_trmm_rgo_unit")
+    lines.append("\tmin = 0")
+    lines.append("}")
+    return lines
+
+
 def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
-                       relevant):
+                       relevant, boosts, base_rgo, rgo_advances):
     lines = [GENERATED_HEADER]
     lines.append(
         "# Province-definition-scoped option values consumed by\n"
@@ -957,7 +1056,9 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
         "# Options from a building with a location_potential pool separately and only\n"
         "# count on locations where that gate holds.\n"
         "# Readers are only evaluated on locations the recompute pass marked\n"
-        "# (has_variable cm_trmm_best_idx).\n")
+        "# (has_variable cm_trmm_best_idx).\n"
+        "# Each reader closes with its location output bonus, added last so the dyes\n"
+        "# and wine RGO averaging cannot halve it.\n")
 
     for good in boosted_goods:
         k = 0
@@ -975,6 +1076,18 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
                     lines.append("\t}")
                 lines.append("}")
         lines.append("")
+
+    lines.extend(emit_rgo_unit(base_rgo, rgo_advances))
+    lines.append("")
+    lines.append(
+        "# Each location's own output bonus for a boosted good, in coverage units,\n"
+        "# so a tradition like Damascus Bladesmithing scores as the extra producers it\n"
+        "# is worth. A town right granted here is subtracted, or it would raise its own\n"
+        "# fit. Floored because a penalty modifier reads negative, and a negative right\n"
+        "# score breaks the cm_trmm_enc_* encoding.")
+    for good in boosted_goods:
+        lines.extend(emit_location_bonus(good, boosts))
+    lines.append("")
 
     for good in boosted_goods:
         groups = group_options(options[good])
@@ -1013,6 +1126,7 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
             lines.append("\t\tadd = 1")
             lines.append("\t\tdivide = 2")
             lines.append("\t}")
+        lines.append(f"\tadd = cm_trmm_lm_{good}")
         lines.append("}")
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
@@ -1273,17 +1387,30 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
     return "\n".join(lines) + "\n"
 
 
-def emit_triggers(relevant_goods):
+def emit_triggers(relevant_goods, boosted_goods):
     lines = [GENERATED_HEADER]
     lines.append(
         "# Province definition trigger. True when the province definition produces any\n"
         "# raw material consumed by a worth-using production method of a building a\n"
-        "# royal specialization town right boosts. Gates the recompute pass.")
+        "# royal specialization town right boosts.")
     lines.append("cm_trmm_province_definition_has_any_input = {")
     lines.append("\tany_location_in_province_definition = {")
     lines.append("\t\tOR = {")
     for good in relevant_goods:
         lines.append(f"\t\t\traw_material ?= goods:{good}")
+    lines.append("\t\t}")
+    lines.append("\t}")
+    lines.append("}")
+    lines.append("")
+    lines.append(
+        "# Province definition trigger. True when a location in the definition carries an\n"
+        "# output bonus for a boosted good, so a location scoring on a tradition modifier\n"
+        "# alone is still marked by the recompute pass.")
+    lines.append("cm_trmm_province_definition_has_any_output_bonus = {")
+    lines.append("\tany_location_in_province_definition = {")
+    lines.append("\t\tOR = {")
+    for good in boosted_goods:
+        lines.append(f"\t\t\tmodifier:local_{good}_output_modifier > 0")
     lines.append("\t\t}")
     lines.append("\t}")
     lines.append("}")
@@ -1304,7 +1431,12 @@ def emit_effects(options, aliases, boosted_goods, relevant, expand_bases,
     lines.append("# Province definition scope.")
     lines.append("cm_trmm_recompute_province_definition = {")
     lines.append("\tif = {")
-    lines.append("\t\tlimit = { cm_trmm_province_definition_has_any_input = yes }")
+    lines.append("\t\tlimit = {")
+    lines.append("\t\t\tOR = {")
+    lines.append("\t\t\t\tcm_trmm_province_definition_has_any_input = yes")
+    lines.append("\t\t\t\tcm_trmm_province_definition_has_any_output_bonus = yes")
+    lines.append("\t\t\t}")
+    lines.append("\t\t}")
     lines.append(
         "\t\t# First-best scan per group: coverage plus the winning option's index\n"
         "\t\t# for the breakdown chips. Options are never negative and ties keep the\n"
@@ -1585,6 +1717,25 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
         lines.append(f"\t\t\traw_material ?= goods:{good}")
         lines.append("\t\t}")
         lines.append(f"\t\tlocalization_key = cm_trmm_chip_rgo_{good}")
+        lines.append("\t}")
+        lines.append("\ttext = {")
+        lines.append("\t\tlocalization_key = cm_trmm_blank")
+        lines.append("\t\tfallback = yes")
+        lines.append("\t}")
+        lines.append("}")
+
+    lines.append(
+        "# Inline chips on the industry lines: shown where the location's own output\n"
+        "# modifier for the good raises the displayed value above the province's\n"
+        "# coverage, which the breakdown sub-tooltip cannot show (it is province-rooted).")
+    for good in boosted_goods:
+        lines.append(f"cm_trmm_lm_chip_{good} = {{")
+        lines.append("\ttype = location")
+        lines.append("\ttext = {")
+        lines.append("\t\ttrigger = {")
+        lines.append(f"\t\t\tcm_trmm_lm_{good} > 0")
+        lines.append("\t\t}")
+        lines.append(f"\t\tlocalization_key = cm_trmm_chip_lm_{good}")
         lines.append("\t}")
         lines.append("\ttext = {")
         lines.append("\t\tlocalization_key = cm_trmm_blank")
@@ -2158,7 +2309,11 @@ def emit_search_map_modes(rights, aliases, right_colors):
         body.append(f"\t\t\t\tmin_color = {NO_MATCH_COLOR}")
         body.append(f"\t\t\t\t# {right} color: {source}")
         body.append(f"\t\t\t\tmax_color = {color}")
-        body.append(f"\t\t\t\tfactor = {{ value = cm_trmm_right_{alias} }}")
+        body.append("\t\t\t\t# A location output bonus can carry a score past 1.")
+        body.append("\t\t\t\tfactor = {")
+        body.append(f"\t\t\t\t\tvalue = cm_trmm_right_{alias}")
+        body.append("\t\t\t\t\tmax = 1")
+        body.append("\t\t\t\t}")
         body.append("\t\t\t}")
         body.append("\t\t}")
         body.append("\t}")
@@ -2262,6 +2417,7 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
             f"#L [{accessor}.MakeScope.ScriptValue('cm_trmm_cov_{good}')|%1]#!#!")
         if good in self_goods:
             line += f"[{accessor}.Custom('cm_trmm_rgo_chip_{good}')]"
+        line += f"[{accessor}.Custom('cm_trmm_lm_chip_{good}')]"
         return line
 
     slot_calls = "".join(
@@ -2297,7 +2453,8 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
     for good in boosted_goods:
         lines.append(
             f" cm_trmm_ind_line_{good}: \"\\n@{good}! [ShowGoodsName('{good}')]: "
-            f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_cov_{good}')|%1]\"")
+            f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_cov_{good}')|%1]"
+            f"[ROOT.GetLocation.Custom('cm_trmm_lm_chip_{good}')]\"")
     lines.append(" cm_trmm_blank: \"\"")
 
     for good in boosted_goods:
@@ -2348,6 +2505,8 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
             f"\"Using [ShowProductionMethodName('{pm}')]:\"")
     for good in sorted(self_goods):
         lines.append(f" cm_trmm_chip_rgo_{good}: \" #G @{good}! RGO here#!\"")
+    for good in boosted_goods:
+        lines.append(f" cm_trmm_chip_lm_{good}: \" #G output bonus here#!\"")
     lines.append(
         " cm_trmm_why_rgo_note: \"Where this good is the location's own RGO, "
         "the RGO counts as one more fully covered source.\"")
@@ -2719,7 +2878,7 @@ def main():
     if not goods_categories:
         sys.exit("No goods parsed")
 
-    rights = parse_town_rights(
+    rights, boosts, boost_warnings = parse_town_rights(
         os.path.join(game_dir, TOWN_RIGHTS_SUBDIR), goods_categories)
     missing = [r for r in ROYAL_RIGHTS if r not in rights]
     if missing:
@@ -2766,10 +2925,26 @@ def main():
 
     right_colors = resolve_right_colors(rights, game_dir)
 
+    boosts = {good: entries for good, entries in boosts.items()
+              if good in boosted_goods}
+    base_rgo = parse_base_rgo_impact(game_dir)
+    rgo_advances = []
+    for adv, data in sorted(advances.items()):
+        if data["rgo_impact"] is None:
+            continue
+        try:
+            rgo_advances.append((adv, float(data["rgo_impact"]), data["ref"]))
+        except ValueError:
+            boost_warnings.append(
+                f"advance {adv} ({data['ref']}) grants "
+                f"{RGO_IMPACT_MODIFIER} = {data['rgo_impact']}, which is not a "
+                f"number; it is left out of cm_trmm_rgo_unit")
+
     write_output(OUT_SCRIPT_VALUES,
                  emit_script_values(rights, options, aliases, boosted_goods,
-                                    self_goods, relevant))
-    write_output(OUT_TRIGGERS, emit_triggers(relevant))
+                                    self_goods, relevant, boosts, base_rgo,
+                                    rgo_advances))
+    write_output(OUT_TRIGGERS, emit_triggers(relevant, boosted_goods))
     write_output(OUT_EFFECTS,
                  emit_effects(options, aliases, boosted_goods, relevant,
                               expand_bases, rgo_goods))
@@ -2800,6 +2975,18 @@ def main():
         print(f"  grant-expand {right}: {', '.join(parts)}")
     print(f"  relevant raw materials: {', '.join(relevant)}")
     print(f"  RGO-self boosted goods: {', '.join(sorted(self_goods))}")
+    unit_terms = " + ".join(
+        [f"{fmt_amount(base_rgo[0])} base"]
+        + [f"{fmt_amount(value)} {adv}" for adv, value, _ref in rgo_advances])
+    print(f"  coverage unit ({RGO_IMPACT_MODIFIER}): {unit_terms}")
+    for good in boosted_goods:
+        entries = boosts.get(good, [])
+        if entries:
+            names = ", ".join(f"{right} {fmt_amount(value)}"
+                              for right, value, _ref in entries)
+            print(f"  {good} output bonus, granted rights subtracted: {names}")
+        else:
+            print(f"  {good} output bonus, no granting town right")
     total_rows = 0
     for good in boosted_goods:
         for _gi, _gate, _label, _fk, _mo, opts in why_groups(options, good):
@@ -2829,7 +3016,7 @@ def main():
         print(f"  location-gated option groups ({len(gated)}):")
         for entry in gated:
             print(f"    {entry}")
-    for warning in sorted(set(requires_warnings)):
+    for warning in sorted(set(requires_warnings)) + sorted(set(boost_warnings)):
         print(f"  WARNING: {warning}")
     if dangling:
         rel_pm = PRODUCTION_METHODS_SUBDIR.replace(os.sep, "/")

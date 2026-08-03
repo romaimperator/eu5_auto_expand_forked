@@ -9,6 +9,8 @@
 # count on locations where that gate holds.
 # Readers are only evaluated on locations the recompute pass marked
 # (has_variable cm_trmm_best_idx).
+# Each reader closes with its location output bonus, added last so the dyes
+# and wine RGO averaging cannot halve it.
 
 # metalwork_guild_maintenance (tools_guild), in_game/common/building_types/production_tools.txt:24 - iron 0.8333 of 0.8333 total input
 cm_trmm_opt_tools_1 = {
@@ -934,12 +936,274 @@ cm_trmm_opt_glass_5 = {
 	}
 }
 
+# One coverage unit in Local Access to Raw Materials terms: the bonus a
+# fully covered province grants. Only the durable sources count, so a
+# parliament issue's temporary share cannot shrink a location's bonus, and
+# the country base floors it on an unowned location. Root is the location.
+cm_trmm_rgo_unit = {
+	# in_game/common/auto_modifiers/country.txt:101
+	value = 0.1
+	if = {
+		# in_game/common/advances/0_age_of_discovery.txt:580
+		limit = {
+			exists = owner
+			owner = { has_advance = rgo_logistics_discovery }
+		}
+		add = 0.025
+	}
+	if = {
+		# in_game/common/advances/4_choices_mil.txt:270
+		limit = {
+			exists = owner
+			owner = { has_advance = rgo_logistics_mil_choice }
+		}
+		add = 0.025
+	}
+}
+
+# Each location's own output bonus for a boosted good, in coverage units,
+# so a tradition like Damascus Bladesmithing scores as the extra producers it
+# is worth. A town right granted here is subtracted, or it would raise its own
+# fit. Floored because a penalty modifier reads negative, and a negative right
+# score breaks the cm_trmm_enc_* encoding.
+cm_trmm_lm_tools = {
+	value = modifier:local_tools_output_modifier
+	if = {
+		# royal_tooling_rights: in_game/common/town_rights/01_discovery.txt:7
+		limit = { has_town_rights = town_rights_type:royal_tooling_rights }
+		subtract = 0.3
+	}
+	if = {
+		# scandinavian_bergslag_privileges: in_game/common/town_rights/11_scandinavian.txt:25
+		limit = { has_town_rights = town_rights_type:scandinavian_bergslag_privileges }
+		subtract = 0.1
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_jewelry = {
+	value = modifier:local_jewelry_output_modifier
+	if = {
+		# royal_jewelry_rights: in_game/common/town_rights/01_discovery.txt:17
+		limit = { has_town_rights = town_rights_type:royal_jewelry_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_naval_supplies = {
+	value = modifier:local_naval_supplies_output_modifier
+	if = {
+		# royal_naval_rights: in_game/common/town_rights/01_discovery.txt:28
+		limit = { has_town_rights = town_rights_type:royal_naval_rights }
+		subtract = 0.3
+	}
+	if = {
+		# scandinavian_tar_privileges: in_game/common/town_rights/11_scandinavian.txt:54
+		limit = { has_town_rights = town_rights_type:scandinavian_tar_privileges }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_tar = {
+	value = modifier:local_tar_output_modifier
+	if = {
+		# royal_naval_rights: in_game/common/town_rights/01_discovery.txt:28
+		limit = { has_town_rights = town_rights_type:royal_naval_rights }
+		subtract = 0.3
+	}
+	if = {
+		# scandinavian_tar_privileges: in_game/common/town_rights/11_scandinavian.txt:54
+		limit = { has_town_rights = town_rights_type:scandinavian_tar_privileges }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_cloth = {
+	value = modifier:local_cloth_output_modifier
+	if = {
+		# royal_textile_rights: in_game/common/town_rights/01_discovery.txt:50
+		limit = { has_town_rights = town_rights_type:royal_textile_rights }
+		subtract = 0.2
+	}
+	if = {
+		# constantinopolitan_silk_monopoly_rights: in_game/common/town_rights/byzantine_greek_roman.txt:41
+		limit = { has_town_rights = town_rights_type:constantinopolitan_silk_monopoly_rights }
+		subtract = 0.25
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_fine_cloth = {
+	value = modifier:local_fine_cloth_output_modifier
+	if = {
+		# royal_textile_rights: in_game/common/town_rights/01_discovery.txt:50
+		limit = { has_town_rights = town_rights_type:royal_textile_rights }
+		subtract = 0.2
+	}
+	if = {
+		# constantinopolitan_silk_monopoly_rights: in_game/common/town_rights/byzantine_greek_roman.txt:41
+		limit = { has_town_rights = town_rights_type:constantinopolitan_silk_monopoly_rights }
+		subtract = 0.1
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_dyes = {
+	value = modifier:local_dyes_output_modifier
+	if = {
+		# royal_textile_rights: in_game/common/town_rights/01_discovery.txt:50
+		limit = { has_town_rights = town_rights_type:royal_textile_rights }
+		subtract = 0.2
+	}
+	if = {
+		# royal_book_rights: in_game/common/town_rights/01_discovery.txt:79
+		limit = { has_town_rights = town_rights_type:royal_book_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_weaponry = {
+	value = modifier:local_weaponry_output_modifier
+	if = {
+		# royal_weaponry_rights: in_game/common/town_rights/01_discovery.txt:67
+		limit = { has_town_rights = town_rights_type:royal_weaponry_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_firearms = {
+	value = modifier:local_firearms_output_modifier
+	if = {
+		# royal_weaponry_rights: in_game/common/town_rights/01_discovery.txt:67
+		limit = { has_town_rights = town_rights_type:royal_weaponry_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_cannons = {
+	value = modifier:local_cannons_output_modifier
+	if = {
+		# royal_weaponry_rights: in_game/common/town_rights/01_discovery.txt:67
+		limit = { has_town_rights = town_rights_type:royal_weaponry_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_paper = {
+	value = modifier:local_paper_output_modifier
+	if = {
+		# royal_book_rights: in_game/common/town_rights/01_discovery.txt:79
+		limit = { has_town_rights = town_rights_type:royal_book_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_books = {
+	value = modifier:local_books_output_modifier
+	if = {
+		# royal_book_rights: in_game/common/town_rights/01_discovery.txt:79
+		limit = { has_town_rights = town_rights_type:royal_book_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_furniture = {
+	value = modifier:local_furniture_output_modifier
+	if = {
+		# royal_artisan_rights: in_game/common/town_rights/01_discovery.txt:91
+		limit = { has_town_rights = town_rights_type:royal_artisan_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_pottery = {
+	value = modifier:local_pottery_output_modifier
+	if = {
+		# royal_artisan_rights: in_game/common/town_rights/01_discovery.txt:91
+		limit = { has_town_rights = town_rights_type:royal_artisan_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_leather = {
+	value = modifier:local_leather_output_modifier
+	if = {
+		# royal_artisan_rights: in_game/common/town_rights/01_discovery.txt:91
+		limit = { has_town_rights = town_rights_type:royal_artisan_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_liquor = {
+	value = modifier:local_liquor_output_modifier
+	if = {
+		# royal_brewing_rights: in_game/common/town_rights/01_discovery.txt:103
+		limit = { has_town_rights = town_rights_type:royal_brewing_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_beer = {
+	value = modifier:local_beer_output_modifier
+	if = {
+		# royal_brewing_rights: in_game/common/town_rights/01_discovery.txt:103
+		limit = { has_town_rights = town_rights_type:royal_brewing_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_wine = {
+	value = modifier:local_wine_output_modifier
+	if = {
+		# royal_brewing_rights: in_game/common/town_rights/01_discovery.txt:103
+		limit = { has_town_rights = town_rights_type:royal_brewing_rights }
+		subtract = 0.2
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_masonry = {
+	value = modifier:local_masonry_output_modifier
+	if = {
+		# royal_masonry_rights: in_game/common/town_rights/01_discovery.txt:115
+		limit = { has_town_rights = town_rights_type:royal_masonry_rights }
+		subtract = 0.25
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+cm_trmm_lm_glass = {
+	value = modifier:local_glass_output_modifier
+	if = {
+		# royal_masonry_rights: in_game/common/town_rights/01_discovery.txt:115
+		limit = { has_town_rights = town_rights_type:royal_masonry_rights }
+		subtract = 0.25
+	}
+	divide = cm_trmm_rgo_unit
+	min = 0
+}
+
 cm_trmm_cov_tools = {
 	value = 0
 	if = {
 		limit = { province = { has_variable = cm_trmm_cov_tools } }
 		province = { add = var:cm_trmm_cov_tools }
 	}
+	add = cm_trmm_lm_tools
 }
 cm_trmm_cov_jewelry = {
 	value = 0
@@ -947,6 +1211,7 @@ cm_trmm_cov_jewelry = {
 		limit = { province = { has_variable = cm_trmm_cov_jewelry } }
 		province = { add = var:cm_trmm_cov_jewelry }
 	}
+	add = cm_trmm_lm_jewelry
 }
 cm_trmm_cov_naval_supplies = {
 	value = 0
@@ -954,6 +1219,7 @@ cm_trmm_cov_naval_supplies = {
 		limit = { province = { has_variable = cm_trmm_cov_naval_supplies } }
 		province = { add = var:cm_trmm_cov_naval_supplies }
 	}
+	add = cm_trmm_lm_naval_supplies
 }
 cm_trmm_cov_tar = {
 	value = 0
@@ -962,6 +1228,7 @@ cm_trmm_cov_tar = {
 		limit = { OR = { vegetation = woods vegetation = forest vegetation = jungle raw_material ?= goods:lumber } province = { has_variable = cm_trmm_cov_tar } }
 		province = { add = var:cm_trmm_cov_tar }
 	}
+	add = cm_trmm_lm_tar
 }
 cm_trmm_cov_cloth = {
 	value = 0
@@ -969,6 +1236,7 @@ cm_trmm_cov_cloth = {
 		limit = { province = { has_variable = cm_trmm_cov_cloth } }
 		province = { add = var:cm_trmm_cov_cloth }
 	}
+	add = cm_trmm_lm_cloth
 }
 cm_trmm_cov_fine_cloth = {
 	value = 0
@@ -976,6 +1244,7 @@ cm_trmm_cov_fine_cloth = {
 		limit = { province = { has_variable = cm_trmm_cov_fine_cloth } }
 		province = { add = var:cm_trmm_cov_fine_cloth }
 	}
+	add = cm_trmm_lm_fine_cloth
 }
 cm_trmm_cov_dyes = {
 	value = 0
@@ -990,6 +1259,7 @@ cm_trmm_cov_dyes = {
 		add = 1
 		divide = 2
 	}
+	add = cm_trmm_lm_dyes
 }
 cm_trmm_cov_weaponry = {
 	value = 0
@@ -997,6 +1267,7 @@ cm_trmm_cov_weaponry = {
 		limit = { province = { has_variable = cm_trmm_cov_weaponry } }
 		province = { add = var:cm_trmm_cov_weaponry }
 	}
+	add = cm_trmm_lm_weaponry
 }
 cm_trmm_cov_firearms = {
 	value = 0
@@ -1004,6 +1275,7 @@ cm_trmm_cov_firearms = {
 		limit = { province = { has_variable = cm_trmm_cov_firearms } }
 		province = { add = var:cm_trmm_cov_firearms }
 	}
+	add = cm_trmm_lm_firearms
 }
 cm_trmm_cov_cannons = {
 	value = 0
@@ -1011,6 +1283,7 @@ cm_trmm_cov_cannons = {
 		limit = { province = { has_variable = cm_trmm_cov_cannons } }
 		province = { add = var:cm_trmm_cov_cannons }
 	}
+	add = cm_trmm_lm_cannons
 }
 cm_trmm_cov_paper = {
 	value = 0
@@ -1018,6 +1291,7 @@ cm_trmm_cov_paper = {
 		limit = { province = { has_variable = cm_trmm_cov_paper } }
 		province = { add = var:cm_trmm_cov_paper }
 	}
+	add = cm_trmm_lm_paper
 }
 cm_trmm_cov_books = {
 	value = 0
@@ -1025,6 +1299,7 @@ cm_trmm_cov_books = {
 		limit = { province = { has_variable = cm_trmm_cov_books } }
 		province = { add = var:cm_trmm_cov_books }
 	}
+	add = cm_trmm_lm_books
 }
 cm_trmm_cov_furniture = {
 	value = 0
@@ -1032,6 +1307,7 @@ cm_trmm_cov_furniture = {
 		limit = { province = { has_variable = cm_trmm_cov_furniture } }
 		province = { add = var:cm_trmm_cov_furniture }
 	}
+	add = cm_trmm_lm_furniture
 }
 cm_trmm_cov_pottery = {
 	value = 0
@@ -1039,6 +1315,7 @@ cm_trmm_cov_pottery = {
 		limit = { province = { has_variable = cm_trmm_cov_pottery } }
 		province = { add = var:cm_trmm_cov_pottery }
 	}
+	add = cm_trmm_lm_pottery
 }
 cm_trmm_cov_leather = {
 	value = 0
@@ -1046,6 +1323,7 @@ cm_trmm_cov_leather = {
 		limit = { province = { has_variable = cm_trmm_cov_leather } }
 		province = { add = var:cm_trmm_cov_leather }
 	}
+	add = cm_trmm_lm_leather
 }
 cm_trmm_cov_liquor = {
 	value = 0
@@ -1053,6 +1331,7 @@ cm_trmm_cov_liquor = {
 		limit = { province = { has_variable = cm_trmm_cov_liquor } }
 		province = { add = var:cm_trmm_cov_liquor }
 	}
+	add = cm_trmm_lm_liquor
 }
 cm_trmm_cov_beer = {
 	value = 0
@@ -1060,6 +1339,7 @@ cm_trmm_cov_beer = {
 		limit = { province = { has_variable = cm_trmm_cov_beer } }
 		province = { add = var:cm_trmm_cov_beer }
 	}
+	add = cm_trmm_lm_beer
 }
 cm_trmm_cov_wine = {
 	value = 0
@@ -1074,6 +1354,7 @@ cm_trmm_cov_wine = {
 		add = 1
 		divide = 2
 	}
+	add = cm_trmm_lm_wine
 }
 cm_trmm_cov_masonry = {
 	value = 0
@@ -1081,6 +1362,7 @@ cm_trmm_cov_masonry = {
 		limit = { province = { has_variable = cm_trmm_cov_masonry } }
 		province = { add = var:cm_trmm_cov_masonry }
 	}
+	add = cm_trmm_lm_masonry
 }
 cm_trmm_covp_glass_g2 = {
 	value = 0
@@ -1103,6 +1385,7 @@ cm_trmm_cov_glass = {
 			add = cm_trmm_covp_glass_g2
 		}
 	}
+	add = cm_trmm_lm_glass
 }
 # royal_tooling_rights: in_game/common/town_rights/01_discovery.txt:7
 cm_trmm_right_tooling = {
