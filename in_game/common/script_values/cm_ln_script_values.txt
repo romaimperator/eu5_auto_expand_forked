@@ -12,6 +12,21 @@ cm_ln_reserve_value = {
 	}
 }
 
+# Country scope. The Industry payback cap, one step higher for each multiple of its tax base a
+# country's treasury holds, so gold loosens the bar rather than piling up.
+# Re-seeded monthly, so it falls back as the treasury drains.
+cm_ln_industry_min_roi_value = {
+	value = 20 # The fa_industry_min_roi registration default: cm_cmm_effects.txt:863
+	if = { limit = { gold >= { value = country_tax_base multiply = 5 } } add = 10 }
+	if = { limit = { gold >= { value = country_tax_base multiply = 10 } } add = 10 }
+	if = { limit = { gold >= { value = country_tax_base multiply = 15 } } add = 10 }
+	if = { limit = { gold >= { value = country_tax_base multiply = 20 } } add = 10 }
+	if = { limit = { gold >= { value = country_tax_base multiply = 25 } } add = 10 }
+	if = { limit = { gold >= { value = country_tax_base multiply = 30 } } add = 10 }
+	if = { limit = { gold >= { value = country_tax_base multiply = 35 } } add = 10 }
+	if = { limit = { gold >= { value = country_tax_base multiply = 40 } } add = 10 }
+}
+
 # Country scope. The gold half of cm_ln_open_charge_move, capped at the treasury so the
 # opening capital move cannot overdraw it.
 cm_ln_open_capital_charge = {

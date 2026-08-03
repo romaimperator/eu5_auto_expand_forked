@@ -121,6 +121,10 @@ cm_fa_budget_probe = {
 	cm_fa_log_balance = { cat = utilities ACTION = cm_log_fa_bal_utilities }
 	cm_fa_log_balance = { cat = military ACTION = cm_log_fa_bal_military }
 	cmf_log_decimal_value = { action = cm_log_fa_bal_total value = local_var:cm_fa_dbg_total }
+	if = {
+		limit = { exists = var:cm_fa_industry_min_roi }
+		cmf_log_value = { action = cm_log_fa_ind_cap value = var:cm_fa_industry_min_roi }
+	}
 	save_temporary_scope_as = cm_country
 	cm_fa_ind_off_slice_best = yes
 	if = {
