@@ -62,10 +62,12 @@ cm_location_deurbanize_target = {
 # Root is the location.
 cm_location_can_deurbanize = {
 	cm_location_deurbanize_target = yes
-	is_capital = no
-	# has_building answers from the moment a level is queued, so a governor merely ordered counts.
-	NOT = { has_building = building_type:local_governor }
-	NOT = { has_building = building_type:naval_governor }
+	# Every standing source, the capital's own 100 included:
+	# main_menu/common/static_modifiers/location.txt:330.
+	NOT = { modifier:local_proximity_source > 0 }
+	# The modifier lands only once a source stands, and has_building answers from the moment a
+	# level is queued, so a governor merely ordered counts.
+	NOT = { cm_location_has_governor = yes }
 	# A lucky nation's reorganization urbanizes its own planned governor sites.
 	NOT = { has_variable = cm_gov_plan_ord }
 }
@@ -88,8 +90,7 @@ cm_location_deurbanize_blocked_by_seat = {
 	NOT = { has_variable = cm_gov_deurb_tried }
 	OR = {
 		is_capital = yes
-		has_building = building_type:local_governor
-		has_building = building_type:naval_governor
+		cm_location_has_governor = yes
 	}
 }
 
