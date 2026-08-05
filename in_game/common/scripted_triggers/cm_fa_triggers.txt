@@ -422,6 +422,21 @@ cm_fa_location_has_food_rgo = {
 	}
 }
 
+# Root is the location, expects scope:cm_country. A location the yearly evaluation may pick,
+# whether to fill a market's coverage or to take a worse pick's place.
+cm_fa_food_candidate_ok = {
+	owner ?= scope:cm_country
+	NOT = { integration_level = conquered }
+	cm_fa_location_has_proximity = yes
+	location_rank = location_rank:rural_settlement
+	cm_fa_location_has_food_rgo = yes
+	NOT = { cm_fa_food_location_effectively_active = yes }
+	# The player said no here.
+	NOT = { exists = var:cm_auto_food_location_excluded }
+	cm_check_location_meets_min_market_access = yes
+	cm_location_food_potential >= cm_fa_food_min_potential_value
+}
+
 # Root is the location, expects scope:cm_country. The lenient expandability test: a
 # location waiting on pop promotion (the *_or_will_be checks inside the buildable chain)
 # or on a level under construction still counts as able to expand; only a genuine pop

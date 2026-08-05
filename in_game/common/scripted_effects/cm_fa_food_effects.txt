@@ -1,8 +1,12 @@
 ﻿# Full-automation Food: samples food supply against demand monthly in every market whose
 # center the country owns, once a year enables auto-food on the best food-potential locations
 # in those markets whose median month still fell short, and stages the system-picked locations
-# through the food option engine under the food pool. System picks never turn off except when
-# the location stops being a rural settlement, leaves the country, or loses the market center.
+# through the food option engine under the food pool. System picks turn off when the location
+# stops being a rural settlement, leaves the country, loses the market center, or a clearly
+# better location takes its place.
+
+# How far above a pick's food potential a candidate must reach to take its place.
+@cm_fa_food_displace_margin = 110
 
 # Samples each covered market's monthly supply/demand ratio into a 7-bucket histogram (the maps
 # cm_fa_food_h1..h7 keyed by market), from which the yearly evaluation reads the median.
@@ -154,30 +158,22 @@ cm_fa_food_yearly_evaluation = {
 					}
 				}
 				if = {
+					limit = { local_var:cm_fa_food_n >= 2 }
+					cm_fa_food_try_relocate = yes
+				}
+				if = {
 					limit = { local_var:cm_fa_food_n < 2 }
 					ordered_location_in_market = {
 						order_by = cm_location_food_potential
 						max = cm_max_guess_at_number_of_locations
 						check_range_bounds = no
-						limit = {
-							owner ?= scope:cm_country
-							NOT = { integration_level = conquered }
-							cm_fa_location_has_proximity = yes
-							location_rank = location_rank:rural_settlement
-							cm_fa_location_has_food_rgo = yes
-							NOT = { cm_fa_food_location_effectively_active = yes }
-							# The player said no here.
-							NOT = { exists = var:cm_auto_food_location_excluded }
-							cm_check_location_meets_min_market_access = yes
-							cm_location_food_potential >= cm_fa_food_min_potential_value
-						}
+						limit = { cm_fa_food_candidate_ok = yes }
 						save_scope_as = cm_fa_cand
 						# The iterator snapshots its limit; the count advances live.
 						if = {
 							limit = { local_var:cm_fa_food_n < 2 }
-							scope:cm_fa_cand = { set_variable = { name = cm_fa_food_marked value = yes } }
-							scope:cm_country = { add_to_variable_list = { name = cm_fa_food_locations target = scope:cm_fa_cand } }
 							change_local_variable = { name = cm_fa_food_n add = 1 }
+							scope:cm_country = { cm_fa_food_mark_pick = { SITE = scope:cm_fa_cand } }
 						}
 					}
 				}
@@ -190,6 +186,89 @@ cm_fa_food_yearly_evaluation = {
 		clear_variable_map = cm_fa_food_h5
 		clear_variable_map = cm_fa_food_h6
 		clear_variable_map = cm_fa_food_h7
+	}
+}
+
+# Enables the full-automation food system on a location.
+# Root is the country. $SITE$ = the location.
+cm_fa_food_mark_pick = {
+	$SITE$ = {
+		set_variable = { name = cm_fa_food_marked value = yes }
+		save_scope_as = cmf_log_loc
+		save_temporary_scope_value_as = { name = cm_fa_food_dbg_pot value = cm_location_food_potential }
+	}
+	add_to_variable_list = { name = cm_fa_food_locations target = $SITE$ }
+	cm_dbg_log_loc = {
+		cat = food
+		action = cm_log_food_marked
+		arg1 = cm_log_food_potential
+		value = scope:cm_fa_food_dbg_pot
+	}
+}
+
+# Takes a location back out of the full-automation food system. Food buildings and RGO levels
+# already built there stay standing.
+# Root is the country. $SITE$ = the location.
+cm_fa_food_drop_pick = {
+	$SITE$ = { remove_variable = cm_fa_food_marked }
+	remove_list_variable = { name = cm_fa_food_locations target = $SITE$ }
+}
+
+# Hands the market's worst pick over to a clearly better location, in a market whose coverage
+# is already met so the yearly fill would never reach that location on its own. A pick with
+# nothing left to build is left where it is: it draws nothing, and the coverage count already
+# passes over it. Root is the market, expects scopes: country, fa_market.
+cm_fa_food_try_relocate = {
+	# Under any real food potential, so it doubles as the found-one test and a market that
+	# matches nothing cannot read the previous market's scope.
+	set_local_variable = { name = cm_fa_sw_chal value = -1 }
+	ordered_location_in_market = {
+		order_by = cm_location_food_potential
+		position = 0
+		check_range_bounds = no
+		limit = { cm_fa_food_candidate_ok = yes }
+		save_scope_as = cm_fa_sw_to
+		set_local_variable = { name = cm_fa_sw_chal value = cm_location_food_potential }
+	}
+	set_local_variable = { name = cm_fa_sw_inc value = -1 }
+	scope:cm_country = {
+		ordered_in_list = {
+			variable = cm_fa_food_locations
+			order_by = cm_fa_food_potential_inverted
+			position = 0
+			check_range_bounds = no
+			limit = {
+				market = { this = scope:cm_fa_market }
+				owner ?= scope:cm_country
+				location_rank = location_rank:rural_settlement
+				cm_fa_food_location_counts_as_expandable = yes
+			}
+			save_scope_as = cm_fa_sw_from
+			set_local_variable = { name = cm_fa_sw_inc value = cm_location_food_potential }
+		}
+	}
+	if = {
+		limit = {
+			local_var:cm_fa_sw_chal >= 0
+			local_var:cm_fa_sw_inc >= 0
+		}
+		set_local_variable = { name = cm_fa_sw_bar value = local_var:cm_fa_sw_inc }
+		change_local_variable = { name = cm_fa_sw_bar multiply = @cm_fa_food_displace_margin }
+		change_local_variable = { name = cm_fa_sw_bar divide = 100 }
+		if = {
+			limit = { local_var:cm_fa_sw_chal >= local_var:cm_fa_sw_bar }
+			scope:cm_fa_sw_from = { save_scope_as = cmf_log_loc }
+			scope:cm_country = {
+				cm_dbg_log_loc = {
+					cat = food
+					action = cm_log_food_disabled
+					arg1 = cm_log_food_potential
+					value = local_var:cm_fa_sw_inc
+				}
+				cm_fa_food_drop_pick = { SITE = scope:cm_fa_sw_from }
+				cm_fa_food_mark_pick = { SITE = scope:cm_fa_sw_to }
+			}
+		}
 	}
 }
 
@@ -278,12 +357,10 @@ cm_fa_food_cleanup = {
 			scope:cm_fa_chk_country = { remove_list_variable = { name = cm_fa_food_locations target = scope:cm_fa_chk } }
 		} else_if = {
 			limit = { scope:cm_fa_chk = { NOT = { location_rank = location_rank:rural_settlement } } }
-			scope:cm_fa_chk = { remove_variable = cm_fa_food_marked }
-			scope:cm_fa_chk_country = { remove_list_variable = { name = cm_fa_food_locations target = scope:cm_fa_chk } }
+			scope:cm_fa_chk_country = { cm_fa_food_drop_pick = { SITE = scope:cm_fa_chk } }
 		} else_if = {
 			limit = { scope:cm_fa_chk = { NOT = { market = { location = { owner ?= scope:cm_fa_chk_country } } } } }
-			scope:cm_fa_chk = { remove_variable = cm_fa_food_marked }
-			scope:cm_fa_chk_country = { remove_list_variable = { name = cm_fa_food_locations target = scope:cm_fa_chk } }
+			scope:cm_fa_chk_country = { cm_fa_food_drop_pick = { SITE = scope:cm_fa_chk } }
 		}
 	}
 }
