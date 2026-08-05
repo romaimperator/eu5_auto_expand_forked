@@ -17,6 +17,30 @@ cm_gov_site_is_naval = {
 	is_port = yes
 }
 
+# Root is the location. local_governor's allow refuses a site holding a seljuk_mint:
+# in_game/common/building_types/capital_buildings.txt:634-637.
+cm_gov_site_blocks_land_governor = {
+	has_building = building_type:seljuk_mint
+}
+
+# Root is the location. Whether either vanilla governor type could ever stand here, whatever gets
+# built first: the land type rides a road to the capital, which needs the land or strait connection
+# (in_game/common/building_types/capital_buildings.txt:641), and refuses a blocked site; the naval
+# type takes the port instead and wants that same connection absent (:799-803). A missing road is
+# left out, since roads can be built.
+cm_gov_site_can_take_governor = {
+	OR = {
+		AND = {
+			is_connected_to_through_realm = owner.capital
+			cm_gov_site_blocks_land_governor = no
+		}
+		AND = {
+			NOT = { is_connected_to_through_realm = owner.capital }
+			is_port = yes
+		}
+	}
+}
+
 # Root is the location. Mirrors both vanilla governor types, waiving the city rank and the road
 # where the plan will build them:
 # in_game/common/building_types/capital_buildings.txt local_governor :607, naval_governor :760.
@@ -50,7 +74,7 @@ cm_gov_site_eligible = {
 		AND = {
 			owner = { var:cm_gov_land_left > 0 }
 			owner.capital != this # location_potential: :642
-			NOT = { has_building = building_type:seljuk_mint } # allow: :634
+			cm_gov_site_blocks_land_governor = no
 			is_connected_to = owner.capital
 			# With no road coming, a land governor needs the one already there:
 			# location_potential has_road_to_capital, :641.

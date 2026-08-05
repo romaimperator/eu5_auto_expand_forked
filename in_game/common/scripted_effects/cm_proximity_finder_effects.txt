@@ -2188,15 +2188,14 @@ cm_pf_score_candidate_pruned = {
 		}
 		set_local_variable = { name = cm_pf_do_g value = 0 }
 	}
-	# Without a land/strait connection to the capital, local_governor's required road to the
-	# capital can never exist, and naval_governor needs the port (both location_potential,
-	# in_game/common/building_types/capital_buildings.txt). A missing road alone never skips
-	# (roads can be built); Exhaustive evaluates everything for mods that lift the rules.
+	# A site neither governor type could ever stand on: no land/strait connection for the land
+	# type's road and no port for the naval type, or a connected site whose land type is refused
+	# by a seljuk_mint while the naval type wants that connection gone. A missing road alone never
+	# skips (roads can be built); Exhaustive evaluates everything for mods that lift the rules.
 	if = {
 		limit = {
 			local_var:cm_pf_do_g = 1
-			NOT = { is_connected_to_through_realm = owner.capital }
-			is_port = no
+			cm_gov_site_can_take_governor = no
 		}
 		set_local_variable = { name = cm_pf_do_g value = 0 }
 		set_local_variable = { name = cm_pf_bskip_g value = 1 }
@@ -2447,10 +2446,7 @@ cm_pf_phase_sample = {
 						}
 					}
 					NOT = { has_variable = cm_gf_nogain }
-					OR = {
-						is_connected_to_through_realm = owner.capital
-						is_port = yes
-					}
+					cm_gov_site_can_take_governor = yes
 				}
 			}
 			order_by = { value = var:cm_pf_ub_ord }
@@ -2477,10 +2473,7 @@ cm_pf_phase_sample = {
 				has_variable = cm_pf_sx
 				has_variable = cm_pf_cl_g
 				NOT = { has_variable = cm_gf_nogain }
-				OR = {
-					is_connected_to_through_realm = owner.capital
-					is_port = yes
-				}
+				cm_gov_site_can_take_governor = yes
 			}
 			set_variable = { name = cm_pf_samp value = 1 }
 		}
