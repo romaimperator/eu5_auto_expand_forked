@@ -4,8 +4,8 @@
 #
 # $cat$ is the category's alias suffix and $action$ the localization key. The toggles are global
 # settings, so the alias is a global variable and a lucky nation reads the same one the player set.
-# Categories, registered in cm_cmm_effects.txt: cycle, industry, collapsar, cleanup, governors,
-# military, government.
+# Categories, registered in cm_cmm_effects.txt: cycle, industry, collapsar, food, cleanup,
+# governors, military, government.
 
 # Root is the country.
 cm_dbg_log = {
@@ -28,6 +28,20 @@ cm_dbg_log_loc = {
 	if = {
 		limit = { exists = global_var:cm_dbg_$cat$ }
 		cmf_log_with_location = { action = $action$ arg1 = $arg1$ value = $value$ }
+	}
+}
+
+# Root is the country. Expects scope:cmf_log_loc. $arg1$ labels all three values.
+cm_dbg_log_loc_values = {
+	if = {
+		limit = { exists = global_var:cm_dbg_$cat$ }
+		cmf_log_with_location_values = {
+			action = $action$
+			arg1 = $arg1$
+			value = $value$
+			value2 = $value2$
+			value3 = $value3$
+		}
 	}
 }
 

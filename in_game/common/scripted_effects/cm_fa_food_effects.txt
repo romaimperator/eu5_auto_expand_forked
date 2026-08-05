@@ -32,7 +32,18 @@ cm_fa_food_sample_markets = {
 				# No demand reads as plentiful; the top bucket never lowers the median.
 				set_local_variable = { name = cm_fa_ratio value = 999 }
 			}
-			scope:cm_country = { cm_fa_food_hist_add = yes }
+			location = { save_scope_as = cmf_log_loc }
+			scope:cm_country = {
+				cm_dbg_log_loc_values = {
+					cat = food
+					action = cm_log_food_sample
+					arg1 = cm_log_food_sdr
+					value = local_var:cm_fa_supply
+					value2 = local_var:cm_fa_demand
+					value3 = local_var:cm_fa_ratio
+				}
+				cm_fa_food_hist_add = yes
+			}
 		}
 	}
 }
@@ -111,6 +122,17 @@ cm_fa_food_yearly_evaluation = {
 		every_market_center_in_country = {
 			save_scope_as = cm_fa_market
 			scope:cm_country = { cm_fa_food_compute_median = yes }
+			location = { save_scope_as = cmf_log_loc }
+			scope:cm_country = {
+				cm_dbg_log_loc_values = {
+					cat = food
+					action = cm_log_food_median
+					arg1 = cm_log_food_mts
+					value = local_var:cm_fa_med_lb
+					value2 = local_var:cm_fa_food_thresh
+					value3 = local_var:cm_fa_tot
+				}
+			}
 			if = {
 				limit = { local_var:cm_fa_med_below = 1 }
 				set_local_variable = { name = cm_fa_food_n value = 0 }
@@ -122,6 +144,14 @@ cm_fa_food_yearly_evaluation = {
 						cm_fa_food_location_counts_as_expandable = yes
 					}
 					change_local_variable = { name = cm_fa_food_n add = 1 }
+				}
+				scope:cm_country = {
+					cm_dbg_log_loc = {
+						cat = food
+						action = cm_log_food_short
+						arg1 = cm_log_food_active
+						value = local_var:cm_fa_food_n
+					}
 				}
 				if = {
 					limit = { local_var:cm_fa_food_n < 2 }
@@ -198,6 +228,8 @@ cm_fa_food_compute_median = {
 	change_local_variable = { name = cm_fa_tot add = local_var:cm_fa_c7 }
 	set_local_variable = { name = cm_fa_med_below value = 0 }
 	set_local_variable = { name = cm_fa_med_bucket value = 0 }
+	# A market with no samples never reaches the walk, and the log reads this outside it.
+	set_local_variable = { name = cm_fa_med_lb value = 0 }
 	if = {
 		limit = { local_var:cm_fa_tot > 0 }
 		set_local_variable = { name = cm_fa_half value = local_var:cm_fa_tot }
