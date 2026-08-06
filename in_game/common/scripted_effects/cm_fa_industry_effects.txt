@@ -4,6 +4,10 @@
 # currently blocked good candidate must still score so it can anchor the bar and hold it
 # against worse buildable ones.
 
+# Mirrors the cm__fa_industry_max_rel_roi slider max (cm_cmm_effects.txt); at it no relative
+# limit applies.
+@cm_fa_rel_roi_unlimited = 100
+
 # Root is the country, scope:cm_country set.
 cm_fa_run_industry = {
 	# From-zero candidate types this pulse: buildable, non-obsolete production types.
@@ -444,40 +448,44 @@ cm_fa_ind_build_off_bars = {
 	}
 }
 
-# Margin factor = 100 / margin percent; scores are negative years, so a good's anchor times
-# the factor is the bar for holding margin percent of that good's payback rate. 0 = off.
-# Root is the country. Result in local_var:cm_fa_margin_f.
-cm_fa_ind_margin_factor = {
-	set_local_variable = { name = cm_fa_margin_f value = 0 }
+# Relative factor = 1 + the tolerance percent; scores are negative years, so a good's anchor times
+# the factor is the worst payback admitted for it. At the slider max no relative limit applies and
+# the factor stays 0. Root is the country. Result in local_var:cm_fa_rel_f.
+cm_fa_ind_rel_roi_factor = {
+	set_local_variable = { name = cm_fa_rel_f value = 0 }
 	if = {
 		limit = {
-			exists = var:cm_fa_industry_margin
-			var:cm_fa_industry_margin > 0
+			exists = var:cm_fa_industry_max_rel_roi
+			var:cm_fa_industry_max_rel_roi < @cm_fa_rel_roi_unlimited
 		}
-		set_local_variable = { name = cm_fa_margin_f value = 100 }
-		change_local_variable = { name = cm_fa_margin_f divide = var:cm_fa_industry_margin }
+		set_local_variable = { name = cm_fa_rel_f value = var:cm_fa_industry_max_rel_roi }
+		change_local_variable = { name = cm_fa_rel_f divide = 100 }
+		change_local_variable = { name = cm_fa_rel_f add = 1 }
 	}
 }
 
 # One good's admission bar, on the negative years scale: the stricter of its anchor scaled by the
-# margin factor and the best score of the same good waiting off-slice. Stays at the sentinel when
-# neither applies, which admits every score. Expects scope:cm_country, scope:cm_fa_anchor_type as
-# the candidate's building type, and local_var:cm_fa_margin_f. Result in local_var:cm_fa_gd_bar.
+# relative factor and the best score of the same good waiting off-slice. Both lift together at the
+# slider max, so no limit means no limit. Stays at the sentinel when neither applies, which admits
+# every score. Expects scope:cm_country, scope:cm_fa_anchor_type as the candidate's building type,
+# and local_var:cm_fa_rel_f. Result in local_var:cm_fa_gd_bar.
 cm_fa_ind_gd_bar = {
 	set_local_variable = { name = cm_fa_gd_bar value = -2000000 }
 	cm_fa_ind_resolve_good = yes
 	if = {
-		limit = { local_var:cm_fa_has_good = 1 }
+		limit = {
+			local_var:cm_fa_has_good = 1
+			local_var:cm_fa_rel_f > 0
+		}
 		if = {
 			limit = {
-				local_var:cm_fa_margin_f > 0
 				scope:cm_country = {
 					has_variable_map = cm_fa_ind_gd_anchor
 					is_key_in_variable_map = { name = cm_fa_ind_gd_anchor target = scope:cm_fa_anchor_good }
 				}
 			}
 			set_local_variable = { name = cm_fa_gd_bar value = "scope:cm_country.variable_map(cm_fa_ind_gd_anchor|scope:cm_fa_anchor_good)" }
-			change_local_variable = { name = cm_fa_gd_bar multiply = local_var:cm_fa_margin_f }
+			change_local_variable = { name = cm_fa_gd_bar multiply = local_var:cm_fa_rel_f }
 		}
 		if = {
 			limit = {
@@ -520,13 +528,12 @@ cm_fa_ind_log_queued = {
 }
 
 # Greedy country-wide drain: actionable builds and upgrades are approved best-first, each held
-# to the margin share of the best payback rate recorded for the good it makes; RGO
-# expansions bypass the margin and drain by ROI. Payback is cost over income in gold, both
-# already priced in the candidate's own market, so scores rank directly against each other
-# across markets.
+# within the tolerance of the best payback recorded for the good it makes; RGO expansions bypass
+# that bar and drain by ROI. Payback is cost over income in gold, both already priced in the
+# candidate's own market, so scores rank directly against each other across markets.
 # Root is the country.
 cm_fa_pass_industry = {
-	cm_fa_ind_margin_factor = yes
+	cm_fa_ind_rel_roi_factor = yes
 	# The picks below run hundreds of times, so the candidate set is collected once here and
 	# re-read from the list instead of re-scanning every owned location. Only the markets
 	# staged this cycle: a market outside the slice holds no candidates.
@@ -557,7 +564,7 @@ cm_fa_pass_industry = {
 # the pool cannot cover the next one; each pick tests the bar of the good it makes. The outer
 # batch loop is what carries the pick count past a single while's 1000-iteration abort; it
 # re-enters only while the inner loop's last iteration picked something.
-# Root is the country. Expects cm_fa_drain_cands built and local_var:cm_fa_margin_f set.
+# Root is the country. Expects cm_fa_drain_cands built and local_var:cm_fa_rel_f set.
 cm_fa_ind_pick_loop = {
 	set_local_variable = { name = cm_fa_more value = 1 }
 	set_local_variable = { name = cm_fa_outer value = 0 }
@@ -630,7 +637,7 @@ cm_fa_ind_pick_loop = {
 				set_local_variable = { name = cm_fa_more value = 1 }
 			} else_if = {
 				# RGOs have no input good, so they can never be unprofitable and never steal a
-				# building's opportunity; the margin never gates them, only ROI order.
+				# building's opportunity; the relative bar never gates them, only ROI order.
 				limit = { scope:cm_fa_dom_r > -2000000 }
 				scope:cm_fa_pick_r_loc = { cm_fa_approve_rgo_item = yes }
 				set_local_variable = { name = cm_fa_more value = 1 }
@@ -644,7 +651,7 @@ cm_fa_ind_pick_loop = {
 # it. Root is the country.
 cm_fa_ind_anchor_probe = {
 	save_temporary_scope_as = cm_fa_probe_country
-	cm_fa_ind_margin_factor = yes
+	cm_fa_ind_rel_roi_factor = yes
 	every_key_in_variable_map = {
 		variable = cm_fa_ind_gd_anchor
 		save_scope_as = cm_fa_probe_good
@@ -652,8 +659,8 @@ cm_fa_ind_anchor_probe = {
 		set_local_variable = { name = cm_fa_ianc_dbg value = "scope:cm_fa_probe_country.variable_map(cm_fa_ind_gd_anchor|scope:cm_fa_probe_good)" }
 		set_local_variable = { name = cm_fa_ibar_dbg value = local_var:cm_fa_ianc_dbg }
 		if = {
-			limit = { local_var:cm_fa_margin_f > 0 }
-			change_local_variable = { name = cm_fa_ibar_dbg multiply = local_var:cm_fa_margin_f }
+			limit = { local_var:cm_fa_rel_f > 0 }
+			change_local_variable = { name = cm_fa_ibar_dbg multiply = local_var:cm_fa_rel_f }
 		}
 		change_local_variable = { name = cm_fa_ianc_dbg multiply = -1 }
 		change_local_variable = { name = cm_fa_ibar_dbg multiply = -1 }
