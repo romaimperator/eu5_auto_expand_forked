@@ -90,3 +90,40 @@ cm_dbg_alias_probe = {
 	cmf_log_value = { action = cm_log_dbg_gate value = scope:cm_dbg_alias_gate }
 	cmf_log_value = { action = cm_log_dbg_stored value = scope:cm_dbg_alias_stored }
 }
+
+# The Debug tab's probe buttons run the same probes as the console commands. Clicking one is the
+# request the same way typing the command is, so a probe whose lines go through a category-gated
+# wrapper arms that category for the call and re-syncs it from the setting afterwards.
+
+# The location cm_fa_col_watch_on marked, or the capital. $PROBE$ = the probe effect.
+# Root is the country.
+cm_dbg_probe_location = {
+	if = {
+		limit = { exists = var:cm_fa_col_watch_loc }
+		var:cm_fa_col_watch_loc = { $PROBE$ = yes }
+	}
+	else = {
+		capital = { $PROBE$ = yes }
+	}
+}
+
+# Root is the country.
+cm_dbg_probe_industry_anchors = {
+	set_global_variable = { name = cm_dbg_industry value = yes }
+	cm_fa_ind_anchor_probe = yes
+	cmm_sync_bool_alias = { setting = cm__log_industry alias = cm_dbg_industry }
+}
+
+# Root is the country.
+cm_dbg_probe_industry_rgo = {
+	set_global_variable = { name = cm_dbg_industry value = yes }
+	cm_dbg_probe_location = { PROBE = cm_fa_rgo_why_probe }
+	cmm_sync_bool_alias = { setting = cm__log_industry alias = cm_dbg_industry }
+}
+
+# Root is the country.
+cm_dbg_probe_collapsar = {
+	set_global_variable = { name = cm_dbg_collapsar value = yes }
+	cm_dbg_probe_location = { PROBE = cm_fa_col_probe }
+	cmm_sync_bool_alias = { setting = cm__log_collapsar alias = cm_dbg_collapsar }
+}
