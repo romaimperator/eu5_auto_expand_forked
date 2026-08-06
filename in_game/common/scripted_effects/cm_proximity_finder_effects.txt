@@ -712,15 +712,22 @@ cm_pf_score_candidate = {
 			scope:cm_pf_c.var:cm_pf_run_g = 1
 			NOT = { has_variable = cm_gf_nogain }
 		}
-		set_variable = { name = cm_pf_d value = 0 }
-		set_local_variable = { name = cm_pf_bg value = scope:cm_pf_c.var:cm_pf_tmax }
 		if = {
-			# A stacked candidate's gains can outrun the shared budget by its excess.
-			limit = { has_variable = cm_pf_sx }
-			change_local_variable = { name = cm_pf_bg add = var:cm_pf_sx }
+			limit = { cm_gov_site_can_take_governor = no }
+			set_variable = { name = cm_gf_inelig value = 1 }
+			cm_pf_drop_gov_outputs = yes
 		}
-		cm_pf_bellman_g = { BUDGET = local_var:cm_pf_bg }
-		cm_pf_sweep_gov = yes
+		else = {
+			set_variable = { name = cm_pf_d value = 0 }
+			set_local_variable = { name = cm_pf_bg value = scope:cm_pf_c.var:cm_pf_tmax }
+			if = {
+				# A stacked candidate's gains can outrun the shared budget by its excess.
+				limit = { has_variable = cm_pf_sx }
+				change_local_variable = { name = cm_pf_bg add = var:cm_pf_sx }
+			}
+			cm_pf_bellman_g = { BUDGET = local_var:cm_pf_bg }
+			cm_pf_sweep_gov = yes
+		}
 	}
 	if = {
 		limit = { scope:cm_pf_c.var:cm_pf_run_c = 1 }
@@ -2191,7 +2198,7 @@ cm_pf_score_candidate_pruned = {
 	# A site neither governor type could ever stand on: no land/strait connection for the land
 	# type's road and no port for the naval type, or a connected site whose land type is refused
 	# by a seljuk_mint while the naval type wants that connection gone. A missing road alone never
-	# skips (roads can be built); Exhaustive evaluates everything for mods that lift the rules.
+	# skips (roads can be built).
 	if = {
 		limit = {
 			local_var:cm_pf_do_g = 1
