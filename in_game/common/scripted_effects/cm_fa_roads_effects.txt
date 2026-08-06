@@ -5,11 +5,6 @@
 # gives every corridor the unrealized tax base of everything behind it. The monthly drain then buys
 # the best corridors its budget share reaches.
 
-# Roads a cycle may start.
-@cm_fa_rd_max_per_cycle = 8
-# Corridors that may be under construction at once. Gold is bounded by the pool, so this bounds how
-# much of the network the category may have in flight before it waits for some of it to land.
-@cm_fa_rd_max_outstanding = 12
 # Orders that produced nothing before a corridor is set aside.
 @cm_fa_rd_max_tries = 3
 # How long a set-aside corridor stays out of the running.
@@ -119,23 +114,17 @@ cm_fa_pass_roads = {
 			modifier:overlord_blocked_from_building_roads = no
 		}
 		save_temporary_scope_value_as = { name = cm_fa_rd_tier value = cm_fa_rd_tier_cost_value }
-		if = {
-			limit = {
-				OR = {
-					NOT = { has_variable_list = cm_fa_rd_building }
-					NOT = { variable_list_size = { name = cm_fa_rd_building value >= @cm_fa_rd_max_outstanding } }
-				}
-			}
-			cm_fa_rd_issue_pass = yes
-		}
+		cm_fa_rd_issue_pass = yes
 	}
 }
 
+# Nothing bounds how many corridors a cycle orders or how many may be in flight: the pool is the
+# only limit, and the first corridor it cannot cover stops the pass through cm_fa_cost_blocked.
 # Root is the country, scope:cm_country set.
 cm_fa_rd_issue_pass = {
 	ordered_owned_location = {
 		order_by = { value = var:cm_fa_rd_score }
-		max = @cm_fa_rd_max_per_cycle
+		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
 		limit = {
 			has_variable = cm_fa_rd_score
