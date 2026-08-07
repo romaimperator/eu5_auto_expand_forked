@@ -1075,6 +1075,55 @@ cm_register_cmf_mod = {
 		setting_id = fa_cleanup_auto_food
 	}
 
+	## Roads (fa_roads) Group
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = fa_roads_proximity
+		tab_id = full_automation
+		group_id = fa_roads
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__fa_roads_proximity
+		alias = cm_fa_roads_proximity
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_roads_proximity
+	}
+
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = fa_roads_market_access
+		tab_id = full_automation
+		group_id = fa_roads
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__fa_roads_market_access
+		alias = cm_fa_roads_market_access
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_roads_market_access
+	}
+
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = fa_roads_capital
+		tab_id = full_automation
+		group_id = fa_roads
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__fa_roads_capital
+		alias = cm_fa_roads_capital
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = fa_roads_capital
+	}
+
 	## Governors (fa_governors) Group
 	cmm_register_bool_setting = {
 		mod_id = cm
@@ -1226,6 +1275,21 @@ cm_register_cmf_mod = {
 	}
 	cmm_register_global_bool_setting = {
 		mod_id = cm
+		setting_id = log_roads
+		tab_id = debug
+		group_id = logging
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__log_roads
+		alias = cm_dbg_roads
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = log_roads
+	}
+	cmm_register_global_bool_setting = {
+		mod_id = cm
 		setting_id = log_cleanup
 		tab_id = debug
 		group_id = logging
@@ -1362,6 +1426,16 @@ cm_register_cmf_mod = {
 	cmm_add_scripted_gui = {
 		mod_id = cm
 		setting_id = probe_collapsar
+	}
+	cmm_register_button_setting = {
+		mod_id = cm
+		setting_id = probe_roads
+		tab_id = debug
+		group_id = probes
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = probe_roads
 	}
 	cmm_register_button_setting = {
 		mod_id = cm
@@ -1595,6 +1669,29 @@ cm_handle_cmf_callback = {
 				alias = cm_fa_cleanup_auto_food
 			}
 		}
+		## Roads (fa_roads) Group
+		flag:cm__fa_roads_proximity = {
+			cmm_sync_bool_alias = {
+				setting = cm__fa_roads_proximity
+				alias = cm_fa_roads_proximity
+			}
+			cm_fa_rd_clear_plan = yes
+		}
+		flag:cm__fa_roads_market_access = {
+			cmm_sync_bool_alias = {
+				setting = cm__fa_roads_market_access
+				alias = cm_fa_roads_market_access
+			}
+			cm_fa_rd_clear_plan = yes
+		}
+		flag:cm__fa_roads_capital = {
+			cmm_sync_bool_alias = {
+				setting = cm__fa_roads_capital
+				alias = cm_fa_roads_capital
+			}
+			cm_fa_rd_clear_plan = yes
+		}
+
 		## Governors (fa_governors) Group
 		flag:cm__fa_gov_move_seats = {
 			cmm_sync_bool_alias = {
@@ -1649,6 +1746,12 @@ cm_handle_cmf_callback = {
 				alias = cm_dbg_food
 			}
 		}
+		flag:cm__log_roads = {
+			cmm_sync_bool_alias = {
+				setting = cm__log_roads
+				alias = cm_dbg_roads
+			}
+		}
 		flag:cm__log_cleanup = {
 			cmm_sync_bool_alias = {
 				setting = cm__log_cleanup
@@ -1691,6 +1794,9 @@ cm_handle_cmf_callback = {
 		}
 		flag:cm__probe_collapsar = {
 			cm_dbg_probe_collapsar = yes
+		}
+		flag:cm__probe_roads = {
+			cm_fa_rd_probe = yes
 		}
 		flag:cm__probe_log_gate = {
 			cm_dbg_alias_probe = yes

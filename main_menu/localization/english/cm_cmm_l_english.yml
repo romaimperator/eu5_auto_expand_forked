@@ -264,7 +264,7 @@
  cm__fa_priority_list_i3_name: "Price Collapsar"
  cm__fa_priority_list_i3_desc: "Expands production of construction materials to push their prices down. Works in markets whose market center you own. The best-producing locations go first and each is given several levels at once, and producers start even where the workers have not arrived yet. Your capital, locations growing food, and producers that would run at a loss without a subsidy are all skipped."
  cm__fa_priority_list_i4_name: "Roads"
- cm__fa_priority_list_i4_desc: "Builds the [road|e] network that raises [proximity|e] the most for the gold. Once a year it works out the best route from your [capital|e] and your governors to every location you own, then each month starts the stretches that would lift the most [tax_base|e], counting everything further down the route behind them. Cheap flat corridors are laid first."
+ cm__fa_priority_list_i4_desc: "Builds the road network worth the most for the gold, across three things a road buys: Proximity, Market Access, and connecting a location to your capital. Once a year it works out the best route to every location you own for each of them, then each month starts the stretches that would lift the most Tax Base, counting everything further down the route behind them. Cheap flat corridors are laid first, and the lower two only get the gold in a month the one above has nothing left to lay."
  cm__fa_priority_list_i5_name: "Utilities"
  cm__fa_priority_list_i5_desc: "Builds supporting infrastructure everywhere it fits: capital buildings, the auto-build roster, mercury patios, market center buildings, bailiffs and any unique buildings your country has that raise control, marketplaces, disease-resisting buildings, then granaries last. Control buildings go to the wealthiest locations first, and marketplaces to the locations with the least market access first."
  cm__fa_priority_list_i6_name: "Building Cleanup"
@@ -311,7 +311,7 @@
  cm__fa_food_target_desc: "A market gets more food locations until its supply reaches this share of its demand. At 125%, food is expanded in any market whose median month of the year did not reach a 25% surplus. Raise it to keep more of a buffer, lower it to only help markets closer to a shortage."
  cm__fa_food_target_format: "[CMMV('cm__fa_food_target')]%"
  cm__fa_food_min_potential_name: "Minimum Food Potential"
- cm__fa_food_min_potential_desc: "Auto-food is only enabled on locations whose food potential per [rgo|e] level reaches this score, the same score the $mapmode_cm_location_food_potential_name$ map mode shows. Raise it to hold out for better farmland, lower it to accept weaker land."
+ cm__fa_food_min_potential_desc: "Auto-food is only enabled on locations whose food potential per RGO level reaches this score, the same score the $mapmode_cm_location_food_potential_name$ map mode shows. Raise it to hold out for better farmland, lower it to accept weaker land."
  cm__fa_food_min_potential_format: "[CMMV('cm__fa_food_min_potential')]"
  ## Urban Rights Group
  cm__full_automation__fa_urban_rights_name: "Urban Rights"
@@ -334,6 +334,16 @@
  cm__fa_cleanup_auto_food_desc: "Where auto-food is running and any kind of worker is already in short supply, destroy the production buildings that are not making food. A @market_village! [ShowBuildingTypeNameWithNoTooltip('market_village')] is cut back to one level rather than destroyed."
  cm__fa_cleanup_core_goods_name: "Prioritize Construction Materials"
  cm__fa_cleanup_core_goods_desc: "Hold buildings that mostly consume @masonry![ShowGoodsNameWithNoTooltip('masonry')], @lumber![ShowGoodsNameWithNoTooltip('lumber')], @sand![ShowGoodsNameWithNoTooltip('sand')] or @glass![ShowGoodsNameWithNoTooltip('glass')] to twice the Minimum Profit, or 0.1@gold!, whichever is higher. Buildings that produce one of the four are judged on the normal Minimum Profit."
+
+ ## Roads (fa_roads) Group
+ cm__full_automation__fa_roads_name: "Roads"
+ cm__full_automation__fa_roads_desc: "Settings for the Roads category above."
+ cm__fa_roads_proximity_name: "Proximity"
+ cm__fa_roads_proximity_desc: "Lay the road stretches that raise Proximity the most for the gold, counting every location further down the route behind them."
+ cm__fa_roads_market_access_name: "Market Access"
+ cm__fa_roads_market_access_desc: "Lay the road stretches that raise Market Access the most for the gold. Only spends in a month the Proximity stretches have none left to lay."
+ cm__fa_roads_capital_name: "Capital Connection"
+ cm__fa_roads_capital_desc: "Lay road stretches to connect your locations to your capital, working outwards from the ones already connected. Only spends in a month the Proximity and Market Access stretches have none left to lay."
 
  ## Governors (fa_governors) Group
  cm__full_automation__fa_governors_name: "Governors"
@@ -462,6 +472,8 @@
  cm__log_collapsar_desc: "Lines following one location through a Price Collapsar cycle: the market's shortfall and the levels it asked for, then what that location was given, scored and built. Mark the location first with the console command effect location:<key> = { cm_fa_col_watch_on = yes }."
  cm__log_food_name: "Auto-Food"
  cm__log_food_desc: "Lines for the Food category: each market's monthly food supply, demand and ratio, the yearly median that ratio is judged on against the target, the count of locations already growing food there, and every location it enables or disables."
+ cm__log_roads_name: "Roads"
+ cm__log_roads_desc: "One line for every road the Roads category orders, naming the location, which of the three things the road was bought for, and what it cost."
  cm__log_cleanup_name: "Building Cleanup"
  cm__log_cleanup_desc: "Lines for the yearly Building Cleanup pass and for every building it closes, trims, destroys or reopens, with the profit behind each and the floor it was judged against."
  cm__log_governors_name: "Governors"
@@ -491,6 +503,9 @@
  cm__probe_collapsar_name: "Price Collapsar"
  cm__probe_collapsar_text: "Run"
  cm__probe_collapsar_desc: "Every number Price Collapsar reads at a location, each beside the game's own reading of it, then what that location's market could absorb in a cycle. Reads the capital unless you mark a location with the console command effect location:<key> = { cm_fa_col_watch_on = yes }; the capital is never a Price Collapsar candidate, so mark a location to read one it would build in."
+ cm__probe_roads_name: "Roads"
+ cm__probe_roads_text: "Run"
+ cm__probe_roads_desc: "How many corridors the Roads plan is holding for each of proximity, market access and capital connection, how many of the capital ones can be started yet, how many roads are already being built, and what is left in the category's pool."
  cm__probe_log_gate_name: "Action Log Gate"
  cm__probe_log_gate_text: "Run"
  cm__probe_log_gate_desc: "The Price Collapsar log category twice, as the log gate reads it and as the menu stores it, so a category that is on in one and off in the other shows up."
