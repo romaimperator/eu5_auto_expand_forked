@@ -899,22 +899,34 @@ cm_fa_rd_ma_order = {
 	}
 }
 
-# The tax base this tile alone would gain once the network reaches its predicted market access.
-# Output scales linearly with access, so gaining d points of it is worth d times the location's base
-# with no division: cm_bld_amenity_market_access divides only because its input is an income figure
-# the current access has already scaled, which location_tax_base is not. Root is the location.
-cm_fa_rd_ma_node_demand = {
-	value = 0
+# The share of a segment's own market access loss the best unlocked road takes off it. Mirrors
+# cm_fa_rd_tier_cost_value's ladder branch for branch. Root is the country.
+cm_fa_rd_tier_ma_gain = {
+	value = 0.1 # gravel_road market_access -0.1: in_game/common/road_types/00_generic.txt:4
 	if = {
-		limit = { has_variable = cm_fa_rd_ma_l }
-		value = 1
-		add = modifier:local_market_access
-		subtract = var:cm_fa_rd_ma_l
-		max = 1 # MARKET_BASE_ACCESS caps access: loading_screen/common/defines/00_defines.txt:1780
-		subtract = market_access
-		min = 0
-		multiply = location_tax_base
+		# railroad_advance unlocks railroad: in_game/common/advances/3_road_unlocks.txt:28
+		limit = { has_advance = railroad_advance }
+		value = 0.4 # railroad market_access -0.4: in_game/common/road_types/00_generic.txt:46
 	}
+	else_if = {
+		# modern_road_advance unlocks modern_road: in_game/common/advances/3_road_unlocks.txt:20
+		limit = { has_advance = modern_road_advance }
+		value = 0.3 # modern_road market_access -0.3: in_game/common/road_types/00_generic.txt:32
+	}
+	else_if = {
+		# paved_road_advance unlocks paved_road: in_game/common/advances/3_road_unlocks.txt:12
+		limit = { has_advance = paved_road_advance }
+		value = 0.2 # paved_road market_access -0.2: in_game/common/road_types/00_generic.txt:18
+	}
+}
+
+# The access this corridor would unlock, per gold it costs: the road's share of the segment's own
+# loss, taken by every location routing through it.
+# Root is the location, expects scope:cm_fa_rd_from, scope:cm_fa_rd_to and scope:cm_fa_rd_tier.
+cm_fa_rd_ma_score_value = {
+	value = var:cm_fa_rd_ma_g
+	multiply = var:cm_fa_rd_sub
+	divide = cm_fa_rd_cost_value
 }
 
 # Deepest first, so every location is visited before the one it reaches the connected set through.

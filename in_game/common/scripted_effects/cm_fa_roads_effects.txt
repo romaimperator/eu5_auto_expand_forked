@@ -153,28 +153,31 @@ cm_fa_rd_plan_market_access = {
 			cm_pf_river_data_is_current = yes
 		}
 		set_variable = { name = cm_fa_rd_ran_2 value = 1 }
-		# Country-scope, and the relaxation runs in location scope, so it is read once here.
+		# Country-scope, and the pass runs in location scope, so both are read once here.
 		save_temporary_scope_value_as = { name = cm_fa_rd_mafac value = cm_fa_rd_ma_segment_factor }
-		cm_fa_rd_ma_spread = yes
+		save_temporary_scope_value_as = { name = cm_fa_rd_magain value = cm_fa_rd_tier_ma_gain }
+		cm_fa_rd_ma_pass = yes
 		cm_fa_rd_ma_value_pass = yes
 		every_owned_location = {
 			remove_variable = cm_fa_rd_ma_l
+			remove_variable = cm_fa_rd_ma_g
 			clear_variable_map = cm_fa_rd_ed
 		}
 	}
 }
 
-# A location's transport loss to its market centre is 1 + local_market_access - market_access, which
-# is additive along the path, so a road on an edge is worth the loss it takes off that edge. Seeding
-# every location at its own live loss means every sea leg, port hop and river already in its route is
-# carried without being modelled. Root is the country, scope:cm_country set.
-cm_fa_rd_ma_spread = {
+# A location's transport loss to its market centre is 1 + local_market_access - market_access, and it
+# is additive along the path, so the drop between a location and the neighbour it reaches the centre
+# through is what that edge costs and a road takes the tier's share off it. Reading the loss live
+# means every sea leg, port hop and river already in the route is carried without being modelled.
+# Root is the country, scope:cm_country set.
+cm_fa_rd_ma_pass = {
 	set_variable = { name = cm_fa_rd_e0 value = 0 }
 	set_variable = { name = cm_fa_rd_e1 value = 0 }
 	set_variable = { name = cm_fa_rd_e2 value = 0 }
-	clear_variable_list = cm_fa_rd_front
 	every_owned_location = {
 		remove_variable = cm_fa_rd_par_2
+		remove_variable = cm_fa_rd_ma_g
 		if = {
 			limit = {
 				is_land = yes
@@ -182,33 +185,15 @@ cm_fa_rd_ma_spread = {
 			}
 			set_variable = { name = cm_fa_rd_ma_l value = cm_fa_rd_loss_value }
 			cm_fa_rd_cache_edges = yes
-			cm_fa_rd_front_push = yes
 		}
 		else = { remove_variable = cm_fa_rd_ma_l }
 	}
-	set_local_variable = { name = cm_fa_rd_changed value = 1 }
-	set_local_variable = { name = cm_fa_rd_wave value = 0 }
-	while = {
-		limit = {
-			local_var:cm_fa_rd_changed > 0
-			local_var:cm_fa_rd_wave < @cm_fa_rd_max_waves
-		}
-		change_local_variable = { name = cm_fa_rd_wave add = 1 }
-		set_local_variable = { name = cm_fa_rd_changed value = 0 }
-		clear_local_variable_list = cm_fa_rd_front_cur
-		every_in_list = {
-			variable = cm_fa_rd_front
-			remove_variable = cm_fa_rd_inq
-			add_to_local_variable_list = { name = cm_fa_rd_front_cur target = this }
-		}
-		clear_variable_list = cm_fa_rd_front
-		every_in_local_list = {
-			variable = cm_fa_rd_front_cur
-			cm_fa_rd_ma_relax = yes
-		}
+	# Second sweep, because picking a parent reads every neighbour's loss and the first sweep is what
+	# sets them.
+	every_owned_location = {
+		limit = { has_variable = cm_fa_rd_ma_l }
+		cm_fa_rd_ma_pick_parent = yes
 	}
-	set_variable = { name = cm_fa_rd_ma_w value = local_var:cm_fa_rd_wave }
-	cm_fa_rd_front_residue_clear = yes
 }
 
 # The edge distances a relaxation re-reads every time a location re-enters the frontier. Caching them
@@ -253,44 +238,74 @@ cm_fa_rd_cache_edges = {
 }
 
 # Root is the location, scope:cm_country set.
-cm_fa_rd_ma_relax = {
+# Root is the location, scope:cm_country, scope:cm_fa_rd_mafac and scope:cm_fa_rd_magain set.
+cm_fa_rd_ma_pick_parent = {
 	save_temporary_scope_as = cm_fa_rd_a
+	set_local_variable = { name = cm_fa_rd_bestc value = 999 }
+	set_local_variable = { name = cm_fa_rd_bestl value = 999 }
 	every_key_in_variable_map = {
 		variable = cm_fa_rd_ed
 		save_temporary_scope_as = cm_fa_rd_b
-		# A quoted map lookup resolves to nothing when it is read straight into an expression, so it
-		# is captured first.
-		scope:cm_fa_rd_a = {
-			set_local_variable = {
-				name = cm_fa_rd_ud
-				value = "variable_map(cm_fa_rd_ed|scope:cm_fa_rd_b)"
+		if = {
+			limit = { scope:cm_fa_rd_b = { has_variable = cm_fa_rd_ma_l } }
+			# A quoted map lookup resolves to nothing read straight into an expression, so capture it.
+			scope:cm_fa_rd_a = {
+				set_local_variable = {
+					name = cm_fa_rd_ud
+					value = "variable_map(cm_fa_rd_ed|scope:cm_fa_rd_b)"
+				}
 			}
-		}
-		set_local_variable = {
-			name = cm_fa_rd_cand
-			value = {
-				value = scope:cm_fa_rd_a.var:cm_fa_rd_ma_l
-				add = {
-					value = local_var:cm_fa_rd_ud
-					multiply = scope:cm_fa_rd_mafac
+			set_local_variable = {
+				name = cm_fa_rd_cand
+				value = {
+					value = scope:cm_fa_rd_b.var:cm_fa_rd_ma_l
+					add = {
+						value = local_var:cm_fa_rd_ud
+						multiply = scope:cm_fa_rd_mafac
+					}
+				}
+			}
+			if = {
+				limit = { local_var:cm_fa_rd_cand < local_var:cm_fa_rd_bestc }
+				set_local_variable = { name = cm_fa_rd_bestc value = local_var:cm_fa_rd_cand }
+				set_local_variable = { name = cm_fa_rd_bestl value = scope:cm_fa_rd_b.var:cm_fa_rd_ma_l }
+				# The iterator makes the key the scope, so the parent has to be written on the location
+				# being solved rather than on the neighbour being weighed.
+				scope:cm_fa_rd_a = {
+					set_variable = { name = cm_fa_rd_par_2 value = scope:cm_fa_rd_b }
 				}
 			}
 		}
-		if = {
-			limit = {
-				scope:cm_fa_rd_b = { has_variable = cm_fa_rd_ma_l }
-				scope:cm_fa_rd_b.var:cm_fa_rd_ma_l > local_var:cm_fa_rd_cand
+	}
+	# The modelled distance ranks the neighbours; the gain comes from the engine instead. A location
+	# reaches its centre through the parent, so the drop in loss between the two is what that edge
+	# really costs, or less where the parent guess is wrong, and a road takes the tier's share off it.
+	# Measured 2026-08-06: the modelled segment ran 1.70x the engine's own drop, so a model asked for
+	# the magnitude could never see the tenth a gravel road is worth.
+	if = {
+		limit = {
+			has_variable = cm_fa_rd_par_2
+			var:cm_fa_rd_ma_l > local_var:cm_fa_rd_bestl
+		}
+		set_variable = {
+			name = cm_fa_rd_ma_g
+			value = {
+				value = var:cm_fa_rd_ma_l
+				subtract = local_var:cm_fa_rd_bestl
+				multiply = scope:cm_fa_rd_magain
 			}
-			scope:cm_fa_rd_b = {
-				set_variable = { name = cm_fa_rd_ma_l value = local_var:cm_fa_rd_cand }
-				set_variable = { name = cm_fa_rd_par_2 value = scope:cm_fa_rd_a }
-				cm_fa_rd_front_push = yes
-			}
-			change_local_variable = { name = cm_fa_rd_changed add = 1 }
 		}
 	}
+	else = { remove_variable = cm_fa_rd_par_2 }
 }
 
+# Temporary scaffolding while the market access model is being judged. For every location it takes
+# the cached neighbour with the LOWEST predicted loss, which is the most favourable reading available,
+# and totals that edge's modelled segment against the segment the engine's own losses imply. If the
+# two totals disagree by more than a tenth the model can never see a road's own tenth and the
+# relaxation is asking a modelled number to out-resolve its own error.
+# Root is the country, scope:cm_country and scope:cm_fa_rd_mafac set.
+# Root is the location, scope:cm_country and scope:cm_fa_rd_mafac set.
 # Root is the location, scope:cm_country set.
 cm_fa_rd_front_push = {
 	if = {
@@ -331,7 +346,9 @@ cm_fa_rd_ma_value_pass = {
 
 # Root is the location, scope:cm_country set.
 cm_fa_rd_ma_value_location = {
-	change_variable = { name = cm_fa_rd_sub add = cm_fa_rd_ma_node_demand }
+	# Plain tax base: every location behind this corridor gains the same absolute access the road takes
+	# off it, so the corridor is worth its own gain times everything routing through it.
+	change_variable = { name = cm_fa_rd_sub add = location_tax_base }
 	if = {
 		limit = { has_variable = cm_fa_rd_par_2 }
 		set_local_variable = { name = cm_fa_rd_push value = var:cm_fa_rd_sub }
@@ -341,11 +358,13 @@ cm_fa_rd_ma_value_location = {
 		if = {
 			limit = {
 				var:cm_fa_rd_sub > 0
+				has_variable = cm_fa_rd_ma_g
+				var:cm_fa_rd_ma_g > 0
 				NOT = { has_latest_road_to = var:cm_fa_rd_par_2 }
 			}
 			save_temporary_scope_as = cm_fa_rd_from
 			var:cm_fa_rd_par_2 = { save_temporary_scope_as = cm_fa_rd_to }
-			set_variable = { name = cm_fa_rd_score_2 value = cm_fa_rd_score_value }
+			set_variable = { name = cm_fa_rd_score_2 value = cm_fa_rd_ma_score_value }
 		}
 	}
 }
@@ -721,25 +740,7 @@ cm_fa_rd_probe = {
 		cmf_log_value = { action = cm_log_rd_p_e1 value = var:cm_fa_rd_e1 }
 		cmf_log_value = { action = cm_log_rd_p_e2 value = var:cm_fa_rd_e2 }
 	}
-	if = {
-		limit = { has_variable = cm_fa_rd_ma_w }
-		cmf_log_value = { action = cm_log_rd_p_ma_waves value = var:cm_fa_rd_ma_w }
-	}
 	cmf_log_value = { action = cm_log_rd_p_cap value = var:cm_fa_rd_p3 }
-	# Only speaks up when a target never got to look, which is the case a count of 0 cannot tell
-	# apart from a target that looked and found nothing.
-	if = {
-		limit = { NOT = { var:cm_fa_rd_ran_1 = 1 } }
-		cmf_log = { action = cm_log_rd_p_skip_prox }
-	}
-	if = {
-		limit = { NOT = { var:cm_fa_rd_ran_2 = 1 } }
-		cmf_log = { action = cm_log_rd_p_skip_ma }
-	}
-	if = {
-		limit = { NOT = { var:cm_fa_rd_ran_3 = 1 } }
-		cmf_log = { action = cm_log_rd_p_skip_cap }
-	}
 	cmf_log_value = { action = cm_log_rd_p_cap_ring value = var:cm_fa_rd_p3r }
 	cmf_log_value = { action = cm_log_rd_p_flight value = var:cm_fa_rd_pf }
 	if = {
@@ -759,7 +760,6 @@ cm_fa_rd_clear_plan = {
 	remove_variable = cm_fa_rd_ran_1
 	remove_variable = cm_fa_rd_ran_2
 	remove_variable = cm_fa_rd_ran_3
-	remove_variable = cm_fa_rd_ma_w
 	remove_variable = cm_fa_rd_e0
 	remove_variable = cm_fa_rd_e1
 	remove_variable = cm_fa_rd_e2
@@ -777,6 +777,7 @@ cm_fa_rd_clear_plan = {
 		remove_variable = cm_fa_rd_ord_par
 		remove_variable = cm_fa_rd_inq
 		remove_variable = cm_fa_rd_ma_l
+		remove_variable = cm_fa_rd_ma_g
 		remove_variable = cm_fa_rd_cc_d
 		remove_variable = cm_fa_rd_sub
 		clear_variable_map = cm_fa_rd_ed
