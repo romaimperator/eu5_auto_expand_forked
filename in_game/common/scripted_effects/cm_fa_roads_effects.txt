@@ -1,6 +1,6 @@
 ﻿# Full-automation Roads: builds the road network worth the most per gold, across three targets that
 # run in a fixed order. Proximity first, then market access, then connecting locations to the
-# capital. Each one plans a parent tree once a year, walks it from the leaves up so every corridor
+# capital. Each one plans a parent tree, walks it from the leaves up so every corridor
 # carries the value of everything behind it, and the monthly drain buys the best corridors its budget
 # share reaches. A lower target gets a turn only in a month the one above it ordered nothing.
 
@@ -12,7 +12,7 @@
 # bound; the engine aborts a while at 1000 iterations either way.
 @cm_fa_rd_max_waves = 200
 
-# The yearly plan. Root is the country.
+# The plan. Root is the country.
 cm_fa_rd_plan = {
 	if = {
 		limit = {
@@ -172,9 +172,6 @@ cm_fa_rd_plan_market_access = {
 # means every sea leg, port hop and river already in the route is carried without being modelled.
 # Root is the country, scope:cm_country set.
 cm_fa_rd_ma_pass = {
-	set_variable = { name = cm_fa_rd_e0 value = 0 }
-	set_variable = { name = cm_fa_rd_e1 value = 0 }
-	set_variable = { name = cm_fa_rd_e2 value = 0 }
 	every_owned_location = {
 		remove_variable = cm_fa_rd_par_2
 		remove_variable = cm_fa_rd_ma_g
@@ -206,31 +203,25 @@ cm_fa_rd_cache_edges = {
 		limit = {
 			is_land = yes
 			owner ?= scope:cm_country
+			market ?= scope:cm_fa_rd_from.market
 		}
 		save_temporary_scope_as = cm_fa_rd_to
-		# Counted per filter stage so an empty cache names the filter that emptied it.
-		scope:cm_country = { change_variable = { name = cm_fa_rd_e0 add = 1 } }
-		if = {
-			limit = { market ?= scope:cm_fa_rd_from.market }
-			scope:cm_country = { change_variable = { name = cm_fa_rd_e1 add = 1 } }
-			scope:cm_fa_rd_from = {
-				# A river edge already carries market access better than any road laid on it, so a road
-				# there buys nothing: MARKET_DOWNSTREAM_FACTOR 0.5 and MARKET_UPSTREAM_FACTOR 0.9
-				# against the road's own (1 + market_access) floor of 0.6.
-				# loading_screen/common/defines/00_defines.txt:1787-1788
-				if = {
-					limit = {
-						NOT = {
-							is_target_in_variable_list = { name = cm_pf_river_neighbors target = scope:cm_fa_rd_to }
-						}
+		scope:cm_fa_rd_from = {
+			# A river edge already carries market access better than any road laid on it, so a road
+			# there buys nothing: MARKET_DOWNSTREAM_FACTOR 0.5 and MARKET_UPSTREAM_FACTOR 0.9
+			# against the road's own (1 + market_access) floor of 0.6.
+			# loading_screen/common/defines/00_defines.txt:1787-1788
+			if = {
+				limit = {
+					NOT = {
+						is_target_in_variable_list = { name = cm_pf_river_neighbors target = scope:cm_fa_rd_to }
 					}
-					set_local_variable = { name = cm_fa_rd_ud value = cm_fa_rd_unit_distance_value }
-					add_to_variable_map = {
-						name = cm_fa_rd_ed
-						key = scope:cm_fa_rd_to
-						value = local_var:cm_fa_rd_ud
-					}
-					scope:cm_country = { change_variable = { name = cm_fa_rd_e2 add = 1 } }
+				}
+				set_local_variable = { name = cm_fa_rd_ud value = cm_fa_rd_unit_distance_value }
+				add_to_variable_map = {
+					name = cm_fa_rd_ed
+					key = scope:cm_fa_rd_to
+					value = local_var:cm_fa_rd_ud
 				}
 			}
 		}
@@ -575,7 +566,7 @@ cm_fa_rd_try_build = {
 		save_temporary_scope_value_as = { name = cm_cost value = cm_fa_rd_cost_value }
 		if = {
 			limit = { cm_fa_can_afford = { POOL = cm_fa_pool_roads } }
-			# The parent is recorded with the order because the yearly plan rewrites cm_fa_rd_par_N
+			# The parent is recorded with the order because a later plan rewrites cm_fa_rd_par_N
 			# under an order still in flight, and check_orders would then judge it against a corridor
 			# it was never for.
 			set_variable = { name = cm_fa_rd_ord_par value = scope:cm_fa_rd_to }
@@ -734,18 +725,26 @@ cm_fa_rd_probe = {
 	cmf_log_value = { action = cm_log_rd_p_prox value = var:cm_fa_rd_p1 }
 	cmf_log_value = { action = cm_log_rd_p_ma value = var:cm_fa_rd_p2 }
 	cmf_log_value = { action = cm_log_rd_p_ma_par value = var:cm_fa_rd_p2p }
-	if = {
-		limit = { has_variable = cm_fa_rd_e0 }
-		cmf_log_value = { action = cm_log_rd_p_e0 value = var:cm_fa_rd_e0 }
-		cmf_log_value = { action = cm_log_rd_p_e1 value = var:cm_fa_rd_e1 }
-		cmf_log_value = { action = cm_log_rd_p_e2 value = var:cm_fa_rd_e2 }
-	}
 	cmf_log_value = { action = cm_log_rd_p_cap value = var:cm_fa_rd_p3 }
 	cmf_log_value = { action = cm_log_rd_p_cap_ring value = var:cm_fa_rd_p3r }
 	cmf_log_value = { action = cm_log_rd_p_flight value = var:cm_fa_rd_pf }
 	if = {
 		limit = { has_variable = cm_fa_pool_roads }
 		cmf_log_decimal_value = { action = cm_log_rd_p_pool value = var:cm_fa_pool_roads }
+	}
+	# Only speaks up when a target never got to look, which is the case a count of 0 cannot tell
+	# apart from a target that looked and found nothing.
+	if = {
+		limit = { NOT = { var:cm_fa_rd_ran_1 = 1 } }
+		cmf_log = { action = cm_log_rd_p_skip_prox }
+	}
+	if = {
+		limit = { NOT = { var:cm_fa_rd_ran_2 = 1 } }
+		cmf_log = { action = cm_log_rd_p_skip_ma }
+	}
+	if = {
+		limit = { NOT = { var:cm_fa_rd_ran_3 = 1 } }
+		cmf_log = { action = cm_log_rd_p_skip_cap }
 	}
 	remove_variable = cm_fa_rd_p1
 	remove_variable = cm_fa_rd_p2
@@ -760,9 +759,6 @@ cm_fa_rd_clear_plan = {
 	remove_variable = cm_fa_rd_ran_1
 	remove_variable = cm_fa_rd_ran_2
 	remove_variable = cm_fa_rd_ran_3
-	remove_variable = cm_fa_rd_e0
-	remove_variable = cm_fa_rd_e1
-	remove_variable = cm_fa_rd_e2
 	clear_variable_list = cm_fa_rd_building
 	clear_variable_list = cm_fa_rd_keep
 	clear_variable_list = cm_fa_rd_front
