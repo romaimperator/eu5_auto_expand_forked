@@ -1,5 +1,5 @@
 ﻿# Settings (settings) Tab
-## Priority (priority) Group
+## Construction Automation (priority_list) Group
 cm__priority_list_on_changed = {
 	scope = country
 
@@ -32,15 +32,31 @@ cm__auto_build_list_on_changed = {
 	}
 }
 
-# Auto Urbanize (auto_urbanize) Tab
-## Auto Urbanize Settings (auto_urbanize) Group
+# Mass Auto-Food (auto_food) Tab
+## Mass Auto-Food (auto_food_list) Group
+cm__auto_food_list_on_changed = {
+	scope = country
+
+	is_shown = {
+		always = yes
+	}
+
+	effect = {
+		cmm_apply_list_change = {
+			setting = cm__auto_food_list
+		}
+		cm_rebuild_auto_food_lookups = yes
+	}
+}
+
+# Auto-Urbanize (auto_urbanize) Tab
+## Auto-Urbanize Settings (auto_urbanize) Group
 cm__urbanize_city_to_megalopolis_on_changed = {
 	scope = country
 
 	is_shown = {
 		cmf_can_use_unrestricted_tools = yes
 	}
-
 	effect = { }
 }
 
@@ -51,7 +67,6 @@ cm__megalopolis_ignore_capital_on_changed = {
 		cmf_can_use_unrestricted_tools = yes
 		exists = var:cm_urbanize_city_to_megalopolis
 	}
-
 	effect = { }
 }
 
@@ -62,11 +77,10 @@ cm__megalopolis_ignore_market_center_on_changed = {
 		cmf_can_use_unrestricted_tools = yes
 		exists = var:cm_urbanize_city_to_megalopolis
 	}
-
 	effect = { }
 }
 
-## Do Not Urbanize (ignore_list) Group
+## Do Not Urbanize (Shows Owned) (auto_urbanize_ignore_list) Group
 cm__auto_urbanize_ignore_list_on_changed = {
 	scope = country
 
@@ -82,29 +96,15 @@ cm__auto_urbanize_ignore_list_on_changed = {
 	}
 }
 
-# Auto Town Rights (auto_town_rights) Tab
-## Auto-Grant Town Rights (auto_town_rights) Group
+# Urban Rights (auto_town_rights) Tab
+## Auto-Grant Urban Rights (auto_town_rights) Group
 cm__town_rights_free_grants_on_changed = {
 	scope = country
 
 	is_shown = {
 		cmf_can_use_unrestricted_tools = yes
 	}
-
-	# Global rule, so mirror it onto every country's revoke cost.
-	effect = {
-		if = {
-			limit = { cm_town_rights_grants_are_free = yes }
-			every_country = {
-				add_country_modifier = { modifier = cm_town_rights_free years = 1000 mode = replace }
-			}
-		}
-		else = {
-			every_country = {
-				remove_country_modifier = cm_town_rights_free
-			}
-		}
-	}
+	effect = { }
 }
 
 cm__town_rights_min_gov_power_on_changed = {
@@ -113,11 +113,10 @@ cm__town_rights_min_gov_power_on_changed = {
 	is_shown = {
 		NOT = { cm_town_rights_grants_are_free = yes }
 	}
-
 	effect = { }
 }
 
-## Town Rights Priority (auto_town_rights_list) Group
+## Urban Rights Priority (auto_town_rights_list) Group
 cm__auto_town_rights_list_on_changed = {
 	scope = country
 
@@ -141,7 +140,6 @@ cm__fa_reserve_on_changed = {
 	is_shown = {
 		exists = var:cm_fa_enabled
 	}
-
 	effect = { }
 }
 
@@ -151,7 +149,6 @@ cm__fa_save_unaffordable_on_changed = {
 	is_shown = {
 		exists = var:cm_fa_enabled
 	}
-
 	effect = { }
 }
 
@@ -179,7 +176,6 @@ cm__fa_industry_algorithm_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_industry_enabled
 	}
-
 	effect = { }
 }
 
@@ -190,7 +186,6 @@ cm__fa_industry_max_rel_roi_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_industry_enabled
 	}
-
 	effect = { }
 }
 
@@ -201,7 +196,6 @@ cm__fa_industry_min_roi_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_industry_enabled
 	}
-
 	effect = { }
 }
 
@@ -213,7 +207,6 @@ cm__fa_collapsar_target_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_collapsar_enabled
 	}
-
 	effect = { }
 }
 
@@ -241,7 +234,6 @@ cm__fa_food_target_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_food_enabled
 	}
-
 	effect = { }
 }
 
@@ -252,7 +244,6 @@ cm__fa_food_min_potential_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_food_enabled
 	}
-
 	effect = { }
 }
 
@@ -264,7 +255,6 @@ cm__fa_urban_rights_window_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_urban_rights_enabled
 	}
-
 	effect = { }
 }
 
@@ -275,7 +265,6 @@ cm__fa_urban_rights_reserve_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_urban_rights_enabled
 	}
-
 	effect = { }
 }
 
@@ -286,7 +275,6 @@ cm__fa_urban_rights_expand_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_urban_rights_enabled
 	}
-
 	effect = { }
 }
 
@@ -298,7 +286,6 @@ cm__fa_cleanup_min_profit_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_cleanup_enabled
 	}
-
 	effect = { }
 }
 
@@ -309,7 +296,6 @@ cm__fa_cleanup_core_goods_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_cleanup_enabled
 	}
-
 	effect = { }
 }
 
@@ -320,7 +306,6 @@ cm__fa_cleanup_auto_food_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_cleanup_enabled
 	}
-
 	effect = { }
 }
 
@@ -332,7 +317,6 @@ cm__fa_roads_proximity_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_roads_enabled
 	}
-
 	effect = { }
 }
 
@@ -343,7 +327,6 @@ cm__fa_roads_market_access_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_roads_enabled
 	}
-
 	effect = { }
 }
 
@@ -354,7 +337,6 @@ cm__fa_roads_capital_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_roads_enabled
 	}
-
 	effect = { }
 }
 
@@ -366,7 +348,6 @@ cm__fa_gov_move_seats_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_governors_enabled
 	}
-
 	effect = { }
 }
 
@@ -377,38 +358,8 @@ cm__fa_gov_prepare_sites_on_changed = {
 		exists = var:cm_fa_enabled
 		exists = var:cm_fa_governors_enabled
 	}
-
 	effect = { }
 }
-
-# Mapmodes (map_modes) Tab
-## Placement Finder (placement_finder) Group
-cm__placement_finder_debug_path_on_changed = {
-	scope = country
-
-	is_shown = {
-		debug_only = yes
-	}
-
-	effect = { }
-}
-
-cm_toggle_auto_expand_buildings_feature = {
-	scope = country
-	is_shown = { always = yes }
-	effect = {
-		cm_toggle_priority_feature = { feature = cm_feature_auto_expand_buildings }
-	}
-}
-
-cm_toggle_auto_expand_rgos_feature = {
-	scope = country
-	is_shown = { always = yes }
-	effect = {
-		cm_toggle_priority_feature = { feature = cm_feature_auto_expand_rgos }
-	}
-}
-
 
 # Debug (debug) Tab
 ## Action Log (logging) Group
@@ -418,7 +369,6 @@ cm__log_cycle_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -428,7 +378,6 @@ cm__log_industry_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -438,7 +387,6 @@ cm__log_collapsar_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -448,7 +396,6 @@ cm__log_food_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -458,7 +405,6 @@ cm__log_roads_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -468,7 +414,6 @@ cm__log_cleanup_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -478,7 +423,6 @@ cm__log_governors_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -488,7 +432,6 @@ cm__log_military_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -498,17 +441,26 @@ cm__log_government_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
+## Diagnostics (diagnostics) Group
+cm__placement_finder_debug_path_on_changed = {
+	scope = country
+
+	is_shown = {
+		debug_only = yes
+	}
+	effect = { }
+}
+
+## Probes (probes) Group
 cm__probe_budget_on_changed = {
 	scope = country
 
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -518,7 +470,6 @@ cm__probe_governors_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -528,7 +479,6 @@ cm__probe_military_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -538,7 +488,6 @@ cm__probe_industry_anchors_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -548,7 +497,6 @@ cm__probe_industry_rgo_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -558,7 +506,6 @@ cm__probe_collapsar_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -568,7 +515,6 @@ cm__probe_roads_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }
 
@@ -578,6 +524,5 @@ cm__probe_log_gate_on_changed = {
 	is_shown = {
 		debug_only = yes
 	}
-
 	effect = { }
 }

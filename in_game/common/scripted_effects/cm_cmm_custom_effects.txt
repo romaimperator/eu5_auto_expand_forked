@@ -6,31 +6,11 @@
 cm_cmm_post_registration = {
 	cm_apply_expand_metric_bounds = yes
 
-	# early_council_hall, minting_office, and settlement_building build regardless of control, since they raise control and population.
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_build_list field_id = min_control item = 1 value = 0 }
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_build_list field_id = min_control item = 2 value = 0 }
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_build_list field_id = min_control item = 3 value = 0 }
+	cmf_add_action_bar_element = { element = cm_pf_refresh }
+	cmf_register_scripted_gui = { element = cm_pf_refresh }
 
-	# Auto-expand buildings and RGOs, auto-build, and auto-food start enabled; auto-build capital builds regardless of construction material prices.
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = priority_list field_id = enabled item = 1 value = 1 }
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = priority_list field_id = enabled item = 2 value = 1 }
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = priority_list field_id = enabled item = 3 value = 1 }
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = priority_list field_id = enabled item = 4 value = 1 }
+	# Item 7 is the retired capital row, which sits past the list's registered item count.
 	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = priority_list field_id = min_discount item = 7 value = 33 }
-
-	# Gold, Silver and Iron are excluded from rural-to-town urbanization by default.
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_urbanize_ignore_list field_id = ignored item = 1 value = 1 }
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_urbanize_ignore_list field_id = ignored item = 2 value = 1 }
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = auto_urbanize_ignore_list field_id = ignored item = 4 value = 1 }
-
-	# Full-automation budget shares: food 10, industry 60, collapsar 10, roads 10, utilities 10.
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = budget item = 2 value = 60 }
-
-	# Building Cleanup, Governors and Urban Rights start off; cleanup is the only category that
-	# closes and destroys what the player already has.
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = enabled item = 6 value = 0 }
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = enabled item = 7 value = 0 }
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = fa_priority_list field_id = enabled item = 8 value = 0 }
 
 	cm_repair_expand_thresholds = yes
 
@@ -76,7 +56,44 @@ cm_rebuild_priority_lookups = {
 	} # end guard
 }
 
-# Re-register the threshold field with the active metric's bounds and localization.
+# Mirrors the global free-grants rule onto every country's manual grant and revoke costs.
+# Scope: country
+cm_town_rights_apply_free_grants = {
+	if = {
+		limit = { cm_town_rights_grants_are_free = yes }
+		every_country = {
+			add_country_modifier = { modifier = cm_town_rights_free years = 1000 mode = replace }
+		}
+	}
+	else = {
+		every_country = {
+			remove_country_modifier = cm_town_rights_free
+		}
+	}
+}
+
+# The CMM slider fires its callback on hover as well as on change, so the alias sync and the
+# push arm behind a comparison against the stored value.
+# Scope: country
+cm_fa_apply_reserve_change = {
+	# A macro never resolves inside a quoted lookup, so the key goes through a local.
+	set_local_variable = { name = cm_fa_tmp_flag value = flag:cm__fa_reserve }
+	if = {
+		limit = {
+			NOT = { "variable_map(cmm|local_var:cm_fa_tmp_flag)" = var:cm_fa_reserve }
+		}
+		cmm_sync_setting_alias = {
+			setting = cm__fa_reserve
+			alias = cm_fa_reserve
+		}
+		# Picked up by the push widgets in cm_automation_lateralview.gui.
+		set_variable = cm_fa_reserve_from_cmm
+	}
+}
+
+# Re-register the threshold field with the active metric's bounds and localization. The
+# generated registration uses the widest bounds of any metric, since it re-runs on every load
+# and clamps stored values.
 # Called on registration and on metric change.
 # Scope: country
 cm_apply_expand_metric_bounds = {
