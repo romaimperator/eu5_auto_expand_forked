@@ -165,13 +165,41 @@ cm_bld_use_standing_value = {
 	trigger_else = { always = no }
 }
 
+# Whether the standing building runs the method cm_bt_output measured. That map holds the best
+# producing method's output and cm_building_type_to_produced_good one good per type, so a building
+# running something else is left out rather than priced on a good it does not make. Root is the
+# location. Expects scope:cm_building_type. Nested for the reason above: each read is only valid
+# once the one over it holds.
+cm_bld_marginal_good_matches = {
+	trigger_if = {
+		limit = {
+			exists = scope:cm_building_type
+			has_global_variable_map = cm_building_type_to_produced_good
+		}
+		trigger_if = {
+			limit = {
+				is_key_in_global_variable_map = { name = cm_building_type_to_produced_good target = scope:cm_building_type }
+				has_building = scope:cm_building_type
+			}
+			"global_variable_map(cm_building_type_to_produced_good|scope:cm_building_type)" = {
+				save_temporary_scope_as = cm_bld_marg_good
+			}
+			"building(scope:cm_building_type|owner)" = {
+				building_produced_goods = scope:cm_bld_marg_good
+			}
+		}
+		trigger_else = { always = no }
+	}
+	trigger_else = { always = no }
+}
+
 # Metric gate for the GUI construction executor. Expects scopes: country, building_type,
 # cost, income, profit. Non-production types, zero construction demand, and a zero
 # threshold are exempt. The threshold is monthly gold per level for Tax Income and
 # Profit, years to recoup the cost for the ROI metrics. Every branch compares
-# cm_bld_income_value or cm_bld_profit_value, and the ROI branches add cm_bld_amenity_value
+# cm_bld_income_value or cm_bld_profit_value, and the ROI branches add the indirect value
 # through cm_bld_adjusted_income and cm_bld_adjusted_profit; both need the location, so
-# they run under scope:cm_amenity_loc and the else branches keep the raw engine values.
+# they run under scope:cm_indirect_loc and the else branches keep the raw engine values.
 cm_gui_metric_gate_passes = {
 	OR = {
 		NOT = { scope:cm_building_type = { cm_is_building_type_production_building = yes } }
@@ -181,8 +209,8 @@ cm_gui_metric_gate_passes = {
 		AND = {
 			cm_expand_metric_is_tax_income = yes
 			trigger_if = {
-				limit = { exists = scope:cm_amenity_loc }
-				scope:cm_amenity_loc = {
+				limit = { exists = scope:cm_indirect_loc }
+				scope:cm_indirect_loc = {
 					cm_bld_income_value >= "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
 				}
 			}
@@ -193,8 +221,8 @@ cm_gui_metric_gate_passes = {
 		AND = {
 			cm_expand_metric_is = { metric = 2 }
 			trigger_if = {
-				limit = { exists = scope:cm_amenity_loc }
-				scope:cm_amenity_loc = {
+				limit = { exists = scope:cm_indirect_loc }
+				scope:cm_indirect_loc = {
 					cm_bld_profit_value >= "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
 				}
 			}
@@ -205,8 +233,8 @@ cm_gui_metric_gate_passes = {
 		AND = {
 			cm_expand_metric_is = { metric = 3 }
 			trigger_if = {
-				limit = { exists = scope:cm_amenity_loc }
-				scope:cm_amenity_loc = {
+				limit = { exists = scope:cm_indirect_loc }
+				scope:cm_indirect_loc = {
 					scope:cm_cost <= {
 						value = cm_bld_adjusted_income
 						multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
@@ -225,8 +253,8 @@ cm_gui_metric_gate_passes = {
 		AND = {
 			cm_expand_metric_is = { metric = 4 }
 			trigger_if = {
-				limit = { exists = scope:cm_amenity_loc }
-				scope:cm_amenity_loc = {
+				limit = { exists = scope:cm_indirect_loc }
+				scope:cm_indirect_loc = {
 					scope:cm_cost <= {
 						value = cm_bld_adjusted_profit
 						multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"

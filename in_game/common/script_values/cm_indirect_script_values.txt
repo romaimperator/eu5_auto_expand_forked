@@ -1,0 +1,309 @@
+﻿# Predicted indirect value for the ROI metric gates: the gold/month one more level of a building
+# adds through its market access grant, its RGO output grants, and the production efficiency it
+# adds to the levels already standing, on top of the engine's predicted income/profit. Grants are
+# baked constants seeded by cm_indirect_populate_grant_maps.
+#
+# The three components are not in one denomination. Market access is built from
+# Location.GetTotalIncome, which is the tax income the owner takes (TAX_BASE_TT_TEXT,
+# game/main_menu/localization/english/interfaces_l_english.yml:7410); RGO output and the marginal
+# efficiency term are profit. Each is written once in its own denomination and the other branch
+# converts it by the tax share.
+
+# Root is the location. Expects scope:cm_building_type, scope:cm_income, scope:cm_profit and the
+# GUI-only inputs scope:cm_cur_market_access (Location.GetMarketAccess), scope:cm_cur_total_income
+# (Location.GetTotalIncome), scope:cm_cur_rgo_profit (Location.GetRGOProfitPerLevel),
+# with scope:cm_indirect_loc marking them present. Returns 0 when they are absent.
+cm_bld_indirect_profit = {
+	value = 0
+	if = {
+		limit = {
+			exists = scope:cm_indirect_loc
+			exists = scope:cm_building_type
+		}
+		add = cm_bld_indirect_market_access_as_profit
+		add = cm_bld_indirect_rgo_output
+		add = cm_bld_marginal_efficiency
+	}
+}
+
+cm_bld_indirect_income = {
+	value = 0
+	if = {
+		limit = {
+			exists = scope:cm_indirect_loc
+			exists = scope:cm_building_type
+		}
+		add = cm_bld_indirect_market_access
+		add = cm_bld_indirect_rgo_output_as_income
+		add = cm_bld_marginal_efficiency_as_income
+	}
+}
+
+# The share of a building's profit that reaches the owner as tax income, the same conversion
+# cm_bld_income_value takes. Reads 0 where the engine pair is absent, so a component needing
+# conversion drops out instead of crossing denominations unconverted.
+cm_bld_tax_share = {
+	value = 0
+	if = {
+		limit = { scope:cm_profit > 0 }
+		value = scope:cm_income
+		divide = scope:cm_profit
+	}
+}
+
+cm_bld_indirect_market_access_as_profit = {
+	value = 0
+	if = {
+		limit = { cm_bld_tax_share > 0 }
+		value = cm_bld_indirect_market_access
+		divide = cm_bld_tax_share
+	}
+}
+
+cm_bld_indirect_rgo_output_as_income = {
+	value = cm_bld_indirect_rgo_output
+	multiply = cm_bld_tax_share
+}
+
+cm_bld_marginal_efficiency_as_income = {
+	value = cm_bld_marginal_efficiency
+	multiply = cm_bld_tax_share
+}
+
+# Market access scales the whole location's throughput: one more level adds
+# (total income / access) * grant, the grant capped at the headroom below 100% access.
+cm_bld_indirect_market_access = {
+	value = 0
+	if = {
+		limit = {
+			has_global_variable_map = cm_indirect_market_access_grants
+			is_key_in_global_variable_map = { name = cm_indirect_market_access_grants target = scope:cm_building_type }
+			scope:cm_cur_market_access > 0
+			scope:cm_cur_market_access < 1
+			scope:cm_cur_total_income > 0
+		}
+		add = "global_variable_map(cm_indirect_market_access_grants|scope:cm_building_type)"
+		max = { value = 1 subtract = scope:cm_cur_market_access }
+		multiply = scope:cm_cur_total_income
+		divide = scope:cm_cur_market_access
+	}
+}
+
+# One more level's share of the RGO's income: grants times (RGO income / current output
+# bonuses), so income the existing bonuses already produce is not credited again.
+cm_bld_indirect_rgo_output = {
+	value = 0
+	if = {
+		limit = {
+			has_global_variable_map = cm_indirect_rgo_output_grants
+			is_key_in_global_variable_map = { name = cm_indirect_rgo_output_grants target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_indirect_rgo_output_grants|scope:cm_building_type)"
+	}
+	# Per-good grants, credited only when the location's RGO produces the boosted good.
+	if = {
+		limit = {
+			raw_material ?= goods:sugar
+			has_global_variable_map = cm_indirect_rgo_output_grants_sugar
+			is_key_in_global_variable_map = { name = cm_indirect_rgo_output_grants_sugar target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_indirect_rgo_output_grants_sugar|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:cotton
+			has_global_variable_map = cm_indirect_rgo_output_grants_cotton
+			is_key_in_global_variable_map = { name = cm_indirect_rgo_output_grants_cotton target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_indirect_rgo_output_grants_cotton|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:tobacco
+			has_global_variable_map = cm_indirect_rgo_output_grants_tobacco
+			is_key_in_global_variable_map = { name = cm_indirect_rgo_output_grants_tobacco target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_indirect_rgo_output_grants_tobacco|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:goods_gold
+			has_global_variable_map = cm_indirect_rgo_output_grants_goods_gold
+			is_key_in_global_variable_map = { name = cm_indirect_rgo_output_grants_goods_gold target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_indirect_rgo_output_grants_goods_gold|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:silver
+			has_global_variable_map = cm_indirect_rgo_output_grants_silver
+			is_key_in_global_variable_map = { name = cm_indirect_rgo_output_grants_silver target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_indirect_rgo_output_grants_silver|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:fish
+			has_global_variable_map = cm_indirect_rgo_output_grants_fish
+			is_key_in_global_variable_map = { name = cm_indirect_rgo_output_grants_fish target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_indirect_rgo_output_grants_fish|scope:cm_building_type)"
+	}
+	if = {
+		limit = {
+			raw_material ?= goods:livestock
+			has_global_variable_map = cm_indirect_rgo_output_grants_livestock
+			is_key_in_global_variable_map = { name = cm_indirect_rgo_output_grants_livestock target = scope:cm_building_type }
+		}
+		add = "global_variable_map(cm_indirect_rgo_output_grants_livestock|scope:cm_building_type)"
+	}
+	multiply = scope:cm_cur_rgo_profit
+	multiply = modifier:cm_rgo_level
+	divide = cm_bld_indirect_rgo_denominator
+}
+
+# 1 + every output bonus already in the RGO's income. Floored: devastation can push it negative.
+cm_bld_indirect_rgo_denominator = {
+	value = 1
+	add = modifier:local_raw_material_output
+	add = owner.modifier:global_raw_material_output
+	if = { limit = { raw_material ?= goods:sugar } add = modifier:local_sugar_output_modifier }
+	if = { limit = { raw_material ?= goods:cotton } add = modifier:local_cotton_output_modifier }
+	if = { limit = { raw_material ?= goods:tobacco } add = modifier:local_tobacco_output_modifier }
+	if = { limit = { raw_material ?= goods:goods_gold } add = modifier:local_goods_gold_output_modifier }
+	if = { limit = { raw_material ?= goods:silver } add = modifier:local_silver_output_modifier }
+	if = { limit = { raw_material ?= goods:fish } add = modifier:local_fish_output_modifier }
+	if = { limit = { raw_material ?= goods:livestock } add = modifier:local_livestock_output_modifier }
+	min = 0.25
+}
+
+# The profit the next level makes beyond the standing building's per-level average. Every level
+# raises the production efficiency of the whole stack by the age's step, so where
+# output(L) = L x out x (1 + E + (L-1)m), output(L+1) - output(L) beats the average
+# out x (1 + E + (L-1)m) by out x (L+1) x m. Efficiency multiplies output alone and the input side
+# carries none of it, so the difference is all margin.
+# Root is the location. Expects scope:cm_building_type and scope:cm_profit.
+cm_bld_marginal_efficiency = {
+	value = 0
+	if = {
+		limit = {
+			cm_bld_use_standing_value = yes
+			has_global_variable_map = cm_bt_output
+			is_key_in_global_variable_map = { name = cm_bt_output target = scope:cm_building_type }
+			cm_bld_marginal_good_matches = yes
+		}
+		value = "global_variable_map(cm_bt_output|scope:cm_building_type)"
+		multiply = cm_bld_marginal_next_level
+		multiply = cm_bld_prod_efficiency_step
+		multiply = cm_bld_marginal_price
+		multiply = cm_bld_marginal_output_realized
+	}
+}
+
+cm_bld_marginal_next_level = {
+	value = 0
+	"building(scope:cm_building_type|owner)" = {
+		value = building_level
+		add = 1
+	}
+}
+
+# What the building makes against what it could, so a starved or understaffed one is not credited a
+# full-output gain against a baseline that is its own actual per-level profit.
+cm_bld_marginal_output_realized = {
+	value = 0
+	if = {
+		limit = { "building(scope:cm_building_type|owner)" = { building_potential_profit > 0 } }
+		"building(scope:cm_building_type|owner)" = {
+			value = building_profit
+			divide = building_potential_profit
+		}
+	}
+	min = 0
+}
+
+# The good's price where the building sells it, the good coming from the scope
+# cm_bld_marginal_good_matches saves off the classification map.
+cm_bld_marginal_price = {
+	value = 0
+	if = {
+		limit = { cm_bld_marginal_good_matches = yes }
+		value = "market.market_price(scope:cm_bld_marg_good)"
+	}
+}
+
+cm_dbg_good_match_value = {
+	value = 0
+	if = {
+		limit = { cm_bld_marginal_good_matches = yes }
+		value = 1
+	}
+}
+
+# The production efficiency each level adds, the age's efficiency field over 100: age_1_traditions 1.0
+# (game/in_game/common/age/00_default.txt:22), age_2_renaissance 0.8 (:84), age_3_discovery 0.6
+# (:143), age_4_reformation 0.4 (:204), age_5_absolutism 0.2 (:280), age_6_revolutions 0.1 (:351).
+cm_bld_prod_efficiency_step = {
+	value = 0.01
+	if = {
+		limit = { current_age = age_2_renaissance }
+		value = 0.008
+	}
+	else_if = {
+		limit = { current_age = age_3_discovery }
+		value = 0.006
+	}
+	else_if = {
+		limit = { current_age = age_4_reformation }
+		value = 0.004
+	}
+	else_if = {
+		limit = { current_age = age_5_absolutism }
+		value = 0.002
+	}
+	else_if = {
+		limit = { current_age = age_6_revolutions }
+		value = 0.001
+	}
+}
+
+# The value of one more level. GetBuildingTypeProfitInLocation and
+# GetBuildingTypeIncomeToOwnerInLocation, which the queue windows pass in as scope:cm_profit and
+# scope:cm_income, price a level at base production efficiency and leave out the Levels in
+# Building term, so on a standing building they fall further behind the taller it is; vanilla
+# reads them only where nothing is constructed (in_game/gui/build_location_lateralview.gui:1837
+# against :1762). Where levels stand, the building's own profit over its level count replaces
+# them, and income to owner takes the same factor because it is a flat share of profit.
+# Root is the location. Expects scope:cm_building_type and scope:cm_profit.
+cm_bld_profit_value = {
+	if = {
+		limit = { cm_bld_use_standing_value = yes }
+		"building(scope:cm_building_type|owner)" = {
+			value = building_profit
+			divide = building_level
+		}
+	}
+	else = { value = scope:cm_profit }
+}
+
+# Also expects scope:cm_income.
+cm_bld_income_value = {
+	if = {
+		limit = { cm_bld_use_standing_value = yes }
+		value = scope:cm_income
+		multiply = cm_bld_profit_value
+		divide = scope:cm_profit
+	}
+	else = { value = scope:cm_income }
+}
+
+# Root is the location. Expects scope:cm_income / scope:cm_profit plus the indirect scopes.
+cm_bld_adjusted_income = {
+	value = cm_bld_income_value
+	add = cm_bld_indirect_income
+}
+
+cm_bld_adjusted_profit = {
+	value = cm_bld_profit_value
+	add = cm_bld_indirect_profit
+}

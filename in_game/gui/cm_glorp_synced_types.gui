@@ -155,13 +155,15 @@ template glorpUI_building_roi_tooltip_base {
 	blockoverride "roi_extra_rows" {
 		vbox = {
 			# The gate is Construction Manager's presence alone. And() evaluates both of its
-			# arguments, so cm_bld_amenity_value is only ever named below this, never beside it.
+			# arguments, so the indirect value is only ever named below this, never beside it.
+			# The row reads the income form, per its own label. The building type pair is what
+			# carries the denomination here because the building type variant shares this base.
 			layoutpolicy_horizontal = expanding
 			ignoreinvisible = yes
 			visible = "[GetScriptedGui('glorpui_roi_indirect_active').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			TooltipManualTableField = {
 				blockoverride "visibility" {
-					visible = "[GreaterThan_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_amenity_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).ScriptValue('cm_bld_amenity_value'), '(CFixedPoint)0')]"
+					visible = "[GreaterThan_CFixedPoint(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_indirect_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))).ScriptValue('cm_bld_indirect_income'), '(CFixedPoint)0')]"
 				}
 				blockoverride "field_content" {
 					text_single = {
@@ -171,7 +173,7 @@ template glorpUI_building_roi_tooltip_base {
 					}
 					text_single = {
 						autoresize = yes
-						raw_text = "[GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_amenity_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).ScriptValue('cm_bld_amenity_value')|2]@income!"
+						raw_text = "[GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_indirect_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))).ScriptValue('cm_bld_indirect_income')|2]@income!"
 					}
 				}
 			}

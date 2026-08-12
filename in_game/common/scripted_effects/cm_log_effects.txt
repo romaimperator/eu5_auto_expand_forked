@@ -127,3 +127,40 @@ cm_dbg_probe_collapsar = {
 	cm_dbg_probe_location = { PROBE = cm_fa_col_probe }
 	cmm_sync_bool_alias = { setting = cm__log_collapsar alias = cm_dbg_collapsar }
 }
+
+# Console diagnostic: effect location:<key> = { cm_dbg_indirect_probe = yes }
+# Reports the marginal chain per producing building: whether the classification's good still
+# matches the method the building runs, the price that good fetches in its market, and how much of
+# its full output the building is making. Producing types only, since the term applies to no other.
+# The age step is left out because it is a per-age constant, and the two decimals the log renders
+# would show every one of them as 0.00. Ungated like every other probe. Root is the location.
+cm_dbg_indirect_probe = {
+	save_temporary_scope_as = cm_dbg_ind_loc
+	save_temporary_scope_as = cmf_log_loc
+	every_buildings_in_location = {
+		limit = {
+			owner = scope:cm_dbg_ind_loc.owner
+			building_type = { cm_is_building_type_production_building = yes }
+		}
+		building_type = {
+			save_temporary_scope_as = cm_building_type
+			save_temporary_scope_as = cmf_log_bt
+		}
+		scope:cm_dbg_ind_loc.owner = {
+			cmf_log_with_building_location = {
+				action = cm_log_ind_probe
+				arg1 = cm_log_ind_a_match
+				arg2 = cm_log_ind_a_price
+				value = scope:cm_dbg_ind_loc.cm_dbg_good_match_value
+				value2 = scope:cm_dbg_ind_loc.cm_bld_marginal_price
+			}
+			cmf_log_with_building_location = {
+				action = cm_log_ind_probe
+				arg1 = cm_log_ind_a_real
+				arg2 = cm_log_ind_a_lvl
+				value = scope:cm_dbg_ind_loc.cm_bld_marginal_output_realized
+				value2 = scope:cm_dbg_ind_loc.cm_bld_marginal_next_level
+			}
+		}
+	}
+}
