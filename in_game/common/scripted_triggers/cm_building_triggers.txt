@@ -143,12 +143,35 @@ cm_expand_metric_is = {
 	}
 }
 
+# Whether cm_bld_income_value and cm_bld_profit_value read the standing building instead of
+# the engine's type-scope estimate. Root is the location. Expects scope:cm_building_type and
+# scope:cm_profit. scope:cm_old_building_type marks an upgrade item, which is out of scope
+# here and whose full-automation scorer passes no profit. Nested rather than one AND list
+# because each read is only valid once the one above it holds, and short-circuiting is
+# unverified.
+cm_bld_use_standing_value = {
+	trigger_if = {
+		limit = {
+			exists = scope:cm_building_type
+			NOT = { exists = scope:cm_old_building_type }
+		}
+		trigger_if = {
+			limit = { has_building = scope:cm_building_type }
+			"building(scope:cm_building_type|owner)" = { building_level >= 1 }
+			scope:cm_profit > 0
+		}
+		trigger_else = { always = no }
+	}
+	trigger_else = { always = no }
+}
+
 # Metric gate for the GUI construction executor. Expects scopes: country, building_type,
 # cost, income, profit. Non-production types, zero construction demand, and a zero
 # threshold are exempt. The threshold is monthly gold per level for Tax Income and
-# Profit, years to recoup the cost for the ROI metrics. The ROI branches add
-# cm_bld_amenity_value when the amenity scopes (cm_amenity_loc and the cm_cur_* values)
-# are passed; Tax Income and Profit always compare the raw engine values.
+# Profit, years to recoup the cost for the ROI metrics. Every branch compares
+# cm_bld_income_value or cm_bld_profit_value, and the ROI branches add cm_bld_amenity_value
+# through cm_bld_adjusted_income and cm_bld_adjusted_profit; both need the location, so
+# they run under scope:cm_amenity_loc and the else branches keep the raw engine values.
 cm_gui_metric_gate_passes = {
 	OR = {
 		NOT = { scope:cm_building_type = { cm_is_building_type_production_building = yes } }
@@ -157,11 +180,27 @@ cm_gui_metric_gate_passes = {
 		"scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)" = 0
 		AND = {
 			cm_expand_metric_is_tax_income = yes
-			scope:cm_income >= "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+			trigger_if = {
+				limit = { exists = scope:cm_amenity_loc }
+				scope:cm_amenity_loc = {
+					cm_bld_income_value >= "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+				}
+			}
+			trigger_else = {
+				scope:cm_income >= "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+			}
 		}
 		AND = {
 			cm_expand_metric_is = { metric = 2 }
-			scope:cm_profit >= "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+			trigger_if = {
+				limit = { exists = scope:cm_amenity_loc }
+				scope:cm_amenity_loc = {
+					cm_bld_profit_value >= "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+				}
+			}
+			trigger_else = {
+				scope:cm_profit >= "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
+			}
 		}
 		AND = {
 			cm_expand_metric_is = { metric = 3 }
@@ -169,8 +208,7 @@ cm_gui_metric_gate_passes = {
 				limit = { exists = scope:cm_amenity_loc }
 				scope:cm_amenity_loc = {
 					scope:cm_cost <= {
-						value = scope:cm_income
-						add = cm_bld_amenity_value
+						value = cm_bld_adjusted_income
 						multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
 						multiply = 12
 					}
@@ -190,8 +228,7 @@ cm_gui_metric_gate_passes = {
 				limit = { exists = scope:cm_amenity_loc }
 				scope:cm_amenity_loc = {
 					scope:cm_cost <= {
-						value = scope:cm_profit
-						add = cm_bld_amenity_value
+						value = cm_bld_adjusted_profit
 						multiply = "scope:cm_country.variable_map(cm_priority_min_profit|flag:cm_feature_auto_expand_buildings)"
 						multiply = 12
 					}
@@ -213,7 +250,7 @@ cm_gui_metric_gate_passes = {
 cm_building_type_profitable_or_subsidized = {
 	OR = {
 		NOT = { scope:cm_building_type = { cm_is_building_type_production_building = yes } }
-		scope:cm_profit > 0
+		cm_bld_profit_value > 0
 		any_buildings_in_location = {
 			building_type = scope:cm_building_type
 			is_subsidized = yes

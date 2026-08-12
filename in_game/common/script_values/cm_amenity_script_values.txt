@@ -125,13 +125,43 @@ cm_bld_amenity_rgo_denominator = {
 	min = 0.25
 }
 
+# The value of one more level. GetBuildingTypeProfitInLocation and
+# GetBuildingTypeIncomeToOwnerInLocation, which the queue windows pass in as scope:cm_profit and
+# scope:cm_income, price a level at base production efficiency and leave out the Levels in
+# Building term, so on a standing building they fall further behind the taller it is; vanilla
+# reads them only where nothing is constructed (in_game/gui/build_location_lateralview.gui:1837
+# against :1762). Where levels stand, the building's own profit over its level count replaces
+# them, and income to owner takes the same factor because it is a flat share of profit.
+# Root is the location. Expects scope:cm_building_type and scope:cm_profit.
+cm_bld_profit_value = {
+	if = {
+		limit = { cm_bld_use_standing_value = yes }
+		"building(scope:cm_building_type|owner)" = {
+			value = building_profit
+			divide = building_level
+		}
+	}
+	else = { value = scope:cm_profit }
+}
+
+# Also expects scope:cm_income.
+cm_bld_income_value = {
+	if = {
+		limit = { cm_bld_use_standing_value = yes }
+		value = scope:cm_income
+		multiply = cm_bld_profit_value
+		divide = scope:cm_profit
+	}
+	else = { value = scope:cm_income }
+}
+
 # Root is the location. Expects scope:cm_income / scope:cm_profit plus the cm_bld_amenity_value scopes.
 cm_bld_adjusted_income = {
-	value = scope:cm_income
+	value = cm_bld_income_value
 	add = cm_bld_amenity_value
 }
 
 cm_bld_adjusted_profit = {
-	value = scope:cm_profit
+	value = cm_bld_profit_value
 	add = cm_bld_amenity_value
 }

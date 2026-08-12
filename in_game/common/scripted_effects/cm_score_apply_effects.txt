@@ -40,7 +40,7 @@ cm_fa_score_build_apply = {
 				remove_from_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type }
 				add_to_variable_map = { name = cm_fa_b_costs key = scope:cm_building_type value = scope:cm_cost }
 				remove_from_variable_map = { name = cm_fa_b_profit key = scope:cm_building_type }
-				add_to_variable_map = { name = cm_fa_b_profit key = scope:cm_building_type value = scope:cm_profit }
+				add_to_variable_map = { name = cm_fa_b_profit key = scope:cm_building_type value = cm_bld_profit_value }
 				if = {
 					limit = {
 						exists = global_var:cm_dbg_collapsar
@@ -52,6 +52,8 @@ cm_fa_score_build_apply = {
 					limit = { cm_fa_col_watched = yes }
 					save_temporary_scope_as = cmf_log_loc
 					scope:cm_building_type = { save_temporary_scope_as = cmf_log_bt }
+					# The log runs in country scope and cm_bld_profit_value needs the location.
+					save_temporary_scope_value_as = { name = cm_col_log_profit value = cm_bld_profit_value }
 					scope:cm_country = {
 						cm_dbg_log_bld = {
 							cat = collapsar
@@ -59,7 +61,7 @@ cm_fa_score_build_apply = {
 							arg1 = cm_log_col_a_cost
 							arg2 = cm_log_col_a_profit
 							value = scope:cm_cost
-							value2 = scope:cm_profit
+							value2 = scope:cm_col_log_profit
 						}
 					}
 				}
