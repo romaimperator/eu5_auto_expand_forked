@@ -290,6 +290,47 @@ GENERATED_HEADER = (
     "# Regenerate after a game update.\n"
 )
 
+# Every repeated phrase in the generated localization is written once here and
+# referenced with $key$, so a translation run pays for it once. cm_trmm_grant_word
+# and cm_trmm_tied_with_label live in cm_town_right_map_mode_static_l_english.yml.
+WORD_KEYS = [
+    ' cm_trmm_tt_options_label: "specialization options:"',
+    ' cm_trmm_tt_details_label: "Details:"',
+    ' cm_trmm_tt_industries_label: "Best industries:"',
+    ' cm_trmm_why_bld_label: "Building:"',
+    ' # Note to translators: followed by a production method name and a colon.',
+    ' cm_trmm_why_pm_label: "Using"',
+    ' # Note to translators: each of these three closes an input row, for example',
+    ' # "Iron: 25.0% in the province".',
+    ' cm_trmm_row_present: "in the province"',
+    ' cm_trmm_row_missing: "missing"',
+    ' cm_trmm_row_other: "from other industries"',
+    ' cm_trmm_chip_rgo_label: "RGO here"',
+    ' cm_trmm_chip_lm_text: " #G output bonus here#!"',
+    ' # Note to translators: shown after the name of an urban right the location',
+    ' # already holds, for example "Royal Masonry Rights granted".',
+    ' cm_trmm_granted_word: "granted"',
+    ' cm_trmm_reason_best_tail: "best urban right for this location"',
+    ' cm_trmm_reason_missed_tail: "short of the best fit here"',
+    ' # Note to translators: followed by the name of an urban right.',
+    ' cm_trmm_search_mode_prefix: "Urban Right Search:"',
+    ' # Note to translators: the name of an urban right sits between these two.',
+    ' cm_trmm_search_desc_head: "Colors each [location|e] by the share of input'
+    ' [goods|e] that the buildings boosted by"',
+    ' cm_trmm_search_desc_tail: "can source from the [province|e]\'s [rgo|e]s.'
+    ' Light stripes mark where the right is already granted; gold stripes mark'
+    ' where it is the best specialization option."',
+    ' cm_trmm_search_desc_boosted: "Boosted industries:"',
+    ' cm_trmm_search_desc_hover: "Hover an industry\'s percentage in the tooltip'
+    ' for its input breakdown."',
+    ' # Note to translators: these two read as "Rank among specializations here: 2 of 9".',
+    ' cm_trmm_search_rank_label: "Rank among specializations here:"',
+    ' cm_trmm_search_rank_of: "of"',
+    ' cm_trmm_grant_match_label: "Match:"',
+    ' # Note to translators: follows a "Grant <urban right>" button title.',
+    ' cm_trmm_grant_expand_suffix: "and enable matching auto-expands"',
+]
+
 
 def _load_config():
     if tomllib is None:
@@ -2429,14 +2470,16 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
     ind_calls = "".join(
         f"[ROOT.GetLocation.Custom('cm_trmm_ind_slot_{slot}')]"
         for slot in range(1, len(boosted_goods) + 1))
-    lines = ["l_english:"]
+    words = ["l_english:"]
     for header_line in GENERATED_HEADER.splitlines():
-        lines.append(f" {header_line}")
+        words.append(f" {header_line}")
+    words.extend(WORD_KEYS)
+    lines = []
     lines.append(
         f" MAPMODE_CM_BEST_TOWN_RIGHT_TT_LAND: \"[ROOT.GetLocation.GetName], "
-        f"[ROOT.GetLocation.GetProvince.GetName] specialization options:{slot_calls}"
-        f"\\n\\nDetails:{bd_calls}"
-        f"\\n\\nBest industries:{ind_calls}"
+        f"[ROOT.GetLocation.GetProvince.GetName] $cm_trmm_tt_options_label${slot_calls}"
+        f"\\n\\n$cm_trmm_tt_details_label${bd_calls}"
+        f"\\n\\n$cm_trmm_tt_industries_label${ind_calls}"
         f"[ROOT.GetLocation.Custom('cm_trmm_stripe_reason')]\"")
     search_cores = {}
     for right in ROYAL_RIGHTS:
@@ -2469,7 +2512,7 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
     for building in via_buildings:
         lines.append(
             f" cm_trmm_why_bld_{building}: "
-            f"\"Building: [ShowBuildingTypeName('{building}')]\"")
+            f"\"$cm_trmm_why_bld_label$ [ShowBuildingTypeName('{building}')]\"")
     row_strings = {}
     for good in boosted_goods:
         structure = why_groups(options, good)
@@ -2480,7 +2523,7 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
                 if len(structure) > 1:
                     label += (" [Province.MakeScope.ScriptValue("
                               f"'cm_trmm_covv_{good}{suffix}')|%1]")
-                lines.append(f" {label_key}: \"{label}\"")
+                words.append(f" {label_key}: \"{label}\"")
             for _k, _building, _pm, rows in opts:
                 for kind, input_good, permille in rows:
                     pct = chip_pct(permille)
@@ -2488,12 +2531,12 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
                             f"[ShowGoodsNameWithNoTooltip('{input_good}')]")
                     if kind == "raw":
                         row_strings[row_key("y", input_good, permille)] = (
-                            f"  {name}: {pct} #G in the province#!")
+                            f"  {name}: {pct} #G $cm_trmm_row_present$#!")
                         row_strings[row_key("n", input_good, permille)] = (
-                            f"  {name}: {pct} #R missing#!")
+                            f"  {name}: {pct} #R $cm_trmm_row_missing$#!")
                     else:
                         row_strings[row_key("o", input_good, permille)] = (
-                            f"  {name}: {pct} #V from other industries#!")
+                            f"  {name}: {pct} #V $cm_trmm_row_other$#!")
     for key in sorted(row_strings):
         lines.append(f" {key}: \"{row_strings[key]}\"")
     pm_keys = sorted({option["pm"]
@@ -2502,12 +2545,14 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
     for pm in pm_keys:
         lines.append(
             f" cm_trmm_why_pm_{pm}: "
-            f"\"Using [ShowProductionMethodName('{pm}')]:\"")
+            f"\"$cm_trmm_why_pm_label$ [ShowProductionMethodName('{pm}')]:\"")
     for good in sorted(self_goods):
-        lines.append(f" cm_trmm_chip_rgo_{good}: \" #G @{good}! RGO here#!\"")
+        lines.append(
+            f" cm_trmm_chip_rgo_{good}: "
+            f"\" #G @{good}! $cm_trmm_chip_rgo_label$#!\"")
     for good in boosted_goods:
-        lines.append(f" cm_trmm_chip_lm_{good}: \" #G output bonus here#!\"")
-    lines.append(
+        lines.append(f" cm_trmm_chip_lm_{good}: \"$cm_trmm_chip_lm_text$\"")
+    words.append(
         " cm_trmm_why_rgo_note: \"Where this good is the location's own RGO, "
         "the RGO counts as one more fully covered source.\"")
 
@@ -2522,8 +2567,8 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
         for slot in range(1, len(ROYAL_RIGHTS) + 1))
     lines.append(
         f" CM_URIGHT_RANKING_TT: \"[Location.GetName], "
-        f"[Location.GetProvince.GetName] specialization options:{u_slot_calls}"
-        f"\\n\\nDetails:{u_bd_calls}\"")
+        f"[Location.GetProvince.GetName] $cm_trmm_tt_options_label${u_slot_calls}"
+        f"\\n\\n$cm_trmm_tt_details_label${u_bd_calls}\"")
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
         u_core = (
@@ -2543,33 +2588,35 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
     assigned_items = "".join(
         f"[Location.Custom('cm_uright_assigned_item_{aliases[right]}')]"
         for right in ROYAL_RIGHTS)
-    lines.append(
+    words.append(
         f" CM_URIGHT_ASSIGNED_LIST_TT: "
         f"\"#T Assigned Specialization Rights#!{assigned_items}\"")
     for right in ROYAL_RIGHTS:
         alias = aliases[right]
-        granted_part = f"@{right}! [ShowTownRightsName('{right}')] granted"
+        granted_part = (f"@{right}! [ShowTownRightsName('{right}')] "
+                        f"$cm_trmm_granted_word$")
         lines.append(
             f" cm_trmm_reason_best_{alias}: "
-            f"\"\\n\\n{granted_part} - best urban right for this location\"")
+            f"\"\\n\\n{granted_part} - $cm_trmm_reason_best_tail$\"")
         lines.append(
             f" cm_trmm_reason_granted_{alias}: \"\\n\\n{granted_part}\"")
         lines.append(
             f" cm_trmm_reason_missed_{alias}: "
             f"\"\\n\\n{granted_part} - "
             f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_granted_miss')|%1] "
-            f"short of the best fit here\"")
+            f"$cm_trmm_reason_missed_tail$\"")
     for pos, right in enumerate(ROYAL_RIGHTS[:-1]):
         alias = aliases[right]
         tied_items = "".join(
             f"[ROOT.GetLocation.Custom('cm_trmm_tie_item_{alias}_{aliases[other]}')]"
             for other in ROYAL_RIGHTS[pos + 1:])
         lines.append(
-            f" cm_trmm_reason_tied_{alias}: \"\\n\\nTied with: {tied_items}\"")
+            f" cm_trmm_reason_tied_{alias}: "
+            f"\"\\n\\n$cm_trmm_tied_with_label$ {tied_items}\"")
     reason_items = "".join(
         f"[ROOT.GetLocation.Custom('cm_uright_assigned_item_{aliases[right]}')]"
         for right in ROYAL_RIGHTS)
-    lines.append(
+    words.append(
         f" cm_trmm_search_other_line: "
         f"\"\\nOther specializations granted here:{reason_items}\"")
 
@@ -2592,34 +2639,32 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
             for good in rights[right]["goods"])
         if right == "royal_naval_rights":
             # "Naval Supplies Rights" overflows the search strip covering the banner.
-            lines.append(
+            words.append(
                 f" mapmode_cm_trmm_search_{alias}_name: "
-                f"\"Urban Right Search: Naval Rights\"")
+                f"\"$cm_trmm_search_mode_prefix$ Naval Rights\"")
         else:
             lines.append(
                 f" mapmode_cm_trmm_search_{alias}_name: "
-                f"\"Urban Right Search: [ShowTownRightsName('{right}')]\"")
+                f"\"$cm_trmm_search_mode_prefix$ [ShowTownRightsName('{right}')]\"")
         lines.append(
             f" MAPMODE_CM_TRMM_SEARCH_{upper}: "
             f"\"#T $mapmode_cm_trmm_search_{alias}_name$#!"
-            f"\\nColors each [location|e] by the share of input [goods|e] that the "
-            f"buildings boosted by @{right}! [ShowTownRightsName('{right}')] can "
-            f"source from the [province|e]'s [rgo|e]s. Light stripes mark "
-            f"where the right is already granted; gold stripes mark where it is the "
-            f"best specialization option.\\nBoosted industries: {boosted}"
-            f"\\nHover an industry's percentage in the tooltip for its input "
-            f"breakdown.\"")
+            f"\\n$cm_trmm_search_desc_head$ @{right}! "
+            f"[ShowTownRightsName('{right}')] $cm_trmm_search_desc_tail$"
+            f"\\n$cm_trmm_search_desc_boosted$ {boosted}"
+            f"\\n$cm_trmm_search_desc_hover$\"")
         tie_items = "".join(
             f"[ROOT.GetLocation.Custom('cm_trmm_tie_item_{alias}_{aliases[other]}')]"
             for other in ROYAL_RIGHTS if other != right)
         lines.append(
             f" MAPMODE_CM_TRMM_SEARCH_{upper}_TT_LAND: \"{search_cores[alias]}"
-            f"\\nRank among specializations here: "
+            f"\\n$cm_trmm_search_rank_label$ "
             f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_tierdisp_{alias}')|0] "
-            f"of [ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_tier_total')|0]"
+            f"$cm_trmm_search_rank_of$ "
+            f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_tier_total')|0]"
             f"[ROOT.GetLocation.Custom('cm_trmm_tie_prefix_{alias}')]{tie_items}"
             f"[ROOT.GetLocation.Custom('cm_trmm_search_reason_{alias}')]\"")
-        lines.append(
+        words.append(
             f" MAPMODE_CM_TRMM_SEARCH_{upper}_TT_NONE: "
             f"\"[ROOT.GetLocation.GetProvince.GetName] has no [raw_material|e] "
             f"used by the industries @{right}! [ShowTownRightsName('{right}')] "
@@ -2647,15 +2692,17 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
         alias = aliases[right]
         lines.append(
             f" cm_trmm_grant_title_{alias}: "
-            f"\"Grant [ShowTownRightsName('{right}')]\"")
+            f"\"$cm_trmm_grant_word$ [ShowTownRightsName('{right}')]\"")
         lines.append(
             f" cm_trmm_grant_tt_{alias}: "
-            f"\"Match: [Location.MakeScope.ScriptValue('cm_trmm_rightv_{alias}')|%1]\"")
+            f"\"$cm_trmm_grant_match_label$ "
+            f"[Location.MakeScope.ScriptValue('cm_trmm_rightv_{alias}')|%1]\"")
         lines.append(
             f" cm_trmm_grant_expand_title_{alias}: "
-            f"\"Grant [ShowTownRightsName('{right}')] and enable matching "
-            f"auto-expands\"")
-    return "\n".join(lines) + "\n"
+            f"\"$cm_trmm_grant_title_{alias}$ $cm_trmm_grant_expand_suffix$\"")
+    marker = (" # NO-TRANSLATE BELOW - data functions and references to the keys"
+              " above.")
+    return "\n".join(words + ["", marker] + lines) + "\n"
 
 
 def emit_scripted_guis(aliases):
