@@ -31,14 +31,39 @@ cm_cu_effective_floor = {
 	}
 }
 
+# What one level of the building earns, which is what the floor is judged against.
+# A building reads level 0 from the moment its first level is queued. Root is the building.
+cm_cu_profit_per_level = {
+	value = 0
+	if = {
+		limit = { building_level >= 1 }
+		value = building_profit
+		divide = building_level
+	}
+}
+
 # Ordered iterators sort high to low, so negating takes the least profitable first.
 # Root is the building.
 cm_cu_neg_profit = {
 	value = 0
-	subtract = building_profit
+	subtract = cm_cu_profit_per_level
 }
 
-# Half the market's open buildings of this type, rounded down.
+# Root is the country. The share a pass may change as a fraction: the cleanup_max_changed
+# percent setting over 100 (50 -> 0.5).
+cm_cu_change_ratio = {
+	if = {
+		limit = { exists = var:cm_cu_max_changed }
+		value = var:cm_cu_max_changed
+		divide = 100
+	}
+	else = {
+		value = 0.5
+	}
+}
+
+# The share of the market's open buildings of this type, rounded down and never under one so
+# the last one of a type is still reachable.
 # Root is the country, expects scope:cm_building_type.
 cm_cu_close_cap = {
 	value = 0
@@ -48,12 +73,13 @@ cm_cu_close_cap = {
 			is_key_in_variable_map = { name = cm_cu_open target = scope:cm_building_type }
 		}
 		value = "variable_map(cm_cu_open|scope:cm_building_type)"
-		divide = 2
+		multiply = cm_cu_change_ratio
 		floor = yes
+		min = 1
 	}
 }
 
-# Half the market's closed buildings of this type, rounded up.
+# The share of the market's closed buildings of this type, rounded up.
 # Root is the country, expects scope:cm_building_type.
 cm_cu_reopen_cap = {
 	value = 0
@@ -63,7 +89,7 @@ cm_cu_reopen_cap = {
 			is_key_in_variable_map = { name = cm_cu_closed_n target = scope:cm_building_type }
 		}
 		value = "variable_map(cm_cu_closed_n|scope:cm_building_type)"
-		divide = 2
+		multiply = cm_cu_change_ratio
 		ceiling = yes
 	}
 }
