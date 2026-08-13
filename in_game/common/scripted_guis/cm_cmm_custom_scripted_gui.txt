@@ -1,5 +1,4 @@
-﻿# Custom CMM scripted GUIs not managed by the visual editor.
-# The vanilla automation cards in cm_automation_lateralview.gui call these.
+﻿# The vanilla automation cards in cm_automation_lateralview.gui call these.
 
 cm_toggle_auto_expand_buildings_feature = {
 	scope = country
@@ -14,5 +13,65 @@ cm_toggle_auto_expand_rgos_feature = {
 	is_shown = { always = yes }
 	effect = {
 		cm_toggle_priority_feature = { feature = cm_feature_auto_expand_rgos }
+	}
+}
+
+# Gold Reserve pull from the Buildings card's gold slider. Polled, so the guards live here: skip
+# while a push is pending, while the slider reads the stale zero it can show at card creation,
+# when the value already matches, and while the setting sits above the slider's own maximum.
+# Writes the CMM value map directly, since the callback would arm a push right back.
+# Root is the player. Saved scopes: cm_gold_res (value).
+cm_gold_reserve_changed = {
+	scope = country
+	saved_scopes = { cm_gold_res }
+	is_shown = { always = yes }
+	effect = {
+		set_local_variable = { name = cm_gold_tmp_reserve value = scope:cm_gold_res }
+		if = {
+			limit = {
+				NOT = { has_variable = cm_gold_reserve_from_cmm }
+				local_var:cm_gold_tmp_reserve > 0
+				NOT = { var:cm_minimum_gold = local_var:cm_gold_tmp_reserve }
+				OR = {
+					NOT = { has_variable = cm_gold_reserve_slider_max }
+					var:cm_minimum_gold <= var:cm_gold_reserve_slider_max
+				}
+			}
+			set_variable = { name = cm_minimum_gold value = scope:cm_gold_res }
+			remove_from_variable_map = { name = cmm key = flag:cm__minimum_gold }
+			add_to_variable_map = { name = cmm key = flag:cm__minimum_gold value = scope:cm_gold_res }
+		}
+	}
+}
+
+# Records the engine gold slider's scale, which appears in no file and has to be observed.
+# Root is the player. Saved scopes: cm_gold_max (value).
+cm_gold_reserve_max_changed = {
+	scope = country
+	saved_scopes = { cm_gold_max }
+	is_shown = { always = yes }
+	effect = {
+		set_variable = { name = cm_gold_reserve_slider_max value = scope:cm_gold_max }
+	}
+}
+
+# Clears the pending push once the caps have committed the value. Root is the player.
+cm_gold_reserve_pushed = {
+	scope = country
+	is_shown = { always = yes }
+	effect = {
+		if = {
+			limit = { has_variable = cm_gold_reserve_from_cmm }
+			remove_variable = cm_gold_reserve_from_cmm
+		}
+	}
+}
+
+# Arms a push on every card creation, so the stored setting wins the open. Root is the player.
+cm_gold_reserve_reconcile = {
+	scope = country
+	is_shown = { always = yes }
+	effect = {
+		set_variable = cm_gold_reserve_from_cmm
 	}
 }

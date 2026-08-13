@@ -50,8 +50,9 @@ cm_get_min_discount_for_upgrade_all_buildings = {
 cm_get_min_discount_for_auto_urbanize = {
 	value = @cm_min_discount_absent
 	if = {
-		limit = { scope:cm_country = { has_variable_map = cm_priority_min_discount is_key_in_variable_map = { name = cm_priority_min_discount target = flag:cm_feature_auto_urbanize } } }
-		value = "scope:cm_country.variable_map(cm_priority_min_discount|flag:cm_feature_auto_urbanize)"
+		limit = { scope:cm_country = { exists = var:cm_auto_urbanize_min_discount } }
+		value = scope:cm_country.var:cm_auto_urbanize_min_discount
+		divide = 100
 	}
 }
 

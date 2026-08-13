@@ -4,7 +4,7 @@
 # All effects expect scope:cm_country to be set.
 
 # One country's construction cycle: clears last cycle's queues, calls every enabled priority
-# feature and full-automation category in the country's own order, and arms the construct
+# feature and Smart Automations category in the country's own order, and arms the construct
 # window when anything staged. Driven by cm_unified_auto_expand for the player and by
 # cm_ln_monthly_cycle for a lucky nation. Root is the country.
 cm_run_construction_cycle = {
@@ -40,11 +40,11 @@ cm_run_construction_cycle = {
 		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_food_locations LOCATION_LIST = cm_q_food_building_types }
 		clear_variable_list = cm_q_food_rgo_locations
 		clear_variable_list = cm_q_rank_locations
-		cm_clear_queue_pair = { COUNTRY_LIST = cm_fa_b_locations LOCATION_LIST = cm_fa_b_types }
-		cm_clear_queue_pair = { COUNTRY_LIST = cm_fa_u_locations LOCATION_LIST = cm_fa_u_types }
-		clear_variable_list = cm_fa_r_locations
-		clear_variable_list = cm_fa_food_rgo_locations
-		clear_variable_list = cm_fa_collapsar_rgo_locations
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_sa_b_locations LOCATION_LIST = cm_sa_b_types }
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_sa_u_locations LOCATION_LIST = cm_sa_u_types }
+		clear_variable_list = cm_sa_r_locations
+		clear_variable_list = cm_sa_food_rgo_locations
+		clear_variable_list = cm_sa_collapsar_rgo_locations
 		cm_q_clear_rgo_served = yes
 		cm_q_clear_foreign_queue = yes
 		# The upgrade queue carries two extra per-location lists alongside the drained one
@@ -79,56 +79,60 @@ cm_run_construction_cycle = {
 							flag:cm_feature_auto_expand_buildings = { scope:cm_country = { cm_run_auto_expand_buildings = yes } }
 							flag:cm_feature_auto_expand_rgos = { scope:cm_country = { cm_run_auto_expand_rgos = yes } }
 							flag:cm_feature_upgrade_all_buildings = { scope:cm_country = { cm_run_upgrade_all_buildings = yes } }
-							flag:cm_feature_auto_build = { scope:cm_country = { cm_run_auto_build = yes } }
 							flag:cm_feature_auto_food = { scope:cm_country = { cm_run_auto_food = yes } }
 						}
 					}
 				}
 			}
+			# Auto-build sits outside the priority loop, staging and draining after the
+			# Auto-Expand tab's features and before Smart Automations.
+			if = {
+				limit = { exists = var:cm_auto_build_enabled }
+				cm_run_auto_build = yes
+			}
 		}
-		# Full-automation staging after the priority features, so the player's own
+		# Smart Automations staging after the priority features, so the player's own
 		# features always stage and claim first. Categories stage in the player's
 		# order, so the higher one claims a candidate both of them want.
 		if = {
 			limit = {
-				cm_fa_master_active = yes
-				has_variable_list = cm_fa_categories_enabled
+				cm_sa_master_active = yes
+				has_variable_list = cm_sa_categories_enabled
 			}
-			cm_fa_pick_slice = yes
+			cm_sa_pick_slice = yes
 			every_in_list = {
-				variable = cm_fa_categories_enabled
-				save_scope_as = cm_fa_cat
-				scope:cm_country = { cm_fa_stage_category = yes }
+				variable = cm_sa_categories_enabled
+				save_scope_as = cm_sa_cat
+				scope:cm_country = { cm_sa_stage_category = yes }
 			}
 		}
-		# Auto-urbanize sits outside the priority loop: it stages and drains after every
-		# other feature and after full automation, whatever its row position. Its Found buildings
-		# are gold outside the full-automation pools cm_gov_hold zeroes, so the hold gates it here.
+		# Auto-urbanize stages and drains after every other feature and after Smart
+		# Automations. Its Found buildings are gold outside the Smart Automations pools
+		# cm_gov_hold zeroes, so the hold gates it here.
 		if = {
 			limit = {
 				cm_should_pause_auto_expand = no
 				NOT = { exists = var:cm_gov_hold }
-				has_variable_list = cm_priority_features_enabled
-				is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_urbanize }
+				exists = var:cm_auto_urbanize_enabled
 			}
 			cm_run_auto_urbanize = yes
 		}
 		# Show the construction-queue window to construct this month's staged items.
-		# The full-automation RGO lists and the road plan bypass the staged counter (no
+		# The Smart Automations RGO lists and the road plan bypass the staged counter (no
 		# GUI scoring), so they arm the window on their own.
 		if = {
 			limit = {
 				OR = {
 					var:cm_q_staged >= 1
 					AND = {
-						has_variable_list = cm_fa_food_rgo_locations
-						variable_list_size = { name = cm_fa_food_rgo_locations value >= 1 }
+						has_variable_list = cm_sa_food_rgo_locations
+						variable_list_size = { name = cm_sa_food_rgo_locations value >= 1 }
 					}
 					AND = {
-						has_variable_list = cm_fa_collapsar_rgo_locations
-						variable_list_size = { name = cm_fa_collapsar_rgo_locations value >= 1 }
+						has_variable_list = cm_sa_collapsar_rgo_locations
+						variable_list_size = { name = cm_sa_collapsar_rgo_locations value >= 1 }
 					}
-					cm_fa_rd_has_work = yes
+					cm_sa_rd_has_work = yes
 				}
 			}
 			set_variable = { name = cm_should_construct value = yes }
@@ -242,33 +246,33 @@ cm_q_reset_cycle_state = {
 		scope:cm_q_reset_loc = { cm_q_loc_reset_rank_scoring = yes }
 	}
 	every_in_list = {
-		variable = cm_fa_b_locations
+		variable = cm_sa_b_locations
 		save_scope_as = cm_q_reset_loc
-		scope:cm_q_reset_loc = { cm_fa_loc_reset_build_scoring = yes }
+		scope:cm_q_reset_loc = { cm_sa_loc_reset_build_scoring = yes }
 	}
 	every_in_list = {
-		variable = cm_fa_u_locations
+		variable = cm_sa_u_locations
 		save_scope_as = cm_q_reset_loc
-		scope:cm_q_reset_loc = { cm_fa_loc_reset_upgrade_scoring = yes }
+		scope:cm_q_reset_loc = { cm_sa_loc_reset_upgrade_scoring = yes }
 	}
 	every_in_list = {
-		variable = cm_fa_r_locations
+		variable = cm_sa_r_locations
 		save_scope_as = cm_q_reset_loc
-		scope:cm_q_reset_loc = { cm_fa_loc_reset_rgo_scoring = yes }
+		scope:cm_q_reset_loc = { cm_sa_loc_reset_rgo_scoring = yes }
 	}
 	every_in_list = {
-		variable = cm_fa_collapsar_rgo_locations
+		variable = cm_sa_collapsar_rgo_locations
 		save_scope_as = cm_q_reset_loc
 		scope:cm_q_reset_loc = {
-			remove_variable = cm_fa_collapsar_touched
-			remove_variable = cm_fa_collapsar_levels
+			remove_variable = cm_sa_collapsar_touched
+			remove_variable = cm_sa_collapsar_levels
 		}
 	}
-	clear_variable_list = cm_fa_food_rgo_locations
-	clear_variable_list = cm_fa_collapsar_rgo_locations
+	clear_variable_list = cm_sa_food_rgo_locations
+	clear_variable_list = cm_sa_collapsar_rgo_locations
 	clear_variable_list = cm_q_cand_locations
 	clear_variable_list = cm_q_upg_cand_locations
-	clear_variable_list = cm_fa_drain_cands
+	clear_variable_list = cm_sa_drain_cands
 	cm_q_clear_foreign_queue = yes
 	remove_variable = cm_q_pass_done
 	remove_variable = cm_should_construct
@@ -1049,15 +1053,8 @@ cm_run_auto_build = {
 
 # --- Auto Food ---
 # Auto-builds food RGOs and related buildings in priority order.
-# Single monthly pass, no daily spread.
-#
-# Dispatches cm_food_auto_build_for_rgo_type for every food good in the list, not just the ones
-# enabled in the mass settings, because individual locations may opt in via
-# var:cm_auto_food_location_enabled even when their good's mass setting is off. The per-location
-# eligibility check inside cm_food_auto_build_for_rgo_type combines mass coverage with the
-# per-location opt-in/opt-out flags.
+# Single monthly pass, no daily spread. Root is the country.
 cm_run_auto_food = {
-	cm_update_food_data_columns = yes
 	if = {
 		limit = { has_variable_list = cm_auto_food_rgo_types_list }
 		every_in_list = {
@@ -1172,47 +1169,57 @@ cm_try_construct_capital_building = {
 # Raw grant_town_rights skips the price.
 cm_run_auto_town_rights = {
 	if = {
-		limit = {
-			has_variable_list = cm_auto_town_rights_list
-			modifier:can_grant_town_rights = yes
-		}
-		every_in_list = {
-			variable = cm_auto_town_rights_list
-			save_scope_as = cm_town_right
-			scope:cm_country = {
-				if = {
-					limit = {
-						is_target_in_variable_list = { name = cm_auto_town_rights_enabled target = scope:cm_town_right }
-						cm_auto_town_rights_potential_passes = yes
-						cm_town_rights_grant_affordable = yes
-					}
-					ordered_owned_location = {
-						order_by = max_control
-						max = cm_max_guess_at_number_of_locations
-						check_range_bounds = no
+		limit = { modifier:can_grant_town_rights = yes }
+		if = {
+			limit = { has_variable_list = cm_auto_town_rights_list }
+			every_in_list = {
+				variable = cm_auto_town_rights_list
+				save_scope_as = cm_town_right
+				scope:cm_country = {
+					if = {
 						limit = {
-							NOT = { integration_level = conquered }
-							has_max_town_rights = no
-							NOT = { has_town_rights = scope:cm_town_right }
+							is_target_in_variable_list = { name = cm_auto_town_rights_enabled target = scope:cm_town_right }
+							cm_auto_town_rights_potential_passes = yes
+							cm_town_rights_grant_affordable = yes
 						}
-						save_scope_as = target
-						# ordered_owned_location snapshots its limit before the body runs.
-						if = {
+						ordered_owned_location = {
+							order_by = max_control
+							max = cm_max_guess_at_number_of_locations
+							check_range_bounds = no
 							limit = {
-								scope:cm_country = {
-									cm_town_rights_grant_affordable = yes
-									cm_can_grant_specific_town_right_at_location = yes
-								}
+								NOT = { integration_level = conquered }
+								has_max_town_rights = no
+								NOT = { has_town_rights = scope:cm_town_right }
 							}
-							grant_town_rights = scope:cm_town_right
+							save_scope_as = target
+							# ordered_owned_location snapshots its limit before the body runs.
 							if = {
-								limit = { NOT = { cm_town_rights_grants_are_free = yes } }
-								scope:cm_country = { pay_price = price:grant_town_rights }
+								limit = {
+									scope:cm_country = {
+										cm_town_rights_grant_affordable = yes
+										cm_can_grant_specific_town_right_at_location = yes
+									}
+								}
+								grant_town_rights = scope:cm_town_right
+								if = {
+									limit = { NOT = { cm_town_rights_grants_are_free = yes } }
+									scope:cm_country = { pay_price = price:grant_town_rights }
+								}
 							}
 						}
 					}
 				}
 			}
+		}
+		# The rights the player enabled are granted first; the specialization draw then takes one
+		# royal right per location from those that suit the goods made around it.
+		# town_rights_enable unlocks all 9: in_game/common/advances/0_age_of_discovery.txt:556
+		if = {
+			limit = {
+				exists = var:cm_auto_grant_specialization
+				has_advance = town_rights_enable
+			}
+			cm_atr_ur_specialization_pass = yes
 		}
 	}
 }

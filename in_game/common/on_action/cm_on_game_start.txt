@@ -56,20 +56,19 @@ on_game_load_after_lobby_human_country = {
 
 cm_on_init_human_country = {
 	effect = {
-		cm_update_food_data_columns = yes
+		cm_seed_food_roster = yes
 		cm_update_auto_build_list_visibility = yes
 		cm_update_auto_town_rights_list_visibility = yes
-		cm_update_auto_food_list_visibility = yes
 		cm_update_auto_urbanize_ignore_list_visibility = yes
 		# A loaded save can have a cycle's flags stuck on, which stops auto-construction.
 		cm_q_reset_cycle_state = yes
 		# A save taken between the cleanup toggles and their end state would otherwise
 		# toggle the same buildings a second time after the load.
-		remove_variable = cm_fa_cu_fire
-		clear_variable_list = cm_fa_cu_toggle
+		remove_variable = cm_sa_cu_fire
+		clear_variable_list = cm_sa_cu_toggle
 		set_variable = { name = cm_q_planned_spend value = 0 }
 		cm_reset_market_committed_demand = yes
-		cm_fa_suppress_engine_automation = yes
+		cm_sa_suppress_engine_automation = yes
 		# Initialize the placement finder scores for the starting country.
 		cm_pf_recompute_now = yes
 	}
@@ -88,15 +87,15 @@ cm_on_country_transfer = {
 		cm_copy_expand_thresholds = { m = 2 }
 		cm_copy_expand_thresholds = { m = 3 }
 		cm_copy_expand_thresholds = { m = 4 }
-		cm_fa_copy_budget_state = yes
+		cm_sa_copy_budget_state = yes
 		# The corridors were planned over land the new tag may not hold, and the in-flight list does
 		# not carry, so the plan is dropped and the next planning pass rebuilds it.
-		cm_fa_rd_clear_plan = yes
+		cm_sa_rd_clear_plan = yes
 		# The new tag's markets are different, so the rotation restarts rather than carrying over.
-		cm_fa_clear_slice_state = yes
+		cm_sa_clear_slice_state = yes
 		cm_fb_copy_state = yes
 		# The new tag carries its own engine automation flags.
-		cm_fa_suppress_engine_automation = yes
+		cm_sa_suppress_engine_automation = yes
 		# An interrupted cycle on this country must not resume with stale approvals.
 		cm_q_reset_cycle_state = yes
 	}

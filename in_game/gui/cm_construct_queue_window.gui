@@ -29,9 +29,9 @@ widget = {
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_rgo')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_foreign')]"
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_q_construct_rank')]"
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_fa_construct_build')]"
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_fa_construct_upgrade')]"
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_fa_construct_rgo')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_sa_construct_build')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_sa_construct_upgrade')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_sa_construct_rgo')]"
 				next = cm_q_scan_done
 			}
 			state = {
@@ -90,28 +90,28 @@ widget = {
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
-			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_fa_cu_fire_gate').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_sa_cu_fire_gate').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 			state = {
 				name = _show
 				duration = 0.1
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_fa_cu_toggle')]"
-				next = cm_fa_cu_toggle_done
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_sa_cu_toggle')]"
+				next = cm_sa_cu_toggle_done
 			}
 			state = {
-				name = cm_fa_cu_toggle_done
+				name = cm_sa_cu_toggle_done
 				duration = 0.25
-				on_finish = "[GetScriptedGui('cm_fa_cu_end').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				on_finish = "[GetScriptedGui('cm_sa_cu_end').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 		}
 		# One list carries both the closes and the reopens: ToggleBuilding flips whichever
 		# state the building is in, and a variable list holds each target once.
 		widget = {
-			datamodel = "[GetPlayer.MakeScope.GetList('cm_fa_cu_toggle')]"
+			datamodel = "[GetPlayer.MakeScope.GetList('cm_sa_cu_toggle')]"
 			item = {
 				widget = {
 					datacontext = "[Scope.GetBuilding]"
 					state = {
-						name = cm_fa_cu_toggle
+						name = cm_sa_cu_toggle
 						on_finish = "[ToggleBuilding(Building.Self)]"
 					}
 				}
@@ -272,54 +272,54 @@ widget = {
 				}
 			}
 		}
-		# Full-automation build queue (expand and from-zero for all four categories; the
+		# Smart Automations build queue (expand and from-zero for all four categories; the
 		# per-location category map decides which drain claims each entry).
 		widget = {
-			datamodel = "[GetPlayer.MakeScope.GetList('cm_fa_b_locations')]"
+			datamodel = "[GetPlayer.MakeScope.GetList('cm_sa_b_locations')]"
 			item = {
 				widget = {
 					datacontext = "[Scope.GetLocation]"
-					datamodel = "[Location.MakeScope.GetList('cm_fa_b_types')]"
+					datamodel = "[Location.MakeScope.GetList('cm_sa_b_types')]"
 					item = {
 						widget = {
 							datacontext = "[Scope.GetBuildingType]"
 							state = {
-								name = cm_fa_construct_build
-								on_finish = "[GetScriptedGui('cm_fa_score_build').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))).AddScope('cm_can_build', MakeScopeBool(CanBuildOrExpandBuilding(BuildingType.Self, Location.Self))).AddScope('cm_obsolete_building', BuildingType.GetObsoleteBuildingInLocation(Location.Self, Player.Self).MakeScope).AddScope('cm_indirect_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).End)]"
+								name = cm_sa_construct_build
+								on_finish = "[GetScriptedGui('cm_sa_score_build').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))).AddScope('cm_can_build', MakeScopeBool(CanBuildOrExpandBuilding(BuildingType.Self, Location.Self))).AddScope('cm_obsolete_building', BuildingType.GetObsoleteBuildingInLocation(Location.Self, Player.Self).MakeScope).AddScope('cm_indirect_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).End)]"
 							}
 						}
 					}
 				}
 			}
 		}
-		# Full-automation obsolete upgrades, replaced with the engine's next tier.
+		# Smart Automations obsolete upgrades, replaced with the engine's next tier.
 		widget = {
-			datamodel = "[GetPlayer.MakeScope.GetList('cm_fa_u_locations')]"
+			datamodel = "[GetPlayer.MakeScope.GetList('cm_sa_u_locations')]"
 			item = {
 				widget = {
 					datacontext = "[Scope.GetLocation]"
-					datamodel = "[Location.MakeScope.GetList('cm_fa_u_types')]"
+					datamodel = "[Location.MakeScope.GetList('cm_sa_u_types')]"
 					item = {
 						widget = {
 							datacontext = "[Scope.GetBuildingType]"
 							state = {
-								name = cm_fa_construct_upgrade
-								on_finish = "[GetScriptedGui('cm_fa_score_upgrade').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_old_building_type', BuildingType.MakeScope).AddScope('cm_new_building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).AddScope('cm_building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self))).AddScope('cm_can_build', MakeScopeBool(CanUpgradeToBuilding(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self))).AddScope('cm_indirect_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).End)]"
+								name = cm_sa_construct_upgrade
+								on_finish = "[GetScriptedGui('cm_sa_score_upgrade').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_old_building_type', BuildingType.MakeScope).AddScope('cm_new_building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).AddScope('cm_building_type', BuildingType.GetNextReplacementBuilding(Player.Self).MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self))).AddScope('cm_can_build', MakeScopeBool(CanUpgradeToBuilding(BuildingType.GetNextReplacementBuilding(Player.Self), Location.Self))).AddScope('cm_indirect_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).End)]"
 							}
 						}
 					}
 				}
 			}
 		}
-		# Full-automation RGO expansions; income read is GUI-only, cost is script-side.
+		# Smart Automations RGO expansions; income read is GUI-only, cost is script-side.
 		widget = {
-			datamodel = "[GetPlayer.MakeScope.GetList('cm_fa_r_locations')]"
+			datamodel = "[GetPlayer.MakeScope.GetList('cm_sa_r_locations')]"
 			item = {
 				widget = {
 					datacontext = "[Scope.GetLocation]"
 					state = {
-						name = cm_fa_construct_rgo
-						on_finish = "[GetScriptedGui('cm_fa_score_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_location', Location.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
+						name = cm_sa_construct_rgo
+						on_finish = "[GetScriptedGui('cm_sa_score_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_location', Location.MakeScope).AddScope('cm_country', GetPlayer.MakeScope).AddScope('cm_income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
 					}
 				}
 			}

@@ -65,11 +65,6 @@ cm_food_auto_build_in_location = {
 
 # Iterate locations for a specific food RGO type and build optimally.
 # Root is the country. Expects scope:cm_food_good, the goods scope for this food type.
-#
-# Eligibility combines mass setting with per-location opt-in/opt-out flags:
-#   - Opt-in via cm_auto_food_location_enabled: location is processed regardless of mass/river status
-#   - Mass-covered: good is enabled in the auto_food_list AND river filter passes AND
-#     location is NOT opted out via cm_auto_food_location_excluded
 cm_food_auto_build_for_rgo_type = {
 	save_scope_as = cm_country
 
@@ -82,158 +77,10 @@ cm_food_auto_build_for_rgo_type = {
 			NOT = { integration_level = conquered }
 			location_rank = location_rank:rural_settlement
 			cm_food_location_matches_rgo_type = yes
-			OR = {
-				exists = var:cm_auto_food_location_enabled
-				AND = {
-					scope:cm_country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:cm_food_good } }
-					cm_food_location_meets_river_filter = yes
-					NOT = { exists = var:cm_auto_food_location_excluded }
-				}
-			}
+			exists = var:cm_auto_food_location_enabled
 		}
 		save_scope_as = cm_location
 		cm_food_auto_build_in_location = yes
 	}
-
-	# Also process subject locations if the good is mass-enabled AND in_subjects is enabled.
-	# Per-location opt-in/opt-out flags don't apply here since the player can't toggle the
-	# auto-food button on subject locations.
-	if = { limit = {
-			is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:cm_food_good }
-			is_target_in_variable_list = { name = cm_auto_food_rgo_types_in_subjects_enabled target = scope:cm_food_good }
-		}
-		every_subject_or_below = {
-			ordered_owned_location = {
-				order_by = max_control
-				max = cm_max_guess_at_number_of_locations
-				check_range_bounds = no
-				limit = {
-					NOT = { integration_level = conquered }
-					location_rank = location_rank:rural_settlement
-					cm_food_location_matches_rgo_type = yes
-					cm_food_location_meets_river_filter = yes
-				}
-				save_scope_as = cm_location
-				scope:cm_country = {
-					scope:cm_location = {
-						cm_food_auto_build_in_location = yes
-					}
-				}
-			}
-		}
-	}
 }
 
-# Update food data columns: sums total food per RGO type across all owned rural locations.
-# Root is the country.
-cm_update_food_data_columns = {
-	save_scope_as = cm_country
-	# Initialize per-type accumulators; item order matches registration in cm_cmm_effects.
-	set_variable = { name = cm_food_col_1 value = 0 }
-	set_variable = { name = cm_food_col_2 value = 0 }
-	set_variable = { name = cm_food_col_3 value = 0 }
-	set_variable = { name = cm_food_col_4 value = 0 }
-	set_variable = { name = cm_food_col_5 value = 0 }
-	set_variable = { name = cm_food_col_6 value = 0 }
-	set_variable = { name = cm_food_col_7 value = 0 }
-	set_variable = { name = cm_food_col_8 value = 0 }
-	set_variable = { name = cm_food_col_9 value = 0 }
-	set_variable = { name = cm_food_col_10 value = 0 }
-	set_variable = { name = cm_food_col_11 value = 0 }
-	set_variable = { name = cm_food_col_12 value = 0 }
-	set_variable = { name = cm_food_col_13 value = 0 }
-
-	# Single pass: accumulate food by RGO type
-	every_owned_location = {
-		limit = { location_rank = location_rank:rural_settlement }
-		save_scope_as = cm_food_loc
-		scope:cm_country = {
-			if = { limit = { scope:cm_food_loc = { raw_material = goods:rice } }
-				change_variable = { name = cm_food_col_1 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:wheat } }
-				change_variable = { name = cm_food_col_2 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:maize } }
-				change_variable = { name = cm_food_col_3 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:potato } }
-				change_variable = { name = cm_food_col_4 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:livestock } }
-				change_variable = { name = cm_food_col_5 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:millet } }
-				change_variable = { name = cm_food_col_6 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:legumes } }
-				change_variable = { name = cm_food_col_7 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:fish } }
-				change_variable = { name = cm_food_col_8 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:olives } }
-				change_variable = { name = cm_food_col_9 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:fruit } }
-				change_variable = { name = cm_food_col_10 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:wild_game } }
-				change_variable = { name = cm_food_col_11 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:beeswax } }
-				change_variable = { name = cm_food_col_12 add = scope:cm_food_loc.cm_food_location_total }
-			}
-			else_if = { limit = { scope:cm_food_loc = { raw_material = goods:fur } }
-				change_variable = { name = cm_food_col_13 add = scope:cm_food_loc.cm_food_location_total }
-			}
-		}
-	}
-
-	# Round to integers for clean display
-	round_variable = { name = cm_food_col_1 nearest = 1 }
-	round_variable = { name = cm_food_col_2 nearest = 1 }
-	round_variable = { name = cm_food_col_3 nearest = 1 }
-	round_variable = { name = cm_food_col_4 nearest = 1 }
-	round_variable = { name = cm_food_col_5 nearest = 1 }
-	round_variable = { name = cm_food_col_6 nearest = 1 }
-	round_variable = { name = cm_food_col_7 nearest = 1 }
-	round_variable = { name = cm_food_col_8 nearest = 1 }
-	round_variable = { name = cm_food_col_9 nearest = 1 }
-	round_variable = { name = cm_food_col_10 nearest = 1 }
-	round_variable = { name = cm_food_col_11 nearest = 1 }
-	round_variable = { name = cm_food_col_12 nearest = 1 }
-	round_variable = { name = cm_food_col_13 nearest = 1 }
-
-	# Write totals to CMM data columns
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 1 value = var:cm_food_col_1 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 2 value = var:cm_food_col_2 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 3 value = var:cm_food_col_3 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 4 value = var:cm_food_col_4 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 5 value = var:cm_food_col_5 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 6 value = var:cm_food_col_6 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 7 value = var:cm_food_col_7 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 8 value = var:cm_food_col_8 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 9 value = var:cm_food_col_9 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 10 value = var:cm_food_col_10 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 11 value = var:cm_food_col_11 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 12 value = var:cm_food_col_12 }
-	cmm_set_list_data_value = { mod_id = cm setting_id = auto_food_list field_id = food_amount item = 13 value = var:cm_food_col_13 }
-
-	# Suppress "set but never used" warnings for accumulators referenced via text substitution.
-	if = { limit = { always = no }
-		cmf_suppress = { v = cm_food_col_1 }
-		cmf_suppress = { v = cm_food_col_2 }
-		cmf_suppress = { v = cm_food_col_3 }
-		cmf_suppress = { v = cm_food_col_4 }
-		cmf_suppress = { v = cm_food_col_5 }
-		cmf_suppress = { v = cm_food_col_6 }
-		cmf_suppress = { v = cm_food_col_7 }
-		cmf_suppress = { v = cm_food_col_8 }
-		cmf_suppress = { v = cm_food_col_9 }
-		cmf_suppress = { v = cm_food_col_10 }
-		cmf_suppress = { v = cm_food_col_11 }
-		cmf_suppress = { v = cm_food_col_12 }
-		cmf_suppress = { v = cm_food_col_13 }
-	}
-}

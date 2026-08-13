@@ -96,32 +96,32 @@ cm_q_loc_reset_rank_scoring = {
 	remove_variable = cm_q_seen_rank
 }
 
-cm_fa_loc_reset_build_scoring = {
-	clear_variable_map = cm_fa_b_scores
-	clear_variable_map = cm_fa_b_costs
-	clear_variable_map = cm_fa_b_conv
-	clear_variable_map = cm_fa_b_profit
-	clear_variable_map = cm_fa_b_cat_1
-	clear_variable_map = cm_fa_b_cat_2
-	clear_variable_map = cm_fa_b_cat_3
-	clear_variable_map = cm_fa_b_cat_4
-	clear_variable_map = cm_fa_b_cat_6
-	clear_variable_map = cm_fa_b_cat_7
-	remove_variable = cm_fa_b_best
-	remove_variable = cm_fa_collapsar_touched
-	remove_variable = cm_fa_collapsar_levels
+cm_sa_loc_reset_build_scoring = {
+	clear_variable_map = cm_sa_b_scores
+	clear_variable_map = cm_sa_b_costs
+	clear_variable_map = cm_sa_b_conv
+	clear_variable_map = cm_sa_b_profit
+	clear_variable_map = cm_sa_b_cat_1
+	clear_variable_map = cm_sa_b_cat_2
+	clear_variable_map = cm_sa_b_cat_3
+	clear_variable_map = cm_sa_b_cat_4
+	clear_variable_map = cm_sa_b_cat_6
+	clear_variable_map = cm_sa_b_cat_7
+	remove_variable = cm_sa_b_best
+	remove_variable = cm_sa_collapsar_touched
+	remove_variable = cm_sa_collapsar_levels
 	cm_q_loc_reset_cycle_counters = yes
 }
 
-cm_fa_loc_reset_upgrade_scoring = {
-	clear_variable_map = cm_fa_u_scores
-	clear_variable_map = cm_fa_u_costs
-	clear_variable_map = cm_fa_u_new_types
-	remove_variable = cm_fa_u_best
+cm_sa_loc_reset_upgrade_scoring = {
+	clear_variable_map = cm_sa_u_scores
+	clear_variable_map = cm_sa_u_costs
+	clear_variable_map = cm_sa_u_new_types
+	remove_variable = cm_sa_u_best
 }
 
-cm_fa_loc_reset_rgo_scoring = {
-	remove_variable = cm_fa_r_score
+cm_sa_loc_reset_rgo_scoring = {
+	remove_variable = cm_sa_r_score
 }
 
 # Within-cycle construction slot claims. Root is the location.
@@ -174,37 +174,38 @@ cm_q_approval_pass = {
 					flag:cm_feature_auto_expand_buildings = { scope:cm_country = { cm_q_pass_auto_expand_buildings = yes } }
 					flag:cm_feature_auto_expand_rgos = { scope:cm_country = { cm_q_pass_auto_expand_rgos = yes } }
 					flag:cm_feature_upgrade_all_buildings = { scope:cm_country = { cm_q_pass_upgrade_all = yes } }
-					flag:cm_feature_auto_build = { scope:cm_country = { cm_q_pass_auto_build = yes } }
 					flag:cm_feature_auto_food = { scope:cm_country = { cm_q_pass_auto_food = yes } }
 				}
 			}
 		}
 	}
-	# Full-automation category drains after every priority feature has claimed, in the player's
+	# Auto-build claims after the Auto-Expand tab's features and before Smart Automations.
+	if = {
+		limit = { exists = var:cm_auto_build_enabled }
+		cm_q_pass_auto_build = yes
+	}
+	# Smart Automations category drains after every priority feature has claimed, in the player's
 	# category order, each category's unspent funds carrying into the next one.
 	if = {
 		limit = {
-			cm_fa_master_active = yes
-			has_variable_list = cm_fa_categories_enabled
+			cm_sa_master_active = yes
+			has_variable_list = cm_sa_categories_enabled
 		}
-		set_local_variable = { name = cm_fa_cost_blocked value = 0 }
-		set_local_variable = { name = cm_fa_no_hold value = 0 }
-		set_local_variable = { name = cm_fa_ledger value = 0 }
-		set_variable = { name = cm_fa_carry value = 0 }
+		set_local_variable = { name = cm_sa_cost_blocked value = 0 }
+		set_local_variable = { name = cm_sa_no_hold value = 0 }
+		set_local_variable = { name = cm_sa_ledger value = 0 }
+		set_variable = { name = cm_sa_carry value = 0 }
 		every_in_list = {
-			variable = cm_fa_categories_enabled
-			save_scope_as = cm_fa_cat
-			scope:cm_country = { cm_fa_drain_category = yes }
+			variable = cm_sa_categories_enabled
+			save_scope_as = cm_sa_cat
+			scope:cm_country = { cm_sa_drain_category = yes }
 		}
-		remove_variable = cm_fa_carry
+		remove_variable = cm_sa_carry
 	}
-	# Auto-urbanize claims last, after every priority feature and every full-automation
-	# category, whatever its row position.
+	# Auto-urbanize claims last, after every priority feature and every Smart Automations
+	# category.
 	if = {
-		limit = {
-			has_variable_list = cm_priority_features_enabled
-			is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_urbanize }
-		}
+		limit = { exists = var:cm_auto_urbanize_enabled }
 		cm_q_pass_auto_urbanize = yes
 	}
 }
@@ -543,7 +544,7 @@ cm_q_pass_approve_upgrade_item = {
 	}
 }
 
-# The approval bookkeeping shared by the player upgrade drains and the full-automation
+# The approval bookkeeping shared by the player upgrade drains and the Smart Automations
 # upgrade pick, which applies its own gates before calling: approved lists, planned spend,
 # the slot claim, the market commit, the auto-expand registration swap, and the in-progress
 # records. Root is the location. Expects scope:cm_country, scope:cm_old_building_type,
@@ -721,7 +722,7 @@ cm_q_drain_ungated_type = {
 				if = {
 					limit = {
 						cm_get_open_build_queue_slots > 0
-						cm_country_can_afford_staged_cost = yes
+						cm_country_can_afford_staged_cost_full = yes
 						cm_market_has_construction_goods_for_building = yes
 					}
 					if = {
@@ -731,7 +732,7 @@ cm_q_drain_ungated_type = {
 						construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
 						cm_commit_market_demand = yes
 					}
-					cm_q_fill_build_slots = { AFFORD = cm_country_can_afford_staged_cost CLAIM = cm_q_claim_build_copy }
+					cm_q_fill_build_slots = { AFFORD = cm_country_can_afford_staged_cost_full CLAIM = cm_q_claim_build_copy }
 				}
 				remove_from_variable_map = { name = cm_q_ungated_costs key = scope:cm_building_type }
 			}
@@ -888,7 +889,7 @@ cm_q_pass_auto_urbanize = {
 								cm_market_has_construction_goods_for_building = yes
 							}
 							if = {
-								limit = { cm_country_can_afford_staged_cost = yes }
+								limit = { cm_country_can_afford_staged_cost_full = yes }
 								construct_building = { building_type = building_type:cm_upgrade_town_to_city_building }
 								cm_commit_market_demand = yes
 							} else = {
@@ -902,7 +903,7 @@ cm_q_pass_auto_urbanize = {
 								cm_market_has_construction_goods_for_building = yes
 							}
 							if = {
-								limit = { cm_country_can_afford_staged_cost = yes }
+								limit = { cm_country_can_afford_staged_cost_full = yes }
 								construct_building = { building_type = building_type:cm_upgrade_rural_to_town_building }
 								cm_commit_market_demand = yes
 							} else = {
@@ -940,7 +941,7 @@ cm_q_pass_auto_rank = {
 					if = {
 						limit = {
 							cm_mass_upgrade_city_to_megalopolis_discount_check = yes
-							cm_country_can_afford_staged_cost = yes
+							cm_country_can_afford_staged_cost_full = yes
 							cm_market_has_construction_goods_for_building = yes
 						}
 						cm_q_approve_rank_location = yes

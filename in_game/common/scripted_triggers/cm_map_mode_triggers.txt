@@ -1,23 +1,12 @@
 ﻿# Mapmode helper triggers.
 
 # Root is location. True if auto-food currently processes this location for its owner:
-# player-enabled, mass-covered, or picked by full automation.
-# Mirrors the eligibility limit in cm_food_auto_build_for_rgo_type's ordered_owned_location.
+# player-enabled or picked by Smart Automations.
 cm_location_is_auto_food_active = {
 	exists = owner
 	OR = {
 		exists = var:cm_auto_food_location_enabled
-		cm_fa_location_is_system_food_active = yes
-		AND = {
-			location_rank = location_rank:rural_settlement
-			owner = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = prev.raw_material } }
-			NOT = { exists = var:cm_auto_food_location_excluded }
-			OR = {
-				NOT = { owner = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_river_only target = prev.raw_material } } }
-				has_river = yes
-				is_adjacent_to_lake = yes
-			}
-		}
+		cm_sa_location_is_system_food_active = yes
 	}
 }
 

@@ -5,3 +5,41 @@ cm_get_minimum_gold = {
 	}
 }
 
+# Country-scoped. The floor everything outside the Auto-Expand tab spends above, so the gold
+# between the two reserves is left for the Auto-Expand tab's own features.
+cm_get_full_reserve = {
+	value = cm_get_minimum_gold
+	if = { limit = { exists = var:cm_auto_expand_reserve }
+		add = var:cm_auto_expand_reserve
+	}
+}
+
+# The gold reserve setting for the automation card's slider expressions. The root-scoped
+# cm_get_minimum_gold is unreachable from GuiScope. Expects scope: cm_country.
+cm_gold_reserve_value = {
+	value = scope:cm_country.var:cm_minimum_gold
+}
+
+# The engine gold slider's observed scale, 0 until it has been sampled.
+# Expects scope: cm_country.
+cm_gold_reserve_max_value = {
+	value = 0
+	if = {
+		limit = { scope:cm_country = { has_variable = cm_gold_reserve_slider_max } }
+		add = scope:cm_country.var:cm_gold_reserve_slider_max
+	}
+}
+
+# The reserve setting as a normalized slider position. 1 until the scale has been sampled,
+# which doubles as the calibration position. Expects scope: cm_country.
+cm_gold_reserve_push_target = {
+	value = 1
+	if = {
+		limit = { scope:cm_country = { has_variable = cm_gold_reserve_slider_max } }
+		multiply = scope:cm_country.var:cm_minimum_gold
+		divide = scope:cm_country.var:cm_gold_reserve_slider_max
+		min = 0
+		max = 1
+	}
+}
+

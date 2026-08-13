@@ -24,66 +24,30 @@ cm_is_food_rgo_location = {
 }
 
 # Root is location. Expects scope:cm_food_good, scope:cm_country as owner. Optional bool scope:cm_set_off.
-# Toggles per-location auto_food state, mirroring cm_set_auto_expand_for_rgo's dual-flag logic:
-#   - If the location is currently "covered by mass", meaning good enabled AND river filter passes,
-#     flip cm_auto_food_location_excluded, the opt-out flag.
-#   - Otherwise flip cm_auto_food_location_enabled, the opt-in flag.
+# The opt-in flag also locks the location against rank upgrades via cm_auto_food_locked_location.
 cm_set_auto_food_for_location = {
 	effect = {
-		if = {
-			limit = {
-				scope:cm_country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:cm_food_good } }
-				cm_food_location_meets_river_filter = yes
-			}
-			# Covered by mass: toggle the excluded flag
-			if = { limit = { NOT = { exists = scope:cm_set_off } }
-				if = { limit = { exists = var:cm_auto_food_location_excluded }
-					remove_variable = cm_auto_food_location_excluded
-				} else = {
-					set_variable = { name = cm_auto_food_location_excluded value = yes }
-				}
+		if = { limit = { NOT = { exists = scope:cm_set_off } }
+			if = { limit = { exists = var:cm_auto_food_location_enabled }
+				remove_variable = cm_auto_food_location_enabled
+				remove_location_modifier = cm_auto_food_locked_location
 			} else = {
-				if = { limit = { scope:cm_set_off = yes }
-					if = { limit = { NOT = { exists = var:cm_auto_food_location_excluded } }
-						set_variable = { name = cm_auto_food_location_excluded value = yes }
-					}
-				} else = {
-					remove_variable = cm_auto_food_location_excluded
-				}
+				set_variable = { name = cm_auto_food_location_enabled value = yes }
+				add_location_modifier = { modifier = cm_auto_food_locked_location years = 1000 mode = replace }
 			}
 		} else = {
-			# Not covered by mass: toggle the enabled flag.
-			# The enabled flag marks a manual per-location opt-in, so it also locks
-			# the location against rank upgrades via cm_auto_food_locked_location.
-			if = { limit = { NOT = { exists = scope:cm_set_off } }
-				if = { limit = { exists = var:cm_auto_food_location_enabled }
-					remove_variable = cm_auto_food_location_enabled
-					remove_location_modifier = cm_auto_food_locked_location
-				} else = {
-					set_variable = { name = cm_auto_food_location_enabled value = yes }
-					add_location_modifier = { modifier = cm_auto_food_locked_location years = 1000 mode = replace }
-				}
+			if = { limit = { scope:cm_set_off = yes }
+				remove_variable = cm_auto_food_location_enabled
+				remove_location_modifier = cm_auto_food_locked_location
 			} else = {
-				if = { limit = { scope:cm_set_off = yes }
-					remove_variable = cm_auto_food_location_enabled
-					remove_location_modifier = cm_auto_food_locked_location
-				} else = {
-					set_variable = { name = cm_auto_food_location_enabled value = yes }
-					add_location_modifier = { modifier = cm_auto_food_locked_location years = 1000 mode = replace }
-				}
+				set_variable = { name = cm_auto_food_location_enabled value = yes }
+				add_location_modifier = { modifier = cm_auto_food_locked_location years = 1000 mode = replace }
 			}
 		}
 	}
 
 	is_shown = {
-		OR = {
-			exists = var:cm_auto_food_location_enabled
-			AND = {
-				scope:cm_country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_enabled target = scope:cm_food_good } }
-				cm_food_location_meets_river_filter = yes
-				NOT = { exists = var:cm_auto_food_location_excluded }
-			}
-		}
+		exists = var:cm_auto_food_location_enabled
 	}
 }
 

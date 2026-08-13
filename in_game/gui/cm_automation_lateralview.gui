@@ -206,13 +206,13 @@
 				on_action = "[GetScriptedGui(Select_CString(AutomatedSystemsItem.IsName('expandbuildings'), 'cm_toggle_auto_expand_buildings_feature', 'cm_toggle_auto_expand_rgos_feature')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 
-			# CM: Buildings card toggles Full Automation
+			# CM: Buildings card toggles Smart Automations
 			action_tooltip = {
 				click_type = left
-				title = "CM_AUTOMATION_TOGGLE_FULL_AUTOMATION"
+				title = "CM_AUTOMATION_TOGGLE_SMART_AUTOMATIONS"
 				visible = "[AutomatedSystemsItem.IsName('buildings')]"
 				using = snd_UI_checkbutton_automation
-				on_action = "[GetScriptedGui('cm_fa_toggle_master').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				on_action = "[GetScriptedGui('cm_sa_toggle_master').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 
 			# CM: Close and Open Buildings card toggles Building Cleanup
@@ -221,7 +221,7 @@
 				title = "CM_AUTOMATION_TOGGLE_CLEANUP"
 				visible = "[AutomatedSystemsItem.IsName('closebuildings')]"
 				using = snd_UI_checkbutton_automation
-				on_action = "[GetScriptedGui('cm_fa_toggle_cleanup').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				on_action = "[GetScriptedGui('cm_sa_toggle_cleanup').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 
 			# Right-click opens the relevant panel
@@ -329,7 +329,7 @@
 				visible = "[AutomatedSystemsItem.IsName('religiousdoctrines')]"
 				on_action = "[OpenLateralViewWithParams('country_religion', 'subtab = doctrine')]"
 			}
-			# CM: Buildings card opens the Full Automation settings
+			# CM: Buildings card opens the Smart Automations settings
 			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
@@ -337,9 +337,9 @@
 				on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 				on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 				on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
-				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__full_automation')]"
+				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__sa_master')]"
 			}
-			# CM: Close and Open Buildings card opens the Full Automation settings
+			# CM: Close and Open Buildings card opens the Smart Automations settings
 			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
@@ -347,7 +347,7 @@
 				on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 				on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 				on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
-				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__full_automation')]"
+				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__sa_master')]"
 			}
 			action_tooltip = {
 				click_type = right
@@ -363,7 +363,7 @@
 				on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 				on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 				on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
-				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__settings')]"
+				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__auto_expand')]"
 			}
 			action_tooltip = {
 				click_type = right
@@ -385,7 +385,7 @@
 				on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 				on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 				on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
-				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__settings')]"
+				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__auto_expand')]"
 			}
 			action_tooltip = {
 				click_type = right
@@ -564,7 +564,7 @@
 							size = { 100% 100% }
 							using = checkbox_auto_texture
 							frame = 2
-							visible = "[Or4(And(AutomatedSystemsItem.IsName('expandbuildings'), GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('expandrgo'), GetScriptedGui('cm_is_auto_expand_rgos_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('buildings'), GetScriptedGui('cm_fa_is_master_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('closebuildings'), GetScriptedGui('cm_fa_is_cleanup_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
+							visible = "[Or4(And(AutomatedSystemsItem.IsName('expandbuildings'), GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('expandrgo'), GetScriptedGui('cm_is_auto_expand_rgos_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('buildings'), GetScriptedGui('cm_sa_is_master_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('closebuildings'), GetScriptedGui('cm_sa_is_cleanup_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
 						}
 					}
 				}
@@ -712,23 +712,23 @@
 						visible = "[AutomatedSystemsItem.IsName('religiousdoctrines')]"
 						on_action = "[OpenLateralViewWithParams('country_religion', 'subtab = doctrine')]"
 					}
-					# CM: Buildings card opens the Full Automation settings
+					# CM: Buildings card opens the Smart Automations settings
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
 						visible = "[AutomatedSystemsItem.IsName('buildings')]"
 						on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 						on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
-						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__full_automation')]"
+						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__sa_master')]"
 					}
-					# CM: Close and Open Buildings card opens the Full Automation settings
+					# CM: Close and Open Buildings card opens the Smart Automations settings
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
 						visible = "[AutomatedSystemsItem.IsName('closebuildings')]"
 						on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 						on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
-						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__full_automation')]"
+						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__sa_master')]"
 					}
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
@@ -742,7 +742,7 @@
 						on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 						on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
-						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__settings')]"
+						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__auto_expand')]"
 					}
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
@@ -761,7 +761,7 @@
 						on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 						on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
-						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__settings')]"
+						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__auto_expand')]"
 					}
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
@@ -1152,8 +1152,8 @@
 							value = "[AutomatedSystemsItem.GetGoldSlider]"
 							# CM: pinned to the reserve setting while a push is pending; the forced
 							# value commits through the callbacks below.
-							mincap = "[Select_CFixedPoint(And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Not(EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value')))), GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_push_target'), '(CFixedPoint)0')]"
-							maxcap = "[Select_CFixedPoint(And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Not(EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value')))), GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_push_target'), '(CFixedPoint)1')]"
+							mincap = "[Select_CFixedPoint(And(GetPlayer.MakeScope.GetVariable('cm_gold_reserve_from_cmm').IsSet, Not(EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_gold_reserve_value')))), GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_gold_reserve_push_target'), '(CFixedPoint)0')]"
+							maxcap = "[Select_CFixedPoint(And(GetPlayer.MakeScope.GetVariable('cm_gold_reserve_from_cmm').IsSet, Not(EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_gold_reserve_value')))), GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_gold_reserve_push_target'), '(CFixedPoint)1')]"
 							onvaluechanged = "[AutomatedSystemsItem.OnChangedGoldSlider]"
 							onchangefinish = "[AutomatedSystemsItem.PostGoldSlider]"
 							blockoverride "economy_slider_inc_button_config"{
@@ -1171,7 +1171,7 @@
 						}
 					}
 
-					# CM: two-way link between this slider and the Full Automation gold reserve
+					# CM: two-way link between this slider and the Gold Reserve setting
 
 					# Arms a push on every card creation: the settings value wins the open.
 					widget = {
@@ -1180,7 +1180,7 @@
 						visible = "[GetPlayer.Exists]"
 						state = {
 							name = _show
-							on_start = "[GetScriptedGui('cm_fa_reserve_reconcile').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							on_start = "[GetScriptedGui('cm_gold_reserve_reconcile').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						}
 					}
 
@@ -1189,11 +1189,11 @@
 					widget = {
 						size = { 0 0 }
 						state = {
-							name = cm_fa_reserve_poll
+							name = cm_gold_reserve_poll
 							trigger_on_create = yes
 							duration = 0.25
-							on_finish = "[GetScriptedGui('cm_fa_reserve_changed').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_fa_res', MakeScopeValue(AutomatedSystemsItem.GetGoldSliderScaled)).End)]"
-							on_finish = "[PdxGuiWidget.TriggerAnimation('cm_fa_reserve_poll')]"
+							on_finish = "[GetScriptedGui('cm_gold_reserve_changed').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_gold_res', MakeScopeValue(AutomatedSystemsItem.GetGoldSliderScaled)).End)]"
+							on_finish = "[PdxGuiWidget.TriggerAnimation('cm_gold_reserve_poll')]"
 						}
 					}
 
@@ -1201,10 +1201,10 @@
 					widget = {
 						size = { 0 0 }
 						visible_at_creation = no
-						visible = "[And(GreaterThan_CFixedPoint(AutomatedSystemsItem.GetGoldSlider, '(CFixedPoint)0'), Not(EqualTo_CFixedPoint(Divide_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, AutomatedSystemsItem.GetGoldSlider), GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_max_value'))))]"
+						visible = "[And(GreaterThan_CFixedPoint(AutomatedSystemsItem.GetGoldSlider, '(CFixedPoint)0'), Not(EqualTo_CFixedPoint(Divide_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, AutomatedSystemsItem.GetGoldSlider), GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_gold_reserve_max_value'))))]"
 						state = {
 							name = _show
-							on_start = "[GetScriptedGui('cm_fa_reserve_max_changed').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_fa_max', MakeScopeValue(Divide_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, AutomatedSystemsItem.GetGoldSlider))).End)]"
+							on_start = "[GetScriptedGui('cm_gold_reserve_max_changed').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('cm_gold_max', MakeScopeValue(Divide_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, AutomatedSystemsItem.GetGoldSlider))).End)]"
 						}
 					}
 
@@ -1212,12 +1212,12 @@
 					widget = {
 						size = { 0 0 }
 						visible_at_creation = no
-						visible = "[And(GetPlayer.MakeScope.GetVariable('cm_fa_reserve_from_cmm').IsSet, Or(GreaterThan_CFixedPoint(GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_max_value'), '(CFixedPoint)0'), EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_fa_reserve_value'))))]"
+						visible = "[And(GetPlayer.MakeScope.GetVariable('cm_gold_reserve_from_cmm').IsSet, Or(GreaterThan_CFixedPoint(GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_gold_reserve_max_value'), '(CFixedPoint)0'), EqualTo_CFixedPoint(AutomatedSystemsItem.GetGoldSliderScaled, GuiScope.AddScope('cm_country', GetPlayer.MakeScope).ScriptValue('cm_gold_reserve_value'))))]"
 						state = {
 							name = _show
 							duration = 0.3
 							on_finish = "[AutomatedSystemsItem.PostGoldSlider]"
-							on_finish = "[GetScriptedGui('cm_fa_reserve_pushed').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							on_finish = "[GetScriptedGui('cm_gold_reserve_pushed').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						}
 					}
 				}

@@ -1,5 +1,4 @@
-﻿# Custom CMM integration code not managed by the visual editor.
-# Called after the visual-editor-managed cm_register_cmf_mod completes.
+﻿# Called after cm_register_cmf_mod completes.
 
 # Post-registration: apply metric bounds, override default values, and build lookup tables.
 # Scope: country
@@ -9,26 +8,21 @@ cm_cmm_post_registration = {
 	cmf_add_action_bar_element = { element = cm_pf_refresh }
 	cmf_register_scripted_gui = { element = cm_pf_refresh }
 
-	# Item 7 is the retired capital row, which sits past the list's registered item count.
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = priority_list field_id = min_discount item = 7 value = 33 }
-
 	cm_repair_expand_thresholds = yes
 
 	# Build lookup tables from CMM list fields
 	cm_rebuild_priority_lookups = yes
 	cm_rebuild_auto_build_lookups = yes
-	cm_rebuild_auto_food_lookups = yes
 	cm_rebuild_auto_urbanize_lookups = yes
 	cm_rebuild_auto_town_rights_lookups = yes
-	cm_fa_rebuild_category_lookups = yes
-	cm_fa_rebuild_collapsar_lookups = yes
+	cm_sa_rebuild_category_lookups = yes
+	cm_sa_rebuild_collapsar_lookups = yes
 
 	# Hide buildings whose advance hasn't been researched yet
 	cm_update_auto_build_list_visibility = yes
 	# Hide town rights whose potential doesn't pass for this country
 	cm_update_auto_town_rights_list_visibility = yes
-	# Hide food goods and ignore-list goods the country doesn't produce
-	cm_update_auto_food_list_visibility = yes
+	# Hide ignore-list goods the country doesn't produce
 	cm_update_auto_urbanize_ignore_list_visibility = yes
 }
 
@@ -75,19 +69,19 @@ cm_town_rights_apply_free_grants = {
 # The CMM slider fires its callback on hover as well as on change, so the alias sync and the
 # push arm behind a comparison against the stored value.
 # Scope: country
-cm_fa_apply_reserve_change = {
+cm_apply_gold_reserve_change = {
 	# A macro never resolves inside a quoted lookup, so the key goes through a local.
-	set_local_variable = { name = cm_fa_tmp_flag value = flag:cm__fa_reserve }
+	set_local_variable = { name = cm_gold_tmp_flag value = flag:cm__minimum_gold }
 	if = {
 		limit = {
-			NOT = { "variable_map(cmm|local_var:cm_fa_tmp_flag)" = var:cm_fa_reserve }
+			NOT = { "variable_map(cmm|local_var:cm_gold_tmp_flag)" = var:cm_minimum_gold }
 		}
 		cmm_sync_setting_alias = {
-			setting = cm__fa_reserve
-			alias = cm_fa_reserve
+			setting = cm__minimum_gold
+			alias = cm_minimum_gold
 		}
 		# Picked up by the push widgets in cm_automation_lateralview.gui.
-		set_variable = cm_fa_reserve_from_cmm
+		set_variable = cm_gold_reserve_from_cmm
 	}
 }
 
@@ -398,41 +392,40 @@ cm_apply_placement_finder_debug_path_change = {
 }
 
 # Scope: country
-cm_fa_apply_master_change = {
+cm_sa_apply_master_change = {
 	cmm_sync_bool_alias = {
-		setting = cm__fa_enabled
-		alias = cm_fa_enabled
+		setting = cm__sa_enabled
+		alias = cm_sa_enabled
 	}
 	if = {
-		limit = { NOT = { exists = var:cm_fa_enabled } }
-		cm_fa_clear_budget_state = yes
+		limit = { NOT = { exists = var:cm_sa_enabled } }
+		cm_sa_clear_budget_state = yes
 	}
 }
 
-# Rebuild the full-automation category lookups from CMM list field data.
+# Rebuild the Smart Automations category lookups from CMM list field data.
 # Called on registration and on every setting change.
 # Scope: country
-cm_fa_rebuild_category_lookups = {
+cm_sa_rebuild_category_lookups = {
 	if = {
-		limit = { NOT = { has_variable_list = cmm_list_items_cm__fa_priority_list } }
+		limit = { NOT = { has_variable_list = cmm_list_items_cm__sa_priority_list } }
 	}
 	else = {
 
 	# Enabled categories, bool field slot 2. Display order, so this one list is both the
 	# drain priority and the enabled filter.
-	cmm_build_list_bool_list = { setting = cm__fa_priority_list field_slot = 2 list_name = cm_fa_categories_enabled }
+	cmm_build_list_bool_list = { setting = cm__sa_priority_list field_slot = 2 list_name = cm_sa_categories_enabled }
 
 	# Budget share by category, numeric field slot 1, direct values.
-	cmm_build_list_field_map = { setting = cm__fa_priority_list field_slot = 1 map_name = cm_fa_cat_budget multiply = 1 }
+	cmm_build_list_field_map = { setting = cm__sa_priority_list field_slot = 1 map_name = cm_sa_cat_budget multiply = 1 }
 
-	cm_fa_sync_category = { cat = industry }
-	cm_fa_sync_category = { cat = collapsar }
-	cm_fa_sync_category = { cat = food }
-	cm_fa_sync_category = { cat = utilities }
-	cm_fa_sync_category = { cat = roads }
-	cm_fa_sync_urban_rights = yes
-	cm_fa_sync_cleanup = yes
-	cm_fa_sync_governors = yes
+	cm_sa_sync_category = { cat = industry }
+	cm_sa_sync_category = { cat = collapsar }
+	cm_sa_sync_category = { cat = food }
+	cm_sa_sync_category = { cat = utilities }
+	cm_sa_sync_category = { cat = roads }
+	cm_sa_sync_cleanup = yes
+	cm_sa_sync_governors = yes
 
 	} # end guard
 }
@@ -441,76 +434,65 @@ cm_fa_rebuild_category_lookups = {
 # settings-row visibility read. Turning a category off zeroes its pool and writes off its debt and
 # its hold; the monthly refresh skips it while off.
 # $cat$ = industry | collapsar | food | utilities | roads. Scope: country
-cm_fa_sync_category = {
+cm_sa_sync_category = {
 	# A macro never resolves inside a quoted lookup, so the key goes through a local.
-	set_local_variable = { name = cm_fa_cat_key value = flag:cm_fa_cat_$cat$ }
+	set_local_variable = { name = cm_sa_cat_key value = flag:cm_sa_cat_$cat$ }
 	if = {
 		limit = {
-			has_variable_map = cm_fa_cat_budget
-			is_key_in_variable_map = { name = cm_fa_cat_budget target = local_var:cm_fa_cat_key }
+			has_variable_map = cm_sa_cat_budget
+			is_key_in_variable_map = { name = cm_sa_cat_budget target = local_var:cm_sa_cat_key }
 		}
-		set_variable = { name = cm_fa_$cat$_budget value = "variable_map(cm_fa_cat_budget|local_var:cm_fa_cat_key)" }
+		set_variable = { name = cm_sa_$cat$_budget value = "variable_map(cm_sa_cat_budget|local_var:cm_sa_cat_key)" }
 	}
 	if = {
-		limit = { is_target_in_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_$cat$ } }
-		set_variable = { name = cm_fa_$cat$_enabled value = 1 }
-		cm_fa_clamp_pool = { cat = $cat$ }
+		limit = { is_target_in_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_$cat$ } }
+		set_variable = { name = cm_sa_$cat$_enabled value = 1 }
+		cm_sa_clamp_pool = { cat = $cat$ }
 	}
 	else = {
-		remove_variable = cm_fa_$cat$_enabled
-		set_variable = { name = cm_fa_pool_$cat$ value = 0 }
+		remove_variable = cm_sa_$cat$_enabled
+		set_variable = { name = cm_sa_pool_$cat$ value = 0 }
 		# A category that gets no further allotment has nothing left to settle a debt with, and
 		# nothing left to spend what it was holding on.
-		remove_variable = cm_fa_debt_$cat$
-		remove_variable = cm_fa_resv_$cat$
-	}
-}
-
-# Urban Rights spends government power, so it has no pool to project. Scope: country
-cm_fa_sync_urban_rights = {
-	if = {
-		limit = { is_target_in_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_urban_rights } }
-		set_variable = { name = cm_fa_urban_rights_enabled value = 1 }
-	}
-	else = {
-		remove_variable = cm_fa_urban_rights_enabled
+		remove_variable = cm_sa_debt_$cat$
+		remove_variable = cm_sa_resv_$cat$
 	}
 }
 
 # Building Cleanup spends nothing, so it has no pool to project. Scope: country
-cm_fa_sync_cleanup = {
+cm_sa_sync_cleanup = {
 	if = {
-		limit = { is_target_in_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_cleanup } }
-		set_variable = { name = cm_fa_cleanup_enabled value = 1 }
+		limit = { is_target_in_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_cleanup } }
+		set_variable = { name = cm_sa_cleanup_enabled value = 1 }
 	}
 	else = {
-		remove_variable = cm_fa_cleanup_enabled
+		remove_variable = cm_sa_cleanup_enabled
 	}
 }
 
 # Governors spends against the treasury above the reserve rather than a pool, so there is no
 # percentage to project. Scope: country
-cm_fa_sync_governors = {
+cm_sa_sync_governors = {
 	if = {
-		limit = { is_target_in_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_governors } }
-		set_variable = { name = cm_fa_governors_enabled value = 1 }
+		limit = { is_target_in_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_governors } }
+		set_variable = { name = cm_sa_governors_enabled value = 1 }
 	}
 	else = {
-		remove_variable = cm_fa_governors_enabled
+		remove_variable = cm_sa_governors_enabled
 	}
 }
 
 # Rebuild the collapsar materials lookup from CMM list field data.
 # Called on registration and on every setting change.
 # Scope: country
-cm_fa_rebuild_collapsar_lookups = {
+cm_sa_rebuild_collapsar_lookups = {
 	if = {
-		limit = { NOT = { has_variable_list = cmm_list_items_cm__fa_collapsar } }
+		limit = { NOT = { has_variable_list = cmm_list_items_cm__sa_collapsar } }
 	}
 	else = {
 
 	# Enabled materials, bool field slot 1, in staging and drain order.
-	cmm_build_list_bool_list = { setting = cm__fa_collapsar field_slot = 1 list_name = cm_fa_collapsar_goods_enabled }
+	cmm_build_list_bool_list = { setting = cm__sa_collapsar field_slot = 1 list_name = cm_sa_collapsar_goods_enabled }
 
 	} # end guard
 }
@@ -550,36 +532,36 @@ cm_apply_priority_desired_item = {
 	if = { limit = { always = no } cmf_suppress = { v = $setting$_$i$ } }
 }
 
-# Flips the Full Automation master setting from the vanilla Buildings automation card.
+# Flips the Smart Automations master setting from the vanilla Buildings automation card.
 # Scope: country
-cm_fa_toggle_master_setting = {
-	remove_from_variable_map = { name = cmm key = flag:cm__fa_enabled }
+cm_sa_toggle_master_setting = {
+	remove_from_variable_map = { name = cmm key = flag:cm__sa_enabled }
 	if = {
-		limit = { exists = var:cm_fa_enabled }
-		add_to_variable_map = { name = cmm key = flag:cm__fa_enabled value = 0 }
+		limit = { exists = var:cm_sa_enabled }
+		add_to_variable_map = { name = cmm key = flag:cm__sa_enabled value = 0 }
 	}
 	else = {
-		add_to_variable_map = { name = cmm key = flag:cm__fa_enabled value = 1 }
+		add_to_variable_map = { name = cmm key = flag:cm__sa_enabled value = 1 }
 	}
-	cm_fa_apply_master_change = yes
+	cm_sa_apply_master_change = yes
 }
 
 # Flips the Building Cleanup category row from the vanilla Close and Open Buildings card.
 # Scope: country
-cm_fa_toggle_cleanup_setting = {
+cm_sa_toggle_cleanup_setting = {
 	if = {
-		limit = { exists = var:cm_fa_cleanup_enabled }
-		cmm_set_list_data_value = { mod_id = cm setting_id = fa_priority_list field_id = enabled item = 6 value = 0 }
+		limit = { exists = var:cm_sa_cleanup_enabled }
+		cmm_set_list_data_value = { mod_id = cm setting_id = sa_priority_list field_id = enabled item = 6 value = 0 }
 	}
 	else = {
-		cmm_set_list_data_value = { mod_id = cm setting_id = fa_priority_list field_id = enabled item = 6 value = 1 }
+		cmm_set_list_data_value = { mod_id = cm setting_id = sa_priority_list field_id = enabled item = 6 value = 1 }
 	}
-	cm_fa_rebuild_category_lookups = yes
+	cm_sa_rebuild_category_lookups = yes
 }
 
 # The Buildings and Close and Open Buildings cards drive this mod's settings instead.
 # Scope: country
-cm_fa_suppress_engine_automation = {
+cm_sa_suppress_engine_automation = {
 	set_automated_system = { system = buildings activate = no }
 	set_automated_system = { system = closebuildings activate = no }
 }
@@ -645,30 +627,6 @@ cm_rebuild_auto_town_rights_lookups = {
 
 	# Enabled town rights, bool field slot 1.
 	cmm_build_list_bool_list = { setting = cm__auto_town_rights_list field_slot = 1 list_name = cm_auto_town_rights_enabled }
-
-	} # end guard
-}
-
-# Rebuild all food auto-build lookup tables from CMM list field data.
-# Called on registration and on every setting change.
-# Scope: country
-cm_rebuild_auto_food_lookups = {
-	if = {
-		limit = { NOT = { has_variable_list = cmm_list_items_cm__auto_food_list } }
-	}
-	else = {
-
-	# Ordered food RGO types list for daily tick iteration in priority order.
-	cmm_build_list_ordered_values = { setting = cm__auto_food_list list_name = cm_auto_food_rgo_types_list }
-
-	# Enabled food RGO types, bool field slot 2, after data column.
-	cmm_build_list_bool_list = { setting = cm__auto_food_list field_slot = 2 list_name = cm_auto_food_rgo_types_enabled }
-
-	# River-only food RGO types, bool field slot 3.
-	cmm_build_list_bool_list = { setting = cm__auto_food_list field_slot = 3 list_name = cm_auto_food_rgo_types_river_only }
-
-	# Subjects-enabled food RGO types, bool field slot 4.
-	cmm_build_list_bool_list = { setting = cm__auto_food_list field_slot = 4 list_name = cm_auto_food_rgo_types_in_subjects_enabled }
 
 	} # end guard
 }
@@ -746,37 +704,6 @@ cm_auto_town_rights_list_update_visibility_item = {
 	}
 }
 
-# Hide/show auto-food list rows based on whether the country produces the food good.
-# Scope: country
-cm_update_auto_food_list_visibility = {
-	if = {
-		limit = { has_variable_list = cmm_list_items_cm__auto_food_list }
-		cmm_for_each_list_item = {
-			setting = cm__auto_food_list
-			effect = cm_auto_food_list_update_visibility_item
-		}
-	}
-}
-
-# Callback for cmm_for_each_list_item. Shows or hides item $i$ based on whether the
-# country owns a location producing the good. scope:cmm_list_current_item_value = goods.
-# Root: country
-cm_auto_food_list_update_visibility_item = {
-	if = {
-		limit = { any_owned_location = { raw_material = scope:cmm_list_current_item_value } }
-		cmm_show_list_item = { mod_id = cm setting_id = auto_food_list item = $i$ }
-	}
-	else = {
-		cmm_hide_list_item = { mod_id = cm setting_id = auto_food_list item = $i$ }
-	}
-
-	# Accept $setting$ param from cmm_for_each_list_item, unused here.
-	if = {
-		limit = { always = no }
-		cmf_suppress = { v = $setting$_$i$ }
-	}
-}
-
 # Hide/show auto-urbanize ignore list rows based on whether the country produces the good.
 # Scope: country
 cm_update_auto_urbanize_ignore_list_visibility = {
@@ -823,19 +750,16 @@ _cm_cmm_suppress_warnings = {
 		cmf_suppress = { v = cm_priority_min_profit }
 		cmf_suppress = { v = cm_priority_min_discount }
 		cmf_suppress = { v = cmm_list_item_hidden }
-		# Food auto-build lookup lists
+		# Food auto-build roster
 		cmf_suppress = { v = cm_auto_food_rgo_types_list }
-		cmf_suppress = { v = cm_auto_food_rgo_types_enabled }
-		cmf_suppress = { v = cm_auto_food_rgo_types_river_only }
-		cmf_suppress = { v = cm_auto_food_rgo_types_in_subjects_enabled }
 		# Auto-urbanize ignore list
 		cmf_suppress = { v = cm_auto_urbanize_ignored_rgo_goods }
 		# Auto town rights lookup lists
 		cmf_suppress = { v = cm_auto_town_rights_list }
 		cmf_suppress = { v = cm_auto_town_rights_enabled }
-		# Full-automation category and collapsar material lookups
-		cmf_suppress = { v = cm_fa_categories_enabled }
-		cmf_suppress = { v = cm_fa_cat_budget }
-		cmf_suppress = { v = cm_fa_collapsar_goods_enabled }
+		# Smart Automations category and collapsar material lookups
+		cmf_suppress = { v = cm_sa_categories_enabled }
+		cmf_suppress = { v = cm_sa_cat_budget }
+		cmf_suppress = { v = cm_sa_collapsar_goods_enabled }
 	}
 }

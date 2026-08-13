@@ -49,7 +49,7 @@ cm_gov_reorg_tick = {
 		cm_gov_prune_pending = yes
 		cm_gov_apply_plan_drops = yes
 		if = {
-			limit = { exists = var:cm_fa_gov_prepare_sites }
+			limit = { exists = var:cm_sa_gov_prepare_sites }
 			cm_gov_road_pass = yes
 			cm_gov_rank_pass = yes
 		}
@@ -184,7 +184,7 @@ cm_gov_seed_slot_counters = {
 	set_variable = { name = cm_gov_land_free_left value = cm_gov_land_free }
 	set_variable = { name = cm_gov_naval_free_left value = cm_gov_naval_free }
 	if = {
-		limit = { exists = var:cm_fa_gov_move_seats }
+		limit = { exists = var:cm_sa_gov_move_seats }
 		set_variable = { name = cm_gov_land_left value = cm_gov_land_slots }
 		set_variable = { name = cm_gov_naval_left value = cm_gov_naval_slots }
 	}
@@ -307,7 +307,7 @@ cm_gov_reorg_search_run = {
 	# De-seating the country's own governors is what lets the run judge whether one is worth moving.
 	# With moving off they keep their spots and read as sources, so the run looks past them.
 	if = {
-		limit = { exists = var:cm_fa_gov_move_seats }
+		limit = { exists = var:cm_sa_gov_move_seats }
 		set_variable = { name = cm_gov_replan value = 1 }
 	}
 	set_variable = { name = cm_gov_valid_only value = 1 }
@@ -527,7 +527,7 @@ cm_gov_reorg_place_step = {
 		cm_gov_place_next = { FREE = no }
 	}
 	else_if = {
-		limit = { exists = var:cm_fa_gov_move_seats }
+		limit = { exists = var:cm_sa_gov_move_seats }
 		set_variable = { name = cm_gov_phase value = 6 }
 	}
 	else = {
@@ -616,7 +616,7 @@ cm_gov_reorg_confirm_step = {
 cm_gov_reorg_move_step = {
 	if = {
 		limit = {
-			exists = var:cm_fa_gov_move_seats
+			exists = var:cm_sa_gov_move_seats
 			has_variable_list = cm_gov_pending
 			variable_list_size = { name = cm_gov_pending value >= 1 }
 		}

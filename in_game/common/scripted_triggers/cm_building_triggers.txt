@@ -20,6 +20,11 @@ cm_country_can_afford_staged_cost = {
 	scope:cm_country = { gold >= { value = scope:cm_cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }
 }
 
+# The same gate for a drain outside the Auto-Expand tab, which stops at the higher floor.
+cm_country_can_afford_staged_cost_full = {
+	scope:cm_country = { gold >= { value = scope:cm_cost add = cm_get_full_reserve add = var:cm_q_planned_spend } }
+}
+
 # Root is the location, expects scope:cm_country. True when the queue window's fire pass builds
 # this approval later, which is what makes cm_q_slots_used the stand-in for the construction the
 # location does not carry yet. A lucky nation and a subject's location both construct at approval
@@ -146,7 +151,7 @@ cm_expand_metric_is = {
 # Whether cm_bld_income_value and cm_bld_profit_value read the standing building instead of
 # the engine's type-scope estimate. Root is the location. Expects scope:cm_building_type and
 # scope:cm_profit. scope:cm_old_building_type marks an upgrade item, which is out of scope
-# here and whose full-automation scorer passes no profit. Nested rather than one AND list
+# here and whose Smart Automations scorer passes no profit. Nested rather than one AND list
 # because each read is only valid once the one above it holds, and short-circuiting is
 # unverified.
 cm_bld_use_standing_value = {

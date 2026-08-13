@@ -1,4 +1,4 @@
-﻿# Lucky Nations forts, the first half of the Military full-automation category. Monthly it
+﻿# Lucky Nations forts, the first half of the Military Smart Automations category. Monthly it
 # builds a spaced fort line along the borders of its strongest neighbors; yearly it tears down
 # the forts left far behind those borders and one of every adjacent pair.
 #
@@ -179,7 +179,7 @@ cm_ln_ft_stage_capital = {
 				# Above every border rank, so the capital is claimed first at the drain.
 				set_variable = { name = cm_ln_ft_prio value = 2000 }
 				scope:cm_country = {
-					cm_fa_stage_build_candidate = { cat = 6 }
+					cm_sa_stage_build_candidate = { cat = 6 }
 					change_variable = { name = cm_ln_ft_claimed add = 1 }
 				}
 				cm_ln_ft_mark_pick = yes
@@ -211,7 +211,7 @@ cm_ln_ft_stage_for_neighbor = {
 			set_variable = { name = cm_ln_ft_prio value = local_var:cm_ln_ft_rank }
 			change_variable = { name = cm_ln_ft_prio multiply = 10 }
 			change_variable = { name = cm_ln_ft_prio add = cm_location_attacker_penalty }
-			scope:cm_country = { cm_fa_stage_build_candidate = { cat = 6 } }
+			scope:cm_country = { cm_sa_stage_build_candidate = { cat = 6 } }
 			cm_ln_ft_mark_pick = yes
 		}
 	}
@@ -223,19 +223,19 @@ cm_ln_ft_stage_for_neighbor = {
 # the neighbor's strength rank with the defensive terrain as the tiebreak.
 cm_ln_ft_drain = {
 	# The staging that resolved the tier ran in an earlier execution, so scope:cm_building_type
-	# has to be re-established here for cm_fa_try_approve_build's category lookup.
+	# has to be re-established here for cm_sa_try_approve_build's category lookup.
 	cm_ln_ft_resolve_type = yes
 	if = {
-		limit = { has_variable_list = cm_fa_b_locations }
+		limit = { has_variable_list = cm_sa_b_locations }
 		ordered_in_list = {
-			variable = cm_fa_b_locations
+			variable = cm_sa_b_locations
 			order_by = cm_ln_ft_prio_value
 			max = cm_max_guess_at_number_of_buildings
 			check_range_bounds = no
 			limit = { has_variable = cm_ln_ft_prio }
 			save_temporary_scope_as = cm_ln_ft_drain_loc
 			scope:cm_ln_ft_drain_loc = {
-				cm_fa_try_approve_build = { cat = 6 POOL = cm_fa_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
+				cm_sa_try_approve_build = { cat = 6 POOL = cm_sa_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_sa_location_has_open_build_slot }
 			}
 		}
 	}
@@ -249,8 +249,8 @@ cm_ln_ft_drain = {
 cm_ln_ft_delete_pass = {
 	if = {
 		limit = {
-			cm_fa_master_active = yes
-			exists = var:cm_fa_military_enabled
+			cm_sa_master_active = yes
+			exists = var:cm_sa_military_enabled
 		}
 		save_scope_as = cm_country
 		cm_ln_ft_build_border_ring = yes

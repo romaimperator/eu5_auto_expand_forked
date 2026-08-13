@@ -1,58 +1,58 @@
-﻿# Full-automation Utilities: the capital-only set (from cm_run_auto_build_capital), the
+﻿# Smart Automations Utilities: the capital-only set (from cm_run_auto_build_capital), the
 # auto_build_list roster (cm_cmm_effects.txt), mercury patios, the vanilla market-center
 # buildings (game in_game/common/building_types/market_buildings.txt, the is_market_center-gated
 # set), bailiffs and the unique local_max_control buildings, the marketplace chain, the
 # disease-resistance buildings, and granaries last. Runs on default thresholds and never reads
 # or writes the player's auto-build settings or toggles.
 # Every location sweep here is confined to the cycle's market slice
-# (cm_fa_slice_effects.txt), except the capital set and the max-control buildings. Bailiffs
+# (cm_sa_slice_effects.txt), except the capital set and the max-control buildings. Bailiffs
 # survey once every four years into a pick list that stages monthly until it empties.
 
 # Four years, the bailiff survey cadence.
-@cm_fa_bailiff_days = 1460
+@cm_sa_bailiff_days = 1460
 
 # Root is the country, scope:cm_country set.
-cm_fa_run_utilities = {
+cm_sa_run_utilities = {
 	if = {
 		limit = { exists = capital }
 		capital = { save_scope_as = cm_location }
 		if = {
 			limit = { scope:cm_location = { NOT = { integration_level = conquered } } }
 			scope:cm_location = {
-				cm_fa_stage_capital_type_here = { bt = royal_garden }
-				cm_fa_stage_capital_type_here = { bt = royal_court }
-				cm_fa_stage_capital_type_here = { bt = house_of_parliament }
-				cm_fa_stage_capital_type_here = { bt = order_headquarters }
-				cm_fa_stage_capital_type_here = { bt = admiralty }
-				cm_fa_stage_capital_type_here = { bt = war_college }
-				cm_fa_stage_capital_type_here = { bt = tax_assessor }
-				cm_fa_stage_capital_type_here = { bt = supreme_court }
-				cm_fa_stage_capital_type_here = { bt = chancery }
-				cm_fa_stage_capital_type_here = { bt = republican_assembly }
-				cm_fa_stage_capital_type_here = { bt = pirate_stronghold }
-				cm_fa_stage_capital_type_here = { bt = sergeantry }
-				cm_fa_stage_capital_type_here = { bt = city_guard }
+				cm_sa_stage_capital_type_here = { bt = royal_garden }
+				cm_sa_stage_capital_type_here = { bt = royal_court }
+				cm_sa_stage_capital_type_here = { bt = house_of_parliament }
+				cm_sa_stage_capital_type_here = { bt = order_headquarters }
+				cm_sa_stage_capital_type_here = { bt = admiralty }
+				cm_sa_stage_capital_type_here = { bt = war_college }
+				cm_sa_stage_capital_type_here = { bt = tax_assessor }
+				cm_sa_stage_capital_type_here = { bt = supreme_court }
+				cm_sa_stage_capital_type_here = { bt = chancery }
+				cm_sa_stage_capital_type_here = { bt = republican_assembly }
+				cm_sa_stage_capital_type_here = { bt = pirate_stronghold }
+				cm_sa_stage_capital_type_here = { bt = sergeantry }
+				cm_sa_stage_capital_type_here = { bt = city_guard }
 			}
 		}
 	}
-	cm_fa_stage_utility_everywhere = { bt = early_council_hall }
-	cm_fa_stage_utility_everywhere = { bt = minting_office }
-	cm_fa_stage_utility_everywhere = { bt = settlement_building }
-	cm_fa_stage_utility_everywhere = { bt = library }
-	cm_fa_stage_utility_everywhere = { bt = bridge_infrastructure }
-	cm_fa_stage_utility_everywhere = { bt = pound_lock_canal_infrastructure }
-	cm_fa_stage_utility_everywhere = { bt = wharf }
-	cm_fa_stage_utility_everywhere = { bt = university }
-	cm_fa_stage_utility_everywhere = { bt = market_village }
-	cm_fa_stage_utility_everywhere = { bt = counting_house }
-	cm_fa_stage_utility_everywhere = { bt = sawmill }
-	cm_fa_stage_utility_everywhere = { bt = windmill }
-	cm_fa_stage_utility_everywhere = { bt = local_smelters }
-	cm_fa_stage_utility_everywhere = { bt = protected_harbor }
-	cm_fa_stage_utility_everywhere = { bt = fortress_granary }
-	cm_fa_stage_utility_everywhere = { bt = confucian_academy }
-	cm_fa_stage_utility_everywhere = { bt = confucian_school }
-	cm_fa_stage_utility_everywhere = { bt = dock }
+	cm_sa_stage_utility_everywhere = { bt = early_council_hall }
+	cm_sa_stage_utility_everywhere = { bt = minting_office }
+	cm_sa_stage_utility_everywhere = { bt = settlement_building }
+	cm_sa_stage_utility_everywhere = { bt = library }
+	cm_sa_stage_utility_everywhere = { bt = bridge_infrastructure }
+	cm_sa_stage_utility_everywhere = { bt = pound_lock_canal_infrastructure }
+	cm_sa_stage_utility_everywhere = { bt = wharf }
+	cm_sa_stage_utility_everywhere = { bt = university }
+	cm_sa_stage_utility_everywhere = { bt = market_village }
+	cm_sa_stage_utility_everywhere = { bt = counting_house }
+	cm_sa_stage_utility_everywhere = { bt = sawmill }
+	cm_sa_stage_utility_everywhere = { bt = windmill }
+	cm_sa_stage_utility_everywhere = { bt = local_smelters }
+	cm_sa_stage_utility_everywhere = { bt = protected_harbor }
+	cm_sa_stage_utility_everywhere = { bt = fortress_granary }
+	cm_sa_stage_utility_everywhere = { bt = confucian_academy }
+	cm_sa_stage_utility_everywhere = { bt = confucian_school }
+	cm_sa_stage_utility_everywhere = { bt = dock }
 	# Mercury patio stands only on gold and silver RGOs (game
 	# in_game/common/building_types/common_buildings.txt, mercury_patio location_potential).
 	ordered_owned_location = {
@@ -60,66 +60,66 @@ cm_fa_run_utilities = {
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
 		limit = {
-			cm_location_market_in_fa_slice = yes
+			cm_location_market_in_sa_slice = yes
 			NOT = { integration_level = conquered }
-			cm_fa_location_has_proximity = yes
+			cm_sa_location_has_proximity = yes
 			OR = {
 				raw_material = goods:silver
 				raw_material = goods:goods_gold
 			}
 		}
 		save_scope_as = cm_location
-		cm_fa_stage_utility_type_here = { bt = mercury_patio }
+		cm_sa_stage_utility_type_here = { bt = mercury_patio }
 	}
 	ordered_owned_location = {
 		order_by = max_control
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
 		limit = {
-			cm_location_market_in_fa_slice = yes
+			cm_location_market_in_sa_slice = yes
 			NOT = { integration_level = conquered }
-			cm_fa_location_has_proximity = yes
+			cm_sa_location_has_proximity = yes
 			is_market_center = yes
 		}
 		save_scope_as = cm_location
-		cm_fa_stage_utility_type_here = { bt = entrepot }
-		cm_fa_stage_utility_type_here = { bt = trading_hub }
-		cm_fa_stage_utility_type_here = { bt = customs_house }
-		cm_fa_stage_utility_type_here = { bt = stock_exchange }
-		cm_fa_stage_utility_type_here = { bt = clearing_house }
-		cm_fa_stage_utility_type_here = { bt = market_warehouse }
+		cm_sa_stage_utility_type_here = { bt = entrepot }
+		cm_sa_stage_utility_type_here = { bt = trading_hub }
+		cm_sa_stage_utility_type_here = { bt = customs_house }
+		cm_sa_stage_utility_type_here = { bt = stock_exchange }
+		cm_sa_stage_utility_type_here = { bt = clearing_house }
+		cm_sa_stage_utility_type_here = { bt = market_warehouse }
 	}
 	if = {
-		limit = { NOT = { exists = var:cm_fa_bailiff_cd } }
-		set_variable = { name = cm_fa_bailiff_cd value = 1 days = @cm_fa_bailiff_days }
-		cm_fa_pick_bailiffs = yes
+		limit = { NOT = { exists = var:cm_sa_bailiff_cd } }
+		set_variable = { name = cm_sa_bailiff_cd value = 1 days = @cm_sa_bailiff_days }
+		cm_sa_pick_bailiffs = yes
 	}
-	cm_fa_stage_bailiffs = yes
+	cm_sa_stage_bailiffs = yes
 	# The unique local_max_control buildings, most control first (game
 	# in_game/common/building_types/unique_buildings.txt: ostrog 0.10, zhixian 0.10,
 	# tur_kodjabashi_office 0.1, eng_royal_forest 0.05, eghabho_nore_mansion 0.05, tambo 0.05).
-	cm_fa_stage_max_control_type = { bt = ostrog }
-	cm_fa_stage_max_control_type = { bt = zhixian }
-	cm_fa_stage_max_control_type = { bt = tur_kodjabashi_office }
-	cm_fa_stage_max_control_type = { bt = eng_royal_forest }
-	cm_fa_stage_max_control_type = { bt = eghabho_nore_mansion }
-	cm_fa_stage_max_control_type = { bt = tambo }
-	cm_fa_stage_marketplaces = yes
+	cm_sa_stage_max_control_type = { bt = ostrog }
+	cm_sa_stage_max_control_type = { bt = zhixian }
+	cm_sa_stage_max_control_type = { bt = tur_kodjabashi_office }
+	cm_sa_stage_max_control_type = { bt = eng_royal_forest }
+	cm_sa_stage_max_control_type = { bt = eghabho_nore_mansion }
+	cm_sa_stage_max_control_type = { bt = tambo }
+	cm_sa_stage_marketplaces = yes
 	# The generic local_disease_resistance buildings, most resistance first (game
 	# in_game/common/building_types/town_buildings.txt: medical_school 0.33, lazaretto 0.25,
 	# hospital 0.1).
-	cm_fa_stage_utility_everywhere = { bt = medical_school }
-	cm_fa_stage_utility_everywhere = { bt = lazaretto }
-	cm_fa_stage_utility_everywhere = { bt = hospital }
+	cm_sa_stage_utility_everywhere = { bt = medical_school }
+	cm_sa_stage_utility_everywhere = { bt = lazaretto }
+	cm_sa_stage_utility_everywhere = { bt = hospital }
 	# Granary is not in the auto_build_list roster.
-	cm_fa_stage_utility_everywhere = { bt = granary }
+	cm_sa_stage_utility_everywhere = { bt = granary }
 }
 
 # Stages one utility type at this location when it fits; the capital and market-center
 # sets have no obsolete chains. The not-at-max-level check keeps multi-level types like
 # chancery topping up. Root is the location. Expects scope:cm_country, scope:cm_location;
 # $bt$ = the type key.
-cm_fa_stage_utility_type_here = {
+cm_sa_stage_utility_type_here = {
 	cm_pop_track = yes
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	if = {
@@ -131,7 +131,7 @@ cm_fa_stage_utility_type_here = {
 			cm_get_open_build_queue_slots > 0
 			NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
 		}
-		cm_fa_stage_build_candidate = { cat = 4 }
+		cm_sa_stage_build_candidate = { cat = 4 }
 	}
 }
 
@@ -139,7 +139,7 @@ cm_fa_stage_utility_type_here = {
 # whatever the capital is already building and gold is the only thing that can stop it, which is
 # what lets the category hold its allotment for one it cannot yet afford. Root is the location.
 # Expects scope:cm_country, scope:cm_location; $bt$ = the type key.
-cm_fa_stage_capital_type_here = {
+cm_sa_stage_capital_type_here = {
 	cm_pop_track = yes
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	if = {
@@ -150,15 +150,15 @@ cm_fa_stage_capital_type_here = {
 			cm_check_location_meets_min_market_access = yes
 			NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
 		}
-		cm_fa_stage_build_candidate = { cat = 4 }
+		cm_sa_stage_build_candidate = { cat = 4 }
 	}
 }
 
 # Stages one utility type across owned locations; chain bases resolve to the current tier,
 # and a location holding an older tier is left to the upgrade features. Tops up to max level,
-# since nothing else in full automation grows these types: Industry only touches production
+# since nothing else in Smart Automations grows these types: Industry only touches production
 # buildings. Root is the country. $bt$ = the raw type key.
-cm_fa_stage_utility_everywhere = {
+cm_sa_stage_utility_everywhere = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes
 	ordered_owned_location = {
@@ -166,24 +166,24 @@ cm_fa_stage_utility_everywhere = {
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
 		limit = {
-			cm_location_market_in_fa_slice = yes
+			cm_location_market_in_sa_slice = yes
 			NOT = { integration_level = conquered }
-			cm_fa_location_has_proximity = yes
+			cm_sa_location_has_proximity = yes
 		}
 		save_scope_as = cm_location
 		cm_pop_track = yes
 		if = {
 			limit = {
-				cm_fa_utilities_type_has_room = yes
+				cm_sa_utilities_type_has_room = yes
 				cm_location_allowed_to_build = { target = scope:cm_building_type }
 				cm_location_has_no_auto_build_chain_predecessor = yes
 				cm_location_has_enough_pops_available = yes
-				cm_fa_utilities_rgo_req_met = yes
+				cm_sa_utilities_rgo_req_met = yes
 				cm_check_location_meets_min_market_access = yes
 				cm_get_open_build_queue_slots > 0
 				NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
 			}
-			cm_fa_stage_build_candidate = { cat = 4 }
+			cm_sa_stage_build_candidate = { cat = 4 }
 		}
 	}
 }
@@ -196,11 +196,11 @@ cm_fa_stage_utility_everywhere = {
 # would never reach the country's. The cap fills slowly enough that re-ranking every owned
 # location every month changes nothing, hence the four-year cadence on the call.
 # Root is the country.
-cm_fa_pick_bailiffs = {
-	clear_variable_list = cm_fa_bailiff_picks
+cm_sa_pick_bailiffs = {
+	clear_variable_list = cm_sa_bailiff_picks
 	building_type:bailiff = { save_scope_as = cm_building_type }
-	set_local_variable = { name = cm_fa_bailiff_room value = modifier:num_bailiffs }
-	change_local_variable = { name = cm_fa_bailiff_room subtract = total_building_levels_including_construction:bailiff }
+	set_local_variable = { name = cm_sa_bailiff_room value = modifier:num_bailiffs }
+	change_local_variable = { name = cm_sa_bailiff_room subtract = total_building_levels_including_construction:bailiff }
 	ordered_owned_location = {
 		order_by = cm_location_raw_wealth
 		max = cm_max_guess_at_number_of_locations
@@ -208,11 +208,11 @@ cm_fa_pick_bailiffs = {
 		save_scope_as = cm_location
 		if = {
 			limit = {
-				local_var:cm_fa_bailiff_room >= 1
-				cm_fa_max_control_site_ok = yes
+				local_var:cm_sa_bailiff_room >= 1
+				cm_sa_max_control_site_ok = yes
 			}
-			scope:cm_country = { add_to_variable_list = { name = cm_fa_bailiff_picks target = scope:cm_location } }
-			change_local_variable = { name = cm_fa_bailiff_room subtract = 1 }
+			scope:cm_country = { add_to_variable_list = { name = cm_sa_bailiff_picks target = scope:cm_location } }
+			change_local_variable = { name = cm_sa_bailiff_room subtract = 1 }
 		}
 	}
 }
@@ -221,29 +221,29 @@ cm_fa_pick_bailiffs = {
 # Utilities pool cannot cover is left in the list and staged again next month, so a survey
 # landing on a poor month is not lost; the room is re-read each month because bailiffs
 # finished since the survey have taken part of the cap. Root is the country.
-cm_fa_stage_bailiffs = {
+cm_sa_stage_bailiffs = {
 	if = {
 		limit = {
-			has_variable_list = cm_fa_bailiff_picks
-			variable_list_size = { name = cm_fa_bailiff_picks value >= 1 }
+			has_variable_list = cm_sa_bailiff_picks
+			variable_list_size = { name = cm_sa_bailiff_picks value >= 1 }
 		}
 		building_type:bailiff = { save_scope_as = cm_building_type }
-		cm_fa_prune_bailiff_picks = yes
-		set_local_variable = { name = cm_fa_bailiff_room value = modifier:num_bailiffs }
-		change_local_variable = { name = cm_fa_bailiff_room subtract = total_building_levels_including_construction:bailiff }
+		cm_sa_prune_bailiff_picks = yes
+		set_local_variable = { name = cm_sa_bailiff_room value = modifier:num_bailiffs }
+		change_local_variable = { name = cm_sa_bailiff_room subtract = total_building_levels_including_construction:bailiff }
 		ordered_in_list = {
-			variable = cm_fa_bailiff_picks
+			variable = cm_sa_bailiff_picks
 			order_by = cm_location_raw_wealth
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_scope_as = cm_location
 			if = {
 				limit = {
-					local_var:cm_fa_bailiff_room >= 1
-					cm_fa_max_control_site_ok = yes
+					local_var:cm_sa_bailiff_room >= 1
+					cm_sa_max_control_site_ok = yes
 				}
-				cm_fa_stage_build_candidate = { cat = 4 }
-				change_local_variable = { name = cm_fa_bailiff_room subtract = 1 }
+				cm_sa_stage_build_candidate = { cat = 4 }
+				change_local_variable = { name = cm_sa_bailiff_room subtract = 1 }
 			}
 		}
 	}
@@ -255,10 +255,10 @@ cm_fa_stage_bailiffs = {
 # the four rank fields (game in_game/common/building_types/rural_buildings.txt:10), so a
 # rank upgrade retires the site for good. Root is the country, expects scope:cm_country,
 # scope:cm_building_type.
-cm_fa_prune_bailiff_picks = {
+cm_sa_prune_bailiff_picks = {
 	every_in_list = {
-		variable = cm_fa_bailiff_picks
-		save_scope_as = cm_fa_bailiff_pick
+		variable = cm_sa_bailiff_picks
+		save_scope_as = cm_sa_bailiff_pick
 		if = {
 			limit = {
 				OR = {
@@ -267,7 +267,7 @@ cm_fa_prune_bailiff_picks = {
 					NOT = { location_rank = location_rank:rural_settlement }
 				}
 			}
-			scope:cm_country = { remove_list_variable = { name = cm_fa_bailiff_picks target = scope:cm_fa_bailiff_pick } }
+			scope:cm_country = { remove_list_variable = { name = cm_sa_bailiff_picks target = scope:cm_sa_bailiff_pick } }
 		}
 	}
 }
@@ -277,18 +277,18 @@ cm_fa_prune_bailiff_picks = {
 # proximity gate nor the market slice applies. No country-wide cap limits these, so they take
 # no survey and a location newly meeting the type's own rules stages the next month. One level
 # per location. Root is the country. $bt$ = the type key.
-cm_fa_stage_max_control_type = {
+cm_sa_stage_max_control_type = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	if = {
-		limit = { cm_fa_country_can_build_type = yes }
+		limit = { cm_sa_country_can_build_type = yes }
 		ordered_owned_location = {
 			order_by = cm_location_raw_wealth
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_scope_as = cm_location
 			if = {
-				limit = { cm_fa_max_control_site_ok = yes }
-				cm_fa_stage_build_candidate = { cat = 4 }
+				limit = { cm_sa_max_control_site_ok = yes }
+				cm_sa_stage_build_candidate = { cat = 4 }
 			}
 		}
 	}
@@ -298,17 +298,17 @@ cm_fa_stage_max_control_type = {
 # first: the chain grants local_market_access per level (game
 # in_game/common/building_types/trade_buildings.txt, marketplace). Tops up to max level; a
 # location holding an older tier is left to the upgrade features. Root is the country.
-cm_fa_stage_marketplaces = {
+cm_sa_stage_marketplaces = {
 	building_type:marketplace = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes
 	ordered_owned_location = {
-		order_by = cm_fa_market_access_inverted
+		order_by = cm_sa_market_access_inverted
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
 		limit = {
-			cm_location_market_in_fa_slice = yes
+			cm_location_market_in_sa_slice = yes
 			NOT = { integration_level = conquered }
-			cm_fa_location_has_proximity = yes
+			cm_sa_location_has_proximity = yes
 		}
 		save_scope_as = cm_location
 		cm_pop_track = yes
@@ -322,7 +322,7 @@ cm_fa_stage_marketplaces = {
 				cm_get_open_build_queue_slots > 0
 				NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
 			}
-			cm_fa_stage_build_candidate = { cat = 4 }
+			cm_sa_stage_build_candidate = { cat = 4 }
 		}
 	}
 }
@@ -330,150 +330,150 @@ cm_fa_stage_marketplaces = {
 # Utilities drain, type-major in the assembly order: the capital set, the auto-build roster,
 # mercury patios, the market-center buildings, the max-control buildings, marketplaces, the
 # disease-resistance buildings, then granaries. Root is the country.
-cm_fa_pass_utilities = {
-	cm_fa_drain_capital_type = { bt = royal_garden }
-	cm_fa_drain_capital_type = { bt = royal_court }
-	cm_fa_drain_capital_type = { bt = house_of_parliament }
-	cm_fa_drain_capital_type = { bt = order_headquarters }
-	cm_fa_drain_capital_type = { bt = admiralty }
-	cm_fa_drain_capital_type = { bt = war_college }
-	cm_fa_drain_capital_type = { bt = tax_assessor }
-	cm_fa_drain_capital_type = { bt = supreme_court }
-	cm_fa_drain_capital_type = { bt = chancery }
-	cm_fa_drain_capital_type = { bt = republican_assembly }
-	cm_fa_drain_capital_type = { bt = pirate_stronghold }
-	cm_fa_drain_capital_type = { bt = sergeantry }
-	cm_fa_drain_capital_type = { bt = city_guard }
-	cm_fa_drain_utility_roster_type = { bt = early_council_hall }
-	cm_fa_drain_utility_roster_type = { bt = minting_office }
-	cm_fa_drain_utility_roster_type = { bt = settlement_building }
-	cm_fa_drain_utility_roster_type = { bt = library }
-	cm_fa_drain_utility_roster_type = { bt = bridge_infrastructure }
-	cm_fa_drain_utility_roster_type = { bt = pound_lock_canal_infrastructure }
-	cm_fa_drain_utility_roster_type = { bt = wharf }
-	cm_fa_drain_utility_roster_type = { bt = university }
-	cm_fa_drain_utility_roster_type = { bt = market_village }
-	cm_fa_drain_utility_roster_type = { bt = counting_house }
-	cm_fa_drain_utility_roster_type = { bt = sawmill }
-	cm_fa_drain_utility_roster_type = { bt = windmill }
-	cm_fa_drain_utility_roster_type = { bt = local_smelters }
-	cm_fa_drain_utility_roster_type = { bt = protected_harbor }
-	cm_fa_drain_utility_roster_type = { bt = fortress_granary }
-	cm_fa_drain_utility_roster_type = { bt = confucian_academy }
-	cm_fa_drain_utility_roster_type = { bt = confucian_school }
-	cm_fa_drain_utility_roster_type = { bt = dock }
-	cm_fa_drain_utility_type = { bt = mercury_patio }
-	cm_fa_drain_utility_type = { bt = entrepot }
-	cm_fa_drain_utility_type = { bt = trading_hub }
-	cm_fa_drain_utility_type = { bt = customs_house }
-	cm_fa_drain_utility_type = { bt = stock_exchange }
-	cm_fa_drain_utility_type = { bt = clearing_house }
-	cm_fa_drain_utility_type = { bt = market_warehouse }
-	cm_fa_drain_max_control_type = { bt = bailiff }
-	cm_fa_drain_max_control_type = { bt = ostrog }
-	cm_fa_drain_max_control_type = { bt = zhixian }
-	cm_fa_drain_max_control_type = { bt = tur_kodjabashi_office }
-	cm_fa_drain_max_control_type = { bt = eng_royal_forest }
-	cm_fa_drain_max_control_type = { bt = eghabho_nore_mansion }
-	cm_fa_drain_max_control_type = { bt = tambo }
-	cm_fa_drain_marketplaces = yes
-	cm_fa_drain_utility_roster_type = { bt = medical_school }
-	cm_fa_drain_utility_roster_type = { bt = lazaretto }
-	cm_fa_drain_utility_roster_type = { bt = hospital }
-	cm_fa_drain_utility_roster_type = { bt = granary }
+cm_sa_pass_utilities = {
+	cm_sa_drain_capital_type = { bt = royal_garden }
+	cm_sa_drain_capital_type = { bt = royal_court }
+	cm_sa_drain_capital_type = { bt = house_of_parliament }
+	cm_sa_drain_capital_type = { bt = order_headquarters }
+	cm_sa_drain_capital_type = { bt = admiralty }
+	cm_sa_drain_capital_type = { bt = war_college }
+	cm_sa_drain_capital_type = { bt = tax_assessor }
+	cm_sa_drain_capital_type = { bt = supreme_court }
+	cm_sa_drain_capital_type = { bt = chancery }
+	cm_sa_drain_capital_type = { bt = republican_assembly }
+	cm_sa_drain_capital_type = { bt = pirate_stronghold }
+	cm_sa_drain_capital_type = { bt = sergeantry }
+	cm_sa_drain_capital_type = { bt = city_guard }
+	cm_sa_drain_utility_roster_type = { bt = early_council_hall }
+	cm_sa_drain_utility_roster_type = { bt = minting_office }
+	cm_sa_drain_utility_roster_type = { bt = settlement_building }
+	cm_sa_drain_utility_roster_type = { bt = library }
+	cm_sa_drain_utility_roster_type = { bt = bridge_infrastructure }
+	cm_sa_drain_utility_roster_type = { bt = pound_lock_canal_infrastructure }
+	cm_sa_drain_utility_roster_type = { bt = wharf }
+	cm_sa_drain_utility_roster_type = { bt = university }
+	cm_sa_drain_utility_roster_type = { bt = market_village }
+	cm_sa_drain_utility_roster_type = { bt = counting_house }
+	cm_sa_drain_utility_roster_type = { bt = sawmill }
+	cm_sa_drain_utility_roster_type = { bt = windmill }
+	cm_sa_drain_utility_roster_type = { bt = local_smelters }
+	cm_sa_drain_utility_roster_type = { bt = protected_harbor }
+	cm_sa_drain_utility_roster_type = { bt = fortress_granary }
+	cm_sa_drain_utility_roster_type = { bt = confucian_academy }
+	cm_sa_drain_utility_roster_type = { bt = confucian_school }
+	cm_sa_drain_utility_roster_type = { bt = dock }
+	cm_sa_drain_utility_type = { bt = mercury_patio }
+	cm_sa_drain_utility_type = { bt = entrepot }
+	cm_sa_drain_utility_type = { bt = trading_hub }
+	cm_sa_drain_utility_type = { bt = customs_house }
+	cm_sa_drain_utility_type = { bt = stock_exchange }
+	cm_sa_drain_utility_type = { bt = clearing_house }
+	cm_sa_drain_utility_type = { bt = market_warehouse }
+	cm_sa_drain_max_control_type = { bt = bailiff }
+	cm_sa_drain_max_control_type = { bt = ostrog }
+	cm_sa_drain_max_control_type = { bt = zhixian }
+	cm_sa_drain_max_control_type = { bt = tur_kodjabashi_office }
+	cm_sa_drain_max_control_type = { bt = eng_royal_forest }
+	cm_sa_drain_max_control_type = { bt = eghabho_nore_mansion }
+	cm_sa_drain_max_control_type = { bt = tambo }
+	cm_sa_drain_marketplaces = yes
+	cm_sa_drain_utility_roster_type = { bt = medical_school }
+	cm_sa_drain_utility_roster_type = { bt = lazaretto }
+	cm_sa_drain_utility_roster_type = { bt = hospital }
+	cm_sa_drain_utility_roster_type = { bt = granary }
 }
 
 # One capital-only type, past the capital's open slots on the max-control buildings' terms, so
 # gold is the only thing that can stop it and the category holds for one it cannot afford. The
 # staged location is walked rather than reached through capital, since a capital moved between
 # staging and this drain would leave the entry unconsumed. Root is the country. $bt$ = the type key.
-cm_fa_drain_capital_type = {
+cm_sa_drain_capital_type = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	if = {
 		limit = {
-			local_var:cm_fa_cost_blocked = 0
-			has_variable_list = cm_fa_b_locations
+			local_var:cm_sa_cost_blocked = 0
+			has_variable_list = cm_sa_b_locations
 		}
 		every_in_list = {
-			variable = cm_fa_b_locations
-			save_temporary_scope_as = cm_fa_drain_loc
-			scope:cm_fa_drain_loc = {
-				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = always }
+			variable = cm_sa_b_locations
+			save_temporary_scope_as = cm_sa_drain_loc
+			scope:cm_sa_drain_loc = {
+				cm_sa_try_approve_build = { cat = 4 POOL = cm_sa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = always }
 			}
 		}
 	}
 }
 
 # Root is the country. $bt$ = a type key with no chain.
-cm_fa_drain_utility_type = {
+cm_sa_drain_utility_type = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
-	cm_fa_drain_utility_resolved = yes
+	cm_sa_drain_utility_resolved = yes
 }
 
 # Root is the country. $bt$ = a raw type key; chains resolve first.
-cm_fa_drain_utility_roster_type = {
+cm_sa_drain_utility_roster_type = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes
-	cm_fa_drain_utility_resolved = yes
+	cm_sa_drain_utility_resolved = yes
 }
 
 # One max-control type, wealthiest locations first and past the location's open slots, so a
 # bailiff and a unique type both reach the queue in the pass that staged them.
 # Root is the country. $bt$ = the type key.
-cm_fa_drain_max_control_type = {
+cm_sa_drain_max_control_type = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	if = {
 		limit = {
-			local_var:cm_fa_cost_blocked = 0
-			has_variable_list = cm_fa_b_locations
+			local_var:cm_sa_cost_blocked = 0
+			has_variable_list = cm_sa_b_locations
 		}
 		ordered_in_list = {
-			variable = cm_fa_b_locations
+			variable = cm_sa_b_locations
 			order_by = cm_location_raw_wealth
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
-			save_temporary_scope_as = cm_fa_drain_loc
-			scope:cm_fa_drain_loc = {
-				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = always }
+			save_temporary_scope_as = cm_sa_drain_loc
+			scope:cm_sa_drain_loc = {
+				cm_sa_try_approve_build = { cat = 4 POOL = cm_sa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = always }
 			}
 		}
 	}
 }
 
 # Marketplaces, lowest market access first. Root is the country.
-cm_fa_drain_marketplaces = {
+cm_sa_drain_marketplaces = {
 	building_type:marketplace = { save_scope_as = cm_building_type }
 	cm_auto_build_resolve_building_type = yes
 	if = {
 		limit = {
-			local_var:cm_fa_cost_blocked = 0
-			has_variable_list = cm_fa_b_locations
+			local_var:cm_sa_cost_blocked = 0
+			has_variable_list = cm_sa_b_locations
 		}
 		ordered_in_list = {
-			variable = cm_fa_b_locations
-			order_by = cm_fa_market_access_inverted
+			variable = cm_sa_b_locations
+			order_by = cm_sa_market_access_inverted
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
-			save_temporary_scope_as = cm_fa_drain_loc
-			scope:cm_fa_drain_loc = {
-				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
+			save_temporary_scope_as = cm_sa_drain_loc
+			scope:cm_sa_drain_loc = {
+				cm_sa_try_approve_build = { cat = 4 POOL = cm_sa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_sa_location_has_open_build_slot }
 			}
 		}
 	}
 }
 
 # Root is the country. Expects scope:cm_building_type.
-cm_fa_drain_utility_resolved = {
+cm_sa_drain_utility_resolved = {
 	if = {
 		limit = {
-			local_var:cm_fa_cost_blocked = 0
-			has_variable_list = cm_fa_b_locations
+			local_var:cm_sa_cost_blocked = 0
+			has_variable_list = cm_sa_b_locations
 		}
 		every_in_list = {
-			variable = cm_fa_b_locations
-			save_temporary_scope_as = cm_fa_drain_loc
-			scope:cm_fa_drain_loc = {
-				cm_fa_try_approve_build = { cat = 4 POOL = cm_fa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_fa_location_has_open_build_slot }
+			variable = cm_sa_b_locations
+			save_temporary_scope_as = cm_sa_drain_loc
+			scope:cm_sa_drain_loc = {
+				cm_sa_try_approve_build = { cat = 4 POOL = cm_sa_pool_utilities GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_sa_location_has_open_build_slot }
 			}
 		}
 	}

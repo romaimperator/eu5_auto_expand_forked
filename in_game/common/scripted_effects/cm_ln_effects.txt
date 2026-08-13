@@ -109,7 +109,7 @@ cm_ln_sync_cu_pending = {
 	every_country = {
 		limit = {
 			cm_ln_is_active = yes
-			exists = var:cm_fa_cu_fire
+			exists = var:cm_sa_cu_fire
 		}
 		change_global_variable = { name = cm_ln_cu_pending add = 1 }
 	}
@@ -128,8 +128,8 @@ cm_ln_init_country = {
 	cm_q_reset_cycle_state = yes
 	# A save taken between the cleanup toggles and their end state would otherwise
 	# toggle the same buildings a second time after the load.
-	remove_variable = cm_fa_cu_fire
-	clear_variable_list = cm_fa_cu_toggle
+	remove_variable = cm_sa_cu_fire
+	clear_variable_list = cm_sa_cu_toggle
 	set_variable = { name = cm_q_planned_spend value = 0 }
 }
 
@@ -138,8 +138,11 @@ cm_ln_init_country = {
 # marked. Re-run every month, so a player who passes through the tag leaves nothing behind.
 # Root is the country.
 cm_ln_seed_settings = {
-	# Both gold floors follow the one reserve rule rather than the registered defaults.
+	# The gold floor follows the one reserve rule rather than the registered default, and nothing
+	# is held back on top of it: the seeded priority list below holds auto-urbanize alone, so this
+	# country runs none of the Auto-Expand tab's features.
 	set_variable = { name = cm_minimum_gold value = cm_ln_reserve_value }
+	set_variable = { name = cm_auto_expand_reserve value = 0 }
 	set_variable = { name = cm_allowed_building_overbuild_levels value = 200 }
 	set_variable = { name = cm_urbanize_town_to_city value = yes }
 	# Registered default is off. Lucky nations run every option on, the de-urbanizer from 1410.
@@ -151,63 +154,53 @@ cm_ln_seed_settings = {
 		remove_variable = cm_deurbanize
 	}
 
+	# Auto-urbanize is the one construction feature a lucky nation runs itself, so the priority
+	# list stays empty and auto-build stays off.
 	clear_variable_list = cm_priority_features_list
 	clear_variable_list = cm_priority_features_enabled
-	add_to_variable_list = { name = cm_priority_features_list target = flag:cm_feature_auto_urbanize }
-	add_to_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_urbanize }
-	remove_from_variable_map = { name = cm_priority_min_discount key = flag:cm_feature_auto_urbanize }
-	add_to_variable_map = { name = cm_priority_min_discount key = flag:cm_feature_auto_urbanize value = 0 }
+	remove_variable = cm_auto_build_enabled
+	set_variable = { name = cm_auto_urbanize_enabled value = yes }
+	set_variable = { name = cm_auto_urbanize_min_discount value = 0 }
 
 	clear_variable_list = cm_auto_urbanize_ignored_rgo_goods
 	add_to_variable_list = { name = cm_auto_urbanize_ignored_rgo_goods target = goods:goods_gold }
 	add_to_variable_list = { name = cm_auto_urbanize_ignored_rgo_goods target = goods:silver }
 	add_to_variable_list = { name = cm_auto_urbanize_ignored_rgo_goods target = goods:iron }
 
-	cm_ln_seed_food_roster = yes
+	cm_seed_food_roster = yes
 
-	set_variable = { name = cm_fa_enabled value = yes }
-	set_variable = { name = cm_fa_reserve value = cm_ln_reserve_value }
-	set_variable = { name = cm_fa_save_unaffordable value = yes }
+	# Auto-Grant Urban Rights: the granary right off the list, then the specialization draw.
+	set_variable = { name = cm_auto_grant_town_rights value = yes }
+	set_variable = { name = cm_auto_grant_specialization value = yes }
+	set_variable = { name = cm_specialization_window value = 50 }
+	set_variable = { name = cm_specialization_expand value = yes }
+	set_variable = { name = cm_town_rights_min_gov_power value = 90 }
+	clear_variable_list = cm_auto_town_rights_list
+	clear_variable_list = cm_auto_town_rights_enabled
+	add_to_variable_list = { name = cm_auto_town_rights_list target = town_rights_type:granary_town }
+	add_to_variable_list = { name = cm_auto_town_rights_enabled target = town_rights_type:granary_town }
+
+	set_variable = { name = cm_sa_enabled value = yes }
+	set_variable = { name = cm_sa_save_unaffordable value = yes }
 	# Driven off the treasury rather than holding the registered 20.
-	set_variable = { name = cm_fa_industry_min_roi value = cm_ln_industry_min_roi_value }
-	set_variable = { name = cm_fa_industry_max_rel_roi value = 30 }
-	set_variable = { name = cm_fa_collapsar_target value = -33 }
-	set_variable = { name = cm_fa_urban_rights_reserve value = 65 }
-	set_variable = { name = cm_fa_urban_rights_expand value = yes }
-	set_variable = { name = cm_fa_cleanup_core_goods value = yes }
-	set_variable = { name = cm_fa_cleanup_auto_food value = yes }
-	set_variable = { name = cm_fa_roads_proximity value = yes }
-	set_variable = { name = cm_fa_roads_market_access value = yes }
-	set_variable = { name = cm_fa_roads_capital value = yes }
-	set_variable = { name = cm_fa_gov_move_seats value = yes }
-	set_variable = { name = cm_fa_gov_prepare_sites value = yes }
+	set_variable = { name = cm_sa_industry_min_roi value = cm_ln_industry_min_roi_value }
+	set_variable = { name = cm_sa_industry_max_rel_roi value = 30 }
+	set_variable = { name = cm_sa_collapsar_target value = -33 }
+	set_variable = { name = cm_sa_cleanup_core_goods value = yes }
+	set_variable = { name = cm_sa_cleanup_auto_food value = yes }
+	set_variable = { name = cm_sa_roads_proximity value = yes }
+	set_variable = { name = cm_sa_roads_market_access value = yes }
+	set_variable = { name = cm_sa_roads_capital value = yes }
+	set_variable = { name = cm_sa_gov_move_seats value = yes }
+	set_variable = { name = cm_sa_gov_prepare_sites value = yes }
 
-	clear_variable_list = cm_fa_collapsar_goods_enabled
-	add_to_variable_list = { name = cm_fa_collapsar_goods_enabled target = goods:masonry }
-	add_to_variable_list = { name = cm_fa_collapsar_goods_enabled target = goods:lumber }
-	add_to_variable_list = { name = cm_fa_collapsar_goods_enabled target = goods:sand }
-	add_to_variable_list = { name = cm_fa_collapsar_goods_enabled target = goods:glass }
+	clear_variable_list = cm_sa_collapsar_goods_enabled
+	add_to_variable_list = { name = cm_sa_collapsar_goods_enabled target = goods:masonry }
+	add_to_variable_list = { name = cm_sa_collapsar_goods_enabled target = goods:lumber }
+	add_to_variable_list = { name = cm_sa_collapsar_goods_enabled target = goods:sand }
+	add_to_variable_list = { name = cm_sa_collapsar_goods_enabled target = goods:glass }
 
 	cm_ln_seed_categories = yes
-}
-
-# The 13 food goods of auto_food_list. Building Cleanup's auto-food pass reads the roster to
-# tell a food producer from any other production building. Root is the country.
-cm_ln_seed_food_roster = {
-	clear_variable_list = cm_auto_food_rgo_types_list
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:rice }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:wheat }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:maize }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:potato }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:livestock }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:millet }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:legumes }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:fish }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:olives }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:fruit }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:wild_game }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:beeswax }
-	add_to_variable_list = { name = cm_auto_food_rgo_types_list target = goods:fur }
 }
 
 # Category order is the drain priority and the enabled filter at once, so Military going last
@@ -216,33 +209,31 @@ cm_ln_seed_food_roster = {
 # lucky nations run every option on. Price Collapsar gives up 5 of its 10 to Military.
 # Root is the country.
 cm_ln_seed_categories = {
-	clear_variable_list = cm_fa_categories_enabled
-	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_food }
-	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_industry }
-	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_collapsar }
-	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_roads }
-	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_utilities }
-	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_cleanup }
-	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_governors }
-	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_urban_rights }
-	add_to_variable_list = { name = cm_fa_categories_enabled target = flag:cm_fa_cat_military }
+	clear_variable_list = cm_sa_categories_enabled
+	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_food }
+	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_industry }
+	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_collapsar }
+	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_roads }
+	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_utilities }
+	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_cleanup }
+	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_governors }
+	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_military }
 
-	set_variable = { name = cm_fa_food_enabled value = 1 }
-	set_variable = { name = cm_fa_collapsar_enabled value = 1 }
-	set_variable = { name = cm_fa_roads_enabled value = 1 }
-	set_variable = { name = cm_fa_industry_enabled value = 1 }
-	set_variable = { name = cm_fa_utilities_enabled value = 1 }
-	set_variable = { name = cm_fa_urban_rights_enabled value = 1 }
-	set_variable = { name = cm_fa_cleanup_enabled value = 1 }
-	set_variable = { name = cm_fa_governors_enabled value = 1 }
-	set_variable = { name = cm_fa_military_enabled value = 1 }
+	set_variable = { name = cm_sa_food_enabled value = 1 }
+	set_variable = { name = cm_sa_collapsar_enabled value = 1 }
+	set_variable = { name = cm_sa_roads_enabled value = 1 }
+	set_variable = { name = cm_sa_industry_enabled value = 1 }
+	set_variable = { name = cm_sa_utilities_enabled value = 1 }
+	set_variable = { name = cm_sa_cleanup_enabled value = 1 }
+	set_variable = { name = cm_sa_governors_enabled value = 1 }
+	set_variable = { name = cm_sa_military_enabled value = 1 }
 
-	set_variable = { name = cm_fa_food_budget value = 10 }
-	set_variable = { name = cm_fa_collapsar_budget value = 5 }
-	set_variable = { name = cm_fa_roads_budget value = 10 }
-	set_variable = { name = cm_fa_industry_budget value = 60 }
-	set_variable = { name = cm_fa_utilities_budget value = 10 }
-	set_variable = { name = cm_fa_military_budget value = 5 }
+	set_variable = { name = cm_sa_food_budget value = 10 }
+	set_variable = { name = cm_sa_collapsar_budget value = 5 }
+	set_variable = { name = cm_sa_roads_budget value = 10 }
+	set_variable = { name = cm_sa_industry_budget value = 60 }
+	set_variable = { name = cm_sa_utilities_budget value = 10 }
+	set_variable = { name = cm_sa_military_budget value = 5 }
 }
 
 # The monthly cycle. Nothing is staged until the opening capital move has resolved, so a lucky
@@ -277,20 +268,28 @@ cm_ln_monthly_cycle = {
 		# month the pools go to zero.
 		cm_gov_reorg_tick = yes
 		if = {
-			limit = { cm_fa_master_active = yes }
-			cm_fa_monthly_budget_refresh = yes
-			cm_fa_food_sample_markets = yes
+			limit = { cm_sa_master_active = yes }
+			cm_sa_monthly_budget_refresh = yes
+			cm_sa_food_sample_markets = yes
 		}
 		cm_run_construction_cycle = yes
+		# The standalone auto-grant hook is human-only, so a lucky nation runs it here.
+		if = {
+			limit = {
+				cm_should_pause_auto_expand = no
+				exists = var:cm_auto_grant_town_rights
+			}
+			cm_run_auto_town_rights = yes
+		}
 	}
 	cm_ln_sync_open_cycles = yes
 }
 
-# The yearly passes, matching cm_fa_yearly_pulse, plus the fort teardown, which is a lucky
+# The yearly passes, matching cm_sa_yearly_pulse, plus the fort teardown, which is a lucky
 # nation's alone. Root is the country.
 cm_ln_yearly_cycle = {
-	cm_fa_food_yearly_evaluation = yes
-	cm_fa_cu_yearly_pass = yes
+	cm_sa_food_yearly_evaluation = yes
+	cm_sa_cu_yearly_pass = yes
 	cm_ln_sync_cu_pending = yes
 	cm_ln_ft_delete_pass = yes
 }
@@ -313,8 +312,8 @@ cm_ln_undesignate = {
 			cm_gov_reorg_teardown = yes
 		}
 	}
-	remove_variable = cm_fa_cu_fire
-	clear_variable_list = cm_fa_cu_toggle
+	remove_variable = cm_sa_cu_fire
+	clear_variable_list = cm_sa_cu_toggle
 	# The finder floors its basis proximity at these, so a human taking the tag would score
 	# governor spots against an AI's committed sites.
 	clear_variable_list = cm_ln_open_gov_sites

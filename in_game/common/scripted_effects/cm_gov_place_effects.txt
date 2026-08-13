@@ -196,7 +196,7 @@ cm_gov_place_fail_reason = {
 			set_local_variable = { name = cm_gov_fail value = 5 }
 		}
 		else_if = {
-			limit = { cm_fa_gov_has_naval_room = no }
+			limit = { cm_sa_gov_has_naval_room = no }
 			set_local_variable = { name = cm_gov_fail value = 1 }
 		}
 	}
@@ -210,7 +210,7 @@ cm_gov_place_fail_reason = {
 	}
 	else_if = {
 		limit = {
-			cm_fa_gov_has_land_room = no
+			cm_sa_gov_has_land_room = no
 			scope:cm_gov_target = { NOT = { has_building = building_type:seljuk_mint } } # allow: :634
 		}
 		set_local_variable = { name = cm_gov_fail value = 1 }
@@ -290,7 +290,7 @@ cm_gov_resolve_target_type = {
 cm_gov_resolve_placeable_type = {
 	if = {
 		limit = {
-			cm_fa_gov_has_naval_room = yes
+			cm_sa_gov_has_naval_room = yes
 			$SITE$ = { cm_location_allowed_to_build = { target = building_type:naval_governor } }
 		}
 		building_type:naval_governor = { save_scope_as = cm_building_type }
@@ -327,9 +327,9 @@ cm_gov_road_step = {
 			exists = capital
 			NOT = { exists = var:cm_gov_road_issued }
 		}
-		capital = { save_temporary_scope_as = cm_fa_rd_from }
-		scope:cm_gov_road_target = { save_temporary_scope_as = cm_fa_rd_to }
-		save_temporary_scope_value_as = { name = cm_fa_rd_tier value = cm_gov_road_tier_cost_value }
+		capital = { save_temporary_scope_as = cm_sa_rd_from }
+		scope:cm_gov_road_target = { save_temporary_scope_as = cm_sa_rd_to }
+		save_temporary_scope_value_as = { name = cm_sa_rd_tier value = cm_gov_road_tier_cost_value }
 		if = {
 			limit = { cm_check_country_gold_above = { threshold = cm_gov_road_gold_threshold } }
 			construct_road = {
@@ -337,7 +337,7 @@ cm_gov_road_step = {
 				from = capital
 				to = scope:cm_gov_road_target
 			}
-			change_variable = { name = cm_gov_tick_spent add = scope:cm_fa_rd_from.cm_fa_rd_cost_value }
+			change_variable = { name = cm_gov_tick_spent add = scope:cm_sa_rd_from.cm_sa_rd_cost_value }
 			set_variable = { name = cm_gov_road_issued value = 1 }
 			set_variable = { name = cm_gov_road_site value = scope:cm_gov_road_target }
 			set_variable = { name = cm_gov_road_age value = 0 }
@@ -402,7 +402,7 @@ cm_gov_do_placement = {
 				# relocation phase behind it is where the seat comes from.
 				limit = {
 					NOT = { always = $FREE$ }
-					exists = var:cm_fa_gov_move_seats
+					exists = var:cm_sa_gov_move_seats
 				}
 				set_variable = { name = cm_gov_phase value = 6 }
 			}

@@ -1,0 +1,124 @@
+﻿# Smart Automations scripted GUIs: the queue scorers the construct queue window invokes per
+# staged entry, the Building Cleanup toggle driver, and the vanilla automation card bridge.
+
+# Build scorer for every category's staged entry. Root is the location. Stores the engine
+# cost when the engine allows the build; Industry entries additionally score on ROI Tax
+# Income, and a blocked Industry candidate still anchors its building type so a worse
+# buildable one cannot slip inside the margin.
+# scope:cm_cost = GetBuildOrExpandBuildingCost, scope:cm_income = income-to-owner per level,
+# scope:cm_profit = profit per level, scope:cm_can_build = CanBuildOrExpandBuilding,
+# scope:cm_obsolete_building = the standing obsolete predecessor, unset when none.
+# Plus the indirect inputs: cm_indirect_loc, cm_cur_market_access,
+# cm_cur_total_income, cm_cur_rgo_profit.
+cm_sa_score_build = {
+	saved_scopes = { cm_building_type cm_country cm_cost cm_income cm_profit cm_can_build cm_obsolete_building cm_indirect_loc cm_cur_market_access cm_cur_total_income cm_cur_rgo_profit }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		cm_sa_score_build_apply = yes
+	}
+}
+
+# Upgrade scorer, keyed by the standing obsolete type. Root is the location. The
+# replacement resolves only in GUI context; the drain reads it from cm_sa_u_new_types.
+# No profitable gate: upgrades are exempt, matching cm_gui_construct_upgrade.
+# scope:cm_cost/cm_income = the replacement's engine values,
+# scope:cm_can_build = CanUpgradeToBuilding for the replacement.
+cm_sa_score_upgrade = {
+	saved_scopes = { cm_old_building_type cm_new_building_type cm_building_type cm_country cm_cost cm_income cm_can_build cm_indirect_loc cm_cur_market_access cm_cur_total_income cm_cur_rgo_profit }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		cm_sa_score_upgrade_apply = yes
+	}
+}
+
+# Root is location. GUI-readable wrapper for the system-picked marker.
+cm_sa_is_system_food_picked = {
+	is_shown = {
+		cm_sa_location_is_system_food_picked = yes
+	}
+}
+
+# Root is location. GUI-readable wrapper for the system-active state.
+cm_sa_is_system_food_active = {
+	is_shown = {
+		cm_sa_location_is_system_food_active = yes
+	}
+}
+
+# Root is location. Expects scope:cm_country, scope:cm_location. The Smart Automations
+# analogue of cm_is_able_to_auto_food_location: drops the player-feature, discount, and
+# gold rows; the pool gate runs at the drain.
+cm_sa_is_able_system_food = {
+	is_shown = {
+		scope:cm_country = { cm_should_pause_auto_expand = no }
+		cm_check_location_meets_min_market_access = yes
+		NOT = { cm_food_location_pops_still_filling = yes }
+		cm_food_location_has_buildable_option = yes
+	}
+}
+
+# RGO scorer. Root is the location. The cost is the script-side glorpui_rgo_expand_cost;
+# slot availability is an approval-time concern, so a slot-blocked RGO still scores and
+# anchors. scope:cm_income = the RGO profit scaled by the location income-to-wealth ratio.
+cm_sa_score_rgo = {
+	saved_scopes = { cm_country cm_location cm_income }
+	is_valid = {
+		always = yes
+	}
+	effect = {
+		cm_sa_score_rgo_apply = yes
+	}
+}
+
+# Gate for the Building Cleanup toggle driver. Root is the player.
+cm_sa_cu_fire_gate = {
+	is_shown = {
+		exists = var:cm_sa_cu_fire
+	}
+}
+
+# Ends the toggle pass. Root is the player.
+cm_sa_cu_end = {
+	effect = {
+		remove_variable = cm_sa_cu_fire
+		clear_variable_list = cm_sa_cu_toggle
+	}
+}
+
+# Toggles the Smart Automations master from the vanilla Buildings automation card.
+# Root is the player.
+cm_sa_toggle_master = {
+	scope = country
+	is_shown = { always = yes }
+	effect = {
+		cm_sa_toggle_master_setting = yes
+	}
+}
+
+# Toggles Building Cleanup from the vanilla Close and Open Buildings card. Root is the player.
+cm_sa_toggle_cleanup = {
+	scope = country
+	is_shown = { always = yes }
+	effect = {
+		cm_sa_toggle_cleanup_setting = yes
+	}
+}
+
+# Tick states for the two intercepted automation cards. Root is the player.
+cm_sa_is_master_enabled = {
+	scope = country
+	is_shown = {
+		exists = var:cm_sa_enabled
+	}
+}
+
+cm_sa_is_cleanup_enabled = {
+	scope = country
+	is_shown = {
+		exists = var:cm_sa_cleanup_enabled
+	}
+}
