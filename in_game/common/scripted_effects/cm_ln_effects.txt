@@ -109,7 +109,7 @@ cm_ln_sync_cu_pending = {
 	every_country = {
 		limit = {
 			cm_ln_is_active = yes
-			exists = var:cm_sa_cu_fire
+			exists = var:cm_cu_fire
 		}
 		change_global_variable = { name = cm_ln_cu_pending add = 1 }
 	}
@@ -128,8 +128,8 @@ cm_ln_init_country = {
 	cm_q_reset_cycle_state = yes
 	# A save taken between the cleanup toggles and their end state would otherwise
 	# toggle the same buildings a second time after the load.
-	remove_variable = cm_sa_cu_fire
-	clear_variable_list = cm_sa_cu_toggle
+	remove_variable = cm_cu_fire
+	clear_variable_list = cm_cu_toggle
 	set_variable = { name = cm_q_planned_spend value = 0 }
 }
 
@@ -186,8 +186,9 @@ cm_ln_seed_settings = {
 	set_variable = { name = cm_sa_industry_min_roi value = cm_ln_industry_min_roi_value }
 	set_variable = { name = cm_sa_industry_max_rel_roi value = 30 }
 	set_variable = { name = cm_sa_collapsar_target value = -33 }
-	set_variable = { name = cm_sa_cleanup_core_goods value = yes }
-	set_variable = { name = cm_sa_cleanup_auto_food value = yes }
+	set_variable = { name = cm_cu_enabled value = yes }
+	set_variable = { name = cm_cu_core_goods value = yes }
+	set_variable = { name = cm_cu_auto_food value = yes }
 	set_variable = { name = cm_sa_roads_proximity value = yes }
 	set_variable = { name = cm_sa_roads_market_access value = yes }
 	set_variable = { name = cm_sa_roads_capital value = yes }
@@ -205,8 +206,8 @@ cm_ln_seed_settings = {
 
 # Category order is the drain priority and the enabled filter at once, so Military going last
 # is what makes it the lowest-priority category and what leaves it the funds every earlier
-# category declined to spend. Building Cleanup, Governors and Urban Rights are registered off;
-# lucky nations run every option on. Price Collapsar gives up 5 of its 10 to Military.
+# category declined to spend. Governors and Urban Rights are registered off; lucky nations run
+# every option on. Price Collapsar gives up 5 of its 10 to Military.
 # Root is the country.
 cm_ln_seed_categories = {
 	clear_variable_list = cm_sa_categories_enabled
@@ -215,7 +216,6 @@ cm_ln_seed_categories = {
 	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_collapsar }
 	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_roads }
 	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_utilities }
-	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_cleanup }
 	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_governors }
 	add_to_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_military }
 
@@ -224,7 +224,6 @@ cm_ln_seed_categories = {
 	set_variable = { name = cm_sa_roads_enabled value = 1 }
 	set_variable = { name = cm_sa_industry_enabled value = 1 }
 	set_variable = { name = cm_sa_utilities_enabled value = 1 }
-	set_variable = { name = cm_sa_cleanup_enabled value = 1 }
 	set_variable = { name = cm_sa_governors_enabled value = 1 }
 	set_variable = { name = cm_sa_military_enabled value = 1 }
 
@@ -289,7 +288,7 @@ cm_ln_monthly_cycle = {
 # nation's alone. Root is the country.
 cm_ln_yearly_cycle = {
 	cm_sa_food_yearly_evaluation = yes
-	cm_sa_cu_yearly_pass = yes
+	cm_cu_yearly_pass = yes
 	cm_ln_sync_cu_pending = yes
 	cm_ln_ft_delete_pass = yes
 }
@@ -312,8 +311,8 @@ cm_ln_undesignate = {
 			cm_gov_reorg_teardown = yes
 		}
 	}
-	remove_variable = cm_sa_cu_fire
-	clear_variable_list = cm_sa_cu_toggle
+	remove_variable = cm_cu_fire
+	clear_variable_list = cm_cu_toggle
 	# The finder floors its basis proximity at these, so a human taking the tag would score
 	# governor spots against an AI's committed sites.
 	clear_variable_list = cm_ln_open_gov_sites

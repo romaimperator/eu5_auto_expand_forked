@@ -1,5 +1,5 @@
 ﻿# Smart Automations scripted GUIs: the queue scorers the construct queue window invokes per
-# staged entry, the Building Cleanup toggle driver, and the vanilla automation card bridge.
+# staged entry, and the vanilla Buildings automation card bridge.
 
 # Build scorer for every category's staged entry. Root is the location. Stores the engine
 # cost when the engine allows the build; Industry entries additionally score on ROI Tax
@@ -74,21 +74,6 @@ cm_sa_score_rgo = {
 	}
 }
 
-# Gate for the Building Cleanup toggle driver. Root is the player.
-cm_sa_cu_fire_gate = {
-	is_shown = {
-		exists = var:cm_sa_cu_fire
-	}
-}
-
-# Ends the toggle pass. Root is the player.
-cm_sa_cu_end = {
-	effect = {
-		remove_variable = cm_sa_cu_fire
-		clear_variable_list = cm_sa_cu_toggle
-	}
-}
-
 # Toggles the Smart Automations master from the vanilla Buildings automation card.
 # Root is the player.
 cm_sa_toggle_master = {
@@ -99,26 +84,10 @@ cm_sa_toggle_master = {
 	}
 }
 
-# Toggles Building Cleanup from the vanilla Close and Open Buildings card. Root is the player.
-cm_sa_toggle_cleanup = {
-	scope = country
-	is_shown = { always = yes }
-	effect = {
-		cm_sa_toggle_cleanup_setting = yes
-	}
-}
-
-# Tick states for the two intercepted automation cards. Root is the player.
+# Tick state for the intercepted Buildings card. Root is the player.
 cm_sa_is_master_enabled = {
 	scope = country
 	is_shown = {
 		exists = var:cm_sa_enabled
-	}
-}
-
-cm_sa_is_cleanup_enabled = {
-	scope = country
-	is_shown = {
-		exists = var:cm_sa_cleanup_enabled
 	}
 }

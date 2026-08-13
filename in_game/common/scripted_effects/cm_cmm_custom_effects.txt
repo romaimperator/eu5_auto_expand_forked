@@ -424,7 +424,6 @@ cm_sa_rebuild_category_lookups = {
 	cm_sa_sync_category = { cat = food }
 	cm_sa_sync_category = { cat = utilities }
 	cm_sa_sync_category = { cat = roads }
-	cm_sa_sync_cleanup = yes
 	cm_sa_sync_governors = yes
 
 	} # end guard
@@ -456,17 +455,6 @@ cm_sa_sync_category = {
 		# nothing left to spend what it was holding on.
 		remove_variable = cm_sa_debt_$cat$
 		remove_variable = cm_sa_resv_$cat$
-	}
-}
-
-# Building Cleanup spends nothing, so it has no pool to project. Scope: country
-cm_sa_sync_cleanup = {
-	if = {
-		limit = { is_target_in_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_cleanup } }
-		set_variable = { name = cm_sa_cleanup_enabled value = 1 }
-	}
-	else = {
-		remove_variable = cm_sa_cleanup_enabled
 	}
 }
 
@@ -546,22 +534,37 @@ cm_sa_toggle_master_setting = {
 	cm_sa_apply_master_change = yes
 }
 
-# Flips the Building Cleanup category row from the vanilla Close and Open Buildings card.
+# Flips the Building Cleanup setting from the vanilla Close and Open Buildings card.
 # Scope: country
-cm_sa_toggle_cleanup_setting = {
+cm_cu_toggle_setting_value = {
+	remove_from_variable_map = { name = cmm key = flag:cm__cleanup_enabled }
 	if = {
-		limit = { exists = var:cm_sa_cleanup_enabled }
-		cmm_set_list_data_value = { mod_id = cm setting_id = sa_priority_list field_id = enabled item = 6 value = 0 }
+		limit = { exists = var:cm_cu_enabled }
+		add_to_variable_map = { name = cmm key = flag:cm__cleanup_enabled value = 0 }
 	}
 	else = {
-		cmm_set_list_data_value = { mod_id = cm setting_id = sa_priority_list field_id = enabled item = 6 value = 1 }
+		add_to_variable_map = { name = cmm key = flag:cm__cleanup_enabled value = 1 }
 	}
-	cm_sa_rebuild_category_lookups = yes
+	cm_cu_apply_enabled_change = yes
+}
+
+# Turning the feature off mid-year would otherwise leave an armed toggle batch for the queue
+# window to fire. Scope: country
+cm_cu_apply_enabled_change = {
+	cmm_sync_bool_alias = {
+		setting = cm__cleanup_enabled
+		alias = cm_cu_enabled
+	}
+	if = {
+		limit = { NOT = { exists = var:cm_cu_enabled } }
+		remove_variable = cm_cu_fire
+		clear_variable_list = cm_cu_toggle
+	}
 }
 
 # The Buildings and Close and Open Buildings cards drive this mod's settings instead.
 # Scope: country
-cm_sa_suppress_engine_automation = {
+cm_suppress_engine_automation = {
 	set_automated_system = { system = buildings activate = no }
 	set_automated_system = { system = closebuildings activate = no }
 }

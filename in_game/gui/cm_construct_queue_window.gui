@@ -90,28 +90,28 @@ widget = {
 		widget = {
 			size = { 0 0 }
 			visible_at_creation = no
-			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_sa_cu_fire_gate').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			visible = "[And(GetPlayer.Exists, GetScriptedGui('cm_cu_fire_gate').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
 			state = {
 				name = _show
 				duration = 0.1
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_sa_cu_toggle')]"
-				next = cm_sa_cu_toggle_done
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_cu_toggle')]"
+				next = cm_cu_toggle_done
 			}
 			state = {
-				name = cm_sa_cu_toggle_done
+				name = cm_cu_toggle_done
 				duration = 0.25
-				on_finish = "[GetScriptedGui('cm_sa_cu_end').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				on_finish = "[GetScriptedGui('cm_cu_end').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 		}
 		# One list carries both the closes and the reopens: ToggleBuilding flips whichever
 		# state the building is in, and a variable list holds each target once.
 		widget = {
-			datamodel = "[GetPlayer.MakeScope.GetList('cm_sa_cu_toggle')]"
+			datamodel = "[GetPlayer.MakeScope.GetList('cm_cu_toggle')]"
 			item = {
 				widget = {
 					datacontext = "[Scope.GetBuilding]"
 					state = {
-						name = cm_sa_cu_toggle
+						name = cm_cu_toggle
 						on_finish = "[ToggleBuilding(Building.Self)]"
 					}
 				}

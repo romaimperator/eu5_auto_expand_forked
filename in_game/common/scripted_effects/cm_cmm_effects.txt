@@ -1201,12 +1201,6 @@ cm_register_cmf_mod = {
 
 	cmm_register_subtab = {
 		mod_id = cm
-		tab_id = sa_cleanup
-		parent_tab_id = smart_automations
-	}
-
-	cmm_register_subtab = {
-		mod_id = cm
 		tab_id = sa_governors
 		parent_tab_id = smart_automations
 	}
@@ -1245,7 +1239,7 @@ cm_register_cmf_mod = {
 		mod_id = cm
 		setting_id = sa_priority_list
 		tab_id = sa_master
-		item_count = 7
+		item_count = 6
 		is_ordered = 1
 	}
 
@@ -1288,13 +1282,6 @@ cm_register_cmf_mod = {
 		mod_id = cm
 		setting_id = sa_priority_list
 		item = 6
-		value = flag:cm_sa_cat_cleanup
-	}
-
-	cmm_set_list_item_value = {
-		mod_id = cm
-		setting_id = sa_priority_list
-		item = 7
 		value = flag:cm_sa_cat_governors
 	}
 
@@ -1319,14 +1306,8 @@ cm_register_cmf_mod = {
 		field_id = budget
 		item = 6
 	}
-	cmm_disable_list_field_for_item = {
-		mod_id = cm
-		setting_id = sa_priority_list
-		field_id = budget
-		item = 7
-	}
 
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = sa_priority_list field_id = enabled item = 7 value = 0 }
+	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = sa_priority_list field_id = enabled item = 6 value = 0 }
 	cmm_register_list_bool_field = {
 		mod_id = cm
 		setting_id = sa_priority_list
@@ -1492,58 +1473,6 @@ cm_register_cmf_mod = {
 		setting_id = sa_food_min_potential
 	}
 
-	## Building Cleaner (sa_cleanup) Group
-	cmm_register_slider_setting = {
-		mod_id = cm
-		setting_id = sa_cleanup_min_profit
-		tab_id = sa_cleanup
-		group_id = sa_cleanup
-		default_value = 5
-		min_value = 0
-		max_value = 100
-		step_value = 5
-	}
-	cmm_sync_setting_alias = {
-		setting = cm__sa_cleanup_min_profit
-		alias = cm_sa_cleanup_min_profit
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = sa_cleanup_min_profit
-	}
-
-	cmm_register_bool_setting = {
-		mod_id = cm
-		setting_id = sa_cleanup_core_goods
-		tab_id = sa_cleanup
-		group_id = sa_cleanup
-		default_value = 1
-	}
-	cmm_sync_bool_alias = {
-		setting = cm__sa_cleanup_core_goods
-		alias = cm_sa_cleanup_core_goods
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = sa_cleanup_core_goods
-	}
-
-	cmm_register_bool_setting = {
-		mod_id = cm
-		setting_id = sa_cleanup_auto_food
-		tab_id = sa_cleanup
-		group_id = sa_cleanup
-		default_value = 1
-	}
-	cmm_sync_bool_alias = {
-		setting = cm__sa_cleanup_auto_food
-		alias = cm_sa_cleanup_auto_food
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = sa_cleanup_auto_food
-	}
-
 	## Road Builder (sa_roads) Group
 	cmm_register_bool_setting = {
 		mod_id = cm
@@ -1626,7 +1555,83 @@ cm_register_cmf_mod = {
 		setting_id = sa_gov_prepare_sites
 	}
 
-	# Mapmodes (map_modes) Tab
+	# Miscellaneous (miscellaneous) Tab
+	cmm_register_subtab = {
+		mod_id = cm
+		tab_id = cleanup
+		parent_tab_id = miscellaneous
+	}
+
+	cmm_register_subtab = {
+		mod_id = cm
+		tab_id = map_modes
+		parent_tab_id = miscellaneous
+	}
+
+	## Building Cleaner (cleanup) Group
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = cleanup_enabled
+		tab_id = cleanup
+		group_id = cleanup
+		default_value = 0
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__cleanup_enabled
+		alias = cm_cu_enabled
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = cleanup_min_profit
+		tab_id = cleanup
+		group_id = cleanup
+		default_value = 5
+		min_value = 0
+		max_value = 100
+		step_value = 5
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__cleanup_min_profit
+		alias = cm_cu_min_profit
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = cleanup_min_profit
+	}
+
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = cleanup_core_goods
+		tab_id = cleanup
+		group_id = cleanup
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__cleanup_core_goods
+		alias = cm_cu_core_goods
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = cleanup_core_goods
+	}
+
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = cleanup_auto_food
+		tab_id = cleanup
+		group_id = cleanup
+		default_value = 1
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__cleanup_auto_food
+		alias = cm_cu_auto_food
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = cleanup_auto_food
+	}
+
 	## Recommended Capital & Governor Location (placement_finder) Group
 	cmm_register_dropdown_setting = {
 		mod_id = cm
@@ -2034,7 +2039,7 @@ cm_register_cmf_mod = {
 # }
 #
 # cm_sa_priority_list_each_item = {
-#     # $i$ is the resolved item number (1-7)
+#     # $i$ is the resolved item number (1-6)
 #     # scope:cmm_list_current_item_value  (attached game object)
 #     # "variable_map(cmm|flag:$setting$_i$i$_f1)"  (budget, numeric)
 #     # "variable_map(cmm|flag:$setting$_i$i$_f2)"  (enabled, bool)
@@ -2246,25 +2251,6 @@ cm_handle_cmf_callback = {
 				alias = cm_sa_food_min_potential
 			}
 		}
-		## Building Cleaner (sa_cleanup) Group
-		flag:cm__sa_cleanup_min_profit = {
-			cmm_sync_setting_alias = {
-				setting = cm__sa_cleanup_min_profit
-				alias = cm_sa_cleanup_min_profit
-			}
-		}
-		flag:cm__sa_cleanup_core_goods = {
-			cmm_sync_bool_alias = {
-				setting = cm__sa_cleanup_core_goods
-				alias = cm_sa_cleanup_core_goods
-			}
-		}
-		flag:cm__sa_cleanup_auto_food = {
-			cmm_sync_bool_alias = {
-				setting = cm__sa_cleanup_auto_food
-				alias = cm_sa_cleanup_auto_food
-			}
-		}
 		## Road Builder (sa_roads) Group
 		flag:cm__sa_roads_proximity = {
 			cmm_sync_bool_alias = {
@@ -2300,7 +2286,29 @@ cm_handle_cmf_callback = {
 				alias = cm_sa_gov_prepare_sites
 			}
 		}
-		# Mapmodes (map_modes) Tab
+		# Miscellaneous (miscellaneous) Tab
+		## Building Cleaner (cleanup) Group
+		flag:cm__cleanup_enabled = {
+			cm_cu_apply_enabled_change = yes
+		}
+		flag:cm__cleanup_min_profit = {
+			cmm_sync_setting_alias = {
+				setting = cm__cleanup_min_profit
+				alias = cm_cu_min_profit
+			}
+		}
+		flag:cm__cleanup_core_goods = {
+			cmm_sync_bool_alias = {
+				setting = cm__cleanup_core_goods
+				alias = cm_cu_core_goods
+			}
+		}
+		flag:cm__cleanup_auto_food = {
+			cmm_sync_bool_alias = {
+				setting = cm__cleanup_auto_food
+				alias = cm_cu_auto_food
+			}
+		}
 		## Recommended Capital & Governor Location (placement_finder) Group
 		flag:cm__placement_finder_method = {
 			cm_apply_placement_finder_method_change = yes

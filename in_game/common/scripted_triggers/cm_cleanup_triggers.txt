@@ -1,0 +1,114 @@
+﻿# Building Cleanup gates.
+
+# Root is the building, expects scope:cm_country.
+cm_cu_is_unprofitable = {
+	building_profit <= cm_cu_effective_floor
+}
+
+# Price Collapsar drives these four toward unprofitable on purpose. building_produced_goods
+# reads the method the building actually runs. Root is the building.
+cm_cu_produces_core_good = {
+	OR = {
+		building_produced_goods = goods:masonry
+		building_produced_goods = goods:lumber
+		building_produced_goods = goods:sand
+		building_produced_goods = goods:glass
+	}
+}
+
+# Mostly runs on construction materials without making any, so its inputs are worth more in
+# the construction queue than in a barely-profitable building.
+# Root is the building, expects scope:cm_country.
+cm_cu_core_goods_applies = {
+	scope:cm_country = { exists = var:cm_cu_core_goods }
+	building_type = { save_temporary_scope_as = cm_cu_ct }
+	has_global_variable_map = cm_cu_core_in
+	is_key_in_global_variable_map = { name = cm_cu_core_in target = scope:cm_cu_ct }
+	cm_cu_produces_core_good = no
+}
+
+# Destroyed on sight and never built, whatever it earns: the goods it draws are worth more elsewhere.
+# fruit_orchard turns lumber 0.167 into fruit 0.3 per level
+# (in_game/common/building_types/common_buildings.txt:591). Root is the building type.
+cm_cu_is_always_delete = {
+	OR = {
+		this = building_type:fruit_orchard
+	}
+}
+
+# Left standing whatever it earns: it is built for what it does to the location, not for the
+# goods it happens to make. farming_village grants local_food_capacity 100 and
+# local_raw_material_output 0.025 per level
+# (farming_village, in_game/common/building_types/rural_buildings.txt:166).
+# Root is the building type.
+cm_cu_is_never_removed = {
+	OR = {
+		this = building_type:farming_village
+	}
+}
+
+# Root is the building, expects scope:cm_country. Takes pops an auto-food location needs
+# without putting food back. building_produced_goods reads the method the building actually
+# runs, so a fishing village switched off fishing counts here and a modded food producer does not.
+cm_cu_af_is_removable = {
+	building_type = { cm_is_building_type_production_building = yes }
+	save_temporary_scope_as = cm_cu_af_b
+	NOT = {
+		scope:cm_country = {
+			any_in_list = {
+				variable = cm_auto_food_rgo_types_list
+				scope:cm_cu_af_b = { building_produced_goods = prev }
+			}
+		}
+	}
+}
+
+# Ten levels is the margin at which an unprofitable building is destroyed rather than closed.
+# Root is the location.
+cm_cu_location_near_cap = {
+	cm_get_available_building_levels <= 10
+}
+
+# This building type's close budget in the market is not yet spent.
+# Root is the country, expects scope:cm_building_type.
+cm_cu_group_has_room = {
+	trigger_if = {
+		limit = {
+			has_variable_map = cm_cu_acted
+			is_key_in_variable_map = { name = cm_cu_acted target = scope:cm_building_type }
+		}
+		"variable_map(cm_cu_acted|scope:cm_building_type)" < cm_cu_close_cap
+	}
+	trigger_else = { cm_cu_close_cap >= 1 }
+}
+
+# A group reopens only when this pass closed nothing in it and one of its open buildings
+# still earns. Root is the country, expects scope:cm_building_type.
+cm_cu_group_reopen_room = {
+	NOT = {
+		AND = {
+			has_variable_map = cm_cu_acted
+			is_key_in_variable_map = { name = cm_cu_acted target = scope:cm_building_type }
+		}
+	}
+	has_variable_map = cm_cu_prof_open
+	is_key_in_variable_map = { name = cm_cu_prof_open target = scope:cm_building_type }
+	trigger_if = {
+		limit = {
+			has_variable_map = cm_cu_reop
+			is_key_in_variable_map = { name = cm_cu_reop target = scope:cm_building_type }
+		}
+		"variable_map(cm_cu_reop|scope:cm_building_type)" < cm_cu_reopen_cap
+	}
+	trigger_else = { cm_cu_reopen_cap >= 1 }
+}
+
+# Closed by this system rather than by hand, so it is ours to reopen or destroy.
+# Root is the building.
+cm_cu_is_tracked_closed = {
+	is_opened = no
+	building_type = { save_temporary_scope_as = cm_cu_t }
+	location = {
+		is_target_in_variable_list = { name = cm_cu_closed_types target = scope:cm_cu_t }
+	}
+}
