@@ -1568,17 +1568,29 @@ cm_register_cmf_mod = {
 		parent_tab_id = miscellaneous
 	}
 
-	## Building Cleaner (cleanup) Group
+	## Building Cleanup (cleanup) Group
 	cmm_register_bool_setting = {
 		mod_id = cm
-		setting_id = cleanup_enabled
+		setting_id = cleanup_close_open
 		tab_id = cleanup
 		group_id = cleanup
 		default_value = 0
 	}
 	cmm_sync_bool_alias = {
-		setting = cm__cleanup_enabled
-		alias = cm_cu_enabled
+		setting = cm__cleanup_close_open
+		alias = cm_cu_close_open
+	}
+
+	cmm_register_bool_setting = {
+		mod_id = cm
+		setting_id = cleanup_destroy
+		tab_id = cleanup
+		group_id = cleanup
+		default_value = 0
+	}
+	cmm_sync_bool_alias = {
+		setting = cm__cleanup_destroy
+		alias = cm_cu_destroy
 	}
 
 	cmm_register_slider_setting = {
@@ -1595,10 +1607,6 @@ cm_register_cmf_mod = {
 		setting = cm__cleanup_min_profit
 		alias = cm_cu_min_profit
 	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = cleanup_min_profit
-	}
 
 	cmm_register_bool_setting = {
 		mod_id = cm
@@ -1611,10 +1619,6 @@ cm_register_cmf_mod = {
 		setting = cm__cleanup_core_goods
 		alias = cm_cu_core_goods
 	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = cleanup_core_goods
-	}
 
 	cmm_register_bool_setting = {
 		mod_id = cm
@@ -1626,10 +1630,6 @@ cm_register_cmf_mod = {
 	cmm_sync_bool_alias = {
 		setting = cm__cleanup_auto_food
 		alias = cm_cu_auto_food
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = cleanup_auto_food
 	}
 
 	## Recommended Capital & Governor Location (placement_finder) Group
@@ -2287,9 +2287,12 @@ cm_handle_cmf_callback = {
 			}
 		}
 		# Miscellaneous (miscellaneous) Tab
-		## Building Cleaner (cleanup) Group
-		flag:cm__cleanup_enabled = {
-			cm_cu_apply_enabled_change = yes
+		## Building Cleanup (cleanup) Group
+		flag:cm__cleanup_close_open = {
+			cm_cu_apply_close_open_change = yes
+		}
+		flag:cm__cleanup_destroy = {
+			cm_cu_apply_destroy_change = yes
 		}
 		flag:cm__cleanup_min_profit = {
 			cmm_sync_setting_alias = {

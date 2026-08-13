@@ -69,6 +69,24 @@ cm_cu_location_near_cap = {
 	cm_get_available_building_levels <= 10
 }
 
+# A building neither toggle can act on would otherwise spend its type's close share.
+# Root is the building, expects scope:cm_country.
+cm_cu_close_pass_can_act = {
+	trigger_if = {
+		limit = { building_type = building_type:market_village }
+		scope:cm_country = { exists = var:cm_cu_destroy }
+	}
+	trigger_else = {
+		OR = {
+			scope:cm_country = { exists = var:cm_cu_close_open }
+			AND = {
+				scope:cm_country = { exists = var:cm_cu_destroy }
+				location = { cm_cu_location_near_cap = yes }
+			}
+		}
+	}
+}
+
 # This building type's close budget in the market is not yet spent.
 # Root is the country, expects scope:cm_building_type.
 cm_cu_group_has_room = {

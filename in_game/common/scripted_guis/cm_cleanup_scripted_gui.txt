@@ -1,5 +1,5 @@
 ﻿# Building Cleanup scripted GUIs: the toggle driver the construct queue window fires from, and
-# the vanilla Close and Open Buildings card bridge.
+# the vanilla Close and Open Buildings and Destroy Buildings card bridges.
 
 # Gate for the Building Cleanup toggle driver. Root is the player.
 cm_cu_fire_gate = {
@@ -16,19 +16,36 @@ cm_cu_end = {
 	}
 }
 
-# Toggles Building Cleanup from the vanilla Close and Open Buildings card. Root is the player.
-cm_cu_toggle_setting = {
+# Toggles closing and opening from the vanilla Close and Open Buildings card. Root is the player.
+cm_cu_toggle_close_open = {
 	scope = country
 	is_shown = { always = yes }
 	effect = {
-		cm_cu_toggle_setting_value = yes
+		cm_cu_toggle_close_open_value = yes
 	}
 }
 
 # Tick state for the intercepted Close and Open Buildings card. Root is the player.
-cm_cu_is_enabled = {
+cm_cu_close_open_is_enabled = {
 	scope = country
 	is_shown = {
-		exists = var:cm_cu_enabled
+		exists = var:cm_cu_close_open
+	}
+}
+
+# Toggles destroying from the vanilla Destroy Buildings card. Root is the player.
+cm_cu_toggle_destroy = {
+	scope = country
+	is_shown = { always = yes }
+	effect = {
+		cm_cu_toggle_destroy_value = yes
+	}
+}
+
+# Tick state for the intercepted Destroy Buildings card. Root is the player.
+cm_cu_destroy_is_enabled = {
+	scope = country
+	is_shown = {
+		exists = var:cm_cu_destroy
 	}
 }

@@ -9,15 +9,22 @@
 cm_cu_yearly_pass = {
 	if = {
 		limit = {
-			exists = var:cm_cu_enabled
+			OR = {
+				exists = var:cm_cu_close_open
+				exists = var:cm_cu_destroy
+			}
 			cm_should_pause_auto_expand = no
 		}
 		save_scope_as = cm_country
 		cm_dbg_log = { cat = cleanup action = cm_log_cu_run }
 		clear_variable_list = cm_cu_toggle
-		cm_cu_purge_pass = yes
+		if = {
+			limit = { exists = var:cm_cu_destroy }
+			cm_cu_purge_pass = yes
+		}
 		if = {
 			limit = {
+				exists = var:cm_cu_destroy
 				exists = var:cm_cu_auto_food
 				# Without the food roster every building reads as non-food.
 				has_variable_list = cm_auto_food_rgo_types_list
@@ -30,10 +37,16 @@ cm_cu_yearly_pass = {
 			scope:cm_country = {
 				cm_cu_survey_market = yes
 				cm_cu_close_pass = yes
-				cm_cu_reopen_pass = yes
+				if = {
+					limit = { exists = var:cm_cu_close_open }
+					cm_cu_reopen_pass = yes
+				}
 			}
 		}
-		cm_cu_delete_closed_pass = yes
+		if = {
+			limit = { exists = var:cm_cu_destroy }
+			cm_cu_delete_closed_pass = yes
+		}
 		if = {
 			limit = {
 				has_variable_list = cm_cu_toggle
@@ -240,6 +253,7 @@ cm_cu_close_pass = {
 				limit = { building_type = building_type:market_village }
 				building_level > 1
 			}
+			cm_cu_close_pass_can_act = yes
 		}
 		save_scope_as = cm_building
 		building_type = { save_scope_as = cm_building_type }
@@ -260,7 +274,10 @@ cm_cu_close_pass = {
 				}
 			}
 			else_if = {
-				limit = { scope:cm_location = { cm_cu_location_near_cap = yes } }
+				limit = {
+					scope:cm_country = { exists = var:cm_cu_destroy }
+					scope:cm_location = { cm_cu_location_near_cap = yes }
+				}
 				cm_cu_log = { ACTION = cm_log_cu_destroyed }
 				scope:cm_location = { destroy_building = scope:cm_building }
 			}

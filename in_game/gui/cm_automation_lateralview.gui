@@ -180,8 +180,8 @@
 			action_tooltip = {
 				click_type = left
 				title = "[AutomatedSystemsItem.GetActionTooltipName]"
-				# CM: engine enable suppressed on the four intercepted cards
-				visible = "[And(Not(AutomatedSystemsItem.IsEnabled), Not(Or4(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'), AutomatedSystemsItem.IsName('buildings'), AutomatedSystemsItem.IsName('closebuildings'))))]"
+				# CM: engine enable suppressed on the five intercepted cards
+				visible = "[And(Not(AutomatedSystemsItem.IsEnabled), Not(Or5(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'), AutomatedSystemsItem.IsName('buildings'), AutomatedSystemsItem.IsName('closebuildings'), AutomatedSystemsItem.IsName('destroybuildings'))))]"
 				using = snd_UI_checkbutton_automation
 				on_action = "[AutomatedSystemsItem.Toggle]"
 				on_action = "[PlayAudioEffect('UI_action_automate_enable')]"
@@ -190,8 +190,8 @@
 			action_tooltip = {
 				click_type = left
 				title = "[AutomatedSystemsItem.GetActionTooltipName]"
-				# CM: engine disable suppressed on the four intercepted cards
-				visible = "[And(AutomatedSystemsItem.IsEnabled, Not(Or4(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'), AutomatedSystemsItem.IsName('buildings'), AutomatedSystemsItem.IsName('closebuildings'))))]"
+				# CM: engine disable suppressed on the five intercepted cards
+				visible = "[And(AutomatedSystemsItem.IsEnabled, Not(Or5(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'), AutomatedSystemsItem.IsName('buildings'), AutomatedSystemsItem.IsName('closebuildings'), AutomatedSystemsItem.IsName('destroybuildings'))))]"
 				using = snd_UI_checkbutton_automation
 				on_action = "[AutomatedSystemsItem.Toggle]"
 				on_action = "[PlayAudioEffect('UI_action_automate_disable')]"
@@ -215,13 +215,22 @@
 				on_action = "[GetScriptedGui('cm_sa_toggle_master').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 
-			# CM: Close and Open Buildings card toggles Building Cleanup
+			# CM: Close and Open Buildings card toggles Building Cleanup's closing and opening
 			action_tooltip = {
 				click_type = left
-				title = "CM_AUTOMATION_TOGGLE_CLEANUP"
+				title = "CM_AUTOMATION_TOGGLE_CLOSE_OPEN"
 				visible = "[AutomatedSystemsItem.IsName('closebuildings')]"
 				using = snd_UI_checkbutton_automation
-				on_action = "[GetScriptedGui('cm_cu_toggle_setting').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				on_action = "[GetScriptedGui('cm_cu_toggle_close_open').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+
+			# CM: Destroy Buildings card toggles Building Cleanup's destroying
+			action_tooltip = {
+				click_type = left
+				title = "CM_AUTOMATION_TOGGLE_DESTROY"
+				visible = "[AutomatedSystemsItem.IsName('destroybuildings')]"
+				using = snd_UI_checkbutton_automation
+				on_action = "[GetScriptedGui('cm_cu_toggle_destroy').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 
 			# Right-click opens the relevant panel
@@ -339,7 +348,7 @@
 				on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
 				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__sa_master')]"
 			}
-			# CM: Close and Open Buildings card opens the Building Cleaner settings
+			# CM: Close and Open Buildings card opens the Building Cleanup settings
 			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
@@ -365,11 +374,15 @@
 				on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
 				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__auto_expand')]"
 			}
+			# CM: Destroy Buildings card opens the Building Cleanup settings
 			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
 				visible = "[AutomatedSystemsItem.IsName('destroybuildings')]"
-				on_action = "[OpenLateralView('production')]"
+				on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
+				on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
+				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__cleanup')]"
 			}
 			action_tooltip = {
 				click_type = right
@@ -556,15 +569,15 @@
 							size = { 100% 100% }
 							using = checkbox_auto_texture
 							frame = 2
-							# CM: engine tick suppressed on the four intercepted cards
-							visible = "[And(AutomatedSystemsItem.IsEnabled, Not(Or4(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'), AutomatedSystemsItem.IsName('buildings'), AutomatedSystemsItem.IsName('closebuildings'))))]"
+							# CM: engine tick suppressed on the five intercepted cards
+							visible = "[And(AutomatedSystemsItem.IsEnabled, Not(Or5(AutomatedSystemsItem.IsName('expandbuildings'), AutomatedSystemsItem.IsName('expandrgo'), AutomatedSystemsItem.IsName('buildings'), AutomatedSystemsItem.IsName('closebuildings'), AutomatedSystemsItem.IsName('destroybuildings'))))]"
 						}
-						# CM: the four intercepted cards tick from this mod's own settings
+						# CM: the five intercepted cards tick from this mod's own settings
 						icon = {
 							size = { 100% 100% }
 							using = checkbox_auto_texture
 							frame = 2
-							visible = "[Or4(And(AutomatedSystemsItem.IsName('expandbuildings'), GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('expandrgo'), GetScriptedGui('cm_is_auto_expand_rgos_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('buildings'), GetScriptedGui('cm_sa_is_master_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('closebuildings'), GetScriptedGui('cm_cu_is_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
+							visible = "[Or5(And(AutomatedSystemsItem.IsName('expandbuildings'), GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('expandrgo'), GetScriptedGui('cm_is_auto_expand_rgos_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('buildings'), GetScriptedGui('cm_sa_is_master_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('closebuildings'), GetScriptedGui('cm_cu_close_open_is_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('destroybuildings'), GetScriptedGui('cm_cu_destroy_is_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
 						}
 					}
 				}
@@ -721,7 +734,7 @@
 						on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
 						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__sa_master')]"
 					}
-					# CM: Close and Open Buildings card opens the Building Cleaner settings
+					# CM: Close and Open Buildings card opens the Building Cleanup settings
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
 						visible = "[AutomatedSystemsItem.IsName('closebuildings')]"
@@ -744,10 +757,14 @@
 						on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
 						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__auto_expand')]"
 					}
+					# CM: Destroy Buildings card opens the Building Cleanup settings
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
 						visible = "[AutomatedSystemsItem.IsName('destroybuildings')]"
-						on_action = "[OpenLateralView('production')]"
+						on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
+						on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
+						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__cleanup')]"
 					}
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"

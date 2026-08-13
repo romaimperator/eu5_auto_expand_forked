@@ -534,39 +534,61 @@ cm_sa_toggle_master_setting = {
 	cm_sa_apply_master_change = yes
 }
 
-# Flips the Building Cleanup setting from the vanilla Close and Open Buildings card.
+# Flips the closing and opening setting from the vanilla Close and Open Buildings card.
 # Scope: country
-cm_cu_toggle_setting_value = {
-	remove_from_variable_map = { name = cmm key = flag:cm__cleanup_enabled }
+cm_cu_toggle_close_open_value = {
+	remove_from_variable_map = { name = cmm key = flag:cm__cleanup_close_open }
 	if = {
-		limit = { exists = var:cm_cu_enabled }
-		add_to_variable_map = { name = cmm key = flag:cm__cleanup_enabled value = 0 }
+		limit = { exists = var:cm_cu_close_open }
+		add_to_variable_map = { name = cmm key = flag:cm__cleanup_close_open value = 0 }
 	}
 	else = {
-		add_to_variable_map = { name = cmm key = flag:cm__cleanup_enabled value = 1 }
+		add_to_variable_map = { name = cmm key = flag:cm__cleanup_close_open value = 1 }
 	}
-	cm_cu_apply_enabled_change = yes
+	cm_cu_apply_close_open_change = yes
 }
 
-# Turning the feature off mid-year would otherwise leave an armed toggle batch for the queue
-# window to fire. Scope: country
-cm_cu_apply_enabled_change = {
+# Turning closing and opening off mid-year would otherwise leave an armed toggle batch for the
+# queue window to fire. Scope: country
+cm_cu_apply_close_open_change = {
 	cmm_sync_bool_alias = {
-		setting = cm__cleanup_enabled
-		alias = cm_cu_enabled
+		setting = cm__cleanup_close_open
+		alias = cm_cu_close_open
 	}
 	if = {
-		limit = { NOT = { exists = var:cm_cu_enabled } }
+		limit = { NOT = { exists = var:cm_cu_close_open } }
 		remove_variable = cm_cu_fire
 		clear_variable_list = cm_cu_toggle
 	}
 }
 
-# The Buildings and Close and Open Buildings cards drive this mod's settings instead.
+# Flips the destroying setting from the vanilla Destroy Buildings card. Scope: country
+cm_cu_toggle_destroy_value = {
+	remove_from_variable_map = { name = cmm key = flag:cm__cleanup_destroy }
+	if = {
+		limit = { exists = var:cm_cu_destroy }
+		add_to_variable_map = { name = cmm key = flag:cm__cleanup_destroy value = 0 }
+	}
+	else = {
+		add_to_variable_map = { name = cmm key = flag:cm__cleanup_destroy value = 1 }
+	}
+	cm_cu_apply_destroy_change = yes
+}
+
 # Scope: country
+cm_cu_apply_destroy_change = {
+	cmm_sync_bool_alias = {
+		setting = cm__cleanup_destroy
+		alias = cm_cu_destroy
+	}
+}
+
+# The Buildings, Close and Open Buildings and Destroy Buildings cards drive this mod's settings
+# instead. Scope: country
 cm_suppress_engine_automation = {
 	set_automated_system = { system = buildings activate = no }
 	set_automated_system = { system = closebuildings activate = no }
+	set_automated_system = { system = destroybuildings activate = no }
 }
 
 # Rebuild all lookup tables from CMM list field data.
