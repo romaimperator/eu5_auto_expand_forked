@@ -73,11 +73,6 @@ cm_q_loc_reset_rgo_scoring = {
 	remove_variable = cm_q_rgo_score
 }
 
-cm_q_loc_reset_ungated_scoring = {
-	clear_variable_map = cm_q_ungated_costs
-	cm_q_loc_reset_cycle_counters = yes
-}
-
 cm_q_loc_reset_urbanize_scoring = {
 	clear_variable_map = cm_q_urb_costs
 }
@@ -178,11 +173,6 @@ cm_q_approval_pass = {
 				}
 			}
 		}
-	}
-	# Auto-build claims after the Auto-Expand tab's features and before Smart Automations.
-	if = {
-		limit = { exists = var:cm_auto_build_enabled }
-		cm_q_pass_auto_build = yes
 	}
 	# Smart Automations category drains after every priority feature has claimed, in the player's
 	# category order, each category's unspent funds carrying into the next one.
@@ -702,88 +692,6 @@ cm_q_pass_upgrade_all = {
 			}
 		}
 	}
-}
-
-# Drains one resolved building type's ungated items across the staged locations, in list
-# order, with the order-dependent gates. Root is the
-# country. Expects scope:cm_country, scope:cm_building_type.
-cm_q_drain_ungated_type = {
-	if = {
-		limit = { has_variable_list = cm_q_ungated_locations }
-		every_in_list = {
-			variable = cm_q_ungated_locations
-			if = {
-				limit = {
-					has_variable_map = cm_q_ungated_costs
-					is_key_in_variable_map = { name = cm_q_ungated_costs target = scope:cm_building_type }
-				}
-				save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_q_ungated_costs|scope:cm_building_type)" }
-				market = { save_temporary_scope_as = cm_market }
-				if = {
-					limit = {
-						cm_get_open_build_queue_slots > 0
-						cm_country_can_afford_staged_cost_full = yes
-						cm_market_has_construction_goods_for_building = yes
-					}
-					if = {
-						limit = { owner = scope:cm_country }
-						cm_approve_gui_build = yes
-					} else = {
-						construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
-						cm_commit_market_demand = yes
-					}
-					cm_q_fill_build_slots = { AFFORD = cm_country_can_afford_staged_cost_full CLAIM = cm_q_claim_build_copy }
-				}
-				remove_from_variable_map = { name = cm_q_ungated_costs key = scope:cm_building_type }
-			}
-		}
-	}
-}
-
-# Auto-build drain: the same type list, enabled checks, and resolution as staging, so the
-# player's per-building order decides who claims gold first. The capital set claims ahead of
-# the roster. Root is the country.
-cm_q_pass_auto_build = {
-	if = { limit = { exists = var:cm_auto_build_capital }
-		cm_q_pass_auto_build_capital = yes
-	}
-	if = {
-		limit = { has_variable_list = cm_auto_build_building_types_list }
-		every_in_list = {
-			variable = cm_auto_build_building_types_list
-			save_scope_as = cm_building_type
-			scope:cm_country = {
-				if = {
-					limit = { is_target_in_variable_list = { name = cm_auto_build_building_types_enabled target = scope:cm_building_type } }
-					# Resolve obsolete building type to current non-obsolete upgrade, e.g. dock -> dry_dock
-					cm_auto_build_resolve_building_type = yes
-					cm_q_drain_ungated_type = yes
-				}
-			}
-		}
-	}
-}
-
-# Capital drain: the same fixed building order as staging. Root is the country.
-cm_q_pass_auto_build_capital = {
-	cm_q_drain_capital_type = { building_type_text = royal_court }
-	cm_q_drain_capital_type = { building_type_text = house_of_parliament }
-	cm_q_drain_capital_type = { building_type_text = order_headquarters }
-	cm_q_drain_capital_type = { building_type_text = admiralty }
-	cm_q_drain_capital_type = { building_type_text = war_college }
-	cm_q_drain_capital_type = { building_type_text = tax_assessor }
-	cm_q_drain_capital_type = { building_type_text = supreme_court }
-	cm_q_drain_capital_type = { building_type_text = chancery }
-	cm_q_drain_capital_type = { building_type_text = republican_assembly }
-	cm_q_drain_capital_type = { building_type_text = royal_garden }
-	cm_q_drain_capital_type = { building_type_text = pirate_stronghold }
-	cm_q_drain_capital_type = { building_type_text = sergeantry }
-	cm_q_drain_capital_type = { building_type_text = city_guard }
-}
-
-cm_q_drain_capital_type = {
-	building_type:$building_type_text$ = { save_scope_as = cm_building_type }
-	cm_q_drain_ungated_type = yes
 }
 
 # Auto-food drain: staged food buildings, then food RGO upgrades, in list order. Root is

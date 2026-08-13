@@ -17,7 +17,11 @@ cm_ln_can_place = {
 		cm_location_can_place_building = { target = scope:cm_building_type }
 	}
 	trigger_else = {
-		scope:cm_can_build = yes
+		# The engine buildability bool is unverified for subject locations.
+		OR = {
+			NOT = { owner = scope:cm_country }
+			scope:cm_can_build = yes
+		}
 	}
 }
 

@@ -143,54 +143,6 @@ cm_sa_ind_roi_passes = {
 	}
 }
 
-# The auto_build_list min_rgos registration default (cm_cmm_effects.txt); Utilities runs
-# on defaults, never the player's tuned per-building values.
-@cm_sa_min_rgos = 5
-
-# The sawmill, windmill, and local_smelters RGO-level requirements at the default
-# threshold, mirroring cm_auto_build_check_rgo_level_requirement_met's per-building
-# variants. Other types always pass. Root is the location, expects
-# scope:cm_auto_build_settings_type as the raw roster key.
-cm_sa_utilities_rgo_req_met = {
-	switch = {
-		trigger = scope:cm_auto_build_settings_type
-		building_type:sawmill = {
-			OR = {
-				AND = {
-					raw_material = goods:lumber
-					cm_modifier_rgo_level >= @cm_sa_min_rgos
-				}
-				AND = {
-					has_building = building_type:lumber_mill
-					"building(building_type:lumber_mill|owner)" = { building_level >= @cm_sa_min_rgos }
-				}
-			}
-		}
-		building_type:windmill = {
-			AND = {
-				OR = {
-					raw_material = goods:wheat
-					raw_material = goods:millet
-					raw_material = goods:rice
-				}
-				cm_modifier_rgo_level >= @cm_sa_min_rgos
-			}
-		}
-		building_type:local_smelters = {
-			AND = {
-				OR = {
-					raw_material = goods:iron
-					raw_material = goods:copper
-					raw_material = goods:tin
-					raw_material = goods:lead
-				}
-				cm_modifier_rgo_level >= @cm_sa_min_rgos
-			}
-		}
-		fallback = { always = yes }
-	}
-}
-
 # Never staged by Smart Automations, whatever it scores. slave_market's profit swings month to
 # month, so a payback the ROI ranking likes is a loss by the time the level stands.
 # Root is the building type.
@@ -229,7 +181,6 @@ cm_sa_max_control_site_ok = {
 	cm_location_allowed_to_build = { target = scope:cm_building_type }
 	cm_location_has_enough_pops_available = yes
 	cm_check_location_meets_min_market_access = yes
-	NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
 }
 
 # The country side of scope:cm_building_type's placement rules, which for a unique type is
@@ -334,7 +285,6 @@ cm_sa_col_placeable = {
 
 cm_sa_col_not_claimed = {
 	NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:cm_building_type } }
-	NOT = { is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type } }
 	NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
 }
 

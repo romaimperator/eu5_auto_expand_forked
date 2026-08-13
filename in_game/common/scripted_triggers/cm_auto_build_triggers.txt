@@ -89,12 +89,6 @@ cm_auto_build_check_rgo_level_requirement_met_local_smelters = {
 # These replace the old per-building trigger files. All building-specific
 # logic is resolved dynamically via engine triggers and precomputed maps.
 
-# Expects scopes: building_type, country. Root is the location.
-cm_location_can_auto_build = {
-	cm_auto_build_will_auto_build = { target = scope:cm_building_type }
-	cm_location_has_no_auto_build_chain_predecessor = yes
-}
-
 # Expects scope:cm_country, with cm_auto_build_chain_predecessors populated by cm_auto_build_resolve_building_type, and scope:cm_location.
 # True when the location has none of the resolved building type's obsolete predecessor tiers.
 cm_location_has_no_auto_build_chain_predecessor = {
@@ -106,21 +100,6 @@ cm_location_has_no_auto_build_chain_predecessor = {
 			}
 		}
 	}
-}
-
-# Root is the location. Expects the resolved building type as a target, also expects the scope country.
-# The per-row settings checks take scope:cm_auto_build_settings_type, the raw list key saved by
-# cm_auto_build_resolve_building_type, because the settings maps are keyed by it.
-cm_auto_build_will_auto_build = {
-	scope:cm_country = { cm_should_pause_auto_expand = no }
-	save_temporary_scope_as = cm_location
-	NOT = { has_building = $target$ }
-	cm_location_allowed_to_build = { target = $target$ }
-	cm_auto_build_check_meets_minimum_control = { target = scope:cm_auto_build_settings_type }
-	cm_auto_build_check_meets_minimum_market_price_impact = { target = scope:cm_auto_build_settings_type }
-	cm_location_has_enough_pops_available = yes
-	cm_auto_build_check_rgo_level_requirement_met = { target = scope:cm_auto_build_settings_type }
-	cm_check_location_meets_min_market_access = yes
 }
 
 # Root is the location. Expects the building type as a target, also expects the scope country.
@@ -164,19 +143,3 @@ cm_auto_build_check_meets_minimum_market_price_impact = {
 		$target$ = { cm_get_standard_construction_cost_adjustment_for_building_type <= { value = cm_get_minimum_market_price_impact_for_auto_build add = 0.005 } }
 	}
 }
-
-# --- Auto Build Capital triggers ---
-# Root is the capital location. Expects scope:cm_building_type, scope:cm_country.
-# Allows multi-level capital buildings such as chancery to be queued up to their cap:
-# cm_location_building_type_is_not_at_max_level passes when the building doesn't
-# exist yet OR exists below max with no level currently under construction.
-cm_capital_location_can_auto_build = {
-	scope:cm_country = { cm_should_pause_auto_expand = no }
-	save_temporary_scope_as = cm_location
-	cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
-	cm_location_allowed_to_build = { target = scope:cm_building_type }
-	cm_location_has_enough_pops_available = yes
-	cm_check_location_meets_min_market_access = yes
-	cm_get_open_build_queue_slots > 0
-}
-

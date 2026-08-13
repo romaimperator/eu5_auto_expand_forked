@@ -16,23 +16,6 @@ cm__priority_list_on_changed = {
 	}
 }
 
-# Auto-Build (auto_build) Tab
-## Auto-Build Buildings (auto_build_list) Group
-cm__auto_build_list_on_changed = {
-	scope = country
-
-	is_shown = {
-		always = yes
-	}
-
-	effect = {
-		cmm_apply_list_change = {
-			setting = cm__auto_build_list
-		}
-		cm_rebuild_auto_build_lookups = yes
-	}
-}
-
 # Auto-Urbanize (auto_urbanize) Tab
 ## Auto-Urbanize Settings (auto_urbanize) Group
 cm__urbanize_city_to_megalopolis_on_changed = {
@@ -269,6 +252,64 @@ cm__sa_roads_capital_on_changed = {
 		exists = var:cm_sa_roads_enabled
 	}
 	effect = { }
+}
+
+## Utility Builder (sa_utilities) Group
+cm__auto_build_capital_on_changed = {
+	scope = country
+
+	is_shown = {
+		exists = var:cm_sa_enabled
+		exists = var:cm_sa_utilities_enabled
+	}
+	effect = { }
+}
+
+cm__sa_utilities_control_on_changed = {
+	scope = country
+
+	is_shown = {
+		exists = var:cm_sa_enabled
+		exists = var:cm_sa_utilities_enabled
+	}
+	effect = { }
+}
+
+cm__sa_utilities_market_centers_on_changed = {
+	scope = country
+
+	is_shown = {
+		exists = var:cm_sa_enabled
+		exists = var:cm_sa_utilities_enabled
+	}
+	effect = { }
+}
+
+## Building Roster (auto_build_list) Group
+cm__auto_build_enabled_on_changed = {
+	scope = country
+
+	is_shown = {
+		exists = var:cm_sa_enabled
+		exists = var:cm_sa_utilities_enabled
+	}
+	effect = { }
+}
+
+cm__auto_build_list_on_changed = {
+	scope = country
+
+	is_shown = {
+		exists = var:cm_sa_enabled
+		exists = var:cm_sa_utilities_enabled
+	}
+
+	effect = {
+		cmm_apply_list_change = {
+			setting = cm__auto_build_list
+		}
+		cm_rebuild_auto_build_lookups = yes
+	}
 }
 
 ## Governor Builder (sa_governors) Group

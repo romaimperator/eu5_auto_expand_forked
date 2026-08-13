@@ -217,37 +217,6 @@ cm_gui_try_rgo = {
 		}
 	}
 }
-# Ungated construction-queue scorer for auto-build and capital. Root is the location;
-# stores the engine cost for cm_q_approval_pass, which re-checks build-queue slots and
-# affordability at the feature's priority turn. Expects scopes: country, building_type, cost, can_build.
-cm_gui_try_ungated = {
-	saved_scopes = { cm_country cm_building_type cm_cost cm_can_build }
-	is_valid = {
-		always = yes
-	}
-	effect = {
-		if = {
-			limit = {
-				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
-				is_target_in_variable_list = { name = cm_q_ungated_building_types target = scope:cm_building_type }
-				NOT = { is_target_in_variable_list = { name = cm_q_done_ungated_types target = scope:cm_building_type } }
-			}
-			add_to_variable_list = { name = cm_q_done_ungated_types target = scope:cm_building_type }
-			scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
-			if = {
-				limit = {
-					# The engine buildability bool is unverified for subject locations.
-					OR = {
-						NOT = { owner = scope:cm_country }
-						scope:cm_can_build = yes
-					}
-				}
-				remove_from_variable_map = { name = cm_q_ungated_costs key = scope:cm_building_type }
-				add_to_variable_map = { name = cm_q_ungated_costs key = scope:cm_building_type value = scope:cm_cost }
-			}
-		}
-	}
-}
 # Foreign construction-queue scorer. Root is the location; stores the engine cost for
 # cm_q_approval_pass, which applies the gold reserve at the auto-expand buildings turn.
 # The queue window binds the country's whole staged type list under every staged location, so
