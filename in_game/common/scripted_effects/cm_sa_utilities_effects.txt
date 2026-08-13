@@ -2,15 +2,25 @@
 # local_max_control types), the vanilla market-center buildings (game
 # in_game/common/building_types/market_buildings.txt, the is_market_center-gated set), and the
 # player's own roster (auto_build_list, cm_cmm_effects.txt). Each of the four has its own toggle.
-# Every location sweep here is confined to the cycle's market slice (cm_sa_slice_effects.txt),
-# except the capital set, the control buildings and the roster's subject branch. Bailiffs survey
-# once every four years into a pick list that stages monthly until it empties.
+# The market-center block and every roster row walk one shared candidate list, built once per cycle
+# from the markets in the slice (cm_sa_slice_effects.txt); the capital set, the control buildings
+# and the roster's subject branch reach their locations their own way. Bailiffs survey once every
+# four years into a pick list that stages monthly until it empties.
 
 # Four years, the bailiff survey cadence.
 @cm_sa_bailiff_days = 1460
 
 # Root is the country, scope:cm_country set.
 cm_sa_run_utilities = {
+	if = {
+		limit = {
+			OR = {
+				exists = var:cm_sa_utilities_market_centers
+				exists = var:cm_auto_build_enabled
+			}
+		}
+		cm_sa_util_build_candidates = yes
+	}
 	if = {
 		limit = {
 			exists = var:cm_auto_build_capital
@@ -20,6 +30,7 @@ cm_sa_run_utilities = {
 		if = {
 			limit = { scope:cm_location = { NOT = { integration_level = conquered } } }
 			scope:cm_location = {
+				cm_pop_track = yes
 				cm_sa_stage_capital_type_here = { bt = royal_garden }
 				cm_sa_stage_capital_type_here = { bt = royal_court }
 				cm_sa_stage_capital_type_here = { bt = house_of_parliament }
@@ -55,37 +66,73 @@ cm_sa_run_utilities = {
 		cm_sa_stage_max_control_type = { bt = tambo }
 	}
 	if = {
-		limit = { exists = var:cm_sa_utilities_market_centers }
-		ordered_owned_location = {
-			order_by = max_control
-			max = cm_max_guess_at_number_of_locations
-			check_range_bounds = no
-			limit = {
-				cm_location_market_in_sa_slice = yes
-				NOT = { integration_level = conquered }
-				cm_sa_location_has_proximity = yes
-				is_market_center = yes
-			}
+		limit = {
+			exists = var:cm_sa_utilities_market_centers
+			has_variable_list = cm_sa_util_cands
+		}
+		every_in_list = {
+			variable = cm_sa_util_cands
 			save_scope_as = cm_location
-			cm_sa_stage_utility_type_here = { bt = entrepot }
-			cm_sa_stage_utility_type_here = { bt = trading_hub }
-			cm_sa_stage_utility_type_here = { bt = customs_house }
-			cm_sa_stage_utility_type_here = { bt = stock_exchange }
-			cm_sa_stage_utility_type_here = { bt = clearing_house }
-			cm_sa_stage_utility_type_here = { bt = market_warehouse }
+			# Once per location rather than per type: this set has no type exempt from the gate.
+			if = {
+				limit = {
+					is_market_center = yes
+					cm_sa_location_has_proximity = yes
+				}
+				cm_sa_stage_utility_type_here = { bt = entrepot }
+				cm_sa_stage_utility_type_here = { bt = trading_hub }
+				cm_sa_stage_utility_type_here = { bt = customs_house }
+				cm_sa_stage_utility_type_here = { bt = stock_exchange }
+				cm_sa_stage_utility_type_here = { bt = clearing_house }
+				cm_sa_stage_utility_type_here = { bt = market_warehouse }
+			}
 		}
 	}
 	if = {
 		limit = { exists = var:cm_auto_build_enabled }
 		cm_sa_stage_utility_roster = yes
 	}
+	clear_variable_list = cm_sa_util_cands
+}
+
+# This cycle's candidates for the market-center block and the roster: the owned, unconquered
+# locations in the slice's markets, in country-wide max_control order. Ordered in one pass over the
+# whole slice rather than per market, because cm_sa_stage_build_candidate appends into the shared
+# cm_sa_b_locations and the insertion-order drains read whatever order the appends were made in.
+# The proximity gate is deliberately left off, since a type exempt from it needs the locations it
+# would remove. Root is the country, scope:cm_country set.
+cm_sa_util_build_candidates = {
+	clear_variable_list = cm_sa_util_raw
+	clear_variable_list = cm_sa_util_cands
+	every_market_present_in_country = {
+		limit = { cm_sa_market_in_slice = yes }
+		# The market iterators carry no ownership filter of their own, and a shared market holds
+		# other countries' locations.
+		every_location_in_market = {
+			limit = {
+				owner ?= scope:cm_country
+				NOT = { integration_level = conquered }
+			}
+			save_scope_as = cm_sa_util_cand
+			scope:cm_country = { add_to_variable_list = { name = cm_sa_util_raw target = scope:cm_sa_util_cand } }
+		}
+	}
+	ordered_in_list = {
+		variable = cm_sa_util_raw
+		order_by = max_control
+		max = cm_max_guess_at_number_of_locations
+		check_range_bounds = no
+		save_scope_as = cm_sa_util_cand
+		cm_pop_track = yes
+		scope:cm_country = { add_to_variable_list = { name = cm_sa_util_cands target = scope:cm_sa_util_cand } }
+	}
+	clear_variable_list = cm_sa_util_raw
 }
 
 # Stages one market-center type at this location when it fits; that set has no obsolete chains.
 # The not-at-max-level check keeps multi-level types topping up. Root is the location. Expects
 # scope:cm_country, scope:cm_location; $bt$ = the type key.
 cm_sa_stage_utility_type_here = {
-	cm_pop_track = yes
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	if = {
 		limit = {
@@ -104,7 +151,6 @@ cm_sa_stage_utility_type_here = {
 # what lets the category hold its allotment for one it cannot yet afford. Root is the location.
 # Expects scope:cm_country, scope:cm_location; $bt$ = the type key.
 cm_sa_stage_capital_type_here = {
-	cm_pop_track = yes
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	if = {
 		limit = {
@@ -155,21 +201,17 @@ cm_sa_stage_utility_roster = {
 	}
 }
 
-# One roster type across owned locations. Root is the country. Expects the resolved
-# scope:cm_building_type and the raw key in scope:cm_auto_build_settings_type.
+# One roster type across this cycle's candidates, in the order cm_sa_util_build_candidates set.
+# Root is the country. Expects the resolved scope:cm_building_type and the raw key in
+# scope:cm_auto_build_settings_type.
 cm_sa_stage_roster_type_owned = {
-	ordered_owned_location = {
-		order_by = max_control
-		max = cm_max_guess_at_number_of_locations
-		check_range_bounds = no
-		limit = {
-			cm_location_market_in_sa_slice = yes
-			NOT = { integration_level = conquered }
-			cm_sa_location_has_proximity = yes
+	if = {
+		limit = { has_variable_list = cm_sa_util_cands }
+		every_in_list = {
+			variable = cm_sa_util_cands
+			save_scope_as = cm_location
+			cm_sa_stage_roster_type_here = yes
 		}
-		save_scope_as = cm_location
-		cm_pop_track = yes
-		cm_sa_stage_roster_type_here = yes
 	}
 }
 
@@ -185,10 +227,7 @@ cm_sa_stage_roster_type_in_subjects = {
 			save_scope_as = cm_location
 			cm_pop_track = yes
 			if = {
-				limit = {
-					NOT = { integration_level = conquered }
-					cm_sa_location_has_proximity = yes
-				}
+				limit = { NOT = { integration_level = conquered } }
 				cm_sa_stage_roster_type_here = yes
 			}
 		}
@@ -198,11 +237,16 @@ cm_sa_stage_roster_type_in_subjects = {
 # Tops up to max level, since nothing else in Smart Automations grows these types: Industry only
 # touches production buildings. A location holding an older tier of the chain is left to the upgrade
 # features. The three per-row gates take scope:cm_auto_build_settings_type, the raw list key
-# cm_auto_build_resolve_building_type saves, because the settings maps are keyed by it.
+# cm_auto_build_resolve_building_type saves, because the settings maps are keyed by it. The
+# proximity gate sits here rather than on the candidate list because a type can be exempt from it.
 # Root is the location. Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_sa_stage_roster_type_here = {
 	if = {
 		limit = {
+			OR = {
+				cm_sa_location_has_proximity = yes
+				scope:cm_building_type = { cm_sa_type_ignores_proximity = yes }
+			}
 			cm_sa_utilities_type_has_room = yes
 			cm_location_allowed_to_build = { target = scope:cm_building_type }
 			cm_location_has_no_auto_build_chain_predecessor = yes

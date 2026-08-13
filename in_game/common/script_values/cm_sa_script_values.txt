@@ -40,6 +40,20 @@ cm_sa_food_min_potential_value = {
 	}
 }
 
+# Expects scope:cm_country. The country's sa_min_proximity setting, the proximity a location must
+# carry to be staged. Read off the acting country rather than the location's owner so the setting
+# still governs the roster's subject branch. Falls back to the setting default of 1 before the
+# first sync.
+cm_sa_min_proximity_value = {
+	if = {
+		limit = { scope:cm_country = { exists = var:cm_sa_min_proximity } }
+		value = scope:cm_country.var:cm_sa_min_proximity
+	}
+	else = {
+		value = 1
+	}
+}
+
 # Ordered iterators sort high to low, so negating takes the lowest food potential first.
 # Root is the location.
 cm_sa_food_potential_inverted = {
