@@ -77,12 +77,12 @@ cm_run_construction_cycle = {
 		set_variable = { name = cm_q_stall_rounds value = 0 }
 		set_variable = { name = cm_q_rescans value = 0 }
 		cm_q_reset_market_committed_for_cycle = yes
-		if = { limit = { cm_should_pause_auto_expand = no }
+		if = { limit = { OR = { cm_should_pause_auto_expand = no  cm_dbg_solo_active = yes } }
 			if = { limit = { has_variable_list = cm_priority_features_list }
 				every_in_list = {
 					variable = cm_priority_features_list
 					save_scope_as = cm_feature
-					if = { limit = { scope:cm_country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = scope:cm_feature } } }
+					if = { limit = { scope:cm_country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = scope:cm_feature }  cm_dbg_solo_allows = { TARGET = scope:cm_feature } } }
 						switch = {
 							trigger = scope:cm_feature
 							flag:cm_feature_auto_expand_buildings = { scope:cm_country = { cm_run_auto_expand_buildings = yes } }
@@ -102,11 +102,28 @@ cm_run_construction_cycle = {
 				cm_ab_master_active = yes
 				has_variable_list = cm_ab_categories_enabled
 			}
-			cm_ab_pick_slice = yes
+			# A Run Now reuses the slice it finds, so the rotation only moves on a monthly
+			# cycle or on the Control Panel's Force Rotate Slice button. A first run with
+			# nothing picked yet still takes a slice.
+			if = {
+				limit = {
+					NOT = {
+						AND = {
+							cm_dbg_solo_active = yes
+							has_variable_map = cm_ab_slice_now
+							variable_map_size = { name = cm_ab_slice_now value >= 1 }
+						}
+					}
+				}
+				cm_ab_pick_slice = yes
+			}
 			every_in_list = {
 				variable = cm_ab_categories_enabled
 				save_scope_as = cm_ab_cat
-				scope:cm_country = { cm_ab_stage_category = yes }
+				if = {
+					limit = { scope:cm_country = { cm_dbg_solo_allows = { TARGET = scope:cm_ab_cat } } }
+					scope:cm_country = { cm_ab_stage_category = yes }
+				}
 			}
 		}
 		# Auto-urbanize stages and drains after every other feature and after Smart
@@ -114,7 +131,8 @@ cm_run_construction_cycle = {
 		# cm_gov_hold zeroes, so the hold gates it here.
 		if = {
 			limit = {
-				cm_should_pause_auto_expand = no
+				OR = { cm_should_pause_auto_expand = no  cm_dbg_solo_active = yes }
+				cm_dbg_solo_allows = { TARGET = flag:cm_feature_auto_urbanize }
 				NOT = { exists = var:cm_gov_hold }
 				exists = var:cm_auto_urbanize_enabled
 			}
@@ -291,6 +309,8 @@ cm_q_reset_cycle_state = {
 	# driver would never fire again.
 	remove_variable = cm_q_scan_armed
 	remove_variable = cm_q_rescans
+	remove_variable = cm_dbg_solo
+	clear_variable_list = cm_dbg_solo_list
 }
 
 # Root is the country. The foreign queue keeps no per-location state, so its whole teardown

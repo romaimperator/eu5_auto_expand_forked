@@ -1,0 +1,95 @@
+﻿# The Debug tab Run Now buttons, one per feature, registered in cm_cmm_effects.txt.
+#
+# A run is an ordinary construction cycle with everything but the named feature held back:
+# cm_dbg_solo marks the cycle and cm_dbg_solo_list names what may act, and the staging loops
+# in cm_run_construction_cycle and the drain loops in cm_q_approval_pass both read
+# cm_dbg_solo_allows. Both gates are needed rather than staging alone, because cm_ab_pass_roads
+# drains off its own road plan rather than off a staged queue.
+#
+# Pause is bypassed (cm_dbg_solo_active sits beside cm_should_pause_auto_expand in the gates
+# that decide whether work happens), the Auto-Build master and the per-category toggles are not:
+# master off wipes the pools, so a disabled category has nothing to spend.
+
+# Runs a cycle staging only $WHAT$. Root is the country.
+cm_dbg_run_solo = {
+	if = {
+		limit = { NOT = { exists = var:cm_should_construct } }
+		set_variable = { name = cm_dbg_solo value = 1 }
+		clear_variable_list = cm_dbg_solo_list
+		add_to_variable_list = { name = cm_dbg_solo_list target = flag:$WHAT$ }
+		cm_run_construction_cycle = yes
+		cm_dbg_solo_clear_if_idle = yes
+	}
+}
+
+# A cycle that staged nothing never arms the queue window, so cm_q_reset_cycle_state never
+# runs and the marker would sit there bypassing Pause for good. Root is the country.
+cm_dbg_solo_clear_if_idle = {
+	if = {
+		limit = { NOT = { exists = var:cm_should_construct } }
+		remove_variable = cm_dbg_solo
+		clear_variable_list = cm_dbg_solo_list
+	}
+}
+
+# The Control Panel button: every enabled Auto-Build category at once, and nothing else.
+# Root is the country.
+cm_dbg_run_solo_auto_build = {
+	if = {
+		limit = { NOT = { exists = var:cm_should_construct } }
+		save_scope_as = cm_country
+		set_variable = { name = cm_dbg_solo value = 1 }
+		clear_variable_list = cm_dbg_solo_list
+		if = {
+			limit = { has_variable_list = cm_ab_categories_enabled }
+			every_in_list = {
+				variable = cm_ab_categories_enabled
+				save_scope_as = cm_dbg_cat
+				scope:cm_country = { add_to_variable_list = { name = cm_dbg_solo_list target = scope:cm_dbg_cat } }
+			}
+		}
+		cm_run_construction_cycle = yes
+		cm_dbg_solo_clear_if_idle = yes
+	}
+}
+
+# Advances the market slice. A solo cycle reuses the slice it finds, so this is the only thing
+# that moves the rotation on while the game is paused. Root is the country.
+cm_dbg_rotate_slice = {
+	if = {
+		limit = {
+			exists = var:cm_ab_enabled
+			NOT = { exists = var:cm_should_construct }
+		}
+		save_scope_as = cm_country
+		cm_ab_pick_slice = yes
+	}
+}
+
+# Starts a governor plan. The readiness half of cm_gov_reorg_try_start's start reason passes
+# outright for a human, so the two cooldowns are the whole of what holds one back; peace, a
+# capital, a current river harvest and the free cm_gov_token still gate the search itself.
+# The category's own toggles are honoured because cm_ab_monthly_budget reads them to advance
+# the plan, so a run started past them would stall holding the global token.
+# Root is the country.
+cm_dbg_run_governors = {
+	if = {
+		limit = {
+			exists = var:cm_ab_enabled
+			exists = var:cm_ab_governors_enabled
+		}
+		save_scope_as = cm_country
+		remove_variable = cm_gov_cooldown
+		remove_variable = cm_gov_slot_cooldown
+		cm_gov_reorg_tick = yes
+	}
+}
+
+# Root is the country.
+cm_dbg_run_town_rights = {
+	if = {
+		limit = { exists = var:cm_auto_grant_town_rights }
+		save_scope_as = cm_country
+		cm_run_auto_town_rights = yes
+	}
+}

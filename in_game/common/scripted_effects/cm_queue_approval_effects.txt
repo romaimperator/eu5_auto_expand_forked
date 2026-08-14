@@ -163,7 +163,7 @@ cm_q_approval_pass = {
 			variable = cm_priority_features_list
 			save_scope_as = cm_q_pass_feature
 			if = {
-				limit = { scope:cm_country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = scope:cm_q_pass_feature } } }
+				limit = { scope:cm_country = { is_target_in_variable_list = { name = cm_priority_features_enabled target = scope:cm_q_pass_feature }  cm_dbg_solo_allows = { TARGET = scope:cm_q_pass_feature } } }
 				switch = {
 					trigger = scope:cm_q_pass_feature
 					flag:cm_feature_auto_expand_buildings = { scope:cm_country = { cm_q_pass_auto_expand_buildings = yes } }
@@ -188,14 +188,22 @@ cm_q_approval_pass = {
 		every_in_list = {
 			variable = cm_ab_categories_enabled
 			save_scope_as = cm_ab_cat
-			scope:cm_country = { cm_ab_drain_category = yes }
+			# Roads drains off its own road plan rather than off a staged queue, so a
+			# category held back by a Run Now has to be stopped here as well as at staging.
+			if = {
+				limit = { scope:cm_country = { cm_dbg_solo_allows = { TARGET = scope:cm_ab_cat } } }
+				scope:cm_country = { cm_ab_drain_category = yes }
+			}
 		}
 		remove_variable = cm_ab_carry
 	}
 	# Auto-urbanize claims last, after every priority feature and every Auto-Build
 	# category.
 	if = {
-		limit = { exists = var:cm_auto_urbanize_enabled }
+		limit = {
+			exists = var:cm_auto_urbanize_enabled
+			cm_dbg_solo_allows = { TARGET = flag:cm_feature_auto_urbanize }
+		}
 		cm_q_pass_auto_urbanize = yes
 	}
 }

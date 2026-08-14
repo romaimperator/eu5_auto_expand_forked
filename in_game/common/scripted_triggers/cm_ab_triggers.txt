@@ -3,7 +3,25 @@
 # Root is the country.
 cm_ab_master_active = {
 	exists = var:cm_ab_enabled
-	cm_should_pause_auto_expand = no
+	OR = {
+		cm_should_pause_auto_expand = no
+		cm_dbg_solo_active = yes
+	}
+}
+
+# A Debug tab Run Now button is driving this cycle by hand (cm_dbg_run_effects.txt).
+# Root is the country.
+cm_dbg_solo_active = {
+	exists = var:cm_dbg_solo
+}
+
+# Whether $TARGET$ may stage and drain this cycle: everything, unless a Run Now button
+# named one feature. Root is the country.
+cm_dbg_solo_allows = {
+	OR = {
+		NOT = { exists = var:cm_dbg_solo }
+		is_target_in_variable_list = { name = cm_dbg_solo_list target = $TARGET$ }
+	}
 }
 
 # Market slice membership (cm_ab_slice_effects.txt).
