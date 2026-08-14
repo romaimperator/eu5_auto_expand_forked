@@ -2,7 +2,39 @@
 	map_color = {
 		if = {
 			limit = { is_land = no }
-			value = hsv { 0.58 0.50 0.52 }
+			# Maritime presence runs 0-100: loading_screen/common/defines/00_defines.txt:1929
+			if = {
+				limit = {
+					exists = scope:actor
+					"location_maritime_presence_power(scope:actor)" > 50
+				}
+				lerp = {
+					max_color = define:NMapColors|MAP_COLOR_TOP
+					min_color = define:NMapColors|MAP_COLOR_MAX
+					factor = {
+						value = "location_maritime_presence_power(scope:actor)"
+						divide = 50
+						subtract = 1
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					exists = scope:actor
+					"location_maritime_presence_power(scope:actor)" > 0
+				}
+				lerp = {
+					max_color = define:NMapColors|MAP_COLOR_MAX
+					min_color = define:NMapColors|MAP_COLOR_HIGH
+					factor = {
+						value = "location_maritime_presence_power(scope:actor)"
+						divide = 50
+					}
+				}
+			}
+			else = {
+				value = hsv { 0.58 0.50 0.52 }
+			}
 		}
 		else_if = {
 			limit = { cm_location_proximity_modifier >= 0 }
@@ -128,6 +160,13 @@
 			limit = { is_land = yes }
 			value = MAPMODE_CM_LOCATION_PROXIMITY_MODIFIER_TT_LAND
 		}
+		else_if = {
+			limit = {
+				exists = scope:actor
+				"location_maritime_presence_power(scope:actor)" > 0
+			}
+			value = MAPMODE_CM_LOCATION_PROXIMITY_MODIFIER_TT_WATER_MARITIME
+		}
 		else = {
 			value = MAPMODE_CM_LOCATION_PROXIMITY_MODIFIER_TT_WATER
 		}
@@ -141,6 +180,11 @@
 	legend_key = { desc = "cm_location_proximity_modifier_severe_legend_key"     color = rgb { 158 55 55 } }
 	legend_key = { desc = "cm_location_proximity_modifier_worst_legend_key"      color = rgb { 61 28 28 } }
 	legend_key = { desc = "cm_location_proximity_modifier_harbor_legend_key"     color = define:NMapColors|MAP_COLOR_HIGH }
+
+	legend_key = { desc = "cm_location_proximity_modifier_maritime_none_legend_key" color = rgb { 66 101 133 } }
+	legend_key = { desc = "cm_location_proximity_modifier_maritime_low_legend_key"  color = define:NMapColors|MAP_COLOR_HIGH }
+	legend_key = { desc = "cm_location_proximity_modifier_maritime_half_legend_key" color = define:NMapColors|MAP_COLOR_MAX }
+	legend_key = { desc = "cm_location_proximity_modifier_maritime_full_legend_key" color = define:NMapColors|MAP_COLOR_TOP }
 
 	map_lines_mode = ToCapital
 	#noinspection ParadoxScriptUnresolvedExpression
@@ -197,6 +241,7 @@
 		after_lighting_blend = 0.5
 	}
 
-	color_refresh_counters = { Advances }
-	color_and_names_refresh_counters = { LocationOwnerChanged }
+	refresh_colors_on_selection_change = yes
+	color_refresh_counters = { Advances Day }
+	color_and_names_refresh_counters = { LocationOwnerChanged CountryStatus }
 }
