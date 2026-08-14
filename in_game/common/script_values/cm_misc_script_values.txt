@@ -50,10 +50,15 @@ cm_town_rights_grant_min_required = {
 }
 
 
-# Root is the location.
+# Root is the location. scope:cm_country is the builder where one is in scope: a subject's location
+# carries no Overbuild Limit of its own.
 cm_get_remaining_free_building_levels_allowed = {
 	value = modifier:free_building_levels
-  owner = { add = cm_get_allowed_building_overbuild_levels }
+	if = { limit = { exists = scope:cm_country }
+		scope:cm_country = { add = cm_get_allowed_building_overbuild_levels }
+	} else = {
+		owner = { add = cm_get_allowed_building_overbuild_levels }
+	}
 	subtract = total_building_levels
 }
 

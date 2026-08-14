@@ -32,6 +32,21 @@ cm_register_cmf_mod = {
 		alias = cm_auto_expand_reserve
 	}
 
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = allowed_building_overbuild_levels
+		tab_id = general
+		group_id = general
+		default_value = 200
+		min_value = 0
+		max_value = 200
+		step_value = 1
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__allowed_building_overbuild_levels
+		alias = cm_allowed_building_overbuild_levels
+	}
+
 	cmm_register_bool_setting = {
 		mod_id = cm
 		setting_id = pause_auto_expand
@@ -109,6 +124,7 @@ cm_register_cmf_mod = {
 		item = 4
 	}
 
+	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = priority_list field_id = min_discount item = 3 value = 33 }
 	cmm_register_list_numeric_field = {
 		mod_id = cm
 		setting_id = priority_list
@@ -145,21 +161,6 @@ cm_register_cmf_mod = {
 	cmm_sync_setting_alias = {
 		setting = cm__expand_metric
 		alias = cm_expand_metric
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = cm
-		setting_id = allowed_building_overbuild_levels
-		tab_id = auto_expand
-		group_id = priority_list
-		default_value = 200
-		min_value = 0
-		max_value = 200
-		step_value = 1
-	}
-	cmm_sync_setting_alias = {
-		setting = cm__allowed_building_overbuild_levels
-		alias = cm_allowed_building_overbuild_levels
 	}
 
 	# Auto-Build (auto_build) Tab
@@ -1929,16 +1930,16 @@ cm_handle_cmf_callback = {
 				alias = cm_auto_expand_reserve
 			}
 		}
-		# Auto-Expand (auto_expand) Tab
-		## Construction Automation (priority_list) Group
-		flag:cm__expand_metric = {
-			cm_apply_expand_metric_change = yes
-		}
 		flag:cm__allowed_building_overbuild_levels = {
 			cmm_sync_setting_alias = {
 				setting = cm__allowed_building_overbuild_levels
 				alias = cm_allowed_building_overbuild_levels
 			}
+		}
+		# Auto-Expand (auto_expand) Tab
+		## Construction Automation (priority_list) Group
+		flag:cm__expand_metric = {
+			cm_apply_expand_metric_change = yes
 		}
 		# Auto-Build (auto_build) Tab
 		## Control Panel (ab_master) Group

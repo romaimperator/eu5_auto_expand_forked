@@ -72,7 +72,6 @@ cm_ab_run_production = {
 						}
 						scope:cm_location = {
 							cm_location_has_enough_pops_available = yes
-							cm_is_location_under_building_limit = yes
 							NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
 						}
 					}
@@ -90,7 +89,6 @@ cm_ab_run_production = {
 								NOT = { has_building = scope:cm_building_type }
 								cm_location_allowed_to_build = { target = scope:cm_building_type }
 								cm_location_has_enough_pops_available = yes
-								cm_is_location_under_building_limit = yes
 								NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
 								NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_building_type } }
 							}
@@ -116,8 +114,15 @@ cm_ab_run_production = {
 # $cat$ = 1 production, 2 core, 3 food, 4 custom, 5 governors, 6 forts, 7 manpower.
 # Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_ab_stage_build_candidate = {
+	set_local_variable = { name = cm_ab_stage_cat value = $cat$ }
 	if = {
-		limit = { scope:cm_building_type = { cm_ab_type_is_never_built = no } }
+		limit = {
+			scope:cm_building_type = { cm_ab_type_is_never_built = no }
+			# Food is exempt: the higher material price does not matter when food is short.
+			trigger_if = { limit = { NOT = { local_var:cm_ab_stage_cat = 3 } }
+				scope:cm_location = { cm_is_location_under_building_limit = yes }
+			}
+		}
 		cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_ab_b_locations SET = cm_ab_b_locations_set LOCATION_LIST = cm_ab_b_types DONE_LIST = cm_ab_done_b_types }
 		scope:cm_location = {
 			add_to_variable_map = { name = cm_ab_b_cat_$cat$ key = scope:cm_building_type value = 1 }
