@@ -102,14 +102,21 @@ cm_run_lobby_setup = {
 
 # Drops every setup stamp when the CMF-aware mod set has changed since they were written, so a mod
 # added or removed rebuilds the lot. Called first in cm_run_lobby_setup, ahead of every pass that
-# reads a stamp. Both branches below fail toward keeping the stamps, since a wrong drop costs a full
-# recompute and a wrong keep costs data one mod-set change stale.
+# reads a stamp. Singleplayer only, and every branch below fails toward keeping the stamps, since a
+# wrong drop costs a full recompute and a wrong keep costs data one mod-set change stale.
 cm_setup_invalidate_on_mod_change = {
   if = {
+    # Multiplayer never invalidates. Finished setup is not recomputed there whatever the mod set
+    # says, which is the whole point of the stamps: the alternative is a playset differing from the
+    # one the save was prepared under dropping the lot and running it inside the load handshake.
+    # The snapshot is left alone too, so singleplayer stays the only writer and keeps comparing
+    # against the set the data was actually computed under. Setup that never finished at all is
+    # unaffected, having no stamp to drop, and still runs from the host.
     # An empty live set means CMF has not run its registration pass yet this lobby. Nothing to
     # compare against and nothing worth recording, and the two hooks' order is not something this
     # can rely on, so the stamps are left exactly as they are.
     limit = {
+      is_multiplayer_session = no
       has_global_variable_list = cmf_active_mod_ids
       any_in_global_list = { variable = cmf_active_mod_ids always = yes }
     }
