@@ -548,6 +548,7 @@ cm_ab_rd_issue_pass = {
 			has_road_constructions = no
 			modifier:road_building_blocked = no
 			cm_ab_rd_meets_min_discount = yes
+			cm_market_has_construction_goods_for_road = yes
 			var:cm_ab_rd_par_$TGT$ = {
 				owner ?= scope:cm_country
 				modifier:road_building_blocked = no
@@ -692,6 +693,7 @@ cm_ab_rd_probe = {
 	set_variable = { name = cm_ab_rd_p3 value = 0 }
 	set_variable = { name = cm_ab_rd_p3r value = 0 }
 	set_variable = { name = cm_ab_rd_pf value = 0 }
+	set_variable = { name = cm_ab_rd_ps value = 0 }
 	every_owned_location = {
 		if = {
 			limit = { has_variable = cm_ab_rd_score_1 }
@@ -715,6 +717,19 @@ cm_ab_rd_probe = {
 				scope:cm_country = { change_variable = { name = cm_ab_rd_p3r add = 1 } }
 			}
 		}
+		# A planned corridor the drain will pass over, which a count of 0 orders cannot tell apart
+		# from an empty plan or a spent pool.
+		if = {
+			limit = {
+				OR = {
+					has_variable = cm_ab_rd_score_1
+					has_variable = cm_ab_rd_score_2
+					has_variable = cm_ab_rd_score_3
+				}
+				cm_market_has_construction_goods_for_road = no
+			}
+			scope:cm_country = { change_variable = { name = cm_ab_rd_ps add = 1 } }
+		}
 	}
 	if = {
 		limit = { has_variable_list = cm_ab_rd_building }
@@ -729,6 +744,7 @@ cm_ab_rd_probe = {
 	cmf_log_value = { action = cm_log_rd_p_cap value = var:cm_ab_rd_p3 }
 	cmf_log_value = { action = cm_log_rd_p_cap_ring value = var:cm_ab_rd_p3r }
 	cmf_log_value = { action = cm_log_rd_p_flight value = var:cm_ab_rd_pf }
+	cmf_log_value = { action = cm_log_rd_p_short value = var:cm_ab_rd_ps }
 	if = {
 		limit = { has_variable = cm_ab_pool_roads }
 		cmf_log_decimal_value = { action = cm_log_rd_p_pool value = var:cm_ab_pool_roads }
@@ -772,6 +788,7 @@ cm_ab_rd_probe = {
 	remove_variable = cm_ab_rd_p3
 	remove_variable = cm_ab_rd_p3r
 	remove_variable = cm_ab_rd_pf
+	remove_variable = cm_ab_rd_ps
 }
 
 # Root is the country. Drops the plan on a tag switch and when the master toggle goes off.
