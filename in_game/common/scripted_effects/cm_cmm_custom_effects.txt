@@ -71,11 +71,9 @@ cm_town_rights_apply_free_grants = {
 # push arm behind a comparison against the stored value.
 # Scope: country
 cm_apply_gold_reserve_change = {
-	# A macro never resolves inside a quoted lookup, so the key goes through a local.
-	set_local_variable = { name = cm_gold_tmp_flag value = flag:cm__minimum_gold }
 	if = {
 		limit = {
-			NOT = { "variable_map(cmm|local_var:cm_gold_tmp_flag)" = var:cm_minimum_gold }
+			NOT = { "variable_map(cmm|flag:cm__minimum_gold)" = var:cm_minimum_gold }
 		}
 		cmm_sync_setting_alias = {
 			setting = cm__minimum_gold
@@ -167,8 +165,7 @@ cm_save_expand_thresholds = {
 	set_variable = { name = cm_expand_threshold_buildings_m$m$ value = 0 }
 	if = {
 		limit = { is_key_in_variable_map = { name = cmm target = flag:cm__priority_list_i1_f1 } }
-		set_local_variable = { name = cm_tmp_field_key value = flag:cm__priority_list_i1_f1 }
-		set_local_variable = { name = cm_tmp_read value = "variable_map(cmm|local_var:cm_tmp_field_key)" }
+		set_local_variable = { name = cm_tmp_read value = "variable_map(cmm|flag:cm__priority_list_i1_f1)" }
 		if = {
 			limit = {
 				trigger_if = {
@@ -185,8 +182,7 @@ cm_save_expand_thresholds = {
 	set_variable = { name = cm_expand_threshold_rgos_m$m$ value = 0 }
 	if = {
 		limit = { is_key_in_variable_map = { name = cmm target = flag:cm__priority_list_i2_f1 } }
-		set_local_variable = { name = cm_tmp_field_key value = flag:cm__priority_list_i2_f1 }
-		set_local_variable = { name = cm_tmp_read2 value = "variable_map(cmm|local_var:cm_tmp_field_key)" }
+		set_local_variable = { name = cm_tmp_read2 value = "variable_map(cmm|flag:cm__priority_list_i2_f1)" }
 		if = {
 			limit = {
 				trigger_if = {
@@ -199,12 +195,6 @@ cm_save_expand_thresholds = {
 			}
 			set_variable = { name = cm_expand_threshold_rgos_m$m$ value = local_var:cm_tmp_read2 }
 		}
-	}
-
-	# Benign warning suppression
-	if = {
-		limit = { always = no }
-		cmf_suppress = { v = cm_tmp_field_key }
 	}
 }
 
@@ -246,8 +236,7 @@ cm_copy_expand_thresholds = {
 # Restore 0 in the live threshold column where an entry is unreadable.
 # Scope: country
 cm_repair_expand_thresholds = {
-	set_local_variable = { name = cm_tmp_field_key value = flag:cm__priority_list_i1_f1 }
-	set_local_variable = { name = cm_tmp_read value = "variable_map(cmm|local_var:cm_tmp_field_key)" }
+	set_local_variable = { name = cm_tmp_read value = "variable_map(cmm|flag:cm__priority_list_i1_f1)" }
 	if = {
 		limit = {
 			trigger_if = {
@@ -261,8 +250,7 @@ cm_repair_expand_thresholds = {
 		remove_from_variable_map = { name = cmm key = flag:cm__priority_list_i1_f1 }
 		add_to_variable_map = { name = cmm key = flag:cm__priority_list_i1_f1 value = 0 }
 	}
-	set_local_variable = { name = cm_tmp_field_key value = flag:cm__priority_list_i2_f1 }
-	set_local_variable = { name = cm_tmp_read2 value = "variable_map(cmm|local_var:cm_tmp_field_key)" }
+	set_local_variable = { name = cm_tmp_read2 value = "variable_map(cmm|flag:cm__priority_list_i2_f1)" }
 	if = {
 		limit = {
 			trigger_if = {
