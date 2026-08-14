@@ -3,6 +3,8 @@
 # Markets are the slice unit because they partition the country's locations.
 # Markets are stored as variable-map keys rather than list targets, the shape the food
 # histograms already use.
+# The Custom roster's subject branch runs a second rotation at the bottom of this file, over
+# the markets the country's subjects hold and the country itself is not present in.
 
 # Market-locations admitted per cycle. A country at or under this size takes every market
 # every cycle, which is what it did before the slice existed.
@@ -135,6 +137,85 @@ cm_ab_slice_admit = {
 	}
 }
 
+# Market-locations the subject rotation admits per cycle. Its own allowance rather than a share
+# of the owned one, which spends its whole budget every cycle.
+@cm_ab_sub_slice_location_budget = 300
+
+# Picks this cycle's markets for the Custom roster's subject branch: the first market the
+# rotation still owes a visit, whatever its size, then whatever else fits the budget behind it.
+# They go in a list rather than the map the owned slice keeps, the only thing that reads them
+# being a walk. Root is the country.
+cm_ab_sub_pick_slice = {
+	clear_variable_list = cm_ab_sub_slice_now
+	save_temporary_scope_as = cm_ab_slice_country
+	cm_ab_sub_build_markets = yes
+	if = {
+		limit = { NOT = { cm_ab_sub_slice_has_unseen = yes } }
+		clear_variable_map = cm_ab_sub_slice_seen
+	}
+	set_local_variable = { name = cm_ab_sub_slice_room value = @cm_ab_sub_slice_location_budget }
+	# The take-one test is an inner if, not the iterator's limit, because a limit does not see
+	# the increments its own body makes.
+	set_local_variable = { name = cm_ab_sub_slice_rot value = 0 }
+	every_in_list = {
+		variable = cm_ab_sub_mkts
+		if = {
+			limit = {
+				local_var:cm_ab_sub_slice_rot = 0
+				cm_ab_sub_market_unseen_this_rotation = yes
+			}
+			set_local_variable = { name = cm_ab_sub_slice_rot value = 1 }
+			cm_ab_sub_slice_admit = yes
+		}
+	}
+	every_in_list = {
+		variable = cm_ab_sub_mkts
+		if = {
+			limit = {
+				cm_ab_sub_market_unseen_this_rotation = yes
+				local_var:cm_ab_sub_slice_room >= { value = market_location_count }
+			}
+			cm_ab_sub_slice_admit = yes
+		}
+	}
+	clear_variable_list = cm_ab_sub_mkts
+}
+
+# Every market a subject or a subject's subject holds a location in, less the markets the country
+# is present in: those ride the owned rotation, whose walk sorts subject locations out alongside
+# its own. A variable list holds each target once, so two subjects sharing a market collapse into
+# one entry. Root is the country, expects scope:cm_ab_slice_country.
+cm_ab_sub_build_markets = {
+	clear_variable_list = cm_ab_sub_mkts
+	clear_variable_list = cm_ab_sub_skip_mkts
+	every_market_present_in_country = {
+		save_scope_as = cm_ab_slice_mkt
+		scope:cm_ab_slice_country = { add_to_variable_list = { name = cm_ab_sub_skip_mkts target = scope:cm_ab_slice_mkt } }
+	}
+	every_subject_or_below = {
+		every_market_present_in_country = {
+			save_scope_as = cm_ab_slice_mkt
+			scope:cm_ab_slice_country = {
+				if = {
+					limit = { NOT = { is_target_in_variable_list = { name = cm_ab_sub_skip_mkts target = scope:cm_ab_slice_mkt } } }
+					add_to_variable_list = { name = cm_ab_sub_mkts target = scope:cm_ab_slice_mkt }
+				}
+			}
+		}
+	}
+	clear_variable_list = cm_ab_sub_skip_mkts
+}
+
+# Root is the market, expects scope:cm_ab_slice_country and local_var:cm_ab_sub_slice_room.
+cm_ab_sub_slice_admit = {
+	save_scope_as = cm_ab_slice_mkt
+	change_local_variable = { name = cm_ab_sub_slice_room subtract = market_location_count }
+	scope:cm_ab_slice_country = {
+		add_to_variable_list = { name = cm_ab_sub_slice_now target = scope:cm_ab_slice_mkt }
+		add_to_variable_map = { name = cm_ab_sub_slice_seen key = scope:cm_ab_slice_mkt value = 1 }
+	}
+}
+
 # A new tag's markets are different, so the rotation restarts rather than carrying over.
 # Root is the country.
 cm_ab_clear_slice_state = {
@@ -142,6 +223,8 @@ cm_ab_clear_slice_state = {
 	clear_variable_map = cm_ab_slice_seen
 	clear_variable_list = cm_ab_slice_prio
 	remove_variable = cm_ab_slice_cursor
+	clear_variable_list = cm_ab_sub_slice_now
+	clear_variable_map = cm_ab_sub_slice_seen
 	clear_variable_map = cm_ab_prod_gd_anchor
 	clear_variable_map = cm_ab_prod_gd_loc
 	clear_variable_map = cm_ab_prod_gd_bt

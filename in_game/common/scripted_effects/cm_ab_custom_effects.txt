@@ -4,15 +4,25 @@
 # player's own roster (auto_build_list, cm_cmm_effects.txt). Each of the four is a row of the
 # ab_custom settings list.
 # The market-center block and every roster row walk one shared candidate list, built once per cycle
-# from the markets in the slice (cm_ab_slice_effects.txt); the capital set, the control buildings
-# and the roster's subject branch reach their locations their own way. Bailiffs survey once every
-# four years into a pick list that stages monthly until it empties.
+# from the markets in the slice (cm_ab_slice_effects.txt); the capital set and the control buildings
+# reach their locations their own way. The roster's subject branch takes its locations from that
+# same walk and from a rotation of its own over the markets only the subjects hold. Bailiffs survey
+# once every four years into a pick list that stages monthly until it empties.
 
 # Four years, the bailiff survey cadence.
 @cm_ab_bailiff_days = 1460
 
 # Root is the country, scope:cm_country set.
 cm_ab_run_custom = {
+	# Ahead of the owned builder, which sorts subject locations out of the same market walk.
+	if = {
+		limit = { cm_ab_custom_subjects_wanted = yes }
+		set_local_variable = { name = cm_ab_custom_subj_on value = 1 }
+		cm_ab_sub_pick_slice = yes
+	}
+	else = {
+		set_local_variable = { name = cm_ab_custom_subj_on value = 0 }
+	}
 	if = {
 		limit = {
 			OR = {
@@ -21,6 +31,10 @@ cm_ab_run_custom = {
 			}
 		}
 		cm_ab_custom_build_candidates = yes
+	}
+	if = {
+		limit = { local_var:cm_ab_custom_subj_on = 1 }
+		cm_ab_custom_build_subject_candidates = yes
 	}
 	if = {
 		limit = {
@@ -102,7 +116,8 @@ cm_ab_run_custom = {
 # whole slice rather than per market, because cm_ab_stage_build_candidate appends into the shared
 # cm_ab_b_locations and the insertion-order drains read whatever order the appends were made in.
 # The proximity gate is deliberately left off, since a type exempt from it needs the locations it
-# would remove. Root is the country, scope:cm_country set.
+# would remove. The same walk sorts subject-owned locations into the subject list, so a market both
+# sides want is visited once. Root is the country, scope:cm_country set.
 cm_ab_custom_build_candidates = {
 	clear_variable_list = cm_ab_custom_raw
 	clear_variable_list = cm_ab_custom_cands
@@ -111,12 +126,26 @@ cm_ab_custom_build_candidates = {
 		# The market iterators carry no ownership filter of their own, and a shared market holds
 		# other countries' locations.
 		every_location_in_market = {
-			limit = {
-				owner ?= scope:cm_country
-				NOT = { integration_level = conquered }
+			if = {
+				limit = {
+					owner ?= scope:cm_country
+					NOT = { integration_level = conquered }
+				}
+				save_scope_as = cm_ab_custom_cand
+				scope:cm_country = { add_to_variable_list = { name = cm_ab_custom_raw target = scope:cm_ab_custom_cand } }
 			}
-			save_scope_as = cm_ab_custom_cand
-			scope:cm_country = { add_to_variable_list = { name = cm_ab_custom_raw target = scope:cm_ab_custom_cand } }
+			# The location-scope form rather than a scope block on owner, which a market's
+			# unowned locations would follow into nothing.
+			else_if = {
+				limit = {
+					local_var:cm_ab_custom_subj_on = 1
+					is_owned_or_owned_by_subjects_or_below_of = scope:cm_country
+					NOT = { integration_level = conquered }
+				}
+				save_scope_as = cm_ab_custom_cand
+				cm_pop_track = yes
+				scope:cm_country = { add_to_variable_list = { name = cm_ab_custom_subj_cands target = scope:cm_ab_custom_cand } }
+			}
 		}
 	}
 	ordered_in_list = {
@@ -131,18 +160,24 @@ cm_ab_custom_build_candidates = {
 	clear_variable_list = cm_ab_custom_raw
 }
 
-# This cycle's subject-side candidates, for the roster rows that opted into subjects.
-# every_market_present_in_country reports exactly the markets a country's OWN locations sit in
-# (cmf-engine-test 194-198), so cm_ab_slice_now cannot hold a market only a subject holds and
-# these are not sliced against it. Root is the country, scope:cm_country set.
+# The rest of this cycle's subject-side candidates, from the markets the subject rotation admitted,
+# which are by construction the ones the owned walk above never visits. It appends rather than
+# clearing, that walk having already filled its share of the list.
+# Root is the country, scope:cm_country set.
 cm_ab_custom_build_subject_candidates = {
-	clear_variable_list = cm_ab_custom_subj_cands
-	every_subject_or_below = {
-		every_owned_location = {
-			limit = { NOT = { integration_level = conquered } }
-			save_scope_as = cm_ab_custom_cand
-			cm_pop_track = yes
-			scope:cm_country = { add_to_variable_list = { name = cm_ab_custom_subj_cands target = scope:cm_ab_custom_cand } }
+	if = {
+		limit = { has_variable_list = cm_ab_sub_slice_now }
+		every_in_list = {
+			variable = cm_ab_sub_slice_now
+			every_location_in_market = {
+				limit = {
+					is_owned_or_owned_by_subjects_or_below_of = scope:cm_country
+					NOT = { integration_level = conquered }
+				}
+				save_scope_as = cm_ab_custom_cand
+				cm_pop_track = yes
+				scope:cm_country = { add_to_variable_list = { name = cm_ab_custom_subj_cands target = scope:cm_ab_custom_cand } }
+			}
 		}
 	}
 }
@@ -187,13 +222,6 @@ cm_ab_stage_capital_type_here = {
 cm_ab_stage_custom_roster = {
 	if = {
 		limit = { has_variable_list = cm_ab_building_types_list }
-		if = {
-			limit = {
-				has_variable_list = cm_ab_building_types_in_subjects_enabled
-				variable_list_size = { name = cm_ab_building_types_in_subjects_enabled value >= 1 }
-			}
-			cm_ab_custom_build_subject_candidates = yes
-		}
 		every_in_list = {
 			variable = cm_ab_building_types_list
 			save_scope_as = cm_building_type

@@ -44,6 +44,34 @@ cm_location_market_in_ab_slice = {
 	market = { cm_ab_market_in_slice = yes }
 }
 
+# The subject rotation's twins. Root is the market, expects scope:cm_ab_slice_country.
+cm_ab_sub_market_unseen_this_rotation = {
+	save_temporary_scope_as = cm_ab_slice_test_mkt
+	scope:cm_ab_slice_country = {
+		OR = {
+			NOT = { has_variable_map = cm_ab_sub_slice_seen }
+			NOT = { is_key_in_variable_map = { name = cm_ab_sub_slice_seen target = scope:cm_ab_slice_test_mkt } }
+		}
+	}
+}
+
+# Root is the country, expects the cm_ab_sub_mkts list built for this cycle. The owned twin asks
+# every_market_present_in_country, which has no subject-union form.
+cm_ab_sub_slice_has_unseen = {
+	save_temporary_scope_as = cm_ab_slice_country
+	any_in_list = {
+		variable = cm_ab_sub_mkts
+		cm_ab_sub_market_unseen_this_rotation = yes
+	}
+}
+
+# True when some roster row builds in subject locations. Root is the country.
+cm_ab_custom_subjects_wanted = {
+	exists = var:cm_ab_custom_roster
+	has_variable_list = cm_ab_building_types_in_subjects_enabled
+	variable_list_size = { name = cm_ab_building_types_in_subjects_enabled value >= 1 }
+}
+
 # Root is the location, expects scope:cm_country. A location no proximity source reaches carries
 # no control, so it earns almost nothing from anything built there.
 cm_ab_location_has_proximity = {
