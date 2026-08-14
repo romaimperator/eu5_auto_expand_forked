@@ -1,0 +1,242 @@
+﻿# Market slice: one cycle covers a rotating subset of the country's markets instead of all of
+# them, so a very large nation's staging cost matches a medium one's. Markets are the slice unit
+# because they partition the country's locations.
+# Markets are stored as variable-map keys rather than list targets, the shape the food
+# histograms already use.
+# Every feature that stages per location reads cm_slice_locations, the admitted markets' owned
+# unconquered locations, and applies its own ordering to it.
+# The Custom roster's subject branch runs a second rotation at the bottom of this file, over
+# the markets the country's subjects hold and the country itself is not present in.
+
+# Market-locations admitted per cycle. A country at or under this size takes every market
+# every cycle, which is what it did before the slice existed.
+@cm_slice_location_budget = 300
+
+# Picks this cycle's markets. A cursor walks the capital's market, then each market holding a
+# governor, then one market from the rotation, and repeats, so the priority markets come round
+# again after every single other market rather than once per full rotation. Root is the country.
+cm_pick_slice = {
+	clear_variable_map = cm_slice_now
+	clear_variable_list = cm_slice_locations
+	# Temporary because cm_slice_has_unseen saves the same name, and a temporary target
+	# over a permanent one of the same name is a logged warning.
+	save_temporary_scope_as = cm_slice_country
+	if = {
+		limit = { NOT = { cm_slice_has_unseen = yes } }
+		clear_variable_map = cm_slice_seen
+	}
+	cm_slice_build_priority = yes
+	set_local_variable = { name = cm_slice_np value = 0 }
+	every_in_list = {
+		variable = cm_slice_prio
+		change_local_variable = { name = cm_slice_np add = 1 }
+	}
+	if = {
+		limit = { NOT = { has_variable = cm_slice_cursor } }
+		set_variable = { name = cm_slice_cursor value = 0 }
+	}
+	# The rotation slot sits one past the priority markets, and losing a governor can leave
+	# the cursor beyond the shortened sequence.
+	if = {
+		limit = { var:cm_slice_cursor > local_var:cm_slice_np }
+		set_variable = { name = cm_slice_cursor value = 0 }
+	}
+	set_local_variable = { name = cm_slice_room value = @cm_slice_location_budget }
+	if = {
+		limit = { var:cm_slice_cursor < local_var:cm_slice_np }
+		cm_slice_take_priority = yes
+	}
+	else = {
+		cm_slice_take_rotation = yes
+	}
+	change_variable = { name = cm_slice_cursor add = 1 }
+	cm_slice_fill_budget = yes
+}
+
+# The capital's market followed by each distinct market holding a governor. A variable list
+# holds each target once, so a governor sharing the capital's market collapses into it.
+# Root is the country, expects scope:cm_slice_country.
+cm_slice_build_priority = {
+	clear_variable_list = cm_slice_prio
+	if = {
+		limit = { exists = capital }
+		capital.market = {
+			save_scope_as = cm_slice_mkt
+			scope:cm_slice_country = { add_to_variable_list = { name = cm_slice_prio target = scope:cm_slice_mkt } }
+		}
+	}
+	every_owned_location = {
+		limit = { cm_location_has_governor = yes }
+		market = {
+			save_scope_as = cm_slice_mkt
+			scope:cm_slice_country = { add_to_variable_list = { name = cm_slice_prio target = scope:cm_slice_mkt } }
+		}
+	}
+}
+
+# Admits the priority market the cursor is on. The index test is an inner if, not the
+# iterator's limit, because a limit does not see the increments its own body makes.
+# Root is the country, expects scope:cm_slice_country and the cm_slice_* locals.
+cm_slice_take_priority = {
+	set_local_variable = { name = cm_slice_i value = 0 }
+	every_in_list = {
+		variable = cm_slice_prio
+		if = {
+			limit = { local_var:cm_slice_i = scope:cm_slice_country.var:cm_slice_cursor }
+			cm_slice_admit = yes
+		}
+		change_local_variable = { name = cm_slice_i add = 1 }
+	}
+}
+
+# Admits the next market the rotation still owes a visit.
+# Root is the country, expects scope:cm_slice_country and the cm_slice_* locals.
+cm_slice_take_rotation = {
+	set_local_variable = { name = cm_slice_rot value = 0 }
+	every_market_present_in_country = {
+		if = {
+			limit = {
+				local_var:cm_slice_rot = 0
+				cm_market_unseen_this_rotation = yes
+			}
+			set_local_variable = { name = cm_slice_rot value = 1 }
+			cm_slice_admit = yes
+		}
+	}
+}
+
+# Spends whatever the cursor's market left of the location budget, which is what keeps a
+# country small enough to fit inside it staging every market every cycle.
+# Root is the country, expects scope:cm_slice_country and the cm_slice_* locals.
+cm_slice_fill_budget = {
+	every_market_present_in_country = {
+		if = {
+			limit = {
+				cm_market_unseen_this_rotation = yes
+				local_var:cm_slice_room >= { value = market_location_count }
+			}
+			cm_slice_admit = yes
+		}
+	}
+}
+
+# Root is the market, expects scope:cm_slice_country and local_var:cm_slice_room.
+cm_slice_admit = {
+	save_scope_as = cm_slice_mkt
+	if = {
+		limit = {
+			scope:cm_slice_country = {
+				NOT = { is_key_in_variable_map = { name = cm_slice_now target = scope:cm_slice_mkt } }
+			}
+		}
+		change_local_variable = { name = cm_slice_room subtract = market_location_count }
+		scope:cm_slice_country = {
+			add_to_variable_map = { name = cm_slice_now key = scope:cm_slice_mkt value = 1 }
+			add_to_variable_map = { name = cm_slice_seen key = scope:cm_slice_mkt value = 1 }
+			# This cycle re-scores the market, so what its last visit recorded goes now rather than
+			# at the rotation boundary.
+			cm_ab_prod_drop_market_memory = yes
+		}
+		# Collected as the market is admitted rather than by a second market walk. Every staging
+		# sweep reads this list and orders it its own way, so nothing here decides an order.
+		every_location_in_market = {
+			limit = {
+				owner ?= scope:cm_slice_country
+				NOT = { integration_level = conquered }
+			}
+			save_scope_as = cm_slice_loc
+			scope:cm_slice_country = { add_to_variable_list = { name = cm_slice_locations target = scope:cm_slice_loc } }
+		}
+	}
+}
+
+# Market-locations the subject rotation admits per cycle. Its own allowance rather than a share
+# of the owned one, which spends its whole budget every cycle.
+@cm_sub_slice_location_budget = 300
+
+# Picks this cycle's markets for the Custom roster's subject branch: the first market the
+# rotation still owes a visit, whatever its size, then whatever else fits the budget behind it.
+# They go in a list rather than the map the owned slice keeps, the only thing that reads them
+# being a walk. Root is the country.
+cm_sub_pick_slice = {
+	clear_variable_list = cm_sub_slice_now
+	save_temporary_scope_as = cm_slice_country
+	cm_sub_build_markets = yes
+	if = {
+		limit = { NOT = { cm_sub_slice_has_unseen = yes } }
+		clear_variable_map = cm_sub_slice_seen
+	}
+	set_local_variable = { name = cm_sub_slice_room value = @cm_sub_slice_location_budget }
+	# The take-one test is an inner if, not the iterator's limit, because a limit does not see
+	# the increments its own body makes.
+	set_local_variable = { name = cm_sub_slice_rot value = 0 }
+	every_in_list = {
+		variable = cm_sub_mkts
+		if = {
+			limit = {
+				local_var:cm_sub_slice_rot = 0
+				cm_sub_market_unseen_this_rotation = yes
+			}
+			set_local_variable = { name = cm_sub_slice_rot value = 1 }
+			cm_sub_slice_admit = yes
+		}
+	}
+	every_in_list = {
+		variable = cm_sub_mkts
+		if = {
+			limit = {
+				cm_sub_market_unseen_this_rotation = yes
+				local_var:cm_sub_slice_room >= { value = market_location_count }
+			}
+			cm_sub_slice_admit = yes
+		}
+	}
+	clear_variable_list = cm_sub_mkts
+}
+
+# Every market a subject or a subject's subject holds a location in, less the markets the country
+# is present in: those ride the owned rotation, whose walk sorts subject locations out alongside
+# its own. A variable list holds each target once, so two subjects sharing a market collapse into
+# one entry. Root is the country, expects scope:cm_slice_country.
+cm_sub_build_markets = {
+	clear_variable_list = cm_sub_mkts
+	clear_variable_list = cm_sub_skip_mkts
+	every_market_present_in_country = {
+		save_scope_as = cm_slice_mkt
+		scope:cm_slice_country = { add_to_variable_list = { name = cm_sub_skip_mkts target = scope:cm_slice_mkt } }
+	}
+	every_subject_or_below = {
+		every_market_present_in_country = {
+			save_scope_as = cm_slice_mkt
+			scope:cm_slice_country = {
+				if = {
+					limit = { NOT = { is_target_in_variable_list = { name = cm_sub_skip_mkts target = scope:cm_slice_mkt } } }
+					add_to_variable_list = { name = cm_sub_mkts target = scope:cm_slice_mkt }
+				}
+			}
+		}
+	}
+	clear_variable_list = cm_sub_skip_mkts
+}
+
+# Root is the market, expects scope:cm_slice_country and local_var:cm_sub_slice_room.
+cm_sub_slice_admit = {
+	save_scope_as = cm_slice_mkt
+	change_local_variable = { name = cm_sub_slice_room subtract = market_location_count }
+	scope:cm_slice_country = {
+		add_to_variable_list = { name = cm_sub_slice_now target = scope:cm_slice_mkt }
+		add_to_variable_map = { name = cm_sub_slice_seen key = scope:cm_slice_mkt value = 1 }
+	}
+}
+
+# A new tag's markets are different, so the rotation restarts rather than carrying over.
+# Root is the country.
+cm_clear_slice_state = {
+	clear_variable_map = cm_slice_now
+	clear_variable_map = cm_slice_seen
+	clear_variable_list = cm_slice_prio
+	clear_variable_list = cm_slice_locations
+	remove_variable = cm_slice_cursor
+	clear_variable_list = cm_sub_slice_now
+	clear_variable_map = cm_sub_slice_seen
+}

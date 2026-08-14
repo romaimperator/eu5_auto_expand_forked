@@ -1,0 +1,77 @@
+﻿# Market slice membership and rotation state (cm_slice_effects.txt).
+
+# Root is the market, expects scope:cm_slice_country.
+cm_market_unseen_this_rotation = {
+	save_temporary_scope_as = cm_slice_test_mkt
+	scope:cm_slice_country = {
+		OR = {
+			NOT = { has_variable_map = cm_slice_seen }
+			NOT = { is_key_in_variable_map = { name = cm_slice_seen target = scope:cm_slice_test_mkt } }
+		}
+	}
+}
+
+# True while the current rotation still has a market it has not covered. Root is the country.
+cm_slice_has_unseen = {
+	save_temporary_scope_as = cm_slice_country
+	any_market_present_in_country = {
+		cm_market_unseen_this_rotation = yes
+	}
+}
+
+# True for a market this cycle staged and will drain. Root is the market, expects
+# scope:cm_country.
+cm_market_in_slice = {
+	save_temporary_scope_as = cm_slice_test_mkt
+	scope:cm_country = {
+		has_variable_map = cm_slice_now
+		is_key_in_variable_map = { name = cm_slice_now target = scope:cm_slice_test_mkt }
+	}
+}
+
+# Slice membership for a sweep that iterates locations rather than markets. Root is the
+# location, expects scope:cm_country. Cheap enough to lead a limit, so the engine
+# buildability and pop gates behind it never run for a location outside the slice.
+cm_location_market_in_slice = {
+	market = { cm_market_in_slice = yes }
+}
+
+# True when something this cycle reads the slice, which is what decides whether the pick runs.
+# Root is the country.
+cm_slice_is_wanted = {
+	OR = {
+		cm_ab_master_active = yes
+		AND = {
+			OR = { cm_should_pause_auto_expand = no  cm_dbg_solo_active = yes }
+			OR = {
+				AND = {
+					has_variable_list = cm_priority_features_enabled
+					variable_list_size = { name = cm_priority_features_enabled value >= 1 }
+				}
+				exists = var:cm_auto_urbanize_enabled
+				exists = var:cm_auto_grant_town_rights
+			}
+		}
+	}
+}
+
+# The subject rotation's twins. Root is the market, expects scope:cm_slice_country.
+cm_sub_market_unseen_this_rotation = {
+	save_temporary_scope_as = cm_slice_test_mkt
+	scope:cm_slice_country = {
+		OR = {
+			NOT = { has_variable_map = cm_sub_slice_seen }
+			NOT = { is_key_in_variable_map = { name = cm_sub_slice_seen target = scope:cm_slice_test_mkt } }
+		}
+	}
+}
+
+# Root is the country, expects the cm_sub_mkts list built for this cycle. The owned twin asks
+# every_market_present_in_country, which has no subject-union form.
+cm_sub_slice_has_unseen = {
+	save_temporary_scope_as = cm_slice_country
+	any_in_list = {
+		variable = cm_sub_mkts
+		cm_sub_market_unseen_this_rotation = yes
+	}
+}

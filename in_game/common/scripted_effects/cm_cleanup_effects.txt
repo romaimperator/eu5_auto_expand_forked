@@ -4,67 +4,138 @@
 # and reopening are GUI-only (ToggleBuilding), so both queue into cm_cu_toggle and fire from
 # cm_construct_queue_window.gui; destroying is the script effect destroy_building and runs
 # inline.
+#
+# A market's survey and close passes walk every owned building, so the year's markets are
+# stepped a few a month rather than all in one tick. cm_cu_seen holds each market to one visit
+# a cycle, so spreading adds nothing to the year's work, and cm_cu_cycle holds the next cycle
+# to a year after this one opened rather than a year after it finished.
+
+# Markets stepped per monthly pulse.
+@cm_cu_markets_per_pulse = 2
 
 # Root is the country.
-cm_cu_yearly_pass = {
+cm_cu_open_cycle = {
+	set_variable = { name = cm_cu_cycle_open value = 1 }
+	set_variable = { name = cm_cu_cycle value = 1 days = 365 }
+	clear_variable_map = cm_cu_seen
+	cm_dbg_log = { cat = cleanup action = cm_log_cu_run }
+	if = {
+		limit = { exists = var:cm_cu_destroy }
+		cm_cu_purge_pass = yes
+	}
 	if = {
 		limit = {
-			OR = {
-				exists = var:cm_cu_close_open
-				exists = var:cm_cu_destroy
-			}
-			cm_should_pause_auto_expand = no
+			exists = var:cm_cu_destroy
+			exists = var:cm_cu_auto_food
+			# Without the food roster every building reads as non-food.
+			has_variable_list = cm_auto_food_rgo_types_list
 		}
+		cm_cu_auto_food_pass = yes
+	}
+}
+
+# A new tag's markets are different, so the cycle restarts rather than carrying over.
+# Root is the country.
+cm_cu_clear_cycle_state = {
+	remove_variable = cm_cu_cycle_open
+	remove_variable = cm_cu_cycle
+	clear_variable_map = cm_cu_seen
+}
+
+# One market's survey, closes and reopens. Root is the country, expects scope:cm_ab_market.
+cm_cu_market_step = {
+	cm_cu_survey_market = yes
+	cm_cu_close_pass = yes
+	if = {
+		limit = { exists = var:cm_cu_close_open }
+		cm_cu_reopen_pass = yes
+	}
+}
+
+# Root is the country.
+cm_cu_close_cycle = {
+	remove_variable = cm_cu_cycle_open
+	if = {
+		limit = { exists = var:cm_cu_destroy }
+		cm_cu_delete_closed_pass = yes
+	}
+}
+
+# Hands this pulse's closes and reopens to the GUI driver. Root is the country.
+cm_cu_arm_toggles = {
+	if = {
+		limit = {
+			has_variable_list = cm_cu_toggle
+			variable_list_size = { name = cm_cu_toggle value >= 1 }
+		}
+		set_variable = { name = cm_cu_fire value = 1 }
+	}
+}
+
+# Steps this cycle's next few markets, opening a cycle once the last one is a year behind and
+# closing it once every market has been visited. Root is the country.
+cm_cu_monthly_pass = {
+	if = {
+		limit = { cm_cu_can_run = yes }
 		save_scope_as = cm_country
-		cm_dbg_log = { cat = cleanup action = cm_log_cu_run }
-		clear_variable_list = cm_cu_toggle
-		if = {
-			limit = { exists = var:cm_cu_destroy }
-			cm_cu_purge_pass = yes
-		}
 		if = {
 			limit = {
-				exists = var:cm_cu_destroy
-				exists = var:cm_cu_auto_food
-				# Without the food roster every building reads as non-food.
-				has_variable_list = cm_auto_food_rgo_types_list
+				NOT = { exists = var:cm_cu_cycle_open }
+				NOT = { exists = var:cm_cu_cycle }
 			}
-			cm_cu_auto_food_pass = yes
+			cm_cu_open_cycle = yes
 		}
-		cm_cu_validate_tracking = yes
-		every_market_present_in_country = {
-			save_scope_as = cm_ab_market
-			scope:cm_country = {
-				cm_cu_survey_market = yes
-				cm_cu_close_pass = yes
+		if = {
+			limit = { exists = var:cm_cu_cycle_open }
+			# Each pulse's batch fires on its own rather than waiting out the cycle, and the
+			# tracking behind the survey counts is revalidated with it.
+			clear_variable_list = cm_cu_toggle
+			cm_cu_validate_tracking = yes
+			set_local_variable = { name = cm_cu_room value = @cm_cu_markets_per_pulse }
+			every_market_present_in_country = {
+				# The room test is an inner if, not the iterator's limit, because a limit does
+				# not see the decrements its own body makes.
 				if = {
-					limit = { exists = var:cm_cu_close_open }
-					cm_cu_reopen_pass = yes
+					limit = {
+						local_var:cm_cu_room > 0
+						cm_cu_market_unseen_this_cycle = yes
+					}
+					change_local_variable = { name = cm_cu_room subtract = 1 }
+					save_scope_as = cm_ab_market
+					scope:cm_country = {
+						add_to_variable_map = { name = cm_cu_seen key = scope:cm_ab_market value = 1 }
+						cm_cu_market_step = yes
+					}
 				}
 			}
-		}
-		if = {
-			limit = { exists = var:cm_cu_destroy }
-			cm_cu_delete_closed_pass = yes
-		}
-		if = {
-			limit = {
-				has_variable_list = cm_cu_toggle
-				variable_list_size = { name = cm_cu_toggle value >= 1 }
+			if = {
+				limit = { NOT = { cm_cu_cycle_has_unseen = yes } }
+				cm_cu_close_cycle = yes
 			}
-			set_variable = { name = cm_cu_fire value = 1 }
+			cm_cu_arm_toggles = yes
 		}
 	}
 }
 
-# The Run Building Cleanup button.
+# Every market in one execution, which is what the Run Building Cleanup button does. It opens a
+# fresh cycle, so a part-stepped one is superseded rather than resumed.
 # Root is the country.
-cm_cu_run_now = {
+cm_cu_full_pass = {
 	if = {
-		# With a batch pending the gate is already true, so the driver makes no second
-		# hidden->shown edge and the rebuilt list would never fire.
-		limit = { NOT = { exists = var:cm_cu_fire } }
-		cm_cu_yearly_pass = yes
+		limit = { cm_cu_can_run = yes }
+		save_scope_as = cm_country
+		cm_cu_open_cycle = yes
+		clear_variable_list = cm_cu_toggle
+		cm_cu_validate_tracking = yes
+		every_market_present_in_country = {
+			save_scope_as = cm_ab_market
+			scope:cm_country = {
+				add_to_variable_map = { name = cm_cu_seen key = scope:cm_ab_market value = 1 }
+				cm_cu_market_step = yes
+			}
+		}
+		cm_cu_close_cycle = yes
+		cm_cu_arm_toggles = yes
 	}
 }
 

@@ -77,6 +77,23 @@ cm_run_construction_cycle = {
 		set_variable = { name = cm_q_stall_rounds value = 0 }
 		set_variable = { name = cm_q_rescans value = 0 }
 		cm_q_reset_market_committed_for_cycle = yes
+		# This cycle's markets, picked before anything stages: every sweep below walks the
+		# cm_slice_locations the pick builds. A Run Now reuses the slice it finds, so the
+		# rotation moves on a monthly cycle or on the Debug tab's Rotate Markets button. A
+		# first run with nothing picked yet still takes a slice.
+		if = {
+			limit = {
+				cm_slice_is_wanted = yes
+				NOT = {
+					AND = {
+						cm_dbg_solo_active = yes
+						has_variable_map = cm_slice_now
+						variable_map_size = { name = cm_slice_now value >= 1 }
+					}
+				}
+			}
+			cm_pick_slice = yes
+		}
 		if = { limit = { OR = { cm_should_pause_auto_expand = no  cm_dbg_solo_active = yes } }
 			if = { limit = { has_variable_list = cm_priority_features_list }
 				every_in_list = {
@@ -101,21 +118,6 @@ cm_run_construction_cycle = {
 			limit = {
 				cm_ab_master_active = yes
 				has_variable_list = cm_ab_categories_enabled
-			}
-			# A Run Now reuses the slice it finds, so the rotation only moves on a monthly
-			# cycle or on the Control Panel's Force Rotate Slice button. A first run with
-			# nothing picked yet still takes a slice.
-			if = {
-				limit = {
-					NOT = {
-						AND = {
-							cm_dbg_solo_active = yes
-							has_variable_map = cm_ab_slice_now
-							variable_map_size = { name = cm_ab_slice_now value >= 1 }
-						}
-					}
-				}
-				cm_ab_pick_slice = yes
 			}
 			every_in_list = {
 				variable = cm_ab_categories_enabled
@@ -699,7 +701,8 @@ cm_toggle_auto_expand_for_building_type_in_province = {
 # replacement types. Unresolvable types stay registered and the obsolete fallback
 # branches keep upgrading them. Expects scope:cm_country.
 cm_transfer_obsolete_auto_expand_registrations = {
-	ordered_owned_location = {
+	ordered_in_list = {
+		variable = cm_slice_locations
 		order_by = max_control
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
@@ -772,12 +775,12 @@ cm_run_auto_expand_buildings = {
 	cm_transfer_obsolete_auto_expand_registrations = yes
 	if = {
 		limit = { has_variable_list = cm_mass_auto_expand_building_types }
-		# -- Mass mode: iterate all existing buildings at all owned locations --
-		ordered_owned_location = {
+		# -- Mass mode: iterate all existing buildings at this cycle's locations --
+		ordered_in_list = {
+			variable = cm_slice_locations
 			order_by = max_control
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
-			limit = { NOT = { integration_level = conquered } }
 			save_scope_as = cm_location
 			cm_pop_track = yes
 			ordered_buildings_in_location = {
@@ -820,11 +823,12 @@ cm_run_auto_expand_buildings = {
 	}
 	# -- Normal mode: iterate per-location registered building types --
 	# Runs unconditionally - per-location registrations are processed alongside mass mode.
-	ordered_owned_location = {
+	ordered_in_list = {
+		variable = cm_slice_locations
 		order_by = max_control
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
-		limit = { NOT = { integration_level = conquered } has_variable_list = cm_auto_expand_registered_building_types }
+		limit = { has_variable_list = cm_auto_expand_registered_building_types }
 		save_scope_as = cm_location
 		cm_pop_track = yes
 		# Upgrades for standing obsolete buildings whose replacement is registered
@@ -878,11 +882,12 @@ cm_run_auto_expand_rgos = {
 	if = {
 		limit = { exists = var:cm_mass_auto_expand_rgo }
 		# Mass mode: expand all non-excluded locations
-		ordered_owned_location = {
+		ordered_in_list = {
+			variable = cm_slice_locations
 			order_by = max_control
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
-			limit = { NOT = { exists = var:cm_auto_expand_rgo_excluded } NOT = { integration_level = conquered } }
+			limit = { NOT = { exists = var:cm_auto_expand_rgo_excluded } }
 			save_scope_as = cm_location
 			cm_pop_track = yes
 			if = {
@@ -892,11 +897,12 @@ cm_run_auto_expand_rgos = {
 		}
 	} else = {
 		# Normal mode: expand only locations with cm_auto_expand_rgo enabled
-		ordered_owned_location = {
+		ordered_in_list = {
+			variable = cm_slice_locations
 			order_by = max_control
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
-			limit = { exists = var:cm_auto_expand_rgo NOT = { integration_level = conquered } }
+			limit = { exists = var:cm_auto_expand_rgo }
 			save_scope_as = cm_location
 			cm_pop_track = yes
 			if = {
@@ -958,11 +964,11 @@ cm_clear_finished_upgrade_in_progress = {
 # --- Upgrade All Buildings ---
 # Upgrades every obsolete building in all owned locations.
 cm_run_upgrade_all_buildings = {
-	ordered_owned_location = {
+	ordered_in_list = {
+		variable = cm_slice_locations
 		order_by = max_control
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
-		limit = { NOT = { integration_level = conquered } }
 		save_scope_as = cm_location
 		cm_pop_track = yes
 		ordered_buildings_in_location = {
@@ -1041,30 +1047,33 @@ cm_run_auto_food = {
 cm_run_auto_urbanize = {
 	if = {
 		limit = { exists = var:cm_deurbanize }
-		every_owned_location = {
+		every_in_list = {
+			variable = cm_slice_locations
 			limit = { cm_location_can_deurbanize = yes }
 			change_location_rank = location_rank:rural_settlement
 		}
 	}
 	if = {
 		limit = { exists = var:cm_urbanize_town_to_city }
-		ordered_owned_location = {
+		ordered_in_list = {
+			variable = cm_slice_locations
 			order_by = max_control
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_scope_as = cm_location
-			limit = { NOT = { integration_level = conquered } cm_ln_location_proximity_ok = yes cm_location_can_mass_upgrade_to_city = yes }
+			limit = { cm_ln_location_proximity_ok = yes cm_location_can_mass_upgrade_to_city = yes }
 			cm_stage_urbanize_candidate = { bt = cm_upgrade_town_to_city_building }
 		}
 	}
 	if = {
 		limit = { exists = var:cm_urbanize_rural_to_town }
-		ordered_owned_location = {
+		ordered_in_list = {
+			variable = cm_slice_locations
 			order_by = max_control
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_scope_as = cm_location
-			limit = { NOT = { integration_level = conquered } cm_ln_location_proximity_ok = yes cm_location_can_mass_upgrade_to_town = yes }
+			limit = { cm_ln_location_proximity_ok = yes cm_location_can_mass_upgrade_to_town = yes }
 			cm_stage_urbanize_candidate = { bt = cm_upgrade_rural_to_town_building }
 		}
 	}
@@ -1073,14 +1082,14 @@ cm_run_auto_urbanize = {
 			exists = var:cm_urbanize_city_to_megalopolis
 			is_subject = no
 		}
-		ordered_owned_location = {
+		ordered_in_list = {
+			variable = cm_slice_locations
 			order_by = max_control
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_scope_as = cm_location
 			limit = {
 				location_rank = location_rank:city
-				NOT = { integration_level = conquered }
 				cm_ln_location_proximity_ok = yes
 				NOT = { cm_location_rgo_blocks_urbanize = yes }
 				modifier:cannot_upgrade_location = no
@@ -1109,17 +1118,17 @@ cm_run_auto_town_rights = {
 							cm_auto_town_rights_potential_passes = yes
 							cm_town_rights_grant_affordable = yes
 						}
-						ordered_owned_location = {
+						ordered_in_list = {
+							variable = cm_slice_locations
 							order_by = max_control
 							max = cm_max_guess_at_number_of_locations
 							check_range_bounds = no
 							limit = {
-								NOT = { integration_level = conquered }
 								has_max_town_rights = no
 								NOT = { has_town_rights = scope:cm_town_right }
 							}
 							save_scope_as = target
-							# ordered_owned_location snapshots its limit before the body runs.
+							# The iterator snapshots its limit before the body runs.
 							if = {
 								limit = {
 									scope:cm_country = {

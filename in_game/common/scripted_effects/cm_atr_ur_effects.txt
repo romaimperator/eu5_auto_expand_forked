@@ -6,17 +6,17 @@
 # town_rights_enable unlocks all 9 royal rights: in_game/common/advances/0_age_of_discovery.txt:556
 cm_atr_ur_specialization_pass = {
 	set_local_variable = { name = cm_atr_ur_win value = cm_atr_ur_window_ratio }
-	ordered_owned_location = {
+	ordered_in_list = {
+		variable = cm_slice_locations
 		order_by = cm_atr_ur_order
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
 		limit = {
-			NOT = { integration_level = conquered }
 			has_max_town_rights = no
 			has_variable = cm_trmm_best_idx
 			cm_atr_ur_has_no_specialization = yes
 		}
-		# ordered_owned_location snapshots its limit before the body runs.
+		# The iterator snapshots its limit before the body runs.
 		if = {
 			limit = { scope:cm_country = { cm_town_rights_grant_affordable = yes } }
 			cm_atr_ur_draw_specialization = yes
