@@ -14,7 +14,6 @@ cm_food_consider_option = {
 # Root is the location.
 cm_food_stage_building_option = {
 	if = { limit = { local_var:cm_food_action = $ACTION$ $BT$ = { save_temporary_scope_as = cm_building_type } cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
-		if = { limit = { debug_only = yes } debug_log = "CM Food: stage food building in [THIS.GetLocation.GetNameWithNoTooltip]" }
 		$BT$ = { save_scope_as = cm_building_type }
 		cm_stage_food_building_candidate = yes
 	}
@@ -48,7 +47,6 @@ cm_food_auto_build_in_location = {
 
 		# --- Execute best action, discount-gated: if the winner fails min discount, build nothing ---
 		if = { limit = { local_var:cm_food_action = 1 cm_rgo_meets_minimum_discount = { threshold = cm_get_min_discount_for_auto_food } }
-			if = { limit = { debug_only = yes } debug_log = "CM Food: RGO expand in [THIS.GetLocation.GetNameWithNoTooltip] (marginal=[GuiScope.SetRoot(THIS.GetLocation.MakeScope).ScriptValue('cm_food_marginal_rgo')])" }
 			cm_stage_food_rgo_candidate = yes
 		}
 		cm_food_stage_building_option = { ACTION = 2 BT = building_type:farming_village }

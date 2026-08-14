@@ -189,7 +189,7 @@ cm_q_sync_check = {
 						set_variable = { name = cm_q_scan_armed value = yes }
 					} else_if = {
 						limit = { var:cm_q_stall_rounds >= { value = cm_q_give_up_rounds } }
-						cmf_log = { action = cm_log_cycle_gave_up }
+						cm_dbg_log = { cat = cycle action = cm_log_cycle_gave_up }
 						# A stalled cycle can give up before reaching the approval pass; approve
 						# whatever scored so the month is not dropped outright.
 						if = {
@@ -333,16 +333,10 @@ cm_pf_river_fill_batch = {
 cm_building_type_section_buildings_init = {
 	saved_scopes = { cm_building_type is_producing is_multiple_levels is_fort pop_type upgrade_type }
 	effect = {
-		# debug_log = "CM: Initializing buildings [TopScope.sBuildingType('building_type').GetNameWithNoTooltip]"
 
 		# Set the which type of building this should be treated as
 		if = { limit = { AND = { scope:cm_is_producing = yes scope:cm_is_multiple_levels = yes } }
 			add_to_global_variable_map = { name = cm_building_type_to_is_production_building key = scope:cm_building_type value = 1 }
-			if = { limit = { scope:cm_is_fort = yes }
-				# debug_log = "CM: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: yes"
-			} else = {
-				# debug_log = "CM: Building: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] is_production_building: yes is_fort: no"
-			}
 		} else = {
 			add_to_global_variable_map = { name = cm_building_type_to_is_production_building key = scope:cm_building_type value = 0 }
 		}
@@ -407,7 +401,6 @@ cm_refresh_upgrade_types_done = {
 cm_construction_demand = {
 	saved_scopes = { cm_building_type cm_good amount }
 	effect = {
-		# debug_log = "CM: Non-standard building type construction demand: [TopScope.sBuildingType('building_type').GetNameWithNoTooltip] [TopScope.sGoods('good').GetNameWithNoTooltip]"
 		switch = { trigger = scope:cm_good
 			goods:books = {
 				remove_from_global_variable_map = { name = cm_construction_demand_books key = scope:cm_building_type }
