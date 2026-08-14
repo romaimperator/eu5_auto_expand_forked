@@ -118,7 +118,7 @@ cm_sa_run_industry = {
 cm_sa_stage_build_candidate = {
 	if = {
 		limit = { scope:cm_building_type = { cm_sa_type_is_never_built = no } }
-		cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_sa_b_locations LOCATION_LIST = cm_sa_b_types DONE_LIST = cm_sa_done_b_types }
+		cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_sa_b_locations SET = cm_sa_b_locations_set LOCATION_LIST = cm_sa_b_types DONE_LIST = cm_sa_done_b_types }
 		scope:cm_location = {
 			add_to_variable_map = { name = cm_sa_b_cat_$cat$ key = scope:cm_building_type value = 1 }
 		}
@@ -127,7 +127,7 @@ cm_sa_stage_build_candidate = {
 
 # Expects scope:cm_country, scope:cm_location.
 cm_sa_stage_rgo_candidate = {
-	cm_stage_location_to_queue = { COUNTRY_LIST = cm_sa_r_locations DONE_VAR = cm_sa_done_rgo }
+	cm_stage_location_to_queue = { COUNTRY_LIST = cm_sa_r_locations SET = cm_sa_r_locations_set DONE_VAR = cm_sa_done_rgo }
 }
 
 # Smart Automations obsolete-upgrade staging, keyed by the standing obsolete type. Mirrors
@@ -159,7 +159,7 @@ cm_sa_stage_upgrade_candidate = {
 	scope:cm_sa_staged_type = { save_scope_as = cm_building_type }
 	if = {
 		limit = { local_var:cm_sa_upg_ok = 1 }
-		cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_sa_u_locations LOCATION_LIST = cm_sa_u_types DONE_LIST = cm_sa_done_u_types }
+		cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_sa_u_locations SET = cm_sa_u_locations_set LOCATION_LIST = cm_sa_u_types DONE_LIST = cm_sa_done_u_types }
 		# Shared marker so no feature from-zero-builds the replacement this pulse.
 		scope:cm_location = {
 			if = {

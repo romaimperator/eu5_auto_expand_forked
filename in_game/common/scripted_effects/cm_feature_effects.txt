@@ -34,14 +34,23 @@ cm_run_construction_cycle = {
 		cm_pop_sample_pass = yes
 		# Start a fresh construction queue each cycle, drained once by the queue window.
 		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_locations LOCATION_LIST = cm_q_building_types }
+		clear_variable_map = cm_q_locations_set
 		clear_variable_list = cm_q_rgo_locations
+		clear_variable_map = cm_q_rgo_locations_set
 		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_urbanize_locations LOCATION_LIST = cm_q_urbanize_building_types }
+		clear_variable_map = cm_q_urbanize_locations_set
 		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_food_locations LOCATION_LIST = cm_q_food_building_types }
+		clear_variable_map = cm_q_food_locations_set
 		clear_variable_list = cm_q_food_rgo_locations
+		clear_variable_map = cm_q_food_rgo_locations_set
 		clear_variable_list = cm_q_rank_locations
+		clear_variable_map = cm_q_rank_locations_set
 		cm_clear_queue_pair = { COUNTRY_LIST = cm_sa_b_locations LOCATION_LIST = cm_sa_b_types }
+		clear_variable_map = cm_sa_b_locations_set
 		cm_clear_queue_pair = { COUNTRY_LIST = cm_sa_u_locations LOCATION_LIST = cm_sa_u_types }
+		clear_variable_map = cm_sa_u_locations_set
 		clear_variable_list = cm_sa_r_locations
+		clear_variable_map = cm_sa_r_locations_set
 		clear_variable_list = cm_sa_food_rgo_locations
 		clear_variable_list = cm_sa_collapsar_rgo_locations
 		cm_q_clear_rgo_served = yes
@@ -57,6 +66,7 @@ cm_run_construction_cycle = {
 			}
 		}
 		clear_variable_list = cm_gui_upgrade_locations
+		clear_variable_map = cm_gui_upgrade_locations_set
 		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_build_locations LOCATION_LIST = cm_q_approved_build_types }
 		cm_clear_queue_pair = { COUNTRY_LIST = cm_q_approved_upgrade_locations LOCATION_LIST = cm_q_approved_upgrade_types }
 		clear_variable_list = cm_q_approved_rank_locations
@@ -140,17 +150,31 @@ cm_run_construction_cycle = {
 	}
 }
 
+# Appends scope:cm_location to $COUNTRY_LIST$ once per cycle. $SET$ is the country map
+# mirroring that list, so membership is a key lookup rather than a scan, and it has to be
+# cleared wherever the list is. Callers read local_var:cm_q_first_add for their first-add work.
+# Expects scope:cm_country, scope:cm_location.
+cm_stage_location_to_country_list = {
+	set_local_variable = { name = cm_q_first_add value = 0 }
+	scope:cm_country = {
+		if = {
+			limit = { NOT = { is_key_in_variable_map = { name = $SET$ target = scope:cm_location } } }
+			add_to_variable_map = { name = $SET$ key = scope:cm_location value = 1 }
+			add_to_variable_list = { name = $COUNTRY_LIST$ target = scope:cm_location }
+			set_local_variable = { name = cm_q_first_add value = 1 }
+		}
+	}
+}
+
 # Add-if-absent queue staging shared by the cm_stage_* effects below: appends
 # scope:cm_location to the country's $COUNTRY_LIST$ and scope:cm_building_type to the
 # location's $LOCATION_LIST$. $DONE_LIST$ is the queue's per-location processed-marker list.
 # Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_stage_location_and_type_to_queue = {
-	scope:cm_country = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = $COUNTRY_LIST$ target = scope:cm_location } } }
-			add_to_variable_list = { name = $COUNTRY_LIST$ target = scope:cm_location }
-			scope:cm_location = { clear_variable_list = $DONE_LIST$ }
-		}
+	cm_stage_location_to_country_list = { COUNTRY_LIST = $COUNTRY_LIST$ SET = $SET$ }
+	if = {
+		limit = { local_var:cm_q_first_add = 1 }
+		scope:cm_location = { clear_variable_list = $DONE_LIST$ }
 	}
 	scope:cm_location = {
 		if = {
@@ -165,13 +189,11 @@ cm_stage_location_and_type_to_queue = {
 # $DONE_VAR$ is the queue's per-location processed-marker variable.
 # Expects scope:cm_country, scope:cm_location.
 cm_stage_location_to_queue = {
-	scope:cm_country = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = $COUNTRY_LIST$ target = scope:cm_location } } }
-			add_to_variable_list = { name = $COUNTRY_LIST$ target = scope:cm_location }
-			change_variable = { name = cm_q_staged add = 1 }
-			scope:cm_location = { remove_variable = $DONE_VAR$ }
-		}
+	cm_stage_location_to_country_list = { COUNTRY_LIST = $COUNTRY_LIST$ SET = $SET$ }
+	if = {
+		limit = { local_var:cm_q_first_add = 1 }
+		scope:cm_country = { change_variable = { name = cm_q_staged add = 1 } }
+		scope:cm_location = { remove_variable = $DONE_VAR$ }
 	}
 }
 
@@ -285,7 +307,7 @@ cm_q_clear_foreign_queue = {
 # bindings, then cm_q_approval_pass approves best metric first.
 # Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_stage_candidate = {
-	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_locations LOCATION_LIST = cm_q_building_types DONE_LIST = cm_q_done_build_types }
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_locations SET = cm_q_locations_set LOCATION_LIST = cm_q_building_types DONE_LIST = cm_q_done_build_types }
 }
 
 # Per-cycle foreign construction queue. Every part of it is stored on the acting country: a
@@ -317,7 +339,7 @@ cm_stage_foreign_candidate = {
 # cm_q_approval_pass applies the gold gate and upgrades in metric order.
 # Expects scope:cm_country, scope:cm_location.
 cm_stage_rgo_candidate = {
-	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_rgo_locations DONE_VAR = cm_q_done_rgo }
+	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_rgo_locations SET = cm_q_rgo_locations_set DONE_VAR = cm_q_done_rgo }
 }
 
 # Urbanize rank-upgrade candidate for the unified queue. The fixed upgrade building type
@@ -325,26 +347,26 @@ cm_stage_rgo_candidate = {
 # against the engine cost. Expects scope:cm_country, scope:cm_location. $bt$ = upgrade building type key.
 cm_stage_urbanize_candidate = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
-	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_urbanize_locations LOCATION_LIST = cm_q_urbanize_building_types DONE_LIST = cm_q_done_urbanize_types }
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_urbanize_locations SET = cm_q_urbanize_locations_set LOCATION_LIST = cm_q_urbanize_building_types DONE_LIST = cm_q_done_urbanize_types }
 }
 
 # Food building candidate for the unified queue; the marginal comparison already picked the
 # winning building type. cm_q_approval_pass re-checks build-queue slots and the food gold
 # reserve. Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
 cm_stage_food_building_candidate = {
-	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_food_locations LOCATION_LIST = cm_q_food_building_types DONE_LIST = cm_q_done_food_types }
+	cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_q_food_locations SET = cm_q_food_locations_set LOCATION_LIST = cm_q_food_building_types DONE_LIST = cm_q_done_food_types }
 }
 
 # Food RGO candidate for the unified queue; the marginal comparison picked an RGO expand.
 # cm_q_approval_pass re-checks build-queue slots and the food gold reserve. Expects scope:cm_country, scope:cm_location.
 cm_stage_food_rgo_candidate = {
-	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_food_rgo_locations DONE_VAR = cm_q_done_food_rgo }
+	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_food_rgo_locations SET = cm_q_food_rgo_locations_set DONE_VAR = cm_q_done_food_rgo }
 }
 
 # Megalopolis rank-upgrade candidate for the unified queue. Location-only: the GUI scorer reads the
 # engine CanUpgradeRank and price, so no building type is staged. Expects scope:cm_country, scope:cm_location.
 cm_stage_rank_candidate = {
-	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_rank_locations DONE_VAR = cm_q_done_rank }
+	cm_stage_location_to_queue = { COUNTRY_LIST = cm_q_rank_locations SET = cm_q_rank_locations_set DONE_VAR = cm_q_done_rank }
 }
 
 # Gated upgrade candidate for the unified queue, keyed by the standing obsolete type.
@@ -380,12 +402,10 @@ cm_stage_upgrade_candidate = {
 				add_to_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type }
 			}
 		}
-		scope:cm_country = {
-			if = {
-				limit = { NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_locations target = scope:cm_location } } }
-				add_to_variable_list = { name = cm_gui_upgrade_locations target = scope:cm_location }
-				scope:cm_location = { clear_variable_list = cm_q_done_upgrade_types }
-			}
+		cm_stage_location_to_country_list = { COUNTRY_LIST = cm_gui_upgrade_locations SET = cm_gui_upgrade_locations_set }
+		if = {
+			limit = { local_var:cm_q_first_add = 1 }
+			scope:cm_location = { clear_variable_list = cm_q_done_upgrade_types }
 		}
 	}
 	scope:cm_ae_staged_type = { save_scope_as = cm_building_type }
@@ -967,12 +987,10 @@ cm_run_upgrade_all_buildings = {
 							scope:cm_country = { change_variable = { name = cm_q_staged add = 1 } }
 						}
 					}
-					scope:cm_country = {
-						if = {
-							limit = { NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_locations target = scope:cm_location } } }
-							add_to_variable_list = { name = cm_gui_upgrade_locations target = scope:cm_location }
-							scope:cm_location = { clear_variable_list = cm_q_done_upgrade_types }
-						}
+					cm_stage_location_to_country_list = { COUNTRY_LIST = cm_gui_upgrade_locations SET = cm_gui_upgrade_locations_set }
+					if = {
+						limit = { local_var:cm_q_first_add = 1 }
+						scope:cm_location = { clear_variable_list = cm_q_done_upgrade_types }
 					}
 				}
 			}
