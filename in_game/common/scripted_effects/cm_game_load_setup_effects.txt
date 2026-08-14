@@ -46,12 +46,11 @@ cm_populate_building_types_to_process = {
 # The once-per-lobby setup, shared by the two after-lobby hooks and the Rebuild Setup Data button.
 # Every pass that walks the map is stamp-gated, so a save carrying finished setup does none of them
 # and a multiplayer load costs no broadcast Executes at all; the unconditional calls below are a
-# handful of map entries each. Order is load-bearing in three places: the mod-set invalidation runs
-# before anything reads a stamp, the building-type populate runs before the R.G.O. Bonus work list
-# because it is what drops that stamp on a reclassification, and the readiness log runs last.
+# handful of map entries each. Order is load-bearing in two places: the building-type populate runs
+# before the R.G.O. Bonus work list because it is what drops that stamp on a reclassification, and
+# the readiness log runs last.
 # No scope.
 cm_run_lobby_setup = {
-  cm_setup_invalidate_on_mod_change = yes
   cm_populate_building_types_to_process = {}
   # The console bridge these feed is singleplayer only, so multiplayer skips them outright rather
   # than stamping them.
@@ -100,15 +99,21 @@ cm_run_lobby_setup = {
   }
 }
 
-# Drops every setup stamp when the CMF-aware mod set has changed since they were written, so a mod
-# added or removed rebuilds the lot. Called first in cm_run_lobby_setup, ahead of every pass that
-# reads a stamp. Singleplayer only, and every branch below fails toward keeping the stamps, since a
-# wrong drop costs a full recompute and a wrong keep costs data one mod-set change stale.
+# NOT WIRED UP. Drops every setup stamp when the CMF-aware mod set has changed since they were
+# written. Re-enable by calling it first in cm_run_lobby_setup, ahead of every pass that reads a
+# stamp; nothing else needs changing.
+# It is unwired because no CMF-aware mod changes what any setup pass records, so it can only ever
+# throw away good data. What would genuinely invalidate a pass is a mod adding building types, which
+# cm_building_classification_is_current already catches per type, or one adding goods and production
+# methods, which this could not catch anyway since such a mod need not register with CMF at all.
+# That leaves a version bump, an absent stamp and the Rebuild Setup Data button as the ways in.
+# Singleplayer only, and every branch below fails toward keeping the stamps, since a wrong drop
+# costs a full recompute and a wrong keep costs data one mod-set change stale.
 cm_setup_invalidate_on_mod_change = {
   if = {
-    # Multiplayer never invalidates. Finished setup is not recomputed there whatever the mod set
-    # says, which is the whole point of the stamps: the alternative is a playset differing from the
-    # one the save was prepared under dropping the lot and running it inside the load handshake.
+    # Multiplayer would never invalidate. Finished setup is not recomputed there whatever the mod
+    # set says, which is the whole point of the stamps: the alternative is a playset differing from
+    # the one the save was prepared under dropping the lot and running it inside the load handshake.
     # The snapshot is left alone too, so singleplayer stays the only writer and keeps comparing
     # against the set the data was actually computed under. Setup that never finished at all is
     # unaffected, having no stamp to drop, and still runs from the host.

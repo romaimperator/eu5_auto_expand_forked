@@ -324,7 +324,7 @@ cm_cu_close_pass = {
 			# A building exists and reads no profit from the moment its first level is
 			# queued, so without this the pass closes what it is still paying to build.
 			cm_is_not_under_construction = yes
-			cm_cu_produces_core_good = no
+			cm_cu_core_good_protected = no
 			cm_cu_is_unprofitable = yes
 			building_type = {
 				cm_is_building_type_production_building = yes
@@ -392,11 +392,12 @@ cm_cu_reopen_pass = {
 		building_type = { save_scope_as = cm_building_type }
 		location = { save_scope_as = cm_location }
 		if = {
-			# A core-goods producer is not judged on profit, so its group's recovery is not
-			# what decides it. This is also what restores the ones closed before the exemption.
+			# A protected core-goods producer is not judged on profit, so its group's recovery is
+			# not what decides it. This is also what restores the ones closed before the setting
+			# was turned on.
 			limit = {
 				OR = {
-					cm_cu_produces_core_good = yes
+					cm_cu_core_good_protected = yes
 					scope:cm_country = { cm_cu_group_reopen_room = yes }
 				}
 			}

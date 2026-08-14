@@ -88,7 +88,7 @@
  cm__ab_save_unaffordable_name: "Save for Unaffordable Buildings"
  cm__ab_save_unaffordable_desc: "A category buys the best building it found even when it costs more than its share for the month, and then goes without until later months have made the difference up. While off, each category spends what it can and hands the rest down."
  cm__ab_min_proximity_name: "Minimum Proximity"
- cm__ab_min_proximity_desc: "Locations below this Proximity are skipped when picking where to build. Proximity carries Control, so a location no source reaches earns little from anything built there. Control Buildings and @settlement_building! [ShowBuildingTypeNameWithNoTooltip('settlement_building')] are built regardless, since those are what make low-Proximity land worth holding. At 0, nothing is skipped."
+ cm__ab_min_proximity_desc: "Locations below this Proximity are skipped when picking where to build. Control Buildings and @settlement_building! [ShowBuildingTypeNameWithNoTooltip('settlement_building')] are built regardless, since those are what make low-Proximity land worth holding. At 0, nothing is skipped."
  cm__ab_min_proximity_format: "[CMMV('cm__ab_min_proximity')]%"
  ## Auto-Build Categories (ab_priority_list) Group
  cm__ab_master__ab_priority_list_name: "Auto-Build Categories"
@@ -99,7 +99,7 @@
  cm__ab_priority_list_i2_name: "Core Goods"
  cm__ab_priority_list_i2_desc: "Expands production of construction materials to push their prices down. Works in markets whose market center you own. The best-producing locations go first and each is given several levels at once, and producers start even where the workers have not arrived yet. Your capital, locations growing food, and producers that would run at a loss without a subsidy are all skipped."
  cm__ab_priority_list_i3_name: "Food"
- cm__ab_priority_list_i3_desc: "Watches food supply over the year in markets whose market center you own and, where the median month fell short, enables auto-food on the locations with the highest food potential. Locations it picks glow like player-enabled ones, but the toggle stays yours; they are never turned off unless the location is no longer a rural settlement you own, or you no longer own its market center."
+ cm__ab_priority_list_i3_desc: "Watches food supply over the year in markets whose market center you own and, where the median month fell short, enables auto-food on the locations with the highest food potential. Locations it picks glow like player-enabled ones, but the toggle stays yours; they are never turned off unless the location is no longer a rural settlement you own, you no longer own its market center, or a better location in the same market takes its place."
  cm__ab_priority_list_i4_name: "Production"
  cm__ab_priority_list_i4_desc: "Builds, expands, and upgrades the production buildings and RGOs that repay their cost fastest in tax income. Locations running auto-food are left alone while any kind of worker there is already in short supply."
  cm__ab_priority_list_i5_name: "Roads"
@@ -199,7 +199,6 @@
  cm__dbg_run_core_text: "Run Now"
  ## Food (ab_food) Group
  cm__ab_food__ab_food_name: "Food"
- cm__ab_food__ab_food_desc: "Settings for Food."
  cm__ab_food_target_name: "Surplus Target"
  cm__ab_food_target_desc: "A market gets more food locations until its supply reaches this share of its demand. At 125%, food is expanded in any market whose median month of the year did not reach a 25% surplus. Raise it to keep more of a buffer, lower it to only help markets closer to a shortage."
  cm__ab_food_target_format: "[CMMV('cm__ab_food_target')]%"
@@ -216,7 +215,6 @@
  cm__dbg_run_food_text: "Run Now"
  ## Production (ab_production) Group
  cm__ab_production__ab_production_name: "Production"
- cm__ab_production__ab_production_desc: "Settings for Production."
  cm__ab_production_algorithm_name: "Build Strategy"
  cm__ab_production_algorithm_desc: "How production picks what to construct."
  cm__ab_production_algorithm_option_1_name: "Greedy"
@@ -237,7 +235,6 @@
  cm__dbg_run_production_text: "Run Now"
  ## Roads (ab_roads) Group
  cm__ab_roads__ab_roads_name: "Roads"
- cm__ab_roads__ab_roads_desc: "Settings for Roads."
  cm__ab_roads_proximity_name: "Proximity"
  cm__ab_roads_proximity_desc: "Lay the road stretches that raise Proximity the most for the gold, counting every location further down the route behind them."
  cm__ab_roads_market_access_name: "Market Access"
@@ -257,7 +254,6 @@
  cm__dbg_run_roads_text: "Run Now"
  ## Governors (ab_governors) Group
  cm__ab_governors__ab_governors_name: "Governors"
- cm__ab_governors__ab_governors_desc: "Settings for Governors."
  cm__ab_gov_move_seats_name: "Allow Moving Governors"
  cm__ab_gov_move_seats_desc: "When every governor slot is full, take a governor down and put one up at a better location instead. The better location has to be a City already, or score more than 10% higher than the one it replaces. With this off, governors only go into slots that are empty."
  cm__ab_gov_prepare_sites_name: "Allow Preparing New Locations"
@@ -338,7 +334,7 @@
  cm__town_rights_min_gov_power_desc: "Auto-grant stops granting urban rights when the next grant would drop your government power (legitimacy, republican tradition, devotion, or horde unity, depending on government type) below this value."
  ## Smart Specialization Right Granter (auto_town_rights_specialization) Group
  cm__auto_town_rights__auto_town_rights_specialization_name: "Smart Specialization Right Granter"
- cm__auto_town_rights__auto_town_rights_specialization_desc: "One specialization right for each location, drawn from those that suit the goods made around it. Granted after the Custom Right Granter has had its turn."
+ cm__auto_town_rights__auto_town_rights_specialization_desc: "Granted after the Custom Right Granter has had its turn."
  cm__auto_grant_specialization_name: "Auto-Grant Specialization Urban Rights"
  cm__auto_grant_specialization_desc: "Grant one specialization right per location, drawn at random from those that suit the goods made around it, weighted by how well each suits it."
  cm__specialization_window_name: "Fit Threshold"
@@ -403,9 +399,8 @@
  cm__map_modes_name: "Map Modes"
  ## Building Cleanup (cleanup) Group
  cm__cleanup__cleanup_name: "Building Cleanup"
- cm__cleanup__cleanup_desc: "Settings for Building Cleanup."
  cm__cleanup_close_open_name: "Close and Open Buildings"
- cm__cleanup_close_open_desc: "Once a year, close production buildings that have stopped making money and are not subsidized. Buildings it closed reopen once the type is earning again in that market. @farming_village! [ShowBuildingTypeNameWithNoTooltip('farming_village')] is never closed."
+ cm__cleanup_close_open_desc: "Once a year, close production buildings that have stopped making money and are not subsidized. Buildings it closed reopen once the type is earning again in that market. @farming_village! [ShowBuildingTypeNameWithNoTooltip('farming_village')] and @market_village! [ShowBuildingTypeNameWithNoTooltip('market_village')] are never closed."
  cm__cleanup_destroy_name: "Destroy Buildings"
  cm__cleanup_destroy_desc: "Once a year, destroy production buildings that have stopped making money where the location is within ten levels of the building levels it supports, along with the ones already closed whose location has since run out of room. A @market_village! [ShowBuildingTypeNameWithNoTooltip('market_village')] is cut back to one level instead. @fruit_orchard! [ShowBuildingTypeNameWithNoTooltip('fruit_orchard')] is destroyed and never rebuilt whatever it earns, and @farming_village! [ShowBuildingTypeNameWithNoTooltip('farming_village')] is never destroyed."
  cm__cleanup_min_profit_name: "Minimum Profit per Level"
@@ -415,7 +410,7 @@
  cm__cleanup_max_changed_desc: "The share of a building type's buildings in a market that can change in one yearly pass. At 50%, half of its open buildings can be closed or destroyed, and half of its closed ones reopened. Never fewer than one, so the last building of a type can still be closed."
  cm__cleanup_max_changed_format: "[CMMV('cm__cleanup_max_changed')]%"
  cm__cleanup_core_goods_name: "Prioritize Construction Materials"
- cm__cleanup_core_goods_desc: "Hold buildings that mostly consume @masonry![ShowGoodsNameWithNoTooltip('masonry')], @lumber![ShowGoodsNameWithNoTooltip('lumber')], @sand![ShowGoodsNameWithNoTooltip('sand')] or @glass![ShowGoodsNameWithNoTooltip('glass')] to twice the Minimum Profit per Level, or 0.1@gold! a level, whichever is higher. Buildings that produce one of the four are judged on the normal Minimum Profit per Level."
+ cm__cleanup_core_goods_desc: "Hold buildings that mostly consume @masonry![ShowGoodsNameWithNoTooltip('masonry')], @lumber![ShowGoodsNameWithNoTooltip('lumber')], @sand![ShowGoodsNameWithNoTooltip('sand')] or @glass![ShowGoodsNameWithNoTooltip('glass')] to twice the Minimum Profit per Level, or 0.1@gold! a level, whichever is higher. Buildings that produce one of the four are never closed or destroyed while this is on."
  cm__cleanup_auto_food_name: "Clear Auto-Food Locations"
  cm__cleanup_auto_food_desc: "Where auto-food is running and any kind of worker is already in short supply, destroy the production buildings that are not making food. A @market_village! [ShowBuildingTypeNameWithNoTooltip('market_village')] is cut back to one level rather than destroyed."
  cm__cleanup_run_now_name: "Run Building Cleanup"

@@ -399,12 +399,22 @@ cm_gov_reorg_probe_check = {
 	}
 }
 
-# The seat a displacement would take over from: the lowest-scoring one the plan has not picked,
-# which is what cm_gov_free_a_seat gives up. A run that scored no standing seat leaves 0, so the
-# bar it feeds passes and the pick is judged by the placement itself, as it was before.
-# Root is the country, scope:cm_country set. Leaves scope:cm_gov_worst_seat.
+# The seat a displacement would take over from, one per governor kind: the lowest-scoring one of
+# that kind the plan has not picked, which is what cm_gov_free_a_seat gives up. Per kind because
+# land and naval count against separate caps, so freeing one makes no room for the other.
+# Root is the country, scope:cm_country set.
+# Leaves scope:cm_gov_worst_seat_land and scope:cm_gov_worst_seat_naval.
 cm_gov_worst_seat_score = {
-	save_temporary_scope_value_as = { name = cm_gov_worst_seat value = 0 }
+	cm_gov_worst_seat_of_kind = { KIND = land TYPE = local_governor }
+	cm_gov_worst_seat_of_kind = { KIND = naval TYPE = naval_governor }
+}
+
+# A kind with no standing unplanned seat leaves 0, so the bar it feeds passes and the pick is
+# judged by the placement itself. A seat the run never scored is left out here and given up first
+# by cm_gov_seat_give_up_rank, which reads an absent score as 0.
+# Root is the country. Leaves scope:cm_gov_worst_seat_$KIND$.
+cm_gov_worst_seat_of_kind = {
+	save_temporary_scope_value_as = { name = cm_gov_worst_seat_$KIND$ value = 0 }
 	ordered_owned_location = {
 		order_by = {
 			value = var:cm_gf_score
@@ -414,10 +424,10 @@ cm_gov_worst_seat_score = {
 		check_range_bounds = no
 		limit = {
 			has_variable = cm_gf_score
-			cm_location_has_governor = yes
+			has_building = building_type:$TYPE$
 			NOT = { has_variable = cm_gov_plan_ord }
 		}
-		save_temporary_scope_value_as = { name = cm_gov_worst_seat value = var:cm_gf_score }
+		save_temporary_scope_value_as = { name = cm_gov_worst_seat_$KIND$ value = var:cm_gf_score }
 	}
 }
 

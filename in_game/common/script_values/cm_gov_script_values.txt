@@ -150,10 +150,20 @@ cm_gov_slot_total = {
 	add = cm_gov_naval_slots
 }
 
-# Any scope. What a site must score to be worth taking a standing seat over, on the scale of the run
-# that scored both. Expects scope:cm_gov_worst_seat.
+# What a site must score to be worth taking a standing seat over, on the scale of the run that
+# scored both. Reads the bar for the kind this site would take, which is the kind
+# cm_gov_free_a_seat can free: the two are mutually exclusive by location, land needing a route to
+# the capital and naval needing the capital unreachable through the realm.
+# Root is the candidate location. Expects scope:cm_gov_worst_seat_land and _naval.
 cm_gov_displace_bar = {
-	value = scope:cm_gov_worst_seat
+	value = 0
+	if = {
+		limit = { cm_gov_site_is_naval = yes }
+		add = scope:cm_gov_worst_seat_naval
+	}
+	else = {
+		add = scope:cm_gov_worst_seat_land
+	}
 	multiply = @cm_gov_displace_margin
 	divide = 100
 }
