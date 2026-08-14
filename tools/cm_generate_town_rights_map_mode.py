@@ -34,7 +34,8 @@ potential/allow gates and requires chains), and named_colors. Emits:
   in_game/gui/cm_town_right_map_mode_grant_section.gui
   main_menu/localization/english/cm_town_right_map_mode_l_english.yml
 
-The scoring math runs once per lobby: cm_trmm_recompute_all sweeps every
+The scoring math runs on a load whose cm_trmm_stamp is stale, not every lobby:
+cm_trmm_recompute_all sweeps every
 province definition, computes each qualifying definition's industry coverages
 definition-wide, stores them on every province slice in the definition (so
 ownership splits never divide a province's coverage between owners; variables
@@ -1462,7 +1463,8 @@ def emit_effects(options, aliases, boosted_goods, relevant, expand_bases,
                  rgo_goods):
     lines = [GENERATED_HEADER]
     lines.append(
-        "# Once-per-lobby precompute: computes each qualifying province definition's\n"
+        "# Precompute, run from cm_run_lobby_setup on a load whose cm_trmm_stamp is\n"
+        "# stale: computes each qualifying province definition's\n"
         "# industry coverages definition-wide, stores them on every province slice in\n"
         "# the definition along with the winning option indices and raw-input presence\n"
         "# flags the tooltip breakdown chips read, and stores each location's best\n"

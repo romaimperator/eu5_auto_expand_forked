@@ -224,9 +224,17 @@ cm_q_sync_check = {
 	}
 }
 
+# The four gates below all carry is_host, because each drives a setup pass writing GLOBAL data and
+# each Execute is broadcast to every machine. Ungated, N clients fire N copies of every Execute and
+# every machine runs all of them, which is N times the wire traffic for the same global result. The
+# host alone drives them and its broadcast writes land everywhere. It sits here rather than as an
+# IsHost term in the driver's own visible, because the trigger is proven and IsHost inside a
+# visible expression is not. is_host is true for the single player in singleplayer.
+
 # Root is the player
 cm_should_building_type_section_show = {
 	is_shown = {
+		is_host = yes
 		has_global_variable = cm_process_buildings
 		OR = {
 			NOT = { has_global_variable_map = cm_building_type_processed }
@@ -241,6 +249,7 @@ cm_should_building_type_section_show = {
 # Root is the player. Gates the hidden window's upgrade-map refresh driver.
 cm_should_refresh_upgrade_types = {
 	is_shown = {
+		is_host = yes
 		has_global_variable = cm_refresh_upgrade_types
 	}
 }
@@ -248,6 +257,7 @@ cm_should_refresh_upgrade_types = {
 # Root is the player. Gates the hidden window's river-adjacency precompute driver while it runs.
 cm_pf_river_should_process = {
 	is_shown = {
+		is_host = yes
 		has_global_variable = cm_pf_river_process
 	}
 }
@@ -255,6 +265,7 @@ cm_pf_river_should_process = {
 # Root is the player. Gates the hidden window's R.G.O. Bonus coverage sweep driver while it runs.
 cm_rgob_should_sweep = {
 	is_shown = {
+		is_host = yes
 		has_global_variable = cm_rgob_sweep
 	}
 }

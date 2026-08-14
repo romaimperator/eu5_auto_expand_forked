@@ -1,4 +1,5 @@
-﻿# Populate building-type globals, goods globals, and town-right mapmode scores once per lobby.
+﻿# The once-per-lobby setup. cm_run_lobby_setup owns the body so the Rebuild Setup Data button runs
+# the same thing.
 on_game_start_after_lobby = {
 	on_actions = {
 		cm_on_init_lobby_globals
@@ -13,31 +14,7 @@ on_game_load_after_lobby = {
 
 cm_on_init_lobby_globals = {
 	effect = {
-		cm_populate_building_types_to_process = {}
-		cm_ln_populate_building_type_ids = yes
-		cm_ln_populate_location_ids = yes
-		set_global_variable = { name = cm_setup_complete_logged value = 0 }
-		cm_ln_c_rows_clear = yes
-		cm_fb_populate_excluded_types = yes
-		cm_fb_populate_no_relation_types = yes
-		cm_pf_populate_river_locations = yes
-		cm_rgob_populate_work_list = yes
-		# Classification's completion branch is what normally arms the sweep, and a reused one has
-		# no completion branch to run. The work list has to exist first, which is why this is not in
-		# cm_populate_building_types_to_process.
-		if = {
-			limit = { cm_building_classification_is_current = yes }
-			cm_rgob_arm_sweep = yes
-		}
-		# Seeded only when absent: resetting it would put every location's sample stamp in the
-		# future, and the sampler would never take another reading.
-		if = {
-			limit = { NOT = { exists = global_var:cm_pop_month } }
-			set_global_variable = { name = cm_pop_month value = 0 }
-		}
-		cm_initialize_goods_globals = {}
-		cm_indirect_populate_grant_maps = yes
-		cm_trmm_recompute_all = yes
+		cm_run_lobby_setup = yes
 	}
 }
 

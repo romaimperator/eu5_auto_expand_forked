@@ -8,9 +8,10 @@
 @cm_rgob_batch_size = 48
 
 # Clears the working maps of the scan and collect waves, which nothing outside those waves reads.
-# Called when the sweep finishes, leaving the pair, row and index data behind: coverage is recomputed
-# every lobby off live raw materials, while the classification that produced those maps is reused
-# from the save, so the sweep has to be able to run without the waves running first.
+# Called when the sweep finishes, leaving the pair, row and index data behind: a reclassification
+# drops the coverage stamp and sweeps again off live raw materials, while the classification that
+# produced those maps is reused from the save, so the sweep has to be able to run without the waves
+# running first.
 cm_rgob_reset_scan_state = {
 	clear_global_variable_map = cm_rgob_best
 	clear_global_variable_map = cm_rgob_total
@@ -133,7 +134,7 @@ cm_rgob_recompute_province = {
 }
 
 # Armed by the classification completion branch, because the rgob waves must finish first
-# and so this cannot run from cm_on_init_lobby_globals like the trmm sweep. The work list
+# and so this cannot run from cm_run_lobby_setup like the trmm sweep. The work list
 # was built at lobby init, so arming is two writes.
 cm_rgob_arm_sweep = {
 	if = {
@@ -145,7 +146,8 @@ cm_rgob_arm_sweep = {
 
 # One driver tick of the coverage sweep. Guarded on the flag because the driver's state
 # machine keeps ticking after its gate goes false, and because every client's Execute is
-# broadcast in multiplayer. Mid-session raw material changes stay stale until the next lobby.
+# broadcast in multiplayer. Mid-session raw material changes stay stale until the stamp is dropped,
+# by a version bump, a mod-set change, or the Rebuild Setup Data button.
 cm_rgob_sweep_batch = {
 	if = {
 		limit = { has_global_variable = cm_rgob_sweep }
@@ -171,6 +173,8 @@ cm_rgob_sweep_batch = {
 			set_global_variable = { name = cm_rgob_wl_idx value = local_var:cm_rgob_whi }
 		}
 		else = {
+			# Written only here, so a save taken mid-sweep carries no stamp and sweeps again.
+			set_global_variable = { name = cm_rgob_stamp value = cm_rgob_version_value }
 			cm_rgob_reset_scan_state = yes
 			cm_rgob_reset_sweep = yes
 			cm_log_setup_complete_if_ready = yes

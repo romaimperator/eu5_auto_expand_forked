@@ -1,0 +1,50 @@
+﻿# Freshness of the load-time setup data. Every pass writes its stamp only where it completes, so a
+# save taken mid-pass reads false and redoes it, and a load finding every stamp current does no
+# setup work at all. The other two stamps live with their own features:
+# cm_building_classification_is_current (cm_building_triggers.txt) and
+# cm_pf_river_data_is_current (cm_map_mode_triggers.txt).
+
+# No scope. Recommended Urban Rights coverage, which cm_trmm_recompute_province_definition stores on
+# every province slice. Synchronous, so there is no in-flight state to guard against.
+cm_trmm_data_is_current = {
+	has_global_variable = cm_trmm_stamp
+	global_var:cm_trmm_stamp = cm_trmm_version_value
+}
+
+# No scope. R.G.O. Bonus per-province coverage. An armed sweep means the coverage is still being
+# written, so it is not yet trustworthy.
+cm_rgob_coverage_is_current = {
+	has_global_variable = cm_rgob_stamp
+	global_var:cm_rgob_stamp = cm_rgob_version_value
+	NOT = { has_global_variable = cm_rgob_sweep }
+}
+
+# No scope. The observer bridge's numeric location and building-type id maps.
+cm_ln_ids_are_current = {
+	has_global_variable = cm_ln_ids_stamp
+	global_var:cm_ln_ids_stamp = cm_ln_ids_version_value
+}
+
+# No scope. True when the CMF-aware mod set matches the one recorded beside the stamps.
+# Read once per lobby by cm_setup_invalidate_on_mod_change rather than folded into the triggers
+# above, which the Roads plan and the governor plan evaluate at runtime and which would then pay
+# two list walks per evaluation.
+# It is blind to a mod CMF does not know about and to a game patch. Neither is reachable: the
+# engine's GetMPChecksum returns CPdxStringView and GetGameVersionDisplay returns CString, both
+# GUI-only, and no string crosses into script. A mod adding building types is covered separately by
+# cm_building_classification_is_current's per-type check.
+cm_setup_mod_set_unchanged = {
+	has_global_variable_list = cm_setup_mod_ids
+	NOT = {
+		any_in_global_list = {
+			variable = cmf_active_mod_ids
+			NOT = { is_target_in_global_variable_list = { name = cm_setup_mod_ids target = this } }
+		}
+	}
+	NOT = {
+		any_in_global_list = {
+			variable = cm_setup_mod_ids
+			NOT = { is_target_in_global_variable_list = { name = cmf_active_mod_ids target = this } }
+		}
+	}
+}
