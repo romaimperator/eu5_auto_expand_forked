@@ -91,32 +91,32 @@ cm_q_loc_reset_rank_scoring = {
 	remove_variable = cm_q_seen_rank
 }
 
-cm_sa_loc_reset_build_scoring = {
-	clear_variable_map = cm_sa_b_scores
-	clear_variable_map = cm_sa_b_costs
-	clear_variable_map = cm_sa_b_conv
-	clear_variable_map = cm_sa_b_profit
-	clear_variable_map = cm_sa_b_cat_1
-	clear_variable_map = cm_sa_b_cat_2
-	clear_variable_map = cm_sa_b_cat_3
-	clear_variable_map = cm_sa_b_cat_4
-	clear_variable_map = cm_sa_b_cat_6
-	clear_variable_map = cm_sa_b_cat_7
-	remove_variable = cm_sa_b_best
-	remove_variable = cm_sa_collapsar_touched
-	remove_variable = cm_sa_collapsar_levels
+cm_ab_loc_reset_build_scoring = {
+	clear_variable_map = cm_ab_b_scores
+	clear_variable_map = cm_ab_b_costs
+	clear_variable_map = cm_ab_b_conv
+	clear_variable_map = cm_ab_b_profit
+	clear_variable_map = cm_ab_b_cat_1
+	clear_variable_map = cm_ab_b_cat_2
+	clear_variable_map = cm_ab_b_cat_3
+	clear_variable_map = cm_ab_b_cat_4
+	clear_variable_map = cm_ab_b_cat_6
+	clear_variable_map = cm_ab_b_cat_7
+	remove_variable = cm_ab_b_best
+	remove_variable = cm_ab_collapsar_touched
+	remove_variable = cm_ab_collapsar_levels
 	cm_q_loc_reset_cycle_counters = yes
 }
 
-cm_sa_loc_reset_upgrade_scoring = {
-	clear_variable_map = cm_sa_u_scores
-	clear_variable_map = cm_sa_u_costs
-	clear_variable_map = cm_sa_u_new_types
-	remove_variable = cm_sa_u_best
+cm_ab_loc_reset_upgrade_scoring = {
+	clear_variable_map = cm_ab_u_scores
+	clear_variable_map = cm_ab_u_costs
+	clear_variable_map = cm_ab_u_new_types
+	remove_variable = cm_ab_u_best
 }
 
-cm_sa_loc_reset_rgo_scoring = {
-	remove_variable = cm_sa_r_score
+cm_ab_loc_reset_rgo_scoring = {
+	remove_variable = cm_ab_r_score
 }
 
 # Within-cycle construction slot claims. Root is the location.
@@ -174,25 +174,25 @@ cm_q_approval_pass = {
 			}
 		}
 	}
-	# Smart Automations category drains after every priority feature has claimed, in the player's
+	# Auto-Build category drains after every priority feature has claimed, in the player's
 	# category order, each category's unspent funds carrying into the next one.
 	if = {
 		limit = {
-			cm_sa_master_active = yes
-			has_variable_list = cm_sa_categories_enabled
+			cm_ab_master_active = yes
+			has_variable_list = cm_ab_categories_enabled
 		}
-		set_local_variable = { name = cm_sa_cost_blocked value = 0 }
-		set_local_variable = { name = cm_sa_no_hold value = 0 }
-		set_local_variable = { name = cm_sa_ledger value = 0 }
-		set_variable = { name = cm_sa_carry value = 0 }
+		set_local_variable = { name = cm_ab_cost_blocked value = 0 }
+		set_local_variable = { name = cm_ab_no_hold value = 0 }
+		set_local_variable = { name = cm_ab_ledger value = 0 }
+		set_variable = { name = cm_ab_carry value = 0 }
 		every_in_list = {
-			variable = cm_sa_categories_enabled
-			save_scope_as = cm_sa_cat
-			scope:cm_country = { cm_sa_drain_category = yes }
+			variable = cm_ab_categories_enabled
+			save_scope_as = cm_ab_cat
+			scope:cm_country = { cm_ab_drain_category = yes }
 		}
-		remove_variable = cm_sa_carry
+		remove_variable = cm_ab_carry
 	}
-	# Auto-urbanize claims last, after every priority feature and every Smart Automations
+	# Auto-urbanize claims last, after every priority feature and every Auto-Build
 	# category.
 	if = {
 		limit = { exists = var:cm_auto_urbanize_enabled }
@@ -600,7 +600,7 @@ cm_q_pass_approve_upgrade_item = {
 	}
 }
 
-# The approval bookkeeping shared by the player upgrade drains and the Smart Automations
+# The approval bookkeeping shared by the player upgrade drains and the Auto-Build
 # upgrade pick, which applies its own gates before calling: approved lists, planned spend,
 # the slot claim, the market commit, the auto-expand registration swap, and the in-progress
 # records. Root is the location. Expects scope:cm_country, scope:cm_old_building_type,

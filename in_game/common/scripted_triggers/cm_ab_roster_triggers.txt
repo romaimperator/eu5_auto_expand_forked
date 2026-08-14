@@ -42,17 +42,17 @@ cm_check_location_has_peasants_available_or_will_be = {
 
 # Root is the location. Expects the raw auto-build list key as target and scope country. True when location has enough RGO/lumber levels for this building type: sawmill needs RGO or lumber_mill >= required; windmill/local_smelters need RGO >= required.
 # Non-RGO buildings always pass via the fallback.
-cm_auto_build_check_rgo_level_requirement_met = {
+cm_ab_check_rgo_level_requirement_met = {
 	switch = { trigger = $target$
-		building_type:sawmill = { cm_auto_build_check_rgo_level_requirement_met_sawmill = yes }
-		building_type:windmill = { cm_auto_build_check_rgo_level_requirement_met_windmill = yes }
-		building_type:local_smelters = { cm_auto_build_check_rgo_level_requirement_met_local_smelters = yes }
+		building_type:sawmill = { cm_ab_check_rgo_level_requirement_met_sawmill = yes }
+		building_type:windmill = { cm_ab_check_rgo_level_requirement_met_windmill = yes }
+		building_type:local_smelters = { cm_ab_check_rgo_level_requirement_met_local_smelters = yes }
 		fallback = { always = yes }
 	}
 }
 
 # Root is the location, also expects the scope country
-cm_auto_build_check_rgo_level_requirement_met_sawmill = {
+cm_ab_check_rgo_level_requirement_met_sawmill = {
 	OR = {
 		AND = { raw_material = goods:lumber cm_modifier_rgo_level >= "scope:cm_country.variable_map(cm_min_rgos_by_building_type|building_type:sawmill)" }
 		AND = { has_building = building_type:lumber_mill "building(building_type:lumber_mill|owner)" = { building_level >= "scope:cm_country.variable_map(cm_min_rgos_by_building_type|building_type:sawmill)" } }
@@ -61,7 +61,7 @@ cm_auto_build_check_rgo_level_requirement_met_sawmill = {
 }
 
 # Root is the location, also expects the scope country
-cm_auto_build_check_rgo_level_requirement_met_windmill = {
+cm_ab_check_rgo_level_requirement_met_windmill = {
 	AND = {
 		OR = {
 			raw_material = goods:wheat
@@ -73,7 +73,7 @@ cm_auto_build_check_rgo_level_requirement_met_windmill = {
 }
 
 # Root is the location, also expects the scope country
-cm_auto_build_check_rgo_level_requirement_met_local_smelters = {
+cm_ab_check_rgo_level_requirement_met_local_smelters = {
 	AND = {
 		OR = {
 			raw_material = goods:iron
@@ -89,13 +89,13 @@ cm_auto_build_check_rgo_level_requirement_met_local_smelters = {
 # These replace the old per-building trigger files. All building-specific
 # logic is resolved dynamically via engine triggers and precomputed maps.
 
-# Expects scope:cm_country, with cm_auto_build_chain_predecessors populated by cm_auto_build_resolve_building_type, and scope:cm_location.
+# Expects scope:cm_country, with cm_ab_chain_predecessors populated by cm_ab_resolve_building_type, and scope:cm_location.
 # True when the location has none of the resolved building type's obsolete predecessor tiers.
 cm_location_has_no_auto_build_chain_predecessor = {
 	scope:cm_country = {
 		NOT = {
 			any_in_list = {
-				variable = cm_auto_build_chain_predecessors
+				variable = cm_ab_chain_predecessors
 				scope:cm_location = { has_building = prev }
 			}
 		}
@@ -128,7 +128,7 @@ cm_location_can_place_building = {
 
 # Expects scopes: country, location
 # Expects param: target => the raw auto-build list key; the min-control map is keyed by it.
-cm_auto_build_check_meets_minimum_control = {
+cm_ab_check_meets_minimum_control = {
 	scope:cm_location.max_control >= $target$.cm_get_minimum_control_for_auto_build
 }
 
@@ -137,7 +137,7 @@ cm_auto_build_check_meets_minimum_control = {
 # and cost adjustment evaluate scope:cm_building_type.
 # The 0.005 added is a 0.5% tolerance so that a setting of -33% matches a cost
 # adjustment of -32.5%, avoiding float-rounding misses at the boundary.
-cm_auto_build_check_meets_minimum_market_price_impact = {
+cm_ab_check_meets_minimum_market_price_impact = {
 	OR = {
 		scope:cm_building_type = { cm_get_standard_construction_demand_total = 0 }
 		$target$ = { cm_get_standard_construction_cost_adjustment_for_building_type <= { value = cm_get_minimum_market_price_impact_for_auto_build add = 0.005 } }

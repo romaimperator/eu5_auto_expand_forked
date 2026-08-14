@@ -1,0 +1,1003 @@
+﻿# Auto-Build Industry: stages expand, from-zero, obsolete-upgrade, and RGO candidates
+# on ROI Tax Income, then the greedy country-wide drain approves the best of them under the
+# industry pool. Staging applies no slot, under-construction, or affordability gates: a
+# currently blocked good candidate must still score so it can anchor the bar and hold it
+# against worse buildable ones.
+
+# Mirrors the cm__ab_industry_max_rel_roi slider max (cm_cmm_effects.txt); at it no relative
+# limit applies.
+@cm_ab_rel_roi_unlimited = 100
+
+# Root is the country, scope:cm_country set.
+cm_ab_run_industry = {
+	# From-zero candidate types this pulse: buildable, non-obsolete production types.
+	clear_variable_list = cm_ab_ind_types
+	every_in_global_list = {
+		variable = cm_building_types_to_process
+		limit = {
+			cm_is_building_type_production_building = yes
+			is_foreign = no
+			cm_cu_is_always_delete = no
+			save_temporary_scope_as = cm_ab_try_type
+			scope:cm_country = {
+				can_build_building = scope:cm_ab_try_type
+				NOT = { building_type_is_obsolete = scope:cm_ab_try_type }
+			}
+		}
+		save_scope_as = cm_ab_list_type
+		scope:cm_country = { add_to_variable_list = { name = cm_ab_ind_types target = scope:cm_ab_list_type } }
+	}
+	every_market_present_in_country = {
+		limit = { cm_ab_market_in_slice = yes }
+		# The market iterators carry no ownership filter of their own, and a shared market
+		# holds other countries' locations.
+		ordered_location_in_market = {
+			order_by = max_control
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			limit = {
+				owner ?= scope:cm_country
+				NOT = { integration_level = conquered }
+				cm_ab_location_has_proximity = yes
+				cm_location_auto_food_workers_ok = yes
+			}
+			save_scope_as = cm_location
+			cm_pop_track = yes
+			# Standing buildings: expands and obsolete upgrades.
+			ordered_buildings_in_location = {
+				order_by = building_index
+				max = 100
+				check_range_bounds = no
+				save_scope_as = cm_building
+				building_type = { save_scope_as = cm_building_type }
+				if = {
+					limit = { cm_is_building_type_obsolete = yes }
+					if = {
+						limit = {
+							scope:cm_building_type = { cm_is_building_type_production_building = yes }
+							scope:cm_location = { cm_is_building_type_upgradeable_and_can_be_upgraded_by_owner = yes }
+						}
+						scope:cm_building_type = { cm_find_current_building_type = yes }
+						cm_ab_stage_upgrade_candidate = yes
+					}
+				} else_if = {
+					limit = {
+						scope:cm_building_type = {
+							cm_is_building_type_production_building = yes
+							cm_cu_is_always_delete = no
+						}
+						scope:cm_building = {
+							is_at_max_level = no
+							is_opened = yes
+						}
+						scope:cm_location = {
+							cm_location_has_enough_pops_available = yes
+							cm_is_location_under_building_limit = yes
+							NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
+						}
+					}
+					cm_ab_stage_build_candidate = { cat = 1 }
+				}
+			}
+			# From-zero production buildings.
+			scope:cm_country = {
+				every_in_list = {
+					variable = cm_ab_ind_types
+					save_scope_as = cm_building_type
+					if = {
+						limit = {
+							scope:cm_location = {
+								NOT = { has_building = scope:cm_building_type }
+								cm_location_allowed_to_build = { target = scope:cm_building_type }
+								cm_location_has_enough_pops_available = yes
+								cm_is_location_under_building_limit = yes
+								NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
+								NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_building_type } }
+							}
+						}
+						cm_ab_stage_build_candidate = { cat = 1 }
+					}
+				}
+			}
+			# RGO expansion.
+			if = {
+				limit = {
+					cm_rgo_basic_expand_eligibility = yes
+					NOT = { cm_location_auto_food_supersedes_rgo = yes }
+				}
+				cm_ab_stage_rgo_candidate = yes
+			}
+		}
+	}
+}
+
+# Stages a build candidate into the shared build queue and marks its category. Each
+# category's mark is its own, so a location one has staged is still reachable by the others.
+# $cat$ = 1 industry, 2 collapsar, 3 food, 4 utilities, 5 governors, 6 forts, 7 manpower.
+# Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
+cm_ab_stage_build_candidate = {
+	if = {
+		limit = { scope:cm_building_type = { cm_ab_type_is_never_built = no } }
+		cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_ab_b_locations SET = cm_ab_b_locations_set LOCATION_LIST = cm_ab_b_types DONE_LIST = cm_ab_done_b_types }
+		scope:cm_location = {
+			add_to_variable_map = { name = cm_ab_b_cat_$cat$ key = scope:cm_building_type value = 1 }
+		}
+	}
+}
+
+# Expects scope:cm_country, scope:cm_location.
+cm_ab_stage_rgo_candidate = {
+	cm_stage_location_to_queue = { COUNTRY_LIST = cm_ab_r_locations SET = cm_ab_r_locations_set DONE_VAR = cm_ab_done_rgo }
+}
+
+# Auto-Build obsolete-upgrade staging, keyed by the standing obsolete type. Mirrors
+# cm_stage_upgrade_candidate's scope dance and shared markers; the ROI gate replaces the
+# min-gold and min-discount gates and runs at scoring. scope:cm_building_type holds the
+# replacement while the gates run. Expects scope:cm_country, scope:cm_location,
+# scope:cm_building, scope:cm_building_type as the standing obsolete type,
+# scope:cm_current_building_type as the resolved replacement.
+cm_ab_stage_upgrade_candidate = {
+	cm_clear_finished_upgrade_in_progress = yes
+	scope:cm_building_type = { save_scope_as = cm_ab_staged_type }
+	scope:cm_current_building_type = { save_scope_as = cm_building_type }
+	set_local_variable = { name = cm_ab_upg_ok value = 0 }
+	if = {
+		limit = {
+			scope:cm_current_building_type = { cm_ab_type_is_never_built = no }
+			scope:cm_building = { cm_is_not_under_construction = yes }
+			scope:cm_location = {
+				cm_location_building_type_not_under_construction = yes
+				cm_location_has_enough_pops_available = yes
+				cm_is_location_under_building_limit = yes
+			}
+			NOT = { scope:cm_location = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_ab_staged_type } } }
+			# Already staged in the player's upgrade queue this pulse
+			NOT = { scope:cm_location = { is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_ab_staged_type } } }
+		}
+		set_local_variable = { name = cm_ab_upg_ok value = 1 }
+	}
+	scope:cm_ab_staged_type = { save_scope_as = cm_building_type }
+	if = {
+		limit = { local_var:cm_ab_upg_ok = 1 }
+		cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_ab_u_locations SET = cm_ab_u_locations_set LOCATION_LIST = cm_ab_u_types DONE_LIST = cm_ab_done_u_types }
+		# Shared marker so no feature from-zero-builds the replacement this pulse.
+		scope:cm_location = {
+			if = {
+				limit = { NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type } } }
+				add_to_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type }
+			}
+		}
+	}
+}
+
+# score = -(cost / (adjusted income * 12)), floored at the -99999 sentinel; bigger =
+# better, matching cm_q_compute_metric_score's ROI branch. Root is the item's location.
+# Expects scope:cm_income (plus the indirect scopes when available) and scope:cm_q_score_cost.
+# Result exported as scope:cm_ab_score_val. Callers gate on cm_ab_ind_roi_passes first.
+cm_ab_compute_roi_score = {
+	set_local_variable = { name = cm_ab_denom value = cm_bld_adjusted_income }
+	change_local_variable = { name = cm_ab_denom multiply = 12 }
+	set_local_variable = { name = cm_ab_sc value = scope:cm_q_score_cost }
+	change_local_variable = { name = cm_ab_sc divide = local_var:cm_ab_denom }
+	change_local_variable = { name = cm_ab_sc multiply = -1 }
+	change_local_variable = { name = cm_ab_sc max = -99999 }
+	save_temporary_scope_value_as = { name = cm_ab_score_val value = local_var:cm_ab_sc }
+}
+
+# The good a candidate's building type makes, as scope:cm_ab_anchor_good, with
+# local_var:cm_ab_has_good telling the callers whether the classification recorded one; without
+# it the candidate is left unanchored and unbarred rather than keyed by something arbitrary.
+# Expects scope:cm_ab_anchor_type.
+cm_ab_ind_resolve_good = {
+	set_local_variable = { name = cm_ab_has_good value = 0 }
+	if = {
+		limit = {
+			has_global_variable_map = cm_building_type_to_produced_good
+			is_key_in_global_variable_map = { name = cm_building_type_to_produced_good target = scope:cm_ab_anchor_type }
+		}
+		"global_variable_map(cm_building_type_to_produced_good|scope:cm_ab_anchor_type)" = { save_temporary_scope_as = cm_ab_anchor_good }
+		set_local_variable = { name = cm_ab_has_good value = 1 }
+	}
+}
+
+# Folds a scored candidate into its good's rotation-remembered best payback, so every building
+# making that good answers to one anchor. Called before the placement gate, so a candidate whose
+# location goes to another building still sets its good's bar. Root is the country. Expects
+# scope:cm_ab_anchor_type, scope:cm_ab_anchor_loc and scope:cm_ab_score_val.
+cm_ab_ind_fold_gd_anchor = {
+	cm_ab_ind_resolve_good = yes
+	if = {
+		limit = { local_var:cm_ab_has_good = 1 }
+		if = {
+			limit = {
+				trigger_if = {
+					limit = {
+						has_variable_map = cm_ab_ind_gd_anchor
+						is_key_in_variable_map = { name = cm_ab_ind_gd_anchor target = scope:cm_ab_anchor_good }
+					}
+					"variable_map(cm_ab_ind_gd_anchor|scope:cm_ab_anchor_good)" < scope:cm_ab_score_val
+				}
+				trigger_else = { always = yes }
+			}
+			remove_from_variable_map = { name = cm_ab_ind_gd_anchor key = scope:cm_ab_anchor_good }
+			add_to_variable_map = { name = cm_ab_ind_gd_anchor key = scope:cm_ab_anchor_good value = scope:cm_ab_score_val }
+			remove_from_variable_map = { name = cm_ab_ind_gd_loc key = scope:cm_ab_anchor_good }
+			add_to_variable_map = { name = cm_ab_ind_gd_loc key = scope:cm_ab_anchor_good value = scope:cm_ab_anchor_loc }
+			remove_from_variable_map = { name = cm_ab_ind_gd_bt key = scope:cm_ab_anchor_good }
+			add_to_variable_map = { name = cm_ab_ind_gd_bt key = scope:cm_ab_anchor_good value = scope:cm_ab_anchor_type }
+		}
+	}
+}
+
+# Clears what a market's last visit left behind, both the anchors its locations set and the best
+# candidate it was remembered by. Called as the market enters a slice, so the fresh scores that
+# follow are what the market is judged on.
+# Root is the country, expects scope:cm_ab_slice_mkt.
+cm_ab_ind_drop_market_memory = {
+	remove_from_variable_map = { name = cm_ab_ind_mkt_best key = scope:cm_ab_slice_mkt }
+	remove_from_variable_map = { name = cm_ab_ind_mkt_cost key = scope:cm_ab_slice_mkt }
+	remove_from_variable_map = { name = cm_ab_ind_mkt_bt key = scope:cm_ab_slice_mkt }
+	save_temporary_scope_as = cm_ab_anchor_owner
+	# Collected first: removing a key inside the walk would mutate the map being walked.
+	clear_variable_list = cm_ab_ind_drop
+	if = {
+		limit = { has_variable_map = cm_ab_ind_gd_loc }
+		every_key_in_variable_map = {
+			variable = cm_ab_ind_gd_loc
+			save_scope_as = cm_ab_drop_gd
+			# The iterator makes the key the scope, so the map read has to name its owner.
+			"scope:cm_ab_anchor_owner.variable_map(cm_ab_ind_gd_loc|scope:cm_ab_drop_gd)" = { save_temporary_scope_as = cm_ab_drop_loc }
+			if = {
+				limit = { scope:cm_ab_drop_loc = { market = { this = scope:cm_ab_slice_mkt } } }
+				scope:cm_ab_anchor_owner = { add_to_variable_list = { name = cm_ab_ind_drop target = scope:cm_ab_drop_gd } }
+			}
+		}
+	}
+	every_in_list = {
+		variable = cm_ab_ind_drop
+		save_scope_as = cm_ab_drop_gd
+		scope:cm_ab_anchor_owner = {
+			remove_from_variable_map = { name = cm_ab_ind_gd_anchor key = scope:cm_ab_drop_gd }
+			remove_from_variable_map = { name = cm_ab_ind_gd_loc key = scope:cm_ab_drop_gd }
+			remove_from_variable_map = { name = cm_ab_ind_gd_bt key = scope:cm_ab_drop_gd }
+		}
+	}
+	clear_variable_list = cm_ab_ind_drop
+}
+
+# The best BUILD or UPGRADE candidate still standing at this location, as local_var:cm_ab_rec_s,
+# local_var:cm_ab_rec_c and scope:cm_ab_rec_bt, with local_var:cm_ab_rec_has_bt marking whether
+# that scope belongs to this location rather than the previous one the caller walked.
+# The RGO domain is deliberately absent: an RGO bars nothing, so it has no place in the off-slice
+# memory this feeds. The type reported is the one the off-slice bar resolves its good from, so an
+# upgrade reports its replacement tier. Root is the location.
+cm_ab_ind_loc_best = {
+	save_temporary_scope_as = cm_ab_rec_loc
+	set_local_variable = { name = cm_ab_rec_s value = -2000000 }
+	set_local_variable = { name = cm_ab_rec_c value = 0 }
+	set_local_variable = { name = cm_ab_rec_has_bt value = 0 }
+	if = {
+		limit = {
+			has_variable = cm_ab_b_best
+			has_variable_map = cm_ab_b_scores
+			var:cm_ab_b_best > local_var:cm_ab_rec_s
+		}
+		ordered_key_in_variable_map = {
+			variable = cm_ab_b_scores
+			order_by = {
+				save_temporary_scope_as = cm_ab_try_type
+				value = "scope:cm_ab_rec_loc.variable_map(cm_ab_b_scores|scope:cm_ab_try_type)"
+			}
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_ab_rec_type
+		}
+		if = {
+			limit = {
+				has_variable_map = cm_ab_b_costs
+				is_key_in_variable_map = { name = cm_ab_b_costs target = scope:cm_ab_rec_type }
+			}
+			set_local_variable = { name = cm_ab_rec_s value = var:cm_ab_b_best }
+			set_local_variable = { name = cm_ab_rec_c value = "variable_map(cm_ab_b_costs|scope:cm_ab_rec_type)" }
+			scope:cm_ab_rec_type = { save_temporary_scope_as = cm_ab_rec_bt }
+			set_local_variable = { name = cm_ab_rec_has_bt value = 1 }
+		}
+	}
+	if = {
+		limit = {
+			has_variable = cm_ab_u_best
+			has_variable_map = cm_ab_u_scores
+			var:cm_ab_u_best > local_var:cm_ab_rec_s
+		}
+		ordered_key_in_variable_map = {
+			variable = cm_ab_u_scores
+			order_by = {
+				save_temporary_scope_as = cm_ab_try_type
+				value = "scope:cm_ab_rec_loc.variable_map(cm_ab_u_scores|scope:cm_ab_try_type)"
+			}
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_ab_rec_type
+		}
+		if = {
+			limit = {
+				has_variable_map = cm_ab_u_costs
+				is_key_in_variable_map = { name = cm_ab_u_costs target = scope:cm_ab_rec_type }
+				has_variable_map = cm_ab_u_new_types
+				is_key_in_variable_map = { name = cm_ab_u_new_types target = scope:cm_ab_rec_type }
+			}
+			set_local_variable = { name = cm_ab_rec_s value = var:cm_ab_u_best }
+			set_local_variable = { name = cm_ab_rec_c value = "variable_map(cm_ab_u_costs|scope:cm_ab_rec_type)" }
+			"variable_map(cm_ab_u_new_types|scope:cm_ab_rec_type)" = { save_temporary_scope_as = cm_ab_rec_bt }
+			set_local_variable = { name = cm_ab_rec_has_bt value = 1 }
+		}
+	}
+}
+
+# Remembers the best candidate each slice market still held when the drain stopped, so a market
+# the rotation has moved off still weighs against the ones it can act on. Anything the pick loop
+# consumed is gone from the maps by now, which is what keeps a bought or refused candidate out.
+# Root is the country.
+cm_ab_ind_record_market_best = {
+	save_temporary_scope_as = cm_ab_rec_ctry
+	every_in_list = {
+		variable = cm_ab_drain_cands
+		cm_ab_ind_loc_best = yes
+		if = {
+			limit = {
+				local_var:cm_ab_rec_s > -2000000
+				local_var:cm_ab_rec_has_bt = 1
+			}
+			market = { save_scope_as = cm_ab_rec_mkt }
+			scope:cm_ab_rec_ctry = {
+				if = {
+					limit = {
+						trigger_if = {
+							limit = {
+								has_variable_map = cm_ab_ind_mkt_best
+								is_key_in_variable_map = { name = cm_ab_ind_mkt_best target = scope:cm_ab_rec_mkt }
+							}
+							"variable_map(cm_ab_ind_mkt_best|scope:cm_ab_rec_mkt)" < local_var:cm_ab_rec_s
+						}
+						trigger_else = { always = yes }
+					}
+					remove_from_variable_map = { name = cm_ab_ind_mkt_best key = scope:cm_ab_rec_mkt }
+					add_to_variable_map = { name = cm_ab_ind_mkt_best key = scope:cm_ab_rec_mkt value = local_var:cm_ab_rec_s }
+					remove_from_variable_map = { name = cm_ab_ind_mkt_cost key = scope:cm_ab_rec_mkt }
+					add_to_variable_map = { name = cm_ab_ind_mkt_cost key = scope:cm_ab_rec_mkt value = local_var:cm_ab_rec_c }
+					remove_from_variable_map = { name = cm_ab_ind_mkt_bt key = scope:cm_ab_rec_mkt }
+					add_to_variable_map = { name = cm_ab_ind_mkt_bt key = scope:cm_ab_rec_mkt value = scope:cm_ab_rec_bt }
+				}
+			}
+		}
+	}
+}
+
+# The best candidate remembered in a market this cycle cannot reach, as local_var:cm_ab_off_best
+# and local_var:cm_ab_off_cost. Builds and upgrades only, the memory holding nothing else.
+# What it sizes is the gold set aside for that pick; the bar it holds candidates to is
+# cm_ab_ind_build_off_bars, keyed per good. Root is the country, expects scope:cm_country.
+cm_ab_ind_off_slice_best = {
+	save_temporary_scope_as = cm_ab_off_ctry
+	set_local_variable = { name = cm_ab_off_best value = -2000000 }
+	set_local_variable = { name = cm_ab_off_cost value = 0 }
+	if = {
+		limit = { has_variable_map = cm_ab_ind_mkt_best }
+		every_key_in_variable_map = {
+			variable = cm_ab_ind_mkt_best
+			save_scope_as = cm_ab_off_mkt
+			# The iterator makes the key the scope, so the map reads have to name their owner.
+			set_local_variable = { name = cm_ab_off_v value = "scope:cm_ab_off_ctry.variable_map(cm_ab_ind_mkt_best|scope:cm_ab_off_mkt)" }
+			if = {
+				limit = {
+					local_var:cm_ab_off_v > local_var:cm_ab_off_best
+					NOT = { cm_ab_market_in_slice = yes }
+					scope:cm_ab_off_ctry = { is_key_in_variable_map = { name = cm_ab_ind_mkt_cost target = scope:cm_ab_off_mkt } }
+				}
+				set_local_variable = { name = cm_ab_off_best value = local_var:cm_ab_off_v }
+				set_local_variable = { name = cm_ab_off_cost value = "scope:cm_ab_off_ctry.variable_map(cm_ab_ind_mkt_cost|scope:cm_ab_off_mkt)" }
+			}
+		}
+	}
+}
+
+# Folds the off-slice memory into cm_ab_ind_off_gd, one bar per good, so a candidate is only ever
+# held back by a better maker of the same good waiting in a market the rotation has moved off.
+# A market whose remembered entry lost its type is skipped rather than applied blindly.
+# Root is the country, expects scope:cm_country.
+cm_ab_ind_build_off_bars = {
+	save_temporary_scope_as = cm_ab_offb_ctry
+	clear_variable_map = cm_ab_ind_off_gd
+	if = {
+		limit = { has_variable_map = cm_ab_ind_mkt_best }
+		every_key_in_variable_map = {
+			variable = cm_ab_ind_mkt_best
+			save_scope_as = cm_ab_offb_mkt
+			if = {
+				limit = {
+					NOT = { cm_ab_market_in_slice = yes }
+					scope:cm_ab_offb_ctry = {
+						is_key_in_variable_map = { name = cm_ab_ind_mkt_bt target = scope:cm_ab_offb_mkt }
+					}
+				}
+				# The iterator makes the key the scope, so the map reads have to name their owner.
+				set_local_variable = { name = cm_ab_offb_v value = "scope:cm_ab_offb_ctry.variable_map(cm_ab_ind_mkt_best|scope:cm_ab_offb_mkt)" }
+				"scope:cm_ab_offb_ctry.variable_map(cm_ab_ind_mkt_bt|scope:cm_ab_offb_mkt)" = { save_temporary_scope_as = cm_ab_anchor_type }
+				cm_ab_ind_resolve_good = yes
+				if = {
+					limit = { local_var:cm_ab_has_good = 1 }
+					scope:cm_ab_offb_ctry = {
+						if = {
+							limit = {
+								trigger_if = {
+									limit = {
+										has_variable_map = cm_ab_ind_off_gd
+										is_key_in_variable_map = { name = cm_ab_ind_off_gd target = scope:cm_ab_anchor_good }
+									}
+									"variable_map(cm_ab_ind_off_gd|scope:cm_ab_anchor_good)" < local_var:cm_ab_offb_v
+								}
+								trigger_else = { always = yes }
+							}
+							remove_from_variable_map = { name = cm_ab_ind_off_gd key = scope:cm_ab_anchor_good }
+							add_to_variable_map = { name = cm_ab_ind_off_gd key = scope:cm_ab_anchor_good value = local_var:cm_ab_offb_v }
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# Relative factor = 1 + the tolerance percent; scores are negative years, so a good's anchor times
+# the factor is the worst payback admitted for it. At the slider max no relative limit applies and
+# the factor stays 0. Root is the country. Result in local_var:cm_ab_rel_f.
+cm_ab_ind_rel_roi_factor = {
+	set_local_variable = { name = cm_ab_rel_f value = 0 }
+	if = {
+		limit = {
+			exists = var:cm_ab_industry_max_rel_roi
+			var:cm_ab_industry_max_rel_roi < @cm_ab_rel_roi_unlimited
+		}
+		set_local_variable = { name = cm_ab_rel_f value = var:cm_ab_industry_max_rel_roi }
+		change_local_variable = { name = cm_ab_rel_f divide = 100 }
+		change_local_variable = { name = cm_ab_rel_f add = 1 }
+	}
+}
+
+# One good's admission bar, on the negative years scale: the stricter of its anchor scaled by the
+# relative factor and the best score of the same good waiting off-slice. Both lift together at the
+# slider max, so no limit means no limit. Stays at the sentinel when neither applies, which admits
+# every score. Expects scope:cm_country, scope:cm_ab_anchor_type as the candidate's building type,
+# and local_var:cm_ab_rel_f. Result in local_var:cm_ab_gd_bar.
+cm_ab_ind_gd_bar = {
+	set_local_variable = { name = cm_ab_gd_bar value = -2000000 }
+	cm_ab_ind_resolve_good = yes
+	if = {
+		limit = {
+			local_var:cm_ab_has_good = 1
+			local_var:cm_ab_rel_f > 0
+		}
+		if = {
+			limit = {
+				scope:cm_country = {
+					has_variable_map = cm_ab_ind_gd_anchor
+					is_key_in_variable_map = { name = cm_ab_ind_gd_anchor target = scope:cm_ab_anchor_good }
+				}
+			}
+			set_local_variable = { name = cm_ab_gd_bar value = "scope:cm_country.variable_map(cm_ab_ind_gd_anchor|scope:cm_ab_anchor_good)" }
+			change_local_variable = { name = cm_ab_gd_bar multiply = local_var:cm_ab_rel_f }
+		}
+		if = {
+			limit = {
+				scope:cm_country = {
+					has_variable_map = cm_ab_ind_off_gd
+					is_key_in_variable_map = { name = cm_ab_ind_off_gd target = scope:cm_ab_anchor_good }
+				}
+			}
+			set_local_variable = { name = cm_ab_off_bar value = "scope:cm_country.variable_map(cm_ab_ind_off_gd|scope:cm_ab_anchor_good)" }
+			change_local_variable = { name = cm_ab_gd_bar max = local_var:cm_ab_off_bar }
+		}
+	}
+}
+
+# Temporary diagnostic: one CMM log line per Industry approval. The income is recovered from
+# the score and the cost, so it is the adjusted income the ROI was computed from. Root is the
+# location. Expects scope:cm_country, scope:cm_building_type, scope:cm_cost, and
+# scope:cm_ab_pick_score as the item's stored negated years-to-recoup.
+cm_ab_ind_log_queued = {
+	set_local_variable = { name = cm_ab_ilog_roi value = scope:cm_ab_pick_score }
+	change_local_variable = { name = cm_ab_ilog_roi multiply = -1 }
+	set_local_variable = { name = cm_ab_ilog_inc value = 0 }
+	if = {
+		limit = { local_var:cm_ab_ilog_roi > 0 }
+		set_local_variable = { name = cm_ab_ilog_inc value = scope:cm_cost }
+		change_local_variable = { name = cm_ab_ilog_inc divide = local_var:cm_ab_ilog_roi }
+		change_local_variable = { name = cm_ab_ilog_inc divide = 12 }
+	}
+	save_scope_as = cmf_log_loc
+	scope:cm_building_type = { save_scope_as = cmf_log_bt }
+	scope:cm_country = {
+		cm_dbg_log_bld = { cat = industry
+			action = cm_log_ind_queued
+			arg1 = cm_log_ind_roi
+			arg2 = cm_log_ind_income
+			value = local_var:cm_ab_ilog_roi
+			value2 = local_var:cm_ab_ilog_inc
+		}
+	}
+}
+
+# Greedy country-wide drain: actionable builds and upgrades are approved best-first, each held
+# within the tolerance of the best payback recorded for the good it makes; RGO expansions bypass
+# that bar and drain by ROI. Payback is cost over income in gold, both already priced in the
+# candidate's own market, so scores rank directly against each other across markets.
+# Root is the country.
+cm_ab_pass_industry = {
+	cm_ab_ind_rel_roi_factor = yes
+	# The picks below run hundreds of times, so the candidate set is collected once here and
+	# re-read from the list instead of re-scanning every owned location. Only the markets
+	# staged this cycle: a market outside the slice holds no candidates.
+	clear_variable_list = cm_ab_drain_cands
+	every_market_present_in_country = {
+		limit = { cm_ab_market_in_slice = yes }
+		every_location_in_market = {
+			limit = {
+				owner ?= scope:cm_country
+				OR = {
+					has_variable = cm_ab_b_best
+					has_variable = cm_ab_u_best
+					has_variable = cm_ab_r_score
+				}
+			}
+			save_scope_as = cm_ab_cand_loc
+			scope:cm_country = { add_to_variable_list = { name = cm_ab_drain_cands target = scope:cm_ab_cand_loc } }
+		}
+	}
+	cm_ab_ind_build_off_bars = yes
+	cm_ab_ind_pick_loop = yes
+	cm_ab_ind_record_market_best = yes
+	clear_variable_map = cm_ab_ind_off_gd
+	clear_variable_list = cm_ab_drain_cands
+}
+
+# Approves the best candidate in the country repeatedly until every candidate map is spent or
+# the pool cannot cover the next one; each pick tests the bar of the good it makes. The outer
+# batch loop is what carries the pick count past a single while's 1000-iteration abort; it
+# re-enters only while the inner loop's last iteration picked something.
+# The three domains share one candidate list, so a pick leaving the other two standing rests on
+# the prune: it drops a location only once it has lost every marker, which is a location the
+# other two were already filtering out.
+# Root is the country. Expects cm_ab_drain_cands built and local_var:cm_ab_rel_f set.
+cm_ab_ind_pick_loop = {
+	set_local_variable = { name = cm_ab_more value = 1 }
+	set_local_variable = { name = cm_ab_outer value = 0 }
+	cm_q_pick_domain_arm = { D = ib LIST = cm_ab_drain_cands BEST = cm_ab_b_best }
+	cm_q_pick_domain_arm = { D = iu LIST = cm_ab_drain_cands BEST = cm_ab_u_best }
+	cm_q_pick_domain_arm = { D = ir LIST = cm_ab_drain_cands BEST = cm_ab_r_score }
+	while = {
+		limit = {
+			local_var:cm_ab_more = 1
+			local_var:cm_ab_cost_blocked = 0
+			local_var:cm_ab_outer < 20
+		}
+		change_local_variable = { name = cm_ab_outer add = 1 }
+		set_local_variable = { name = cm_ab_guard value = 0 }
+		while = {
+			limit = {
+				local_var:cm_ab_more = 1
+				local_var:cm_ab_cost_blocked = 0
+				# 999 stays under the engine's 1000-iteration while abort.
+				local_var:cm_ab_guard < 999
+			}
+			change_local_variable = { name = cm_ab_guard add = 1 }
+			set_local_variable = { name = cm_ab_more value = 0 }
+			cm_q_pick_domain_refresh = { D = ib LIST = cm_ab_drain_cands BEST = cm_ab_b_best PICK = cm_ab_pick_b_loc }
+			cm_q_pick_domain_refresh = { D = iu LIST = cm_ab_drain_cands BEST = cm_ab_u_best PICK = cm_ab_pick_u_loc }
+			cm_q_pick_domain_refresh = { D = ir LIST = cm_ab_drain_cands BEST = cm_ab_r_score PICK = cm_ab_pick_r_loc }
+			# The picks prune cm_ab_drain_cands, which is only safe because they run after
+			# every refresh above has closed. Moving one inside a refresh would mutate the
+			# list mid-iteration.
+			if = {
+				# Ties go to the build domain, then upgrades.
+				limit = {
+					local_var:cm_q_pd_best_ib >= local_var:cm_q_pd_best_iu
+					local_var:cm_q_pd_best_ib >= local_var:cm_q_pd_best_ir
+					local_var:cm_q_pd_best_ib > -2000000
+				}
+				scope:cm_ab_pick_b_loc = { cm_ab_pick_best_build_item = yes }
+				set_local_variable = { name = cm_q_pd_dirty_ib value = 1 }
+				set_local_variable = { name = cm_ab_more value = 1 }
+			} else_if = {
+				limit = {
+					local_var:cm_q_pd_best_iu >= local_var:cm_q_pd_best_ir
+					local_var:cm_q_pd_best_iu > -2000000
+				}
+				scope:cm_ab_pick_u_loc = { cm_ab_pick_best_upgrade_item = yes }
+				set_local_variable = { name = cm_q_pd_dirty_iu value = 1 }
+				set_local_variable = { name = cm_ab_more value = 1 }
+			} else_if = {
+				# RGOs have no input good, so they can never be unprofitable and never steal a
+				# building's opportunity; the relative bar never gates them, only ROI order.
+				limit = { local_var:cm_q_pd_best_ir > -2000000 }
+				scope:cm_ab_pick_r_loc = { cm_ab_approve_rgo_item = yes }
+				set_local_variable = { name = cm_q_pd_dirty_ir value = 1 }
+				set_local_variable = { name = cm_ab_more value = 1 }
+			}
+		}
+	}
+	clear_variable_list = cm_q_pd_cache_ib
+	clear_variable_list = cm_q_pd_cache_iu
+	clear_variable_list = cm_q_pd_cache_ir
+}
+
+# Console diagnostic: effect c:<TAG> = { cm_ab_ind_anchor_probe = yes }
+# One line per good that has an anchor this rotation, naming the building and location that set
+# it. Root is the country.
+cm_ab_ind_anchor_probe = {
+	save_temporary_scope_as = cm_ab_probe_country
+	cm_ab_ind_rel_roi_factor = yes
+	every_key_in_variable_map = {
+		variable = cm_ab_ind_gd_anchor
+		save_scope_as = cm_ab_probe_good
+		# The iterator makes the key the scope, so the map reads have to name their owner.
+		set_local_variable = { name = cm_ab_ianc_dbg value = "scope:cm_ab_probe_country.variable_map(cm_ab_ind_gd_anchor|scope:cm_ab_probe_good)" }
+		set_local_variable = { name = cm_ab_ibar_dbg value = local_var:cm_ab_ianc_dbg }
+		if = {
+			limit = { local_var:cm_ab_rel_f > 0 }
+			change_local_variable = { name = cm_ab_ibar_dbg multiply = local_var:cm_ab_rel_f }
+		}
+		change_local_variable = { name = cm_ab_ianc_dbg multiply = -1 }
+		change_local_variable = { name = cm_ab_ibar_dbg multiply = -1 }
+		"scope:cm_ab_probe_country.variable_map(cm_ab_ind_gd_bt|scope:cm_ab_probe_good)" = { save_scope_as = cmf_log_bt }
+		"scope:cm_ab_probe_country.variable_map(cm_ab_ind_gd_loc|scope:cm_ab_probe_good)" = { save_scope_as = cmf_log_loc }
+		scope:cm_ab_probe_country = {
+			cm_dbg_log_bld = { cat = industry
+				action = cm_log_ind_anchor
+				arg1 = cm_log_ind_anchor_best
+				arg2 = cm_log_ind_anchor_bar
+				value = local_var:cm_ab_ianc_dbg
+				value2 = local_var:cm_ab_ibar_dbg
+			}
+		}
+	}
+}
+
+# Console diagnostic: effect location:<key> = { cm_ab_rgo_why_probe = yes }
+# One line per Industry RGO gate this location fails, covering the staging gates the drain log
+# never reaches, and one pass line when it fails none. Root is the location.
+cm_ab_rgo_why_probe = {
+	owner = { save_scope_as = cm_country }
+	save_temporary_scope_as = cm_location
+	set_local_variable = { name = cm_ab_why value = 0 }
+	cm_ab_rgo_why_line = { COND = cm_location_market_in_ab_slice ACTION = cm_log_rgo_slice }
+	cm_ab_rgo_why_line = { COND = cm_ab_location_has_proximity ACTION = cm_log_rgo_prox }
+	cm_ab_rgo_why_line = { COND = cm_location_auto_food_workers_ok ACTION = cm_log_rgo_workers }
+	cm_ab_rgo_why_line = { COND = cm_rgo_basic_expand_eligibility ACTION = cm_log_rgo_elig }
+	cm_ab_rgo_why_line = { COND = cm_location_rgo_free_this_cycle ACTION = cm_log_rgo_served }
+	cm_ab_rgo_why_line = { COND = cm_market_has_construction_goods_for_rgo ACTION = cm_log_rgo_goods }
+	if = {
+		limit = { integration_level = conquered }
+		change_local_variable = { name = cm_ab_why add = 1 }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = cm_log_rgo_conquered } }
+	}
+	if = {
+		limit = { cm_location_auto_food_supersedes_rgo = yes }
+		change_local_variable = { name = cm_ab_why add = 1 }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = cm_log_rgo_food } }
+	}
+	if = {
+		limit = { NOT = { cm_get_open_build_queue_slots > 0 } }
+		change_local_variable = { name = cm_ab_why add = 1 }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = cm_log_rgo_slots } }
+	}
+	if = {
+		limit = { NOT = { cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction } } }
+		change_local_variable = { name = cm_ab_why add = 1 }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = cm_log_rgo_room } }
+	}
+	if = {
+		limit = { local_var:cm_ab_why = 0 }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = cm_log_rgo_pass } }
+	}
+}
+
+# One probe line for a gate stated as a passing condition. $COND$ = the trigger, $ACTION$ = its
+# log key. Root is the location, expects scope:cm_country and local_var:cm_ab_why.
+cm_ab_rgo_why_line = {
+	if = {
+		limit = { NOT = { $COND$ = yes } }
+		change_local_variable = { name = cm_ab_why add = 1 }
+		scope:cm_country = { cm_dbg_log = { cat = industry action = $ACTION$ } }
+	}
+}
+
+# Approves the highest-scored build at this location, then consumes it;
+# the key is removed even when the gates fail, so every pick shrinks a map. Root is the
+# location.
+cm_ab_pick_best_build_item = {
+	save_temporary_scope_as = cm_ab_pick_loc
+	ordered_key_in_variable_map = {
+		variable = cm_ab_b_scores
+		order_by = {
+			save_temporary_scope_as = cm_ab_try_type
+			value = "scope:cm_ab_pick_loc.variable_map(cm_ab_b_scores|scope:cm_ab_try_type)"
+		}
+		position = 0
+		check_range_bounds = no
+		save_temporary_scope_as = cm_ab_pick_type
+	}
+	scope:cm_ab_pick_type = {
+		save_scope_as = cm_building_type
+		save_temporary_scope_as = cm_ab_anchor_type
+	}
+	save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_ab_b_costs|scope:cm_ab_pick_type)" }
+	save_temporary_scope_value_as = { name = cm_ab_pick_score value = "variable_map(cm_ab_b_scores|scope:cm_ab_pick_type)" }
+	cm_ab_ind_gd_bar = yes
+	market = { save_temporary_scope_as = cm_market }
+	if = {
+		limit = {
+			# No cost key means the pick came back empty or the engine blocked the build at scoring.
+			has_variable_map = cm_ab_b_costs
+			is_key_in_variable_map = { name = cm_ab_b_costs target = scope:cm_ab_pick_type }
+			scope:cm_ab_pick_score >= { value = local_var:cm_ab_gd_bar }
+			# Approved by another feature this cycle: consume silently.
+			NOT = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } }
+		}
+		if = {
+			limit = {
+				cm_get_open_build_queue_slots > 0
+				cm_market_has_construction_goods_for_building = yes
+			}
+			if = {
+				limit = { cm_ab_can_afford = { POOL = cm_ab_pool_industry } }
+				cm_approve_gui_build = yes
+				cm_ab_ind_log_queued = yes
+				scope:cm_country = { change_variable = { name = cm_ab_pool_industry subtract = scope:cm_cost } }
+				# The engine converts this build into the standing obsolete predecessor's upgrade.
+				if = {
+					limit = {
+						has_variable_map = cm_ab_b_conv
+						is_key_in_variable_map = { name = cm_ab_b_conv target = scope:cm_ab_pick_type }
+					}
+					"variable_map(cm_ab_b_conv|scope:cm_ab_pick_type)" = { save_temporary_scope_as = cm_ab_conv_pred }
+					if = {
+						limit = { NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_ab_conv_pred } } }
+						add_to_variable_list = { name = cm_upgrade_in_progress target = scope:cm_ab_conv_pred }
+					}
+					remove_from_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_ab_conv_pred }
+					add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_ab_conv_pred value = scope:cm_building_type }
+				} else = {
+					# A conversion must fire exactly once.
+					cm_ab_fill_build_slots = { POOL = cm_ab_pool_industry }
+					if = {
+						# The batch stopped on the pool or the treasury alone: stop all further
+						# Industry picks rather than let a worse candidate spend what is left.
+						limit = { local_var:cm_q_copy_stop = 2 }
+						cm_ab_stop_on_cost = { COST = scope:cm_cost }
+					}
+				}
+			} else = {
+				cm_ab_stop_on_cost = { COST = scope:cm_cost }
+			}
+		}
+	}
+	remove_from_variable_map = { name = cm_ab_b_scores key = scope:cm_ab_pick_type }
+	remove_from_variable_map = { name = cm_ab_b_conv key = scope:cm_ab_pick_type }
+	remove_from_variable_map = { name = cm_ab_b_cat_1 key = scope:cm_ab_pick_type }
+	cm_ab_refresh_build_best = yes
+	cm_ab_drain_prune_loc = yes
+}
+
+# Drops a spent location out of the candidate list so the picks stop reading it.
+# Root is the location.
+cm_ab_drain_prune_loc = {
+	save_temporary_scope_as = cm_ab_prune_loc
+	if = {
+		limit = {
+			NOT = { has_variable = cm_ab_b_best }
+			NOT = { has_variable = cm_ab_u_best }
+			NOT = { has_variable = cm_ab_r_score }
+		}
+		scope:cm_country = { remove_list_variable = { name = cm_ab_drain_cands target = scope:cm_ab_prune_loc } }
+	}
+}
+
+# Recomputes this location's best build score after a pick; an empty map drops the best
+# marker, which is the picks' membership filter. Root is the location.
+cm_ab_refresh_build_best = {
+	save_temporary_scope_as = cm_ab_refresh_loc
+	remove_variable = cm_ab_b_best
+	if = {
+		limit = {
+			has_variable_map = cm_ab_b_scores
+			variable_map_size = { name = cm_ab_b_scores value >= 1 }
+		}
+		ordered_key_in_variable_map = {
+			variable = cm_ab_b_scores
+			order_by = {
+				save_temporary_scope_as = cm_ab_try_type
+				value = "scope:cm_ab_refresh_loc.variable_map(cm_ab_b_scores|scope:cm_ab_try_type)"
+			}
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_ab_next_type
+		}
+		set_variable = { name = cm_ab_b_best value = "variable_map(cm_ab_b_scores|scope:cm_ab_next_type)" }
+	}
+}
+
+# Upgrade twin of cm_ab_pick_best_build_item, keyed by the standing obsolete type. Root is
+# the location.
+cm_ab_pick_best_upgrade_item = {
+	save_temporary_scope_as = cm_ab_pick_loc
+	ordered_key_in_variable_map = {
+		variable = cm_ab_u_scores
+		order_by = {
+			save_temporary_scope_as = cm_ab_try_type
+			value = "scope:cm_ab_pick_loc.variable_map(cm_ab_u_scores|scope:cm_ab_try_type)"
+		}
+		position = 0
+		check_range_bounds = no
+		save_temporary_scope_as = cm_ab_pick_type
+	}
+	if = {
+		limit = {
+			has_variable_map = cm_ab_u_new_types
+			is_key_in_variable_map = { name = cm_ab_u_new_types target = scope:cm_ab_pick_type }
+		}
+		scope:cm_ab_pick_type = { save_scope_as = cm_old_building_type }
+		"variable_map(cm_ab_u_new_types|scope:cm_ab_pick_type)" = { save_scope_as = cm_new_building_type }
+		# The replacement is what gets built, so its own good is what the bar comes from.
+		scope:cm_new_building_type = {
+			save_scope_as = cm_building_type
+			save_temporary_scope_as = cm_ab_anchor_type
+		}
+		save_temporary_scope_value_as = { name = cm_cost value = "variable_map(cm_ab_u_costs|scope:cm_ab_pick_type)" }
+		save_temporary_scope_value_as = { name = cm_ab_pick_score value = "variable_map(cm_ab_u_scores|scope:cm_ab_pick_type)" }
+		cm_ab_ind_gd_bar = yes
+		market = { save_temporary_scope_as = cm_market }
+		if = {
+			# Outside its good's bar, approved, or already converting via another feature:
+			# consume silently.
+			limit = {
+				scope:cm_ab_pick_score >= { value = local_var:cm_ab_gd_bar }
+				NOT = { is_target_in_variable_list = { name = cm_q_approved_upgrade_types target = scope:cm_old_building_type } }
+				NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_old_building_type } }
+			}
+			if = {
+				limit = { cm_market_has_construction_goods_for_building = yes }
+				if = {
+					limit = { cm_ab_can_afford = { POOL = cm_ab_pool_industry } }
+					cm_q_record_upgrade_approval = yes
+					cm_ab_ind_log_queued = yes
+					scope:cm_country = { change_variable = { name = cm_ab_pool_industry subtract = scope:cm_cost } }
+				} else = {
+					cm_ab_stop_on_cost = { COST = scope:cm_cost }
+				}
+			}
+		}
+	}
+	remove_from_variable_map = { name = cm_ab_u_scores key = scope:cm_ab_pick_type }
+	remove_from_variable_map = { name = cm_ab_u_costs key = scope:cm_ab_pick_type }
+	remove_from_variable_map = { name = cm_ab_u_new_types key = scope:cm_ab_pick_type }
+	cm_ab_refresh_upg_best = yes
+	cm_ab_drain_prune_loc = yes
+}
+
+# Upgrade twin of cm_ab_refresh_build_best. Root is the location.
+cm_ab_refresh_upg_best = {
+	save_temporary_scope_as = cm_ab_refresh_loc
+	remove_variable = cm_ab_u_best
+	if = {
+		limit = {
+			has_variable_map = cm_ab_u_scores
+			variable_map_size = { name = cm_ab_u_scores value >= 1 }
+		}
+		ordered_key_in_variable_map = {
+			variable = cm_ab_u_scores
+			order_by = {
+				save_temporary_scope_as = cm_ab_try_type
+				value = "scope:cm_ab_refresh_loc.variable_map(cm_ab_u_scores|scope:cm_ab_try_type)"
+			}
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = cm_ab_next_type
+		}
+		set_variable = { name = cm_ab_u_best value = "variable_map(cm_ab_u_scores|scope:cm_ab_next_type)" }
+	}
+}
+
+# Approves RGO levels at this location under the industry pool, mirroring the player RGO
+# drain's slot, headroom, and laborer budget; consumes the score first so the pick loop
+# always advances. Root is the location.
+cm_ab_approve_rgo_item = {
+	if = {
+		limit = { has_variable = cm_ab_r_score }
+		save_temporary_scope_value_as = { name = cm_ab_rgo_dbg value = { value = var:cm_ab_r_score multiply = -1 } }
+	}
+	else = {
+		save_temporary_scope_value_as = { name = cm_ab_rgo_dbg value = 0 }
+	}
+	remove_variable = cm_ab_r_score
+	save_temporary_scope_as = cm_location
+	if = {
+		limit = { NOT = { cm_rgo_basic_expand_eligibility = yes } }
+		cm_ab_rgo_log = { ACTION = cm_log_rgo_elig }
+	}
+	else_if = {
+		limit = { NOT = { cm_location_rgo_free_this_cycle = yes } }
+		cm_ab_rgo_log = { ACTION = cm_log_rgo_served }
+	}
+	else_if = {
+		limit = { cm_location_auto_food_supersedes_rgo = yes }
+		cm_ab_rgo_log = { ACTION = cm_log_rgo_food }
+	}
+	else_if = {
+		limit = { NOT = { cm_market_has_construction_goods_for_rgo = yes } }
+		cm_ab_rgo_log = { ACTION = cm_log_rgo_goods }
+	}
+	else = {
+		if = {
+			limit = { cm_get_open_build_queue_slots > 0 }
+			set_local_variable = { name = cm_ab_rgo_budget value = cm_get_open_build_queue_slots }
+			set_local_variable = { name = cm_ab_rgo_headroom value = cm_get_max_rgo_workers_floor }
+			change_local_variable = { name = cm_ab_rgo_headroom subtract = cm_modifier_rgo_level }
+			change_local_variable = { name = cm_ab_rgo_headroom subtract = cm_get_rgos_under_construction }
+			if = {
+				limit = { local_var:cm_ab_rgo_headroom < local_var:cm_ab_rgo_budget }
+				set_local_variable = { name = cm_ab_rgo_budget value = local_var:cm_ab_rgo_headroom }
+			}
+			set_local_variable = { name = cm_ab_rgo_slack value = cm_location_rgo_promotion_buffer_slack }
+			set_local_variable = { name = cm_ab_rgo_done value = 0 }
+			while = {
+				limit = {
+					local_var:cm_ab_rgo_budget > 0
+					local_var:cm_ab_rgo_slack >= local_var:cm_ab_rgo_done
+					cm_get_open_build_queue_slots > 0
+					cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction }
+					cm_ab_can_afford_rgo = { POOL = cm_ab_pool_industry }
+				}
+				set_local_variable = { name = cm_ab_rgo_cost value = glorpui_rgo_expand_cost }
+				construct_rgo_upgrade = { }
+				scope:cm_country = { change_variable = { name = cm_ab_pool_industry subtract = local_var:cm_ab_rgo_cost } }
+				change_local_variable = { name = cm_ab_rgo_budget subtract = 1 }
+				change_local_variable = { name = cm_ab_rgo_done add = 1 }
+			}
+			if = {
+				# Same non-affordability conditions as the while above, affordability negated.
+				limit = {
+					local_var:cm_ab_rgo_budget > 0
+					local_var:cm_ab_rgo_slack >= local_var:cm_ab_rgo_done
+					cm_get_open_build_queue_slots > 0
+					cm_get_max_rgo_workers_floor > { value = cm_modifier_rgo_level add = cm_get_rgos_under_construction }
+					NOT = { cm_ab_can_afford_rgo = { POOL = cm_ab_pool_industry } }
+				}
+				cm_ab_stop_on_cost = { COST = glorpui_rgo_expand_cost }
+				cm_ab_rgo_log = { ACTION = cm_log_rgo_gold }
+			}
+			if = {
+				limit = { local_var:cm_ab_rgo_done > 0 }
+				cm_q_mark_rgo_served = yes
+				cm_ab_rgo_log = { ACTION = cm_log_rgo_ok }
+			}
+			else_if = {
+				limit = { local_var:cm_ab_cost_blocked = 0 }
+				cm_ab_rgo_log = { ACTION = cm_log_rgo_room }
+			}
+		}
+		else = {
+			cm_ab_rgo_log = { ACTION = cm_log_rgo_slots }
+		}
+	}
+	cm_ab_drain_prune_loc = yes
+}
+
+# One CMM log line per Industry RGO drain outcome, naming the location and the candidate's
+# payback in years. $ACTION$ = the outcome's log key. Root is the location, expects
+# scope:cm_country and scope:cm_ab_rgo_dbg.
+cm_ab_rgo_log = {
+	save_scope_as = cmf_log_loc
+	scope:cm_country = {
+		cm_dbg_log_loc = { cat = industry action = $ACTION$ arg1 = cm_log_rgo_payback value = scope:cm_ab_rgo_dbg }
+	}
+}

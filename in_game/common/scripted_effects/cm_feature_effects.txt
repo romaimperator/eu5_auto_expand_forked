@@ -4,7 +4,7 @@
 # All effects expect scope:cm_country to be set.
 
 # One country's construction cycle: clears last cycle's queues, calls every enabled priority
-# feature and Smart Automations category in the country's own order, and arms the construct
+# feature and Auto-Build category in the country's own order, and arms the construct
 # window when anything staged. Driven by cm_unified_auto_expand for the player and by
 # cm_ln_monthly_cycle for a lucky nation. Root is the country.
 cm_run_construction_cycle = {
@@ -45,14 +45,14 @@ cm_run_construction_cycle = {
 		clear_variable_map = cm_q_food_rgo_locations_set
 		clear_variable_list = cm_q_rank_locations
 		clear_variable_map = cm_q_rank_locations_set
-		cm_clear_queue_pair = { COUNTRY_LIST = cm_sa_b_locations LOCATION_LIST = cm_sa_b_types }
-		clear_variable_map = cm_sa_b_locations_set
-		cm_clear_queue_pair = { COUNTRY_LIST = cm_sa_u_locations LOCATION_LIST = cm_sa_u_types }
-		clear_variable_map = cm_sa_u_locations_set
-		clear_variable_list = cm_sa_r_locations
-		clear_variable_map = cm_sa_r_locations_set
-		clear_variable_list = cm_sa_food_rgo_locations
-		clear_variable_list = cm_sa_collapsar_rgo_locations
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_ab_b_locations LOCATION_LIST = cm_ab_b_types }
+		clear_variable_map = cm_ab_b_locations_set
+		cm_clear_queue_pair = { COUNTRY_LIST = cm_ab_u_locations LOCATION_LIST = cm_ab_u_types }
+		clear_variable_map = cm_ab_u_locations_set
+		clear_variable_list = cm_ab_r_locations
+		clear_variable_map = cm_ab_r_locations_set
+		clear_variable_list = cm_ab_food_rgo_locations
+		clear_variable_list = cm_ab_collapsar_rgo_locations
 		cm_q_clear_rgo_served = yes
 		cm_q_clear_foreign_queue = yes
 		# The upgrade queue carries two extra per-location lists alongside the drained one
@@ -94,23 +94,23 @@ cm_run_construction_cycle = {
 				}
 			}
 		}
-		# Smart Automations staging after the priority features, so the player's own
+		# Auto-Build staging after the priority features, so the player's own
 		# features always stage and claim first. Categories stage in the player's
 		# order, so the higher one claims a candidate both of them want.
 		if = {
 			limit = {
-				cm_sa_master_active = yes
-				has_variable_list = cm_sa_categories_enabled
+				cm_ab_master_active = yes
+				has_variable_list = cm_ab_categories_enabled
 			}
-			cm_sa_pick_slice = yes
+			cm_ab_pick_slice = yes
 			every_in_list = {
-				variable = cm_sa_categories_enabled
-				save_scope_as = cm_sa_cat
-				scope:cm_country = { cm_sa_stage_category = yes }
+				variable = cm_ab_categories_enabled
+				save_scope_as = cm_ab_cat
+				scope:cm_country = { cm_ab_stage_category = yes }
 			}
 		}
 		# Auto-urbanize stages and drains after every other feature and after Smart
-		# Automations. Its Found buildings are gold outside the Smart Automations pools
+		# Automations. Its Found buildings are gold outside the Auto-Build pools
 		# cm_gov_hold zeroes, so the hold gates it here.
 		if = {
 			limit = {
@@ -121,21 +121,21 @@ cm_run_construction_cycle = {
 			cm_run_auto_urbanize = yes
 		}
 		# Show the construction-queue window to construct this month's staged items.
-		# The Smart Automations RGO lists and the road plan bypass the staged counter (no
+		# The Auto-Build RGO lists and the road plan bypass the staged counter (no
 		# GUI scoring), so they arm the window on their own.
 		if = {
 			limit = {
 				OR = {
 					var:cm_q_staged >= 1
 					AND = {
-						has_variable_list = cm_sa_food_rgo_locations
-						variable_list_size = { name = cm_sa_food_rgo_locations value >= 1 }
+						has_variable_list = cm_ab_food_rgo_locations
+						variable_list_size = { name = cm_ab_food_rgo_locations value >= 1 }
 					}
 					AND = {
-						has_variable_list = cm_sa_collapsar_rgo_locations
-						variable_list_size = { name = cm_sa_collapsar_rgo_locations value >= 1 }
+						has_variable_list = cm_ab_collapsar_rgo_locations
+						variable_list_size = { name = cm_ab_collapsar_rgo_locations value >= 1 }
 					}
-					cm_sa_rd_has_work = yes
+					cm_ab_rd_has_work = yes
 				}
 			}
 			set_variable = { name = cm_should_construct value = yes }
@@ -256,33 +256,33 @@ cm_q_reset_cycle_state = {
 		scope:cm_q_reset_loc = { cm_q_loc_reset_rank_scoring = yes }
 	}
 	every_in_list = {
-		variable = cm_sa_b_locations
+		variable = cm_ab_b_locations
 		save_scope_as = cm_q_reset_loc
-		scope:cm_q_reset_loc = { cm_sa_loc_reset_build_scoring = yes }
+		scope:cm_q_reset_loc = { cm_ab_loc_reset_build_scoring = yes }
 	}
 	every_in_list = {
-		variable = cm_sa_u_locations
+		variable = cm_ab_u_locations
 		save_scope_as = cm_q_reset_loc
-		scope:cm_q_reset_loc = { cm_sa_loc_reset_upgrade_scoring = yes }
+		scope:cm_q_reset_loc = { cm_ab_loc_reset_upgrade_scoring = yes }
 	}
 	every_in_list = {
-		variable = cm_sa_r_locations
+		variable = cm_ab_r_locations
 		save_scope_as = cm_q_reset_loc
-		scope:cm_q_reset_loc = { cm_sa_loc_reset_rgo_scoring = yes }
+		scope:cm_q_reset_loc = { cm_ab_loc_reset_rgo_scoring = yes }
 	}
 	every_in_list = {
-		variable = cm_sa_collapsar_rgo_locations
+		variable = cm_ab_collapsar_rgo_locations
 		save_scope_as = cm_q_reset_loc
 		scope:cm_q_reset_loc = {
-			remove_variable = cm_sa_collapsar_touched
-			remove_variable = cm_sa_collapsar_levels
+			remove_variable = cm_ab_collapsar_touched
+			remove_variable = cm_ab_collapsar_levels
 		}
 	}
-	clear_variable_list = cm_sa_food_rgo_locations
-	clear_variable_list = cm_sa_collapsar_rgo_locations
+	clear_variable_list = cm_ab_food_rgo_locations
+	clear_variable_list = cm_ab_collapsar_rgo_locations
 	clear_variable_list = cm_q_cand_locations
 	clear_variable_list = cm_q_upg_cand_locations
-	clear_variable_list = cm_sa_drain_cands
+	clear_variable_list = cm_ab_drain_cands
 	cm_q_clear_foreign_queue = yes
 	remove_variable = cm_q_pass_done
 	remove_variable = cm_should_construct

@@ -21,9 +21,9 @@ widget = {
 				name = _show
 				duration = 0.3
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_construct_urbanize')]"
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_sa_construct_build')]"
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_sa_construct_upgrade')]"
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_sa_construct_rgo')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_ab_construct_build')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_ab_construct_upgrade')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_ab_construct_rgo')]"
 				next = cm_ln_scan_done
 			}
 			state = {
@@ -122,9 +122,9 @@ widget = {
 				name = _show
 				duration = 0.3
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_construct_urbanize')]"
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_sa_construct_build')]"
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_sa_construct_upgrade')]"
-				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_sa_construct_rgo')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_ab_construct_build')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_ab_construct_upgrade')]"
+				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_ab_construct_rgo')]"
 				next = cm_ln_c_scan_done
 			}
 			state = {
@@ -251,14 +251,14 @@ widget = {
 							}
 						}
 					}
-					# Smart Automations build queue (expand and from-zero for every category; the
+					# Auto-Build builds (expand and from-zero for every category; the
 					# per-location category map decides which drain claims each entry).
 					widget = {
-						datamodel = "[Country.MakeScope.GetList('cm_sa_b_locations')]"
+						datamodel = "[Country.MakeScope.GetList('cm_ab_b_locations')]"
 						item = {
 							widget = {
 								datacontext = "[Scope.GetLocation]"
-								datamodel = "[Location.MakeScope.GetList('cm_sa_b_types')]"
+								datamodel = "[Location.MakeScope.GetList('cm_ab_b_types')]"
 								item = {
 									widget = {
 										datacontext = "[Scope.GetBuildingType]"
@@ -266,54 +266,54 @@ widget = {
 										# objects cross as assigned ids, since GUI exposes no script key for
 										# either.
 										state = {
-											name = cm_ln_c_sa_construct_build
+											name = cm_ln_c_ab_construct_build
 											on_finish = "[CMBatchAppend(Country, Concatenate3('cm_ln_c_row_b = { Y = ', CMCountryIdText(Country), Concatenate3(' L = ', CMLocationIdText(Location), Concatenate3(' B = ', CMBuildingTypeIdText(BuildingType), Concatenate3(' C = ', CMScaledValueText(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self)), Concatenate3(' I = ', CMScaledValueText(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self)), Concatenate3(' P = ', CMScaledValueText(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self)), Concatenate3(' T = ', CMScaledValueText(Location.GetTotalIncome), Concatenate3(' R = ', CMScaledValueText(Location.GetRGOProfitPerLevel), ' } ')))))))))]"
 										}
 										state = {
-											name = cm_ln_sa_construct_build
-											on_finish = "[GetScriptedGui('cm_sa_score_build').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', Country.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))).AddScope('cm_can_build', MakeScopeBool(CanBuildOrExpandBuilding(BuildingType.Self, Location.Self))).AddScope('cm_obsolete_building', BuildingType.GetObsoleteBuildingInLocation(Location.Self, Country.Self).MakeScope).AddScope('cm_indirect_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).End)]"
+											name = cm_ln_ab_construct_build
+											on_finish = "[GetScriptedGui('cm_ab_score_build').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_building_type', BuildingType.MakeScope).AddScope('cm_country', Country.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.Self, Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.Self, Location.Self))).AddScope('cm_profit', MakeScopeValue(GetBuildingTypeProfitInLocation(BuildingType.Self, Location.Self))).AddScope('cm_can_build', MakeScopeBool(CanBuildOrExpandBuilding(BuildingType.Self, Location.Self))).AddScope('cm_obsolete_building', BuildingType.GetObsoleteBuildingInLocation(Location.Self, Country.Self).MakeScope).AddScope('cm_indirect_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).End)]"
 										}
 									}
 								}
 							}
 						}
 					}
-					# Smart Automations obsolete upgrades, replaced with the engine's next tier.
+					# Auto-Build obsolete upgrades, replaced with the engine's next tier.
 					widget = {
-						datamodel = "[Country.MakeScope.GetList('cm_sa_u_locations')]"
+						datamodel = "[Country.MakeScope.GetList('cm_ab_u_locations')]"
 						item = {
 							widget = {
 								datacontext = "[Scope.GetLocation]"
-								datamodel = "[Location.MakeScope.GetList('cm_sa_u_types')]"
+								datamodel = "[Location.MakeScope.GetList('cm_ab_u_types')]"
 								item = {
 									widget = {
 										datacontext = "[Scope.GetBuildingType]"
 										state = {
-											name = cm_ln_c_sa_construct_upgrade
+											name = cm_ln_c_ab_construct_upgrade
 											on_finish = "[CMBatchAppend(Country, Concatenate3('cm_ln_c_row_u = { Y = ', CMCountryIdText(Country), Concatenate3(' L = ', CMLocationIdText(Location), Concatenate3(' B = ', CMBuildingTypeIdText(BuildingType), Concatenate3(' N = ', CMBuildingTypeIdText(BuildingType.GetNextReplacementBuilding(Country.Self)), Concatenate3(' C = ', CMScaledValueText(GetBuildOrExpandBuildingCost(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self)), Concatenate3(' I = ', CMScaledValueText(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self)), Concatenate3(' T = ', CMScaledValueText(Location.GetTotalIncome), Concatenate3(' R = ', CMScaledValueText(Location.GetRGOProfitPerLevel), ' } ')))))))))]"
 										}
 										state = {
-											name = cm_ln_sa_construct_upgrade
-											on_finish = "[GetScriptedGui('cm_sa_score_upgrade').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_old_building_type', BuildingType.MakeScope).AddScope('cm_new_building_type', BuildingType.GetNextReplacementBuilding(Country.Self).MakeScope).AddScope('cm_building_type', BuildingType.GetNextReplacementBuilding(Country.Self).MakeScope).AddScope('cm_country', Country.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self))).AddScope('cm_can_build', MakeScopeBool(CanUpgradeToBuilding(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self))).AddScope('cm_indirect_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).End)]"
+											name = cm_ln_ab_construct_upgrade
+											on_finish = "[GetScriptedGui('cm_ab_score_upgrade').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_old_building_type', BuildingType.MakeScope).AddScope('cm_new_building_type', BuildingType.GetNextReplacementBuilding(Country.Self).MakeScope).AddScope('cm_building_type', BuildingType.GetNextReplacementBuilding(Country.Self).MakeScope).AddScope('cm_country', Country.MakeScope).AddScope('cm_cost', MakeScopeValue(GetBuildOrExpandBuildingCost(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self))).AddScope('cm_income', MakeScopeValue(GetBuildingTypeIncomeToOwnerInLocation(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self))).AddScope('cm_can_build', MakeScopeBool(CanUpgradeToBuilding(BuildingType.GetNextReplacementBuilding(Country.Self), Location.Self))).AddScope('cm_indirect_loc', Location.MakeScope).AddScope('cm_cur_market_access', MakeScopeValue(Location.GetMarketAccess)).AddScope('cm_cur_total_income', MakeScopeValue(Location.GetTotalIncome)).AddScope('cm_cur_rgo_profit', MakeScopeValue(Location.GetRGOProfitPerLevel)).End)]"
 										}
 									}
 								}
 							}
 						}
 					}
-					# Smart Automations RGO expansions; income read is GUI-only, cost is script-side.
+					# Auto-Build RGO expansions; income read is GUI-only, cost is script-side.
 					widget = {
-						datamodel = "[Country.MakeScope.GetList('cm_sa_r_locations')]"
+						datamodel = "[Country.MakeScope.GetList('cm_ab_r_locations')]"
 						item = {
 							widget = {
 								datacontext = "[Scope.GetLocation]"
 								state = {
-									name = cm_ln_c_sa_construct_rgo
+									name = cm_ln_c_ab_construct_rgo
 									on_finish = "[CMBatchAppend(Country, Concatenate3('cm_ln_c_row_r = { Y = ', CMCountryIdText(Country), Concatenate3(' L = ', CMLocationIdText(Location), Concatenate3(' I = ', CMScaledValueText(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase))), ' } '))))]"
 								}
 								state = {
-									name = cm_ln_sa_construct_rgo
-									on_finish = "[GetScriptedGui('cm_sa_score_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_location', Location.MakeScope).AddScope('cm_country', Country.MakeScope).AddScope('cm_income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
+									name = cm_ln_ab_construct_rgo
+									on_finish = "[GetScriptedGui('cm_ab_score_rgo').Execute(GuiScope.SetRoot(Location.MakeScope).AddScope('cm_location', Location.MakeScope).AddScope('cm_country', Country.MakeScope).AddScope('cm_income', MakeScopeValue(Multiply_CFixedPoint(Divide_CFixedPoint(Location.GetRGOProfitPerLevel, Location.GetControl), Divide_CFixedPoint(Location.GetTotalIncome, Location.GetTotalPossibleTaxBase)))).End)]"
 								}
 							}
 						}

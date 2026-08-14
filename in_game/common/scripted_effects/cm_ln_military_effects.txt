@@ -1,9 +1,9 @@
-﻿# Lucky Nations Military: the lowest-priority Smart Automations category. It runs the border fort
+﻿# Lucky Nations Military: the lowest-priority Auto-Build category. It runs the border fort
 # line (cm_ln_fort_effects.txt), coastal forts, the capital manpower building and the urban
 # manpower chain, in that order. The two fort lines and the capital building live inside the
 # category's own share; only the chain draws on the carry, and only once it has a tier it can
 # build, which cm_ln_bk_run projects into var:cm_ln_bk_active for the drain fork in
-# cm_sa_drain_category.
+# cm_ab_drain_category.
 
 # --- Category entry points ---
 
@@ -20,14 +20,14 @@ cm_ln_mil_run = {
 # line: it yields to the next one instead, since nothing downstream of the category would gain
 # from the gold being held. Its ledger is not running either, so it never buys on credit.
 # Root is the country, scope:cm_country set.
-cm_sa_pass_military = {
+cm_ab_pass_military = {
 	if = {
 		limit = { NOT = { exists = var:cm_ln_bk_active } }
-		set_local_variable = { name = cm_sa_no_hold value = 1 }
+		set_local_variable = { name = cm_ab_no_hold value = 1 }
 	}
 	cm_ln_ft_drain = yes
 	cm_ln_coast_drain = yes
-	set_local_variable = { name = cm_sa_no_hold value = 0 }
+	set_local_variable = { name = cm_ab_no_hold value = 0 }
 	cm_ln_bk_drain_capital_type = { bt = sergeantry }
 	cm_ln_bk_drain_capital_type = { bt = city_guard }
 	if = {
@@ -42,7 +42,7 @@ cm_sa_pass_military = {
 # Root is the country.
 cm_ln_coast_resolve_type = {
 	building_type:coastal_fort = { save_scope_as = cm_building_type }
-	cm_auto_build_resolve_building_type = yes
+	cm_ab_resolve_building_type = yes
 }
 
 # Stages the current coastal fort tier across owned ports, most controlled first. The chain is the
@@ -62,7 +62,7 @@ cm_ln_coast_run = {
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			limit = {
-				cm_location_market_in_sa_slice = yes
+				cm_location_market_in_ab_slice = yes
 				NOT = { integration_level = conquered }
 			}
 			save_scope_as = cm_location
@@ -75,7 +75,7 @@ cm_ln_coast_run = {
 					cm_check_location_meets_min_market_access = yes
 					cm_get_open_build_queue_slots > 0
 				}
-				cm_sa_stage_build_candidate = { cat = 6 }
+				cm_ab_stage_build_candidate = { cat = 6 }
 			}
 		}
 	}
@@ -87,15 +87,15 @@ cm_ln_coast_run = {
 cm_ln_coast_drain = {
 	cm_ln_coast_resolve_type = yes
 	if = {
-		limit = { has_variable_list = cm_sa_b_locations }
+		limit = { has_variable_list = cm_ab_b_locations }
 		ordered_in_list = {
-			variable = cm_sa_b_locations
+			variable = cm_ab_b_locations
 			order_by = max_control
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_temporary_scope_as = cm_ln_coast_drain_loc
 			scope:cm_ln_coast_drain_loc = {
-				cm_sa_try_approve_build = { cat = 6 POOL = cm_sa_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_sa_location_has_open_build_slot }
+				cm_ab_try_approve_build = { cat = 6 POOL = cm_ab_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_ab_location_has_open_build_slot }
 			}
 		}
 	}
@@ -128,7 +128,7 @@ cm_ln_bk_stage_capital_type = {
 					cm_check_location_meets_min_market_access = yes
 					cm_get_open_build_queue_slots > 0
 				}
-				cm_sa_stage_build_candidate = { cat = 7 }
+				cm_ab_stage_build_candidate = { cat = 7 }
 			}
 		}
 	}
@@ -142,7 +142,7 @@ cm_ln_bk_drain_capital_type = {
 	if = {
 		limit = { exists = capital }
 		capital = {
-			cm_sa_try_approve_build = { cat = 7 POOL = cm_sa_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_sa_location_has_open_build_slot }
+			cm_ab_try_approve_build = { cat = 7 POOL = cm_ab_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_ab_location_has_open_build_slot }
 		}
 	}
 }
@@ -163,7 +163,7 @@ cm_ln_bk_resolve_type = {
 		limit = { can_build_building = building_type:korean_barracks }
 		building_type:korean_barracks = { save_scope_as = cm_building_type }
 	}
-	cm_auto_build_resolve_building_type = yes
+	cm_ab_resolve_building_type = yes
 }
 
 # Stages the current manpower tier across owned locations, topping up to max level: the chain is
@@ -182,9 +182,9 @@ cm_ln_bk_run = {
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			limit = {
-				cm_location_market_in_sa_slice = yes
+				cm_location_market_in_ab_slice = yes
 				NOT = { integration_level = conquered }
-				cm_sa_location_has_proximity = yes
+				cm_ab_location_has_proximity = yes
 			}
 			save_scope_as = cm_location
 			cm_pop_track = yes
@@ -196,7 +196,7 @@ cm_ln_bk_run = {
 					cm_check_location_meets_min_market_access = yes
 					cm_get_open_build_queue_slots > 0
 				}
-				cm_sa_stage_build_candidate = { cat = 7 }
+				cm_ab_stage_build_candidate = { cat = 7 }
 			}
 		}
 	}
@@ -212,17 +212,17 @@ cm_ln_bk_drain = {
 	cm_ln_bk_resolve_type = yes
 	if = {
 		limit = {
-			local_var:cm_sa_cost_blocked = 0
-			has_variable_list = cm_sa_b_locations
+			local_var:cm_ab_cost_blocked = 0
+			has_variable_list = cm_ab_b_locations
 		}
 		ordered_in_list = {
-			variable = cm_sa_b_locations
+			variable = cm_ab_b_locations
 			order_by = population
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_temporary_scope_as = cm_ln_bk_drain_loc
 			scope:cm_ln_bk_drain_loc = {
-				cm_sa_try_approve_build = { cat = 7 POOL = cm_sa_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_sa_location_has_open_build_slot }
+				cm_ab_try_approve_build = { cat = 7 POOL = cm_ab_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_ab_location_has_open_build_slot }
 			}
 		}
 	}
@@ -292,8 +292,8 @@ cm_ln_mil_probe = {
 
 	set_local_variable = { name = cm_ln_mil_dbg value = 0 }
 	if = {
-		limit = { exists = var:cm_sa_pool_military }
-		set_local_variable = { name = cm_ln_mil_dbg value = var:cm_sa_pool_military }
+		limit = { exists = var:cm_ab_pool_military }
+		set_local_variable = { name = cm_ln_mil_dbg value = var:cm_ab_pool_military }
 	}
 	cmf_log_decimal_value = { action = cm_log_mil_pool value = local_var:cm_ln_mil_dbg }
 
@@ -307,7 +307,7 @@ cm_ln_mil_probe = {
 		}
 		if = {
 			limit = {
-				cm_sa_location_has_proximity = yes
+				cm_ab_location_has_proximity = yes
 				cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
 				cm_location_allowed_to_build = { target = scope:cm_building_type }
 				cm_location_has_enough_pops_available = yes

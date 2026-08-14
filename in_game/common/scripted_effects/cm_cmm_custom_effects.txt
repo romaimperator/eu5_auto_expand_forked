@@ -15,8 +15,8 @@ cm_cmm_post_registration = {
 	cm_rebuild_auto_build_lookups = yes
 	cm_rebuild_auto_urbanize_lookups = yes
 	cm_rebuild_auto_town_rights_lookups = yes
-	cm_sa_rebuild_category_lookups = yes
-	cm_sa_rebuild_collapsar_lookups = yes
+	cm_ab_rebuild_category_lookups = yes
+	cm_ab_rebuild_collapsar_lookups = yes
 
 	# Hide buildings whose advance hasn't been researched yet
 	cm_update_auto_build_list_visibility = yes
@@ -392,39 +392,39 @@ cm_apply_placement_finder_debug_path_change = {
 }
 
 # Scope: country
-cm_sa_apply_master_change = {
+cm_ab_apply_master_change = {
 	cmm_sync_bool_alias = {
-		setting = cm__sa_enabled
-		alias = cm_sa_enabled
+		setting = cm__ab_enabled
+		alias = cm_ab_enabled
 	}
 	if = {
-		limit = { NOT = { exists = var:cm_sa_enabled } }
-		cm_sa_clear_budget_state = yes
+		limit = { NOT = { exists = var:cm_ab_enabled } }
+		cm_ab_clear_budget_state = yes
 	}
 }
 
-# Rebuild the Smart Automations category lookups from CMM list field data.
+# Rebuild the Auto-Build category lookups from CMM list field data.
 # Called on registration and on every setting change.
 # Scope: country
-cm_sa_rebuild_category_lookups = {
+cm_ab_rebuild_category_lookups = {
 	if = {
-		limit = { NOT = { has_variable_list = cmm_list_items_cm__sa_priority_list } }
+		limit = { NOT = { has_variable_list = cmm_list_items_cm__ab_priority_list } }
 	}
 	else = {
 
 	# Enabled categories, bool field slot 2. Display order, so this one list is both the
 	# drain priority and the enabled filter.
-	cmm_build_list_bool_list = { setting = cm__sa_priority_list field_slot = 2 list_name = cm_sa_categories_enabled }
+	cmm_build_list_bool_list = { setting = cm__ab_priority_list field_slot = 2 list_name = cm_ab_categories_enabled }
 
 	# Budget share by category, numeric field slot 1, direct values.
-	cmm_build_list_field_map = { setting = cm__sa_priority_list field_slot = 1 map_name = cm_sa_cat_budget multiply = 1 }
+	cmm_build_list_field_map = { setting = cm__ab_priority_list field_slot = 1 map_name = cm_ab_cat_budget multiply = 1 }
 
-	cm_sa_sync_category = { cat = industry }
-	cm_sa_sync_category = { cat = collapsar }
-	cm_sa_sync_category = { cat = food }
-	cm_sa_sync_category = { cat = utilities }
-	cm_sa_sync_category = { cat = roads }
-	cm_sa_sync_governors = yes
+	cm_ab_sync_category = { cat = industry }
+	cm_ab_sync_category = { cat = collapsar }
+	cm_ab_sync_category = { cat = food }
+	cm_ab_sync_category = { cat = utilities }
+	cm_ab_sync_category = { cat = roads }
+	cm_ab_sync_governors = yes
 
 	} # end guard
 }
@@ -433,54 +433,54 @@ cm_sa_rebuild_category_lookups = {
 # settings-row visibility read. Turning a category off zeroes its pool and writes off its debt and
 # its hold; the monthly refresh skips it while off.
 # $cat$ = industry | collapsar | food | utilities | roads. Scope: country
-cm_sa_sync_category = {
+cm_ab_sync_category = {
 	# A macro never resolves inside a quoted lookup, so the key goes through a local.
-	set_local_variable = { name = cm_sa_cat_key value = flag:cm_sa_cat_$cat$ }
+	set_local_variable = { name = cm_ab_cat_key value = flag:cm_ab_cat_$cat$ }
 	if = {
 		limit = {
-			has_variable_map = cm_sa_cat_budget
-			is_key_in_variable_map = { name = cm_sa_cat_budget target = local_var:cm_sa_cat_key }
+			has_variable_map = cm_ab_cat_budget
+			is_key_in_variable_map = { name = cm_ab_cat_budget target = local_var:cm_ab_cat_key }
 		}
-		set_variable = { name = cm_sa_$cat$_budget value = "variable_map(cm_sa_cat_budget|local_var:cm_sa_cat_key)" }
+		set_variable = { name = cm_ab_$cat$_budget value = "variable_map(cm_ab_cat_budget|local_var:cm_ab_cat_key)" }
 	}
 	if = {
-		limit = { is_target_in_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_$cat$ } }
-		set_variable = { name = cm_sa_$cat$_enabled value = 1 }
-		cm_sa_clamp_pool = { cat = $cat$ }
+		limit = { is_target_in_variable_list = { name = cm_ab_categories_enabled target = flag:cm_ab_cat_$cat$ } }
+		set_variable = { name = cm_ab_$cat$_enabled value = 1 }
+		cm_ab_clamp_pool = { cat = $cat$ }
 	}
 	else = {
-		remove_variable = cm_sa_$cat$_enabled
-		set_variable = { name = cm_sa_pool_$cat$ value = 0 }
+		remove_variable = cm_ab_$cat$_enabled
+		set_variable = { name = cm_ab_pool_$cat$ value = 0 }
 		# A category that gets no further allotment has nothing left to settle a debt with, and
 		# nothing left to spend what it was holding on.
-		remove_variable = cm_sa_debt_$cat$
-		remove_variable = cm_sa_resv_$cat$
+		remove_variable = cm_ab_debt_$cat$
+		remove_variable = cm_ab_resv_$cat$
 	}
 }
 
 # Governors spends against the treasury above the reserve rather than a pool, so there is no
 # percentage to project. Scope: country
-cm_sa_sync_governors = {
+cm_ab_sync_governors = {
 	if = {
-		limit = { is_target_in_variable_list = { name = cm_sa_categories_enabled target = flag:cm_sa_cat_governors } }
-		set_variable = { name = cm_sa_governors_enabled value = 1 }
+		limit = { is_target_in_variable_list = { name = cm_ab_categories_enabled target = flag:cm_ab_cat_governors } }
+		set_variable = { name = cm_ab_governors_enabled value = 1 }
 	}
 	else = {
-		remove_variable = cm_sa_governors_enabled
+		remove_variable = cm_ab_governors_enabled
 	}
 }
 
 # Rebuild the collapsar materials lookup from CMM list field data.
 # Called on registration and on every setting change.
 # Scope: country
-cm_sa_rebuild_collapsar_lookups = {
+cm_ab_rebuild_collapsar_lookups = {
 	if = {
-		limit = { NOT = { has_variable_list = cmm_list_items_cm__sa_collapsar } }
+		limit = { NOT = { has_variable_list = cmm_list_items_cm__ab_collapsar } }
 	}
 	else = {
 
 	# Enabled materials, bool field slot 1, in staging and drain order.
-	cmm_build_list_bool_list = { setting = cm__sa_collapsar field_slot = 1 list_name = cm_sa_collapsar_goods_enabled }
+	cmm_build_list_bool_list = { setting = cm__ab_collapsar field_slot = 1 list_name = cm_ab_collapsar_goods_enabled }
 
 	} # end guard
 }
@@ -520,18 +520,18 @@ cm_apply_priority_desired_item = {
 	if = { limit = { always = no } cmf_suppress = { v = $setting$_$i$ } }
 }
 
-# Flips the Smart Automations master setting from the vanilla Buildings automation card.
+# Flips the Auto-Build master setting from the vanilla Buildings automation card.
 # Scope: country
-cm_sa_toggle_master_setting = {
-	remove_from_variable_map = { name = cmm key = flag:cm__sa_enabled }
+cm_ab_toggle_master_setting = {
+	remove_from_variable_map = { name = cmm key = flag:cm__ab_enabled }
 	if = {
-		limit = { exists = var:cm_sa_enabled }
-		add_to_variable_map = { name = cmm key = flag:cm__sa_enabled value = 0 }
+		limit = { exists = var:cm_ab_enabled }
+		add_to_variable_map = { name = cmm key = flag:cm__ab_enabled value = 0 }
 	}
 	else = {
-		add_to_variable_map = { name = cmm key = flag:cm__sa_enabled value = 1 }
+		add_to_variable_map = { name = cmm key = flag:cm__ab_enabled value = 1 }
 	}
-	cm_sa_apply_master_change = yes
+	cm_ab_apply_master_change = yes
 }
 
 # Flips the closing and opening setting from the vanilla Close and Open Buildings card.
@@ -603,13 +603,13 @@ cm_rebuild_auto_build_lookups = {
 	else = {
 
 	# Ordered building types list for monthly pulse iteration in priority order.
-	cmm_build_list_ordered_values = { setting = cm__auto_build_list list_name = cm_auto_build_building_types_list }
+	cmm_build_list_ordered_values = { setting = cm__auto_build_list list_name = cm_ab_building_types_list }
 
 	# Enabled building types, bool field slot 1.
-	cmm_build_list_bool_list = { setting = cm__auto_build_list field_slot = 1 list_name = cm_auto_build_building_types_enabled }
+	cmm_build_list_bool_list = { setting = cm__auto_build_list field_slot = 1 list_name = cm_ab_building_types_enabled }
 
 	# Subjects-enabled building types, bool field slot 2.
-	cmm_build_list_bool_list = { setting = cm__auto_build_list field_slot = 2 list_name = cm_auto_build_building_types_in_subjects_enabled }
+	cmm_build_list_bool_list = { setting = cm__auto_build_list field_slot = 2 list_name = cm_ab_building_types_in_subjects_enabled }
 
 	# Min control by building type, numeric field slot 3, CMM 0-100 -> 0-1.
 	cmm_build_list_field_map = { setting = cm__auto_build_list field_slot = 3 map_name = cm_min_control_by_building_type multiply = 0.01 }
@@ -663,7 +663,7 @@ cm_update_auto_build_list_visibility = {
 		limit = { has_variable_list = cmm_list_items_cm__auto_build_list }
 		cmm_for_each_list_item = {
 			setting = cm__auto_build_list
-			effect = cm_auto_build_list_update_visibility_item
+			effect = cm_ab_list_update_visibility_item
 		}
 	}
 }
@@ -671,7 +671,7 @@ cm_update_auto_build_list_visibility = {
 # Callback for cmm_for_each_list_item. Shows or hides item $i$ based on advance status.
 # $i$ = item position in the list. $setting$ = composite key. scope:cmm_list_current_item_value = building_type.
 # Root: country
-cm_auto_build_list_update_visibility_item = {
+cm_ab_list_update_visibility_item = {
 	if = {
 		limit = {
 			OR = {
@@ -782,9 +782,9 @@ _cm_cmm_suppress_warnings = {
 		# Auto town rights lookup lists
 		cmf_suppress = { v = cm_auto_town_rights_list }
 		cmf_suppress = { v = cm_auto_town_rights_enabled }
-		# Smart Automations category and collapsar material lookups
-		cmf_suppress = { v = cm_sa_categories_enabled }
-		cmf_suppress = { v = cm_sa_cat_budget }
-		cmf_suppress = { v = cm_sa_collapsar_goods_enabled }
+		# Auto-Build category and collapsar material lookups
+		cmf_suppress = { v = cm_ab_categories_enabled }
+		cmf_suppress = { v = cm_ab_cat_budget }
+		cmf_suppress = { v = cm_ab_collapsar_goods_enabled }
 	}
 }

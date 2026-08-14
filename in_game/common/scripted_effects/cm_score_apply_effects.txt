@@ -1,55 +1,55 @@
 ﻿# The queue scorers' bodies. Two callers share each one: the scripted GUI the construct queue
 # windows invoke per staged item, and the lucky-nation console bridge, which rebuilds the same
 # scopes from a command and calls these directly. Root and expected scopes are documented on the
-# scripted gui in cm_sa_scripted_gui.txt and cm_scripted_gui.txt.
+# scripted gui in cm_ab_scripted_gui.txt and cm_scripted_gui.txt.
 
-cm_sa_score_build_apply = {
-	scope:cm_country = { cm_sa_col_count = { N = cm_sa_col_c_enter V = 1 } }
+cm_ab_score_build_apply = {
+	scope:cm_country = { cm_ab_col_count = { N = cm_ab_col_c_enter V = 1 } }
 	if = {
 		limit = {
 			scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
-			is_target_in_variable_list = { name = cm_sa_b_types target = scope:cm_building_type }
-			NOT = { is_target_in_variable_list = { name = cm_sa_done_b_types target = scope:cm_building_type } }
+			is_target_in_variable_list = { name = cm_ab_b_types target = scope:cm_building_type }
+			NOT = { is_target_in_variable_list = { name = cm_ab_done_b_types target = scope:cm_building_type } }
 		}
-		scope:cm_country = { cm_sa_col_count = { N = cm_sa_col_c_limit V = 1 } }
-		add_to_variable_list = { name = cm_sa_done_b_types target = scope:cm_building_type }
+		scope:cm_country = { cm_ab_col_count = { N = cm_ab_col_c_limit V = 1 } }
+		add_to_variable_list = { name = cm_ab_done_b_types target = scope:cm_building_type }
 		scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
 		# The engine converts a build into the standing obsolete predecessor's upgrade;
 		# skip the item entirely when that predecessor is staged for upgrade this pulse.
-		set_local_variable = { name = cm_sa_conv_clash value = 0 }
+		set_local_variable = { name = cm_ab_conv_clash value = 0 }
 		if = {
 			limit = { exists = scope:cm_obsolete_building }
-			scope:cm_obsolete_building = { building_type = { save_temporary_scope_as = cm_sa_conv_type } }
+			scope:cm_obsolete_building = { building_type = { save_temporary_scope_as = cm_ab_conv_type } }
 			if = {
 				limit = {
 					OR = {
-						is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_sa_conv_type }
-						is_target_in_variable_list = { name = cm_sa_u_types target = scope:cm_sa_conv_type }
+						is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_ab_conv_type }
+						is_target_in_variable_list = { name = cm_ab_u_types target = scope:cm_ab_conv_type }
 					}
 				}
-				set_local_variable = { name = cm_sa_conv_clash value = 1 }
+				set_local_variable = { name = cm_ab_conv_clash value = 1 }
 			} else = {
-				remove_from_variable_map = { name = cm_sa_b_conv key = scope:cm_building_type }
-				add_to_variable_map = { name = cm_sa_b_conv key = scope:cm_building_type value = scope:cm_sa_conv_type }
+				remove_from_variable_map = { name = cm_ab_b_conv key = scope:cm_building_type }
+				add_to_variable_map = { name = cm_ab_b_conv key = scope:cm_building_type value = scope:cm_ab_conv_type }
 			}
 		}
 		if = {
-			limit = { local_var:cm_sa_conv_clash = 0 }
+			limit = { local_var:cm_ab_conv_clash = 0 }
 			if = {
 				limit = { cm_ln_can_place = yes }
-				remove_from_variable_map = { name = cm_sa_b_costs key = scope:cm_building_type }
-				add_to_variable_map = { name = cm_sa_b_costs key = scope:cm_building_type value = scope:cm_cost }
-				remove_from_variable_map = { name = cm_sa_b_profit key = scope:cm_building_type }
-				add_to_variable_map = { name = cm_sa_b_profit key = scope:cm_building_type value = cm_bld_profit_value }
+				remove_from_variable_map = { name = cm_ab_b_costs key = scope:cm_building_type }
+				add_to_variable_map = { name = cm_ab_b_costs key = scope:cm_building_type value = scope:cm_cost }
+				remove_from_variable_map = { name = cm_ab_b_profit key = scope:cm_building_type }
+				add_to_variable_map = { name = cm_ab_b_profit key = scope:cm_building_type value = cm_bld_profit_value }
 				if = {
 					limit = {
 						exists = global_var:cm_dbg_collapsar
-						cm_sa_col_claimed_by_collapsar = yes
+						cm_ab_col_claimed_by_collapsar = yes
 					}
-					scope:cm_country = { cm_sa_col_count = { N = cm_sa_col_c_score_ok V = 1 } }
+					scope:cm_country = { cm_ab_col_count = { N = cm_ab_col_c_score_ok V = 1 } }
 				}
 				if = {
-					limit = { cm_sa_col_watched = yes }
+					limit = { cm_ab_col_watched = yes }
 					save_temporary_scope_as = cmf_log_loc
 					scope:cm_building_type = { save_temporary_scope_as = cmf_log_bt }
 					# The log runs in country scope and cm_bld_profit_value needs the location.
@@ -70,35 +70,35 @@ cm_sa_score_build_apply = {
 				if = {
 					limit = {
 						exists = global_var:cm_dbg_collapsar
-						cm_sa_col_claimed_by_collapsar = yes
+						cm_ab_col_claimed_by_collapsar = yes
 					}
-					scope:cm_country = { cm_sa_col_count = { N = cm_sa_col_c_score_no V = 1 } }
+					scope:cm_country = { cm_ab_col_count = { N = cm_ab_col_c_score_no V = 1 } }
 				}
 				if = {
-					limit = { cm_sa_col_watched = yes }
-					cm_sa_col_skip_line = { COND = cm_ln_can_place ACTION = cm_log_col_score_place }
+					limit = { cm_ab_col_watched = yes }
+					cm_ab_col_skip_line = { COND = cm_ln_can_place ACTION = cm_log_col_score_place }
 				}
 			}
 			# Industry entries score; the other categories drain by category in list order.
 			if = {
 				limit = {
-					has_variable_map = cm_sa_b_cat_1
-					is_key_in_variable_map = { name = cm_sa_b_cat_1 target = scope:cm_building_type }
-					cm_sa_ind_roi_passes = { COST = scope:cm_cost }
+					has_variable_map = cm_ab_b_cat_1
+					is_key_in_variable_map = { name = cm_ab_b_cat_1 target = scope:cm_building_type }
+					cm_ab_ind_roi_passes = { COST = scope:cm_cost }
 					cm_building_type_profitable_or_subsidized = yes
 				}
 				save_temporary_scope_value_as = { name = cm_q_score_cost value = scope:cm_cost }
-				cm_sa_compute_roi_score = yes
-				save_temporary_scope_as = cm_sa_anchor_loc
-				scope:cm_building_type = { save_temporary_scope_as = cm_sa_anchor_type }
-				scope:cm_country = { cm_sa_ind_fold_gd_anchor = yes }
+				cm_ab_compute_roi_score = yes
+				save_temporary_scope_as = cm_ab_anchor_loc
+				scope:cm_building_type = { save_temporary_scope_as = cm_ab_anchor_type }
+				scope:cm_country = { cm_ab_ind_fold_gd_anchor = yes }
 				if = {
 					limit = { cm_ln_can_place = yes }
-					remove_from_variable_map = { name = cm_sa_b_scores key = scope:cm_building_type }
-					add_to_variable_map = { name = cm_sa_b_scores key = scope:cm_building_type value = scope:cm_sa_score_val }
+					remove_from_variable_map = { name = cm_ab_b_scores key = scope:cm_building_type }
+					add_to_variable_map = { name = cm_ab_b_scores key = scope:cm_building_type value = scope:cm_ab_score_val }
 					if = {
-						limit = { OR = { NOT = { has_variable = cm_sa_b_best } var:cm_sa_b_best < scope:cm_sa_score_val } }
-						set_variable = { name = cm_sa_b_best value = scope:cm_sa_score_val }
+						limit = { OR = { NOT = { has_variable = cm_ab_b_best } var:cm_ab_b_best < scope:cm_ab_score_val } }
+						set_variable = { name = cm_ab_b_best value = scope:cm_ab_score_val }
 					}
 				}
 			}
@@ -106,62 +106,62 @@ cm_sa_score_build_apply = {
 	}
 }
 
-cm_sa_score_upgrade_apply = {
+cm_ab_score_upgrade_apply = {
 	if = {
 		limit = {
 			scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
-			is_target_in_variable_list = { name = cm_sa_u_types target = scope:cm_old_building_type }
-			NOT = { is_target_in_variable_list = { name = cm_sa_done_u_types target = scope:cm_old_building_type } }
+			is_target_in_variable_list = { name = cm_ab_u_types target = scope:cm_old_building_type }
+			NOT = { is_target_in_variable_list = { name = cm_ab_done_u_types target = scope:cm_old_building_type } }
 		}
-		add_to_variable_list = { name = cm_sa_done_u_types target = scope:cm_old_building_type }
+		add_to_variable_list = { name = cm_ab_done_u_types target = scope:cm_old_building_type }
 		scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
 		if = {
 			limit = {
 				exists = scope:cm_new_building_type
-				cm_sa_ind_roi_passes = { COST = scope:cm_cost }
+				cm_ab_ind_roi_passes = { COST = scope:cm_cost }
 			}
 			save_temporary_scope_value_as = { name = cm_q_score_cost value = scope:cm_cost }
-			cm_sa_compute_roi_score = yes
+			cm_ab_compute_roi_score = yes
 			# The replacement is what gets built, so its own good is what the bar comes from.
-			save_temporary_scope_as = cm_sa_anchor_loc
-			scope:cm_new_building_type = { save_temporary_scope_as = cm_sa_anchor_type }
-			scope:cm_country = { cm_sa_ind_fold_gd_anchor = yes }
+			save_temporary_scope_as = cm_ab_anchor_loc
+			scope:cm_new_building_type = { save_temporary_scope_as = cm_ab_anchor_type }
+			scope:cm_country = { cm_ab_ind_fold_gd_anchor = yes }
 			if = {
 				limit = { cm_ln_can_place = yes }
-				remove_from_variable_map = { name = cm_sa_u_new_types key = scope:cm_old_building_type }
-				add_to_variable_map = { name = cm_sa_u_new_types key = scope:cm_old_building_type value = scope:cm_new_building_type }
-				remove_from_variable_map = { name = cm_sa_u_scores key = scope:cm_old_building_type }
-				add_to_variable_map = { name = cm_sa_u_scores key = scope:cm_old_building_type value = scope:cm_sa_score_val }
-				remove_from_variable_map = { name = cm_sa_u_costs key = scope:cm_old_building_type }
-				add_to_variable_map = { name = cm_sa_u_costs key = scope:cm_old_building_type value = scope:cm_cost }
+				remove_from_variable_map = { name = cm_ab_u_new_types key = scope:cm_old_building_type }
+				add_to_variable_map = { name = cm_ab_u_new_types key = scope:cm_old_building_type value = scope:cm_new_building_type }
+				remove_from_variable_map = { name = cm_ab_u_scores key = scope:cm_old_building_type }
+				add_to_variable_map = { name = cm_ab_u_scores key = scope:cm_old_building_type value = scope:cm_ab_score_val }
+				remove_from_variable_map = { name = cm_ab_u_costs key = scope:cm_old_building_type }
+				add_to_variable_map = { name = cm_ab_u_costs key = scope:cm_old_building_type value = scope:cm_cost }
 				if = {
-					limit = { OR = { NOT = { has_variable = cm_sa_u_best } var:cm_sa_u_best < scope:cm_sa_score_val } }
-					set_variable = { name = cm_sa_u_best value = scope:cm_sa_score_val }
+					limit = { OR = { NOT = { has_variable = cm_ab_u_best } var:cm_ab_u_best < scope:cm_ab_score_val } }
+					set_variable = { name = cm_ab_u_best value = scope:cm_ab_score_val }
 				}
 			}
 		}
 	}
 }
 
-cm_sa_score_rgo_apply = {
+cm_ab_score_rgo_apply = {
 	if = {
 		limit = {
 			scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
 			save_temporary_scope_as = cm_q_item_loc
-			scope:cm_country = { is_target_in_variable_list = { name = cm_sa_r_locations target = scope:cm_q_item_loc } }
-			NOT = { has_variable = cm_sa_done_rgo }
+			scope:cm_country = { is_target_in_variable_list = { name = cm_ab_r_locations target = scope:cm_q_item_loc } }
+			NOT = { has_variable = cm_ab_done_rgo }
 		}
-		set_variable = { name = cm_sa_done_rgo value = yes }
+		set_variable = { name = cm_ab_done_rgo value = yes }
 		scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
 		if = {
 			limit = {
 				cm_rgo_basic_expand_eligibility = yes
 				cm_market_has_construction_goods_for_rgo = yes
-				cm_sa_ind_roi_passes = { COST = glorpui_rgo_expand_cost }
+				cm_ab_ind_roi_passes = { COST = glorpui_rgo_expand_cost }
 			}
 			save_temporary_scope_value_as = { name = cm_q_score_cost value = glorpui_rgo_expand_cost }
-			cm_sa_compute_roi_score = yes
-			set_variable = { name = cm_sa_r_score value = scope:cm_sa_score_val }
+			cm_ab_compute_roi_score = yes
+			set_variable = { name = cm_ab_r_score value = scope:cm_ab_score_val }
 		}
 	}
 }

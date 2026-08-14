@@ -1,7 +1,7 @@
 ﻿cmf_monthly_human_country_pulse = {
 	on_actions = {
 		# Budget refresh first so this month's funds exist before the dispatcher stages.
-		cm_sa_monthly_budget
+		cm_ab_monthly_budget
 		cm_unified_auto_expand
 		cm_update_all_list_visibility
 		cm_monthly_auto_town_rights
@@ -47,24 +47,24 @@ cm_monthly_auto_town_rights = {
 	}
 }
 
-# Standalone monthly hook for the Smart Automations budget and food sampling. Its own
+# Standalone monthly hook for the Auto-Build budget and food sampling. Its own
 # on_action so a skipped construction cycle never skips them.
-cm_sa_monthly_budget = {
+cm_ab_monthly_budget = {
 	effect = {
 		save_scope_as = cm_country
 		if = {
-			limit = { cm_sa_master_active = yes }
+			limit = { cm_ab_master_active = yes }
 			# Ahead of the refresh, so the month the governor plan claims the treasury is the month
 			# the pools go to zero. A lucky nation ticks its own plan from cm_ln_monthly_cycle.
 			if = {
 				limit = {
 					cm_ln_is_active = no
-					exists = var:cm_sa_governors_enabled
+					exists = var:cm_ab_governors_enabled
 				}
 				cm_gov_reorg_tick = yes
 			}
-			cm_sa_monthly_budget_refresh = yes
-			cm_sa_food_sample_markets = yes
+			cm_ab_monthly_budget_refresh = yes
+			cm_ab_food_sample_markets = yes
 		}
 	}
 }

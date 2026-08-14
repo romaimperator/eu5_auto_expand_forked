@@ -229,14 +229,14 @@ cm_pf_prep_core = {
 	if = {
 		limit = {
 			var:cm_pf_run_g = 1
-			NOT = { exists = var:cm_sa_rd_plan_active }
+			NOT = { exists = var:cm_ab_rd_plan_active }
 		}
 		remove_variable = cm_pf_fresh_g
 	}
 	if = {
 		limit = {
 			var:cm_pf_run_c = 1
-			NOT = { exists = var:cm_sa_rd_plan_active }
+			NOT = { exists = var:cm_ab_rd_plan_active }
 		}
 		remove_variable = cm_pf_fresh_c
 	}
@@ -376,7 +376,7 @@ cm_pf_prep_core = {
 	if = {
 		limit = {
 			var:cm_pf_run_g = 1
-			NOT = { exists = var:cm_sa_rd_plan_active }
+			NOT = { exists = var:cm_ab_rd_plan_active }
 		}
 		# Governor search budget: nothing contributes at path cost beyond the largest headroom.
 		set_variable = { name = cm_pf_tmax value = 0 }
@@ -548,7 +548,7 @@ cm_pf_prime_land_location = {
 	if = {
 		limit = {
 			scope:cm_pf_c.var:cm_pf_run_g = 1
-			scope:cm_pf_c = { NOT = { exists = var:cm_sa_rd_plan_active } }
+			scope:cm_pf_c = { NOT = { exists = var:cm_ab_rd_plan_active } }
 		}
 		remove_variable = cm_gf_skip
 		remove_variable = cm_gf_inelig
@@ -1280,7 +1280,7 @@ cm_pf_try_relax = {
 		# cm_pf_rec above, whose hop and depth chain reads the previous tile's own counters and so
 		# needs them seeded, which suits that spread's single capital seed and not this one's many.
 		else_if = {
-			limit = { scope:cm_pf_c = { has_variable = cm_sa_rd_plan_active } }
+			limit = { scope:cm_pf_c = { has_variable = cm_ab_rd_plan_active } }
 			set_variable = { name = cm_pf_prev value = scope:cm_pf_a }
 		}
 	}

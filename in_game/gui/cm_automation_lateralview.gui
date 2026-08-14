@@ -206,13 +206,13 @@
 				on_action = "[GetScriptedGui(Select_CString(AutomatedSystemsItem.IsName('expandbuildings'), 'cm_toggle_auto_expand_buildings_feature', 'cm_toggle_auto_expand_rgos_feature')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 
-			# CM: Buildings card toggles Smart Automations
+			# CM: Buildings card toggles Auto-Build
 			action_tooltip = {
 				click_type = left
-				title = "CM_AUTOMATION_TOGGLE_SMART_AUTOMATIONS"
+				title = "CM_AUTOMATION_TOGGLE_AUTO_BUILD"
 				visible = "[AutomatedSystemsItem.IsName('buildings')]"
 				using = snd_UI_checkbutton_automation
-				on_action = "[GetScriptedGui('cm_sa_toggle_master').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				on_action = "[GetScriptedGui('cm_ab_toggle_master').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			}
 
 			# CM: Close and Open Buildings card toggles Building Cleanup's closing and opening
@@ -338,7 +338,7 @@
 				visible = "[AutomatedSystemsItem.IsName('religiousdoctrines')]"
 				on_action = "[OpenLateralViewWithParams('country_religion', 'subtab = doctrine')]"
 			}
-			# CM: Buildings card opens the Smart Automations settings
+			# CM: Buildings card opens the Auto-Build settings
 			action_tooltip = {
 				click_type = right
 				title = "[AutomatedSystemsItem.GetClickAction]"
@@ -346,7 +346,7 @@
 				on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 				on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 				on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
-				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__sa_master')]"
+				on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__ab_master')]"
 			}
 			# CM: Close and Open Buildings card opens the Building Cleanup settings
 			action_tooltip = {
@@ -577,7 +577,7 @@
 							size = { 100% 100% }
 							using = checkbox_auto_texture
 							frame = 2
-							visible = "[Or5(And(AutomatedSystemsItem.IsName('expandbuildings'), GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('expandrgo'), GetScriptedGui('cm_is_auto_expand_rgos_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('buildings'), GetScriptedGui('cm_sa_is_master_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('closebuildings'), GetScriptedGui('cm_cu_close_open_is_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('destroybuildings'), GetScriptedGui('cm_cu_destroy_is_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
+							visible = "[Or5(And(AutomatedSystemsItem.IsName('expandbuildings'), GetScriptedGui('cm_is_auto_expand_buildings_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('expandrgo'), GetScriptedGui('cm_is_auto_expand_rgos_feature_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('buildings'), GetScriptedGui('cm_ab_is_master_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('closebuildings'), GetScriptedGui('cm_cu_close_open_is_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)), And(AutomatedSystemsItem.IsName('destroybuildings'), GetScriptedGui('cm_cu_destroy_is_enabled').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
 						}
 					}
 				}
@@ -725,14 +725,14 @@
 						visible = "[AutomatedSystemsItem.IsName('religiousdoctrines')]"
 						on_action = "[OpenLateralViewWithParams('country_religion', 'subtab = doctrine')]"
 					}
-					# CM: Buildings card opens the Smart Automations settings
+					# CM: Buildings card opens the Auto-Build settings
 					action_tooltip = {
 						title = "[AutomatedSystemsItem.GetClickAction]"
 						visible = "[AutomatedSystemsItem.IsName('buildings')]"
 						on_action = "[GetScriptedGui(Select_CString(Or(Not(GameIsMultiplayer), IsHost), 'CMM_SetHostAndRegisterCoreMod', 'CMM_RegisterCoreMod')).Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						on_action = "[GetVariableSystem.Set('cmm_window_open', 'true')]"
 						on_action = "[GetVariableSystem.Set('cmm_selected_mod', 'cm')]"
-						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__sa_master')]"
+						on_action = "[GetVariableSystem.Set('cmm_selected_tab', 'cm__ab_master')]"
 					}
 					# CM: Close and Open Buildings card opens the Building Cleanup settings
 					action_tooltip = {

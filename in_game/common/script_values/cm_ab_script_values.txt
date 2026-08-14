@@ -1,25 +1,25 @@
-﻿# Smart Automations script values.
+﻿# Auto-Build script values.
 
 # Root is the country. Returns what the categories are holding for picks they could not pay for.
 # One read per category, because a macro parameter cannot vary a variable name inside a
 # script value.
-cm_sa_reserved_total = {
+cm_ab_reserved_total = {
 	value = 0
-	if = { limit = { exists = var:cm_sa_resv_industry } add = var:cm_sa_resv_industry }
-	if = { limit = { exists = var:cm_sa_resv_collapsar } add = var:cm_sa_resv_collapsar }
-	if = { limit = { exists = var:cm_sa_resv_food } add = var:cm_sa_resv_food }
-	if = { limit = { exists = var:cm_sa_resv_utilities } add = var:cm_sa_resv_utilities }
-	if = { limit = { exists = var:cm_sa_resv_roads } add = var:cm_sa_resv_roads }
-	if = { limit = { exists = var:cm_sa_resv_military } add = var:cm_sa_resv_military }
+	if = { limit = { exists = var:cm_ab_resv_industry } add = var:cm_ab_resv_industry }
+	if = { limit = { exists = var:cm_ab_resv_collapsar } add = var:cm_ab_resv_collapsar }
+	if = { limit = { exists = var:cm_ab_resv_food } add = var:cm_ab_resv_food }
+	if = { limit = { exists = var:cm_ab_resv_utilities } add = var:cm_ab_resv_utilities }
+	if = { limit = { exists = var:cm_ab_resv_roads } add = var:cm_ab_resv_roads }
+	if = { limit = { exists = var:cm_ab_resv_military } add = var:cm_ab_resv_military }
 }
 
-# Root is the country. The food surplus target as a supply/demand ratio: the sa_food_target
+# Root is the country. The food surplus target as a supply/demand ratio: the ab_food_target
 # percent setting over 100 (125 -> 1.25). A market whose best food month stayed below this
 # gets new auto-food locations.
-cm_sa_food_target_ratio = {
+cm_ab_food_target_ratio = {
 	if = {
-		limit = { exists = var:cm_sa_food_target }
-		value = var:cm_sa_food_target
+		limit = { exists = var:cm_ab_food_target }
+		value = var:cm_ab_food_target
 		divide = 100
 	}
 	else = {
@@ -27,27 +27,27 @@ cm_sa_food_target_ratio = {
 	}
 }
 
-# Root is the location. The owner's sa_food_min_potential setting, the minimum food potential
+# Root is the location. The owner's ab_food_min_potential setting, the minimum food potential
 # per RGO level a location must reach to be picked. Falls back to the setting default of 15
 # before the first sync.
-cm_sa_food_min_potential_value = {
+cm_ab_food_min_potential_value = {
 	if = {
-		limit = { owner = { exists = var:cm_sa_food_min_potential } }
-		value = owner.var:cm_sa_food_min_potential
+		limit = { owner = { exists = var:cm_ab_food_min_potential } }
+		value = owner.var:cm_ab_food_min_potential
 	}
 	else = {
 		value = 15
 	}
 }
 
-# Expects scope:cm_country. The country's sa_min_proximity setting, the proximity a location must
+# Expects scope:cm_country. The country's ab_min_proximity setting, the proximity a location must
 # carry to be staged. Read off the acting country rather than the location's owner so the setting
 # still governs the roster's subject branch. Falls back to the setting default of 1 before the
 # first sync.
-cm_sa_min_proximity_value = {
+cm_ab_min_proximity_value = {
 	if = {
-		limit = { scope:cm_country = { exists = var:cm_sa_min_proximity } }
-		value = scope:cm_country.var:cm_sa_min_proximity
+		limit = { scope:cm_country = { exists = var:cm_ab_min_proximity } }
+		value = scope:cm_country.var:cm_ab_min_proximity
 	}
 	else = {
 		value = 1
@@ -56,14 +56,14 @@ cm_sa_min_proximity_value = {
 
 # Ordered iterators sort high to low, so negating takes the lowest food potential first.
 # Root is the location.
-cm_sa_food_potential_inverted = {
+cm_ab_food_potential_inverted = {
 	value = 0
 	subtract = cm_location_food_potential
 }
 
 # The next RGO level's cost plus the full reserve and this drain's committed
 # spend. Root is the location, expects scopes: country, location.
-cm_sa_rgo_gold_threshold = {
+cm_ab_rgo_gold_threshold = {
 	value = glorpui_rgo_expand_cost
 	scope:cm_country = {
 		add = cm_get_full_reserve
@@ -73,19 +73,19 @@ cm_sa_rgo_gold_threshold = {
 
 # Ordered iterators sort high to low, so negating takes the lowest access first.
 # Root is the location.
-cm_sa_market_access_inverted = {
+cm_ab_market_access_inverted = {
 	value = 0
 	subtract = market_access
 }
 
-# The price scope:cm_sa_good_t is being pushed to: its default price at the target markup, the
+# The price scope:cm_ab_good_t is being pushed to: its default price at the target markup, the
 # min-discount markup convention (negative = below base, positive = above).
-# Expects scope:cm_sa_good_t and scope:cm_country.
-cm_sa_collapsar_goal_price = {
-	value = "default_price(scope:cm_sa_good_t)"
+# Expects scope:cm_ab_good_t and scope:cm_country.
+cm_ab_collapsar_goal_price = {
+	value = "default_price(scope:cm_ab_good_t)"
 	multiply = {
 		value = 100
-		add = scope:cm_country.var:cm_sa_collapsar_target
+		add = scope:cm_country.var:cm_ab_collapsar_target
 		divide = 100
 	}
 }
@@ -101,7 +101,7 @@ cm_sa_collapsar_goal_price = {
 # age_6_revolutions 0.02 (:308). Four decimals because the script value parser rejects a literal
 # carrying six, logging jomini_scriptvalue.h:498 "Badly read script value" and leaving the value
 # unset; vanilla's own script values never go past four.
-cm_sa_collapsar_ln_price_stability = {
+cm_ab_collapsar_ln_price_stability = {
 	value = -2.3026
 	if = {
 		limit = { current_age = age_3_discovery }
@@ -124,30 +124,30 @@ cm_sa_collapsar_ln_price_stability = {
 # The goal price as a proportion of base, written as (M - 1) / (M + 1) for the series below. M is
 # (100 + target) / 100, so the whole thing reduces to target / (200 + target).
 # Expects scope:cm_country.
-cm_sa_collapsar_goal_u = {
-	value = scope:cm_country.var:cm_sa_collapsar_target
+cm_ab_collapsar_goal_u = {
+	value = scope:cm_country.var:cm_ab_collapsar_target
 	divide = {
 		value = 200
-		add = scope:cm_country.var:cm_sa_collapsar_target
+		add = scope:cm_country.var:cm_ab_collapsar_target
 	}
 }
 
-cm_sa_collapsar_goal_u2 = {
-	value = cm_sa_collapsar_goal_u
-	multiply = cm_sa_collapsar_goal_u
+cm_ab_collapsar_goal_u2 = {
+	value = cm_ab_collapsar_goal_u
+	multiply = cm_ab_collapsar_goal_u
 }
 
 # The natural log of the goal price as a proportion of base, by the series
 # ln(M) = 2u + 2u^3/3 + 2u^5/5 in Horner form. The Price Target spans -33 to +33 percent, so u never
 # leaves +-0.198 and the fifth-order truncation is good to a millionth.
 # Expects scope:cm_country.
-cm_sa_collapsar_ln_goal = {
-	value = cm_sa_collapsar_goal_u2
+cm_ab_collapsar_ln_goal = {
+	value = cm_ab_collapsar_goal_u2
 	multiply = 0.4
 	add = 0.6667
-	multiply = cm_sa_collapsar_goal_u2
+	multiply = cm_ab_collapsar_goal_u2
 	add = 2
-	multiply = cm_sa_collapsar_goal_u
+	multiply = cm_ab_collapsar_goal_u
 }
 
 # How much of the supply-versus-demand scale the engine spends moving the price, measured off six
@@ -157,74 +157,74 @@ cm_sa_collapsar_ln_goal = {
 # decimals those target prices are displayed to, so it is a real asymmetry rather than rounding.
 # Which side applies follows the Price Target's own sign, since a goal under base price is reached
 # with supply over demand and a goal over it with demand over supply.
-@cm_sa_collapsar_scale_supply = 0.745
-@cm_sa_collapsar_scale_demand = 0.7
+@cm_ab_collapsar_scale_supply = 0.745
+@cm_ab_collapsar_scale_demand = 0.7
 
-cm_sa_collapsar_balance_scale = {
-	value = @cm_sa_collapsar_scale_supply
+cm_ab_collapsar_balance_scale = {
+	value = @cm_ab_collapsar_scale_supply
 	if = {
-		limit = { scope:cm_country.var:cm_sa_collapsar_target > 0 }
-		value = @cm_sa_collapsar_scale_demand
+		limit = { scope:cm_country.var:cm_ab_collapsar_target > 0 }
+		value = @cm_ab_collapsar_scale_demand
 	}
 }
 
 # Where the goal price sits on the engine's supply-versus-demand scale: the exponent x for which
 # price_stability raised to x is the goal price as a proportion of base. Zero at the base price,
 # positive below it, negative above. Expects scope:cm_country.
-cm_sa_collapsar_price_exponent = {
-	value = cm_sa_collapsar_ln_goal
-	divide = cm_sa_collapsar_ln_price_stability
-	divide = cm_sa_collapsar_balance_scale
+cm_ab_collapsar_price_exponent = {
+	value = cm_ab_collapsar_ln_goal
+	divide = cm_ab_collapsar_ln_price_stability
+	divide = cm_ab_collapsar_balance_scale
 }
 
 # Added to supply and to demand before the price model takes their ratio
 # (SUPPLY_AND_DEMAND_STABILITY_OFFSET_CONSTANT,
 # game/loading_screen/common/defines/00_defines.txt:1907).
-@cm_sa_collapsar_price_offset = 1
+@cm_ab_collapsar_price_offset = 1
 
-# The local production of scope:cm_sa_good_t that puts this market at the goal price, taking the
+# The local production of scope:cm_ab_good_t that puts this market at the goal price, taking the
 # market's own production and demand as the whole of what forms the price. The engine reads the
 # scale as (supply - demand) / (supply + demand + 2), so this inverts that for supply at the
-# exponent the goal sits on. Root is the market, expects scope:cm_sa_good_t and scope:cm_country.
-cm_sa_collapsar_supply_wanted = {
-	value = "goods_demand_in_market(scope:cm_sa_good_t)"
+# exponent the goal sits on. Root is the market, expects scope:cm_ab_good_t and scope:cm_country.
+cm_ab_collapsar_supply_wanted = {
+	value = "goods_demand_in_market(scope:cm_ab_good_t)"
 	multiply = {
 		value = 1
-		add = cm_sa_collapsar_price_exponent
+		add = cm_ab_collapsar_price_exponent
 	}
 	add = {
-		value = @cm_sa_collapsar_price_offset
+		value = @cm_ab_collapsar_price_offset
 		multiply = 2
-		multiply = cm_sa_collapsar_price_exponent
+		multiply = cm_ab_collapsar_price_exponent
 	}
 	divide = {
 		value = 1
-		subtract = cm_sa_collapsar_price_exponent
+		subtract = cm_ab_collapsar_price_exponent
 	}
 }
 
-# How much of scope:cm_sa_good_t this market has to add to its own production to reach the goal
+# How much of scope:cm_ab_good_t this market has to add to its own production to reach the goal
 # price. Imports meet the physical requirement in full but are discounted when the price forms
 # (BURGHER_TRADE_IMPACT_ON_SUPPLY_SCALE 0.1 and TRADE_IMPACT_ON_SUPPLY_SCALE 0.75,
 # game/loading_screen/common/defines/00_defines.txt:1760-1761), so the shortfall is measured
 # against what is produced here. Root is the market.
 # produced_in_market takes a literal goods key, never a scope.
-cm_sa_collapsar_shortfall = {
-	value = cm_sa_collapsar_supply_wanted
+cm_ab_collapsar_shortfall = {
+	value = cm_ab_collapsar_supply_wanted
 	if = {
-		limit = { scope:cm_sa_good_t = goods:masonry }
+		limit = { scope:cm_ab_good_t = goods:masonry }
 		subtract = produced_in_market:masonry
 	}
 	else_if = {
-		limit = { scope:cm_sa_good_t = goods:lumber }
+		limit = { scope:cm_ab_good_t = goods:lumber }
 		subtract = produced_in_market:lumber
 	}
 	else_if = {
-		limit = { scope:cm_sa_good_t = goods:sand }
+		limit = { scope:cm_ab_good_t = goods:sand }
 		subtract = produced_in_market:sand
 	}
 	else_if = {
-		limit = { scope:cm_sa_good_t = goods:glass }
+		limit = { scope:cm_ab_good_t = goods:glass }
 		subtract = produced_in_market:glass
 	}
 	min = 0
@@ -232,27 +232,27 @@ cm_sa_collapsar_shortfall = {
 
 # Levels are sized past the measured shortfall by a tenth, because construction the country
 # starts inside the window raises its own demand for the material.
-@cm_sa_collapsar_overshoot = 1.1
+@cm_ab_collapsar_overshoot = 1.1
 
 # Levels queued per construction slot. Chosen rather than derived: a slot finishes one level a
 # year (guild_build_time and rural_build_time,
 # game/main_menu/common/script_values/default_values.txt:1094 and :1116), so two holds one level
 # building and one waiting behind it.
-@cm_sa_collapsar_slot_rounds = 2
+@cm_ab_collapsar_slot_rounds = 2
 
-# Producer levels this market needs to close scope:cm_sa_good_t's shortfall, plus the overshoot.
+# Producer levels this market needs to close scope:cm_ab_good_t's shortfall, plus the overshoot.
 # Reads 0 before classification has recorded the producer's output.
-# Root is the market, expects scope:cm_sa_good_t and scope:cm_building_type.
-cm_sa_collapsar_levels_wanted = {
+# Root is the market, expects scope:cm_ab_good_t and scope:cm_building_type.
+cm_ab_collapsar_levels_wanted = {
 	value = 0
 	if = {
 		limit = {
 			has_global_variable_map = cm_bt_output
 			is_key_in_global_variable_map = { name = cm_bt_output target = scope:cm_building_type }
 		}
-		value = cm_sa_collapsar_shortfall
+		value = cm_ab_collapsar_shortfall
 		divide = "global_variable_map(cm_bt_output|scope:cm_building_type)"
-		multiply = @cm_sa_collapsar_overshoot
+		multiply = @cm_ab_collapsar_overshoot
 		ceiling = yes
 	}
 }
@@ -260,7 +260,7 @@ cm_sa_collapsar_levels_wanted = {
 # Levels of scope:cm_building_type here that are paid for but not yet producing: under
 # construction, or standing with a level's worth of jobs unfilled.
 # Root is the location, expects scope:cm_building_type and scope:cm_country.
-cm_sa_collapsar_type_inflight = {
+cm_ab_collapsar_type_inflight = {
 	value = 0
 	if = {
 		limit = {
@@ -285,18 +285,18 @@ cm_sa_collapsar_type_inflight = {
 # queued here is deliberately not counted: the four construction goods gate every other build,
 # so the collapsar takes the slots rather than waiting for them.
 # Root is the location, expects scope:cm_building_type and scope:cm_country.
-cm_sa_collapsar_type_room = {
+cm_ab_collapsar_type_room = {
 	value = modifier:max_constructions_at_same_time
-	multiply = @cm_sa_collapsar_slot_rounds
-	subtract = cm_sa_collapsar_type_inflight
+	multiply = @cm_ab_collapsar_slot_rounds
+	subtract = cm_ab_collapsar_type_inflight
 	min = 0
 }
 
 # The RGO's share of the slot-rounds allowance, less the levels under construction and the ones
 # standing unstaffed. Root is the location.
-cm_sa_collapsar_rgo_slot_room = {
+cm_ab_collapsar_rgo_slot_room = {
 	value = modifier:max_constructions_at_same_time
-	multiply = @cm_sa_collapsar_slot_rounds
+	multiply = @cm_ab_collapsar_slot_rounds
 	subtract = cm_get_rgos_under_construction
 	subtract = {
 		value = rgo_level
@@ -307,11 +307,11 @@ cm_sa_collapsar_rgo_slot_room = {
 
 # RGO levels this location may still be given: worker headroom, held to the slot-rounds
 # allowance. Root is the location.
-cm_sa_collapsar_rgo_room = {
+cm_ab_collapsar_rgo_room = {
 	value = cm_get_max_rgo_workers_floor
 	subtract = cm_modifier_rgo_level
 	subtract = cm_get_rgos_under_construction
-	max = cm_sa_collapsar_rgo_slot_room
+	max = cm_ab_collapsar_rgo_slot_room
 	min = 0
 }
 
@@ -320,7 +320,7 @@ cm_sa_collapsar_rgo_room = {
 # value reads 0 for vanilla and modded types alike (cmf-engine-test 149/156/157), so it can bound
 # nothing. An unmapped type reads 0 here, which stops the loop rather than overbuilding.
 # Root is the location, expects scope:cm_building_type.
-cm_sa_collapsar_type_cap = {
+cm_ab_collapsar_type_cap = {
 	value = 0
 	if = {
 		# mason: in_game/common/building_types/common_buildings.txt:118, glass_guild:
@@ -365,7 +365,7 @@ cm_sa_collapsar_type_cap = {
 # Materials bonus the R.G.O. Bonus filters show, read straight off the map the rgob sweep bakes per
 # province rather than through cm_rgob_coverage, which needs a standing building. Types without an
 # entry read 0. Root is the location, expects scope:cm_building_type.
-cm_sa_collapsar_rgo_bonus = {
+cm_ab_collapsar_rgo_bonus = {
 	value = 0
 	province = {
 		if = {
@@ -385,8 +385,8 @@ cm_sa_collapsar_rgo_bonus = {
 # global_production_efficiency, reads the same at every location the sweep visits and so would move
 # every reading by the same amount and rank nothing.
 # Root is the location, expects scope:cm_building_type.
-cm_sa_collapsar_efficiency_order = {
-	value = cm_sa_collapsar_rgo_bonus
+cm_ab_collapsar_efficiency_order = {
+	value = cm_ab_collapsar_rgo_bonus
 	add = modifier:local_production_efficiency
 	if = {
 		limit = { scope:cm_building_type = building_type:mason }
@@ -415,50 +415,50 @@ cm_sa_collapsar_efficiency_order = {
 }
 
 # The market survey's tallies, read back out of the locals its walk accumulated.
-cm_sa_col_survey_owned = { value = local_var:cm_sa_col_n_owned }
-cm_sa_col_survey_eligible = { value = local_var:cm_sa_col_n_limit }
-cm_sa_col_survey_placeable = { value = local_var:cm_sa_col_n_full }
-cm_sa_col_survey_room = { value = local_var:cm_sa_col_n_room }
-cm_sa_col_survey_ord_lo = { value = local_var:cm_sa_col_ord_lo }
-cm_sa_col_survey_ord_hi = { value = local_var:cm_sa_col_ord_hi }
-cm_sa_col_survey_inflight = { value = local_var:cm_sa_col_n_infl }
+cm_ab_col_survey_owned = { value = local_var:cm_ab_col_n_owned }
+cm_ab_col_survey_eligible = { value = local_var:cm_ab_col_n_limit }
+cm_ab_col_survey_placeable = { value = local_var:cm_ab_col_n_full }
+cm_ab_col_survey_room = { value = local_var:cm_ab_col_n_room }
+cm_ab_col_survey_ord_lo = { value = local_var:cm_ab_col_ord_lo }
+cm_ab_col_survey_ord_hi = { value = local_var:cm_ab_col_ord_hi }
+cm_ab_col_survey_inflight = { value = local_var:cm_ab_col_n_infl }
 
 # What the sweep has left to place after every visited location has taken its in-flight levels
 # off the want.
-cm_sa_col_survey_left = {
-	value = scope:cm_sa_market.cm_sa_collapsar_levels_wanted
-	subtract = local_var:cm_sa_col_n_infl
+cm_ab_col_survey_left = {
+	value = scope:cm_ab_market.cm_ab_collapsar_levels_wanted
+	subtract = local_var:cm_ab_col_n_infl
 }
 
 # The probe's raw engine readings, each paired against the collapsar value derived from it.
-# Root is the location, expects scope:cm_building_type, scope:cm_sa_market and scope:cm_sa_good_t.
-cm_sa_col_engine_laborers = {
+# Root is the location, expects scope:cm_building_type, scope:cm_ab_market and scope:cm_ab_good_t.
+cm_ab_col_engine_laborers = {
 	value = "unemployed_pops_of_pop_type_in_location(pop_type:laborers)"
 }
 
 # Paired against the whole order key, so the gap between the two is the province's raw-material
 # coverage plus the material's own output modifier.
-cm_sa_col_engine_efficiency = {
+cm_ab_col_engine_efficiency = {
 	value = modifier:local_production_efficiency
 }
 
-cm_sa_col_max_constructions = {
+cm_ab_col_max_constructions = {
 	value = modifier:max_constructions_at_same_time
 }
 
-cm_sa_col_civil_constructions = {
+cm_ab_col_civil_constructions = {
 	value = num_civil_constructions
 }
 
-cm_sa_col_market_access = {
+cm_ab_col_market_access = {
 	value = market_access
 }
 
-cm_sa_col_proximity = {
+cm_ab_col_proximity = {
 	value = proximity
 }
 
-cm_sa_col_standing_levels = {
+cm_ab_col_standing_levels = {
 	value = 0
 	if = {
 		limit = {
@@ -471,11 +471,11 @@ cm_sa_col_standing_levels = {
 	}
 }
 
-cm_sa_col_market_shortfall = {
-	value = scope:cm_sa_market.cm_sa_collapsar_shortfall
+cm_ab_col_market_shortfall = {
+	value = scope:cm_ab_market.cm_ab_collapsar_shortfall
 }
 
-cm_sa_col_bt_output = {
+cm_ab_col_bt_output = {
 	value = 0
 	if = {
 		limit = { is_key_in_global_variable_map = { name = cm_bt_output target = scope:cm_building_type } }
@@ -483,17 +483,17 @@ cm_sa_col_bt_output = {
 	}
 }
 
-cm_sa_col_market_want = {
-	value = scope:cm_sa_market.cm_sa_collapsar_levels_wanted
+cm_ab_col_market_want = {
+	value = scope:cm_ab_market.cm_ab_collapsar_levels_wanted
 }
 
-cm_sa_col_market_price = {
-	value = "scope:cm_sa_market.market_price(scope:cm_sa_good_t)"
+cm_ab_col_market_price = {
+	value = "scope:cm_ab_market.market_price(scope:cm_ab_good_t)"
 }
 
 # How slow this tile is to cross: its topography movement cost plus its vegetation movement cost,
 # 2 on flat open ground. Root is the location.
-cm_sa_rd_movement_cost_value = {
+cm_ab_rd_movement_cost_value = {
 	value = 1 # Mirrors vanilla flatland movement_cost, shared by every other land topography: in_game/common/topography/00_default.txt:7
 	if = { limit = { topography = mountains } value = 2 } # Mirrors vanilla mountains movement_cost: in_game/common/topography/00_default.txt:21
 	else_if = { limit = { topography = hills } value = 1.5 } # Mirrors vanilla hills movement_cost: in_game/common/topography/00_default.txt:53
@@ -516,15 +516,15 @@ cm_sa_rd_movement_cost_value = {
 # against 7.71, 5.09 and 6.74 from the terms above: ratios 1.650, 1.659 and 1.641. Both divisor
 # branches were then checked whole against real costs, same area 81 against 80.5 and across an area
 # boundary 73 against 73.5, so the 10 and the 20 are right relative to each other as well.
-# Root is the location, expects scope:cm_sa_rd_from and scope:cm_sa_rd_to.
-cm_sa_rd_unit_distance_value = {
-	value = "scope:cm_sa_rd_from.distance_to(scope:cm_sa_rd_to)"
+# Root is the location, expects scope:cm_ab_rd_from and scope:cm_ab_rd_to.
+cm_ab_rd_unit_distance_value = {
+	value = "scope:cm_ab_rd_from.distance_to(scope:cm_ab_rd_to)"
 	multiply = {
-		value = cm_sa_rd_movement_cost_value
-		add = scope:cm_sa_rd_to.cm_sa_rd_movement_cost_value
+		value = cm_ab_rd_movement_cost_value
+		add = scope:cm_ab_rd_to.cm_ab_rd_movement_cost_value
 	}
 	if = {
-		limit = { area = scope:cm_sa_rd_to.area }
+		limit = { area = scope:cm_ab_rd_to.area }
 		divide = 10
 	}
 	else = {
@@ -541,7 +541,7 @@ cm_sa_rd_unit_distance_value = {
 # Weights mirror vanilla build_gravel_road_demand: in_game/common/goods_demand/special_construction_demands.txt:28
 # Every road tier demands the same three; railroad adds steel, which is not modelled.
 # Root is the location.
-cm_sa_rd_goods_adjust_value = {
+cm_ab_rd_goods_adjust_value = {
 	value = 0
 	add = {
 		value = "market.market_price(goods:lumber)"
@@ -565,7 +565,7 @@ cm_sa_rd_goods_adjust_value = {
 
 # Gold per unit distance for the best road type this country has unlocked, carrying that type's own
 # cost modifier and inflation. Root is the country.
-cm_sa_rd_tier_cost_value = {
+cm_ab_rd_tier_cost_value = {
 	value = 0
 	if = {
 		# railroad_advance unlocks railroad: in_game/common/advances/3_road_unlocks.txt:28
@@ -595,33 +595,33 @@ cm_sa_rd_tier_cost_value = {
 	min = 0
 }
 
-# Estimated gold for one road between this location and scope:cm_sa_rd_to. Vanilla's own goods
+# Estimated gold for one road between this location and scope:cm_ab_rd_to. Vanilla's own goods
 # term is left out: its market-price weighting has no readable form, and under-estimating there
 # only slows the category down, which the treasury reserve already absorbs.
-# scope:cm_sa_rd_tier is cm_sa_rd_tier_cost_value, saved once a pass because it is the same for
-# every corridor. Root is the location, expects scope:cm_sa_rd_from, scope:cm_sa_rd_to and
-# scope:cm_sa_rd_tier.
-cm_sa_rd_cost_value = {
-	value = cm_sa_rd_unit_distance_value
-	multiply = scope:cm_sa_rd_tier
+# scope:cm_ab_rd_tier is cm_ab_rd_tier_cost_value, saved once a pass because it is the same for
+# every corridor. Root is the location, expects scope:cm_ab_rd_from, scope:cm_ab_rd_to and
+# scope:cm_ab_rd_tier.
+cm_ab_rd_cost_value = {
+	value = cm_ab_rd_unit_distance_value
+	multiply = scope:cm_ab_rd_tier
 	multiply = {
 		value = 1
-		add = cm_sa_rd_goods_adjust_value
+		add = cm_ab_rd_goods_adjust_value
 		min = 0
 	}
 	min = 1
 }
 
 # The tax base a road on the edge above this location would unlock, per gold it costs.
-# Root is the location, expects scope:cm_sa_rd_from, scope:cm_sa_rd_to and scope:cm_sa_rd_tier.
-cm_sa_rd_score_value = {
-	value = var:cm_sa_rd_sub
-	divide = cm_sa_rd_cost_value
+# Root is the location, expects scope:cm_ab_rd_from, scope:cm_ab_rd_to and scope:cm_ab_rd_tier.
+cm_ab_rd_score_value = {
+	value = var:cm_ab_rd_sub
+	divide = cm_ab_rd_cost_value
 }
 
 # Ordered iterators sort high to low, so negating visits the farthest tiles first, which is every
 # child before its parent in a shortest-path tree. Root is the location.
-cm_sa_rd_leaf_order = {
+cm_ab_rd_leaf_order = {
 	value = 0
 	if = {
 		limit = { has_variable = cm_pf_pb }
@@ -632,7 +632,7 @@ cm_sa_rd_leaf_order = {
 # The tax base this tile alone would gain once the network reaches its predicted proximity.
 # Control rises 0.75 per unit of proximity and proximity runs 0-100, hence 0.0075, the same
 # conversion cm_gf_taxgain uses. Root is the location.
-cm_sa_rd_node_demand = {
+cm_ab_rd_node_demand = {
 	value = var:cm_pf_pb
 	subtract = proximity
 	min = 0
@@ -641,9 +641,9 @@ cm_sa_rd_node_demand = {
 }
 
 # What one unit of distance costs a location in market access once the best unlocked road sits on
-# that edge. Mirrors cm_sa_rd_tier_cost_value's ladder branch for branch, since a corridor priced at
+# that edge. Mirrors cm_ab_rd_tier_cost_value's ladder branch for branch, since a corridor priced at
 # one tier has to be modelled at the same one. Root is the country.
-cm_sa_rd_ma_segment_factor = {
+cm_ab_rd_ma_segment_factor = {
 	value = 0.005 # MARKET_BASE_DISTANCE_FACTOR: loading_screen/common/defines/00_defines.txt:1782
 	if = {
 		# railroad_advance unlocks railroad: in_game/common/advances/3_road_unlocks.txt:28
@@ -671,7 +671,7 @@ cm_sa_rd_ma_segment_factor = {
 # MARKET_BASE_ACCESS 1: loading_screen/common/defines/00_defines.txt:1780. Where a location already
 # sits at full access the cap makes this read high, which only understates what a road would buy.
 # Root is the location.
-cm_sa_rd_loss_value = {
+cm_ab_rd_loss_value = {
 	value = 1
 	add = modifier:local_market_access
 	subtract = market_access
@@ -680,17 +680,17 @@ cm_sa_rd_loss_value = {
 
 # Highest predicted loss is farthest from the centre, so ordering by it visits every tile before the
 # one it routes through. Root is the location.
-cm_sa_rd_ma_order = {
+cm_ab_rd_ma_order = {
 	value = 0
 	if = {
-		limit = { has_variable = cm_sa_rd_ma_l }
-		value = var:cm_sa_rd_ma_l
+		limit = { has_variable = cm_ab_rd_ma_l }
+		value = var:cm_ab_rd_ma_l
 	}
 }
 
 # The share of a segment's own market access loss the best unlocked road takes off it. Mirrors
-# cm_sa_rd_tier_cost_value's ladder branch for branch. Root is the country.
-cm_sa_rd_tier_ma_gain = {
+# cm_ab_rd_tier_cost_value's ladder branch for branch. Root is the country.
+cm_ab_rd_tier_ma_gain = {
 	value = 0.1 # gravel_road market_access -0.1: in_game/common/road_types/00_generic.txt:4
 	if = {
 		# railroad_advance unlocks railroad: in_game/common/advances/3_road_unlocks.txt:28
@@ -711,20 +711,20 @@ cm_sa_rd_tier_ma_gain = {
 
 # The access this corridor would unlock, per gold it costs: the road's share of the segment's own
 # loss, taken by every location routing through it.
-# Root is the location, expects scope:cm_sa_rd_from, scope:cm_sa_rd_to and scope:cm_sa_rd_tier.
-cm_sa_rd_ma_score_value = {
-	value = var:cm_sa_rd_ma_g
-	multiply = var:cm_sa_rd_sub
-	divide = cm_sa_rd_cost_value
+# Root is the location, expects scope:cm_ab_rd_from, scope:cm_ab_rd_to and scope:cm_ab_rd_tier.
+cm_ab_rd_ma_score_value = {
+	value = var:cm_ab_rd_ma_g
+	multiply = var:cm_ab_rd_sub
+	divide = cm_ab_rd_cost_value
 }
 
 # Deepest first, so every location is visited before the one it reaches the connected set through.
 # Root is the location.
-cm_sa_rd_cc_order = {
+cm_ab_rd_cc_order = {
 	value = 0
 	if = {
-		limit = { has_variable = cm_sa_rd_cc_d }
-		value = var:cm_sa_rd_cc_d
+		limit = { has_variable = cm_ab_rd_cc_d }
+		value = var:cm_ab_rd_cc_d
 	}
 }
 
@@ -732,7 +732,7 @@ cm_sa_rd_cc_order = {
 # payoff is the has_road_connected_to_capital modifier, whose development, institution growth and
 # integration terms all scale with the location rather than with the corridor.
 # main_menu/common/static_modifiers/location.txt:169. Root is the location.
-cm_sa_rd_cc_node_demand = {
+cm_ab_rd_cc_node_demand = {
 	value = 0
 	if = {
 		limit = { has_road_to_capital = no }

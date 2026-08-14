@@ -33,7 +33,7 @@ cm_cu_yearly_pass = {
 		}
 		cm_cu_validate_tracking = yes
 		every_market_present_in_country = {
-			save_scope_as = cm_sa_market
+			save_scope_as = cm_ab_market
 			scope:cm_country = {
 				cm_cu_survey_market = yes
 				cm_cu_close_pass = yes
@@ -84,7 +84,7 @@ cm_cu_auto_food_pass = {
 	every_owned_location = {
 		limit = {
 			NOT = { integration_level = conquered }
-			cm_sa_food_location_effectively_active = yes
+			cm_ab_food_location_effectively_active = yes
 			cm_location_has_worker_deficit = yes
 		}
 		save_scope_as = cm_location
@@ -179,7 +179,7 @@ cm_cu_validate_tracking = {
 
 # Counts one market's production buildings per type: how many are open, whether any open one
 # still earns, and how many this system has closed. Root is the country, expects
-# scope:cm_sa_market.
+# scope:cm_ab_market.
 cm_cu_survey_market = {
 	clear_variable_map = cm_cu_open
 	clear_variable_map = cm_cu_prof_open
@@ -188,7 +188,7 @@ cm_cu_survey_market = {
 	clear_variable_map = cm_cu_reop
 	# Iterating the market rather than the country matters here: this runs once per market.
 	# The iterator carries no ownership filter of its own.
-	scope:cm_sa_market = {
+	scope:cm_ab_market = {
 		every_location_in_market = {
 			limit = {
 				owner ?= scope:cm_country
@@ -223,7 +223,7 @@ cm_cu_survey_market = {
 # Closes one market's unprofitable production buildings least profitable first, destroying
 # instead where the location is near its cap, until each type's half share is spent. A market
 # village is cut back to one level instead, never closed or destroyed.
-# Root is the country, expects scope:cm_sa_market.
+# Root is the country, expects scope:cm_ab_market.
 cm_cu_close_pass = {
 	ordered_owned_building = {
 		order_by = cm_cu_neg_profit
@@ -234,7 +234,7 @@ cm_cu_close_pass = {
 			# leads: the profit read behind it is by far the most expensive check here.
 			location = {
 				owner = scope:cm_country
-				market = scope:cm_sa_market
+				market = scope:cm_ab_market
 				NOT = { integration_level = conquered }
 			}
 			is_opened = yes
@@ -293,7 +293,7 @@ cm_cu_close_pass = {
 }
 
 # Reopens the closed buildings of one market's recovered types, best potential profit first.
-# Root is the country, expects scope:cm_sa_market.
+# Root is the country, expects scope:cm_ab_market.
 cm_cu_reopen_pass = {
 	ordered_owned_building = {
 		order_by = building_potential_profit
@@ -302,7 +302,7 @@ cm_cu_reopen_pass = {
 		limit = {
 			location = {
 				owner = scope:cm_country
-				market = scope:cm_sa_market
+				market = scope:cm_ab_market
 			}
 			cm_cu_is_tracked_closed = yes
 		}
