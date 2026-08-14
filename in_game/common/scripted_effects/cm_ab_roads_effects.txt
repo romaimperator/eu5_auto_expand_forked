@@ -734,16 +734,35 @@ cm_ab_rd_probe = {
 	}
 	# Only speaks up when a target never got to look, which is the case a count of 0 cannot tell
 	# apart from a target that looked and found nothing.
+	# cm_ab_rd_clear_plan removes these, and an unset left side is three script errors per read.
 	if = {
-		limit = { NOT = { var:cm_ab_rd_ran_1 = 1 } }
+		limit = {
+			trigger_if = {
+				limit = { has_variable = cm_ab_rd_ran_1 }
+				var:cm_ab_rd_ran_1 = 0
+			}
+			trigger_else = { always = yes }
+		}
 		cmf_log = { action = cm_log_rd_p_skip_prox }
 	}
 	if = {
-		limit = { NOT = { var:cm_ab_rd_ran_2 = 1 } }
+		limit = {
+			trigger_if = {
+				limit = { has_variable = cm_ab_rd_ran_2 }
+				var:cm_ab_rd_ran_2 = 0
+			}
+			trigger_else = { always = yes }
+		}
 		cmf_log = { action = cm_log_rd_p_skip_ma }
 	}
 	if = {
-		limit = { NOT = { var:cm_ab_rd_ran_3 = 1 } }
+		limit = {
+			trigger_if = {
+				limit = { has_variable = cm_ab_rd_ran_3 }
+				var:cm_ab_rd_ran_3 = 0
+			}
+			trigger_else = { always = yes }
+		}
 		cmf_log = { action = cm_log_rd_p_skip_cap }
 	}
 	remove_variable = cm_ab_rd_p1
