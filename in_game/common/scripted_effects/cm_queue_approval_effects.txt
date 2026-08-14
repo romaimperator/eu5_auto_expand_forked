@@ -200,12 +200,88 @@ cm_q_approval_pass = {
 	}
 }
 
+# How many candidates one scan caches for a max-pick domain. A cache serves at least this many
+# picks before it has to be refilled, and reading it costs an ordered scan of this many entries
+# rather than one over the whole candidate list.
+@cm_q_pick_cache_size = 8
+
+# One domain's best candidate for the next pick, re-derived only when the last pick touched that
+# domain: a pick writes scores only in its own domain, at its own location. Refills the cache
+# once its best live entry falls under the bar, below which an uncached candidate could win.
+# $D$ = the domain's name suffix, $LIST$ = its candidate list, $BEST$ = its per-location best
+# score variable, $PICK$ = the scope the caller's pick reads. Root is the country.
+cm_q_pick_domain_refresh = {
+	if = {
+		limit = { local_var:cm_q_pd_dirty_$D$ = 1 }
+		cm_q_pick_domain_read = { D = $D$ BEST = $BEST$ PICK = $PICK$ }
+		if = {
+			limit = { local_var:cm_q_pd_best_$D$ < local_var:cm_q_pd_bar_$D$ }
+			cm_q_pick_domain_fill = { D = $D$ LIST = $LIST$ BEST = $BEST$ }
+			cm_q_pick_domain_read = { D = $D$ BEST = $BEST$ PICK = $PICK$ }
+		}
+		set_local_variable = { name = cm_q_pd_dirty_$D$ value = 0 }
+	}
+}
+
+# Caches the domain's top candidates. The scan runs high to low, so the last entry visited leaves
+# the lowest cached score in the bar, which every uncached candidate is at or below and stays at
+# or below: a pick takes the top key of the location it picks from, so that location's best only
+# ever falls. Root is the country.
+cm_q_pick_domain_fill = {
+	save_temporary_scope_as = cm_q_pd_country
+	clear_variable_list = cm_q_pd_cache_$D$
+	set_local_variable = { name = cm_q_pd_bar_$D$ value = -2000000 }
+	set_local_variable = { name = cm_q_pd_n_$D$ value = 0 }
+	ordered_in_list = {
+		variable = $LIST$
+		limit = { has_variable = $BEST$ }
+		order_by = { value = var:$BEST$ }
+		max = @cm_q_pick_cache_size
+		check_range_bounds = no
+		save_temporary_scope_as = cm_q_pd_fill_loc
+		set_local_variable = { name = cm_q_pd_bar_$D$ value = var:$BEST$ }
+		change_local_variable = { name = cm_q_pd_n_$D$ add = 1 }
+		scope:cm_q_pd_country = { add_to_variable_list = { name = cm_q_pd_cache_$D$ target = scope:cm_q_pd_fill_loc } }
+	}
+	if = {
+		# A short fill is the whole domain, so nothing uncached can outrank it.
+		limit = { local_var:cm_q_pd_n_$D$ < @cm_q_pick_cache_size }
+		set_local_variable = { name = cm_q_pd_bar_$D$ value = -2000000 }
+	}
+}
+
+# Best live cache entry into local_var:cm_q_pd_best_$D$ and scope:$PICK$; an entry that has lost
+# $BEST$ left the domain after the fill. -2000000 marks an empty domain: strictly below every
+# stored score, which the scorer floors at -99999. Root is the country.
+cm_q_pick_domain_read = {
+	set_local_variable = { name = cm_q_pd_best_$D$ value = -2000000 }
+	ordered_in_list = {
+		variable = cm_q_pd_cache_$D$
+		limit = { has_variable = $BEST$ }
+		order_by = { value = var:$BEST$ }
+		position = 0
+		check_range_bounds = no
+		save_scope_as = $PICK$
+		set_local_variable = { name = cm_q_pd_best_$D$ value = var:$BEST$ }
+	}
+}
+
+# Loop prologue: arms the domain and takes its first scan. Root is the country.
+cm_q_pick_domain_arm = {
+	set_local_variable = { name = cm_q_pd_dirty_$D$ value = 1 }
+	cm_q_pick_domain_fill = { D = $D$ LIST = $LIST$ BEST = $BEST$ }
+}
+
 # Exact best-first drain for auto-expand buildings: repeatedly approves the single
 # highest-scored item across the expand and gated-upgrade domains, stopping early once the
-# current best pick is blocked by gold alone. Root is the country.
+# current best pick is blocked by gold alone. The two domains hold separate candidate lists and
+# separate refreshes, so a pick in one leaves the other's answer standing.
+# Root is the country.
 cm_q_pass_auto_expand_buildings = {
 	set_local_variable = { name = cm_q_pick_guard value = 0 }
 	set_local_variable = { name = cm_q_budget_exhausted value = 0 }
+	cm_q_pick_domain_arm = { D = build LIST = cm_q_cand_locations BEST = cm_q_best }
+	cm_q_pick_domain_arm = { D = upg LIST = cm_q_upg_cand_locations BEST = cm_q_upg_best }
 	while = {
 		limit = {
 			# 999 stays under the engine's 1000-iteration while abort; anything past it waits
@@ -224,34 +300,24 @@ cm_q_pass_auto_expand_buildings = {
 			}
 		}
 		change_local_variable = { name = cm_q_pick_guard add = 1 }
-		# -2000000 marks an empty domain: strictly below every stored score, which the
-		# scorer floors at -99999.
-		save_temporary_scope_value_as = { name = cm_q_dom_build_best value = -2000000 }
-		save_temporary_scope_value_as = { name = cm_q_dom_upg_best value = -2000000 }
-		ordered_in_list = {
-			variable = cm_q_cand_locations
-			order_by = { value = var:cm_q_best }
-			position = 0
-			check_range_bounds = no
-			save_temporary_scope_as = cm_q_pick_build_loc
-			save_temporary_scope_value_as = { name = cm_q_dom_build_best value = var:cm_q_best }
-		}
-		ordered_in_list = {
-			variable = cm_q_upg_cand_locations
-			order_by = { value = var:cm_q_upg_best }
-			position = 0
-			check_range_bounds = no
-			save_temporary_scope_as = cm_q_pick_upg_loc
-			save_temporary_scope_value_as = { name = cm_q_dom_upg_best value = var:cm_q_upg_best }
-		}
+		cm_q_pick_domain_refresh = { D = build LIST = cm_q_cand_locations BEST = cm_q_best PICK = cm_q_pick_build_loc }
+		cm_q_pick_domain_refresh = { D = upg LIST = cm_q_upg_cand_locations BEST = cm_q_upg_best PICK = cm_q_pick_upg_loc }
 		if = {
 			# Ties go to the expand domain.
-			limit = { scope:cm_q_dom_build_best >= { value = scope:cm_q_dom_upg_best } }
+			limit = {
+				local_var:cm_q_pd_best_build >= local_var:cm_q_pd_best_upg
+				local_var:cm_q_pd_best_build > -2000000
+			}
 			scope:cm_q_pick_build_loc = { cm_q_pick_best_build_item = yes }
-		} else = {
+			set_local_variable = { name = cm_q_pd_dirty_build value = 1 }
+		} else_if = {
+			limit = { local_var:cm_q_pd_best_upg > -2000000 }
 			scope:cm_q_pick_upg_loc = { cm_q_pick_best_upgrade_item = yes }
+			set_local_variable = { name = cm_q_pd_dirty_upg value = 1 }
 		}
 	}
+	clear_variable_list = cm_q_pd_cache_build
+	clear_variable_list = cm_q_pd_cache_upg
 	cm_q_pass_foreign = yes
 }
 

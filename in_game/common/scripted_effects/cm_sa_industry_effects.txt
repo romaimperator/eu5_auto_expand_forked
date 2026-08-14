@@ -564,10 +564,16 @@ cm_sa_pass_industry = {
 # the pool cannot cover the next one; each pick tests the bar of the good it makes. The outer
 # batch loop is what carries the pick count past a single while's 1000-iteration abort; it
 # re-enters only while the inner loop's last iteration picked something.
+# The three domains share one candidate list, so a pick leaving the other two standing rests on
+# the prune: it drops a location only once it has lost every marker, which is a location the
+# other two were already filtering out.
 # Root is the country. Expects cm_sa_drain_cands built and local_var:cm_sa_rel_f set.
 cm_sa_ind_pick_loop = {
 	set_local_variable = { name = cm_sa_more value = 1 }
 	set_local_variable = { name = cm_sa_outer value = 0 }
+	cm_q_pick_domain_arm = { D = ib LIST = cm_sa_drain_cands BEST = cm_sa_b_best }
+	cm_q_pick_domain_arm = { D = iu LIST = cm_sa_drain_cands BEST = cm_sa_u_best }
+	cm_q_pick_domain_arm = { D = ir LIST = cm_sa_drain_cands BEST = cm_sa_r_score }
 	while = {
 		limit = {
 			local_var:cm_sa_more = 1
@@ -585,65 +591,43 @@ cm_sa_ind_pick_loop = {
 			}
 			change_local_variable = { name = cm_sa_guard add = 1 }
 			set_local_variable = { name = cm_sa_more value = 0 }
-			# Best actionable candidate per domain.
-			save_temporary_scope_value_as = { name = cm_sa_dom_b value = -2000000 }
-			save_temporary_scope_value_as = { name = cm_sa_dom_u value = -2000000 }
-			save_temporary_scope_value_as = { name = cm_sa_dom_r value = -2000000 }
-			ordered_in_list = {
-				variable = cm_sa_drain_cands
-				limit = { has_variable = cm_sa_b_best }
-				order_by = { value = var:cm_sa_b_best }
-				position = 0
-				check_range_bounds = no
-				save_temporary_scope_as = cm_sa_pick_b_loc
-				save_temporary_scope_value_as = { name = cm_sa_dom_b value = var:cm_sa_b_best }
-			}
-			ordered_in_list = {
-				variable = cm_sa_drain_cands
-				limit = { has_variable = cm_sa_u_best }
-				order_by = { value = var:cm_sa_u_best }
-				position = 0
-				check_range_bounds = no
-				save_temporary_scope_as = cm_sa_pick_u_loc
-				save_temporary_scope_value_as = { name = cm_sa_dom_u value = var:cm_sa_u_best }
-			}
-			ordered_in_list = {
-				variable = cm_sa_drain_cands
-				limit = { has_variable = cm_sa_r_score }
-				order_by = { value = var:cm_sa_r_score }
-				position = 0
-				check_range_bounds = no
-				save_temporary_scope_as = cm_sa_pick_r_loc
-				save_temporary_scope_value_as = { name = cm_sa_dom_r value = var:cm_sa_r_score }
-			}
+			cm_q_pick_domain_refresh = { D = ib LIST = cm_sa_drain_cands BEST = cm_sa_b_best PICK = cm_sa_pick_b_loc }
+			cm_q_pick_domain_refresh = { D = iu LIST = cm_sa_drain_cands BEST = cm_sa_u_best PICK = cm_sa_pick_u_loc }
+			cm_q_pick_domain_refresh = { D = ir LIST = cm_sa_drain_cands BEST = cm_sa_r_score PICK = cm_sa_pick_r_loc }
 			# The picks prune cm_sa_drain_cands, which is only safe because they run after
-			# all three scans above have closed. Moving one inside a scan body would mutate
-			# the list mid-iteration.
+			# every refresh above has closed. Moving one inside a refresh would mutate the
+			# list mid-iteration.
 			if = {
 				# Ties go to the build domain, then upgrades.
 				limit = {
-					scope:cm_sa_dom_b >= { value = scope:cm_sa_dom_u }
-					scope:cm_sa_dom_b >= { value = scope:cm_sa_dom_r }
-					scope:cm_sa_dom_b > -2000000
+					local_var:cm_q_pd_best_ib >= local_var:cm_q_pd_best_iu
+					local_var:cm_q_pd_best_ib >= local_var:cm_q_pd_best_ir
+					local_var:cm_q_pd_best_ib > -2000000
 				}
 				scope:cm_sa_pick_b_loc = { cm_sa_pick_best_build_item = yes }
+				set_local_variable = { name = cm_q_pd_dirty_ib value = 1 }
 				set_local_variable = { name = cm_sa_more value = 1 }
 			} else_if = {
 				limit = {
-					scope:cm_sa_dom_u >= { value = scope:cm_sa_dom_r }
-					scope:cm_sa_dom_u > -2000000
+					local_var:cm_q_pd_best_iu >= local_var:cm_q_pd_best_ir
+					local_var:cm_q_pd_best_iu > -2000000
 				}
 				scope:cm_sa_pick_u_loc = { cm_sa_pick_best_upgrade_item = yes }
+				set_local_variable = { name = cm_q_pd_dirty_iu value = 1 }
 				set_local_variable = { name = cm_sa_more value = 1 }
 			} else_if = {
 				# RGOs have no input good, so they can never be unprofitable and never steal a
 				# building's opportunity; the relative bar never gates them, only ROI order.
-				limit = { scope:cm_sa_dom_r > -2000000 }
+				limit = { local_var:cm_q_pd_best_ir > -2000000 }
 				scope:cm_sa_pick_r_loc = { cm_sa_approve_rgo_item = yes }
+				set_local_variable = { name = cm_q_pd_dirty_ir value = 1 }
 				set_local_variable = { name = cm_sa_more value = 1 }
 			}
 		}
 	}
+	clear_variable_list = cm_q_pd_cache_ib
+	clear_variable_list = cm_q_pd_cache_iu
+	clear_variable_list = cm_q_pd_cache_ir
 }
 
 # Console diagnostic: effect c:<TAG> = { cm_sa_ind_anchor_probe = yes }
