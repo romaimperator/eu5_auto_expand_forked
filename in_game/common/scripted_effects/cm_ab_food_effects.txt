@@ -179,13 +179,32 @@ cm_ab_food_yearly_evaluation = {
 				}
 			}
 		}
-		clear_variable_map = cm_ab_food_h1
-		clear_variable_map = cm_ab_food_h2
-		clear_variable_map = cm_ab_food_h3
-		clear_variable_map = cm_ab_food_h4
-		clear_variable_map = cm_ab_food_h5
-		clear_variable_map = cm_ab_food_h6
-		clear_variable_map = cm_ab_food_h7
+		# A forced run keeps them, so the scheduled pass still reads a full year of samples.
+		if = {
+			limit = { NOT = { exists = var:cm_ab_food_keep_hist } }
+			clear_variable_map = cm_ab_food_h1
+			clear_variable_map = cm_ab_food_h2
+			clear_variable_map = cm_ab_food_h3
+			clear_variable_map = cm_ab_food_h4
+			clear_variable_map = cm_ab_food_h5
+			clear_variable_map = cm_ab_food_h6
+			clear_variable_map = cm_ab_food_h7
+		}
+	}
+}
+
+# The Force Re-Plan Food button. Samples this month first, so a press right after a yearly run
+# judges on the current balance rather than an empty histogram.
+# Root is the country.
+cm_ab_food_run_now = {
+	if = {
+		# cm_ab_food_sample_markets checks only the Food toggle.
+		limit = { cm_ab_master_active = yes }
+		save_scope_as = cm_country
+		cm_ab_food_sample_markets = yes
+		set_variable = { name = cm_ab_food_keep_hist value = 1 }
+		cm_ab_food_yearly_evaluation = yes
+		remove_variable = cm_ab_food_keep_hist
 	}
 }
 

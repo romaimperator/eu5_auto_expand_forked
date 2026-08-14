@@ -57,6 +57,17 @@ cm_cu_yearly_pass = {
 	}
 }
 
+# The Run Building Cleanup button.
+# Root is the country.
+cm_cu_run_now = {
+	if = {
+		# With a batch pending the gate is already true, so the driver makes no second
+		# hidden->shown edge and the rebuilt list would never fire.
+		limit = { NOT = { exists = var:cm_cu_fire } }
+		cm_cu_yearly_pass = yes
+	}
+}
+
 # Destroys the always-delete types outright, no profit, subsidy, cap, or share check. Runs
 # before everything else so the removals never reach the survey counts.
 # Root is the country, scope:cm_country set.
