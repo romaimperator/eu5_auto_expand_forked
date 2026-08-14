@@ -229,13 +229,13 @@ cm_register_cmf_mod = {
 
 	cmm_register_subtab = {
 		mod_id = cm
-		tab_id = ab_production
+		tab_id = ab_food
 		parent_tab_id = auto_build
 	}
 
 	cmm_register_subtab = {
 		mod_id = cm
-		tab_id = ab_food
+		tab_id = ab_production
 		parent_tab_id = auto_build
 	}
 
@@ -304,35 +304,35 @@ cm_register_cmf_mod = {
 		mod_id = cm
 		setting_id = ab_priority_list
 		item = 1
-		value = flag:cm_ab_cat_food
+		value = flag:cm_ab_cat_custom
 	}
 
 	cmm_set_list_item_value = {
 		mod_id = cm
 		setting_id = ab_priority_list
 		item = 2
-		value = flag:cm_ab_cat_production
-	}
-
-	cmm_set_list_item_value = {
-		mod_id = cm
-		setting_id = ab_priority_list
-		item = 3
 		value = flag:cm_ab_cat_core
 	}
 
 	cmm_set_list_item_value = {
 		mod_id = cm
 		setting_id = ab_priority_list
+		item = 3
+		value = flag:cm_ab_cat_food
+	}
+
+	cmm_set_list_item_value = {
+		mod_id = cm
+		setting_id = ab_priority_list
 		item = 4
-		value = flag:cm_ab_cat_roads
+		value = flag:cm_ab_cat_production
 	}
 
 	cmm_set_list_item_value = {
 		mod_id = cm
 		setting_id = ab_priority_list
 		item = 5
-		value = flag:cm_ab_cat_custom
+		value = flag:cm_ab_cat_roads
 	}
 
 	cmm_set_list_item_value = {
@@ -342,7 +342,7 @@ cm_register_cmf_mod = {
 		value = flag:cm_ab_cat_governors
 	}
 
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = ab_priority_list field_id = budget item = 2 value = 60 }
+	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = ab_priority_list field_id = budget item = 4 value = 60 }
 	cmm_register_list_numeric_field = {
 		mod_id = cm
 		setting_id = ab_priority_list
@@ -364,7 +364,7 @@ cm_register_cmf_mod = {
 		item = 6
 	}
 
-	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = ab_priority_list field_id = enabled item = 5 value = 1 }
+	cmm_set_list_field_default_for_item = { mod_id = cm setting_id = ab_priority_list field_id = enabled item = 1 value = 1 }
 	cmm_register_list_bool_field = {
 		mod_id = cm
 		setting_id = ab_priority_list
@@ -635,6 +635,56 @@ cm_register_cmf_mod = {
 		setting_id = dbg_run_core
 	}
 
+	## Food (ab_food) Group
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = ab_food_target
+		tab_id = ab_food
+		group_id = ab_food
+		default_value = 125
+		min_value = 100
+		max_value = 300
+		step_value = 5
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__ab_food_target
+		alias = cm_ab_food_target
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = ab_food_min_potential
+		tab_id = ab_food
+		group_id = ab_food
+		default_value = 15
+		min_value = 1
+		max_value = 30
+		step_value = 1
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__ab_food_min_potential
+		alias = cm_ab_food_min_potential
+	}
+
+	cmm_register_button_setting = {
+		mod_id = cm
+		setting_id = ab_food_run_now
+		tab_id = ab_food
+		group_id = ab_food
+	}
+
+	## Debug (debug) Group
+	cmm_register_button_setting = {
+		mod_id = cm
+		setting_id = dbg_run_food
+		tab_id = ab_food
+		group_id = debug
+	}
+	cmm_add_scripted_gui = {
+		mod_id = cm
+		setting_id = dbg_run_food
+	}
+
 	## Production (ab_production) Group
 	cmm_register_dropdown_setting = {
 		mod_id = cm
@@ -704,56 +754,6 @@ cm_register_cmf_mod = {
 	cmm_add_scripted_gui = {
 		mod_id = cm
 		setting_id = dbg_run_production
-	}
-
-	## Food (ab_food) Group
-	cmm_register_slider_setting = {
-		mod_id = cm
-		setting_id = ab_food_target
-		tab_id = ab_food
-		group_id = ab_food
-		default_value = 125
-		min_value = 100
-		max_value = 300
-		step_value = 5
-	}
-	cmm_sync_setting_alias = {
-		setting = cm__ab_food_target
-		alias = cm_ab_food_target
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = cm
-		setting_id = ab_food_min_potential
-		tab_id = ab_food
-		group_id = ab_food
-		default_value = 15
-		min_value = 1
-		max_value = 30
-		step_value = 1
-	}
-	cmm_sync_setting_alias = {
-		setting = cm__ab_food_min_potential
-		alias = cm_ab_food_min_potential
-	}
-
-	cmm_register_button_setting = {
-		mod_id = cm
-		setting_id = ab_food_run_now
-		tab_id = ab_food
-		group_id = ab_food
-	}
-
-	## Debug (debug) Group
-	cmm_register_button_setting = {
-		mod_id = cm
-		setting_id = dbg_run_food
-		tab_id = ab_food
-		group_id = debug
-	}
-	cmm_add_scripted_gui = {
-		mod_id = cm
-		setting_id = dbg_run_food
 	}
 
 	## Roads (ab_roads) Group
@@ -2186,6 +2186,25 @@ cm_handle_cmf_callback = {
 		flag:cm__dbg_run_core = {
 			cm_dbg_run_solo = { WHAT = cm_ab_cat_core }
 		}
+		## Food (ab_food) Group
+		flag:cm__ab_food_target = {
+			cmm_sync_setting_alias = {
+				setting = cm__ab_food_target
+				alias = cm_ab_food_target
+			}
+		}
+		flag:cm__ab_food_min_potential = {
+			cmm_sync_setting_alias = {
+				setting = cm__ab_food_min_potential
+				alias = cm_ab_food_min_potential
+			}
+		}
+		flag:cm__ab_food_run_now = {
+			cm_ab_food_run_now = yes
+		}
+		flag:cm__dbg_run_food = {
+			cm_dbg_run_solo = { WHAT = cm_ab_cat_food }
+		}
 		## Production (ab_production) Group
 		flag:cm__ab_production_algorithm = {
 			cmm_sync_setting_alias = {
@@ -2213,25 +2232,6 @@ cm_handle_cmf_callback = {
 		}
 		flag:cm__dbg_run_production = {
 			cm_dbg_run_solo = { WHAT = cm_ab_cat_production }
-		}
-		## Food (ab_food) Group
-		flag:cm__ab_food_target = {
-			cmm_sync_setting_alias = {
-				setting = cm__ab_food_target
-				alias = cm_ab_food_target
-			}
-		}
-		flag:cm__ab_food_min_potential = {
-			cmm_sync_setting_alias = {
-				setting = cm__ab_food_min_potential
-				alias = cm_ab_food_min_potential
-			}
-		}
-		flag:cm__ab_food_run_now = {
-			cm_ab_food_run_now = yes
-		}
-		flag:cm__dbg_run_food = {
-			cm_dbg_run_solo = { WHAT = cm_ab_cat_food }
 		}
 		## Roads (ab_roads) Group
 		flag:cm__ab_roads_proximity = {
