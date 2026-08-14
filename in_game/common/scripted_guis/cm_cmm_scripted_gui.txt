@@ -16,12 +16,16 @@ cm__priority_list_on_changed = {
 }
 
 # Auto-Build (auto_build) Tab
-## Smart Builders (ab_priority_list) Group
+## Auto-Build Categories (ab_priority_list) Group
 cm__ab_priority_list_on_changed = {
 	scope = country
 
 	is_shown = {
 		always = yes
+	}
+
+	is_valid = {
+		exists = var:cm_ab_enabled
 	}
 
 	effect = {
@@ -32,7 +36,23 @@ cm__ab_priority_list_on_changed = {
 	}
 }
 
-## Custom Buildings (auto_build_list) Group
+## Custom (ab_custom) Group
+cm__ab_custom_on_changed = {
+	scope = country
+
+	is_shown = {
+		always = yes
+	}
+
+	effect = {
+		cmm_apply_list_change = {
+			setting = cm__ab_custom
+		}
+		cm_ab_rebuild_custom_lookups = yes
+	}
+}
+
+## Select Buildings (auto_build_list) Group
 cm__auto_build_list_on_changed = {
 	scope = country
 
@@ -41,7 +61,7 @@ cm__auto_build_list_on_changed = {
 	}
 
 	is_valid = {
-		exists = var:cm_ab_utilities_roster
+		exists = var:cm_ab_custom_roster
 	}
 
 	effect = {
@@ -52,8 +72,8 @@ cm__auto_build_list_on_changed = {
 	}
 }
 
-## Price Collapsar (ab_collapsar) Group
-cm__ab_collapsar_on_changed = {
+## Core Goods (ab_core) Group
+cm__ab_core_on_changed = {
 	scope = country
 
 	is_shown = {
@@ -62,9 +82,9 @@ cm__ab_collapsar_on_changed = {
 
 	effect = {
 		cmm_apply_list_change = {
-			setting = cm__ab_collapsar
+			setting = cm__ab_core
 		}
-		cm_ab_rebuild_collapsar_lookups = yes
+		cm_ab_rebuild_core_lookups = yes
 	}
 }
 
@@ -181,7 +201,7 @@ cm__log_cycle_on_changed = {
 	effect = { }
 }
 
-cm__log_industry_on_changed = {
+cm__log_production_on_changed = {
 	scope = country
 
 	is_shown = {
@@ -190,7 +210,7 @@ cm__log_industry_on_changed = {
 	effect = { }
 }
 
-cm__log_collapsar_on_changed = {
+cm__log_core_on_changed = {
 	scope = country
 
 	is_shown = {
@@ -291,7 +311,7 @@ cm__probe_military_on_changed = {
 	effect = { }
 }
 
-cm__probe_industry_anchors_on_changed = {
+cm__probe_production_anchors_on_changed = {
 	scope = country
 
 	is_shown = {
@@ -300,7 +320,7 @@ cm__probe_industry_anchors_on_changed = {
 	effect = { }
 }
 
-cm__probe_industry_rgo_on_changed = {
+cm__probe_production_rgo_on_changed = {
 	scope = country
 
 	is_shown = {
@@ -309,7 +329,7 @@ cm__probe_industry_rgo_on_changed = {
 	effect = { }
 }
 
-cm__probe_collapsar_on_changed = {
+cm__probe_core_on_changed = {
 	scope = country
 
 	is_shown = {

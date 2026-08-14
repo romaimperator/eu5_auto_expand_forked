@@ -4,7 +4,7 @@
 #
 # $cat$ is the category's alias suffix and $action$ the localization key. The toggles are global
 # settings, so the alias is a global variable and a lucky nation reads the same one the player set.
-# Categories, registered in cm_cmm_effects.txt: cycle, industry, collapsar, food, roads, cleanup,
+# Categories, registered in cm_cmm_effects.txt: cycle, production, core, food, roads, cleanup,
 # governors, military, government.
 
 # Root is the country.
@@ -60,7 +60,7 @@ cm_dbg_log_bld = {
 }
 
 # Console: effect location:<key> = { owner = { cm_dbg_alias_probe = yes } }
-# The collapsar category as the gate above sees it, beside the value the settings menu shows, so a
+# The Core Goods category as the gate above sees it, beside the value the settings menu shows, so a
 # category that reads on in the menu and off at the gate is separable from one that is simply off.
 # Ungated, or it could not report a category being off. Root is the country.
 cm_dbg_alias_probe = {
@@ -69,7 +69,7 @@ cm_dbg_alias_probe = {
 		value = {
 			value = 0
 			if = {
-				limit = { exists = global_var:cm_dbg_collapsar }
+				limit = { exists = global_var:cm_dbg_core }
 				value = 1
 			}
 		}
@@ -81,9 +81,9 @@ cm_dbg_alias_probe = {
 			if = {
 				limit = {
 					has_global_variable_map = cmm
-					is_key_in_global_variable_map = { name = cmm target = flag:cm__log_collapsar }
+					is_key_in_global_variable_map = { name = cmm target = flag:cm__log_core }
 				}
-				value = "global_variable_map(cmm|flag:cm__log_collapsar)"
+				value = "global_variable_map(cmm|flag:cm__log_core)"
 			}
 		}
 	}
@@ -95,12 +95,12 @@ cm_dbg_alias_probe = {
 # request the same way typing the command is, so a probe whose lines go through a category-gated
 # wrapper arms that category for the call and re-syncs it from the setting afterwards.
 
-# The location cm_ab_col_watch_on marked, or the capital. $PROBE$ = the probe effect.
+# The location cm_ab_core_watch_on marked, or the capital. $PROBE$ = the probe effect.
 # Root is the country.
 cm_dbg_probe_location = {
 	if = {
-		limit = { exists = var:cm_ab_col_watch_loc }
-		var:cm_ab_col_watch_loc = { $PROBE$ = yes }
+		limit = { exists = var:cm_ab_core_watch_loc }
+		var:cm_ab_core_watch_loc = { $PROBE$ = yes }
 	}
 	else = {
 		capital = { $PROBE$ = yes }
@@ -108,24 +108,24 @@ cm_dbg_probe_location = {
 }
 
 # Root is the country.
-cm_dbg_probe_industry_anchors = {
-	set_global_variable = { name = cm_dbg_industry value = yes }
-	cm_ab_ind_anchor_probe = yes
-	cmm_sync_bool_alias = { setting = cm__log_industry alias = cm_dbg_industry }
+cm_dbg_probe_production_anchors = {
+	set_global_variable = { name = cm_dbg_production value = yes }
+	cm_ab_prod_anchor_probe = yes
+	cmm_sync_bool_alias = { setting = cm__log_production alias = cm_dbg_production }
 }
 
 # Root is the country.
-cm_dbg_probe_industry_rgo = {
-	set_global_variable = { name = cm_dbg_industry value = yes }
+cm_dbg_probe_production_rgo = {
+	set_global_variable = { name = cm_dbg_production value = yes }
 	cm_dbg_probe_location = { PROBE = cm_ab_rgo_why_probe }
-	cmm_sync_bool_alias = { setting = cm__log_industry alias = cm_dbg_industry }
+	cmm_sync_bool_alias = { setting = cm__log_production alias = cm_dbg_production }
 }
 
 # Root is the country.
-cm_dbg_probe_collapsar = {
-	set_global_variable = { name = cm_dbg_collapsar value = yes }
-	cm_dbg_probe_location = { PROBE = cm_ab_col_probe }
-	cmm_sync_bool_alias = { setting = cm__log_collapsar alias = cm_dbg_collapsar }
+cm_dbg_probe_core = {
+	set_global_variable = { name = cm_dbg_core value = yes }
+	cm_dbg_probe_location = { PROBE = cm_ab_core_probe }
+	cmm_sync_bool_alias = { setting = cm__log_core alias = cm_dbg_core }
 }
 
 # Console diagnostic: effect location:<key> = { cm_dbg_indirect_probe = yes }
@@ -135,31 +135,31 @@ cm_dbg_probe_collapsar = {
 # The age step is left out because it is a per-age constant, and the two decimals the log renders
 # would show every one of them as 0.00. Ungated like every other probe. Root is the location.
 cm_dbg_indirect_probe = {
-	save_temporary_scope_as = cm_dbg_ind_loc
+	save_temporary_scope_as = cm_dbg_prod_loc
 	save_temporary_scope_as = cmf_log_loc
 	every_buildings_in_location = {
 		limit = {
-			owner = scope:cm_dbg_ind_loc.owner
+			owner = scope:cm_dbg_prod_loc.owner
 			building_type = { cm_is_building_type_production_building = yes }
 		}
 		building_type = {
 			save_temporary_scope_as = cm_building_type
 			save_temporary_scope_as = cmf_log_bt
 		}
-		scope:cm_dbg_ind_loc.owner = {
+		scope:cm_dbg_prod_loc.owner = {
 			cmf_log_with_building_location = {
-				action = cm_log_ind_probe
-				arg1 = cm_log_ind_a_match
-				arg2 = cm_log_ind_a_price
-				value = scope:cm_dbg_ind_loc.cm_dbg_good_match_value
-				value2 = scope:cm_dbg_ind_loc.cm_bld_marginal_price
+				action = cm_log_prod_probe
+				arg1 = cm_log_prod_a_match
+				arg2 = cm_log_prod_a_price
+				value = scope:cm_dbg_prod_loc.cm_dbg_good_match_value
+				value2 = scope:cm_dbg_prod_loc.cm_bld_marginal_price
 			}
 			cmf_log_with_building_location = {
-				action = cm_log_ind_probe
-				arg1 = cm_log_ind_a_real
-				arg2 = cm_log_ind_a_lvl
-				value = scope:cm_dbg_ind_loc.cm_bld_marginal_output_realized
-				value2 = scope:cm_dbg_ind_loc.cm_bld_marginal_next_level
+				action = cm_log_prod_probe
+				arg1 = cm_log_prod_a_real
+				arg2 = cm_log_prod_a_lvl
+				value = scope:cm_dbg_prod_loc.cm_bld_marginal_output_realized
+				value2 = scope:cm_dbg_prod_loc.cm_bld_marginal_next_level
 			}
 		}
 	}

@@ -126,18 +126,18 @@ cm_ab_can_afford_rgo = {
 	cm_check_country_gold_above = { threshold = cm_ab_rgo_gold_threshold }
 }
 
-# Industry candidacy: measurable payback inside the max-payback-years cap (0 = no cap).
+# Production candidacy: measurable payback inside the max-payback-years cap (0 = no cap).
 # The adjusted income adds the indirect gain when the indirect scopes are present, matching
 # the metric-3 branch of cm_gui_metric_gate_passes. Root is the item's location.
 # Expects scope:cm_country, scope:cm_income; $COST$ = the cost value.
-cm_ab_ind_roi_passes = {
+cm_ab_prod_roi_passes = {
 	cm_bld_adjusted_income > 0
 	OR = {
-		NOT = { scope:cm_country = { exists = var:cm_ab_industry_min_roi } }
-		scope:cm_country.var:cm_ab_industry_min_roi = 0
+		NOT = { scope:cm_country = { exists = var:cm_ab_production_min_roi } }
+		scope:cm_country.var:cm_ab_production_min_roi = 0
 		$COST$ <= {
 			value = cm_bld_adjusted_income
-			multiply = scope:cm_country.var:cm_ab_industry_min_roi
+			multiply = scope:cm_country.var:cm_ab_production_min_roi
 			multiply = 12
 		}
 	}
@@ -172,7 +172,7 @@ cm_ab_type_is_single_level = {
 
 # Room for another level of the roster type here. Root is the location, expects
 # scope:cm_building_type.
-cm_ab_utilities_type_has_room = {
+cm_ab_custom_type_has_room = {
 	trigger_if = {
 		limit = { cm_ab_type_is_single_level = yes }
 		NOT = { has_building = scope:cm_building_type }
@@ -212,23 +212,23 @@ cm_ab_location_has_open_build_slot = {
 # without the second branch a market keeps being built into for over a year after its supply is
 # already enough. The > 0 guard keeps a target_price of 0 from reading as every goal met.
 # Expects scope:cm_ab_market, scope:cm_ab_good_t, scope:cm_country.
-cm_ab_collapsar_target_met = {
+cm_ab_core_target_met = {
 	OR = {
-		"scope:cm_ab_market.market_price(scope:cm_ab_good_t)" <= cm_ab_collapsar_goal_price
+		"scope:cm_ab_market.market_price(scope:cm_ab_good_t)" <= cm_ab_core_goal_price
 		AND = {
 			"scope:cm_ab_market.target_price(scope:cm_ab_good_t)" > 0
-			"scope:cm_ab_market.target_price(scope:cm_ab_good_t)" <= cm_ab_collapsar_goal_price
+			"scope:cm_ab_market.target_price(scope:cm_ab_good_t)" <= cm_ab_core_goal_price
 		}
 	}
 }
 
-# Root is the location, expects scope:cm_building_type. The collapsar's pop gate: unemployed
+# Root is the location, expects scope:cm_building_type. The Core Goods pop gate: unemployed
 # pops of the building's own type, or pops here that promote into it. Dropping the six-year
 # projection cm_location_has_enough_pops_available applies is deliberate and stays confined to
 # this category - a location short of one of the four core construction goods is often exactly
 # the one whose pops are furthest behind, and those goods block every other build when they run
 # out. Open jobs do not convert to promotions one for one, so this is not a general relaxation.
-cm_ab_collapsar_pops_ok = {
+cm_ab_core_pops_ok = {
 	has_global_variable_map = cm_building_type_to_pop_type
 	is_key_in_global_variable_map = { name = cm_building_type_to_pop_type target = scope:cm_building_type }
 	OR = {
@@ -237,116 +237,116 @@ cm_ab_collapsar_pops_ok = {
 	}
 }
 
-# Root is the location. The RGO twin of cm_ab_collapsar_pops_ok.
-cm_ab_collapsar_rgo_pops_ok = {
+# Root is the location. The RGO twin of cm_ab_core_pops_ok.
+cm_ab_core_rgo_pops_ok = {
 	OR = {
 		cm_location_laborers_or_slaves_available > 0
 		cm_location_laborers_promotion_source_pool > 0
 	}
 }
 
-# Root is the location. Locations the collapsar leaves alone: the capital and anything food
+# Root is the location. Locations Core Goods leaves alone: the capital and anything food
 # automation is working are both short of construction slots, and a level placed there
 # displaces work that has nowhere else to go.
-cm_ab_collapsar_candidate_ok = {
+cm_ab_core_candidate_ok = {
 	is_capital = no
 	cm_ab_food_location_effectively_active = no
 }
 
-# Root is the location, expects scope:cm_country. The collapsar trace follows one location
+# Root is the location, expects scope:cm_country. The Core Goods trace follows one location
 # through a whole cycle, so the log stays inside its 200 entries.
-cm_ab_col_watched = {
-	save_temporary_scope_as = cm_ab_col_loc
+cm_ab_core_watched = {
+	save_temporary_scope_as = cm_ab_core_loc
 	scope:cm_country = {
-		exists = var:cm_ab_col_watch_loc
-		var:cm_ab_col_watch_loc = { this = scope:cm_ab_col_loc }
+		exists = var:cm_ab_core_watch_loc
+		var:cm_ab_core_watch_loc = { this = scope:cm_ab_core_loc }
 	}
 }
 
 # Root is the market, expects scope:cm_country.
-cm_ab_col_market_watched = {
-	save_temporary_scope_as = cm_ab_col_mkt
+cm_ab_core_market_watched = {
+	save_temporary_scope_as = cm_ab_core_mkt
 	scope:cm_country = {
-		exists = var:cm_ab_col_watch_loc
-		var:cm_ab_col_watch_loc = { market ?= scope:cm_ab_col_mkt }
+		exists = var:cm_ab_core_watch_loc
+		var:cm_ab_core_watch_loc = { market ?= scope:cm_ab_core_mkt }
 	}
 }
 
 # The staging conditions the trace reports one at a time, each wrapped so the skip-line helper
 # can take it by name. Root is the location, expects scope:cm_building_type.
-cm_ab_col_room_left = {
+cm_ab_core_room_left = {
 	local_var:cm_ab_good_room > 0
 }
 
-cm_ab_col_untouched = {
-	NOT = { exists = var:cm_ab_collapsar_touched }
+cm_ab_core_untouched = {
+	NOT = { exists = var:cm_ab_core_touched }
 }
 
-cm_ab_col_type_has_room = {
-	cm_ab_collapsar_type_room > 0
+cm_ab_core_type_has_room = {
+	cm_ab_core_type_room > 0
 }
 
-cm_ab_col_not_at_max = {
+cm_ab_core_not_at_max = {
 	cm_location_building_type_is_not_at_max_level = { target = scope:cm_building_type }
 }
 
-cm_ab_col_placeable = {
+cm_ab_core_placeable = {
 	cm_location_allowed_to_build = { target = scope:cm_building_type }
 }
 
-cm_ab_col_not_claimed = {
+cm_ab_core_not_claimed = {
 	NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:cm_building_type } }
 	NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
 }
 
 # The probe's remaining verdicts. Root is the location, expects scope:cm_country,
 # scope:cm_building_type, scope:cm_ab_market and scope:cm_ab_good_t.
-cm_ab_col_has_pop_type = {
+cm_ab_core_has_pop_type = {
 	has_global_variable_map = cm_building_type_to_pop_type
 	is_key_in_global_variable_map = { name = cm_building_type_to_pop_type target = scope:cm_building_type }
 }
 
-cm_ab_col_market_center_owned = {
+cm_ab_core_market_center_owned = {
 	scope:cm_ab_market = { location = { owner ?= scope:cm_country } }
 }
 
-cm_ab_col_target_met_here = {
-	cm_ab_collapsar_target_met = yes
+cm_ab_core_target_met_here = {
+	cm_ab_core_target_met = yes
 }
 
-cm_ab_col_collapsar_enabled = {
+cm_ab_core_cat_enabled = {
 	scope:cm_country = {
-		has_variable_list = cm_ab_collapsar_goods_enabled
-		is_target_in_variable_list = { name = cm_ab_collapsar_goods_enabled target = scope:cm_ab_good_t }
+		has_variable_list = cm_ab_core_goods_enabled
+		is_target_in_variable_list = { name = cm_ab_core_goods_enabled target = scope:cm_ab_good_t }
 	}
 }
 
 # The iterator's own limit, split so the trace names which one kept the location out of the
 # sweep entirely. Root is the location, expects scope:cm_country.
-cm_ab_col_owned = {
+cm_ab_core_owned = {
 	owner ?= scope:cm_country
 }
 
-cm_ab_col_unconquered = {
+cm_ab_core_unconquered = {
 	NOT = { integration_level = conquered }
 }
 
 # The two drain-side conditions, split so the trace names which one dropped the item.
-cm_ab_col_claimed_by_collapsar = {
-	cm_ab_col_cat_key_present = yes
+cm_ab_core_claimed_by_cat = {
+	cm_ab_core_cat_key_present = yes
 }
 
-cm_ab_col_cat_key_present = {
+cm_ab_core_cat_key_present = {
 	has_variable_map = cm_ab_b_cat_2
 	is_key_in_variable_map = { name = cm_ab_b_cat_2 target = scope:cm_building_type }
 }
 
-cm_ab_col_industry_also_wants = {
+cm_ab_core_production_also_wants = {
 	has_variable_map = cm_ab_b_cat_1
 	is_key_in_variable_map = { name = cm_ab_b_cat_1 target = scope:cm_building_type }
 }
 
-cm_ab_col_has_cost_key = {
+cm_ab_core_has_cost_key = {
 	has_variable_map = cm_ab_b_costs
 	is_key_in_variable_map = { name = cm_ab_b_costs target = scope:cm_building_type }
 }

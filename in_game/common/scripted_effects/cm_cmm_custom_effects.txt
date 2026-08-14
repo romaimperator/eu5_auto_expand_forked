@@ -16,7 +16,8 @@ cm_cmm_post_registration = {
 	cm_rebuild_auto_urbanize_lookups = yes
 	cm_rebuild_auto_town_rights_lookups = yes
 	cm_ab_rebuild_category_lookups = yes
-	cm_ab_rebuild_collapsar_lookups = yes
+	cm_ab_rebuild_core_lookups = yes
+	cm_ab_rebuild_custom_lookups = yes
 
 	# Hide buildings whose advance hasn't been researched yet
 	cm_update_auto_build_list_visibility = yes
@@ -419,10 +420,10 @@ cm_ab_rebuild_category_lookups = {
 	# Budget share by category, numeric field slot 1, direct values.
 	cmm_build_list_field_map = { setting = cm__ab_priority_list field_slot = 1 map_name = cm_ab_cat_budget multiply = 1 }
 
-	cm_ab_sync_category = { cat = industry }
-	cm_ab_sync_category = { cat = collapsar }
+	cm_ab_sync_category = { cat = production }
+	cm_ab_sync_category = { cat = core }
 	cm_ab_sync_category = { cat = food }
-	cm_ab_sync_category = { cat = utilities }
+	cm_ab_sync_category = { cat = custom }
 	cm_ab_sync_category = { cat = roads }
 	cm_ab_sync_governors = yes
 
@@ -432,7 +433,7 @@ cm_ab_rebuild_category_lookups = {
 # Projects one category's row into the per-category variables the budget engine and the
 # settings-row visibility read. Turning a category off zeroes its pool and writes off its debt and
 # its hold; the monthly refresh skips it while off.
-# $cat$ = industry | collapsar | food | utilities | roads. Scope: country
+# $cat$ = production | core | food | custom | roads. Scope: country
 cm_ab_sync_category = {
 	# A macro never resolves inside a quoted lookup, so the key goes through a local.
 	set_local_variable = { name = cm_ab_cat_key value = flag:cm_ab_cat_$cat$ }
@@ -470,19 +471,52 @@ cm_ab_sync_governors = {
 	}
 }
 
-# Rebuild the collapsar materials lookup from CMM list field data.
+# Rebuild the Core Goods materials lookup from CMM list field data.
 # Called on registration and on every setting change.
 # Scope: country
-cm_ab_rebuild_collapsar_lookups = {
+cm_ab_rebuild_core_lookups = {
 	if = {
-		limit = { NOT = { has_variable_list = cmm_list_items_cm__ab_collapsar } }
+		limit = { NOT = { has_variable_list = cmm_list_items_cm__ab_core } }
 	}
 	else = {
 
 	# Enabled materials, bool field slot 1, in staging and drain order.
-	cmm_build_list_bool_list = { setting = cm__ab_collapsar field_slot = 1 list_name = cm_ab_collapsar_goods_enabled }
+	cmm_build_list_bool_list = { setting = cm__ab_core field_slot = 1 list_name = cm_ab_core_goods_enabled }
 
 	} # end guard
+}
+
+# Rebuild the Custom category's four build-set toggles from CMM list field data.
+# Called on registration and on every setting change.
+# Scope: country
+cm_ab_rebuild_custom_lookups = {
+	if = {
+		limit = { NOT = { has_variable_list = cmm_list_items_cm__ab_custom } }
+	}
+	else = {
+
+	# Enabled sets, bool field slot 1.
+	cmm_build_list_bool_list = { setting = cm__ab_custom field_slot = 1 list_name = cm_ab_custom_sets_enabled }
+
+	cm_ab_sync_custom_set = { set = capital }
+	cm_ab_sync_custom_set = { set = control }
+	cm_ab_sync_custom_set = { set = market_centers }
+	cm_ab_sync_custom_set = { set = roster }
+
+	} # end guard
+}
+
+# Projects one build set's row into the variable the staging and drain blocks read, the same
+# plain-variable shape a lucky nation is seeded with.
+# $set$ = capital | control | market_centers | roster. Scope: country
+cm_ab_sync_custom_set = {
+	if = {
+		limit = { is_target_in_variable_list = { name = cm_ab_custom_sets_enabled target = flag:cm_ab_set_$set$ } }
+		set_variable = { name = cm_ab_custom_$set$ value = 1 }
+	}
+	else = {
+		remove_variable = cm_ab_custom_$set$
+	}
 }
 
 cm_toggle_priority_feature = {
@@ -782,9 +816,10 @@ _cm_cmm_suppress_warnings = {
 		# Auto town rights lookup lists
 		cmf_suppress = { v = cm_auto_town_rights_list }
 		cmf_suppress = { v = cm_auto_town_rights_enabled }
-		# Auto-Build category and collapsar material lookups
+		# Auto-Build category and core goods material lookups
 		cmf_suppress = { v = cm_ab_categories_enabled }
 		cmf_suppress = { v = cm_ab_cat_budget }
-		cmf_suppress = { v = cm_ab_collapsar_goods_enabled }
+		cmf_suppress = { v = cm_ab_core_goods_enabled }
+		cmf_suppress = { v = cm_ab_custom_sets_enabled }
 	}
 }

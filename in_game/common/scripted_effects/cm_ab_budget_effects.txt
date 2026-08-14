@@ -21,17 +21,17 @@ cm_ab_monthly_budget_refresh = {
 		# saving for.
 		change_local_variable = { name = cm_ab_split subtract = cm_ab_reserved_total }
 		change_local_variable = { name = cm_ab_split max = 0 }
-		cm_ab_set_category_pool = { cat = industry }
-		cm_ab_set_category_pool = { cat = collapsar }
+		cm_ab_set_category_pool = { cat = production }
+		cm_ab_set_category_pool = { cat = core }
 		cm_ab_set_category_pool = { cat = food }
-		cm_ab_set_category_pool = { cat = utilities }
+		cm_ab_set_category_pool = { cat = custom }
 		cm_ab_set_category_pool = { cat = roads }
 		cm_ab_set_category_pool = { cat = military }
 	}
 }
 
 # pool = pct * split, plus whatever the category held back last cycle.
-# $cat$ = industry | collapsar | food | utilities | roads | military. Root is the country.
+# $cat$ = production | core | food | custom | roads | military. Root is the country.
 cm_ab_set_category_pool = {
 	if = {
 		limit = { exists = var:cm_ab_$cat$_enabled }
@@ -74,30 +74,30 @@ cm_ab_clear_budget_state = {
 
 # Root is the country.
 cm_ab_zero_pools = {
-	set_variable = { name = cm_ab_pool_industry value = 0 }
-	set_variable = { name = cm_ab_pool_collapsar value = 0 }
+	set_variable = { name = cm_ab_pool_production value = 0 }
+	set_variable = { name = cm_ab_pool_core value = 0 }
 	set_variable = { name = cm_ab_pool_food value = 0 }
-	set_variable = { name = cm_ab_pool_utilities value = 0 }
+	set_variable = { name = cm_ab_pool_custom value = 0 }
 	set_variable = { name = cm_ab_pool_roads value = 0 }
 	set_variable = { name = cm_ab_pool_military value = 0 }
 }
 
 # Writes off what every category owes. Root is the country.
 cm_ab_clear_debts = {
-	remove_variable = cm_ab_debt_industry
-	remove_variable = cm_ab_debt_collapsar
+	remove_variable = cm_ab_debt_production
+	remove_variable = cm_ab_debt_core
 	remove_variable = cm_ab_debt_food
-	remove_variable = cm_ab_debt_utilities
+	remove_variable = cm_ab_debt_custom
 	remove_variable = cm_ab_debt_roads
 	remove_variable = cm_ab_debt_military
 }
 
 # Releases every held allotment back into the split. Root is the country.
 cm_ab_clear_reservations = {
-	remove_variable = cm_ab_resv_industry
-	remove_variable = cm_ab_resv_collapsar
+	remove_variable = cm_ab_resv_production
+	remove_variable = cm_ab_resv_core
 	remove_variable = cm_ab_resv_food
-	remove_variable = cm_ab_resv_utilities
+	remove_variable = cm_ab_resv_custom
 	remove_variable = cm_ab_resv_roads
 	remove_variable = cm_ab_resv_military
 }
@@ -109,18 +109,18 @@ cm_ab_clear_reservations = {
 cm_ab_budget_probe = {
 	set_local_variable = { name = cm_ab_dbg_total value = 0 }
 	cm_ab_log_balance = { cat = food ACTION = cm_log_ab_bal_food }
-	cm_ab_log_balance = { cat = collapsar ACTION = cm_log_ab_bal_collapsar }
+	cm_ab_log_balance = { cat = core ACTION = cm_log_ab_bal_core }
 	cm_ab_log_balance = { cat = roads ACTION = cm_log_ab_bal_roads }
-	cm_ab_log_balance = { cat = industry ACTION = cm_log_ab_bal_industry }
-	cm_ab_log_balance = { cat = utilities ACTION = cm_log_ab_bal_utilities }
+	cm_ab_log_balance = { cat = production ACTION = cm_log_ab_bal_production }
+	cm_ab_log_balance = { cat = custom ACTION = cm_log_ab_bal_custom }
 	cm_ab_log_balance = { cat = military ACTION = cm_log_ab_bal_military }
 	cmf_log_decimal_value = { action = cm_log_ab_bal_total value = local_var:cm_ab_dbg_total }
 	if = {
-		limit = { exists = var:cm_ab_industry_min_roi }
-		cmf_log_value = { action = cm_log_ab_ind_cap value = var:cm_ab_industry_min_roi }
+		limit = { exists = var:cm_ab_production_min_roi }
+		cmf_log_value = { action = cm_log_ab_prod_cap value = var:cm_ab_production_min_roi }
 	}
 	save_temporary_scope_as = cm_country
-	cm_ab_ind_off_slice_best = yes
+	cm_ab_prod_off_slice_best = yes
 	if = {
 		limit = { local_var:cm_ab_off_best > -2000000 }
 		change_local_variable = { name = cm_ab_off_best multiply = -1 }
@@ -153,22 +153,22 @@ cm_ab_log_balance = {
 # Copies the budget state from scope:old_country on tag switch; pools are non-CMM state
 # CMF does not carry. Root is the new country.
 cm_ab_copy_budget_state = {
-	cm_ab_copy_budget_var = { v = cm_ab_pool_industry }
-	cm_ab_copy_budget_var = { v = cm_ab_pool_collapsar }
+	cm_ab_copy_budget_var = { v = cm_ab_pool_production }
+	cm_ab_copy_budget_var = { v = cm_ab_pool_core }
 	cm_ab_copy_budget_var = { v = cm_ab_pool_food }
-	cm_ab_copy_budget_var = { v = cm_ab_pool_utilities }
+	cm_ab_copy_budget_var = { v = cm_ab_pool_custom }
 	cm_ab_copy_budget_var = { v = cm_ab_pool_roads }
 	cm_ab_copy_budget_var = { v = cm_ab_pool_military }
-	cm_ab_copy_budget_var = { v = cm_ab_debt_industry }
-	cm_ab_copy_budget_var = { v = cm_ab_debt_collapsar }
+	cm_ab_copy_budget_var = { v = cm_ab_debt_production }
+	cm_ab_copy_budget_var = { v = cm_ab_debt_core }
 	cm_ab_copy_budget_var = { v = cm_ab_debt_food }
-	cm_ab_copy_budget_var = { v = cm_ab_debt_utilities }
+	cm_ab_copy_budget_var = { v = cm_ab_debt_custom }
 	cm_ab_copy_budget_var = { v = cm_ab_debt_roads }
 	cm_ab_copy_budget_var = { v = cm_ab_debt_military }
-	cm_ab_copy_budget_var = { v = cm_ab_resv_industry }
-	cm_ab_copy_budget_var = { v = cm_ab_resv_collapsar }
+	cm_ab_copy_budget_var = { v = cm_ab_resv_production }
+	cm_ab_copy_budget_var = { v = cm_ab_resv_core }
 	cm_ab_copy_budget_var = { v = cm_ab_resv_food }
-	cm_ab_copy_budget_var = { v = cm_ab_resv_utilities }
+	cm_ab_copy_budget_var = { v = cm_ab_resv_custom }
 	cm_ab_copy_budget_var = { v = cm_ab_resv_roads }
 	cm_ab_copy_budget_var = { v = cm_ab_resv_military }
 }
@@ -258,10 +258,10 @@ cm_ab_claim_build_copy = {
 cm_ab_drain_category = {
 	switch = {
 		trigger = scope:cm_ab_cat
-		flag:cm_ab_cat_industry = { cm_ab_drain_one = { CAT = industry PASS = cm_ab_pass_industry } }
-		flag:cm_ab_cat_collapsar = { cm_ab_drain_one = { CAT = collapsar PASS = cm_ab_pass_collapsar } }
+		flag:cm_ab_cat_production = { cm_ab_drain_one = { CAT = production PASS = cm_ab_pass_production } }
+		flag:cm_ab_cat_core = { cm_ab_drain_one = { CAT = core PASS = cm_ab_pass_core } }
 		flag:cm_ab_cat_food = { cm_ab_drain_one = { CAT = food PASS = cm_ab_pass_food } }
-		flag:cm_ab_cat_utilities = { cm_ab_drain_one = { CAT = utilities PASS = cm_ab_pass_utilities } }
+		flag:cm_ab_cat_custom = { cm_ab_drain_one = { CAT = custom PASS = cm_ab_pass_custom } }
 		flag:cm_ab_cat_roads = { cm_ab_drain_one = { CAT = roads PASS = cm_ab_pass_roads } }
 		# Military takes the carry, and runs a ledger it can owe against, only once its manpower
 		# chain has a tier it can build. Until then the category is the fort line alone, which
@@ -357,10 +357,10 @@ cm_ab_stop_on_cost = {
 cm_ab_stage_category = {
 	switch = {
 		trigger = scope:cm_ab_cat
-		flag:cm_ab_cat_industry = { cm_ab_run_industry = yes }
-		flag:cm_ab_cat_collapsar = { cm_ab_run_collapsar = yes }
+		flag:cm_ab_cat_production = { cm_ab_run_production = yes }
+		flag:cm_ab_cat_core = { cm_ab_run_core = yes }
 		flag:cm_ab_cat_food = { cm_ab_run_food = yes }
-		flag:cm_ab_cat_utilities = { cm_ab_run_utilities = yes }
+		flag:cm_ab_cat_custom = { cm_ab_run_custom = yes }
 		flag:cm_ab_cat_military = { cm_ln_mil_run = yes }
 	}
 }

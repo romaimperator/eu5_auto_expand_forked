@@ -5,10 +5,10 @@
 # script value.
 cm_ab_reserved_total = {
 	value = 0
-	if = { limit = { exists = var:cm_ab_resv_industry } add = var:cm_ab_resv_industry }
-	if = { limit = { exists = var:cm_ab_resv_collapsar } add = var:cm_ab_resv_collapsar }
+	if = { limit = { exists = var:cm_ab_resv_production } add = var:cm_ab_resv_production }
+	if = { limit = { exists = var:cm_ab_resv_core } add = var:cm_ab_resv_core }
 	if = { limit = { exists = var:cm_ab_resv_food } add = var:cm_ab_resv_food }
-	if = { limit = { exists = var:cm_ab_resv_utilities } add = var:cm_ab_resv_utilities }
+	if = { limit = { exists = var:cm_ab_resv_custom } add = var:cm_ab_resv_custom }
 	if = { limit = { exists = var:cm_ab_resv_roads } add = var:cm_ab_resv_roads }
 	if = { limit = { exists = var:cm_ab_resv_military } add = var:cm_ab_resv_military }
 }
@@ -81,11 +81,11 @@ cm_ab_market_access_inverted = {
 # The price scope:cm_ab_good_t is being pushed to: its default price at the target markup, the
 # min-discount markup convention (negative = below base, positive = above).
 # Expects scope:cm_ab_good_t and scope:cm_country.
-cm_ab_collapsar_goal_price = {
+cm_ab_core_goal_price = {
 	value = "default_price(scope:cm_ab_good_t)"
 	multiply = {
 		value = 100
-		add = scope:cm_country.var:cm_ab_collapsar_target
+		add = scope:cm_country.var:cm_ab_core_target
 		divide = 100
 	}
 }
@@ -101,7 +101,7 @@ cm_ab_collapsar_goal_price = {
 # age_6_revolutions 0.02 (:308). Four decimals because the script value parser rejects a literal
 # carrying six, logging jomini_scriptvalue.h:498 "Badly read script value" and leaving the value
 # unset; vanilla's own script values never go past four.
-cm_ab_collapsar_ln_price_stability = {
+cm_ab_core_ln_price_stability = {
 	value = -2.3026
 	if = {
 		limit = { current_age = age_3_discovery }
@@ -124,30 +124,30 @@ cm_ab_collapsar_ln_price_stability = {
 # The goal price as a proportion of base, written as (M - 1) / (M + 1) for the series below. M is
 # (100 + target) / 100, so the whole thing reduces to target / (200 + target).
 # Expects scope:cm_country.
-cm_ab_collapsar_goal_u = {
-	value = scope:cm_country.var:cm_ab_collapsar_target
+cm_ab_core_goal_u = {
+	value = scope:cm_country.var:cm_ab_core_target
 	divide = {
 		value = 200
-		add = scope:cm_country.var:cm_ab_collapsar_target
+		add = scope:cm_country.var:cm_ab_core_target
 	}
 }
 
-cm_ab_collapsar_goal_u2 = {
-	value = cm_ab_collapsar_goal_u
-	multiply = cm_ab_collapsar_goal_u
+cm_ab_core_goal_u2 = {
+	value = cm_ab_core_goal_u
+	multiply = cm_ab_core_goal_u
 }
 
 # The natural log of the goal price as a proportion of base, by the series
 # ln(M) = 2u + 2u^3/3 + 2u^5/5 in Horner form. The Price Target spans -33 to +33 percent, so u never
 # leaves +-0.198 and the fifth-order truncation is good to a millionth.
 # Expects scope:cm_country.
-cm_ab_collapsar_ln_goal = {
-	value = cm_ab_collapsar_goal_u2
+cm_ab_core_ln_goal = {
+	value = cm_ab_core_goal_u2
 	multiply = 0.4
 	add = 0.6667
-	multiply = cm_ab_collapsar_goal_u2
+	multiply = cm_ab_core_goal_u2
 	add = 2
-	multiply = cm_ab_collapsar_goal_u
+	multiply = cm_ab_core_goal_u
 }
 
 # How much of the supply-versus-demand scale the engine spends moving the price, measured off six
@@ -157,49 +157,49 @@ cm_ab_collapsar_ln_goal = {
 # decimals those target prices are displayed to, so it is a real asymmetry rather than rounding.
 # Which side applies follows the Price Target's own sign, since a goal under base price is reached
 # with supply over demand and a goal over it with demand over supply.
-@cm_ab_collapsar_scale_supply = 0.745
-@cm_ab_collapsar_scale_demand = 0.7
+@cm_ab_core_scale_supply = 0.745
+@cm_ab_core_scale_demand = 0.7
 
-cm_ab_collapsar_balance_scale = {
-	value = @cm_ab_collapsar_scale_supply
+cm_ab_core_balance_scale = {
+	value = @cm_ab_core_scale_supply
 	if = {
-		limit = { scope:cm_country.var:cm_ab_collapsar_target > 0 }
-		value = @cm_ab_collapsar_scale_demand
+		limit = { scope:cm_country.var:cm_ab_core_target > 0 }
+		value = @cm_ab_core_scale_demand
 	}
 }
 
 # Where the goal price sits on the engine's supply-versus-demand scale: the exponent x for which
 # price_stability raised to x is the goal price as a proportion of base. Zero at the base price,
 # positive below it, negative above. Expects scope:cm_country.
-cm_ab_collapsar_price_exponent = {
-	value = cm_ab_collapsar_ln_goal
-	divide = cm_ab_collapsar_ln_price_stability
-	divide = cm_ab_collapsar_balance_scale
+cm_ab_core_price_exponent = {
+	value = cm_ab_core_ln_goal
+	divide = cm_ab_core_ln_price_stability
+	divide = cm_ab_core_balance_scale
 }
 
 # Added to supply and to demand before the price model takes their ratio
 # (SUPPLY_AND_DEMAND_STABILITY_OFFSET_CONSTANT,
 # game/loading_screen/common/defines/00_defines.txt:1907).
-@cm_ab_collapsar_price_offset = 1
+@cm_ab_core_price_offset = 1
 
 # The local production of scope:cm_ab_good_t that puts this market at the goal price, taking the
 # market's own production and demand as the whole of what forms the price. The engine reads the
 # scale as (supply - demand) / (supply + demand + 2), so this inverts that for supply at the
 # exponent the goal sits on. Root is the market, expects scope:cm_ab_good_t and scope:cm_country.
-cm_ab_collapsar_supply_wanted = {
+cm_ab_core_supply_wanted = {
 	value = "goods_demand_in_market(scope:cm_ab_good_t)"
 	multiply = {
 		value = 1
-		add = cm_ab_collapsar_price_exponent
+		add = cm_ab_core_price_exponent
 	}
 	add = {
-		value = @cm_ab_collapsar_price_offset
+		value = @cm_ab_core_price_offset
 		multiply = 2
-		multiply = cm_ab_collapsar_price_exponent
+		multiply = cm_ab_core_price_exponent
 	}
 	divide = {
 		value = 1
-		subtract = cm_ab_collapsar_price_exponent
+		subtract = cm_ab_core_price_exponent
 	}
 }
 
@@ -209,8 +209,8 @@ cm_ab_collapsar_supply_wanted = {
 # game/loading_screen/common/defines/00_defines.txt:1760-1761), so the shortfall is measured
 # against what is produced here. Root is the market.
 # produced_in_market takes a literal goods key, never a scope.
-cm_ab_collapsar_shortfall = {
-	value = cm_ab_collapsar_supply_wanted
+cm_ab_core_shortfall = {
+	value = cm_ab_core_supply_wanted
 	if = {
 		limit = { scope:cm_ab_good_t = goods:masonry }
 		subtract = produced_in_market:masonry
@@ -232,27 +232,27 @@ cm_ab_collapsar_shortfall = {
 
 # Levels are sized past the measured shortfall by a tenth, because construction the country
 # starts inside the window raises its own demand for the material.
-@cm_ab_collapsar_overshoot = 1.1
+@cm_ab_core_overshoot = 1.1
 
 # Levels queued per construction slot. Chosen rather than derived: a slot finishes one level a
 # year (guild_build_time and rural_build_time,
 # game/main_menu/common/script_values/default_values.txt:1094 and :1116), so two holds one level
 # building and one waiting behind it.
-@cm_ab_collapsar_slot_rounds = 2
+@cm_ab_core_slot_rounds = 2
 
 # Producer levels this market needs to close scope:cm_ab_good_t's shortfall, plus the overshoot.
 # Reads 0 before classification has recorded the producer's output.
 # Root is the market, expects scope:cm_ab_good_t and scope:cm_building_type.
-cm_ab_collapsar_levels_wanted = {
+cm_ab_core_levels_wanted = {
 	value = 0
 	if = {
 		limit = {
 			has_global_variable_map = cm_bt_output
 			is_key_in_global_variable_map = { name = cm_bt_output target = scope:cm_building_type }
 		}
-		value = cm_ab_collapsar_shortfall
+		value = cm_ab_core_shortfall
 		divide = "global_variable_map(cm_bt_output|scope:cm_building_type)"
-		multiply = @cm_ab_collapsar_overshoot
+		multiply = @cm_ab_core_overshoot
 		ceiling = yes
 	}
 }
@@ -260,7 +260,7 @@ cm_ab_collapsar_levels_wanted = {
 # Levels of scope:cm_building_type here that are paid for but not yet producing: under
 # construction, or standing with a level's worth of jobs unfilled.
 # Root is the location, expects scope:cm_building_type and scope:cm_country.
-cm_ab_collapsar_type_inflight = {
+cm_ab_core_type_inflight = {
 	value = 0
 	if = {
 		limit = {
@@ -283,20 +283,20 @@ cm_ab_collapsar_type_inflight = {
 
 # Levels of scope:cm_building_type this location may still be given. What other features have
 # queued here is deliberately not counted: the four construction goods gate every other build,
-# so the collapsar takes the slots rather than waiting for them.
+# so Core Goods takes the slots rather than waiting for them.
 # Root is the location, expects scope:cm_building_type and scope:cm_country.
-cm_ab_collapsar_type_room = {
+cm_ab_core_type_room = {
 	value = modifier:max_constructions_at_same_time
-	multiply = @cm_ab_collapsar_slot_rounds
-	subtract = cm_ab_collapsar_type_inflight
+	multiply = @cm_ab_core_slot_rounds
+	subtract = cm_ab_core_type_inflight
 	min = 0
 }
 
 # The RGO's share of the slot-rounds allowance, less the levels under construction and the ones
 # standing unstaffed. Root is the location.
-cm_ab_collapsar_rgo_slot_room = {
+cm_ab_core_rgo_slot_room = {
 	value = modifier:max_constructions_at_same_time
-	multiply = @cm_ab_collapsar_slot_rounds
+	multiply = @cm_ab_core_slot_rounds
 	subtract = cm_get_rgos_under_construction
 	subtract = {
 		value = rgo_level
@@ -307,11 +307,11 @@ cm_ab_collapsar_rgo_slot_room = {
 
 # RGO levels this location may still be given: worker headroom, held to the slot-rounds
 # allowance. Root is the location.
-cm_ab_collapsar_rgo_room = {
+cm_ab_core_rgo_room = {
 	value = cm_get_max_rgo_workers_floor
 	subtract = cm_modifier_rgo_level
 	subtract = cm_get_rgos_under_construction
-	max = cm_ab_collapsar_rgo_slot_room
+	max = cm_ab_core_rgo_slot_room
 	min = 0
 }
 
@@ -320,7 +320,7 @@ cm_ab_collapsar_rgo_room = {
 # value reads 0 for vanilla and modded types alike (cmf-engine-test 149/156/157), so it can bound
 # nothing. An unmapped type reads 0 here, which stops the loop rather than overbuilding.
 # Root is the location, expects scope:cm_building_type.
-cm_ab_collapsar_type_cap = {
+cm_ab_core_type_cap = {
 	value = 0
 	if = {
 		# mason: in_game/common/building_types/common_buildings.txt:118, glass_guild:
@@ -365,7 +365,7 @@ cm_ab_collapsar_type_cap = {
 # Materials bonus the R.G.O. Bonus filters show, read straight off the map the rgob sweep bakes per
 # province rather than through cm_rgob_coverage, which needs a standing building. Types without an
 # entry read 0. Root is the location, expects scope:cm_building_type.
-cm_ab_collapsar_rgo_bonus = {
+cm_ab_core_rgo_bonus = {
 	value = 0
 	province = {
 		if = {
@@ -380,13 +380,13 @@ cm_ab_collapsar_rgo_bonus = {
 }
 
 # The production efficiency scope:cm_building_type runs at here, which is the per-level output the
-# collapsar is buying: the raw materials the province gives it, plus the location half of Production
+# Core Goods is buying: the raw materials the province gives it, plus the location half of Production
 # Efficiency and the material's own output modifier. The country half,
 # global_production_efficiency, reads the same at every location the sweep visits and so would move
 # every reading by the same amount and rank nothing.
 # Root is the location, expects scope:cm_building_type.
-cm_ab_collapsar_efficiency_order = {
-	value = cm_ab_collapsar_rgo_bonus
+cm_ab_core_efficiency_order = {
+	value = cm_ab_core_rgo_bonus
 	add = modifier:local_production_efficiency
 	if = {
 		limit = { scope:cm_building_type = building_type:mason }
@@ -415,50 +415,50 @@ cm_ab_collapsar_efficiency_order = {
 }
 
 # The market survey's tallies, read back out of the locals its walk accumulated.
-cm_ab_col_survey_owned = { value = local_var:cm_ab_col_n_owned }
-cm_ab_col_survey_eligible = { value = local_var:cm_ab_col_n_limit }
-cm_ab_col_survey_placeable = { value = local_var:cm_ab_col_n_full }
-cm_ab_col_survey_room = { value = local_var:cm_ab_col_n_room }
-cm_ab_col_survey_ord_lo = { value = local_var:cm_ab_col_ord_lo }
-cm_ab_col_survey_ord_hi = { value = local_var:cm_ab_col_ord_hi }
-cm_ab_col_survey_inflight = { value = local_var:cm_ab_col_n_infl }
+cm_ab_core_survey_owned = { value = local_var:cm_ab_core_n_owned }
+cm_ab_core_survey_eligible = { value = local_var:cm_ab_core_n_limit }
+cm_ab_core_survey_placeable = { value = local_var:cm_ab_core_n_full }
+cm_ab_core_survey_room = { value = local_var:cm_ab_core_n_room }
+cm_ab_core_survey_ord_lo = { value = local_var:cm_ab_core_ord_lo }
+cm_ab_core_survey_ord_hi = { value = local_var:cm_ab_core_ord_hi }
+cm_ab_core_survey_inflight = { value = local_var:cm_ab_core_n_infl }
 
 # What the sweep has left to place after every visited location has taken its in-flight levels
 # off the want.
-cm_ab_col_survey_left = {
-	value = scope:cm_ab_market.cm_ab_collapsar_levels_wanted
-	subtract = local_var:cm_ab_col_n_infl
+cm_ab_core_survey_left = {
+	value = scope:cm_ab_market.cm_ab_core_levels_wanted
+	subtract = local_var:cm_ab_core_n_infl
 }
 
-# The probe's raw engine readings, each paired against the collapsar value derived from it.
+# The probe's raw engine readings, each paired against the Core Goods value derived from it.
 # Root is the location, expects scope:cm_building_type, scope:cm_ab_market and scope:cm_ab_good_t.
-cm_ab_col_engine_laborers = {
+cm_ab_core_engine_laborers = {
 	value = "unemployed_pops_of_pop_type_in_location(pop_type:laborers)"
 }
 
 # Paired against the whole order key, so the gap between the two is the province's raw-material
 # coverage plus the material's own output modifier.
-cm_ab_col_engine_efficiency = {
+cm_ab_core_engine_efficiency = {
 	value = modifier:local_production_efficiency
 }
 
-cm_ab_col_max_constructions = {
+cm_ab_core_max_constructions = {
 	value = modifier:max_constructions_at_same_time
 }
 
-cm_ab_col_civil_constructions = {
+cm_ab_core_civil_constructions = {
 	value = num_civil_constructions
 }
 
-cm_ab_col_market_access = {
+cm_ab_core_market_access = {
 	value = market_access
 }
 
-cm_ab_col_proximity = {
+cm_ab_core_proximity = {
 	value = proximity
 }
 
-cm_ab_col_standing_levels = {
+cm_ab_core_standing_levels = {
 	value = 0
 	if = {
 		limit = {
@@ -471,11 +471,11 @@ cm_ab_col_standing_levels = {
 	}
 }
 
-cm_ab_col_market_shortfall = {
-	value = scope:cm_ab_market.cm_ab_collapsar_shortfall
+cm_ab_core_market_shortfall = {
+	value = scope:cm_ab_market.cm_ab_core_shortfall
 }
 
-cm_ab_col_bt_output = {
+cm_ab_core_bt_output = {
 	value = 0
 	if = {
 		limit = { is_key_in_global_variable_map = { name = cm_bt_output target = scope:cm_building_type } }
@@ -483,11 +483,11 @@ cm_ab_col_bt_output = {
 	}
 }
 
-cm_ab_col_market_want = {
-	value = scope:cm_ab_market.cm_ab_collapsar_levels_wanted
+cm_ab_core_market_want = {
+	value = scope:cm_ab_market.cm_ab_core_levels_wanted
 }
 
-cm_ab_col_market_price = {
+cm_ab_core_market_price = {
 	value = "scope:cm_ab_market.market_price(scope:cm_ab_good_t)"
 }
 

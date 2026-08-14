@@ -171,19 +171,19 @@ cm_register_cmf_mod = {
 
 	cmm_register_subtab = {
 		mod_id = cm
-		tab_id = ab_utilities
+		tab_id = ab_custom
 		parent_tab_id = auto_build
 	}
 
 	cmm_register_subtab = {
 		mod_id = cm
-		tab_id = ab_industry
+		tab_id = ab_core
 		parent_tab_id = auto_build
 	}
 
 	cmm_register_subtab = {
 		mod_id = cm
-		tab_id = ab_collapsar
+		tab_id = ab_production
 		parent_tab_id = auto_build
 	}
 
@@ -245,7 +245,7 @@ cm_register_cmf_mod = {
 		alias = cm_ab_min_proximity
 	}
 
-	## Smart Builders (ab_priority_list) Group
+	## Auto-Build Categories (ab_priority_list) Group
 	cmm_register_settings_list = {
 		mod_id = cm
 		setting_id = ab_priority_list
@@ -265,14 +265,14 @@ cm_register_cmf_mod = {
 		mod_id = cm
 		setting_id = ab_priority_list
 		item = 2
-		value = flag:cm_ab_cat_industry
+		value = flag:cm_ab_cat_production
 	}
 
 	cmm_set_list_item_value = {
 		mod_id = cm
 		setting_id = ab_priority_list
 		item = 3
-		value = flag:cm_ab_cat_collapsar
+		value = flag:cm_ab_cat_core
 	}
 
 	cmm_set_list_item_value = {
@@ -286,7 +286,7 @@ cm_register_cmf_mod = {
 		mod_id = cm
 		setting_id = ab_priority_list
 		item = 5
-		value = flag:cm_ab_cat_utilities
+		value = flag:cm_ab_cat_custom
 	}
 
 	cmm_set_list_item_value = {
@@ -326,60 +326,55 @@ cm_register_cmf_mod = {
 		default_value = 0
 	}
 
-	## Utilities (ab_utilities) Group
-	cmm_register_bool_setting = {
+	## Custom (ab_custom) Group
+	cmm_register_settings_list = {
 		mod_id = cm
-		setting_id = auto_build_capital
-		tab_id = ab_utilities
-		group_id = ab_utilities
-		default_value = 1
-	}
-	cmm_sync_bool_alias = {
-		setting = cm__auto_build_capital
-		alias = cm_ab_utilities_capital
+		setting_id = ab_custom
+		tab_id = ab_custom
+		item_count = 4
+		is_ordered = 0
 	}
 
-	cmm_register_bool_setting = {
+	cmm_set_list_item_value = {
 		mod_id = cm
-		setting_id = ab_utilities_control
-		tab_id = ab_utilities
-		group_id = ab_utilities
-		default_value = 1
-	}
-	cmm_sync_bool_alias = {
-		setting = cm__ab_utilities_control
-		alias = cm_ab_utilities_control
+		setting_id = ab_custom
+		item = 1
+		value = flag:cm_ab_set_capital
 	}
 
-	cmm_register_bool_setting = {
+	cmm_set_list_item_value = {
 		mod_id = cm
-		setting_id = ab_utilities_market_centers
-		tab_id = ab_utilities
-		group_id = ab_utilities
-		default_value = 1
-	}
-	cmm_sync_bool_alias = {
-		setting = cm__ab_utilities_market_centers
-		alias = cm_ab_utilities_market_centers
+		setting_id = ab_custom
+		item = 2
+		value = flag:cm_ab_set_control
 	}
 
-	cmm_register_bool_setting = {
+	cmm_set_list_item_value = {
 		mod_id = cm
-		setting_id = auto_build_enabled
-		tab_id = ab_utilities
-		group_id = ab_utilities
-		default_value = 1
-	}
-	cmm_sync_bool_alias = {
-		setting = cm__auto_build_enabled
-		alias = cm_ab_utilities_roster
+		setting_id = ab_custom
+		item = 3
+		value = flag:cm_ab_set_market_centers
 	}
 
-	## Custom Buildings (auto_build_list) Group
+	cmm_set_list_item_value = {
+		mod_id = cm
+		setting_id = ab_custom
+		item = 4
+		value = flag:cm_ab_set_roster
+	}
+
+	cmm_register_list_bool_field = {
+		mod_id = cm
+		setting_id = ab_custom
+		field_id = enabled
+		default_value = 1
+	}
+
+	## Select Buildings (auto_build_list) Group
 	cmm_register_settings_list = {
 		mod_id = cm
 		setting_id = auto_build_list
-		tab_id = ab_utilities
+		tab_id = ab_custom
 		item_count = 24
 		is_ordered = 1
 	}
@@ -488,107 +483,107 @@ cm_register_cmf_mod = {
 	cmm_disable_list_field_for_item = { mod_id = cm setting_id = auto_build_list field_id = min_rgos item = 23 }
 	cmm_disable_list_field_for_item = { mod_id = cm setting_id = auto_build_list field_id = min_rgos item = 24 }
 
-	## Industry (ab_industry) Group
-	cmm_register_dropdown_setting = {
-		mod_id = cm
-		setting_id = ab_industry_algorithm
-		tab_id = ab_industry
-		group_id = ab_industry
-		default_index = 1
-		option_count = 1
-	}
-	cmm_sync_setting_alias = {
-		setting = cm__ab_industry_algorithm
-		alias = cm_ab_industry_algorithm
-	}
-
+	## Core Goods (ab_core) Group
 	cmm_register_slider_setting = {
 		mod_id = cm
-		setting_id = ab_industry_max_rel_roi
-		tab_id = ab_industry
-		group_id = ab_industry
-		default_value = 30
-		min_value = 0
-		max_value = 100
-		step_value = 5
-	}
-	cmm_sync_setting_alias = {
-		setting = cm__ab_industry_max_rel_roi
-		alias = cm_ab_industry_max_rel_roi
-	}
-
-	cmm_register_slider_setting = {
-		mod_id = cm
-		setting_id = ab_industry_min_roi
-		tab_id = ab_industry
-		group_id = ab_industry
-		default_value = 20
-		min_value = 0
-		max_value = 100
-		step_value = 1
-	}
-	cmm_sync_setting_alias = {
-		setting = cm__ab_industry_min_roi
-		alias = cm_ab_industry_min_roi
-	}
-
-	## Price Collapsar (ab_collapsar) Group
-	cmm_register_slider_setting = {
-		mod_id = cm
-		setting_id = ab_collapsar_target
-		tab_id = ab_collapsar
-		group_id = ab_collapsar
+		setting_id = ab_core_target
+		tab_id = ab_core
+		group_id = ab_core
 		default_value = -33
 		min_value = -33
 		max_value = 33
 		step_value = 1
 	}
 	cmm_sync_setting_alias = {
-		setting = cm__ab_collapsar_target
-		alias = cm_ab_collapsar_target
+		setting = cm__ab_core_target
+		alias = cm_ab_core_target
 	}
 
 	cmm_register_settings_list = {
 		mod_id = cm
-		setting_id = ab_collapsar
-		tab_id = ab_collapsar
+		setting_id = ab_core
+		tab_id = ab_core
 		item_count = 4
 		is_ordered = 1
 	}
 
 	cmm_set_list_item_value = {
 		mod_id = cm
-		setting_id = ab_collapsar
+		setting_id = ab_core
 		item = 1
 		value = goods:masonry
 	}
 
 	cmm_set_list_item_value = {
 		mod_id = cm
-		setting_id = ab_collapsar
+		setting_id = ab_core
 		item = 2
 		value = goods:lumber
 	}
 
 	cmm_set_list_item_value = {
 		mod_id = cm
-		setting_id = ab_collapsar
+		setting_id = ab_core
 		item = 3
 		value = goods:sand
 	}
 
 	cmm_set_list_item_value = {
 		mod_id = cm
-		setting_id = ab_collapsar
+		setting_id = ab_core
 		item = 4
 		value = goods:glass
 	}
 
 	cmm_register_list_bool_field = {
 		mod_id = cm
-		setting_id = ab_collapsar
+		setting_id = ab_core
 		field_id = enabled
 		default_value = 1
+	}
+
+	## Production (ab_production) Group
+	cmm_register_dropdown_setting = {
+		mod_id = cm
+		setting_id = ab_production_algorithm
+		tab_id = ab_production
+		group_id = ab_production
+		default_index = 1
+		option_count = 1
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__ab_production_algorithm
+		alias = cm_ab_production_algorithm
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = ab_production_max_rel_roi
+		tab_id = ab_production
+		group_id = ab_production
+		default_value = 30
+		min_value = 0
+		max_value = 100
+		step_value = 5
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__ab_production_max_rel_roi
+		alias = cm_ab_production_max_rel_roi
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = ab_production_min_roi
+		tab_id = ab_production
+		group_id = ab_production
+		default_value = 20
+		min_value = 0
+		max_value = 100
+		step_value = 1
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__ab_production_min_roi
+		alias = cm_ab_production_min_roi
 	}
 
 	## Food (ab_food) Group
@@ -1509,34 +1504,34 @@ cm_register_cmf_mod = {
 
 	cmm_register_global_bool_setting = {
 		mod_id = cm
-		setting_id = log_industry
+		setting_id = log_production
 		tab_id = debug
 		group_id = logging
 		default_value = 0
 	}
 	cmm_sync_bool_alias = {
-		setting = cm__log_industry
-		alias = cm_dbg_industry
+		setting = cm__log_production
+		alias = cm_dbg_production
 	}
 	cmm_add_scripted_gui = {
 		mod_id = cm
-		setting_id = log_industry
+		setting_id = log_production
 	}
 
 	cmm_register_global_bool_setting = {
 		mod_id = cm
-		setting_id = log_collapsar
+		setting_id = log_core
 		tab_id = debug
 		group_id = logging
 		default_value = 0
 	}
 	cmm_sync_bool_alias = {
-		setting = cm__log_collapsar
-		alias = cm_dbg_collapsar
+		setting = cm__log_core
+		alias = cm_dbg_core
 	}
 	cmm_add_scripted_gui = {
 		mod_id = cm
-		setting_id = log_collapsar
+		setting_id = log_core
 	}
 
 	cmm_register_global_bool_setting = {
@@ -1688,35 +1683,35 @@ cm_register_cmf_mod = {
 
 	cmm_register_button_setting = {
 		mod_id = cm
-		setting_id = probe_industry_anchors
+		setting_id = probe_production_anchors
 		tab_id = debug
 		group_id = probes
 	}
 	cmm_add_scripted_gui = {
 		mod_id = cm
-		setting_id = probe_industry_anchors
+		setting_id = probe_production_anchors
 	}
 
 	cmm_register_button_setting = {
 		mod_id = cm
-		setting_id = probe_industry_rgo
+		setting_id = probe_production_rgo
 		tab_id = debug
 		group_id = probes
 	}
 	cmm_add_scripted_gui = {
 		mod_id = cm
-		setting_id = probe_industry_rgo
+		setting_id = probe_production_rgo
 	}
 
 	cmm_register_button_setting = {
 		mod_id = cm
-		setting_id = probe_collapsar
+		setting_id = probe_core
 		tab_id = debug
 		group_id = probes
 	}
 	cmm_add_scripted_gui = {
 		mod_id = cm
-		setting_id = probe_collapsar
+		setting_id = probe_core
 	}
 
 	cmm_register_button_setting = {
@@ -1764,8 +1759,27 @@ cm_register_cmf_mod = {
 #     # "variable_map(cmm|flag:$setting$_i$i$_f3)"  (enabled, bool)
 # }
 
-# Utilities (ab_utilities) Tab
-## Custom Buildings (auto_build_list) Group
+# Custom (ab_custom) Tab
+## Custom (ab_custom) Group
+
+# ─── How to iterate: cm__ab_custom ───
+# Call cmm_for_each_list_item to loop through items. It calls your effect
+# with $i$ set to the item number, so you can use it in variable names.
+# scope:cmm_list_current_item_value holds the attached game object scope.
+# Scope: country
+#
+# cmm_for_each_list_item = {
+#     setting = cm__ab_custom
+#     effect = cm_ab_custom_each_item
+# }
+#
+# cm_ab_custom_each_item = {
+#     # $i$ is the resolved item number (1-4)
+#     # scope:cmm_list_current_item_value  (attached game object)
+#     # "variable_map(cmm|flag:$setting$_i$i$_f1)"  (enabled, bool)
+# }
+
+## Select Buildings (auto_build_list) Group
 
 # ─── How to iterate: cm__auto_build_list ───
 # Call cmm_for_each_list_item to loop through items. It calls your effect
@@ -1829,7 +1843,7 @@ cm_register_cmf_mod = {
 # }
 
 # Auto-Build (auto_build) Tab
-## Smart Builders (ab_priority_list) Group
+## Auto-Build Categories (ab_priority_list) Group
 
 # ─── How to iterate: cm__ab_priority_list ───
 # Call cmm_for_each_list_item to loop through items. It calls your effect
@@ -1848,20 +1862,20 @@ cm_register_cmf_mod = {
 #     # "variable_map(cmm|flag:$setting$_i$i$_f1)"  (budget, numeric)
 #     # "variable_map(cmm|flag:$setting$_i$i$_f2)"  (enabled, bool)
 # }
-## Price Collapsar (ab_collapsar) Group
+## Core Goods (ab_core) Group
 
-# ─── How to iterate: cm__ab_collapsar ───
+# ─── How to iterate: cm__ab_core ───
 # Call cmm_for_each_list_item to loop through items. It calls your effect
 # with $i$ set to the item number, so you can use it in variable names.
 # scope:cmm_list_current_item_value holds the attached game object scope.
 # Scope: country
 #
 # cmm_for_each_list_item = {
-#     setting = cm__ab_collapsar
-#     effect = cm_ab_collapsar_each_item
+#     setting = cm__ab_core
+#     effect = cm_ab_core_each_item
 # }
 #
-# cm_ab_collapsar_each_item = {
+# cm_ab_core_each_item = {
 #     # $i$ is the resolved item number (1-4)
 #     # scope:cmm_list_current_item_value  (attached game object)
 #     # "variable_map(cmm|flag:$setting$_i$i$_f1)"  (enabled, bool)
@@ -1922,55 +1936,30 @@ cm_handle_cmf_callback = {
 				alias = cm_ab_min_proximity
 			}
 		}
-		## Utilities (ab_utilities) Group
-		flag:cm__auto_build_capital = {
-			cmm_sync_bool_alias = {
-				setting = cm__auto_build_capital
-				alias = cm_ab_utilities_capital
-			}
-		}
-		flag:cm__ab_utilities_control = {
-			cmm_sync_bool_alias = {
-				setting = cm__ab_utilities_control
-				alias = cm_ab_utilities_control
-			}
-		}
-		flag:cm__ab_utilities_market_centers = {
-			cmm_sync_bool_alias = {
-				setting = cm__ab_utilities_market_centers
-				alias = cm_ab_utilities_market_centers
-			}
-		}
-		flag:cm__auto_build_enabled = {
-			cmm_sync_bool_alias = {
-				setting = cm__auto_build_enabled
-				alias = cm_ab_utilities_roster
-			}
-		}
-		## Industry (ab_industry) Group
-		flag:cm__ab_industry_algorithm = {
+		## Core Goods (ab_core) Group
+		flag:cm__ab_core_target = {
 			cmm_sync_setting_alias = {
-				setting = cm__ab_industry_algorithm
-				alias = cm_ab_industry_algorithm
+				setting = cm__ab_core_target
+				alias = cm_ab_core_target
 			}
 		}
-		flag:cm__ab_industry_max_rel_roi = {
+		## Production (ab_production) Group
+		flag:cm__ab_production_algorithm = {
 			cmm_sync_setting_alias = {
-				setting = cm__ab_industry_max_rel_roi
-				alias = cm_ab_industry_max_rel_roi
+				setting = cm__ab_production_algorithm
+				alias = cm_ab_production_algorithm
 			}
 		}
-		flag:cm__ab_industry_min_roi = {
+		flag:cm__ab_production_max_rel_roi = {
 			cmm_sync_setting_alias = {
-				setting = cm__ab_industry_min_roi
-				alias = cm_ab_industry_min_roi
+				setting = cm__ab_production_max_rel_roi
+				alias = cm_ab_production_max_rel_roi
 			}
 		}
-		## Price Collapsar (ab_collapsar) Group
-		flag:cm__ab_collapsar_target = {
+		flag:cm__ab_production_min_roi = {
 			cmm_sync_setting_alias = {
-				setting = cm__ab_collapsar_target
-				alias = cm_ab_collapsar_target
+				setting = cm__ab_production_min_roi
+				alias = cm_ab_production_min_roi
 			}
 		}
 		## Food (ab_food) Group
@@ -2160,16 +2149,16 @@ cm_handle_cmf_callback = {
 				alias = cm_dbg_cycle
 			}
 		}
-		flag:cm__log_industry = {
+		flag:cm__log_production = {
 			cmm_sync_bool_alias = {
-				setting = cm__log_industry
-				alias = cm_dbg_industry
+				setting = cm__log_production
+				alias = cm_dbg_production
 			}
 		}
-		flag:cm__log_collapsar = {
+		flag:cm__log_core = {
 			cmm_sync_bool_alias = {
-				setting = cm__log_collapsar
-				alias = cm_dbg_collapsar
+				setting = cm__log_core
+				alias = cm_dbg_core
 			}
 		}
 		flag:cm__log_food = {
@@ -2222,14 +2211,14 @@ cm_handle_cmf_callback = {
 		flag:cm__probe_military = {
 			cm_ln_mil_probe = yes
 		}
-		flag:cm__probe_industry_anchors = {
-			cm_dbg_probe_industry_anchors = yes
+		flag:cm__probe_production_anchors = {
+			cm_dbg_probe_production_anchors = yes
 		}
-		flag:cm__probe_industry_rgo = {
-			cm_dbg_probe_industry_rgo = yes
+		flag:cm__probe_production_rgo = {
+			cm_dbg_probe_production_rgo = yes
 		}
-		flag:cm__probe_collapsar = {
-			cm_dbg_probe_collapsar = yes
+		flag:cm__probe_core = {
+			cm_dbg_probe_core = yes
 		}
 		flag:cm__probe_roads = {
 			cm_ab_rd_probe = yes

@@ -4,14 +4,14 @@
 # scripted gui in cm_ab_scripted_gui.txt and cm_scripted_gui.txt.
 
 cm_ab_score_build_apply = {
-	scope:cm_country = { cm_ab_col_count = { N = cm_ab_col_c_enter V = 1 } }
+	scope:cm_country = { cm_ab_core_count = { N = cm_ab_core_c_enter V = 1 } }
 	if = {
 		limit = {
 			scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
 			is_target_in_variable_list = { name = cm_ab_b_types target = scope:cm_building_type }
 			NOT = { is_target_in_variable_list = { name = cm_ab_done_b_types target = scope:cm_building_type } }
 		}
-		scope:cm_country = { cm_ab_col_count = { N = cm_ab_col_c_limit V = 1 } }
+		scope:cm_country = { cm_ab_core_count = { N = cm_ab_core_c_limit V = 1 } }
 		add_to_variable_list = { name = cm_ab_done_b_types target = scope:cm_building_type }
 		scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
 		# The engine converts a build into the standing obsolete predecessor's upgrade;
@@ -43,25 +43,25 @@ cm_ab_score_build_apply = {
 				add_to_variable_map = { name = cm_ab_b_profit key = scope:cm_building_type value = cm_bld_profit_value }
 				if = {
 					limit = {
-						exists = global_var:cm_dbg_collapsar
-						cm_ab_col_claimed_by_collapsar = yes
+						exists = global_var:cm_dbg_core
+						cm_ab_core_claimed_by_cat = yes
 					}
-					scope:cm_country = { cm_ab_col_count = { N = cm_ab_col_c_score_ok V = 1 } }
+					scope:cm_country = { cm_ab_core_count = { N = cm_ab_core_c_score_ok V = 1 } }
 				}
 				if = {
-					limit = { cm_ab_col_watched = yes }
+					limit = { cm_ab_core_watched = yes }
 					save_temporary_scope_as = cmf_log_loc
 					scope:cm_building_type = { save_temporary_scope_as = cmf_log_bt }
 					# The log runs in country scope and cm_bld_profit_value needs the location.
-					save_temporary_scope_value_as = { name = cm_col_log_profit value = cm_bld_profit_value }
+					save_temporary_scope_value_as = { name = cm_core_log_profit value = cm_bld_profit_value }
 					scope:cm_country = {
 						cm_dbg_log_bld = {
-							cat = collapsar
-							action = cm_log_col_scored
-							arg1 = cm_log_col_a_cost
-							arg2 = cm_log_col_a_profit
+							cat = core
+							action = cm_log_core_scored
+							arg1 = cm_log_core_a_cost
+							arg2 = cm_log_core_a_profit
 							value = scope:cm_cost
-							value2 = scope:cm_col_log_profit
+							value2 = scope:cm_core_log_profit
 						}
 					}
 				}
@@ -69,29 +69,29 @@ cm_ab_score_build_apply = {
 			else = {
 				if = {
 					limit = {
-						exists = global_var:cm_dbg_collapsar
-						cm_ab_col_claimed_by_collapsar = yes
+						exists = global_var:cm_dbg_core
+						cm_ab_core_claimed_by_cat = yes
 					}
-					scope:cm_country = { cm_ab_col_count = { N = cm_ab_col_c_score_no V = 1 } }
+					scope:cm_country = { cm_ab_core_count = { N = cm_ab_core_c_score_no V = 1 } }
 				}
 				if = {
-					limit = { cm_ab_col_watched = yes }
-					cm_ab_col_skip_line = { COND = cm_ln_can_place ACTION = cm_log_col_score_place }
+					limit = { cm_ab_core_watched = yes }
+					cm_ab_core_skip_line = { COND = cm_ln_can_place ACTION = cm_log_core_score_place }
 				}
 			}
-			# Industry entries score; the other categories drain by category in list order.
+			# Production entries score; the other categories drain by category in list order.
 			if = {
 				limit = {
 					has_variable_map = cm_ab_b_cat_1
 					is_key_in_variable_map = { name = cm_ab_b_cat_1 target = scope:cm_building_type }
-					cm_ab_ind_roi_passes = { COST = scope:cm_cost }
+					cm_ab_prod_roi_passes = { COST = scope:cm_cost }
 					cm_building_type_profitable_or_subsidized = yes
 				}
 				save_temporary_scope_value_as = { name = cm_q_score_cost value = scope:cm_cost }
 				cm_ab_compute_roi_score = yes
 				save_temporary_scope_as = cm_ab_anchor_loc
 				scope:cm_building_type = { save_temporary_scope_as = cm_ab_anchor_type }
-				scope:cm_country = { cm_ab_ind_fold_gd_anchor = yes }
+				scope:cm_country = { cm_ab_prod_fold_gd_anchor = yes }
 				if = {
 					limit = { cm_ln_can_place = yes }
 					remove_from_variable_map = { name = cm_ab_b_scores key = scope:cm_building_type }
@@ -118,14 +118,14 @@ cm_ab_score_upgrade_apply = {
 		if = {
 			limit = {
 				exists = scope:cm_new_building_type
-				cm_ab_ind_roi_passes = { COST = scope:cm_cost }
+				cm_ab_prod_roi_passes = { COST = scope:cm_cost }
 			}
 			save_temporary_scope_value_as = { name = cm_q_score_cost value = scope:cm_cost }
 			cm_ab_compute_roi_score = yes
 			# The replacement is what gets built, so its own good is what the bar comes from.
 			save_temporary_scope_as = cm_ab_anchor_loc
 			scope:cm_new_building_type = { save_temporary_scope_as = cm_ab_anchor_type }
-			scope:cm_country = { cm_ab_ind_fold_gd_anchor = yes }
+			scope:cm_country = { cm_ab_prod_fold_gd_anchor = yes }
 			if = {
 				limit = { cm_ln_can_place = yes }
 				remove_from_variable_map = { name = cm_ab_u_new_types key = scope:cm_old_building_type }
@@ -157,7 +157,7 @@ cm_ab_score_rgo_apply = {
 			limit = {
 				cm_rgo_basic_expand_eligibility = yes
 				cm_market_has_construction_goods_for_rgo = yes
-				cm_ab_ind_roi_passes = { COST = glorpui_rgo_expand_cost }
+				cm_ab_prod_roi_passes = { COST = glorpui_rgo_expand_cost }
 			}
 			save_temporary_scope_value_as = { name = cm_q_score_cost value = glorpui_rgo_expand_cost }
 			cm_ab_compute_roi_score = yes
