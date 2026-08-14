@@ -1,5 +1,4 @@
-﻿# Settings (settings) Tab
-# Auto-Expand (auto_expand) Tab
+﻿# Auto-Expand (auto_expand) Tab
 ## Construction Automation (priority_list) Group
 cm__priority_list_on_changed = {
 	scope = country
@@ -13,6 +12,59 @@ cm__priority_list_on_changed = {
 			setting = cm__priority_list
 		}
 		cm_rebuild_priority_lookups = yes
+	}
+}
+
+# Auto-Build (auto_build) Tab
+## Smart Builders (ab_priority_list) Group
+cm__ab_priority_list_on_changed = {
+	scope = country
+
+	is_shown = {
+		always = yes
+	}
+
+	effect = {
+		cmm_apply_list_change = {
+			setting = cm__ab_priority_list
+		}
+		cm_ab_rebuild_category_lookups = yes
+	}
+}
+
+## Custom Buildings (auto_build_list) Group
+cm__auto_build_list_on_changed = {
+	scope = country
+
+	is_shown = {
+		always = yes
+	}
+
+	is_valid = {
+		exists = var:cm_ab_utilities_roster
+	}
+
+	effect = {
+		cmm_apply_list_change = {
+			setting = cm__auto_build_list
+		}
+		cm_rebuild_auto_build_lookups = yes
+	}
+}
+
+## Price Collapsar (ab_collapsar) Group
+cm__ab_collapsar_on_changed = {
+	scope = country
+
+	is_shown = {
+		always = yes
+	}
+
+	effect = {
+		cmm_apply_list_change = {
+			setting = cm__ab_collapsar
+		}
+		cm_ab_rebuild_collapsar_lookups = yes
 	}
 }
 
@@ -114,230 +166,6 @@ cm__specialization_expand_on_changed = {
 
 	is_shown = {
 		exists = var:cm_auto_grant_specialization
-	}
-	effect = { }
-}
-
-# Auto-Build (auto_build) Tab
-cm__ab_save_unaffordable_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-	}
-	effect = { }
-}
-
-cm__ab_min_proximity_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-	}
-	effect = { }
-}
-
-## Features (ab_priority_list) Group
-cm__ab_priority_list_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-	}
-
-	effect = {
-		cmm_apply_list_change = {
-			setting = cm__ab_priority_list
-		}
-		cm_ab_rebuild_category_lookups = yes
-	}
-}
-
-## Industry Builder (ab_industry) Group
-cm__ab_industry_algorithm_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_industry_enabled
-	}
-	effect = { }
-}
-
-cm__ab_industry_max_rel_roi_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_industry_enabled
-	}
-	effect = { }
-}
-
-cm__ab_industry_min_roi_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_industry_enabled
-	}
-	effect = { }
-}
-
-## Price Collapsar (ab_collapsar) Group
-cm__ab_collapsar_target_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_collapsar_enabled
-	}
-	effect = { }
-}
-
-cm__ab_collapsar_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_collapsar_enabled
-	}
-
-	effect = {
-		cmm_apply_list_change = {
-			setting = cm__ab_collapsar
-		}
-		cm_ab_rebuild_collapsar_lookups = yes
-	}
-}
-
-## Food Builder (ab_food) Group
-cm__ab_food_target_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_food_enabled
-	}
-	effect = { }
-}
-
-cm__ab_food_min_potential_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_food_enabled
-	}
-	effect = { }
-}
-
-## Road Builder (ab_roads) Group
-cm__ab_roads_proximity_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_roads_enabled
-	}
-	effect = { }
-}
-
-cm__ab_roads_market_access_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_roads_enabled
-	}
-	effect = { }
-}
-
-cm__ab_roads_capital_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_roads_enabled
-	}
-	effect = { }
-}
-
-## Utility Builder (ab_utilities) Group
-cm__auto_build_capital_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_utilities_enabled
-	}
-	effect = { }
-}
-
-cm__ab_utilities_control_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_utilities_enabled
-	}
-	effect = { }
-}
-
-cm__ab_utilities_market_centers_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_utilities_enabled
-	}
-	effect = { }
-}
-
-## Building Roster (auto_build_list) Group
-cm__auto_build_enabled_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_utilities_enabled
-	}
-	effect = { }
-}
-
-cm__auto_build_list_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_utilities_enabled
-	}
-
-	effect = {
-		cmm_apply_list_change = {
-			setting = cm__auto_build_list
-		}
-		cm_rebuild_auto_build_lookups = yes
-	}
-}
-
-## Governor Builder (ab_governors) Group
-cm__ab_gov_move_seats_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_governors_enabled
-	}
-	effect = { }
-}
-
-cm__ab_gov_prepare_sites_on_changed = {
-	scope = country
-
-	is_shown = {
-		exists = var:cm_ab_enabled
-		exists = var:cm_ab_governors_enabled
 	}
 	effect = { }
 }
