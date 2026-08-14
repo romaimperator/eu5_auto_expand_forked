@@ -679,6 +679,21 @@ cm_register_cmf_mod = {
 		alias = cm_ab_production_min_roi
 	}
 
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = ab_production_min_discount
+		tab_id = ab_production
+		group_id = ab_production
+		default_value = 0
+		min_value = -33
+		max_value = 33
+		step_value = 1
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__ab_production_min_discount
+		alias = cm_ab_production_min_discount
+	}
+
 	## Debug (debug) Group
 	cmm_register_button_setting = {
 		mod_id = cm
@@ -776,6 +791,21 @@ cm_register_cmf_mod = {
 	cmm_sync_bool_alias = {
 		setting = cm__ab_roads_capital
 		alias = cm_ab_roads_capital
+	}
+
+	cmm_register_slider_setting = {
+		mod_id = cm
+		setting_id = ab_roads_min_discount
+		tab_id = ab_roads
+		group_id = ab_roads
+		default_value = 0
+		min_value = -33
+		max_value = 33
+		step_value = 1
+	}
+	cmm_sync_setting_alias = {
+		setting = cm__ab_roads_min_discount
+		alias = cm_ab_roads_min_discount
 	}
 
 	cmm_register_button_setting = {
@@ -2175,6 +2205,12 @@ cm_handle_cmf_callback = {
 				alias = cm_ab_production_min_roi
 			}
 		}
+		flag:cm__ab_production_min_discount = {
+			cmm_sync_setting_alias = {
+				setting = cm__ab_production_min_discount
+				alias = cm_ab_production_min_discount
+			}
+		}
 		flag:cm__dbg_run_production = {
 			cm_dbg_run_solo = { WHAT = cm_ab_cat_production }
 		}
@@ -2218,6 +2254,14 @@ cm_handle_cmf_callback = {
 				alias = cm_ab_roads_capital
 			}
 			cm_ab_rd_clear_plan = yes
+		}
+		# No cm_ab_rd_clear_plan: the three bools above change which corridors are planned, where
+		# this only changes what a planned one is allowed to cost, tested afresh at every issue.
+		flag:cm__ab_roads_min_discount = {
+			cmm_sync_setting_alias = {
+				setting = cm__ab_roads_min_discount
+				alias = cm_ab_roads_min_discount
+			}
 		}
 		flag:cm__ab_roads_run_now = {
 			cm_ab_rd_plan = yes

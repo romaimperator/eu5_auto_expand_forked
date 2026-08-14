@@ -680,6 +680,7 @@ cm_ab_rgo_why_probe = {
 	cm_ab_rgo_why_line = { COND = cm_rgo_basic_expand_eligibility ACTION = cm_log_rgo_elig }
 	cm_ab_rgo_why_line = { COND = cm_location_rgo_free_this_cycle ACTION = cm_log_rgo_served }
 	cm_ab_rgo_why_line = { COND = cm_market_has_construction_goods_for_rgo ACTION = cm_log_rgo_goods }
+	cm_ab_rgo_why_line = { COND = cm_ab_rgo_meets_min_discount ACTION = cm_log_rgo_discount }
 	if = {
 		limit = { integration_level = conquered }
 		change_local_variable = { name = cm_ab_why add = 1 }
@@ -721,6 +722,9 @@ cm_ab_rgo_why_line = {
 # location.
 cm_ab_pick_best_build_item = {
 	save_temporary_scope_as = cm_ab_pick_loc
+	# The discount gate prices this location's market; another drain earlier in the pass leaves its
+	# own location in scope.
+	save_scope_as = cm_location
 	ordered_key_in_variable_map = {
 		variable = cm_ab_b_scores
 		order_by = {
@@ -752,6 +756,7 @@ cm_ab_pick_best_build_item = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
 				cm_market_has_construction_goods_for_building = yes
+				cm_ab_prod_meets_min_discount = yes
 			}
 			if = {
 				limit = { cm_ab_can_afford = { POOL = cm_ab_pool_production } }
@@ -835,6 +840,9 @@ cm_ab_refresh_build_best = {
 # the location.
 cm_ab_pick_best_upgrade_item = {
 	save_temporary_scope_as = cm_ab_pick_loc
+	# The discount gate prices this location's market; another drain earlier in the pass leaves its
+	# own location in scope.
+	save_scope_as = cm_location
 	ordered_key_in_variable_map = {
 		variable = cm_ab_u_scores
 		order_by = {
@@ -870,7 +878,10 @@ cm_ab_pick_best_upgrade_item = {
 				NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_old_building_type } }
 			}
 			if = {
-				limit = { cm_market_has_construction_goods_for_building = yes }
+				limit = {
+					cm_market_has_construction_goods_for_building = yes
+					cm_ab_prod_meets_min_discount = yes
+				}
 				if = {
 					limit = { cm_ab_can_afford = { POOL = cm_ab_pool_production } }
 					cm_q_record_upgrade_approval = yes
@@ -940,6 +951,10 @@ cm_ab_approve_rgo_item = {
 	else_if = {
 		limit = { NOT = { cm_market_has_construction_goods_for_rgo = yes } }
 		cm_ab_rgo_log = { ACTION = cm_log_rgo_goods }
+	}
+	else_if = {
+		limit = { NOT = { cm_ab_rgo_meets_min_discount = yes } }
+		cm_ab_rgo_log = { ACTION = cm_log_rgo_discount }
 	}
 	else = {
 		if = {

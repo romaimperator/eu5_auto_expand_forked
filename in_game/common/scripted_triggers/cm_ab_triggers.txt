@@ -119,6 +119,13 @@ cm_ab_rd_has_work = {
 	}
 }
 
+# Root is the location, expects scope:cm_country. The road's own construction goods measured as a
+# demand-weighted mean deviation, against the Roads Min Discount. The 0.005 tolerance matches the
+# building and RGO discount triggers, so a -33 setting still admits a -32.5 reading.
+cm_ab_rd_meets_min_discount = {
+	cm_ab_rd_goods_price_index_value <= { value = cm_get_min_discount_for_ab_roads add = 0.005 }
+}
+
 # True while the category may buy past its allotment and owe the difference: its ledger is
 # running, which only cm_ab_drain_one starts, and the setting is on. Root is the country.
 cm_ab_may_borrow = {
@@ -187,6 +194,17 @@ cm_ab_prod_roi_passes = {
 			multiply = 12
 		}
 	}
+}
+
+# The Production Min Discount, named once for the drain and the probe that reports it.
+# Expects scope:cm_country, scope:cm_location, scope:cm_building_type.
+cm_ab_prod_meets_min_discount = {
+	cm_building_meets_minimum_discount = { threshold = cm_get_min_discount_for_ab_production }
+}
+
+# RGO twin. Root is the location, expects scope:cm_country.
+cm_ab_rgo_meets_min_discount = {
+	cm_rgo_meets_minimum_discount = { threshold = cm_get_min_discount_for_ab_production }
 }
 
 # Never staged by Auto-Build, whatever it scores. slave_market's profit swings month to

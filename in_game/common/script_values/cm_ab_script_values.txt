@@ -563,6 +563,17 @@ cm_ab_rd_goods_adjust_value = {
 	}
 }
 
+# The same three deviations as a demand-weighted mean rather than a sum, which is the scale the
+# min discount settings are stated on: cm_get_standard_construction_cost_modifier_for_building_type
+# divides by its own demand total the same way. The sibling above stays a sum because it scales a
+# cost, where every weight counts in full. Root is the location.
+cm_ab_rd_goods_price_index_value = {
+	value = cm_ab_rd_goods_adjust_value
+	# 0.5 lumber + 1 masonry + 0.25 sand, vanilla build_gravel_road_demand:
+	# in_game/common/goods_demand/special_construction_demands.txt:28
+	divide = 1.75
+}
+
 # Gold per unit distance for the best road type this country has unlocked, carrying that type's own
 # cost modifier and inflation. Root is the country.
 cm_ab_rd_tier_cost_value = {
