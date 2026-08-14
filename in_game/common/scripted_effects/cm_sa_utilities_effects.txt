@@ -93,6 +93,7 @@ cm_sa_run_utilities = {
 		cm_sa_stage_utility_roster = yes
 	}
 	clear_variable_list = cm_sa_util_cands
+	clear_variable_list = cm_sa_util_subj_cands
 }
 
 # This cycle's candidates for the market-center block and the roster: the owned, unconquered
@@ -127,6 +128,21 @@ cm_sa_util_build_candidates = {
 		scope:cm_country = { add_to_variable_list = { name = cm_sa_util_cands target = scope:cm_sa_util_cand } }
 	}
 	clear_variable_list = cm_sa_util_raw
+}
+
+# This cycle's subject-side candidates, for the roster rows that opted into subjects. Whether
+# every_market_present_in_country reaches a subject's market is unverified, so these are not
+# sliced. Root is the country, scope:cm_country set.
+cm_sa_util_build_subject_candidates = {
+	clear_variable_list = cm_sa_util_subj_cands
+	every_subject_or_below = {
+		every_owned_location = {
+			limit = { NOT = { integration_level = conquered } }
+			save_scope_as = cm_sa_util_cand
+			cm_pop_track = yes
+			scope:cm_country = { add_to_variable_list = { name = cm_sa_util_subj_cands target = scope:cm_sa_util_cand } }
+		}
+	}
 }
 
 # Stages one market-center type at this location when it fits; that set has no obsolete chains.
@@ -164,8 +180,8 @@ cm_sa_stage_capital_type_here = {
 }
 
 # Walks the roster in the player's order, resolving each row's chain base to the current buildable
-# tier and forking on that row's subjects toggle. The subjects flag is read before the resolve
-# overwrites scope:cm_building_type. Root is the country.
+# tier. The subjects flag is read before the resolve overwrites scope:cm_building_type. Root is
+# the country.
 cm_sa_stage_utility_roster = {
 	if = {
 		limit = { has_variable_list = cm_auto_build_building_types_list }
@@ -174,7 +190,7 @@ cm_sa_stage_utility_roster = {
 				has_variable_list = cm_auto_build_building_types_in_subjects_enabled
 				variable_list_size = { name = cm_auto_build_building_types_in_subjects_enabled value >= 1 }
 			}
-			cm_reset_locations_lists = yes
+			cm_sa_util_build_subject_candidates = yes
 		}
 		every_in_list = {
 			variable = cm_auto_build_building_types_list
@@ -189,11 +205,10 @@ cm_sa_stage_utility_roster = {
 						set_local_variable = { name = cm_sa_util_subjects value = 0 }
 					}
 					cm_auto_build_resolve_building_type = yes
+					cm_sa_stage_roster_type_owned = yes
 					if = {
 						limit = { local_var:cm_sa_util_subjects = 1 }
 						cm_sa_stage_roster_type_in_subjects = yes
-					} else = {
-						cm_sa_stage_roster_type_owned = yes
 					}
 				}
 			}
@@ -215,21 +230,16 @@ cm_sa_stage_roster_type_owned = {
 	}
 }
 
-# The same roster type across the subject locations the row opted into. The market slice does not
-# gate this branch: whether every_market_present_in_country reaches a subject's market is unverified,
-# and the list is prebuilt anyway. Root is the country. Expects the resolved scope:cm_building_type
-# and the raw key in scope:cm_auto_build_settings_type.
+# The same roster type across the subject locations the row opted into, on top of the owned pass
+# every row takes. Root is the country. Expects the resolved scope:cm_building_type and the raw
+# key in scope:cm_auto_build_settings_type.
 cm_sa_stage_roster_type_in_subjects = {
 	if = {
-		limit = { has_variable_list = cm_all_locations_including_subjects_list }
+		limit = { has_variable_list = cm_sa_util_subj_cands }
 		every_in_list = {
-			variable = cm_all_locations_including_subjects_list
+			variable = cm_sa_util_subj_cands
 			save_scope_as = cm_location
-			cm_pop_track = yes
-			if = {
-				limit = { NOT = { integration_level = conquered } }
-				cm_sa_stage_roster_type_here = yes
-			}
+			cm_sa_stage_roster_type_here = yes
 		}
 	}
 }
