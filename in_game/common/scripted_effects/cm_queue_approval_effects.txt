@@ -175,7 +175,8 @@ cm_q_approval_pass = {
 		}
 	}
 	# Auto-Build category drains after every priority feature has claimed, in the player's
-	# category order, each category's unspent funds carrying into the next one.
+	# category order. Each category spends its own share, then whatever none of them spent is
+	# offered again from the top, so the highest category that still wants gold takes it.
 	if = {
 		limit = {
 			cm_ab_master_active = yes
@@ -184,7 +185,14 @@ cm_q_approval_pass = {
 		set_local_variable = { name = cm_ab_cost_blocked value = 0 }
 		set_local_variable = { name = cm_ab_no_hold value = 0 }
 		set_local_variable = { name = cm_ab_ledger value = 0 }
-		set_variable = { name = cm_ab_carry value = 0 }
+		set_local_variable = { name = cm_ab_reoffer value = 0 }
+		cm_ab_init_drain_signals = { CAT = production }
+		cm_ab_init_drain_signals = { CAT = core }
+		cm_ab_init_drain_signals = { CAT = food }
+		cm_ab_init_drain_signals = { CAT = custom }
+		cm_ab_init_drain_signals = { CAT = roads }
+		cm_ab_init_drain_signals = { CAT = military }
+		set_variable = { name = cm_ab_surplus value = 0 }
 		every_in_list = {
 			variable = cm_ab_categories_enabled
 			save_scope_as = cm_ab_cat
@@ -192,10 +200,31 @@ cm_q_approval_pass = {
 			# category held back by a Run Now has to be stopped here as well as at staging.
 			if = {
 				limit = { scope:cm_country = { cm_dbg_solo_allows = { TARGET = scope:cm_ab_cat } } }
-				scope:cm_country = { cm_ab_drain_category = yes }
+				scope:cm_country = { cm_ab_drain_category = { WRAP = cm_ab_drain_one } }
 			}
 		}
-		remove_variable = cm_ab_carry
+		# One walk places the whole leftover: it reaches every category that stopped on a pick it
+		# could not pay for, in order, and each takes everything it can. A category that stopped on
+		# anything else wanted no more gold, so it can never become spendable here.
+		if = {
+			limit = { var:cm_ab_surplus > 0 }
+			set_local_variable = { name = cm_ab_reoffer value = 1 }
+			every_in_list = {
+				variable = cm_ab_categories_enabled
+				save_scope_as = cm_ab_cat
+				if = {
+					limit = { scope:cm_country = { cm_dbg_solo_allows = { TARGET = scope:cm_ab_cat } } }
+					scope:cm_country = { cm_ab_drain_category = { WRAP = cm_ab_drain_surplus } }
+				}
+			}
+		}
+		set_variable = { name = cm_ab_surplus_last value = var:cm_ab_surplus }
+		remove_variable = cm_ab_surplus
+		if = {
+			# Core's cycle tallies once the whole drain has run, so the re-offer's builds are in them.
+			limit = { exists = var:cm_ab_core_enabled }
+			cm_ab_core_log_counts = yes
+		}
 	}
 	# Auto-urbanize claims last, after every priority feature and every Auto-Build
 	# category.

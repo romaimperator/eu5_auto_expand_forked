@@ -1,8 +1,9 @@
-﻿# Auto-Build budget engine: monthly per-category pools set from the treasury above
-# the reserve, and the per-category dispatch that runs each drain and passes its unspent
-# pool down the player's category order. A category buys its best pick whenever the treasury
-# covers it, and what it spent past its own allotment becomes a debt it settles out of the
-# allotments that follow. Pools and debts are country variables and persist in saves.
+﻿# Auto-Build budget engine: monthly per-category pools set from the treasury above the reserve,
+# and the per-category dispatch that runs each drain. Every category gets its own share, then
+# whatever none of them spent is offered again from the top of the player's category order, so
+# the highest category that still wants gold takes it. A category buys its best pick whenever the
+# treasury covers it, and what it spent past its own allotment becomes a debt it settles out of
+# the allotments that follow. Pools and debts are country variables and persist in saves.
 
 # Sets each enabled category's pool to its share of split = max(0, gold - reserve). A debt holds
 # no gold, so it takes nothing off the top. Root is the country.
@@ -72,6 +73,7 @@ cm_ab_clear_budget_state = {
 	cm_ab_clear_reservations = yes
 	cm_ab_prod_clear_memory = yes
 	cm_ab_rd_clear_plan = yes
+	remove_variable = cm_ab_surplus_last
 }
 
 # Root is the country.
@@ -117,6 +119,13 @@ cm_ab_budget_probe = {
 	cm_ab_log_balance = { cat = custom ACTION = cm_log_ab_bal_custom }
 	cm_ab_log_balance = { cat = military ACTION = cm_log_ab_bal_military }
 	cmf_log_decimal_value = { action = cm_log_ab_bal_total value = local_var:cm_ab_dbg_total }
+	# What the re-offer could not place: gold every category declined, which no balance shows.
+	set_local_variable = { name = cm_ab_dbg value = 0 }
+	if = {
+		limit = { exists = var:cm_ab_surplus_last }
+		set_local_variable = { name = cm_ab_dbg value = var:cm_ab_surplus_last }
+	}
+	cmf_log_decimal_value = { action = cm_log_ab_surplus value = local_var:cm_ab_dbg }
 	if = {
 		limit = { exists = var:cm_ab_production_min_roi }
 		cmf_log_value = { action = cm_log_ab_prod_cap value = var:cm_ab_production_min_roi }
@@ -255,33 +264,41 @@ cm_ab_claim_build_copy = {
 	scope:cm_country = { change_variable = { name = cm_ab_copy_pool subtract = scope:cm_cost } }
 }
 
-# Runs one category's drain under its pool, taking in the funds earlier categories left and
-# handing on whatever it does not spend. Root is the country, expects scope:cm_ab_cat.
+# Runs one category's drain under its pool. $WRAP$ = cm_ab_drain_one for the share walk and
+# cm_ab_drain_surplus for the re-offer. Root is the country, expects scope:cm_ab_cat.
 cm_ab_drain_category = {
 	switch = {
 		trigger = scope:cm_ab_cat
-		flag:cm_ab_cat_production = { cm_ab_drain_one = { CAT = production PASS = cm_ab_pass_production } }
-		flag:cm_ab_cat_core = { cm_ab_drain_one = { CAT = core PASS = cm_ab_pass_core } }
-		flag:cm_ab_cat_food = { cm_ab_drain_one = { CAT = food PASS = cm_ab_pass_food } }
-		flag:cm_ab_cat_custom = { cm_ab_drain_one = { CAT = custom PASS = cm_ab_pass_custom } }
-		flag:cm_ab_cat_roads = { cm_ab_drain_one = { CAT = roads PASS = cm_ab_pass_roads } }
-		# Military takes the carry, and runs a ledger it can owe against, only once its manpower
-		# chain has a tier it can build. Until then the category is the fort line alone, which
-		# its own share covers.
+		flag:cm_ab_cat_production = { $WRAP$ = { CAT = production PASS = cm_ab_pass_production } }
+		flag:cm_ab_cat_core = { $WRAP$ = { CAT = core PASS = cm_ab_pass_core } }
+		flag:cm_ab_cat_food = { $WRAP$ = { CAT = food PASS = cm_ab_pass_food } }
+		flag:cm_ab_cat_custom = { $WRAP$ = { CAT = custom PASS = cm_ab_pass_custom } }
+		flag:cm_ab_cat_roads = { $WRAP$ = { CAT = roads PASS = cm_ab_pass_roads } }
+		# Military runs a ledger it can owe against only once its manpower chain has a tier it can
+		# build. Until then the category is the fort line alone, which its own share covers, so it
+		# takes no part in the re-offer.
 		flag:cm_ab_cat_military = {
 			if = {
 				limit = { exists = var:cm_ln_bk_active }
-				cm_ab_drain_one = { CAT = military PASS = cm_ab_pass_military }
+				$WRAP$ = { CAT = military PASS = cm_ab_pass_military }
 			}
-			else = {
+			else_if = {
+				limit = { local_var:cm_ab_reoffer = 0 }
 				cm_ab_pass_military = yes
 			}
 		}
 	}
 }
 
-# Settles what the category owes out of its own allotment, then spends what is left of it plus
-# the carry, or stands the category down for the cycle while it still owes. Each category answers
+# Clears the two signals cm_ab_drain_one leaves for the re-offer, so neither is read unset.
+# $CAT$ = category id. Root is the country.
+cm_ab_init_drain_signals = {
+	set_local_variable = { name = cm_ab_hungry_$CAT$ value = 0 }
+	set_local_variable = { name = cm_ab_own_$CAT$ value = 0 }
+}
+
+# The share walk: settles what the category owes out of its own allotment, then spends what is
+# left of it, or stands the category down for the cycle while it still owes. Each category answers
 # only for its own stop, so the signal is cleared per category rather than once for the loop.
 # $CAT$ = category id, $PASS$ = its drain effect. Root is the country.
 cm_ab_drain_one = {
@@ -293,7 +310,6 @@ cm_ab_drain_one = {
 	}
 	set_local_variable = { name = cm_ab_paid value = 0 }
 	if = {
-		# Settled before the carry arrives, so only the category's own allotment pays it down.
 		limit = { exists = var:cm_ab_debt_$CAT$ }
 		set_local_variable = { name = cm_ab_paid value = var:cm_ab_pool_$CAT$ }
 		change_local_variable = { name = cm_ab_paid min = var:cm_ab_debt_$CAT$ }
@@ -304,52 +320,85 @@ cm_ab_drain_one = {
 			remove_variable = cm_ab_debt_$CAT$
 		}
 	}
+	# A debt is gold last month already spent, so the allotment that settles it is not spent now
+	# and goes to the leftover either way.
+	change_variable = { name = cm_ab_surplus add = local_var:cm_ab_paid }
 	if = {
-		# Still owing, so it buys nothing and the carry passes it by.
-		limit = { exists = var:cm_ab_debt_$CAT$ }
-		change_variable = { name = cm_ab_carry add = local_var:cm_ab_paid }
-	}
-	else = {
-		# Caps the hold below: gold that trickles down can be spent this month but never banked.
-		set_local_variable = { name = cm_ab_own value = var:cm_ab_pool_$CAT$ }
-		change_variable = { name = cm_ab_pool_$CAT$ add = var:cm_ab_carry }
-		# The settled gold goes down the order, so it is handed on only after the pool has taken
-		# the incoming carry.
-		set_variable = { name = cm_ab_carry value = local_var:cm_ab_paid }
+		# Still owing, so it buys nothing and is not offered the leftover.
+		limit = { NOT = { exists = var:cm_ab_debt_$CAT$ } }
+		# Caps the hold, and is read again by the re-offer, so it is named per category.
+		set_local_variable = { name = cm_ab_own_$CAT$ value = var:cm_ab_pool_$CAT$ }
 		set_local_variable = { name = cm_ab_ledger value = 1 }
 		$PASS$ = yes
 		set_local_variable = { name = cm_ab_ledger value = 0 }
-		if = {
-			# It bought past its allotment, and the overspend is what it now owes.
-			limit = { var:cm_ab_pool_$CAT$ < 0 }
-			set_variable = { name = cm_ab_debt_$CAT$ value = 0 }
-			change_variable = { name = cm_ab_debt_$CAT$ subtract = var:cm_ab_pool_$CAT$ }
-		}
-		else_if = {
-			# It stopped on a pick it could not reach, so it holds toward that pick and hands
-			# down the rest.
-			limit = {
-				local_var:cm_ab_cost_blocked = 1
-				local_var:cm_ab_hold_cost > 0
-				local_var:cm_ab_own > 0
-				var:cm_ab_pool_$CAT$ > 0
-			}
-			set_local_variable = { name = cm_ab_keep value = var:cm_ab_pool_$CAT$ }
-			change_local_variable = { name = cm_ab_keep min = local_var:cm_ab_hold_cost }
-			change_local_variable = { name = cm_ab_keep min = local_var:cm_ab_own }
-			set_variable = { name = cm_ab_resv_$CAT$ value = local_var:cm_ab_keep }
-			change_variable = { name = cm_ab_pool_$CAT$ subtract = local_var:cm_ab_keep }
-			change_variable = { name = cm_ab_carry add = var:cm_ab_pool_$CAT$ }
-		}
-		else = {
-			change_variable = { name = cm_ab_carry add = var:cm_ab_pool_$CAT$ }
-		}
+		cm_ab_settle_pool = { CAT = $CAT$ }
 	}
 	set_variable = { name = cm_ab_pool_$CAT$ value = 0 }
 }
 
+# The re-offer: hands the leftover to a category that stopped on a pick it could not pay for.
+# The walk is in list order, so the highest such category takes as much of it as it can use.
+# Its own hold is handed back first, the leftover being able to cover the pick outright.
+# $CAT$ = category id, $PASS$ = its drain effect. Root is the country.
+cm_ab_drain_surplus = {
+	if = {
+		limit = {
+			local_var:cm_ab_hungry_$CAT$ = 1
+			var:cm_ab_surplus > 0
+		}
+		set_local_variable = { name = cm_ab_cost_blocked value = 0 }
+		set_local_variable = { name = cm_ab_hold_cost value = 0 }
+		set_variable = { name = cm_ab_pool_$CAT$ value = var:cm_ab_surplus }
+		set_variable = { name = cm_ab_surplus value = 0 }
+		if = {
+			limit = { exists = var:cm_ab_resv_$CAT$ }
+			change_variable = { name = cm_ab_pool_$CAT$ add = var:cm_ab_resv_$CAT$ }
+			remove_variable = cm_ab_resv_$CAT$
+		}
+		set_local_variable = { name = cm_ab_ledger value = 1 }
+		$PASS$ = yes
+		set_local_variable = { name = cm_ab_ledger value = 0 }
+		cm_ab_settle_pool = { CAT = $CAT$ }
+		set_variable = { name = cm_ab_pool_$CAT$ value = 0 }
+	}
+}
+
+# What the pool holds once a drain has run: an overspend becomes a debt, a pick it could not
+# reach holds an allotment sized to that pick, and the rest goes to the leftover.
+# $CAT$ = category id. Root is the country.
+cm_ab_settle_pool = {
+	if = {
+		# It bought past its allotment, and the overspend is what it now owes.
+		limit = { var:cm_ab_pool_$CAT$ < 0 }
+		set_variable = { name = cm_ab_debt_$CAT$ value = 0 }
+		change_variable = { name = cm_ab_debt_$CAT$ subtract = var:cm_ab_pool_$CAT$ }
+	}
+	else = {
+		if = {
+			limit = { local_var:cm_ab_cost_blocked = 1 }
+			set_local_variable = { name = cm_ab_hungry_$CAT$ value = 1 }
+		}
+		if = {
+			# The hold stays capped at its own allotment: leftover gold can be spent this month
+			# but never banked, or a low category would hoard what the whole order is handed.
+			limit = {
+				local_var:cm_ab_cost_blocked = 1
+				local_var:cm_ab_hold_cost > 0
+				local_var:cm_ab_own_$CAT$ > 0
+				var:cm_ab_pool_$CAT$ > 0
+			}
+			set_local_variable = { name = cm_ab_keep value = var:cm_ab_pool_$CAT$ }
+			change_local_variable = { name = cm_ab_keep min = local_var:cm_ab_hold_cost }
+			change_local_variable = { name = cm_ab_keep min = local_var:cm_ab_own_$CAT$ }
+			set_variable = { name = cm_ab_resv_$CAT$ value = local_var:cm_ab_keep }
+			change_variable = { name = cm_ab_pool_$CAT$ subtract = local_var:cm_ab_keep }
+		}
+		change_variable = { name = cm_ab_surplus add = var:cm_ab_pool_$CAT$ }
+	}
+}
+
 # Stands the category down on a pick it could not pay for, recording what that pick costs so
-# cm_ab_drain_one holds an allotment sized to it. $COST$ = the pick's cost.
+# cm_ab_settle_pool holds an allotment sized to it. $COST$ = the pick's cost.
 cm_ab_stop_on_cost = {
 	set_local_variable = { name = cm_ab_cost_blocked value = 1 }
 	set_local_variable = { name = cm_ab_hold_cost value = $COST$ }

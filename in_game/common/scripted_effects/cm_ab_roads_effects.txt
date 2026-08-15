@@ -484,7 +484,12 @@ cm_ab_rd_cc_value_location = {
 # The test is re-made every month and never latches, so conquest or a new road tier puts proximity
 # back in front the first month it has a corridor to lay.
 cm_ab_pass_roads = {
-	cm_ab_rd_check_orders = yes
+	if = {
+		# Bookkeeping for the month rather than for the pass, so the re-offer must not spend a
+		# second re-issue try on a corridor that has had one month to appear.
+		limit = { local_var:cm_ab_reoffer = 0 }
+		cm_ab_rd_check_orders = yes
+	}
 	if = {
 		limit = {
 			has_advance = road_building # Unlocks gravel_road: in_game/common/advances/3_road_unlocks.txt:1
@@ -538,6 +543,9 @@ cm_ab_rd_issue_pass = {
 				}
 			}
 			has_road_constructions = no
+			# An order placed earlier in this same execution: has_road_constructions is not a
+			# reliable guard against one, and the re-offer walks the plan a second time.
+			NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_ab_rd_building target = prev } } }
 			modifier:road_building_blocked = no
 			cm_ab_rd_meets_min_discount = yes
 			cm_market_has_construction_goods_for_road = yes

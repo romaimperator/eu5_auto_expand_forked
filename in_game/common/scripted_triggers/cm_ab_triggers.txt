@@ -68,7 +68,7 @@ cm_ab_rd_meets_min_discount = {
 }
 
 # True while the category may buy past its allotment and owe the difference: its ledger is
-# running, which only cm_ab_drain_one starts, and the setting is on. Root is the country.
+# running, which only the two drain wrappers start, and the setting is on. Root is the country.
 cm_ab_may_borrow = {
 	local_var:cm_ab_ledger = 1
 	exists = var:cm_ab_save_unaffordable
@@ -248,6 +248,12 @@ cm_ab_core_rgo_pops_ok = {
 		cm_location_laborers_or_slaves_available > 0
 		cm_location_laborers_promotion_source_pool > 0
 	}
+}
+
+# Root is the location. Expects scope:cm_building_type and scope:cm_profit. Core Goods holds a
+# producer to cm_ab_core_min_profit in place of the shared floor.
+cm_ab_core_profitable_or_subsidized = {
+	cm_building_type_clears_profit_floor = { FLOOR = cm_ab_core_min_profit }
 }
 
 # Root is the location. Locations Core Goods leaves alone: the capital and anything food

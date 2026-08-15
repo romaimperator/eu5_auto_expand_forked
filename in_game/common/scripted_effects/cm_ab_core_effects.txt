@@ -581,11 +581,11 @@ cm_ab_pass_core = {
 			}
 		}
 	}
-	cm_ab_core_log_counts = yes
 }
 
 # One cycle's tallies across all four materials, so the stage the levels are lost at is the one
-# whose count drops. Root is the country.
+# whose count drops. Called from cm_q_approval_pass once both drain walks have run, rather than
+# from the drain, which the re-offer can enter a second time. Root is the country.
 cm_ab_core_log_counts = {
 	if = {
 		limit = {
@@ -609,7 +609,7 @@ cm_ab_core_log_counts = {
 		cm_dbg_log_value = { cat = core action = cm_log_core_c_cost value = var:cm_ab_core_c_cost }
 		cm_dbg_log_value = { cat = core action = cm_log_core_c_drain_hit value = var:cm_ab_core_c_drain_hit }
 		cm_dbg_log_value = { cat = core action = cm_log_core_c_built value = var:cm_ab_core_c_built }
-		cm_dbg_log_value = { cat = core action = cm_log_core_c_blocked value = local_var:cm_ab_cost_blocked }
+		cm_dbg_log_value = { cat = core action = cm_log_core_c_blocked value = local_var:cm_ab_hungry_core }
 	}
 }
 
@@ -787,7 +787,7 @@ cm_ab_core_approve_build = {
 			if = {
 				limit = {
 					exists = var:cm_ab_core_levels
-					cm_building_type_profitable_or_subsidized = yes
+					cm_ab_core_profitable_or_subsidized = yes
 					cm_ab_can_afford = { POOL = cm_ab_pool_core }
 				}
 				set_local_variable = { name = cm_ab_core_bld_guard value = 0 }
@@ -840,9 +840,25 @@ cm_ab_core_approve_build = {
 				# The level is wanted and profitable, so the cost is the only thing that failed.
 				limit = {
 					exists = var:cm_ab_core_levels
-					cm_building_type_profitable_or_subsidized = yes
+					cm_ab_core_profitable_or_subsidized = yes
 				}
 				cm_ab_stop_on_cost = { COST = scope:cm_cost }
+			}
+			else_if = {
+				limit = {
+					exists = var:cm_ab_core_levels
+					cm_ab_core_watched = yes
+				}
+				save_temporary_scope_value_as = { name = cm_ab_core_prof value = cm_bld_profit_value }
+				save_temporary_scope_as = cmf_log_loc
+				scope:cm_country = {
+					cm_dbg_log_loc = {
+						cat = core
+						action = cm_log_core_profit
+						arg1 = cm_log_core_a_profit
+						value = scope:cm_ab_core_prof
+					}
+				}
 			}
 		}
 		remove_from_variable_map = { name = cm_ab_b_cat_2 key = scope:cm_building_type }

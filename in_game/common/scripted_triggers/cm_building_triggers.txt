@@ -275,15 +275,21 @@ cm_gui_metric_gate_passes = {
 
 # Root is the location. Expects scope:cm_building_type and scope:cm_profit. The engine
 # does not staff an unprofitable unsubsidized building. Non-production types are exempt.
-cm_building_type_profitable_or_subsidized = {
+# $FLOOR$ = the profit per level the building must reach when none of its type here is
+# subsidized.
+cm_building_type_clears_profit_floor = {
 	OR = {
 		NOT = { scope:cm_building_type = { cm_is_building_type_production_building = yes } }
-		cm_bld_profit_value > 0
+		cm_bld_profit_value >= $FLOOR$
 		any_buildings_in_location = {
 			building_type = scope:cm_building_type
 			is_subsidized = yes
 		}
 	}
+}
+
+cm_building_type_profitable_or_subsidized = {
+	cm_building_type_clears_profit_floor = { FLOOR = cm_min_profit_per_level }
 }
 
 # Expects scope:cm_building_type. Checks if the building type produces a good that is also
