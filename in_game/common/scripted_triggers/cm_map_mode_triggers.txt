@@ -10,12 +10,20 @@ cm_location_is_auto_food_active = {
 	}
 }
 
-# Root is country. Tax-base placement scoring (the default; option 2 is proximity).
+# Root is country. Tax-base placement scoring (the default; option 2 is proximity, option 3 is
+# population).
 cm_pf_method_is_tax_base = {
 	OR = {
 		NOT = { exists = var:cm_placement_finder_method }
 		var:cm_placement_finder_method = 1
 	}
+}
+
+# Root is country. Population placement scoring (method option 3): weights each reached location by
+# its population where tax base weights it by cm_location_raw_wealth.
+cm_pf_method_is_population = {
+	exists = var:cm_placement_finder_method
+	var:cm_placement_finder_method = 3
 }
 
 # Root is country. Current-roads placement scoring (roads option 1; option 2 Max Roads is the default, option 3 is Best Possible).

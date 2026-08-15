@@ -204,6 +204,40 @@ cm_setup_invalidate_on_mod_change = {
   }
 }
 
+# Console-only diagnostic: effect c:<TAG> = { cm_dbg_setup_probe = yes }, or the Setup Data button
+# on the Debug tab. Which setup data the save is carrying and at what version, so data that is
+# stale, or was written by an older pass, can be read off rather than guessed at - the cost of
+# stamping being that a load no longer rebuilds it and nothing else shows what is cached.
+# A 0 means no stamp, so that pass runs on the next cm_run_lobby_setup. The last line is is_host,
+# which the four setup drivers gate on: 0 on every client in a multiplayer session means they are
+# all waiting for a host to be marked and no setup is running anywhere.
+# Root is the country.
+cm_dbg_setup_probe = {
+  cm_dbg_setup_stamp = { S = cm_bt_class_stamp A = cm_log_setup_stamp_class }
+  cm_dbg_setup_stamp = { S = cm_pf_river_stamp A = cm_log_setup_stamp_river }
+  cm_dbg_setup_stamp = { S = cm_rgob_stamp A = cm_log_setup_stamp_rgob }
+  cm_dbg_setup_stamp = { S = cm_trmm_stamp A = cm_log_setup_stamp_trmm }
+  cm_dbg_setup_stamp = { S = cm_ln_ids_stamp A = cm_log_setup_stamp_ids }
+  if = {
+    limit = { is_host = yes }
+    cmf_log_value = { action = cm_log_setup_host value = 1 }
+  }
+  else = {
+    cmf_log_value = { action = cm_log_setup_host value = 0 }
+  }
+}
+
+# One probe line. $S$ = the stamp global, $A$ = its log action key. Root is the country.
+cm_dbg_setup_stamp = {
+  if = {
+    limit = { has_global_variable = $S$ }
+    cmf_log_value = { action = $A$ value = global_var:$S$ }
+  }
+  else = {
+    cmf_log_value = { action = $A$ value = 0 }
+  }
+}
+
 # The one place naming every setup stamp. Dropping one is what makes its pass run again on the next
 # cm_run_lobby_setup. No scope.
 cm_setup_drop_stamps = {

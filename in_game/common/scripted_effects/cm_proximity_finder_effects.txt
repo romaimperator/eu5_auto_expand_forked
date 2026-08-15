@@ -383,15 +383,18 @@ cm_pf_prep_core = {
 		# The headroom score cap's totals: a candidate scores at most its headroom times these.
 		set_variable = { name = cm_pf_npos value = 0 }
 		set_variable = { name = cm_pf_wpos value = 0 }
+		set_variable = { name = cm_pf_ppos value = 0 }
 		every_owned_location = {
 			if = {
 				limit = { var:cm_pf_t > 0 }
 				set_local_variable = { name = cm_pf_lt value = var:cm_pf_t }
 				set_local_variable = { name = cm_pf_lw value = var:cm_pf_w }
+				set_local_variable = { name = cm_pf_lp value = var:cm_pf_wpop }
 				scope:cm_pf_c = {
 					change_variable = { name = cm_pf_tmax max = local_var:cm_pf_lt }
 					change_variable = { name = cm_pf_npos add = 1 }
 					change_variable = { name = cm_pf_wpos add = local_var:cm_pf_lw }
+					change_variable = { name = cm_pf_ppos add = local_var:cm_pf_lp }
 				}
 			}
 			else = {
@@ -592,6 +595,8 @@ cm_pf_prime_land_location = {
 	set_variable = { name = cm_pf_cl_c value = cm_pf_cl_c_value }
 	set_variable = { name = cm_pf_cl_cb value = cm_pf_cl_cb_value }
 	set_variable = { name = cm_pf_w value = cm_location_raw_wealth }
+	# Population values are in units of 1000.
+	set_variable = { name = cm_pf_wpop value = population }
 	if = {
 		limit = { has_river = yes }
 		set_variable = { name = cm_pf_cr_g value = cm_pf_cr_g_value }
@@ -742,10 +747,11 @@ cm_pf_score_candidate = {
 
 # Location scope (the candidate). Accumulates the governor sums over the reached set, clears
 # the search state, and stores the raw results. cm_pf_sum = wealth-weighted; cm_pf_sum_p =
-# unweighted proximity.
+# unweighted proximity; cm_pf_sum_pop = population-weighted.
 cm_pf_sweep_gov = {
 	set_local_variable = { name = cm_pf_sum value = 0 }
 	set_local_variable = { name = cm_pf_sum_p value = 0 }
+	set_local_variable = { name = cm_pf_sum_pop value = 0 }
 	# The candidate's source value: a governor plus whatever already stacks with one here.
 	set_local_variable = { name = cm_pf_sv value = 80 } # Governor source value: in_game/common/building_types/capital_buildings.txt:681
 	if = {
@@ -786,6 +792,13 @@ cm_pf_sweep_gov = {
 						multiply = var:cm_pf_w
 					}
 				}
+				change_local_variable = {
+					name = cm_pf_sum_pop
+					add = {
+						value = local_var:cm_pf_gain
+						multiply = var:cm_pf_wpop
+					}
+				}
 			}
 			remove_variable = cm_pf_d
 		}
@@ -796,11 +809,13 @@ cm_pf_sweep_gov = {
 	}
 	set_variable = { name = cm_pf_gf_raw value = local_var:cm_pf_sum }
 	set_variable = { name = cm_pf_gf_raw_p value = local_var:cm_pf_sum_p }
+	set_variable = { name = cm_pf_gf_raw_pop value = local_var:cm_pf_sum_pop }
 }
 
 cm_pf_sweep_cap = {
 	set_local_variable = { name = cm_pf_sum value = 0 }
 	set_local_variable = { name = cm_pf_sum_p value = 0 }
+	set_local_variable = { name = cm_pf_sum_pop value = 0 }
 	scope:cm_pf_c = {
 		every_owned_location = {
 			limit = { has_variable = cm_pf_d }
@@ -821,6 +836,14 @@ cm_pf_sweep_cap = {
 						multiply = var:cm_pf_w
 					}
 				}
+				change_local_variable = {
+					name = cm_pf_sum_pop
+					add = {
+						value = 100
+						subtract = var:cm_pf_d
+						multiply = var:cm_pf_wpop
+					}
+				}
 			}
 			remove_variable = cm_pf_d
 		}
@@ -831,6 +854,7 @@ cm_pf_sweep_cap = {
 	}
 	set_variable = { name = cm_pf_cf_raw value = local_var:cm_pf_sum }
 	set_variable = { name = cm_pf_cf_raw_p value = local_var:cm_pf_sum_p }
+	set_variable = { name = cm_pf_cf_raw_pop value = local_var:cm_pf_sum_pop }
 }
 
 # Some seed location holds cm_pf_d = 0. Expects scope:cm_pf_c. Cheapest-path relaxation
@@ -1414,6 +1438,19 @@ cm_pf_phase_init = {
 	set_variable = { name = cm_pf_b1_cp value = 0 }
 	set_variable = { name = cm_pf_b2_cp value = 0 }
 	set_variable = { name = cm_pf_b3_cp value = 0 }
+	# The population channel is built only for the method that reads it, so a tax base or
+	# proximity run costs exactly what it did before the method existed.
+	set_local_variable = { name = cm_pf_dopop value = 0 }
+	if = {
+		limit = { cm_pf_method_is_population = yes }
+		set_local_variable = { name = cm_pf_dopop value = 1 }
+		set_variable = { name = cm_pf_b1_gpop value = 0 }
+		set_variable = { name = cm_pf_b2_gpop value = 0 }
+		set_variable = { name = cm_pf_b3_gpop value = 0 }
+		set_variable = { name = cm_pf_b1_cpop value = 0 }
+		set_variable = { name = cm_pf_b2_cpop value = 0 }
+		set_variable = { name = cm_pf_b3_cpop value = 0 }
+	}
 	every_owned_location = {
 		limit = { has_variable = cm_pf_cl_g }
 		# Sentinel above any reachable bound, so an unbounded candidate is never skipped.
@@ -1421,6 +1458,11 @@ cm_pf_phase_init = {
 		set_variable = { name = cm_pf_ub_gp value = 999999999 }
 		set_variable = { name = cm_pf_ub_ct value = 999999999 }
 		set_variable = { name = cm_pf_ub_cp value = 999999999 }
+		if = {
+			limit = { local_var:cm_pf_dopop = 1 }
+			set_variable = { name = cm_pf_ub_gpop value = 999999999 }
+			set_variable = { name = cm_pf_ub_cpop value = 999999999 }
+		}
 		set_variable = { name = cm_pf_dref_min value = 9999 }
 	}
 	if = {
@@ -1560,6 +1602,34 @@ cm_pf_refs_done = {
 			}
 		}
 	}
+	else_if = {
+		limit = { cm_pf_method_is_population = yes }
+		if = {
+			limit = { var:cm_pf_run_g = 1 }
+			every_owned_location = {
+				limit = { has_variable = cm_pf_cl_g }
+				set_local_variable = {
+					name = cm_pf_ubg
+					value = {
+						value = var:cm_pf_t
+						multiply = scope:cm_pf_c.var:cm_pf_ppos
+					}
+				}
+				if = {
+					limit = { var:cm_pf_ub_gpop < local_var:cm_pf_ubg }
+					set_local_variable = { name = cm_pf_ubg value = var:cm_pf_ub_gpop }
+				}
+				change_variable = { name = cm_pf_ub_ord add = local_var:cm_pf_ubg }
+			}
+		}
+		if = {
+			limit = { var:cm_pf_run_c = 1 }
+			every_owned_location = {
+				limit = { has_variable = cm_pf_cl_g }
+				change_variable = { name = cm_pf_ub_ord add = var:cm_pf_ub_cpop }
+			}
+		}
+	}
 	else = {
 		if = {
 			limit = { var:cm_pf_run_g = 1 }
@@ -1612,11 +1682,19 @@ cm_pf_build_ref_tables = {
 	set_variable = { name = cm_pf_cx_gp value = 0 }
 	set_variable = { name = cm_pf_cx_ct value = 0 }
 	set_variable = { name = cm_pf_cx_cp value = 0 }
+	set_local_variable = { name = cm_pf_dopop value = 0 }
+	if = {
+		limit = { cm_pf_method_is_population = yes }
+		set_local_variable = { name = cm_pf_dopop value = 1 }
+		set_variable = { name = cm_pf_cx_gpop value = 0 }
+		set_variable = { name = cm_pf_cx_cpop value = 0 }
+	}
 	every_owned_location = {
 		limit = { has_variable = cm_pf_cl_g }
 		if = {
 			limit = { has_variable = cm_pf_d }
 			set_local_variable = { name = cm_pf_lw value = var:cm_pf_w }
+			set_local_variable = { name = cm_pf_lp value = var:cm_pf_wpop }
 			set_local_variable = { name = cm_pf_lt value = var:cm_pf_t }
 			set_local_variable = {
 				name = cm_pf_bk2
@@ -1678,6 +1756,31 @@ cm_pf_build_ref_tables = {
 						}
 						add_to_variable_map = { name = cm_pf_tb_gwk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
 						if = {
+							limit = { local_var:cm_pf_dopop = 1 }
+							set_local_variable = { name = cm_pf_tv value = 0 }
+							if = {
+								limit = { is_key_in_variable_map = { name = cm_pf_tb_gpopc target = local_var:cm_pf_bk } }
+								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gpopc|local_var:cm_pf_bk)" }
+								remove_from_variable_map = { name = cm_pf_tb_gpopc key = local_var:cm_pf_bk }
+							}
+							change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lp }
+							add_to_variable_map = { name = cm_pf_tb_gpopc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+							set_local_variable = { name = cm_pf_tv value = 0 }
+							if = {
+								limit = { is_key_in_variable_map = { name = cm_pf_tb_gpopk target = local_var:cm_pf_bk } }
+								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gpopk|local_var:cm_pf_bk)" }
+								remove_from_variable_map = { name = cm_pf_tb_gpopk key = local_var:cm_pf_bk }
+							}
+							change_local_variable = {
+								name = cm_pf_tv
+								add = {
+									value = local_var:cm_pf_bk
+									multiply = local_var:cm_pf_lp
+								}
+							}
+							add_to_variable_map = { name = cm_pf_tb_gpopk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+						}
+						if = {
 							limit = { local_var:cm_pf_bk2 <= @cm_pf_bucket_max }
 							set_local_variable = { name = cm_pf_tv value = 0 }
 							if = {
@@ -1717,6 +1820,31 @@ cm_pf_build_ref_tables = {
 								}
 							}
 							add_to_variable_map = { name = cm_pf_tb2_gwk key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+							if = {
+								limit = { local_var:cm_pf_dopop = 1 }
+								set_local_variable = { name = cm_pf_tv value = 0 }
+								if = {
+									limit = { is_key_in_variable_map = { name = cm_pf_tb2_gpopc target = local_var:cm_pf_bk2 } }
+									set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gpopc|local_var:cm_pf_bk2)" }
+									remove_from_variable_map = { name = cm_pf_tb2_gpopc key = local_var:cm_pf_bk2 }
+								}
+								change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lp }
+								add_to_variable_map = { name = cm_pf_tb2_gpopc key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+								set_local_variable = { name = cm_pf_tv value = 0 }
+								if = {
+									limit = { is_key_in_variable_map = { name = cm_pf_tb2_gpopk target = local_var:cm_pf_bk2 } }
+									set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gpopk|local_var:cm_pf_bk2)" }
+									remove_from_variable_map = { name = cm_pf_tb2_gpopk key = local_var:cm_pf_bk2 }
+								}
+								change_local_variable = {
+									name = cm_pf_tv
+									add = {
+										value = local_var:cm_pf_bk2
+										multiply = local_var:cm_pf_lp
+									}
+								}
+								add_to_variable_map = { name = cm_pf_tb2_gpopk key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+							}
 						}
 					}
 				}
@@ -1728,6 +1856,16 @@ cm_pf_build_ref_tables = {
 							add = {
 								value = local_var:cm_pf_lt
 								multiply = local_var:cm_pf_lw
+							}
+						}
+						if = {
+							limit = { local_var:cm_pf_dopop = 1 }
+							change_variable = {
+								name = cm_pf_cx_gpop
+								add = {
+									value = local_var:cm_pf_lt
+									multiply = local_var:cm_pf_lp
+								}
 							}
 						}
 					}
@@ -1784,6 +1922,31 @@ cm_pf_build_ref_tables = {
 					}
 					add_to_variable_map = { name = cm_pf_tb_cwk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
 					if = {
+						limit = { local_var:cm_pf_dopop = 1 }
+						set_local_variable = { name = cm_pf_tv value = 0 }
+						if = {
+							limit = { is_key_in_variable_map = { name = cm_pf_tb_cpopc target = local_var:cm_pf_bk } }
+							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cpopc|local_var:cm_pf_bk)" }
+							remove_from_variable_map = { name = cm_pf_tb_cpopc key = local_var:cm_pf_bk }
+						}
+						change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lp }
+						add_to_variable_map = { name = cm_pf_tb_cpopc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+						set_local_variable = { name = cm_pf_tv value = 0 }
+						if = {
+							limit = { is_key_in_variable_map = { name = cm_pf_tb_cpopk target = local_var:cm_pf_bk } }
+							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cpopk|local_var:cm_pf_bk)" }
+							remove_from_variable_map = { name = cm_pf_tb_cpopk key = local_var:cm_pf_bk }
+						}
+						change_local_variable = {
+							name = cm_pf_tv
+							add = {
+								value = local_var:cm_pf_bk
+								multiply = local_var:cm_pf_lp
+							}
+						}
+						add_to_variable_map = { name = cm_pf_tb_cpopk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+					}
+					if = {
 						limit = { local_var:cm_pf_bk2 <= @cm_pf_bucket_max }
 						set_local_variable = { name = cm_pf_tv value = 0 }
 						if = {
@@ -1823,6 +1986,31 @@ cm_pf_build_ref_tables = {
 							}
 						}
 						add_to_variable_map = { name = cm_pf_tb2_cwk key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+						if = {
+							limit = { local_var:cm_pf_dopop = 1 }
+							set_local_variable = { name = cm_pf_tv value = 0 }
+							if = {
+								limit = { is_key_in_variable_map = { name = cm_pf_tb2_cpopc target = local_var:cm_pf_bk2 } }
+								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cpopc|local_var:cm_pf_bk2)" }
+								remove_from_variable_map = { name = cm_pf_tb2_cpopc key = local_var:cm_pf_bk2 }
+							}
+							change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lp }
+							add_to_variable_map = { name = cm_pf_tb2_cpopc key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+							set_local_variable = { name = cm_pf_tv value = 0 }
+							if = {
+								limit = { is_key_in_variable_map = { name = cm_pf_tb2_cpopk target = local_var:cm_pf_bk2 } }
+								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cpopk|local_var:cm_pf_bk2)" }
+								remove_from_variable_map = { name = cm_pf_tb2_cpopk key = local_var:cm_pf_bk2 }
+							}
+							change_local_variable = {
+								name = cm_pf_tv
+								add = {
+									value = local_var:cm_pf_bk2
+									multiply = local_var:cm_pf_lp
+								}
+							}
+							add_to_variable_map = { name = cm_pf_tb2_cpopk key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+						}
 					}
 				}
 			}
@@ -1834,6 +2022,16 @@ cm_pf_build_ref_tables = {
 						add = {
 							value = 100
 							multiply = local_var:cm_pf_lw
+						}
+					}
+					if = {
+						limit = { local_var:cm_pf_dopop = 1 }
+						change_variable = {
+							name = cm_pf_cx_cpop
+							add = {
+								value = 100
+								multiply = local_var:cm_pf_lp
+							}
 						}
 					}
 				}
@@ -1862,6 +2060,19 @@ cm_pf_prefix_ref_tables = {
 	set_local_variable = { name = cm_pf_r2_ck value = 0 }
 	set_local_variable = { name = cm_pf_r2_cwc value = 0 }
 	set_local_variable = { name = cm_pf_r2_cwk value = 0 }
+	set_local_variable = { name = cm_pf_r_gpopc value = 0 }
+	set_local_variable = { name = cm_pf_r_gpopk value = 0 }
+	set_local_variable = { name = cm_pf_r_cpopc value = 0 }
+	set_local_variable = { name = cm_pf_r_cpopk value = 0 }
+	set_local_variable = { name = cm_pf_r2_gpopc value = 0 }
+	set_local_variable = { name = cm_pf_r2_gpopk value = 0 }
+	set_local_variable = { name = cm_pf_r2_cpopc value = 0 }
+	set_local_variable = { name = cm_pf_r2_cpopk value = 0 }
+	set_local_variable = { name = cm_pf_dopop value = 0 }
+	if = {
+		limit = { cm_pf_method_is_population = yes }
+		set_local_variable = { name = cm_pf_dopop value = 1 }
+	}
 	while = {
 		limit = { local_var:cm_pf_k <= @cm_pf_bucket_max }
 		if = {
@@ -1893,6 +2104,23 @@ cm_pf_prefix_ref_tables = {
 		}
 		add_to_variable_map = { name = cm_pf_tb_gwk key = local_var:cm_pf_k value = local_var:cm_pf_r_gwk }
 		if = {
+			limit = { local_var:cm_pf_dopop = 1 }
+			if = {
+				limit = { is_key_in_variable_map = { name = cm_pf_tb_gpopc target = local_var:cm_pf_k } }
+				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gpopc|local_var:cm_pf_k)" }
+				change_local_variable = { name = cm_pf_r_gpopc add = local_var:cm_pf_tv }
+				remove_from_variable_map = { name = cm_pf_tb_gpopc key = local_var:cm_pf_k }
+			}
+			add_to_variable_map = { name = cm_pf_tb_gpopc key = local_var:cm_pf_k value = local_var:cm_pf_r_gpopc }
+			if = {
+				limit = { is_key_in_variable_map = { name = cm_pf_tb_gpopk target = local_var:cm_pf_k } }
+				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gpopk|local_var:cm_pf_k)" }
+				change_local_variable = { name = cm_pf_r_gpopk add = local_var:cm_pf_tv }
+				remove_from_variable_map = { name = cm_pf_tb_gpopk key = local_var:cm_pf_k }
+			}
+			add_to_variable_map = { name = cm_pf_tb_gpopk key = local_var:cm_pf_k value = local_var:cm_pf_r_gpopk }
+		}
+		if = {
 			limit = { is_key_in_variable_map = { name = cm_pf_tb_cc target = local_var:cm_pf_k } }
 			set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cc|local_var:cm_pf_k)" }
 			change_local_variable = { name = cm_pf_r_cc add = local_var:cm_pf_tv }
@@ -1920,6 +2148,23 @@ cm_pf_prefix_ref_tables = {
 			remove_from_variable_map = { name = cm_pf_tb_cwk key = local_var:cm_pf_k }
 		}
 		add_to_variable_map = { name = cm_pf_tb_cwk key = local_var:cm_pf_k value = local_var:cm_pf_r_cwk }
+		if = {
+			limit = { local_var:cm_pf_dopop = 1 }
+			if = {
+				limit = { is_key_in_variable_map = { name = cm_pf_tb_cpopc target = local_var:cm_pf_k } }
+				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cpopc|local_var:cm_pf_k)" }
+				change_local_variable = { name = cm_pf_r_cpopc add = local_var:cm_pf_tv }
+				remove_from_variable_map = { name = cm_pf_tb_cpopc key = local_var:cm_pf_k }
+			}
+			add_to_variable_map = { name = cm_pf_tb_cpopc key = local_var:cm_pf_k value = local_var:cm_pf_r_cpopc }
+			if = {
+				limit = { is_key_in_variable_map = { name = cm_pf_tb_cpopk target = local_var:cm_pf_k } }
+				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cpopk|local_var:cm_pf_k)" }
+				change_local_variable = { name = cm_pf_r_cpopk add = local_var:cm_pf_tv }
+				remove_from_variable_map = { name = cm_pf_tb_cpopk key = local_var:cm_pf_k }
+			}
+			add_to_variable_map = { name = cm_pf_tb_cpopk key = local_var:cm_pf_k value = local_var:cm_pf_r_cpopk }
+		}
 		if = {
 			limit = { is_key_in_variable_map = { name = cm_pf_tb2_gc target = local_var:cm_pf_k } }
 			set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gc|local_var:cm_pf_k)" }
@@ -1949,6 +2194,23 @@ cm_pf_prefix_ref_tables = {
 		}
 		add_to_variable_map = { name = cm_pf_tb2_gwk key = local_var:cm_pf_k value = local_var:cm_pf_r2_gwk }
 		if = {
+			limit = { local_var:cm_pf_dopop = 1 }
+			if = {
+				limit = { is_key_in_variable_map = { name = cm_pf_tb2_gpopc target = local_var:cm_pf_k } }
+				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gpopc|local_var:cm_pf_k)" }
+				change_local_variable = { name = cm_pf_r2_gpopc add = local_var:cm_pf_tv }
+				remove_from_variable_map = { name = cm_pf_tb2_gpopc key = local_var:cm_pf_k }
+			}
+			add_to_variable_map = { name = cm_pf_tb2_gpopc key = local_var:cm_pf_k value = local_var:cm_pf_r2_gpopc }
+			if = {
+				limit = { is_key_in_variable_map = { name = cm_pf_tb2_gpopk target = local_var:cm_pf_k } }
+				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gpopk|local_var:cm_pf_k)" }
+				change_local_variable = { name = cm_pf_r2_gpopk add = local_var:cm_pf_tv }
+				remove_from_variable_map = { name = cm_pf_tb2_gpopk key = local_var:cm_pf_k }
+			}
+			add_to_variable_map = { name = cm_pf_tb2_gpopk key = local_var:cm_pf_k value = local_var:cm_pf_r2_gpopk }
+		}
+		if = {
 			limit = { is_key_in_variable_map = { name = cm_pf_tb2_cc target = local_var:cm_pf_k } }
 			set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cc|local_var:cm_pf_k)" }
 			change_local_variable = { name = cm_pf_r2_cc add = local_var:cm_pf_tv }
@@ -1976,6 +2238,23 @@ cm_pf_prefix_ref_tables = {
 			remove_from_variable_map = { name = cm_pf_tb2_cwk key = local_var:cm_pf_k }
 		}
 		add_to_variable_map = { name = cm_pf_tb2_cwk key = local_var:cm_pf_k value = local_var:cm_pf_r2_cwk }
+		if = {
+			limit = { local_var:cm_pf_dopop = 1 }
+			if = {
+				limit = { is_key_in_variable_map = { name = cm_pf_tb2_cpopc target = local_var:cm_pf_k } }
+				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cpopc|local_var:cm_pf_k)" }
+				change_local_variable = { name = cm_pf_r2_cpopc add = local_var:cm_pf_tv }
+				remove_from_variable_map = { name = cm_pf_tb2_cpopc key = local_var:cm_pf_k }
+			}
+			add_to_variable_map = { name = cm_pf_tb2_cpopc key = local_var:cm_pf_k value = local_var:cm_pf_r2_cpopc }
+			if = {
+				limit = { is_key_in_variable_map = { name = cm_pf_tb2_cpopk target = local_var:cm_pf_k } }
+				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cpopk|local_var:cm_pf_k)" }
+				change_local_variable = { name = cm_pf_r2_cpopk add = local_var:cm_pf_tv }
+				remove_from_variable_map = { name = cm_pf_tb2_cpopk key = local_var:cm_pf_k }
+			}
+			add_to_variable_map = { name = cm_pf_tb2_cpopk key = local_var:cm_pf_k value = local_var:cm_pf_r2_cpopk }
+		}
 		change_local_variable = { name = cm_pf_k add = 1 }
 	}
 }
@@ -1990,6 +2269,11 @@ cm_pf_prefix_ref_tables = {
 # @cm_pf_bucket_max takes no fold from this reference at all; its running min from nearer
 # references stands, which is sound.
 cm_pf_apply_ref_bounds = {
+	set_local_variable = { name = cm_pf_dopop value = 0 }
+	if = {
+		limit = { cm_pf_method_is_population = yes }
+		set_local_variable = { name = cm_pf_dopop value = 1 }
+	}
 	every_owned_location = {
 		limit = {
 			has_variable = cm_pf_cl_g
@@ -2030,6 +2314,17 @@ cm_pf_apply_ref_bounds = {
 				set_local_variable = { name = cm_pf_r2_ck value = "scope:cm_pf_c.variable_map(cm_pf_tb2_ck|local_var:cm_pf_xi)" }
 				set_local_variable = { name = cm_pf_r2_cwc value = "scope:cm_pf_c.variable_map(cm_pf_tb2_cwc|local_var:cm_pf_xi)" }
 				set_local_variable = { name = cm_pf_r2_cwk value = "scope:cm_pf_c.variable_map(cm_pf_tb2_cwk|local_var:cm_pf_xi)" }
+				if = {
+					limit = { local_var:cm_pf_dopop = 1 }
+					set_local_variable = { name = cm_pf_r_gpopc value = "scope:cm_pf_c.variable_map(cm_pf_tb_gpopc|local_var:cm_pf_xi)" }
+					set_local_variable = { name = cm_pf_r_gpopk value = "scope:cm_pf_c.variable_map(cm_pf_tb_gpopk|local_var:cm_pf_xi)" }
+					set_local_variable = { name = cm_pf_r_cpopc value = "scope:cm_pf_c.variable_map(cm_pf_tb_cpopc|local_var:cm_pf_xi)" }
+					set_local_variable = { name = cm_pf_r_cpopk value = "scope:cm_pf_c.variable_map(cm_pf_tb_cpopk|local_var:cm_pf_xi)" }
+					set_local_variable = { name = cm_pf_r2_gpopc value = "scope:cm_pf_c.variable_map(cm_pf_tb2_gpopc|local_var:cm_pf_xi)" }
+					set_local_variable = { name = cm_pf_r2_gpopk value = "scope:cm_pf_c.variable_map(cm_pf_tb2_gpopk|local_var:cm_pf_xi)" }
+					set_local_variable = { name = cm_pf_r2_cpopc value = "scope:cm_pf_c.variable_map(cm_pf_tb2_cpopc|local_var:cm_pf_xi)" }
+					set_local_variable = { name = cm_pf_r2_cpopk value = "scope:cm_pf_c.variable_map(cm_pf_tb2_cpopk|local_var:cm_pf_xi)" }
+				}
 			}
 			else = {
 				set_local_variable = { name = cm_pf_r_gc value = 0 }
@@ -2048,6 +2343,14 @@ cm_pf_apply_ref_bounds = {
 				set_local_variable = { name = cm_pf_r2_ck value = 0 }
 				set_local_variable = { name = cm_pf_r2_cwc value = 0 }
 				set_local_variable = { name = cm_pf_r2_cwk value = 0 }
+				set_local_variable = { name = cm_pf_r_gpopc value = 0 }
+				set_local_variable = { name = cm_pf_r_gpopk value = 0 }
+				set_local_variable = { name = cm_pf_r_cpopc value = 0 }
+				set_local_variable = { name = cm_pf_r_cpopk value = 0 }
+				set_local_variable = { name = cm_pf_r2_gpopc value = 0 }
+				set_local_variable = { name = cm_pf_r2_gpopk value = 0 }
+				set_local_variable = { name = cm_pf_r2_cpopc value = 0 }
+				set_local_variable = { name = cm_pf_r2_cpopk value = 0 }
 			}
 			set_local_variable = {
 				name = cm_pf_ubv
@@ -2109,6 +2412,39 @@ cm_pf_apply_ref_bounds = {
 				}
 			}
 			change_variable = { name = cm_pf_ub_cp min = local_var:cm_pf_ubv }
+			if = {
+				limit = { local_var:cm_pf_dopop = 1 }
+				set_local_variable = {
+					name = cm_pf_ubv
+					value = {
+						value = local_var:cm_pf_x
+						multiply = local_var:cm_pf_r_gpopc
+						subtract = local_var:cm_pf_r_gpopk
+						subtract = {
+							value = local_var:cm_pf_x
+							multiply = local_var:cm_pf_r2_gpopc
+						}
+						add = local_var:cm_pf_r2_gpopk
+						add = scope:cm_pf_c.var:cm_pf_cx_gpop
+					}
+				}
+				change_variable = { name = cm_pf_ub_gpop min = local_var:cm_pf_ubv }
+				set_local_variable = {
+					name = cm_pf_ubv
+					value = {
+						value = local_var:cm_pf_x
+						multiply = local_var:cm_pf_r_cpopc
+						subtract = local_var:cm_pf_r_cpopk
+						subtract = {
+							value = local_var:cm_pf_x
+							multiply = local_var:cm_pf_r2_cpopc
+						}
+						add = local_var:cm_pf_r2_cpopk
+						add = scope:cm_pf_c.var:cm_pf_cx_cpop
+					}
+				}
+				change_variable = { name = cm_pf_ub_cpop min = local_var:cm_pf_ubv }
+			}
 		}
 		remove_variable = cm_pf_d
 	}
@@ -2132,6 +2468,14 @@ cm_pf_apply_ref_bounds = {
 	clear_variable_map = cm_pf_tb2_ck
 	clear_variable_map = cm_pf_tb2_cwc
 	clear_variable_map = cm_pf_tb2_cwk
+	clear_variable_map = cm_pf_tb_gpopc
+	clear_variable_map = cm_pf_tb_gpopk
+	clear_variable_map = cm_pf_tb_cpopc
+	clear_variable_map = cm_pf_tb_cpopk
+	clear_variable_map = cm_pf_tb2_gpopc
+	clear_variable_map = cm_pf_tb2_gpopk
+	clear_variable_map = cm_pf_tb2_cpopc
+	clear_variable_map = cm_pf_tb2_cpopk
 }
 
 # Country scope. Folds $V$ (a local) into the exact best-1/2/3 values for metric $C$.
@@ -2160,6 +2504,7 @@ cm_pf_drop_gov_outputs = {
 	remove_variable = cm_gf_score
 	remove_variable = cm_gf_avg
 	remove_variable = cm_gf_taxgain
+	remove_variable = cm_gf_popgain
 	remove_variable = cm_gf_top
 	remove_variable = cm_gf_localmax
 }
@@ -2169,6 +2514,7 @@ cm_pf_drop_cap_outputs = {
 	remove_variable = cm_cf_score
 	remove_variable = cm_cf_avg
 	remove_variable = cm_cf_taxgain
+	remove_variable = cm_cf_popgain
 	remove_variable = cm_cf_top
 	remove_variable = cm_cf_localmax
 }
@@ -2221,6 +2567,11 @@ cm_pf_score_candidate_pruned = {
 			set_local_variable = { name = cm_pf_th_gp value = scope:cm_pf_c.var:cm_pf_b3_gp }
 			set_local_variable = { name = cm_pf_th_ct value = scope:cm_pf_c.var:cm_pf_b3_ct }
 			set_local_variable = { name = cm_pf_th_cp value = scope:cm_pf_c.var:cm_pf_b3_cp }
+			if = {
+				limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
+				set_local_variable = { name = cm_pf_th_gpop value = scope:cm_pf_c.var:cm_pf_b3_gpop }
+				set_local_variable = { name = cm_pf_th_cpop value = scope:cm_pf_c.var:cm_pf_b3_cpop }
+			}
 		}
 		else_if = {
 			limit = { scope:cm_pf_c.var:cm_pf_acc = 3 }
@@ -2228,6 +2579,11 @@ cm_pf_score_candidate_pruned = {
 			set_local_variable = { name = cm_pf_th_gp value = scope:cm_pf_c.var:cm_pf_b1_gp }
 			set_local_variable = { name = cm_pf_th_ct value = scope:cm_pf_c.var:cm_pf_b1_ct }
 			set_local_variable = { name = cm_pf_th_cp value = scope:cm_pf_c.var:cm_pf_b1_cp }
+			if = {
+				limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
+				set_local_variable = { name = cm_pf_th_gpop value = scope:cm_pf_c.var:cm_pf_b1_gpop }
+				set_local_variable = { name = cm_pf_th_cpop value = scope:cm_pf_c.var:cm_pf_b1_cpop }
+			}
 		}
 		else = {
 			# 1.25: skips only what is provably below 125% of the found best, keeping the
@@ -2258,6 +2614,23 @@ cm_pf_score_candidate_pruned = {
 				value = {
 					value = scope:cm_pf_c.var:cm_pf_b1_cp
 					multiply = 1.25
+				}
+			}
+			if = {
+				limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
+				set_local_variable = {
+					name = cm_pf_th_gpop
+					value = {
+						value = scope:cm_pf_c.var:cm_pf_b1_gpop
+						multiply = 1.25
+					}
+				}
+				set_local_variable = {
+					name = cm_pf_th_cpop
+					value = {
+						value = scope:cm_pf_c.var:cm_pf_b1_cpop
+						multiply = 1.25
+					}
 				}
 			}
 		}
@@ -2293,6 +2666,40 @@ cm_pf_score_candidate_pruned = {
 				limit = {
 					local_var:cm_pf_do_c = 1
 					var:cm_pf_ub_ct < local_var:cm_pf_th_ct
+				}
+				set_local_variable = { name = cm_pf_do_c value = 0 }
+				set_local_variable = { name = cm_pf_bskip_c value = 1 }
+			}
+		}
+		else_if = {
+			limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
+			if = {
+				limit = {
+					local_var:cm_pf_do_g = 1
+					NOT = { has_variable = cm_pf_sx }
+				}
+				set_local_variable = {
+					name = cm_pf_cap_g
+					value = {
+						value = var:cm_pf_t
+						multiply = scope:cm_pf_c.var:cm_pf_ppos
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							var:cm_pf_ub_gpop < local_var:cm_pf_th_gpop
+							local_var:cm_pf_cap_g < local_var:cm_pf_th_gpop
+						}
+					}
+					set_local_variable = { name = cm_pf_do_g value = 0 }
+					set_local_variable = { name = cm_pf_bskip_g value = 1 }
+				}
+			}
+			if = {
+				limit = {
+					local_var:cm_pf_do_c = 1
+					var:cm_pf_ub_cpop < local_var:cm_pf_th_cpop
 				}
 				set_local_variable = { name = cm_pf_do_c value = 0 }
 				set_local_variable = { name = cm_pf_bskip_c value = 1 }
@@ -2347,9 +2754,14 @@ cm_pf_score_candidate_pruned = {
 			limit = { scope:cm_pf_c.var:cm_pf_acc <= 4 }
 			set_local_variable = { name = cm_pf_fv value = var:cm_pf_gf_raw }
 			set_local_variable = { name = cm_pf_fvp value = var:cm_pf_gf_raw_p }
+			set_local_variable = { name = cm_pf_fvpop value = var:cm_pf_gf_raw_pop }
 			scope:cm_pf_c = {
 				cm_pf_best3_fold = { C = gt V = cm_pf_fv }
 				cm_pf_best3_fold = { C = gp V = cm_pf_fvp }
+				if = {
+					limit = { cm_pf_method_is_population = yes }
+					cm_pf_best3_fold = { C = gpop V = cm_pf_fvpop }
+				}
 			}
 		}
 	}
@@ -2369,9 +2781,14 @@ cm_pf_score_candidate_pruned = {
 			limit = { scope:cm_pf_c.var:cm_pf_acc <= 4 }
 			set_local_variable = { name = cm_pf_fv value = var:cm_pf_cf_raw }
 			set_local_variable = { name = cm_pf_fvp value = var:cm_pf_cf_raw_p }
+			set_local_variable = { name = cm_pf_fvpop value = var:cm_pf_cf_raw_pop }
 			scope:cm_pf_c = {
 				cm_pf_best3_fold = { C = ct V = cm_pf_fv }
 				cm_pf_best3_fold = { C = cp V = cm_pf_fvp }
+				if = {
+					limit = { cm_pf_method_is_population = yes }
+					cm_pf_best3_fold = { C = cpop V = cm_pf_fvpop }
+				}
 			}
 		}
 	}
@@ -2559,6 +2976,15 @@ cm_pf_refine_mark_round = {
 		cm_pf_refine_mark_top = { RAW = cf_raw_p POS = 0 }
 		cm_pf_refine_mark_top = { RAW = cf_raw_p POS = 1 }
 		cm_pf_refine_mark_top = { RAW = cf_raw_p POS = 2 }
+		if = {
+			limit = { cm_pf_method_is_population = yes }
+			cm_pf_refine_mark_top = { RAW = gf_raw_pop POS = 0 }
+			cm_pf_refine_mark_top = { RAW = gf_raw_pop POS = 1 }
+			cm_pf_refine_mark_top = { RAW = gf_raw_pop POS = 2 }
+			cm_pf_refine_mark_top = { RAW = cf_raw_pop POS = 0 }
+			cm_pf_refine_mark_top = { RAW = cf_raw_pop POS = 1 }
+			cm_pf_refine_mark_top = { RAW = cf_raw_pop POS = 2 }
+		}
 	}
 }
 
@@ -2699,13 +3125,21 @@ cm_pf_finalize = {
 	set_variable = { name = cm_pf_gf_max value = 0 }
 	set_variable = { name = cm_pf_cf_max value = 0 }
 	# Predicted tax base gain: cm_pf_gf_raw is wealth-weighted proximity, times 0.0075 (control rises
-	# 0.75 per unit of proximity, and proximity is 0-100 in the search, so 0.75/100). Then in proximity
-	# mode retarget the score/rank basis from the weighted sum to the unweighted one. Each mode's
-	# loops guard on its own raw: accuracy 2+ can evaluate a location for one mode and skip the other.
+	# 0.75 per unit of proximity, and proximity is 0-100 in the search, so 0.75/100). Population gain
+	# is the population-weighted sum over 100, which reads as the population that would have to be
+	# brought from nothing to full proximity to match it. Both are baked before the retarget below,
+	# which moves the score and rank basis off the wealth-weighted sum for the two methods that do
+	# not rank by it. Each mode's loops guard on its own raw: accuracy 2+ can evaluate a location
+	# for one mode and skip the other.
 	every_owned_location = {
 		limit = { has_variable = cm_pf_gf_raw }
 		set_variable = { name = cm_gf_taxgain value = { value = var:cm_pf_gf_raw multiply = 0.0075 } }
+		set_variable = { name = cm_gf_popgain value = { value = var:cm_pf_gf_raw_pop divide = 100 } }
 		if = {
+			limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
+			set_variable = { name = cm_pf_gf_raw value = var:cm_pf_gf_raw_pop }
+		}
+		else_if = {
 			limit = { scope:cm_pf_c = { NOT = { cm_pf_method_is_tax_base = yes } } }
 			set_variable = { name = cm_pf_gf_raw value = var:cm_pf_gf_raw_p }
 		}
@@ -2713,7 +3147,12 @@ cm_pf_finalize = {
 	every_owned_location = {
 		limit = { has_variable = cm_pf_cf_raw }
 		set_variable = { name = cm_cf_taxgain value = { value = var:cm_pf_cf_raw multiply = 0.0075 } }
+		set_variable = { name = cm_cf_popgain value = { value = var:cm_pf_cf_raw_pop divide = 100 } }
 		if = {
+			limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
+			set_variable = { name = cm_pf_cf_raw value = var:cm_pf_cf_raw_pop }
+		}
+		else_if = {
 			limit = { scope:cm_pf_c = { NOT = { cm_pf_method_is_tax_base = yes } } }
 			set_variable = { name = cm_pf_cf_raw value = var:cm_pf_cf_raw_p }
 		}
@@ -2927,10 +3366,13 @@ cm_pf_clean_location = {
 	remove_variable = cm_pf_cs
 	remove_variable = cm_pf_wd
 	remove_variable = cm_pf_w
+	remove_variable = cm_pf_wpop
 	remove_variable = cm_pf_gf_raw
 	remove_variable = cm_pf_gf_raw_p
+	remove_variable = cm_pf_gf_raw_pop
 	remove_variable = cm_pf_cf_raw
 	remove_variable = cm_pf_cf_raw_p
+	remove_variable = cm_pf_cf_raw_pop
 	remove_variable = cm_pf_div_g
 	remove_variable = cm_pf_div_c
 	remove_variable = cm_pf_div_cb
@@ -2941,6 +3383,8 @@ cm_pf_clean_location = {
 	remove_variable = cm_pf_ub_gp
 	remove_variable = cm_pf_ub_ct
 	remove_variable = cm_pf_ub_cp
+	remove_variable = cm_pf_ub_gpop
+	remove_variable = cm_pf_ub_cpop
 	remove_variable = cm_pf_ub_ord
 	remove_variable = cm_pf_dref_min
 	remove_variable = cm_pf_samp
@@ -2988,13 +3432,22 @@ cm_pf_clean_country = {
 	remove_variable = cm_pf_b1_cp
 	remove_variable = cm_pf_b2_cp
 	remove_variable = cm_pf_b3_cp
+	remove_variable = cm_pf_b1_gpop
+	remove_variable = cm_pf_b2_gpop
+	remove_variable = cm_pf_b3_gpop
+	remove_variable = cm_pf_b1_cpop
+	remove_variable = cm_pf_b2_cpop
+	remove_variable = cm_pf_b3_cpop
 	remove_variable = cm_pf_cx_gt
 	remove_variable = cm_pf_cx_gp
 	remove_variable = cm_pf_cx_ct
 	remove_variable = cm_pf_cx_cp
+	remove_variable = cm_pf_cx_gpop
+	remove_variable = cm_pf_cx_cpop
 	remove_variable = cm_pf_tmax
 	remove_variable = cm_pf_npos
 	remove_variable = cm_pf_wpos
+	remove_variable = cm_pf_ppos
 	clear_variable_list = cm_pf_front
 	clear_variable_map = cm_pf_tb_gc
 	clear_variable_map = cm_pf_tb_gk
@@ -3012,4 +3465,12 @@ cm_pf_clean_country = {
 	clear_variable_map = cm_pf_tb2_ck
 	clear_variable_map = cm_pf_tb2_cwc
 	clear_variable_map = cm_pf_tb2_cwk
+	clear_variable_map = cm_pf_tb_gpopc
+	clear_variable_map = cm_pf_tb_gpopk
+	clear_variable_map = cm_pf_tb_cpopc
+	clear_variable_map = cm_pf_tb_cpopk
+	clear_variable_map = cm_pf_tb2_gpopc
+	clear_variable_map = cm_pf_tb2_gpopk
+	clear_variable_map = cm_pf_tb2_cpopc
+	clear_variable_map = cm_pf_tb2_cpopk
 }
