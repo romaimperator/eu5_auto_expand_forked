@@ -16,7 +16,7 @@ cm_ab_monthly_budget_refresh = {
 	}
 	else = {
 		set_local_variable = { name = cm_ab_split value = gold }
-		change_local_variable = { name = cm_ab_split subtract = cm_get_full_reserve }
+		change_local_variable = { name = cm_ab_split subtract = cm_get_minimum_gold }
 		# Held allotments come off the top, so no other category is handed gold one of them is
 		# saving for.
 		change_local_variable = { name = cm_ab_split subtract = cm_ab_reserved_total }
@@ -55,7 +55,7 @@ cm_ab_clamp_pool = {
 	if = {
 		limit = { has_variable = cm_ab_pool_$cat$ }
 		set_local_variable = { name = cm_ab_cap value = gold }
-		change_local_variable = { name = cm_ab_cap subtract = cm_get_full_reserve }
+		change_local_variable = { name = cm_ab_cap subtract = cm_get_minimum_gold }
 		change_local_variable = { name = cm_ab_cap max = 0 }
 		change_local_variable = { name = cm_ab_cap multiply = var:cm_ab_$cat$_budget }
 		change_local_variable = { name = cm_ab_cap multiply = 0.01 }

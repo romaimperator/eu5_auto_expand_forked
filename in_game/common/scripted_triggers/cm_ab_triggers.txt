@@ -76,7 +76,7 @@ cm_ab_may_borrow = {
 
 # Affordability gate for Auto-Build approvals: anything left in the category pool covers a
 # borrowing category's pick, the whole cost otherwise, and the treasury stays above the
-# full reserve after this drain's committed spend.
+# gold reserve after this drain's committed spend.
 # $POOL$ = the category pool variable name. Expects scope:cm_country, scope:cm_cost.
 cm_ab_can_afford = {
 	scope:cm_country = {
@@ -91,7 +91,7 @@ cm_ab_can_afford = {
 
 # The treasury half of cm_ab_can_afford. Expects scope:cm_country, scope:cm_cost.
 cm_ab_treasury_covers_cost = {
-	scope:cm_country = { gold >= { value = scope:cm_cost add = cm_get_full_reserve add = var:cm_q_planned_spend } }
+	scope:cm_country = { gold >= { value = scope:cm_cost add = cm_get_minimum_gold add = var:cm_q_planned_spend } }
 }
 
 # Per-level affordability for an Auto-Build batch: the pool balance the batch has left,
