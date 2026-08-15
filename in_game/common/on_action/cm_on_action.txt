@@ -22,6 +22,25 @@ cm_pop_month_tick = {
 	}
 }
 
+# Four-yearly in singleplayer, twelve-yearly in multiplayer, both paced by the cooldown the effect
+# sets rather than by this leaf. Merges with the Auto-Build Roads leaf on the same pulse.
+four_yearly_country_pulse = {
+	on_actions = {
+		cm_upgrade_refresh_pulse
+	}
+}
+
+# Root is the country. The pulse fires for every country in the world; a human is enough to carry
+# the refresh, since the map it rebuilds is global and the driver reads the local player either way.
+cm_upgrade_refresh_pulse = {
+	trigger = {
+		is_ai = no
+	}
+	effect = {
+		cm_arm_upgrade_refresh_if_due = yes
+	}
+}
+
 # Refresh the CMF settings lists each month so newly available items appear.
 cm_update_all_list_visibility = {
 	effect = {

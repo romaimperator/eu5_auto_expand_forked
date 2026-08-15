@@ -3,12 +3,12 @@
 # the passes record is a global map that saves and reloads with the game, so a load that reuses them
 # skips five GUI passes over every building type and their nested demand and production-method
 # datamodels. Replacement tiers are the one part that cannot be reused: GetNextReplacementBuilding
-# returns only what the loading player has unlocked (cmf-engine-test 199-203), so a reused
-# classification arms the upgrade-map refresh in its place, in singleplayer only. Whether unlocks
-# are the ONLY thing it filters on is untested; that run varied nothing but an advance.
-# The list itself is rebuilt every time: it is the
-# datamodel both drivers bind to, and the driver that fires the refresh has to have every type
-# under it.
+# returns only what the recording player had unlocked (cmf-engine-test 199-203; whether unlocks are
+# the ONLY thing it filters on is untested, that run varying nothing but an advance), so those are
+# refreshed on their own cadence instead - see cm_arm_upgrade_refresh_if_due below. Nothing arms
+# that refresh at load.
+# The list itself is rebuilt every time: it is the datamodel both drivers bind to, and the driver
+# that fires the refresh has to have every type under it.
 # Called from on_game_start_after_lobby and on_game_load_after_lobby, once per lobby, not per player.
 cm_populate_building_types_to_process = {
   clear_global_variable_list = cm_building_types_to_process
@@ -33,15 +33,44 @@ cm_populate_building_types_to_process = {
     # Trigger building classification in the hidden window GUI
     set_global_variable = { name = cm_process_buildings value = yes }
   }
-  else = {
-    # GetNextReplacementBuilding reports only the loading player's unlocks, so this global map holds
-    # one player's tiers however it is refreshed, and the refresh costs one broadcast Execute per
-    # building type inside the load handshake. cm_ab_resolve_building_type still arms it mid-session
-    # when an obsolete type turns up with no entry.
+}
+
+# Days between upgrade-map refreshes. The map holds what the recording player had unlocked
+# (cmf-engine-test 199-203), so it goes stale as advances come in and there is nothing
+# version-stable to stamp it against; a cadence is what stands in for a stamp. Multiplayer takes
+# every third four-yearly pulse rather than every one, the refresh costing a broadcast Execute per
+# building type there against a local one in singleplayer.
+# Both sit under their interval rather than on it, because four_yearly_country_pulse fires per
+# country and nothing here relies on the countries all reaching it on the same day: the slack is
+# what stops the rest of the world re-arming behind the first country through an expired timer.
+@cm_upgrade_refresh_days_sp = 1400
+@cm_upgrade_refresh_days_mp = 4300
+
+# Arms the upgrade-map refresh once its cooldown has run out, from four_yearly_country_pulse.
+# The timer is what makes this once per cadence rather than once per country: whoever arrives first
+# restarts it and every other country that pulse finds it live. cm_ab_resolve_building_type still
+# arms the refresh between cadences when an obsolete type turns up with no entry at all, which is
+# what covers a chain unlocked moments after a refresh.
+# No scope.
+cm_arm_upgrade_refresh_if_due = {
+  if = {
+    limit = { NOT = { has_global_variable = cm_upgrade_refresh_cd } }
     if = {
       limit = { is_multiplayer_session = no }
-      set_global_variable = { name = cm_refresh_upgrade_types value = yes }
+      set_global_variable = {
+        name = cm_upgrade_refresh_cd
+        value = 1
+        days = @cm_upgrade_refresh_days_sp
+      }
     }
+    else = {
+      set_global_variable = {
+        name = cm_upgrade_refresh_cd
+        value = 1
+        days = @cm_upgrade_refresh_days_mp
+      }
+    }
+    set_global_variable = { name = cm_refresh_upgrade_types value = yes }
   }
 }
 
