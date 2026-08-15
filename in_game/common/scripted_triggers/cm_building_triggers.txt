@@ -437,6 +437,19 @@ cm_is_building_type_production_building = {
 }
 
 
+# Types the slot-filling batch may queue several levels of in one cycle. The production flag is
+# also the multi-level test, which is what keeps a single-level type out. granary runs no
+# production method with an output so that flag misses it, while its cap is guild_max_level and
+# every level grants local_food_capacity 500 (in_game/common/building_types/town_buildings.txt:149).
+# Root is the building type.
+cm_building_type_batches_levels = {
+	OR = {
+		cm_is_building_type_production_building = yes
+		this = building_type:granary
+	}
+}
+
+
 # Root is the location.
 cm_location_has_governor = {
 	OR = {

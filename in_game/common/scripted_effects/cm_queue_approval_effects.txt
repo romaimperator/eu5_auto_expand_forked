@@ -490,9 +490,7 @@ cm_q_fill_build_slots = {
 		if = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
-				# Only producing, multi-level types batch: a single-level type reaching this loop
-				# queued a second level of it.
-				scope:cm_building_type = { cm_is_building_type_production_building = yes }
+				scope:cm_building_type = { cm_building_type_batches_levels = yes }
 				# The batch's own count against the engine cap. building_max_level is building scope
 				# and reports correctly where building_type_max_level reads 0 (cmf-engine-test 176),
 				# so a type with nothing of ours standing here yet cannot be read and is left to the
