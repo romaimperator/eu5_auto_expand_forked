@@ -4,6 +4,11 @@
 # Share of the seat it takes over from a site must beat before it is worth moving a governor.
 @cm_gov_displace_margin = 110
 
+# Share of the run's best a standing city must reach to be taken over a site the plan would have to
+# found a city on first, and the tax base gain that founding must beat to be worth doing anyway.
+@cm_gov_standing_margin = 95
+@cm_gov_standing_tax_gap = 30
+
 # Share of its first score a pick must still reach on the re-check to be kept. Both halves of the
 # plan read it and an @ constant only resolves inside the file that declares it.
 cm_gov_probe_keep_value = {
@@ -166,4 +171,20 @@ cm_gov_displace_bar = {
 	}
 	multiply = @cm_gov_displace_margin
 	divide = 100
+}
+
+# What a standing city must score to be taken instead of the pick, on the scale of the run that
+# scored both. Expects scope:cm_gov_probe_pick.
+cm_gov_standing_bar = {
+	value = scope:cm_gov_probe_pick.var:cm_gf_score
+	multiply = @cm_gov_standing_margin
+	divide = 100
+}
+
+# The tax base gain that same city must reach. Every location the pick was drawn from carries both
+# outputs, cm_pf_finalize writing them under one guard and every remover dropping them together.
+# Expects scope:cm_gov_probe_pick.
+cm_gov_standing_tax_floor = {
+	value = scope:cm_gov_probe_pick.var:cm_gf_taxgain
+	subtract = @cm_gov_standing_tax_gap
 }

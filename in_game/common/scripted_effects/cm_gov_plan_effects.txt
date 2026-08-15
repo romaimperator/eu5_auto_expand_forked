@@ -344,42 +344,58 @@ cm_gov_reorg_probe_open = {
 		order_by = { value = var:cm_gf_score }
 		position = 0
 		check_range_bounds = no
-		limit = {
-			has_variable = cm_gf_score
-			NOT = { has_variable = cm_gov_probe_reject }
-			# Once the free room is gone every further site has to take a standing seat over, and the
-			# player pays again for the governor it puts back up. So the move has to earn itself: the
-			# site is already a city, where it costs only the governor, or it scores far enough above
-			# the seat it takes over from to carry the rank upgrade too. Both scores come from this
-			# run, so they share its scale. The two kinds of room are read together rather than one
-			# per kind, since a country holding naval slots at all is the rare case; where it does,
-			# the bar does not apply. A lucky nation rebuilds a seat it has already bought for free
-			# and takes no bar.
-			trigger_if = {
-				limit = {
-					scope:cm_country = {
-						cm_ln_is_active = no
-						var:cm_gov_land_free_left <= 0
-						var:cm_gov_naval_free_left <= 0
-					}
-				}
-				OR = {
-					location_rank = location_rank:city
-					location_rank = location_rank:megalopolis
-					var:cm_gf_score >= cm_gov_displace_bar
-				}
-			}
-		}
+		limit = { cm_gov_probe_candidate = yes }
 		save_scope_as = cm_gov_probe_pick
 		set_local_variable = { name = cm_gov_picked value = 1 }
-		scope:cm_country = { cm_gov_probe_start = { SCORE = cm_gf_score } }
+	}
+	if = {
+		limit = { local_var:cm_gov_picked = 1 }
+		cm_gov_prefer_standing_city = yes
+		cm_gov_probe_start = { SCORE = cm_gf_score }
 	}
 	# Nothing left the search would take, so the plan is as full as the map allows and the confirm
 	# step is free to end the run with the remaining room unfilled.
-	if = {
-		limit = { local_var:cm_gov_picked = 0 }
+	else = {
 		set_variable = { name = cm_gov_plan_exhausted value = 1 }
 		set_variable = { name = cm_gov_phase value = 4 }
+	}
+}
+
+# The best site can be one the plan has to found a town and a city on before a governor can stand
+# there, which costs both Found buildings, the months they take, and the treasury hold while it saves
+# for them. A city already standing takes its place where it comes within @cm_gov_standing_margin of
+# its score and founding is worth under @cm_gov_standing_tax_gap of tax base more. Both bars sit in
+# the limit, so the best city clearing them wins rather than the best city outright, which is what
+# separates them on the proximity method where score and tax base part company. A city can never
+# outscore the pick, both being drawn from the set the pick topped.
+# Root is the country, scope:cm_country set. Expects scope:cm_gov_probe_pick and may replace it.
+cm_gov_prefer_standing_city = {
+	if = {
+		limit = { scope:cm_gov_probe_pick = { cm_gov_target_needs_rank = yes } }
+		set_local_variable = { name = cm_gov_swapped value = 0 }
+		ordered_owned_location = {
+			order_by = { value = var:cm_gf_score }
+			position = 0
+			check_range_bounds = no
+			limit = {
+				cm_gov_probe_candidate = yes
+				cm_gov_target_needs_rank = no
+				var:cm_gf_score >= cm_gov_standing_bar
+				var:cm_gf_taxgain >= cm_gov_standing_tax_floor
+			}
+			set_local_variable = { name = cm_gov_swapped value = 1 }
+			save_temporary_scope_as = cmf_log_loc
+			# The limit read the pick for every candidate, so the swap lands after the whole scan.
+			save_scope_as = cm_gov_probe_pick
+			scope:cm_country = { cm_dbg_log_at_loc = { cat = governors action = cm_gov_log_kept_city } }
+		}
+		# The other half of the decision, so the two Found buildings the plan is about to pay for have
+		# a line saying nothing standing was close enough.
+		if = {
+			limit = { local_var:cm_gov_swapped = 0 }
+			scope:cm_gov_probe_pick = { save_temporary_scope_as = cmf_log_loc }
+			cm_dbg_log_at_loc = { cat = governors action = cm_gov_log_no_city }
+		}
 	}
 }
 

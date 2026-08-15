@@ -162,6 +162,15 @@ cm_run_construction_cycle = {
 			# One scan driver serves every lucky nation, so their arm is global; several
 			# arming in one tick still produce one sweep.
 			if = { limit = { cm_ln_is_active = yes }
+				# On the rising edge only. cm_ln_c_process clears the rows as it consumes them, so a
+				# set can only survive a save taken between the sweep appending and the tail command
+				# running; clearing here rather than leaning on the lobby setup is what covers a load
+				# that never reaches it, an observer one among them. A second country arming while the
+				# flag is up must not wipe rows already staged.
+				if = {
+					limit = { NOT = { has_global_variable = cm_ln_scan_armed } }
+					cm_ln_c_rows_clear = yes
+				}
 				set_global_variable = { name = cm_ln_scan_armed value = 1 }
 			} else = {
 				set_variable = { name = cm_q_scan_armed value = yes }
