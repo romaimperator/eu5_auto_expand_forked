@@ -24,7 +24,7 @@ cm_populate_building_types_to_process = {
     clear_global_variable_map = cm_building_type_processed
     clear_global_variable_list = cm_base_goods
     # Written by the rgob collect wave, so it is rebuilt with the rest of the classification.
-    clear_global_variable_map = cm_cu_core_in
+    clear_global_variable_map = cm_bt_core_input
     # Written by the rgob scan wave, and outlives the scan state the sweep clears.
     clear_global_variable_map = cm_bt_output
     cm_rgob_reset_classification = yes
@@ -33,6 +33,36 @@ cm_populate_building_types_to_process = {
     # Trigger building classification in the hidden window GUI
     set_global_variable = { name = cm_process_buildings value = yes }
   }
+}
+
+# Flags a building type whose majority input is one of the four construction materials.
+# Fired from cm_rgob_collect_entry per goods demand entry of a worth-using method, so it
+# reuses that wave's per-method input total. Expects scope:cm_rgob_bt, scope:cm_rgob_pm,
+# scope:cm_rgob_good, scope:cm_rgob_amount.
+cm_bt_mark_core_input = {
+	if = {
+		limit = {
+			scope:cm_rgob_amount > 0
+			is_key_in_global_variable_map = { name = cm_rgob_total target = scope:cm_rgob_pm }
+			scope:cm_rgob_good = {
+				OR = {
+					this = goods:masonry
+					this = goods:lumber
+					this = goods:sand
+					this = goods:glass
+				}
+			}
+		}
+		set_local_variable = { name = cm_bt_ci_tot value = "global_variable_map(cm_rgob_total|scope:cm_rgob_pm)" }
+		if = {
+			limit = { local_var:cm_bt_ci_tot > 0 }
+			set_local_variable = { name = cm_bt_ci_share value = { value = scope:cm_rgob_amount divide = local_var:cm_bt_ci_tot } }
+			if = {
+				limit = { local_var:cm_bt_ci_share > 0.5 }
+				add_to_global_variable_map = { name = cm_bt_core_input key = scope:cm_rgob_bt value = 1 }
+			}
+		}
+	}
 }
 
 # Days between upgrade-map refreshes. The map holds what the recording player had unlocked

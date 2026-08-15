@@ -193,6 +193,28 @@ cm_bld_marginal_good_matches = {
 	trigger_else = { always = no }
 }
 
+# Whether the classification recorded this type as making a good the construction chain runs on:
+# the four materials, plus the two masonry itself is made from, so a supplier of those is not held
+# back by a rule meant to protect them (mason's stone_bricks method takes stone 0.417 and its
+# clay_bricks method clay 0.833, game/in_game/common/building_types/common_buildings.txt).
+# Root is the building type. The Building Cleanup twin cm_cu_produces_core_good reads
+# building_produced_goods off a standing building, which a from-zero candidate has none of.
+cm_bt_type_produces_construction_good = {
+	save_temporary_scope_as = cm_bt_cg_t
+	has_global_variable_map = cm_building_type_to_produced_good
+	is_key_in_global_variable_map = { name = cm_building_type_to_produced_good target = scope:cm_bt_cg_t }
+	"global_variable_map(cm_building_type_to_produced_good|scope:cm_bt_cg_t)" = {
+		OR = {
+			this = goods:masonry
+			this = goods:lumber
+			this = goods:sand
+			this = goods:glass
+			this = goods:stone
+			this = goods:clay
+		}
+	}
+}
+
 # Metric gate for the GUI construction executor. Expects scopes: country, building_type,
 # cost, income, profit. Non-production types, zero construction demand, and a zero
 # threshold are exempt. The threshold is monthly gold per level for Tax Income and

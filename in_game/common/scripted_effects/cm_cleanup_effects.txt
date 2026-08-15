@@ -201,36 +201,6 @@ cm_cu_auto_food_pass = {
 	}
 }
 
-# Flags a building type whose majority input is one of the four construction materials.
-# Fired from cm_rgob_collect_entry per goods demand entry of a worth-using method, so it
-# reuses that wave's per-method input total. Expects scope:cm_rgob_bt, scope:cm_rgob_pm,
-# scope:cm_rgob_good, scope:cm_rgob_amount.
-cm_cu_mark_core_input = {
-	if = {
-		limit = {
-			scope:cm_rgob_amount > 0
-			is_key_in_global_variable_map = { name = cm_rgob_total target = scope:cm_rgob_pm }
-			scope:cm_rgob_good = {
-				OR = {
-					this = goods:masonry
-					this = goods:lumber
-					this = goods:sand
-					this = goods:glass
-				}
-			}
-		}
-		set_local_variable = { name = cm_cu_tot value = "global_variable_map(cm_rgob_total|scope:cm_rgob_pm)" }
-		if = {
-			limit = { local_var:cm_cu_tot > 0 }
-			set_local_variable = { name = cm_cu_share value = { value = scope:cm_rgob_amount divide = local_var:cm_cu_tot } }
-			if = {
-				limit = { local_var:cm_cu_share > 0.5 }
-				add_to_global_variable_map = { name = cm_cu_core_in key = scope:cm_rgob_bt value = 1 }
-			}
-		}
-	}
-}
-
 # Drops tracking for buildings that are gone, no longer ours, or open again, so a building
 # reopened by hand goes back to the player and a close that never landed becomes a fresh
 # candidate. Root is the country, scope:cm_country set.

@@ -1,5 +1,10 @@
 ﻿# Auto-Build gates.
 
+# The payback a construction-material consumer has to make, against the general cap's 20 default.
+# Deliberately not driven off that cap: a lucky nation's climbs toward 100 as gold accumulates
+# (cm_ln_production_min_roi_value), which is exactly when it mass-builds these.
+@cm_ab_prod_core_max_roi = 10
+
 # Root is the country.
 cm_ab_master_active = {
 	exists = var:cm_ab_enabled
@@ -132,6 +137,28 @@ cm_ab_prod_roi_passes = {
 		$COST$ <= {
 			value = cm_bld_adjusted_income
 			multiply = scope:cm_country.var:cm_ab_production_min_roi
+			multiply = 12
+		}
+	}
+}
+
+# A construction-material consumer draws on the same masonry, lumber, sand and glass every other
+# build in the country is competing for, and that draw is permanent while the payback is one-off,
+# so it is held to a shorter payback than the general cap. Passes untouched for every other type,
+# and for one that makes a construction good itself. Runs after cm_ab_prod_roi_passes, which has
+# already established income above 0. Root is the item's location.
+# Expects scope:cm_country, scope:cm_income; $COST$ = the cost value,
+# $TYPE$ = the scope holding the type that gets built.
+cm_ab_prod_core_roi_passes = {
+	trigger_if = {
+		limit = {
+			has_global_variable_map = cm_bt_core_input
+			is_key_in_global_variable_map = { name = cm_bt_core_input target = $TYPE$ }
+			$TYPE$ = { cm_bt_type_produces_construction_good = no }
+		}
+		$COST$ <= {
+			value = cm_bld_adjusted_income
+			multiply = @cm_ab_prod_core_max_roi
 			multiply = 12
 		}
 	}
