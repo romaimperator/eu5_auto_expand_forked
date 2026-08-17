@@ -152,7 +152,7 @@ cm_ln_c_process = {
 			if = {
 				limit = {
 					exists = global_var:cm_dbg_core
-					exists = scope:cm_country
+					local_var:cm_ln_c_y > 0
 				}
 				scope:cm_country = { cm_ab_core_count = { N = cm_ab_core_c_rows V = 1 } }
 				if = {
@@ -160,8 +160,14 @@ cm_ln_c_process = {
 					scope:cm_country = { cm_ab_core_count = { N = cm_ab_core_c_rows_b V = 1 } }
 				}
 			}
+			# A row whose country id renders 0 is dropped rather than scored. Nothing can unset a
+			# temporary scope, so scope:cm_country would otherwise still name whichever country the
+			# previous row in the walk resolved.
 			if = {
-				limit = { local_var:cm_ln_c_l > 0 }
+				limit = {
+					local_var:cm_ln_c_y > 0
+					local_var:cm_ln_c_l > 0
+				}
 				"global_variable_map(cm_ln_loc_of_id|local_var:cm_ln_c_l)" = {
 					save_temporary_scope_as = cm_indirect_loc
 					save_temporary_scope_value_as = { name = cm_cur_market_access value = market_access }

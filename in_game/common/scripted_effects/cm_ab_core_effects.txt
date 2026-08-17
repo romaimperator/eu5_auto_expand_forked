@@ -259,10 +259,13 @@ cm_ab_core_count = {
 # Root is the country, scope:cm_country set.
 cm_ab_run_core = {
 	cm_ab_core_reset_counts = yes
-	every_market_center_in_country = {
-		limit = { cm_market_in_slice = yes }
-		save_scope_as = cm_ab_market
-		scope:cm_country = { cm_ab_stage_core_market = yes }
+	if = {
+		limit = { has_variable_list = cm_ab_core_goods_enabled }
+		every_in_list = {
+			variable = cm_ab_core_goods_enabled
+			save_scope_as = cm_ab_core_item
+			scope:cm_country = { cm_ab_stage_core_material = yes }
+		}
 	}
 	cm_ab_core_count_marks = yes
 }
@@ -287,46 +290,71 @@ cm_ab_core_count_marks = {
 	}
 }
 
-# Stages one market's candidates, each material under its own level count.
-# Root is the country, expects scope:cm_ab_market.
-cm_ab_stage_core_market = {
+# One material across every market whose center the country owns, under its own level count per
+# market. The walk is material-major so the lead producer's tier is resolved once instead of once
+# per market: the answer is the country's own advances, the same everywhere. That resolve also
+# rebuilds cm_ab_chain_predecessors, which glass's second producer overwrites, so the pair is
+# cached here and restored at the top of each market.
+# Root is the country, expects scope:cm_ab_core_item.
+cm_ab_stage_core_material = {
 	if = {
-		limit = { has_variable_list = cm_ab_core_goods_enabled }
-		every_in_list = {
-			variable = cm_ab_core_goods_enabled
-			save_scope_as = cm_ab_core_item
-			scope:cm_country = { cm_ab_stage_core_good = yes }
-		}
+		limit = { scope:cm_ab_core_item = goods:masonry }
+		building_type:mason = { save_scope_as = cm_building_type }
+	}
+	else_if = {
+		limit = { scope:cm_ab_core_item = goods:lumber }
+		goods:lumber = { save_scope_as = cm_ab_good }
+		building_type:lumber_mill = { save_scope_as = cm_building_type }
+	}
+	else_if = {
+		limit = { scope:cm_ab_core_item = goods:sand }
+		goods:sand = { save_scope_as = cm_ab_good }
+		building_type:sand_pit = { save_scope_as = cm_building_type }
+	}
+	else = {
+		building_type:glass_guild = { save_scope_as = cm_building_type }
+	}
+	scope:cm_building_type = { save_scope_as = cm_ab_core_base }
+	cm_ab_resolve_building_type = yes
+	scope:cm_building_type = { save_scope_as = cm_ab_core_lead }
+	clear_variable_list = cm_ab_core_lead_preds
+	every_in_list = {
+		variable = cm_ab_chain_predecessors
+		save_temporary_scope_as = cm_ab_core_pred
+		scope:cm_country = { add_to_variable_list = { name = cm_ab_core_lead_preds target = scope:cm_ab_core_pred } }
+	}
+	every_market_center_in_country = {
+		limit = { cm_market_in_slice = yes }
+		save_scope_as = cm_ab_market
+		scope:cm_country = { cm_ab_stage_core_good = yes }
+	}
+	clear_variable_list = cm_ab_core_lead_preds
+}
+
+# Puts the material's lead producer and the chain it was resolved from back in scope, a second
+# producer's own resolve having overwritten both. Root is the country, expects scope:cm_ab_core_base,
+# scope:cm_ab_core_lead.
+cm_ab_core_restore_lead = {
+	scope:cm_ab_core_base = { save_scope_as = cm_ab_settings_type }
+	scope:cm_ab_core_lead = { save_scope_as = cm_building_type }
+	clear_variable_list = cm_ab_chain_predecessors
+	every_in_list = {
+		variable = cm_ab_core_lead_preds
+		save_temporary_scope_as = cm_ab_core_pred
+		scope:cm_country = { add_to_variable_list = { name = cm_ab_chain_predecessors target = scope:cm_ab_core_pred } }
 	}
 }
 
 # Sets local_var:cm_ab_core_want to the producer levels scope:cm_ab_core_item's
-# shortfall needs in scope:cm_ab_market, and 0 once its goal price is reached. Leaves
-# scope:cm_building_type on the material's lead producer, whose per-level output is what turns
-# a goods shortfall into a level count. Root is the country, expects scope:cm_ab_market and
-# scope:cm_ab_core_item.
+# shortfall needs in scope:cm_ab_market, and 0 once its goal price is reached.
+# scope:cm_building_type is the lead producer cm_ab_stage_core_material resolved, whose per-level
+# output is what turns a goods shortfall into a level count. Root is the country, expects
+# scope:cm_ab_market and scope:cm_ab_core_item.
 cm_ab_core_size_good = {
 	set_local_variable = { name = cm_ab_core_want value = 0 }
 	scope:cm_ab_core_item = { save_temporary_scope_as = cm_ab_good_t }
 	if = {
 		limit = { NOT = { cm_ab_core_target_met = yes } }
-		if = {
-			limit = { scope:cm_ab_core_item = goods:masonry }
-			building_type:mason = { save_scope_as = cm_building_type }
-		}
-		else_if = {
-			limit = { scope:cm_ab_core_item = goods:lumber }
-			building_type:lumber_mill = { save_scope_as = cm_building_type }
-		}
-		else_if = {
-			limit = { scope:cm_ab_core_item = goods:sand }
-			building_type:sand_pit = { save_scope_as = cm_building_type }
-		}
-		else_if = {
-			limit = { scope:cm_ab_core_item = goods:glass }
-			building_type:glass_guild = { save_scope_as = cm_building_type }
-			cm_ab_resolve_building_type = yes
-		}
 		set_local_variable = { name = cm_ab_core_want value = scope:cm_ab_market.cm_ab_core_levels_wanted }
 		if = {
 			limit = { scope:cm_ab_market = { cm_ab_core_market_watched = yes } }
@@ -372,32 +400,27 @@ cm_ab_core_size_good = {
 	}
 }
 
-# Stages one material's candidates under its own level count, which is 0 once its goal price
-# is reached. Root is the country, expects scope:cm_ab_market and scope:cm_ab_core_item.
+# Stages one material's candidates in one market under its own level count, which is 0 once its
+# goal price is reached. RGO expansions come before producer buildings, and glass's rural tier
+# after its lead. Root is the country, expects scope:cm_ab_market and scope:cm_ab_core_item.
 cm_ab_stage_core_good = {
+	cm_ab_core_restore_lead = yes
 	cm_ab_core_size_good = yes
 	set_local_variable = { name = cm_ab_good_room value = local_var:cm_ab_core_want }
 	if = {
 		limit = { local_var:cm_ab_good_room > 0 }
 		if = {
-			limit = { scope:cm_ab_core_item = goods:masonry }
-			cm_ab_stage_core_building = { bt = mason }
-		}
-		else_if = {
-			limit = { scope:cm_ab_core_item = goods:lumber }
-			goods:lumber = { save_scope_as = cm_ab_good }
+			limit = {
+				OR = {
+					scope:cm_ab_core_item = goods:lumber
+					scope:cm_ab_core_item = goods:sand
+				}
+			}
 			cm_ab_stage_core_rgos = yes
-			cm_ab_stage_core_building = { bt = lumber_mill }
 		}
-		else_if = {
-			limit = { scope:cm_ab_core_item = goods:sand }
-			goods:sand = { save_scope_as = cm_ab_good }
-			cm_ab_stage_core_rgos = yes
-			cm_ab_stage_core_building = { bt = sand_pit }
-		}
-		else_if = {
+		cm_ab_stage_core_resolved_building = yes
+		if = {
 			limit = { scope:cm_ab_core_item = goods:glass }
-			cm_ab_stage_core_building = { bt = glass_guild }
 			cm_ab_stage_core_building = { bt = rural_glassmaker }
 		}
 	}
@@ -462,6 +485,12 @@ cm_ab_stage_core_rgos = {
 cm_ab_stage_core_building = {
 	building_type:$bt$ = { save_scope_as = cm_building_type }
 	cm_ab_resolve_building_type = yes
+	cm_ab_stage_core_resolved_building = yes
+}
+
+# The staging half of the above, entered directly for a producer whose tier is already resolved.
+# Root is the country, expects scope:cm_building_type.
+cm_ab_stage_core_resolved_building = {
 	set_local_variable = { name = cm_ab_core_seen value = 0 }
 	scope:cm_ab_market = {
 		ordered_location_in_market = {
@@ -475,17 +504,20 @@ cm_ab_stage_core_building = {
 				cm_ab_core_candidate_ok = yes
 			}
 			save_scope_as = cm_location
+			# The remaining count and the location's own room both rest on one scan of its buildings,
+			# so the room is derived from the captured figure rather than read through
+			# cm_ab_core_type_room, which would run that scan again at every location the sweep visits.
+			set_local_variable = { name = cm_ab_infl value = cm_ab_core_type_inflight }
 			if = {
 				limit = { cm_ab_core_watched = yes }
 				set_local_variable = { name = cm_ab_core_seen value = 1 }
-				save_temporary_scope_value_as = { name = cm_ab_core_infl value = cm_ab_core_type_inflight }
 				save_temporary_scope_as = cmf_log_loc
 				scope:cm_country = {
 					cm_dbg_log_loc = {
 						cat = core
 						action = cm_log_core_visit
 						arg1 = cm_log_core_a_infl
-						value = scope:cm_ab_core_infl
+						value = local_var:cm_ab_infl
 					}
 					cm_dbg_log_value = {
 						cat = core
@@ -494,9 +526,15 @@ cm_ab_stage_core_building = {
 					}
 				}
 			}
-			# Both values scan the location's buildings, so each is read once here.
-			change_local_variable = { name = cm_ab_good_room subtract = cm_ab_core_type_inflight }
-			set_local_variable = { name = cm_ab_type_room value = cm_ab_core_type_room }
+			change_local_variable = { name = cm_ab_good_room subtract = local_var:cm_ab_infl }
+			set_local_variable = {
+				name = cm_ab_type_room
+				value = {
+					value = cm_ab_core_slot_allowance
+					subtract = local_var:cm_ab_infl
+					min = 0
+				}
+			}
 			if = {
 				limit = {
 					local_var:cm_ab_good_room > 0

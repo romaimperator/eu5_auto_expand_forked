@@ -449,12 +449,47 @@ cm_stage_from_zero_candidate = {
 	}
 	if = {
 		limit = { cm_is_building_type_obsolete = no }
+		cm_stage_from_zero_live_candidate = yes
+	}
+}
+
+# The staging half of the above, for a caller whose list is already filtered to non-obsolete types
+# and which sweeps the upgrade markers itself. Expects scope:cm_country, scope:cm_location,
+# scope:cm_building_type.
+cm_stage_from_zero_live_candidate = {
+	if = {
+		limit = {
+			cm_location_can_auto_expand_from_zero_levels = yes
+			NOT = { scope:cm_location = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } } }
+		}
+		cm_stage_candidate = yes
+	}
+}
+
+# Drops the upgrade markers at scope:cm_location whose source building is gone, an upgrade having
+# converted it away. Driven from the location's own list rather than from a walk over candidate
+# types, so a location with nothing upgrading costs one test.
+# Expects scope:cm_location, scope:cm_country.
+cm_clear_vanished_upgrade_markers = {
+	scope:cm_location = {
 		if = {
-			limit = {
-				cm_location_can_auto_expand_from_zero_levels = yes
-				NOT = { scope:cm_location = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } } }
+			limit = { has_variable_list = cm_upgrade_in_progress }
+			clear_variable_list = cm_ae_vanished_upgrades
+			every_in_list = {
+				variable = cm_upgrade_in_progress
+				save_temporary_scope_as = cm_ae_marked_type
+				if = {
+					limit = { scope:cm_location = { NOT = { has_building = scope:cm_ae_marked_type } } }
+					scope:cm_location = { add_to_variable_list = { name = cm_ae_vanished_upgrades target = scope:cm_ae_marked_type } }
+				}
 			}
-			cm_stage_candidate = yes
+			# Staged rather than removed above, which would mutate the list being walked.
+			every_in_list = {
+				variable = cm_ae_vanished_upgrades
+				save_temporary_scope_as = cm_ae_marked_type
+				scope:cm_location = { remove_list_variable = { name = cm_upgrade_in_progress target = scope:cm_ae_marked_type } }
+			}
+			clear_variable_list = cm_ae_vanished_upgrades
 		}
 	}
 }
@@ -765,11 +800,26 @@ cm_run_auto_expand_buildings = {
 	cm_transfer_obsolete_auto_expand_registrations = yes
 	if = {
 		limit = { has_variable_list = cm_mass_auto_expand_building_types }
+		# Obsolescence is a country-and-type answer with no location term, so it is settled once per
+		# type here rather than once per type per location down in the from-zero walk. The foreign
+		# filter rides along: cm_run_auto_expand_foreign owns those, and this loop would otherwise
+		# stage another country's building at an owned location.
+		clear_variable_list = cm_ae_mass_live
+		every_in_list = {
+			variable = cm_mass_auto_expand_building_types
+			limit = { is_foreign = no }
+			save_scope_as = cm_building_type
+			if = {
+				limit = { cm_is_building_type_obsolete = no }
+				scope:cm_country = { add_to_variable_list = { name = cm_ae_mass_live target = scope:cm_building_type } }
+			}
+		}
 		# -- Mass mode: iterate all existing buildings at this cycle's locations --
 		every_in_list = {
 			variable = cm_slice_locations
 			save_scope_as = cm_location
 			cm_pop_track = yes
+			cm_clear_vanished_upgrade_markers = yes
 			ordered_buildings_in_location = {
 				order_by = building_index
 				max = 100
@@ -794,19 +844,19 @@ cm_run_auto_expand_buildings = {
 			# -- Mass mode: construct missing buildings from zero levels --
 			scope:cm_country = {
 				every_in_list = {
-					variable = cm_mass_auto_expand_building_types
-					limit = { is_foreign = no }
+					variable = cm_ae_mass_live
 					save_scope_as = cm_building_type
 					if = {
 						limit = {
 							NOT = { scope:cm_location = { has_building = scope:cm_building_type } }
 							NOT = { scope:cm_location = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type } } }
 						}
-						cm_stage_from_zero_candidate = yes
+						cm_stage_from_zero_live_candidate = yes
 					}
 				}
 			}
 		}
+		clear_variable_list = cm_ae_mass_live
 	}
 	# -- Normal mode: iterate per-location registered building types --
 	# Runs unconditionally - per-location registrations are processed alongside mass mode.

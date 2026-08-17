@@ -1948,7 +1948,7 @@ def emit_custom_loc(aliases, boosted_goods, self_goods):
     lines.append("\ttext = {")
     lines.append("\t\ttrigger = {")
     lines.append("\t\t\thas_max_town_rights = yes")
-    lines.append("\t\t\tcm_uright_assigned_count = 0")
+    lines.append("\t\t\tcm_atr_ur_has_no_specialization = yes")
     lines.append("\t\t\tOR = {")
     lines.append("\t\t\t\tlocation_rank = location_rank:city")
     lines.append("\t\t\t\tlocation_rank = location_rank:megalopolis")

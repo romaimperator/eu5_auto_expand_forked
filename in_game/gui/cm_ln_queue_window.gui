@@ -129,19 +129,18 @@ widget = {
 			}
 			# The flush state queues each country's own rows and buffers its tail; the send state
 			# submits every tail as a single command, so a sweep costs one command per lucky nation
-			# plus one rather than two apiece. The gap between them is what every country's flush has
-			# to land in, or a tail buffered late goes out with the next cycle and that country's
-			# cycle stalls, so it takes the round driver's 0.5s rather than the 0.15s a state that
-			# nothing waited on could afford.
+			# plus one rather than two apiece. A tail buffered after the send goes out with the next
+			# cycle and stalls that country, and on_finish fires at the END of a state, so the margin
+			# every country's flush has to land in is the send state's own duration.
 			state = {
 				name = cm_ln_c_scan_done
-				duration = 0.5
+				duration = 0.15
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_flush')]"
 				next = cm_ln_c_scan_send
 			}
 			state = {
 				name = cm_ln_c_scan_send
-				duration = 0.15
+				duration = 0.5
 				on_finish = "[CMQueueAppend(CMFlushBlock)]"
 				on_finish = "[GetVariableSystem.Set(CMFlushKey, '')]"
 			}
@@ -182,17 +181,16 @@ widget = {
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_cu_toggle')]"
 				next = cm_ln_c_cu_toggle_done
 			}
-			# Building Cleanup's end calls batch the same way, and the gap takes 0.5s for the same
-			# reason the sweep's does.
+			# Building Cleanup's end calls batch the same way, so the send state carries the margin.
 			state = {
 				name = cm_ln_c_cu_toggle_done
-				duration = 0.5
+				duration = 0.25
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_cu_end')]"
 				next = cm_ln_c_cu_send
 			}
 			state = {
 				name = cm_ln_c_cu_send
-				duration = 0.25
+				duration = 0.5
 				on_finish = "[CMQueueAppend(CMCuBlock)]"
 				on_finish = "[GetVariableSystem.Set(CMCuKey, '')]"
 			}

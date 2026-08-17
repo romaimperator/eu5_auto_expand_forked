@@ -70,12 +70,30 @@ cm_cu_arm_toggles = {
 			variable_list_size = { name = cm_cu_toggle value >= 1 }
 		}
 		set_variable = { name = cm_cu_fire value = 1 }
+		set_variable = { name = cm_cu_fire_skips value = 0 }
+	}
+}
+
+# cm_cu_fire is cleared by the toggle driver's own end call, which for an observed lucky nation
+# rides a console command the engine drops when another is already running. A dropped one would
+# otherwise leave cm_cu_can_run refusing for the rest of the game, so a batch still pending two
+# pulses on is abandoned; cm_cu_validate_tracking then reads a close that never landed as a fresh
+# candidate. Root is the country.
+cm_cu_clear_stuck_fire = {
+	if = {
+		limit = { exists = var:cm_cu_fire }
+		change_variable = { name = cm_cu_fire_skips add = 1 }
+		if = {
+			limit = { var:cm_cu_fire_skips >= 2 }
+			remove_variable = cm_cu_fire
+		}
 	}
 }
 
 # Steps this cycle's next few markets, opening a cycle once the last one is a year behind and
 # closing it once every market has been visited. Root is the country.
 cm_cu_monthly_pass = {
+	cm_cu_clear_stuck_fire = yes
 	if = {
 		limit = { cm_cu_can_run = yes }
 		save_scope_as = cm_country
@@ -208,7 +226,6 @@ cm_cu_auto_food_pass = {
 cm_cu_validate_tracking = {
 	if = {
 		limit = { has_variable_list = cm_cu_closed_locs }
-		clear_variable_list = cm_cu_untracked_locs
 		every_in_list = {
 			variable = cm_cu_closed_locs
 			save_scope_as = cm_location
@@ -230,19 +247,30 @@ cm_cu_validate_tracking = {
 					scope:cm_location = { remove_list_variable = { name = cm_cu_closed_types target = scope:cm_building_type } }
 				}
 			}
-			# Staged rather than removed here, which would mutate the list being walked.
-			if = {
-				limit = { NOT = { variable_list_size = { name = cm_cu_closed_types value >= 1 } } }
-				scope:cm_country = { add_to_variable_list = { name = cm_cu_untracked_locs target = scope:cm_location } }
-			}
+			cm_cu_stage_untrack_if_empty = yes
 		}
-		every_in_list = {
-			variable = cm_cu_untracked_locs
-			save_scope_as = cm_location
-			scope:cm_country = { remove_list_variable = { name = cm_cu_closed_locs target = scope:cm_location } }
-		}
-		clear_variable_list = cm_cu_untracked_locs
+		cm_cu_apply_untracked_locs = yes
 	}
+}
+
+# A location whose type list has emptied is staged rather than dropped where it is found, which
+# would mutate the cm_cu_closed_locs walk each caller runs inside.
+# Expects scope:cm_location and scope:cm_country.
+cm_cu_stage_untrack_if_empty = {
+	if = {
+		limit = { scope:cm_location = { NOT = { variable_list_size = { name = cm_cu_closed_types value >= 1 } } } }
+		scope:cm_country = { add_to_variable_list = { name = cm_cu_untracked_locs target = scope:cm_location } }
+	}
+}
+
+# Root is the country.
+cm_cu_apply_untracked_locs = {
+	every_in_list = {
+		variable = cm_cu_untracked_locs
+		save_scope_as = cm_location
+		scope:cm_country = { remove_list_variable = { name = cm_cu_closed_locs target = scope:cm_location } }
+	}
+	clear_variable_list = cm_cu_untracked_locs
 }
 
 # Counts one market's production buildings per type: how many are open, whether any open one
@@ -405,6 +433,7 @@ cm_cu_reopen_pass = {
 				}
 			}
 		}
+		cm_cu_apply_untracked_locs = yes
 	}
 }
 
@@ -412,30 +441,32 @@ cm_cu_reopen_pass = {
 # building levels. Runs after the reopens, so a recovered type is restored rather than lost.
 # Root is the country, scope:cm_country set.
 cm_cu_delete_closed_pass = {
-	every_in_list = {
-		variable = cm_cu_closed_locs
-		limit = {
-			owner ?= scope:cm_country
-			cm_cu_location_near_cap = yes
-		}
-		save_scope_as = cm_location
-		every_buildings_in_location = {
+	if = {
+		limit = { has_variable_list = cm_cu_closed_locs }
+		every_in_list = {
+			variable = cm_cu_closed_locs
 			limit = {
-				owner = scope:cm_country
-				cm_cu_is_tracked_closed = yes
+				owner ?= scope:cm_country
+				cm_cu_location_near_cap = yes
 			}
-			save_scope_as = cm_building
-			building_type = { save_scope_as = cm_building_type }
-			cm_cu_log = { ACTION = cm_log_cu_deleted }
-			scope:cm_location = { destroy_building = scope:cm_building }
-			cm_cu_untrack = yes
+			save_scope_as = cm_location
+			every_buildings_in_location = {
+				limit = {
+					owner = scope:cm_country
+					cm_cu_is_tracked_closed = yes
+				}
+				save_scope_as = cm_building
+				building_type = { save_scope_as = cm_building_type }
+				cm_cu_log = { ACTION = cm_log_cu_deleted }
+				scope:cm_location = { destroy_building = scope:cm_building }
+				cm_cu_untrack = yes
+			}
 		}
+		cm_cu_apply_untracked_locs = yes
 	}
 }
 
-# Expects scope:cm_location, scope:cm_building_type. The location is pruned from
-# cm_cu_closed_locs in cm_cu_validate_tracking, not in cm_cu_untrack, which runs inside
-# walks over that list.
+# Expects scope:cm_location, scope:cm_building_type.
 cm_cu_track_closed = {
 	scope:cm_location = {
 		add_to_variable_list = { name = cm_cu_closed_types target = scope:cm_building_type }
@@ -450,6 +481,7 @@ cm_cu_untrack = {
 	scope:cm_location = {
 		remove_list_variable = { name = cm_cu_closed_types target = scope:cm_building_type }
 	}
+	cm_cu_stage_untrack_if_empty = yes
 }
 
 # add_to_variable_map overwrites, so each counter reads its entry, bumps it, and writes it

@@ -288,13 +288,18 @@ cm_ab_core_type_inflight = {
 	}
 }
 
-# Levels of scope:cm_building_type this location may still be given. What other features have
-# queued here is deliberately not counted: the four construction goods gate every other build,
-# so Core Goods takes the slots rather than waiting for them.
-# Root is the location, expects scope:cm_building_type and scope:cm_country.
-cm_ab_core_type_room = {
+# The levels Core Goods may have in flight at a location at once. What other features have queued
+# here is deliberately not counted: the four construction goods gate every other build, so Core
+# Goods takes the slots rather than waiting for them. Root is the location.
+cm_ab_core_slot_allowance = {
 	value = modifier:max_constructions_at_same_time
 	multiply = @cm_ab_core_slot_rounds
+}
+
+# Levels of scope:cm_building_type this location may still be given.
+# Root is the location, expects scope:cm_building_type and scope:cm_country.
+cm_ab_core_type_room = {
+	value = cm_ab_core_slot_allowance
 	subtract = cm_ab_core_type_inflight
 	min = 0
 }

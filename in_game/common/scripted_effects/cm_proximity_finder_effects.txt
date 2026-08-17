@@ -391,21 +391,17 @@ cm_pf_prep_core = {
 		}
 		# Governor search budget: nothing contributes at path cost beyond the largest headroom.
 		set_variable = { name = cm_pf_tmax value = 0 }
-		# The headroom score cap's totals: a candidate scores at most its headroom times these.
-		set_variable = { name = cm_pf_npos value = 0 }
-		set_variable = { name = cm_pf_wpos value = 0 }
-		set_variable = { name = cm_pf_ppos value = 0 }
+		# The headroom score cap's total: a candidate scores at most its headroom times this.
+		set_variable = { name = cm_pf_hpos value = 0 }
+		cm_pf_arm_bound_tables = yes
 		every_owned_location = {
 			if = {
 				limit = { var:cm_pf_t > 0 }
 				set_local_variable = { name = cm_pf_lt value = var:cm_pf_t }
-				set_local_variable = { name = cm_pf_lw value = var:cm_pf_w }
-				set_local_variable = { name = cm_pf_lp value = var:cm_pf_wpop }
+				cm_pf_set_bound_weight = yes
 				scope:cm_pf_c = {
 					change_variable = { name = cm_pf_tmax max = local_var:cm_pf_lt }
-					change_variable = { name = cm_pf_npos add = 1 }
-					change_variable = { name = cm_pf_wpos add = local_var:cm_pf_lw }
-					change_variable = { name = cm_pf_ppos add = local_var:cm_pf_lp }
+					change_variable = { name = cm_pf_hpos add = local_var:cm_pf_lwt }
 				}
 			}
 			else = {
@@ -988,7 +984,13 @@ cm_pf_bellman_g_multi = {
 		clear_variable_list = cm_pf_front
 		every_in_list = {
 			variable = cm_pf_reach
-			limit = { has_variable = cm_pf_d }
+			# A seed the caller took from somewhere other than this run's owned map - a committed
+			# opening-governor site the country has since lost - carries no priming, so relaxing
+			# out of it would read unset costs on every neighbour.
+			limit = {
+				has_variable = cm_pf_d
+				has_variable = cm_pf_cl_g
+			}
 			set_variable = { name = cm_pf_inf value = 1 }
 			scope:cm_pf_c = {
 				add_to_variable_list = { name = cm_pf_front target = prev }
@@ -1462,43 +1464,17 @@ cm_pf_phase_init = {
 	set_variable = { name = cm_pf_ref_i value = 0 }
 	set_variable = { name = cm_pf_round value = 0 }
 	set_variable = { name = cm_pf_ub_valid value = 1 }
-	set_variable = { name = cm_pf_b1_gt value = 0 }
-	set_variable = { name = cm_pf_b2_gt value = 0 }
-	set_variable = { name = cm_pf_b3_gt value = 0 }
-	set_variable = { name = cm_pf_b1_gp value = 0 }
-	set_variable = { name = cm_pf_b2_gp value = 0 }
-	set_variable = { name = cm_pf_b3_gp value = 0 }
-	set_variable = { name = cm_pf_b1_ct value = 0 }
-	set_variable = { name = cm_pf_b2_ct value = 0 }
-	set_variable = { name = cm_pf_b3_ct value = 0 }
-	set_variable = { name = cm_pf_b1_cp value = 0 }
-	set_variable = { name = cm_pf_b2_cp value = 0 }
-	set_variable = { name = cm_pf_b3_cp value = 0 }
-	# The population channel is built only for the method that reads it, so a tax base or
-	# proximity run costs exactly what it did before the method existed.
-	set_local_variable = { name = cm_pf_dopop value = 0 }
-	if = {
-		limit = { cm_pf_method_is_population = yes }
-		set_local_variable = { name = cm_pf_dopop value = 1 }
-		set_variable = { name = cm_pf_b1_gpop value = 0 }
-		set_variable = { name = cm_pf_b2_gpop value = 0 }
-		set_variable = { name = cm_pf_b3_gpop value = 0 }
-		set_variable = { name = cm_pf_b1_cpop value = 0 }
-		set_variable = { name = cm_pf_b2_cpop value = 0 }
-		set_variable = { name = cm_pf_b3_cpop value = 0 }
-	}
+	set_variable = { name = cm_pf_b1_g value = 0 }
+	set_variable = { name = cm_pf_b2_g value = 0 }
+	set_variable = { name = cm_pf_b3_g value = 0 }
+	set_variable = { name = cm_pf_b1_c value = 0 }
+	set_variable = { name = cm_pf_b2_c value = 0 }
+	set_variable = { name = cm_pf_b3_c value = 0 }
 	every_owned_location = {
 		limit = { has_variable = cm_pf_cl_g }
 		# Sentinel above any reachable bound, so an unbounded candidate is never skipped.
-		set_variable = { name = cm_pf_ub_gt value = 999999999 }
-		set_variable = { name = cm_pf_ub_gp value = 999999999 }
-		set_variable = { name = cm_pf_ub_ct value = 999999999 }
-		set_variable = { name = cm_pf_ub_cp value = 999999999 }
-		if = {
-			limit = { local_var:cm_pf_dopop = 1 }
-			set_variable = { name = cm_pf_ub_gpop value = 999999999 }
-			set_variable = { name = cm_pf_ub_cpop value = 999999999 }
-		}
+		set_variable = { name = cm_pf_ub_g value = 999999999 }
+		set_variable = { name = cm_pf_ub_c value = 999999999 }
 		set_variable = { name = cm_pf_dref_min value = 9999 }
 	}
 	if = {
@@ -1507,7 +1483,7 @@ cm_pf_phase_init = {
 				var:cm_pf_n < @cm_pf_min_n_prune
 				AND = {
 					var:cm_pf_run_c = 0
-					var:cm_pf_npos = 0
+					var:cm_pf_hpos = 0
 				}
 			}
 		}
@@ -1602,89 +1578,35 @@ cm_pf_phase_refs_step = {
 	}
 }
 
-# Country scope. Bakes the drain/seed order key from the active metric's bounds (governor
-# bounds capped at headroom times the positive-headroom total), over the modes this run
-# computes, and enters the evaluation phase for the tier.
+# Country scope. Bakes the drain/seed order key from the run's bounds (the governor bound capped at
+# headroom times the positive-headroom total), over the modes this run computes, and enters the
+# evaluation phase for the tier.
 cm_pf_refs_done = {
-	# One walk per method rather than one to zero the key plus one per mode: nothing here reads a
-	# country aggregate the walk itself produces, so the zeroing and both modes' folds sit together.
+	# One walk rather than one to zero the key plus one per mode: nothing here reads a country
+	# aggregate the walk itself produces, so the zeroing and both modes' folds sit together.
 	set_local_variable = { name = cm_pf_og value = var:cm_pf_run_g }
 	set_local_variable = { name = cm_pf_oc value = var:cm_pf_run_c }
-	if = {
-		limit = { cm_pf_method_is_tax_base = yes }
-		every_owned_location = {
-			limit = { has_variable = cm_pf_cl_g }
-			set_variable = { name = cm_pf_ub_ord value = 0 }
-			if = {
-				limit = { local_var:cm_pf_og = 1 }
-				set_local_variable = {
-					name = cm_pf_ubg
-					value = {
-						value = var:cm_pf_t
-						multiply = scope:cm_pf_c.var:cm_pf_wpos
-					}
+	every_owned_location = {
+		limit = { has_variable = cm_pf_cl_g }
+		set_variable = { name = cm_pf_ub_ord value = 0 }
+		if = {
+			limit = { local_var:cm_pf_og = 1 }
+			set_local_variable = {
+				name = cm_pf_ubg
+				value = {
+					value = var:cm_pf_t
+					multiply = scope:cm_pf_c.var:cm_pf_hpos
 				}
-				if = {
-					limit = { var:cm_pf_ub_gt < local_var:cm_pf_ubg }
-					set_local_variable = { name = cm_pf_ubg value = var:cm_pf_ub_gt }
-				}
-				change_variable = { name = cm_pf_ub_ord add = local_var:cm_pf_ubg }
 			}
 			if = {
-				limit = { local_var:cm_pf_oc = 1 }
-				change_variable = { name = cm_pf_ub_ord add = var:cm_pf_ub_ct }
+				limit = { var:cm_pf_ub_g < local_var:cm_pf_ubg }
+				set_local_variable = { name = cm_pf_ubg value = var:cm_pf_ub_g }
 			}
+			change_variable = { name = cm_pf_ub_ord add = local_var:cm_pf_ubg }
 		}
-	}
-	else_if = {
-		limit = { cm_pf_method_is_population = yes }
-		every_owned_location = {
-			limit = { has_variable = cm_pf_cl_g }
-			set_variable = { name = cm_pf_ub_ord value = 0 }
-			if = {
-				limit = { local_var:cm_pf_og = 1 }
-				set_local_variable = {
-					name = cm_pf_ubg
-					value = {
-						value = var:cm_pf_t
-						multiply = scope:cm_pf_c.var:cm_pf_ppos
-					}
-				}
-				if = {
-					limit = { var:cm_pf_ub_gpop < local_var:cm_pf_ubg }
-					set_local_variable = { name = cm_pf_ubg value = var:cm_pf_ub_gpop }
-				}
-				change_variable = { name = cm_pf_ub_ord add = local_var:cm_pf_ubg }
-			}
-			if = {
-				limit = { local_var:cm_pf_oc = 1 }
-				change_variable = { name = cm_pf_ub_ord add = var:cm_pf_ub_cpop }
-			}
-		}
-	}
-	else = {
-		every_owned_location = {
-			limit = { has_variable = cm_pf_cl_g }
-			set_variable = { name = cm_pf_ub_ord value = 0 }
-			if = {
-				limit = { local_var:cm_pf_og = 1 }
-				set_local_variable = {
-					name = cm_pf_ubg
-					value = {
-						value = var:cm_pf_t
-						multiply = scope:cm_pf_c.var:cm_pf_npos
-					}
-				}
-				if = {
-					limit = { var:cm_pf_ub_gp < local_var:cm_pf_ubg }
-					set_local_variable = { name = cm_pf_ubg value = var:cm_pf_ub_gp }
-				}
-				change_variable = { name = cm_pf_ub_ord add = local_var:cm_pf_ubg }
-			}
-			if = {
-				limit = { local_var:cm_pf_oc = 1 }
-				change_variable = { name = cm_pf_ub_ord add = var:cm_pf_ub_cp }
-			}
+		if = {
+			limit = { local_var:cm_pf_oc = 1 }
+			change_variable = { name = cm_pf_ub_ord add = var:cm_pf_ub_c }
 		}
 	}
 	if = {
@@ -1698,8 +1620,8 @@ cm_pf_refs_done = {
 
 # Country scope. Folds one reference search's distances (cm_pf_d) into the bound tables:
 # bucket key = floor(d - T), T = the location's contribution threshold (cm_pf_t governor,
-# 100 capital), with count and key-sum tables both unweighted and wealth-weighted. The tb2
-# family holds the same locations keyed by key2 = ceil(d); its lookup subtracts each term's
+# 100 capital), into a weight-sum table and a key-weighted-sum table per mode. The tb2 pair
+# holds the same locations keyed by key2 = ceil(d); its lookup subtracts each term's
 # growth past key2, capping the location's credit at key2 - key >= T. The rounding directions
 # (floor the key, ceil key2 and the lookup) keep every term an overestimate. key2 entries
 # beyond @cm_pf_bucket_max are not stored: folds only run at X <= @cm_pf_bucket_max, where
@@ -1707,67 +1629,54 @@ cm_pf_refs_done = {
 # into the cm_pf_cx_* constants instead (clamping a key up to 0 would under-bound and break
 # the skip guarantee); unreached locations fold nothing, since @cm_pf_ref_budget puts them
 # beyond every folding candidate's reach.
-# Country scope. Arms which bound-table families a run maintains. Only the active method's pair of
-# bounds is ever read, and each half only under its own run mode, so an interactive run computing one
-# mode needs four of the sixteen tables. Build, prefix and apply all arm through here, so a family
-# cannot be filled by one of them and skipped by another.
-cm_pf_arm_table_families = {
-	set_local_variable = { name = cm_pf_f_gw value = 0 }
-	set_local_variable = { name = cm_pf_f_gp value = 0 }
-	set_local_variable = { name = cm_pf_f_gpop value = 0 }
-	set_local_variable = { name = cm_pf_f_cw value = 0 }
-	set_local_variable = { name = cm_pf_f_cp value = 0 }
-	set_local_variable = { name = cm_pf_f_cpop value = 0 }
+# Country scope. Arms the bound tables: which modes the run maintains, and which weight its scoring
+# method ranks by. The three methods are mutually exclusive within a run and differ only in that
+# weight, so one set of tables serves whichever is live. Build, prefix and apply all arm through
+# here, so a table cannot be filled by one of them and skipped by another.
+cm_pf_arm_bound_tables = {
+	set_local_variable = { name = cm_pf_dog value = var:cm_pf_run_g }
+	set_local_variable = { name = cm_pf_doc value = var:cm_pf_run_c }
+	set_local_variable = { name = cm_pf_wmode value = 0 }
 	if = {
 		limit = { cm_pf_method_is_tax_base = yes }
-		set_local_variable = { name = cm_pf_f_gw value = var:cm_pf_run_g }
-		set_local_variable = { name = cm_pf_f_cw value = var:cm_pf_run_c }
+		set_local_variable = { name = cm_pf_wmode value = 1 }
 	}
 	else_if = {
 		limit = { cm_pf_method_is_population = yes }
-		set_local_variable = { name = cm_pf_f_gpop value = var:cm_pf_run_g }
-		set_local_variable = { name = cm_pf_f_cpop value = var:cm_pf_run_c }
+		set_local_variable = { name = cm_pf_wmode value = 2 }
 	}
-	else = {
-		set_local_variable = { name = cm_pf_f_gp value = var:cm_pf_run_g }
-		set_local_variable = { name = cm_pf_f_cp value = var:cm_pf_run_c }
+}
+
+# Location scope. The weight this location carries into the bound tables, armed by
+# cm_pf_arm_bound_tables: its wealth on tax base, its population on population, 1 on proximity,
+# where every term the tables hold is one location counted once.
+cm_pf_set_bound_weight = {
+	set_local_variable = { name = cm_pf_lwt value = 1 }
+	if = {
+		limit = { local_var:cm_pf_wmode = 1 }
+		set_local_variable = { name = cm_pf_lwt value = var:cm_pf_w }
 	}
-	set_local_variable = { name = cm_pf_dog value = var:cm_pf_run_g }
-	set_local_variable = { name = cm_pf_doc value = var:cm_pf_run_c }
+	else_if = {
+		limit = { local_var:cm_pf_wmode = 2 }
+		set_local_variable = { name = cm_pf_lwt value = var:cm_pf_wpop }
+	}
 }
 
 cm_pf_build_ref_tables = {
-	cm_pf_arm_table_families = yes
+	cm_pf_arm_bound_tables = yes
 	if = {
-		limit = { local_var:cm_pf_f_gw = 1 }
-		set_variable = { name = cm_pf_cx_gt value = 0 }
+		limit = { local_var:cm_pf_dog = 1 }
+		set_variable = { name = cm_pf_cx_g value = 0 }
 	}
 	if = {
-		limit = { local_var:cm_pf_f_gp = 1 }
-		set_variable = { name = cm_pf_cx_gp value = 0 }
-	}
-	if = {
-		limit = { local_var:cm_pf_f_cw = 1 }
-		set_variable = { name = cm_pf_cx_ct value = 0 }
-	}
-	if = {
-		limit = { local_var:cm_pf_f_cp = 1 }
-		set_variable = { name = cm_pf_cx_cp value = 0 }
-	}
-	if = {
-		limit = { local_var:cm_pf_f_gpop = 1 }
-		set_variable = { name = cm_pf_cx_gpop value = 0 }
-	}
-	if = {
-		limit = { local_var:cm_pf_f_cpop = 1 }
-		set_variable = { name = cm_pf_cx_cpop value = 0 }
+		limit = { local_var:cm_pf_doc = 1 }
+		set_variable = { name = cm_pf_cx_c value = 0 }
 	}
 	every_owned_location = {
 		limit = { has_variable = cm_pf_cl_g }
 		if = {
 			limit = { has_variable = cm_pf_d }
-			set_local_variable = { name = cm_pf_lw value = var:cm_pf_w }
-			set_local_variable = { name = cm_pf_lp value = var:cm_pf_wpop }
+			cm_pf_set_bound_weight = yes
 			set_local_variable = { name = cm_pf_lt value = var:cm_pf_t }
 			set_local_variable = {
 				name = cm_pf_bk2
@@ -1793,173 +1702,58 @@ cm_pf_build_ref_tables = {
 				if = {
 					limit = { local_var:cm_pf_bk >= 1 }
 					scope:cm_pf_c = {
+						set_local_variable = { name = cm_pf_tv value = 0 }
 						if = {
-							limit = { local_var:cm_pf_f_gp = 1 }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb_gc target = local_var:cm_pf_bk } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gc|local_var:cm_pf_bk)" }
-								remove_from_variable_map = { name = cm_pf_tb_gc key = local_var:cm_pf_bk }
-							}
-							change_local_variable = { name = cm_pf_tv add = 1 }
-							add_to_variable_map = { name = cm_pf_tb_gc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb_gk target = local_var:cm_pf_bk } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gk|local_var:cm_pf_bk)" }
-								remove_from_variable_map = { name = cm_pf_tb_gk key = local_var:cm_pf_bk }
-							}
-							change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_bk }
-							add_to_variable_map = { name = cm_pf_tb_gk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+							limit = { is_key_in_variable_map = { name = cm_pf_tb_gc target = local_var:cm_pf_bk } }
+							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gc|local_var:cm_pf_bk)" }
 						}
+						change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lwt }
+						add_to_variable_map = { name = cm_pf_tb_gc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+						set_local_variable = { name = cm_pf_tv value = 0 }
 						if = {
-							limit = { local_var:cm_pf_f_gw = 1 }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb_gwc target = local_var:cm_pf_bk } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gwc|local_var:cm_pf_bk)" }
-								remove_from_variable_map = { name = cm_pf_tb_gwc key = local_var:cm_pf_bk }
-							}
-							change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lw }
-							add_to_variable_map = { name = cm_pf_tb_gwc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb_gwk target = local_var:cm_pf_bk } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gwk|local_var:cm_pf_bk)" }
-								remove_from_variable_map = { name = cm_pf_tb_gwk key = local_var:cm_pf_bk }
-							}
-							change_local_variable = {
-								name = cm_pf_tv
-								add = {
-									value = local_var:cm_pf_bk
-									multiply = local_var:cm_pf_lw
-								}
-							}
-							add_to_variable_map = { name = cm_pf_tb_gwk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+							limit = { is_key_in_variable_map = { name = cm_pf_tb_gk target = local_var:cm_pf_bk } }
+							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gk|local_var:cm_pf_bk)" }
 						}
-						if = {
-							limit = { local_var:cm_pf_f_gpop = 1 }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb_gpopc target = local_var:cm_pf_bk } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gpopc|local_var:cm_pf_bk)" }
-								remove_from_variable_map = { name = cm_pf_tb_gpopc key = local_var:cm_pf_bk }
+						change_local_variable = {
+							name = cm_pf_tv
+							add = {
+								value = local_var:cm_pf_bk
+								multiply = local_var:cm_pf_lwt
 							}
-							change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lp }
-							add_to_variable_map = { name = cm_pf_tb_gpopc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb_gpopk target = local_var:cm_pf_bk } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gpopk|local_var:cm_pf_bk)" }
-								remove_from_variable_map = { name = cm_pf_tb_gpopk key = local_var:cm_pf_bk }
-							}
-							change_local_variable = {
-								name = cm_pf_tv
-								add = {
-									value = local_var:cm_pf_bk
-									multiply = local_var:cm_pf_lp
-								}
-							}
-							add_to_variable_map = { name = cm_pf_tb_gpopk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
 						}
+						add_to_variable_map = { name = cm_pf_tb_gk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
 						if = {
 							limit = { local_var:cm_pf_bk2 <= @cm_pf_bucket_max }
+							set_local_variable = { name = cm_pf_tv value = 0 }
 							if = {
-								limit = { local_var:cm_pf_f_gp = 1 }
-								set_local_variable = { name = cm_pf_tv value = 0 }
-								if = {
-									limit = { is_key_in_variable_map = { name = cm_pf_tb2_gc target = local_var:cm_pf_bk2 } }
-									set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gc|local_var:cm_pf_bk2)" }
-									remove_from_variable_map = { name = cm_pf_tb2_gc key = local_var:cm_pf_bk2 }
-								}
-								change_local_variable = { name = cm_pf_tv add = 1 }
-								add_to_variable_map = { name = cm_pf_tb2_gc key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
-								set_local_variable = { name = cm_pf_tv value = 0 }
-								if = {
-									limit = { is_key_in_variable_map = { name = cm_pf_tb2_gk target = local_var:cm_pf_bk2 } }
-									set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gk|local_var:cm_pf_bk2)" }
-									remove_from_variable_map = { name = cm_pf_tb2_gk key = local_var:cm_pf_bk2 }
-								}
-								change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_bk2 }
-								add_to_variable_map = { name = cm_pf_tb2_gk key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+								limit = { is_key_in_variable_map = { name = cm_pf_tb2_gc target = local_var:cm_pf_bk2 } }
+								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gc|local_var:cm_pf_bk2)" }
 							}
+							change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lwt }
+							add_to_variable_map = { name = cm_pf_tb2_gc key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+							set_local_variable = { name = cm_pf_tv value = 0 }
 							if = {
-								limit = { local_var:cm_pf_f_gw = 1 }
-								set_local_variable = { name = cm_pf_tv value = 0 }
-								if = {
-									limit = { is_key_in_variable_map = { name = cm_pf_tb2_gwc target = local_var:cm_pf_bk2 } }
-									set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gwc|local_var:cm_pf_bk2)" }
-									remove_from_variable_map = { name = cm_pf_tb2_gwc key = local_var:cm_pf_bk2 }
-								}
-								change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lw }
-								add_to_variable_map = { name = cm_pf_tb2_gwc key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
-								set_local_variable = { name = cm_pf_tv value = 0 }
-								if = {
-									limit = { is_key_in_variable_map = { name = cm_pf_tb2_gwk target = local_var:cm_pf_bk2 } }
-									set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gwk|local_var:cm_pf_bk2)" }
-									remove_from_variable_map = { name = cm_pf_tb2_gwk key = local_var:cm_pf_bk2 }
-								}
-								change_local_variable = {
-									name = cm_pf_tv
-									add = {
-										value = local_var:cm_pf_bk2
-										multiply = local_var:cm_pf_lw
-									}
-								}
-								add_to_variable_map = { name = cm_pf_tb2_gwk key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+								limit = { is_key_in_variable_map = { name = cm_pf_tb2_gk target = local_var:cm_pf_bk2 } }
+								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gk|local_var:cm_pf_bk2)" }
 							}
-							if = {
-								limit = { local_var:cm_pf_f_gpop = 1 }
-								set_local_variable = { name = cm_pf_tv value = 0 }
-								if = {
-									limit = { is_key_in_variable_map = { name = cm_pf_tb2_gpopc target = local_var:cm_pf_bk2 } }
-									set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gpopc|local_var:cm_pf_bk2)" }
-									remove_from_variable_map = { name = cm_pf_tb2_gpopc key = local_var:cm_pf_bk2 }
+							change_local_variable = {
+								name = cm_pf_tv
+								add = {
+									value = local_var:cm_pf_bk2
+									multiply = local_var:cm_pf_lwt
 								}
-								change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lp }
-								add_to_variable_map = { name = cm_pf_tb2_gpopc key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
-								set_local_variable = { name = cm_pf_tv value = 0 }
-								if = {
-									limit = { is_key_in_variable_map = { name = cm_pf_tb2_gpopk target = local_var:cm_pf_bk2 } }
-									set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gpopk|local_var:cm_pf_bk2)" }
-									remove_from_variable_map = { name = cm_pf_tb2_gpopk key = local_var:cm_pf_bk2 }
-								}
-								change_local_variable = {
-									name = cm_pf_tv
-									add = {
-										value = local_var:cm_pf_bk2
-										multiply = local_var:cm_pf_lp
-									}
-								}
-								add_to_variable_map = { name = cm_pf_tb2_gpopk key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
 							}
+							add_to_variable_map = { name = cm_pf_tb2_gk key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
 						}
 					}
 				}
 				else = {
 					scope:cm_pf_c = {
-						if = {
-							limit = { local_var:cm_pf_f_gp = 1 }
-							change_variable = { name = cm_pf_cx_gp add = local_var:cm_pf_lt }
-						}
-						if = {
-							limit = { local_var:cm_pf_f_gw = 1 }
-							change_variable = {
-								name = cm_pf_cx_gt
-								add = {
-									value = local_var:cm_pf_lt
-									multiply = local_var:cm_pf_lw
-								}
-							}
-						}
-						if = {
-							limit = { local_var:cm_pf_f_gpop = 1 }
-							change_variable = {
-								name = cm_pf_cx_gpop
-								add = {
-									value = local_var:cm_pf_lt
-									multiply = local_var:cm_pf_lp
-								}
+						change_variable = {
+							name = cm_pf_cx_g
+							add = {
+								value = local_var:cm_pf_lt
+								multiply = local_var:cm_pf_lwt
 							}
 						}
 					}
@@ -1980,172 +1774,60 @@ cm_pf_build_ref_tables = {
 					local_var:cm_pf_bk >= 1
 				}
 				scope:cm_pf_c = {
+					set_local_variable = { name = cm_pf_tv value = 0 }
 					if = {
-						limit = { local_var:cm_pf_f_cp = 1 }
-						set_local_variable = { name = cm_pf_tv value = 0 }
-						if = {
-							limit = { is_key_in_variable_map = { name = cm_pf_tb_cc target = local_var:cm_pf_bk } }
-							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cc|local_var:cm_pf_bk)" }
-							remove_from_variable_map = { name = cm_pf_tb_cc key = local_var:cm_pf_bk }
-						}
-						change_local_variable = { name = cm_pf_tv add = 1 }
-						add_to_variable_map = { name = cm_pf_tb_cc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
-						set_local_variable = { name = cm_pf_tv value = 0 }
-						if = {
-							limit = { is_key_in_variable_map = { name = cm_pf_tb_ck target = local_var:cm_pf_bk } }
-							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_ck|local_var:cm_pf_bk)" }
-							remove_from_variable_map = { name = cm_pf_tb_ck key = local_var:cm_pf_bk }
-						}
-						change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_bk }
-						add_to_variable_map = { name = cm_pf_tb_ck key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+						limit = { is_key_in_variable_map = { name = cm_pf_tb_cc target = local_var:cm_pf_bk } }
+						set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cc|local_var:cm_pf_bk)" }
 					}
+					change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lwt }
+					add_to_variable_map = { name = cm_pf_tb_cc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+					set_local_variable = { name = cm_pf_tv value = 0 }
 					if = {
-						limit = { local_var:cm_pf_f_cw = 1 }
-						set_local_variable = { name = cm_pf_tv value = 0 }
-						if = {
-							limit = { is_key_in_variable_map = { name = cm_pf_tb_cwc target = local_var:cm_pf_bk } }
-							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cwc|local_var:cm_pf_bk)" }
-							remove_from_variable_map = { name = cm_pf_tb_cwc key = local_var:cm_pf_bk }
-						}
-						change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lw }
-						add_to_variable_map = { name = cm_pf_tb_cwc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
-						set_local_variable = { name = cm_pf_tv value = 0 }
-						if = {
-							limit = { is_key_in_variable_map = { name = cm_pf_tb_cwk target = local_var:cm_pf_bk } }
-							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cwk|local_var:cm_pf_bk)" }
-							remove_from_variable_map = { name = cm_pf_tb_cwk key = local_var:cm_pf_bk }
-						}
-						change_local_variable = {
-							name = cm_pf_tv
-							add = {
-								value = local_var:cm_pf_bk
-								multiply = local_var:cm_pf_lw
-							}
-						}
-						add_to_variable_map = { name = cm_pf_tb_cwk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
+						limit = { is_key_in_variable_map = { name = cm_pf_tb_ck target = local_var:cm_pf_bk } }
+						set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_ck|local_var:cm_pf_bk)" }
 					}
-					if = {
-						limit = { local_var:cm_pf_f_cpop = 1 }
-						set_local_variable = { name = cm_pf_tv value = 0 }
-						if = {
-							limit = { is_key_in_variable_map = { name = cm_pf_tb_cpopc target = local_var:cm_pf_bk } }
-							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cpopc|local_var:cm_pf_bk)" }
-							remove_from_variable_map = { name = cm_pf_tb_cpopc key = local_var:cm_pf_bk }
+					change_local_variable = {
+						name = cm_pf_tv
+						add = {
+							value = local_var:cm_pf_bk
+							multiply = local_var:cm_pf_lwt
 						}
-						change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lp }
-						add_to_variable_map = { name = cm_pf_tb_cpopc key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
-						set_local_variable = { name = cm_pf_tv value = 0 }
-						if = {
-							limit = { is_key_in_variable_map = { name = cm_pf_tb_cpopk target = local_var:cm_pf_bk } }
-							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cpopk|local_var:cm_pf_bk)" }
-							remove_from_variable_map = { name = cm_pf_tb_cpopk key = local_var:cm_pf_bk }
-						}
-						change_local_variable = {
-							name = cm_pf_tv
-							add = {
-								value = local_var:cm_pf_bk
-								multiply = local_var:cm_pf_lp
-							}
-						}
-						add_to_variable_map = { name = cm_pf_tb_cpopk key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
 					}
+					add_to_variable_map = { name = cm_pf_tb_ck key = local_var:cm_pf_bk value = local_var:cm_pf_tv }
 					if = {
 						limit = { local_var:cm_pf_bk2 <= @cm_pf_bucket_max }
+						set_local_variable = { name = cm_pf_tv value = 0 }
 						if = {
-							limit = { local_var:cm_pf_f_cp = 1 }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb2_cc target = local_var:cm_pf_bk2 } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cc|local_var:cm_pf_bk2)" }
-								remove_from_variable_map = { name = cm_pf_tb2_cc key = local_var:cm_pf_bk2 }
-							}
-							change_local_variable = { name = cm_pf_tv add = 1 }
-							add_to_variable_map = { name = cm_pf_tb2_cc key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb2_ck target = local_var:cm_pf_bk2 } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_ck|local_var:cm_pf_bk2)" }
-								remove_from_variable_map = { name = cm_pf_tb2_ck key = local_var:cm_pf_bk2 }
-							}
-							change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_bk2 }
-							add_to_variable_map = { name = cm_pf_tb2_ck key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+							limit = { is_key_in_variable_map = { name = cm_pf_tb2_cc target = local_var:cm_pf_bk2 } }
+							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cc|local_var:cm_pf_bk2)" }
 						}
+						change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lwt }
+						add_to_variable_map = { name = cm_pf_tb2_cc key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+						set_local_variable = { name = cm_pf_tv value = 0 }
 						if = {
-							limit = { local_var:cm_pf_f_cw = 1 }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb2_cwc target = local_var:cm_pf_bk2 } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cwc|local_var:cm_pf_bk2)" }
-								remove_from_variable_map = { name = cm_pf_tb2_cwc key = local_var:cm_pf_bk2 }
-							}
-							change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lw }
-							add_to_variable_map = { name = cm_pf_tb2_cwc key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb2_cwk target = local_var:cm_pf_bk2 } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cwk|local_var:cm_pf_bk2)" }
-								remove_from_variable_map = { name = cm_pf_tb2_cwk key = local_var:cm_pf_bk2 }
-							}
-							change_local_variable = {
-								name = cm_pf_tv
-								add = {
-									value = local_var:cm_pf_bk2
-									multiply = local_var:cm_pf_lw
-								}
-							}
-							add_to_variable_map = { name = cm_pf_tb2_cwk key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
+							limit = { is_key_in_variable_map = { name = cm_pf_tb2_ck target = local_var:cm_pf_bk2 } }
+							set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_ck|local_var:cm_pf_bk2)" }
 						}
-						if = {
-							limit = { local_var:cm_pf_f_cpop = 1 }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb2_cpopc target = local_var:cm_pf_bk2 } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cpopc|local_var:cm_pf_bk2)" }
-								remove_from_variable_map = { name = cm_pf_tb2_cpopc key = local_var:cm_pf_bk2 }
+						change_local_variable = {
+							name = cm_pf_tv
+							add = {
+								value = local_var:cm_pf_bk2
+								multiply = local_var:cm_pf_lwt
 							}
-							change_local_variable = { name = cm_pf_tv add = local_var:cm_pf_lp }
-							add_to_variable_map = { name = cm_pf_tb2_cpopc key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
-							set_local_variable = { name = cm_pf_tv value = 0 }
-							if = {
-								limit = { is_key_in_variable_map = { name = cm_pf_tb2_cpopk target = local_var:cm_pf_bk2 } }
-								set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cpopk|local_var:cm_pf_bk2)" }
-								remove_from_variable_map = { name = cm_pf_tb2_cpopk key = local_var:cm_pf_bk2 }
-							}
-							change_local_variable = {
-								name = cm_pf_tv
-								add = {
-									value = local_var:cm_pf_bk2
-									multiply = local_var:cm_pf_lp
-								}
-							}
-							add_to_variable_map = { name = cm_pf_tb2_cpopk key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
 						}
+						add_to_variable_map = { name = cm_pf_tb2_ck key = local_var:cm_pf_bk2 value = local_var:cm_pf_tv }
 					}
 				}
 			}
 			else = {
 				scope:cm_pf_c = {
 					if = {
-						limit = { local_var:cm_pf_f_cp = 1 }
-						change_variable = { name = cm_pf_cx_cp add = 100 }
-					}
-					if = {
-						limit = { local_var:cm_pf_f_cw = 1 }
+						limit = { local_var:cm_pf_doc = 1 }
 						change_variable = {
-							name = cm_pf_cx_ct
+							name = cm_pf_cx_c
 							add = {
-								value = 100
-								multiply = local_var:cm_pf_lw
-							}
-						}
-					}
-					if = {
-						limit = { local_var:cm_pf_f_cpop = 1 }
-						change_variable = {
-							name = cm_pf_cx_cpop
-							add = {
-								value = 100
-								multiply = local_var:cm_pf_lp
+								value = 100 # Capital source value: main_menu/common/static_modifiers/location.txt:330
+								multiply = local_var:cm_pf_lwt
 							}
 						}
 					}
@@ -2158,237 +1840,77 @@ cm_pf_build_ref_tables = {
 # Country scope. In-place prefix sums over the bound tables this run maintains, writing every key 0
 # to @cm_pf_bucket_max so candidate lookups read without key guards.
 cm_pf_prefix_ref_tables = {
-	cm_pf_arm_table_families = yes
+	cm_pf_arm_bound_tables = yes
 	set_local_variable = { name = cm_pf_k value = 0 }
 	set_local_variable = { name = cm_pf_r_gc value = 0 }
 	set_local_variable = { name = cm_pf_r_gk value = 0 }
-	set_local_variable = { name = cm_pf_r_gwc value = 0 }
-	set_local_variable = { name = cm_pf_r_gwk value = 0 }
 	set_local_variable = { name = cm_pf_r_cc value = 0 }
 	set_local_variable = { name = cm_pf_r_ck value = 0 }
-	set_local_variable = { name = cm_pf_r_cwc value = 0 }
-	set_local_variable = { name = cm_pf_r_cwk value = 0 }
 	set_local_variable = { name = cm_pf_r2_gc value = 0 }
 	set_local_variable = { name = cm_pf_r2_gk value = 0 }
-	set_local_variable = { name = cm_pf_r2_gwc value = 0 }
-	set_local_variable = { name = cm_pf_r2_gwk value = 0 }
 	set_local_variable = { name = cm_pf_r2_cc value = 0 }
 	set_local_variable = { name = cm_pf_r2_ck value = 0 }
-	set_local_variable = { name = cm_pf_r2_cwc value = 0 }
-	set_local_variable = { name = cm_pf_r2_cwk value = 0 }
-	set_local_variable = { name = cm_pf_r_gpopc value = 0 }
-	set_local_variable = { name = cm_pf_r_gpopk value = 0 }
-	set_local_variable = { name = cm_pf_r_cpopc value = 0 }
-	set_local_variable = { name = cm_pf_r_cpopk value = 0 }
-	set_local_variable = { name = cm_pf_r2_gpopc value = 0 }
-	set_local_variable = { name = cm_pf_r2_gpopk value = 0 }
-	set_local_variable = { name = cm_pf_r2_cpopc value = 0 }
-	set_local_variable = { name = cm_pf_r2_cpopk value = 0 }
 	while = {
 		limit = { local_var:cm_pf_k <= @cm_pf_bucket_max }
 		if = {
-			limit = { local_var:cm_pf_f_gp = 1 }
+			limit = { local_var:cm_pf_dog = 1 }
 			if = {
 				limit = { is_key_in_variable_map = { name = cm_pf_tb_gc target = local_var:cm_pf_k } }
 				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gc|local_var:cm_pf_k)" }
 				change_local_variable = { name = cm_pf_r_gc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_gc key = local_var:cm_pf_k }
 			}
 			add_to_variable_map = { name = cm_pf_tb_gc key = local_var:cm_pf_k value = local_var:cm_pf_r_gc }
 			if = {
 				limit = { is_key_in_variable_map = { name = cm_pf_tb_gk target = local_var:cm_pf_k } }
 				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gk|local_var:cm_pf_k)" }
 				change_local_variable = { name = cm_pf_r_gk add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_gk key = local_var:cm_pf_k }
 			}
 			add_to_variable_map = { name = cm_pf_tb_gk key = local_var:cm_pf_k value = local_var:cm_pf_r_gk }
 		}
 		if = {
-			limit = { local_var:cm_pf_f_gw = 1 }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb_gwc target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gwc|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r_gwc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_gwc key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb_gwc key = local_var:cm_pf_k value = local_var:cm_pf_r_gwc }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb_gwk target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gwk|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r_gwk add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_gwk key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb_gwk key = local_var:cm_pf_k value = local_var:cm_pf_r_gwk }
-		}
-		if = {
-			limit = { local_var:cm_pf_f_gpop = 1 }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb_gpopc target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gpopc|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r_gpopc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_gpopc key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb_gpopc key = local_var:cm_pf_k value = local_var:cm_pf_r_gpopc }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb_gpopk target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_gpopk|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r_gpopk add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_gpopk key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb_gpopk key = local_var:cm_pf_k value = local_var:cm_pf_r_gpopk }
-		}
-		if = {
-			limit = { local_var:cm_pf_f_cp = 1 }
+			limit = { local_var:cm_pf_doc = 1 }
 			if = {
 				limit = { is_key_in_variable_map = { name = cm_pf_tb_cc target = local_var:cm_pf_k } }
 				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cc|local_var:cm_pf_k)" }
 				change_local_variable = { name = cm_pf_r_cc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_cc key = local_var:cm_pf_k }
 			}
 			add_to_variable_map = { name = cm_pf_tb_cc key = local_var:cm_pf_k value = local_var:cm_pf_r_cc }
 			if = {
 				limit = { is_key_in_variable_map = { name = cm_pf_tb_ck target = local_var:cm_pf_k } }
 				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_ck|local_var:cm_pf_k)" }
 				change_local_variable = { name = cm_pf_r_ck add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_ck key = local_var:cm_pf_k }
 			}
 			add_to_variable_map = { name = cm_pf_tb_ck key = local_var:cm_pf_k value = local_var:cm_pf_r_ck }
 		}
 		if = {
-			limit = { local_var:cm_pf_f_cw = 1 }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb_cwc target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cwc|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r_cwc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_cwc key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb_cwc key = local_var:cm_pf_k value = local_var:cm_pf_r_cwc }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb_cwk target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cwk|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r_cwk add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_cwk key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb_cwk key = local_var:cm_pf_k value = local_var:cm_pf_r_cwk }
-		}
-		if = {
-			limit = { local_var:cm_pf_f_cpop = 1 }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb_cpopc target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cpopc|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r_cpopc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_cpopc key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb_cpopc key = local_var:cm_pf_k value = local_var:cm_pf_r_cpopc }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb_cpopk target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb_cpopk|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r_cpopk add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb_cpopk key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb_cpopk key = local_var:cm_pf_k value = local_var:cm_pf_r_cpopk }
-		}
-		if = {
-			limit = { local_var:cm_pf_f_gp = 1 }
+			limit = { local_var:cm_pf_dog = 1 }
 			if = {
 				limit = { is_key_in_variable_map = { name = cm_pf_tb2_gc target = local_var:cm_pf_k } }
 				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gc|local_var:cm_pf_k)" }
 				change_local_variable = { name = cm_pf_r2_gc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_gc key = local_var:cm_pf_k }
 			}
 			add_to_variable_map = { name = cm_pf_tb2_gc key = local_var:cm_pf_k value = local_var:cm_pf_r2_gc }
 			if = {
 				limit = { is_key_in_variable_map = { name = cm_pf_tb2_gk target = local_var:cm_pf_k } }
 				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gk|local_var:cm_pf_k)" }
 				change_local_variable = { name = cm_pf_r2_gk add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_gk key = local_var:cm_pf_k }
 			}
 			add_to_variable_map = { name = cm_pf_tb2_gk key = local_var:cm_pf_k value = local_var:cm_pf_r2_gk }
 		}
 		if = {
-			limit = { local_var:cm_pf_f_gw = 1 }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb2_gwc target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gwc|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r2_gwc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_gwc key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb2_gwc key = local_var:cm_pf_k value = local_var:cm_pf_r2_gwc }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb2_gwk target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gwk|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r2_gwk add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_gwk key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb2_gwk key = local_var:cm_pf_k value = local_var:cm_pf_r2_gwk }
-		}
-		if = {
-			limit = { local_var:cm_pf_f_gpop = 1 }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb2_gpopc target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gpopc|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r2_gpopc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_gpopc key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb2_gpopc key = local_var:cm_pf_k value = local_var:cm_pf_r2_gpopc }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb2_gpopk target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_gpopk|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r2_gpopk add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_gpopk key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb2_gpopk key = local_var:cm_pf_k value = local_var:cm_pf_r2_gpopk }
-		}
-		if = {
-			limit = { local_var:cm_pf_f_cp = 1 }
+			limit = { local_var:cm_pf_doc = 1 }
 			if = {
 				limit = { is_key_in_variable_map = { name = cm_pf_tb2_cc target = local_var:cm_pf_k } }
 				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cc|local_var:cm_pf_k)" }
 				change_local_variable = { name = cm_pf_r2_cc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_cc key = local_var:cm_pf_k }
 			}
 			add_to_variable_map = { name = cm_pf_tb2_cc key = local_var:cm_pf_k value = local_var:cm_pf_r2_cc }
 			if = {
 				limit = { is_key_in_variable_map = { name = cm_pf_tb2_ck target = local_var:cm_pf_k } }
 				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_ck|local_var:cm_pf_k)" }
 				change_local_variable = { name = cm_pf_r2_ck add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_ck key = local_var:cm_pf_k }
 			}
 			add_to_variable_map = { name = cm_pf_tb2_ck key = local_var:cm_pf_k value = local_var:cm_pf_r2_ck }
-		}
-		if = {
-			limit = { local_var:cm_pf_f_cw = 1 }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb2_cwc target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cwc|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r2_cwc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_cwc key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb2_cwc key = local_var:cm_pf_k value = local_var:cm_pf_r2_cwc }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb2_cwk target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cwk|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r2_cwk add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_cwk key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb2_cwk key = local_var:cm_pf_k value = local_var:cm_pf_r2_cwk }
-		}
-		if = {
-			limit = { local_var:cm_pf_f_cpop = 1 }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb2_cpopc target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cpopc|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r2_cpopc add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_cpopc key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb2_cpopc key = local_var:cm_pf_k value = local_var:cm_pf_r2_cpopc }
-			if = {
-				limit = { is_key_in_variable_map = { name = cm_pf_tb2_cpopk target = local_var:cm_pf_k } }
-				set_local_variable = { name = cm_pf_tv value = "variable_map(cm_pf_tb2_cpopk|local_var:cm_pf_k)" }
-				change_local_variable = { name = cm_pf_r2_cpopk add = local_var:cm_pf_tv }
-				remove_from_variable_map = { name = cm_pf_tb2_cpopk key = local_var:cm_pf_k }
-			}
-			add_to_variable_map = { name = cm_pf_tb2_cpopk key = local_var:cm_pf_k value = local_var:cm_pf_r2_cpopk }
 		}
 		change_local_variable = { name = cm_pf_k add = 1 }
 	}
@@ -2400,11 +1922,11 @@ cm_pf_prefix_ref_tables = {
 # relu(X - key_L) - relu(X - key2_L): non-decreasing in X with plateau key2 - key >= T, and
 # the rounding directions (floor the stored key, ceil key2 and the lookup) only ever
 # overestimate. The prefix tables turn the sum over all L into count and key-sum reads at
-# X - 1 for both families, plus the cm_pf_cx_* constants. A candidate with X beyond
+# X - 1 for both pairs, plus the cm_pf_cx_* constants. A candidate with X beyond
 # @cm_pf_bucket_max takes no fold from this reference at all; its running min from nearer
 # references stands, which is sound.
 cm_pf_apply_ref_bounds = {
-	cm_pf_arm_table_families = yes
+	cm_pf_arm_bound_tables = yes
 	every_owned_location = {
 		limit = {
 			has_variable = cm_pf_cl_g
@@ -2430,94 +1952,32 @@ cm_pf_apply_ref_bounds = {
 			if = {
 				limit = { local_var:cm_pf_xi >= 0 }
 				if = {
-					limit = { local_var:cm_pf_f_gp = 1 }
+					limit = { local_var:cm_pf_dog = 1 }
 					set_local_variable = { name = cm_pf_r_gc value = "scope:cm_pf_c.variable_map(cm_pf_tb_gc|local_var:cm_pf_xi)" }
 					set_local_variable = { name = cm_pf_r_gk value = "scope:cm_pf_c.variable_map(cm_pf_tb_gk|local_var:cm_pf_xi)" }
 					set_local_variable = { name = cm_pf_r2_gc value = "scope:cm_pf_c.variable_map(cm_pf_tb2_gc|local_var:cm_pf_xi)" }
 					set_local_variable = { name = cm_pf_r2_gk value = "scope:cm_pf_c.variable_map(cm_pf_tb2_gk|local_var:cm_pf_xi)" }
 				}
 				if = {
-					limit = { local_var:cm_pf_f_gw = 1 }
-					set_local_variable = { name = cm_pf_r_gwc value = "scope:cm_pf_c.variable_map(cm_pf_tb_gwc|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r_gwk value = "scope:cm_pf_c.variable_map(cm_pf_tb_gwk|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r2_gwc value = "scope:cm_pf_c.variable_map(cm_pf_tb2_gwc|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r2_gwk value = "scope:cm_pf_c.variable_map(cm_pf_tb2_gwk|local_var:cm_pf_xi)" }
-				}
-				if = {
-					limit = { local_var:cm_pf_f_cp = 1 }
+					limit = { local_var:cm_pf_doc = 1 }
 					set_local_variable = { name = cm_pf_r_cc value = "scope:cm_pf_c.variable_map(cm_pf_tb_cc|local_var:cm_pf_xi)" }
 					set_local_variable = { name = cm_pf_r_ck value = "scope:cm_pf_c.variable_map(cm_pf_tb_ck|local_var:cm_pf_xi)" }
 					set_local_variable = { name = cm_pf_r2_cc value = "scope:cm_pf_c.variable_map(cm_pf_tb2_cc|local_var:cm_pf_xi)" }
 					set_local_variable = { name = cm_pf_r2_ck value = "scope:cm_pf_c.variable_map(cm_pf_tb2_ck|local_var:cm_pf_xi)" }
 				}
-				if = {
-					limit = { local_var:cm_pf_f_cw = 1 }
-					set_local_variable = { name = cm_pf_r_cwc value = "scope:cm_pf_c.variable_map(cm_pf_tb_cwc|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r_cwk value = "scope:cm_pf_c.variable_map(cm_pf_tb_cwk|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r2_cwc value = "scope:cm_pf_c.variable_map(cm_pf_tb2_cwc|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r2_cwk value = "scope:cm_pf_c.variable_map(cm_pf_tb2_cwk|local_var:cm_pf_xi)" }
-				}
-				if = {
-					limit = { local_var:cm_pf_f_gpop = 1 }
-					set_local_variable = { name = cm_pf_r_gpopc value = "scope:cm_pf_c.variable_map(cm_pf_tb_gpopc|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r_gpopk value = "scope:cm_pf_c.variable_map(cm_pf_tb_gpopk|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r2_gpopc value = "scope:cm_pf_c.variable_map(cm_pf_tb2_gpopc|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r2_gpopk value = "scope:cm_pf_c.variable_map(cm_pf_tb2_gpopk|local_var:cm_pf_xi)" }
-				}
-				if = {
-					limit = { local_var:cm_pf_f_cpop = 1 }
-					set_local_variable = { name = cm_pf_r_cpopc value = "scope:cm_pf_c.variable_map(cm_pf_tb_cpopc|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r_cpopk value = "scope:cm_pf_c.variable_map(cm_pf_tb_cpopk|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r2_cpopc value = "scope:cm_pf_c.variable_map(cm_pf_tb2_cpopc|local_var:cm_pf_xi)" }
-					set_local_variable = { name = cm_pf_r2_cpopk value = "scope:cm_pf_c.variable_map(cm_pf_tb2_cpopk|local_var:cm_pf_xi)" }
-				}
 			}
 			else = {
 				set_local_variable = { name = cm_pf_r_gc value = 0 }
 				set_local_variable = { name = cm_pf_r_gk value = 0 }
-				set_local_variable = { name = cm_pf_r_gwc value = 0 }
-				set_local_variable = { name = cm_pf_r_gwk value = 0 }
 				set_local_variable = { name = cm_pf_r_cc value = 0 }
 				set_local_variable = { name = cm_pf_r_ck value = 0 }
-				set_local_variable = { name = cm_pf_r_cwc value = 0 }
-				set_local_variable = { name = cm_pf_r_cwk value = 0 }
 				set_local_variable = { name = cm_pf_r2_gc value = 0 }
 				set_local_variable = { name = cm_pf_r2_gk value = 0 }
-				set_local_variable = { name = cm_pf_r2_gwc value = 0 }
-				set_local_variable = { name = cm_pf_r2_gwk value = 0 }
 				set_local_variable = { name = cm_pf_r2_cc value = 0 }
 				set_local_variable = { name = cm_pf_r2_ck value = 0 }
-				set_local_variable = { name = cm_pf_r2_cwc value = 0 }
-				set_local_variable = { name = cm_pf_r2_cwk value = 0 }
-				set_local_variable = { name = cm_pf_r_gpopc value = 0 }
-				set_local_variable = { name = cm_pf_r_gpopk value = 0 }
-				set_local_variable = { name = cm_pf_r_cpopc value = 0 }
-				set_local_variable = { name = cm_pf_r_cpopk value = 0 }
-				set_local_variable = { name = cm_pf_r2_gpopc value = 0 }
-				set_local_variable = { name = cm_pf_r2_gpopk value = 0 }
-				set_local_variable = { name = cm_pf_r2_cpopc value = 0 }
-				set_local_variable = { name = cm_pf_r2_cpopk value = 0 }
 			}
 			if = {
-				limit = { local_var:cm_pf_f_gw = 1 }
-				set_local_variable = {
-					name = cm_pf_ubv
-					value = {
-						value = local_var:cm_pf_x
-						multiply = local_var:cm_pf_r_gwc
-						subtract = local_var:cm_pf_r_gwk
-						subtract = {
-							value = local_var:cm_pf_x
-							multiply = local_var:cm_pf_r2_gwc
-						}
-						add = local_var:cm_pf_r2_gwk
-						add = scope:cm_pf_c.var:cm_pf_cx_gt
-					}
-				}
-				change_variable = { name = cm_pf_ub_gt min = local_var:cm_pf_ubv }
-			}
-			if = {
-				limit = { local_var:cm_pf_f_gp = 1 }
+				limit = { local_var:cm_pf_dog = 1 }
 				set_local_variable = {
 					name = cm_pf_ubv
 					value = {
@@ -2529,31 +1989,13 @@ cm_pf_apply_ref_bounds = {
 							multiply = local_var:cm_pf_r2_gc
 						}
 						add = local_var:cm_pf_r2_gk
-						add = scope:cm_pf_c.var:cm_pf_cx_gp
+						add = scope:cm_pf_c.var:cm_pf_cx_g
 					}
 				}
-				change_variable = { name = cm_pf_ub_gp min = local_var:cm_pf_ubv }
+				change_variable = { name = cm_pf_ub_g min = local_var:cm_pf_ubv }
 			}
 			if = {
-				limit = { local_var:cm_pf_f_cw = 1 }
-				set_local_variable = {
-					name = cm_pf_ubv
-					value = {
-						value = local_var:cm_pf_x
-						multiply = local_var:cm_pf_r_cwc
-						subtract = local_var:cm_pf_r_cwk
-						subtract = {
-							value = local_var:cm_pf_x
-							multiply = local_var:cm_pf_r2_cwc
-						}
-						add = local_var:cm_pf_r2_cwk
-						add = scope:cm_pf_c.var:cm_pf_cx_ct
-					}
-				}
-				change_variable = { name = cm_pf_ub_ct min = local_var:cm_pf_ubv }
-			}
-			if = {
-				limit = { local_var:cm_pf_f_cp = 1 }
+				limit = { local_var:cm_pf_doc = 1 }
 				set_local_variable = {
 					name = cm_pf_ubv
 					value = {
@@ -2565,46 +2007,10 @@ cm_pf_apply_ref_bounds = {
 							multiply = local_var:cm_pf_r2_cc
 						}
 						add = local_var:cm_pf_r2_ck
-						add = scope:cm_pf_c.var:cm_pf_cx_cp
+						add = scope:cm_pf_c.var:cm_pf_cx_c
 					}
 				}
-				change_variable = { name = cm_pf_ub_cp min = local_var:cm_pf_ubv }
-			}
-			if = {
-				limit = { local_var:cm_pf_f_gpop = 1 }
-				set_local_variable = {
-					name = cm_pf_ubv
-					value = {
-						value = local_var:cm_pf_x
-						multiply = local_var:cm_pf_r_gpopc
-						subtract = local_var:cm_pf_r_gpopk
-						subtract = {
-							value = local_var:cm_pf_x
-							multiply = local_var:cm_pf_r2_gpopc
-						}
-						add = local_var:cm_pf_r2_gpopk
-						add = scope:cm_pf_c.var:cm_pf_cx_gpop
-					}
-				}
-				change_variable = { name = cm_pf_ub_gpop min = local_var:cm_pf_ubv }
-			}
-			if = {
-				limit = { local_var:cm_pf_f_cpop = 1 }
-				set_local_variable = {
-					name = cm_pf_ubv
-					value = {
-						value = local_var:cm_pf_x
-						multiply = local_var:cm_pf_r_cpopc
-						subtract = local_var:cm_pf_r_cpopk
-						subtract = {
-							value = local_var:cm_pf_x
-							multiply = local_var:cm_pf_r2_cpopc
-						}
-						add = local_var:cm_pf_r2_cpopk
-						add = scope:cm_pf_c.var:cm_pf_cx_cpop
-					}
-				}
-				change_variable = { name = cm_pf_ub_cpop min = local_var:cm_pf_ubv }
+				change_variable = { name = cm_pf_ub_c min = local_var:cm_pf_ubv }
 			}
 		}
 		remove_variable = cm_pf_d
@@ -2618,31 +2024,15 @@ cm_pf_apply_ref_bounds = {
 	clear_variable_list = cm_pf_reach
 	clear_variable_map = cm_pf_tb_gc
 	clear_variable_map = cm_pf_tb_gk
-	clear_variable_map = cm_pf_tb_gwc
-	clear_variable_map = cm_pf_tb_gwk
 	clear_variable_map = cm_pf_tb_cc
 	clear_variable_map = cm_pf_tb_ck
-	clear_variable_map = cm_pf_tb_cwc
-	clear_variable_map = cm_pf_tb_cwk
 	clear_variable_map = cm_pf_tb2_gc
 	clear_variable_map = cm_pf_tb2_gk
-	clear_variable_map = cm_pf_tb2_gwc
-	clear_variable_map = cm_pf_tb2_gwk
 	clear_variable_map = cm_pf_tb2_cc
 	clear_variable_map = cm_pf_tb2_ck
-	clear_variable_map = cm_pf_tb2_cwc
-	clear_variable_map = cm_pf_tb2_cwk
-	clear_variable_map = cm_pf_tb_gpopc
-	clear_variable_map = cm_pf_tb_gpopk
-	clear_variable_map = cm_pf_tb_cpopc
-	clear_variable_map = cm_pf_tb_cpopk
-	clear_variable_map = cm_pf_tb2_gpopc
-	clear_variable_map = cm_pf_tb2_gpopk
-	clear_variable_map = cm_pf_tb2_cpopc
-	clear_variable_map = cm_pf_tb2_cpopk
 }
 
-# Country scope. Folds $V$ (a local) into the exact best-1/2/3 values for metric $C$.
+# Country scope. Folds $V$ (a local) into the exact best-1/2/3 values for mode $C$.
 cm_pf_best3_fold = {
 	if = {
 		limit = { local_var:$V$ > var:cm_pf_b1_$C$ }
@@ -2727,180 +2117,65 @@ cm_pf_score_candidate_pruned = {
 		}
 		if = {
 			limit = { scope:cm_pf_c.var:cm_pf_acc = 2 }
-			set_local_variable = { name = cm_pf_th_gt value = scope:cm_pf_c.var:cm_pf_b3_gt }
-			set_local_variable = { name = cm_pf_th_gp value = scope:cm_pf_c.var:cm_pf_b3_gp }
-			set_local_variable = { name = cm_pf_th_ct value = scope:cm_pf_c.var:cm_pf_b3_ct }
-			set_local_variable = { name = cm_pf_th_cp value = scope:cm_pf_c.var:cm_pf_b3_cp }
-			if = {
-				limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
-				set_local_variable = { name = cm_pf_th_gpop value = scope:cm_pf_c.var:cm_pf_b3_gpop }
-				set_local_variable = { name = cm_pf_th_cpop value = scope:cm_pf_c.var:cm_pf_b3_cpop }
-			}
+			set_local_variable = { name = cm_pf_th_g value = scope:cm_pf_c.var:cm_pf_b3_g }
+			set_local_variable = { name = cm_pf_th_c value = scope:cm_pf_c.var:cm_pf_b3_c }
 		}
 		else_if = {
 			limit = { scope:cm_pf_c.var:cm_pf_acc = 3 }
-			set_local_variable = { name = cm_pf_th_gt value = scope:cm_pf_c.var:cm_pf_b1_gt }
-			set_local_variable = { name = cm_pf_th_gp value = scope:cm_pf_c.var:cm_pf_b1_gp }
-			set_local_variable = { name = cm_pf_th_ct value = scope:cm_pf_c.var:cm_pf_b1_ct }
-			set_local_variable = { name = cm_pf_th_cp value = scope:cm_pf_c.var:cm_pf_b1_cp }
-			if = {
-				limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
-				set_local_variable = { name = cm_pf_th_gpop value = scope:cm_pf_c.var:cm_pf_b1_gpop }
-				set_local_variable = { name = cm_pf_th_cpop value = scope:cm_pf_c.var:cm_pf_b1_cpop }
-			}
+			set_local_variable = { name = cm_pf_th_g value = scope:cm_pf_c.var:cm_pf_b1_g }
+			set_local_variable = { name = cm_pf_th_c value = scope:cm_pf_c.var:cm_pf_b1_c }
 		}
 		else = {
 			# 1.25: skips only what is provably below 125% of the found best, keeping the
 			# found best at or above 80% of the true best.
 			set_local_variable = {
-				name = cm_pf_th_gt
+				name = cm_pf_th_g
 				value = {
-					value = scope:cm_pf_c.var:cm_pf_b1_gt
+					value = scope:cm_pf_c.var:cm_pf_b1_g
 					multiply = 1.25
 				}
 			}
 			set_local_variable = {
-				name = cm_pf_th_gp
+				name = cm_pf_th_c
 				value = {
-					value = scope:cm_pf_c.var:cm_pf_b1_gp
+					value = scope:cm_pf_c.var:cm_pf_b1_c
 					multiply = 1.25
-				}
-			}
-			set_local_variable = {
-				name = cm_pf_th_ct
-				value = {
-					value = scope:cm_pf_c.var:cm_pf_b1_ct
-					multiply = 1.25
-				}
-			}
-			set_local_variable = {
-				name = cm_pf_th_cp
-				value = {
-					value = scope:cm_pf_c.var:cm_pf_b1_cp
-					multiply = 1.25
-				}
-			}
-			if = {
-				limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
-				set_local_variable = {
-					name = cm_pf_th_gpop
-					value = {
-						value = scope:cm_pf_c.var:cm_pf_b1_gpop
-						multiply = 1.25
-					}
-				}
-				set_local_variable = {
-					name = cm_pf_th_cpop
-					value = {
-						value = scope:cm_pf_c.var:cm_pf_b1_cpop
-						multiply = 1.25
-					}
 				}
 			}
 		}
 		if = {
-			limit = { scope:cm_pf_c = { cm_pf_method_is_tax_base = yes } }
-			if = {
-				limit = {
-					local_var:cm_pf_do_g = 1
-					# The 80-based bounds undercount stacked candidates; always evaluate those.
-					NOT = { has_variable = cm_pf_sx }
-				}
-				# Headroom cap: a candidate scores at most its own headroom times the
-				# positive-headroom total.
-				set_local_variable = {
-					name = cm_pf_cap_g
-					value = {
-						value = var:cm_pf_t
-						multiply = scope:cm_pf_c.var:cm_pf_wpos
-					}
-				}
-				if = {
-					limit = {
-						OR = {
-							var:cm_pf_ub_gt < local_var:cm_pf_th_gt
-							local_var:cm_pf_cap_g < local_var:cm_pf_th_gt
-						}
-					}
-					set_local_variable = { name = cm_pf_do_g value = 0 }
-					set_local_variable = { name = cm_pf_bskip_g value = 1 }
+			limit = {
+				local_var:cm_pf_do_g = 1
+				# The 80-based bounds undercount stacked candidates; always evaluate those.
+				NOT = { has_variable = cm_pf_sx }
+			}
+			# Headroom cap: a candidate scores at most its own headroom times the
+			# positive-headroom total.
+			set_local_variable = {
+				name = cm_pf_cap_g
+				value = {
+					value = var:cm_pf_t
+					multiply = scope:cm_pf_c.var:cm_pf_hpos
 				}
 			}
 			if = {
 				limit = {
-					local_var:cm_pf_do_c = 1
-					var:cm_pf_ub_ct < local_var:cm_pf_th_ct
+					OR = {
+						var:cm_pf_ub_g < local_var:cm_pf_th_g
+						local_var:cm_pf_cap_g < local_var:cm_pf_th_g
+					}
 				}
-				set_local_variable = { name = cm_pf_do_c value = 0 }
-				set_local_variable = { name = cm_pf_bskip_c value = 1 }
+				set_local_variable = { name = cm_pf_do_g value = 0 }
+				set_local_variable = { name = cm_pf_bskip_g value = 1 }
 			}
 		}
-		else_if = {
-			limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
-			if = {
-				limit = {
-					local_var:cm_pf_do_g = 1
-					NOT = { has_variable = cm_pf_sx }
-				}
-				set_local_variable = {
-					name = cm_pf_cap_g
-					value = {
-						value = var:cm_pf_t
-						multiply = scope:cm_pf_c.var:cm_pf_ppos
-					}
-				}
-				if = {
-					limit = {
-						OR = {
-							var:cm_pf_ub_gpop < local_var:cm_pf_th_gpop
-							local_var:cm_pf_cap_g < local_var:cm_pf_th_gpop
-						}
-					}
-					set_local_variable = { name = cm_pf_do_g value = 0 }
-					set_local_variable = { name = cm_pf_bskip_g value = 1 }
-				}
+		if = {
+			limit = {
+				local_var:cm_pf_do_c = 1
+				var:cm_pf_ub_c < local_var:cm_pf_th_c
 			}
-			if = {
-				limit = {
-					local_var:cm_pf_do_c = 1
-					var:cm_pf_ub_cpop < local_var:cm_pf_th_cpop
-				}
-				set_local_variable = { name = cm_pf_do_c value = 0 }
-				set_local_variable = { name = cm_pf_bskip_c value = 1 }
-			}
-		}
-		else = {
-			if = {
-				limit = {
-					local_var:cm_pf_do_g = 1
-					NOT = { has_variable = cm_pf_sx }
-				}
-				set_local_variable = {
-					name = cm_pf_cap_g
-					value = {
-						value = var:cm_pf_t
-						multiply = scope:cm_pf_c.var:cm_pf_npos
-					}
-				}
-				if = {
-					limit = {
-						OR = {
-							var:cm_pf_ub_gp < local_var:cm_pf_th_gp
-							local_var:cm_pf_cap_g < local_var:cm_pf_th_gp
-						}
-					}
-					set_local_variable = { name = cm_pf_do_g value = 0 }
-					set_local_variable = { name = cm_pf_bskip_g value = 1 }
-				}
-			}
-			if = {
-				limit = {
-					local_var:cm_pf_do_c = 1
-					var:cm_pf_ub_cp < local_var:cm_pf_th_cp
-				}
-				set_local_variable = { name = cm_pf_do_c value = 0 }
-				set_local_variable = { name = cm_pf_bskip_c value = 1 }
-			}
+			set_local_variable = { name = cm_pf_do_c value = 0 }
+			set_local_variable = { name = cm_pf_bskip_c value = 1 }
 		}
 	}
 	if = {
@@ -2916,23 +2191,17 @@ cm_pf_score_candidate_pruned = {
 		cm_pf_sweep_gov = yes
 		if = {
 			limit = { scope:cm_pf_c.var:cm_pf_acc <= 4 }
-			set_local_variable = { name = cm_pf_fv value = var:cm_pf_gf_raw }
-			set_local_variable = { name = cm_pf_fvp value = var:cm_pf_gf_raw_p }
-			set_local_variable = { name = cm_pf_fvpop value = var:cm_pf_gf_raw_pop }
-			scope:cm_pf_c = {
-				# Only the active method's best-three is ever read as a skip threshold.
-				if = {
-					limit = { cm_pf_method_is_tax_base = yes }
-					cm_pf_best3_fold = { C = gt V = cm_pf_fv }
-				}
-				else_if = {
-					limit = { cm_pf_method_is_population = yes }
-					cm_pf_best3_fold = { C = gpop V = cm_pf_fvpop }
-				}
-				else = {
-					cm_pf_best3_fold = { C = gp V = cm_pf_fvp }
-				}
+			# Only the active method's best-three is ever read as a skip threshold.
+			set_local_variable = { name = cm_pf_fvm value = var:cm_pf_gf_raw_p }
+			if = {
+				limit = { scope:cm_pf_c = { cm_pf_method_is_tax_base = yes } }
+				set_local_variable = { name = cm_pf_fvm value = var:cm_pf_gf_raw }
 			}
+			else_if = {
+				limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
+				set_local_variable = { name = cm_pf_fvm value = var:cm_pf_gf_raw_pop }
+			}
+			scope:cm_pf_c = { cm_pf_best3_fold = { C = g V = cm_pf_fvm } }
 		}
 	}
 	else_if = {
@@ -2949,22 +2218,17 @@ cm_pf_score_candidate_pruned = {
 		cm_pf_sweep_cap = yes
 		if = {
 			limit = { scope:cm_pf_c.var:cm_pf_acc <= 4 }
-			set_local_variable = { name = cm_pf_fv value = var:cm_pf_cf_raw }
-			set_local_variable = { name = cm_pf_fvp value = var:cm_pf_cf_raw_p }
-			set_local_variable = { name = cm_pf_fvpop value = var:cm_pf_cf_raw_pop }
-			scope:cm_pf_c = {
-				if = {
-					limit = { cm_pf_method_is_tax_base = yes }
-					cm_pf_best3_fold = { C = ct V = cm_pf_fv }
-				}
-				else_if = {
-					limit = { cm_pf_method_is_population = yes }
-					cm_pf_best3_fold = { C = cpop V = cm_pf_fvpop }
-				}
-				else = {
-					cm_pf_best3_fold = { C = cp V = cm_pf_fvp }
-				}
+			# Only the active method's best-three is ever read as a skip threshold.
+			set_local_variable = { name = cm_pf_fvm value = var:cm_pf_cf_raw_p }
+			if = {
+				limit = { scope:cm_pf_c = { cm_pf_method_is_tax_base = yes } }
+				set_local_variable = { name = cm_pf_fvm value = var:cm_pf_cf_raw }
 			}
+			else_if = {
+				limit = { scope:cm_pf_c = { cm_pf_method_is_population = yes } }
+				set_local_variable = { name = cm_pf_fvm value = var:cm_pf_cf_raw_pop }
+			}
+			scope:cm_pf_c = { cm_pf_best3_fold = { C = c V = cm_pf_fvm } }
 		}
 	}
 	else_if = {
@@ -3594,12 +2858,8 @@ cm_pf_clean_location = {
 		remove_variable = cm_pf_div_g_nv
 		remove_variable = cm_pf_div_c_nv
 		remove_variable = cm_pf_div_cb_nv
-		remove_variable = cm_pf_ub_gt
-		remove_variable = cm_pf_ub_gp
-		remove_variable = cm_pf_ub_ct
-		remove_variable = cm_pf_ub_cp
-		remove_variable = cm_pf_ub_gpop
-		remove_variable = cm_pf_ub_cpop
+		remove_variable = cm_pf_ub_g
+		remove_variable = cm_pf_ub_c
 		remove_variable = cm_pf_ub_ord
 		remove_variable = cm_pf_dref_min
 		remove_variable = cm_pf_samp
@@ -3636,60 +2896,26 @@ cm_pf_clean_country = {
 	remove_variable = cm_pf_ub_valid
 	remove_variable = cm_pf_run_g
 	remove_variable = cm_pf_run_c
-	remove_variable = cm_pf_b1_gt
-	remove_variable = cm_pf_b2_gt
-	remove_variable = cm_pf_b3_gt
-	remove_variable = cm_pf_b1_gp
-	remove_variable = cm_pf_b2_gp
-	remove_variable = cm_pf_b3_gp
-	remove_variable = cm_pf_b1_ct
-	remove_variable = cm_pf_b2_ct
-	remove_variable = cm_pf_b3_ct
-	remove_variable = cm_pf_b1_cp
-	remove_variable = cm_pf_b2_cp
-	remove_variable = cm_pf_b3_cp
-	remove_variable = cm_pf_b1_gpop
-	remove_variable = cm_pf_b2_gpop
-	remove_variable = cm_pf_b3_gpop
-	remove_variable = cm_pf_b1_cpop
-	remove_variable = cm_pf_b2_cpop
-	remove_variable = cm_pf_b3_cpop
-	remove_variable = cm_pf_cx_gt
-	remove_variable = cm_pf_cx_gp
-	remove_variable = cm_pf_cx_ct
-	remove_variable = cm_pf_cx_cp
-	remove_variable = cm_pf_cx_gpop
-	remove_variable = cm_pf_cx_cpop
+	remove_variable = cm_pf_b1_g
+	remove_variable = cm_pf_b2_g
+	remove_variable = cm_pf_b3_g
+	remove_variable = cm_pf_b1_c
+	remove_variable = cm_pf_b2_c
+	remove_variable = cm_pf_b3_c
+	remove_variable = cm_pf_cx_g
+	remove_variable = cm_pf_cx_c
 	remove_variable = cm_pf_tmax
-	remove_variable = cm_pf_npos
-	remove_variable = cm_pf_wpos
-	remove_variable = cm_pf_ppos
+	remove_variable = cm_pf_hpos
 	remove_variable = cm_pf_dc_left
 	clear_variable_list = cm_pf_front
 	clear_variable_list = cm_pf_reach
 	clear_variable_list = cm_pf_drain_cache
 	clear_variable_map = cm_pf_tb_gc
 	clear_variable_map = cm_pf_tb_gk
-	clear_variable_map = cm_pf_tb_gwc
-	clear_variable_map = cm_pf_tb_gwk
 	clear_variable_map = cm_pf_tb_cc
 	clear_variable_map = cm_pf_tb_ck
-	clear_variable_map = cm_pf_tb_cwc
-	clear_variable_map = cm_pf_tb_cwk
 	clear_variable_map = cm_pf_tb2_gc
 	clear_variable_map = cm_pf_tb2_gk
-	clear_variable_map = cm_pf_tb2_gwc
-	clear_variable_map = cm_pf_tb2_gwk
 	clear_variable_map = cm_pf_tb2_cc
 	clear_variable_map = cm_pf_tb2_ck
-	clear_variable_map = cm_pf_tb2_cwc
-	clear_variable_map = cm_pf_tb2_cwk
-	clear_variable_map = cm_pf_tb_gpopc
-	clear_variable_map = cm_pf_tb_gpopk
-	clear_variable_map = cm_pf_tb_cpopc
-	clear_variable_map = cm_pf_tb_cpopk
-	clear_variable_map = cm_pf_tb2_gpopc
-	clear_variable_map = cm_pf_tb2_gpopk
-	clear_variable_map = cm_pf_tb2_cpopc
-	clear_variable_map = cm_pf_tb2_cpopk
 }

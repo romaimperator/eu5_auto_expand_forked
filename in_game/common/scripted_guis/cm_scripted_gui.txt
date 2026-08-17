@@ -91,16 +91,13 @@ cm_gui_construct_upgrade = {
 					}
 				}
 				# The replacement resolves only in GUI context; the approval pass reads it from here.
-				remove_from_variable_map = { name = cm_q_upg_new_types key = scope:cm_old_building_type }
 				add_to_variable_map = { name = cm_q_upg_new_types key = scope:cm_old_building_type value = scope:cm_new_building_type }
 				if = {
 					limit = { is_target_in_variable_list = { name = cm_q_upgrade_gated_types target = scope:cm_old_building_type } }
 					save_temporary_scope_as = cm_q_scored_loc
 					save_temporary_scope_value_as = { name = cm_q_score_cost value = scope:cm_cost }
 					cm_q_compute_metric_score = yes
-					remove_from_variable_map = { name = cm_q_upg_scores key = scope:cm_old_building_type }
 					add_to_variable_map = { name = cm_q_upg_scores key = scope:cm_old_building_type value = scope:cm_q_score_val }
-					remove_from_variable_map = { name = cm_q_upg_costs key = scope:cm_old_building_type }
 					add_to_variable_map = { name = cm_q_upg_costs key = scope:cm_old_building_type value = scope:cm_cost }
 					if = {
 						limit = { OR = { NOT = { has_variable = cm_q_upg_best } var:cm_q_upg_best < scope:cm_q_score_val } }
@@ -110,7 +107,6 @@ cm_gui_construct_upgrade = {
 						add_to_variable_list = { name = cm_q_upg_cand_locations target = scope:cm_q_scored_loc }
 					}
 				} else = {
-					remove_from_variable_map = { name = cm_q_upgall_costs key = scope:cm_old_building_type }
 					add_to_variable_map = { name = cm_q_upgall_costs key = scope:cm_old_building_type value = scope:cm_cost }
 				}
 			}
@@ -156,16 +152,13 @@ cm_gui_try_build = {
 				save_temporary_scope_as = cm_q_scored_loc
 				save_temporary_scope_value_as = { name = cm_q_score_cost value = scope:cm_cost }
 				cm_q_compute_metric_score = yes
-				remove_from_variable_map = { name = cm_q_scores key = scope:cm_building_type }
 				add_to_variable_map = { name = cm_q_scores key = scope:cm_building_type value = scope:cm_q_score_val }
-				remove_from_variable_map = { name = cm_q_costs key = scope:cm_building_type }
 				add_to_variable_map = { name = cm_q_costs key = scope:cm_building_type value = scope:cm_cost }
 				# The standing predecessor resolves only in GUI context; the approval pass
 				# records the conversion bookkeeping from here.
 				if = {
 					limit = { exists = scope:cm_obsolete_building }
 					scope:cm_obsolete_building = { building_type = { save_temporary_scope_as = cm_build_obsolete_type } }
-					remove_from_variable_map = { name = cm_q_conv_types key = scope:cm_building_type }
 					add_to_variable_map = { name = cm_q_conv_types key = scope:cm_building_type value = scope:cm_build_obsolete_type }
 				}
 				if = {
@@ -291,7 +284,6 @@ cm_gui_try_food_building = {
 						scope:cm_can_build = yes
 					}
 				}
-				remove_from_variable_map = { name = cm_q_food_costs key = scope:cm_building_type }
 				add_to_variable_map = { name = cm_q_food_costs key = scope:cm_building_type value = scope:cm_cost }
 			}
 		}

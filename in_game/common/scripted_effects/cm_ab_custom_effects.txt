@@ -463,6 +463,7 @@ cm_ab_pass_custom = {
 	}
 	if = {
 		limit = { exists = var:cm_ab_custom_control }
+		cm_ab_drain_bailiffs = yes
 		cm_ab_drain_max_control_types = yes
 	}
 	if = {
@@ -509,10 +510,34 @@ cm_ab_drain_custom_type = {
 	cm_ab_drain_custom_resolved = yes
 }
 
-# The control set, wealthiest locations first and past each location's open slots: a location
-# takes its bailiff and every unique type staged there before the walk moves on, so its slots and
-# labour go to the whole set. Inside a location the bailiff comes first, then the uniques by
-# local_max_control. Root is the country.
+# The bailiff, richest RGO first at what its market pays for it now, which is the order its
+# four-yearly survey and its monthly staging both pick in. It drains on its own rather than taking
+# a turn in the raw-wealth walk below: the bailiff stands only on rural land and of the six unique
+# types can share a location with ostrog, eng_royal_forest (both country-exclusive) and tambo, so
+# grouping it with them buys nothing. Root is the country.
+cm_ab_drain_bailiffs = {
+	building_type:bailiff = { save_scope_as = cm_building_type }
+	if = {
+		limit = {
+			local_var:cm_ab_cost_blocked = 0
+			has_variable_list = cm_ab_b_locations
+		}
+		ordered_in_list = {
+			variable = cm_ab_b_locations
+			order_by = cm_location_rgo_market_value
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			save_temporary_scope_as = cm_ab_drain_loc
+			scope:cm_ab_drain_loc = {
+				cm_ab_try_approve_build = { cat = 4 POOL = cm_ab_pool_custom GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = always }
+			}
+		}
+	}
+}
+
+# The unique types, wealthiest locations first and past each location's open slots: a location takes
+# every unique type staged there before the walk moves on, so its slots and labour go to the whole
+# set, and inside a location they come in local_max_control order. Root is the country.
 cm_ab_drain_max_control_types = {
 	if = {
 		limit = {
@@ -526,7 +551,6 @@ cm_ab_drain_max_control_types = {
 			check_range_bounds = no
 			save_temporary_scope_as = cm_ab_drain_loc
 			scope:cm_ab_drain_loc = {
-				cm_ab_drain_control_type_here = { bt = bailiff }
 				cm_ab_drain_control_type_here = { bt = ostrog }
 				cm_ab_drain_control_type_here = { bt = zhixian }
 				cm_ab_drain_control_type_here = { bt = tur_kodjabashi_office }

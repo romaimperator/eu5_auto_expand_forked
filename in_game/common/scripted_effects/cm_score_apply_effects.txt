@@ -29,7 +29,6 @@ cm_ab_score_build_apply = {
 				}
 				set_local_variable = { name = cm_ab_conv_clash value = 1 }
 			} else = {
-				remove_from_variable_map = { name = cm_ab_b_conv key = scope:cm_building_type }
 				add_to_variable_map = { name = cm_ab_b_conv key = scope:cm_building_type value = scope:cm_ab_conv_type }
 			}
 		}
@@ -37,9 +36,7 @@ cm_ab_score_build_apply = {
 			limit = { local_var:cm_ab_conv_clash = 0 }
 			if = {
 				limit = { cm_ln_can_place = yes }
-				remove_from_variable_map = { name = cm_ab_b_costs key = scope:cm_building_type }
 				add_to_variable_map = { name = cm_ab_b_costs key = scope:cm_building_type value = scope:cm_cost }
-				remove_from_variable_map = { name = cm_ab_b_profit key = scope:cm_building_type }
 				add_to_variable_map = { name = cm_ab_b_profit key = scope:cm_building_type value = cm_bld_profit_value }
 				if = {
 					limit = {
@@ -95,7 +92,6 @@ cm_ab_score_build_apply = {
 				scope:cm_country = { cm_ab_prod_fold_gd_anchor = yes }
 				if = {
 					limit = { cm_ln_can_place = yes }
-					remove_from_variable_map = { name = cm_ab_b_scores key = scope:cm_building_type }
 					add_to_variable_map = { name = cm_ab_b_scores key = scope:cm_building_type value = scope:cm_ab_score_val }
 					if = {
 						limit = { OR = { NOT = { has_variable = cm_ab_b_best } var:cm_ab_b_best < scope:cm_ab_score_val } }
@@ -131,11 +127,8 @@ cm_ab_score_upgrade_apply = {
 			scope:cm_country = { cm_ab_prod_fold_gd_anchor = yes }
 			if = {
 				limit = { cm_ln_can_place = yes }
-				remove_from_variable_map = { name = cm_ab_u_new_types key = scope:cm_old_building_type }
 				add_to_variable_map = { name = cm_ab_u_new_types key = scope:cm_old_building_type value = scope:cm_new_building_type }
-				remove_from_variable_map = { name = cm_ab_u_scores key = scope:cm_old_building_type }
 				add_to_variable_map = { name = cm_ab_u_scores key = scope:cm_old_building_type value = scope:cm_ab_score_val }
-				remove_from_variable_map = { name = cm_ab_u_costs key = scope:cm_old_building_type }
 				add_to_variable_map = { name = cm_ab_u_costs key = scope:cm_old_building_type value = scope:cm_cost }
 				if = {
 					limit = { OR = { NOT = { has_variable = cm_ab_u_best } var:cm_ab_u_best < scope:cm_ab_score_val } }
@@ -182,7 +175,6 @@ cm_q_urbanize_apply = {
 		}
 		add_to_variable_list = { name = cm_q_done_urbanize_types target = scope:cm_building_type }
 		scope:cm_country = { change_variable = { name = cm_q_processed add = 1 } }
-		remove_from_variable_map = { name = cm_q_urb_costs key = scope:cm_building_type }
 		add_to_variable_map = { name = cm_q_urb_costs key = scope:cm_building_type value = scope:cm_cost }
 	}
 }
