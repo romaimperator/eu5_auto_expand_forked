@@ -25,6 +25,15 @@ cm_pf_run_batch = {
 	}
 }
 
+# Gates the tick drivers on the same pair cm_pf_run_batch_all's own entry gate reads. cm_pf_prep_core
+# removes cm_pf_all_done as it primes, so priming is what re-arms a driver that has gone idle.
+cm_pf_batch_ready = {
+	is_shown = {
+		has_variable = cm_pf_n
+		NOT = { has_variable = cm_pf_all_done }
+	}
+}
+
 # is_shown gates the repaint driver; Execute clears the flag after the repaint fires.
 cm_pf_repaint_ready = {
 	is_shown = {

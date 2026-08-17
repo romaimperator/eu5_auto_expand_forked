@@ -1,5 +1,5 @@
-# Runs the placement finder when a finder mapmode is opened: _show preps the search,
-# the tick loop scores candidate batches until done, and the repaint driver swaps through
+# Runs the placement finder when a finder mapmode is opened: a prep driver primes the search,
+# a gated tick driver scores candidate batches until done, and the repaint driver swaps through
 # the mode's hidden duplicate to show the finished scores.
 widget = {
 	name = "cm_pf_map_mode_window"
@@ -7,7 +7,7 @@ widget = {
 	visible = "[EqualTo_CFixedPoint('(CFixedPoint)0', '(CFixedPoint)0')]"
 	position = { -10000 1 }
 
-	# Governor finder compute driver.
+	# Governor finder prep driver.
 	widget = {
 		size = { 0 0 }
 		# Pinned so a save made with the mode active still fires _show on load.
@@ -17,8 +17,22 @@ widget = {
 		state = {
 			name = _show
 			duration = 0.1
-			next = cm_pf_gf_tick_a
 			on_finish = "[GetScriptedGui('cm_pf_prep_gov').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+	}
+
+	# Governor finder tick driver. The cm_pf_batch_ready term is what ends the loop: each Execute is
+	# a broadcast scripted_gui_command, and a finished run would otherwise keep paying one per tick
+	# for the length of time the mode stays open. Priming re-arms it, so the refresh button works.
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetPlayer.Exists, Or(GetMapMode('cm_governor_finder').IsActive, GetMapMode('cm_governor_finder_hidden').IsActive), GetScriptedGui('cm_pf_batch_ready').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+		state = {
+			name = _show
+			duration = 0.1
+			next = cm_pf_gf_tick_a
+			on_finish = "[GetScriptedGui('cm_pf_run_batch').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 		state = {
 			name = cm_pf_gf_tick_a
@@ -53,7 +67,7 @@ widget = {
 		}
 	}
 
-	# Capital finder compute driver.
+	# Capital finder prep driver.
 	widget = {
 		size = { 0 0 }
 		visible_at_creation = no
@@ -61,8 +75,20 @@ widget = {
 		state = {
 			name = _show
 			duration = 0.1
-			next = cm_pf_cf_tick_a
 			on_finish = "[GetScriptedGui('cm_pf_prep_cap').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+		}
+	}
+
+	# Capital finder tick driver.
+	widget = {
+		size = { 0 0 }
+		visible_at_creation = no
+		visible = "[And3(GetPlayer.Exists, Or(GetMapMode('cm_capital_finder').IsActive, GetMapMode('cm_capital_finder_hidden').IsActive), GetScriptedGui('cm_pf_batch_ready').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+		state = {
+			name = _show
+			duration = 0.1
+			next = cm_pf_cf_tick_a
+			on_finish = "[GetScriptedGui('cm_pf_run_batch').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 		}
 		state = {
 			name = cm_pf_cf_tick_a
