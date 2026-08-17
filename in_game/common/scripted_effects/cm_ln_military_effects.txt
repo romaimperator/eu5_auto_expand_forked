@@ -45,8 +45,8 @@ cm_ln_coast_resolve_type = {
 	cm_ab_resolve_building_type = yes
 }
 
-# Stages the current coastal fort tier across owned ports, most controlled first. The chain is the
-# only generic source of local_maritime_presence (game
+# Stages the current coastal fort tier across owned ports. The chain is the only generic source of
+# local_maritime_presence (game
 # in_game/common/building_types/coastal_forts.txt: coastal_fort 0.15 :44, naval_battery 0.3 :93),
 # and an AI left to raise its presence with fleets does it badly. The sweep carries no proximity
 # gate, in the same way the border rings do not: a port the land network never reached is exactly
@@ -57,10 +57,7 @@ cm_ln_coast_run = {
 	cm_ln_coast_resolve_type = yes
 	if = {
 		limit = { can_build_building = scope:cm_building_type }
-		ordered_owned_location = {
-			order_by = max_control
-			max = cm_max_guess_at_number_of_locations
-			check_range_bounds = no
+		every_owned_location = {
 			limit = {
 				cm_location_market_in_slice = yes
 				NOT = { integration_level = conquered }
@@ -81,18 +78,18 @@ cm_ln_coast_run = {
 	}
 }
 
-# Most controlled first, the order the staging swept in. The tier is re-resolved for the same
-# reason cm_ln_ft_drain re-resolves its own.
+# The shared build list holds every category's entries, so the limit is what keeps this off the ones
+# Production, Core Goods, Food and Custom staged, and off the border fort line, which writes the
+# same category code under its own tier. The tier is re-resolved for the same reason cm_ln_ft_drain
+# re-resolves its own, and the limit reads it.
 # Root is the country, scope:cm_country set.
 cm_ln_coast_drain = {
 	cm_ln_coast_resolve_type = yes
 	if = {
 		limit = { has_variable_list = cm_ab_b_locations }
-		ordered_in_list = {
+		every_in_list = {
 			variable = cm_ab_b_locations
-			order_by = max_control
-			max = cm_max_guess_at_number_of_locations
-			check_range_bounds = no
+			limit = { cm_ln_mil_site_claimed = { CAT = 6 } }
 			save_temporary_scope_as = cm_ln_coast_drain_loc
 			scope:cm_ln_coast_drain_loc = {
 				cm_ab_try_approve_build = { cat = 6 POOL = cm_ab_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_ab_location_has_open_build_slot }
@@ -177,10 +174,7 @@ cm_ln_bk_run = {
 	if = {
 		limit = { can_build_building = scope:cm_building_type }
 		set_variable = { name = cm_ln_bk_active value = yes }
-		ordered_owned_location = {
-			order_by = max_control
-			max = cm_max_guess_at_number_of_locations
-			check_range_bounds = no
+		every_owned_location = {
 			limit = {
 				cm_location_market_in_slice = yes
 				NOT = { integration_level = conquered }
@@ -205,8 +199,10 @@ cm_ln_bk_run = {
 	}
 }
 
-# Biggest towns first: manpower_max_level is 1 + population/20, so they take the most levels and
-# each level is worth the most there.
+# The shared build list holds every category's entries, so the limit is what keeps this off the ones
+# Production, Core Goods, Food and Custom staged, and off the two capital types, which write the
+# same category code under their own keys. The tier is re-resolved for the same reason
+# cm_ln_ft_drain re-resolves its own, and the limit reads it.
 # Root is the country, scope:cm_country set.
 cm_ln_bk_drain = {
 	cm_ln_bk_resolve_type = yes
@@ -215,11 +211,9 @@ cm_ln_bk_drain = {
 			local_var:cm_ab_cost_blocked = 0
 			has_variable_list = cm_ab_b_locations
 		}
-		ordered_in_list = {
+		every_in_list = {
 			variable = cm_ab_b_locations
-			order_by = population
-			max = cm_max_guess_at_number_of_locations
-			check_range_bounds = no
+			limit = { cm_ln_mil_site_claimed = { CAT = 7 } }
 			save_temporary_scope_as = cm_ln_bk_drain_loc
 			scope:cm_ln_bk_drain_loc = {
 				cm_ab_try_approve_build = { cat = 7 POOL = cm_ab_pool_military GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_ab_location_has_open_build_slot }

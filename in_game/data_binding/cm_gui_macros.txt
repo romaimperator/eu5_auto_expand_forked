@@ -89,6 +89,62 @@ macro = {
 	replace_with = "GetVariableSystem.Set(CMRoundKey, Concatenate(CMRoundRead, CallArg))"
 }
 
+# The sweep's tails batch the same way. Each country still queues its own rows as its own command,
+# so a malformed value costs that command rather than the cycle, but the per-country calls behind
+# them go here and cm_ln_c_scan_send submits them as one.
+macro = {
+	description = "GUI variable holding the sweep's pending per-country tails"
+	definition = "CMFlushKey"
+	replace_with = "'cm_ln_c_flush_buf'"
+}
+
+macro = {
+	description = "The sweep's pending per-country tails"
+	definition = "CMFlushRead"
+	replace_with = "GetVariableSystem.Get(CMFlushKey)"
+}
+
+# This one is never empty, where CMRoundBlock is: cm_ln_c_scan_disarm has to run whether or not any
+# country staged a row, or the gate stays true and no later cycle makes the edge that scans.
+macro = {
+	description = "The sweep's tails as one console command, behind the calls that run once a cycle"
+	definition = "CMFlushBlock"
+	replace_with = "Concatenate3('effect hidden_effect = { cm_ln_c_process = yes cm_ln_c_scan_disarm = yes ', Select_CString(GetVariableSystem.Exists(CMFlushKey), CMFlushRead, ''), ' };')"
+}
+
+macro = {
+	description = "Appends one effect call to the sweep's tail batch"
+	definition = "CMFlushAppend(CallArg)"
+	replace_with = "GetVariableSystem.Set(CMFlushKey, Concatenate(CMFlushRead, CallArg))"
+}
+
+# Building Cleanup's per-country end calls, batched the same way. Its own buffer rather than the
+# sweep's, because the two drivers run on their own timers and each wraps and clears what it holds,
+# so one buffer between them would let either submit the other's half-built content.
+macro = {
+	description = "GUI variable holding Building Cleanup's pending per-country end calls"
+	definition = "CMCuKey"
+	replace_with = "'cm_ln_c_cu_buf'"
+}
+
+macro = {
+	description = "Building Cleanup's pending per-country end calls"
+	definition = "CMCuRead"
+	replace_with = "GetVariableSystem.Get(CMCuKey)"
+}
+
+macro = {
+	description = "Building Cleanup's end calls as one console command, empty when nothing was appended"
+	definition = "CMCuBlock"
+	replace_with = "Select_CString(And(GetVariableSystem.Exists(CMCuKey), Not(GetVariableSystem.HasValue(CMCuKey, ''))), Concatenate3('effect hidden_effect = { ', CMCuRead, ' };'), '')"
+}
+
+macro = {
+	description = "Appends one effect call to Building Cleanup's end batch"
+	definition = "CMCuAppend(CallArg)"
+	replace_with = "GetVariableSystem.Set(CMCuKey, Concatenate(CMCuRead, CallArg))"
+}
+
 # A hidden widget's state machine keeps running, so a visibility gate cannot keep two drivers off
 # the console and the second call of any instant was refused. Every bridge state appends its
 # finished, ';'-terminated command here and one widget submits the queue.

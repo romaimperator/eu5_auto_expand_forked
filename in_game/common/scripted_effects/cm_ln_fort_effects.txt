@@ -18,20 +18,23 @@
 # Marks every owned land location within 2 hops of land owned outside the country's own subject
 # hierarchy as cm_ln_ft_bd = its hop count. Root is the country, scope:cm_country set.
 cm_ln_ft_build_border_ring = {
+	# The seed writes only on the location it visits, so the clear rides the same walk.
 	every_owned_location = {
-		limit = { has_variable = cm_ln_ft_bd }
-		remove_variable = cm_ln_ft_bd
-	}
-	every_owned_location = {
-		limit = {
-			is_land = yes
-			any_neighbor_location = {
+		if = {
+			limit = {
 				is_land = yes
-				exists = owner
-				NOT = { is_owned_or_owned_by_subjects_or_below_of = scope:cm_country }
+				any_neighbor_location = {
+					is_land = yes
+					exists = owner
+					NOT = { is_owned_or_owned_by_subjects_or_below_of = scope:cm_country }
+				}
 			}
+			set_variable = { name = cm_ln_ft_bd value = 1 }
 		}
-		set_variable = { name = cm_ln_ft_bd value = 1 }
+		else_if = {
+			limit = { has_variable = cm_ln_ft_bd }
+			remove_variable = cm_ln_ft_bd
+		}
 	}
 	cm_ln_ft_expand_ring = { RING = cm_ln_ft_bd FROM = 1 TO = 2 }
 }
@@ -40,15 +43,17 @@ cm_ln_ft_build_border_ring = {
 # Root is the country, scope:cm_country and scope:cm_ln_ft_nb set.
 cm_ln_ft_build_neighbor_ring = {
 	every_owned_location = {
-		limit = { has_variable = cm_ln_ft_nd }
-		remove_variable = cm_ln_ft_nd
-	}
-	every_owned_location = {
-		limit = {
-			is_land = yes
-			adjacent_to_owned_by = scope:cm_ln_ft_nb
+		if = {
+			limit = {
+				is_land = yes
+				adjacent_to_owned_by = scope:cm_ln_ft_nb
+			}
+			set_variable = { name = cm_ln_ft_nd value = 1 }
 		}
-		set_variable = { name = cm_ln_ft_nd value = 1 }
+		else_if = {
+			limit = { has_variable = cm_ln_ft_nd }
+			remove_variable = cm_ln_ft_nd
+		}
 	}
 	cm_ln_ft_expand_ring = { RING = cm_ln_ft_nd FROM = 1 TO = 2 }
 }
@@ -76,6 +81,8 @@ cm_ln_ft_expand_ring = {
 # neighbors, so two forts overlap at any spacing under 3.
 # Root is the country, scope:cm_country set.
 cm_ln_ft_build_exclusion_ring = {
+	# cm_ln_ft_mark_pick writes on neighbors too, so unlike the rings above this clear needs its own
+	# pass: a merged walk would strip a mark an earlier fort had just made.
 	every_owned_location = {
 		limit = { has_variable = cm_ln_ft_zx }
 		remove_variable = cm_ln_ft_zx
@@ -146,22 +153,31 @@ cm_ln_ft_resolve_type = {
 cm_ln_ft_run = {
 	cm_ln_ft_resolve_type = yes
 	set_variable = { name = cm_ln_ft_claimed value = 0 }
+	# Above the gate below: the drain reads this rank and would otherwise take last month's.
 	every_owned_location = {
 		limit = { has_variable = cm_ln_ft_prio }
 		remove_variable = cm_ln_ft_prio
 	}
-	cm_ln_ft_build_exclusion_ring = yes
-	cm_ln_ft_stage_capital = yes
-	set_local_variable = { name = cm_ln_ft_rank value = @cm_ln_ft_rank_base }
-	ordered_neighbor_country = {
-		order_by = military_strength
-		max = @cm_ln_ft_max_neighbors
-		check_range_bounds = no
-		save_scope_as = cm_ln_ft_nb
-		change_local_variable = { name = cm_ln_ft_rank subtract = 1 }
-		scope:cm_country = { cm_ln_ft_stage_for_neighbor = yes }
+	# A full fort limit is the steady state once a country's line is built, and both terms are
+	# country-scope, so with either failing every ring below is rebuilt to produce nothing.
+	if = {
+		limit = {
+			cm_ln_ft_has_room = yes
+			can_build_building = scope:cm_building_type
+		}
+		cm_ln_ft_build_exclusion_ring = yes
+		cm_ln_ft_stage_capital = yes
+		set_local_variable = { name = cm_ln_ft_rank value = @cm_ln_ft_rank_base }
+		ordered_neighbor_country = {
+			order_by = military_strength
+			max = @cm_ln_ft_max_neighbors
+			check_range_bounds = no
+			save_scope_as = cm_ln_ft_nb
+			change_local_variable = { name = cm_ln_ft_rank subtract = 1 }
+			scope:cm_country = { cm_ln_ft_stage_for_neighbor = yes }
+		}
+		cm_ln_ft_clear_rings = yes
 	}
-	cm_ln_ft_clear_rings = yes
 }
 
 # The keep rule names the capital a legitimate fort site, so it leads the order.
@@ -189,30 +205,38 @@ cm_ln_ft_stage_capital = {
 }
 
 # Greedy best-terrain-first placement along one neighbor's border, each pick excluding its own
-# zone of control so the next one lands at least 3 hops away.
+# zone of control so the next one lands at least 3 hops away. The order key is terrain, which never
+# moves, and a pick only ever removes candidates, so one descending walk takes the same sites a
+# repeated argmax would. The iterator snapshots its limit, so only the ring membership is tested
+# there and the exclusion each pick writes is re-tested in the body, where it is visible.
 # Root is the country, scope:cm_country, scope:cm_ln_ft_nb and scope:cm_building_type set.
 cm_ln_ft_stage_for_neighbor = {
-	cm_ln_ft_build_neighbor_ring = yes
-	set_local_variable = { name = cm_ln_ft_picks value = 0 }
-	while = {
-		limit = {
-			local_var:cm_ln_ft_picks < @cm_ln_ft_max_per_neighbor
-			cm_ln_ft_has_room = yes
-			any_owned_location = { cm_ln_ft_site_eligible = yes }
-		}
-		change_local_variable = { name = cm_ln_ft_picks add = 1 }
-		change_variable = { name = cm_ln_ft_claimed add = 1 }
+	if = {
+		limit = { cm_ln_ft_has_room = yes }
+		cm_ln_ft_build_neighbor_ring = yes
+		set_local_variable = { name = cm_ln_ft_picks value = 0 }
 		ordered_owned_location = {
 			order_by = cm_location_attacker_penalty
-			position = 0
+			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
-			limit = { cm_ln_ft_site_eligible = yes }
-			save_scope_as = cm_location
-			set_variable = { name = cm_ln_ft_prio value = local_var:cm_ln_ft_rank }
-			change_variable = { name = cm_ln_ft_prio multiply = 10 }
-			change_variable = { name = cm_ln_ft_prio add = cm_location_attacker_penalty }
-			scope:cm_country = { cm_ab_stage_build_candidate = { cat = 6 } }
-			cm_ln_ft_mark_pick = yes
+			limit = { has_variable = cm_ln_ft_nd }
+			if = {
+				limit = {
+					local_var:cm_ln_ft_picks < @cm_ln_ft_max_per_neighbor
+					scope:cm_country = { cm_ln_ft_has_room = yes }
+					cm_ln_ft_site_placeable = yes
+				}
+				change_local_variable = { name = cm_ln_ft_picks add = 1 }
+				save_scope_as = cm_location
+				set_variable = { name = cm_ln_ft_prio value = local_var:cm_ln_ft_rank }
+				change_variable = { name = cm_ln_ft_prio multiply = 10 }
+				change_variable = { name = cm_ln_ft_prio add = cm_location_attacker_penalty }
+				scope:cm_country = {
+					cm_ab_stage_build_candidate = { cat = 6 }
+					change_variable = { name = cm_ln_ft_claimed add = 1 }
+				}
+				cm_ln_ft_mark_pick = yes
+			}
 		}
 	}
 }

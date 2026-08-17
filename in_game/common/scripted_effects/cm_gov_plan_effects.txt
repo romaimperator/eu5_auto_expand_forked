@@ -20,6 +20,9 @@
 @cm_gov_income_start = 100
 # Months a pick waits before it is scored again.
 @cm_gov_probe_months = 2
+# Above the 1000 cm_gf_score normalises to, so the first seat of a kind the worst-seat walk reaches
+# always takes the slot and the value doubles as that kind's found-one test.
+@cm_gov_worst_seat_unset = 2000000
 
 # Root is the country, scope:cm_country set.
 cm_gov_reorg_tick = {
@@ -418,32 +421,58 @@ cm_gov_reorg_probe_check = {
 # The seat a displacement would take over from, one per governor kind: the lowest-scoring one of
 # that kind the plan has not picked, which is what cm_gov_free_a_seat gives up. Per kind because
 # land and naval count against separate caps, so freeing one makes no room for the other.
+#
+# A kind with no standing unplanned seat leaves 0, so the bar it feeds passes and the pick is judged
+# by the placement itself. A seat the run never scored is left out here and given up first by
+# cm_gov_seat_give_up_rank, which reads an absent score as 0.
+#
+# The seeds are unconditional so cm_gov_displace_bar never reads an unset scope, while the walk runs
+# only where that bar applies: cm_gov_probe_candidate reads it behind exactly these three terms, so
+# a lucky nation never reaches it and a human only once the free room is gone.
 # Root is the country, scope:cm_country set.
 # Leaves scope:cm_gov_worst_seat_land and scope:cm_gov_worst_seat_naval.
 cm_gov_worst_seat_score = {
-	cm_gov_worst_seat_of_kind = { KIND = land TYPE = local_governor }
-	cm_gov_worst_seat_of_kind = { KIND = naval TYPE = naval_governor }
+	save_temporary_scope_value_as = { name = cm_gov_worst_seat_land value = 0 }
+	save_temporary_scope_value_as = { name = cm_gov_worst_seat_naval value = 0 }
+	if = {
+		limit = {
+			cm_ln_is_active = no
+			var:cm_gov_land_free_left <= 0
+			var:cm_gov_naval_free_left <= 0
+		}
+		set_local_variable = { name = cm_gov_ws_land value = @cm_gov_worst_seat_unset }
+		set_local_variable = { name = cm_gov_ws_naval value = @cm_gov_worst_seat_unset }
+		# One running-min walk in place of a sort per kind, the shape cm_gov_free_a_seat uses.
+		every_owned_location = {
+			limit = {
+				has_variable = cm_gf_score
+				NOT = { has_variable = cm_gov_plan_ord }
+			}
+			cm_gov_worst_seat_track = { KIND = land TYPE = local_governor }
+			cm_gov_worst_seat_track = { KIND = naval TYPE = naval_governor }
+		}
+		cm_gov_worst_seat_publish = { KIND = land }
+		cm_gov_worst_seat_publish = { KIND = naval }
+	}
 }
 
-# A kind with no standing unplanned seat leaves 0, so the bar it feeds passes and the pick is
-# judged by the placement itself. A seat the run never scored is left out here and given up first
-# by cm_gov_seat_give_up_rank, which reads an absent score as 0.
-# Root is the country. Leaves scope:cm_gov_worst_seat_$KIND$.
-cm_gov_worst_seat_of_kind = {
-	save_temporary_scope_value_as = { name = cm_gov_worst_seat_$KIND$ value = 0 }
-	ordered_owned_location = {
-		order_by = {
-			value = var:cm_gf_score
-			multiply = -1
-		}
-		position = 0
-		check_range_bounds = no
+# Root is the location. $KIND$ the accumulator, $TYPE$ the governor type it tracks.
+cm_gov_worst_seat_track = {
+	if = {
 		limit = {
-			has_variable = cm_gf_score
 			has_building = building_type:$TYPE$
-			NOT = { has_variable = cm_gov_plan_ord }
+			var:cm_gf_score < local_var:cm_gov_ws_$KIND$
 		}
-		save_temporary_scope_value_as = { name = cm_gov_worst_seat_$KIND$ value = var:cm_gf_score }
+		set_local_variable = { name = cm_gov_ws_$KIND$ value = var:cm_gf_score }
+	}
+}
+
+# Root is the country. $KIND$ the accumulator to publish, left at its seeded 0 where the walk
+# reached no seat of that kind.
+cm_gov_worst_seat_publish = {
+	if = {
+		limit = { local_var:cm_gov_ws_$KIND$ < @cm_gov_worst_seat_unset }
+		save_temporary_scope_value_as = { name = cm_gov_worst_seat_$KIND$ value = local_var:cm_gov_ws_$KIND$ }
 	}
 }
 

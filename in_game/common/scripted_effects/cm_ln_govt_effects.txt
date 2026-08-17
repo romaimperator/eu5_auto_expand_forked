@@ -44,16 +44,15 @@ cm_ln_bur_trim = {
 # --- Estate emergency actions ---
 
 # Fires one estate emergency action. can_do_generic_action carries the action's own potential and
-# allow, which is what keeps the burghers' minimum-pool arithmetic out of the mod; the cooldown is
-# checked by hand beside it, as vanilla does at in_game/common/generic_actions/mayan.txt:115.
-# $ACTION$ the generic action, $COOLDOWN$ its cooldown type, $EST$ the scope holding the estate to
-# target, $LOG$ the log key.
+# allow, which is what keeps the burghers' minimum-pool arithmetic out of the mod. The cooldown is
+# checked by hand, as vanilla does at in_game/common/generic_actions/mayan.txt:115, but by the
+# caller: it is the one term that can be known before the estate walk that finds $EST$.
+# $ACTION$ the generic action, $EST$ the scope holding the estate to target, $LOG$ the log key.
 # Root is the country, scope:cm_ln_est_ctry set.
 cm_ln_est_fire = {
 	if = {
 		limit = {
 			exists = scope:$EST$
-			NOT = { has_cooldown = $COOLDOWN$ }
 			can_do_generic_action = {
 				generic_action = generic_action:$ACTION$
 				target = scope:$EST$
@@ -72,22 +71,29 @@ cm_ln_est_fire = {
 cm_ln_est_run = {
 	save_scope_as = cm_ln_est_ctry
 
-	every_estate = {
-		limit = {
-			estate_type = estate_type:burghers_estate
-			satisfaction >= @cm_ln_est_burghers_floor
+	# Each cooldown runs for years, so it leads its block: without it the estate walk below runs
+	# every month of one to find an estate the action cannot be fired at anyway.
+	if = {
+		limit = { NOT = { has_cooldown = ask_burghers_for_loan_cooldown } }
+		every_estate = {
+			limit = {
+				estate_type = estate_type:burghers_estate
+				satisfaction >= @cm_ln_est_burghers_floor
+			}
+			save_scope_as = cm_ln_est_burghers
 		}
-		save_scope_as = cm_ln_est_burghers
-	}
-	cm_ln_est_fire = {
-		ACTION = ask_burghers_for_loan
-		COOLDOWN = ask_burghers_for_loan_cooldown
-		EST = cm_ln_est_burghers
-		LOG = cm_ln_log_est_grant
+		cm_ln_est_fire = {
+			ACTION = ask_burghers_for_loan
+			EST = cm_ln_est_burghers
+			LOG = cm_ln_log_est_grant
+		}
 	}
 
 	if = {
-		limit = { government_power < @cm_ln_est_gov_power_max }
+		limit = {
+			NOT = { has_cooldown = ask_clergy_for_legitimacy_cooldown }
+			government_power < @cm_ln_est_gov_power_max
+		}
 		every_estate = {
 			limit = {
 				estate_type = estate_type:clergy_estate
@@ -97,14 +103,16 @@ cm_ln_est_run = {
 		}
 		cm_ln_est_fire = {
 			ACTION = ask_clergy_for_legitimacy
-			COOLDOWN = ask_clergy_for_legitimacy_cooldown
 			EST = cm_ln_est_clergy
 			LOG = cm_ln_log_est_endorsement
 		}
 	}
 
 	if = {
-		limit = { stability < @cm_ln_est_stability_max }
+		limit = {
+			NOT = { has_cooldown = ask_commoners_for_stability_cooldown }
+			stability < @cm_ln_est_stability_max
+		}
 		# The action takes either commoner estate, so the floor has to apply to the one actually
 		# targeted. Peasants first, dhimmi only where peasants do not clear it.
 		every_estate = {
@@ -126,7 +134,6 @@ cm_ln_est_run = {
 		}
 		cm_ln_est_fire = {
 			ACTION = ask_commoners_for_stability
-			COOLDOWN = ask_commoners_for_stability_cooldown
 			EST = cm_ln_est_commoners
 			LOG = cm_ln_log_est_appeal
 		}

@@ -135,21 +135,39 @@ cm_ln_init_country = {
 
 # Writes the settings an AI country has no CMM registration to give it. Values are the
 # registered defaults in cm_cmm_effects.txt and cm_cmm_custom_effects.txt except where
-# marked. Re-run every month, so a player who passes through the tag leaves nothing behind.
-# Root is the country.
+# marked. Root is the country.
+#
+# Only the three values that move with the treasury and the calendar are rewritten every month; the
+# rest are stamped, so a country already seeded costs three writes instead of two full roster
+# rebuilds and the category list. A player who passes through the tag still leaves nothing behind,
+# because cm_ln_undesignate drops the stamp: the mark goes on the next cm_ln_seed_marks diff,
+# undesignate runs, and the AI taking the tag back seeds in full over CMF's transfer re-sync.
 cm_ln_seed_settings = {
 	# The gold floor follows the one reserve rule rather than the registered default.
 	set_variable = { name = cm_minimum_gold value = cm_ln_reserve_value }
-	set_variable = { name = cm_allowed_building_overbuild_levels value = 200 }
-	set_variable = { name = cm_urbanize_town_to_city value = yes }
-	# Registered default is off. Lucky nations run every option on, the de-urbanizer from 1410.
-	set_variable = { name = cm_urbanize_rural_to_town value = yes }
+	# Driven off the treasury rather than holding the registered 20.
+	set_variable = { name = cm_ab_production_min_roi value = cm_ln_production_min_roi_value }
+	# Registered default is off. The de-urbanizer starts in 1410.
 	if = {
 		limit = { current_date >= 1410.1.1 }
 		set_variable = { name = cm_deurbanize value = yes }
 	} else = {
 		remove_variable = cm_deurbanize
 	}
+	if = {
+		limit = { cm_ln_settings_are_current = no }
+		cm_ln_seed_constant_settings = yes
+		set_variable = { name = cm_ln_seed_stamp value = cm_ln_seed_version_value }
+	}
+}
+
+# The seeded settings that never move once written. Bump cm_ln_seed_version_value when one of them
+# changes. Root is the country.
+cm_ln_seed_constant_settings = {
+	set_variable = { name = cm_allowed_building_overbuild_levels value = 200 }
+	set_variable = { name = cm_urbanize_town_to_city value = yes }
+	# Registered default is off. Lucky nations run every option on.
+	set_variable = { name = cm_urbanize_rural_to_town value = yes }
 
 	# Auto-urbanize is the one Auto-Expand tab feature a lucky nation runs itself, so the priority
 	# list stays empty.
@@ -178,8 +196,6 @@ cm_ln_seed_settings = {
 
 	set_variable = { name = cm_ab_enabled value = yes }
 	set_variable = { name = cm_ab_save_unaffordable value = yes }
-	# Driven off the treasury rather than holding the registered 20.
-	set_variable = { name = cm_ab_production_min_roi value = cm_ln_production_min_roi_value }
 	set_variable = { name = cm_ab_production_max_rel_roi value = 30 }
 	set_variable = { name = cm_ab_production_min_discount value = 0 }
 	set_variable = { name = cm_ab_core_target value = -33 }
@@ -243,6 +259,13 @@ cm_ln_seed_categories = {
 # nation never builds into a capital it is about to leave. Root is the country.
 cm_ln_monthly_cycle = {
 	save_scope_as = cm_country
+	# Read from the scan rather than from cm_gov_no_finder_run_in_flight, which would read this seed
+	# back. Three or four of the gates below reach that trigger, and it walks every living country.
+	set_local_variable = { name = cm_gov_finder_free value = 0 }
+	if = {
+		limit = { cm_gov_finder_scan_clear = yes }
+		set_local_variable = { name = cm_gov_finder_free value = 1 }
+	}
 	# Ahead of everything that places or gives up a governor, so the count of the ones this country
 	# has bought takes in whatever changed since last month before any of them reads it.
 	cm_ln_sync_paid_seats = yes
@@ -324,6 +347,9 @@ cm_ln_undesignate = {
 	clear_variable_list = cm_ln_open_gov_sites
 	cm_ln_clear_seats = yes
 	remove_variable = cm_ln_gov_paid_seats
+	# A human on the tag overwrites the seeded settings, so the stamp goes with the mark and the AI
+	# taking it back seeds in full.
+	remove_variable = cm_ln_seed_stamp
 	cm_ln_end_cycle = yes
 	cm_ln_sync_cu_pending = yes
 	# Only the scan driver's own disarm clears this global, so an arm carried out of the set would

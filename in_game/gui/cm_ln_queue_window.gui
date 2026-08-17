@@ -127,10 +127,23 @@ widget = {
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_ab_construct_rgo')]"
 				next = cm_ln_c_scan_done
 			}
+			# The flush state queues each country's own rows and buffers its tail; the send state
+			# submits every tail as a single command, so a sweep costs one command per lucky nation
+			# plus one rather than two apiece. The gap between them is what every country's flush has
+			# to land in, or a tail buffered late goes out with the next cycle and that country's
+			# cycle stalls, so it takes the round driver's 0.5s rather than the 0.15s a state that
+			# nothing waited on could afford.
 			state = {
 				name = cm_ln_c_scan_done
-				duration = 0.15
+				duration = 0.5
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_flush')]"
+				next = cm_ln_c_scan_send
+			}
+			state = {
+				name = cm_ln_c_scan_send
+				duration = 0.15
+				on_finish = "[CMQueueAppend(CMFlushBlock)]"
+				on_finish = "[GetVariableSystem.Set(CMFlushKey, '')]"
 			}
 		}
 		widget = {
@@ -169,10 +182,19 @@ widget = {
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_cu_toggle')]"
 				next = cm_ln_c_cu_toggle_done
 			}
+			# Building Cleanup's end calls batch the same way, and the gap takes 0.5s for the same
+			# reason the sweep's does.
 			state = {
 				name = cm_ln_c_cu_toggle_done
-				duration = 0.25
+				duration = 0.5
 				on_finish = "[PdxGuiTriggerAllAnimations('cm_ln_c_cu_end')]"
+				next = cm_ln_c_cu_send
+			}
+			state = {
+				name = cm_ln_c_cu_send
+				duration = 0.25
+				on_finish = "[CMQueueAppend(CMCuBlock)]"
+				on_finish = "[GetVariableSystem.Set(CMCuKey, '')]"
 			}
 		}
 		# Statically visible, so items the monthly staging adds mid-cycle still instantiate.
@@ -203,15 +225,17 @@ widget = {
 						}
 						state = {
 							name = cm_ln_c_cu_end
-							on_finish = "[CMQueueAppend(Concatenate3('effect cm_ln_c_cu_end = { Y = ', CMCountryIdText(Country), ' };'))]"
+							on_finish = "[CMCuAppend(Concatenate3('cm_ln_c_cu_end = { Y = ', CMCountryIdText(Country), ' } '))]"
 						}
-						# Queues the sweep as its own ';'-separated commands, so a malformed value costs
-						# its own command and not the cycle. The tail clears the arm the dropped
-						# cm_ln_scan_disarm Execute would otherwise have cleared.
+						# Queues this country's rows as their own command, so a malformed value costs
+						# that command and not the cycle, and buffers the call that scores them for
+						# cm_ln_c_scan_send. Every row carries its own cm_ln_r_ctry, which is what lets
+						# several countries' rows sit in the maps at once for the one scoring pass.
 						state = {
 							name = cm_ln_c_flush
-							on_finish = "[CMQueueAppend(Concatenate(CMBatchBlock(Country), Concatenate3('effect hidden_effect = { cm_ln_c_process = yes cm_ln_c_scan_disarm = yes cm_ln_c_sync_check = { Y = ', CMCountryIdText(Country), ' } };')))]"
+							on_finish = "[CMQueueAppend(CMBatchBlock(Country))]"
 							on_finish = "[GetVariableSystem.Set(CMBatchKey(Country), '')]"
+							on_finish = "[CMFlushAppend(Concatenate3('cm_ln_c_sync_check = { Y = ', CMCountryIdText(Country), ' } '))]"
 						}
 					}
 					# One list carries both the closes and the reopens: ToggleBuilding flips

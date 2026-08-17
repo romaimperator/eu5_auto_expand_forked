@@ -72,10 +72,19 @@ cm_ln_ft_site_placeable = {
 	cm_location_allowed_to_build = { target = scope:cm_building_type }
 }
 
-# Root is the location. Expects scope:cm_country, scope:cm_building_type.
-cm_ln_ft_site_eligible = {
-	has_variable = cm_ln_ft_nd
-	cm_ln_ft_site_placeable = yes
+# Root is the location. Expects scope:cm_building_type. The Military category's own claim on this
+# location, which is what lets a drain walk the shared build list and visit only what it staged.
+# The map is keyed by building type, so the two lines sharing a category code stay apart: border
+# and coastal forts both write cat 6, the manpower chain and the two capital types both write cat 7.
+cm_ln_mil_site_claimed = {
+	has_variable_map = cm_ab_b_cat_$CAT$
+	is_key_in_variable_map = { name = cm_ab_b_cat_$CAT$ target = scope:cm_building_type }
+}
+
+# Root is the country. Whether this country already holds the seeded settings that never move.
+cm_ln_settings_are_current = {
+	exists = var:cm_ln_seed_stamp
+	var:cm_ln_seed_stamp = cm_ln_seed_version_value
 }
 
 # Root is the country. A governor the country has bought and does not have. cm_ln_gov_paid_seats only

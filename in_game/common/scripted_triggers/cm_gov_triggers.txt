@@ -167,9 +167,9 @@ cm_gov_slot_open = {
 	}
 }
 
-# Root is the country. cm_pf_n set with cm_pf_all_done absent is a run that was primed and
-# never finished; the finder's water state is shared, so a reorganization waits it out.
-cm_gov_no_finder_run_in_flight = {
+# No scope. cm_pf_n set with cm_pf_all_done absent is a run that was primed and never finished; the
+# finder's water state is shared, so a reorganization waits it out.
+cm_gov_finder_scan_clear = {
 	NOT = {
 		any_country = {
 			is_ai = no
@@ -177,6 +177,17 @@ cm_gov_no_finder_run_in_flight = {
 			NOT = { has_variable = cm_pf_all_done }
 		}
 	}
+}
+
+# Root is the country. A tick reaching this several times gets one answer: a finder run is started
+# and ended by the GUI drivers, never from script, so it cannot move inside one execution and
+# cm_ln_monthly_cycle reads the scan once into the local below. A caller that seeds no local scans.
+cm_gov_no_finder_run_in_flight = {
+	trigger_if = {
+		limit = { has_local_variable = cm_gov_finder_free }
+		local_var:cm_gov_finder_free = 1
+	}
+	trigger_else = { cm_gov_finder_scan_clear = yes }
 }
 
 # Root is the country. An advance or a rank-up granting a slot reopens the plan without
