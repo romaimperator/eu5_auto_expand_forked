@@ -1,8 +1,8 @@
 ﻿# Auto-Build Custom: the capital-only set, the control buildings (bailiffs and the unique
-# local_max_control types), the vanilla market-center buildings (game
-# in_game/common/building_types/market_buildings.txt, the is_market_center-gated set), and the
-# player's own roster (auto_build_list, cm_cmm_effects.txt). Each of the four is a row of the
-# ab_custom settings list.
+# local_max_control types), the market-center buildings (game
+# in_game/common/building_types/market_buildings.txt, the is_market_center-gated set, plus
+# city_walls for its market_center_modifier), and the player's own roster (auto_build_list,
+# cm_cmm_effects.txt). Each of the four is a row of the ab_custom settings list.
 # The market-center block and every roster row walk one shared candidate list, built once per cycle
 # from the markets in the slice (cm_slice_effects.txt); the capital set and the control buildings
 # reach their locations their own way. The roster's subject branch takes its locations from that
@@ -100,6 +100,9 @@ cm_ab_run_custom = {
 				cm_ab_stage_custom_type_here = { bt = stock_exchange }
 				cm_ab_stage_custom_type_here = { bt = clearing_house }
 				cm_ab_stage_custom_type_here = { bt = market_warehouse }
+				# Not an is_market_center type: its market_center_modifier grants
+				# local_trade_center_power 0.1 (game in_game/common/building_types/forts.txt:282).
+				cm_ab_stage_custom_type_here = { bt = city_walls }
 			}
 		}
 	}
@@ -447,6 +450,8 @@ cm_ab_pass_custom = {
 		cm_ab_drain_custom_type = { bt = stock_exchange }
 		cm_ab_drain_custom_type = { bt = clearing_house }
 		cm_ab_drain_custom_type = { bt = market_warehouse }
+		# Last, so the trade buildings claim the pool ahead of it.
+		cm_ab_drain_custom_type = { bt = city_walls }
 	}
 	if = {
 		limit = { exists = var:cm_ab_custom_roster }
