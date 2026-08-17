@@ -100,6 +100,7 @@ cm_ab_score_build_apply = {
 					if = {
 						limit = { OR = { NOT = { has_variable = cm_ab_b_best } var:cm_ab_b_best < scope:cm_ab_score_val } }
 						set_variable = { name = cm_ab_b_best value = scope:cm_ab_score_val }
+						set_variable = { name = cm_ab_b_best_type value = scope:cm_building_type }
 					}
 				}
 			}
@@ -139,6 +140,7 @@ cm_ab_score_upgrade_apply = {
 				if = {
 					limit = { OR = { NOT = { has_variable = cm_ab_u_best } var:cm_ab_u_best < scope:cm_ab_score_val } }
 					set_variable = { name = cm_ab_u_best value = scope:cm_ab_score_val }
+					set_variable = { name = cm_ab_u_best_type value = scope:cm_old_building_type }
 				}
 			}
 		}
@@ -150,7 +152,10 @@ cm_ab_score_rgo_apply = {
 		limit = {
 			scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
 			save_temporary_scope_as = cm_q_item_loc
-			scope:cm_country = { is_target_in_variable_list = { name = cm_ab_r_locations target = scope:cm_q_item_loc } }
+			scope:cm_country = {
+				has_variable_map = cm_ab_r_locations_set
+				is_key_in_variable_map = { name = cm_ab_r_locations_set target = scope:cm_q_item_loc }
+			}
 			NOT = { has_variable = cm_ab_done_rgo }
 		}
 		set_variable = { name = cm_ab_done_rgo value = yes }

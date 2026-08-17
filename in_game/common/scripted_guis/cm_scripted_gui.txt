@@ -107,10 +107,7 @@ cm_gui_construct_upgrade = {
 						set_variable = { name = cm_q_upg_best value = scope:cm_q_score_val }
 					}
 					scope:cm_country = {
-						if = {
-							limit = { NOT = { is_target_in_variable_list = { name = cm_q_upg_cand_locations target = scope:cm_q_scored_loc } } }
-							add_to_variable_list = { name = cm_q_upg_cand_locations target = scope:cm_q_scored_loc }
-						}
+						add_to_variable_list = { name = cm_q_upg_cand_locations target = scope:cm_q_scored_loc }
 					}
 				} else = {
 					remove_from_variable_map = { name = cm_q_upgall_costs key = scope:cm_old_building_type }
@@ -176,10 +173,7 @@ cm_gui_try_build = {
 					set_variable = { name = cm_q_best value = scope:cm_q_score_val }
 				}
 				scope:cm_country = {
-					if = {
-						limit = { NOT = { is_target_in_variable_list = { name = cm_q_cand_locations target = scope:cm_q_scored_loc } } }
-						add_to_variable_list = { name = cm_q_cand_locations target = scope:cm_q_scored_loc }
-					}
+					add_to_variable_list = { name = cm_q_cand_locations target = scope:cm_q_scored_loc }
 				}
 			}
 		}
@@ -199,7 +193,10 @@ cm_gui_try_rgo = {
 		if = {
 			limit = {
 				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
-				scope:cm_country = { is_target_in_variable_list = { name = cm_q_rgo_locations target = scope:cm_location } }
+				scope:cm_country = {
+					has_variable_map = cm_q_rgo_locations_set
+					is_key_in_variable_map = { name = cm_q_rgo_locations_set target = scope:cm_location }
+				}
 				NOT = { has_variable = cm_q_done_rgo }
 			}
 			set_variable = { name = cm_q_done_rgo value = yes }
@@ -313,7 +310,10 @@ cm_gui_try_food_rgo = {
 			limit = {
 				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
 				save_temporary_scope_as = cm_q_item_loc
-				scope:cm_country = { is_target_in_variable_list = { name = cm_q_food_rgo_locations target = scope:cm_q_item_loc } }
+				scope:cm_country = {
+					has_variable_map = cm_q_food_rgo_locations_set
+					is_key_in_variable_map = { name = cm_q_food_rgo_locations_set target = scope:cm_q_item_loc }
+				}
 				NOT = { has_variable = cm_q_done_food_rgo }
 			}
 			set_variable = { name = cm_q_done_food_rgo value = yes }
@@ -342,7 +342,10 @@ cm_gui_try_rank = {
 			limit = {
 				scope:cm_country = { NOT = { exists = var:cm_q_fire_approved } }
 				save_temporary_scope_as = cm_q_item_loc
-				scope:cm_country = { is_target_in_variable_list = { name = cm_q_rank_locations target = scope:cm_q_item_loc } }
+				scope:cm_country = {
+					has_variable_map = cm_q_rank_locations_set
+					is_key_in_variable_map = { name = cm_q_rank_locations_set target = scope:cm_q_item_loc }
+				}
 				NOT = { has_variable = cm_q_done_rank }
 			}
 			set_variable = { name = cm_q_done_rank value = yes }
@@ -772,10 +775,7 @@ cm_toggle_mass_auto_expand_for_building_type = {
 				# Turning OFF - remove from country list and clear exclusion entries for this type
 				scope:cm_country = {
 					remove_list_variable = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type }
-					ordered_owned_location = {
-						order_by = max_control
-						max = cm_max_guess_at_number_of_locations
-						check_range_bounds = no
+					every_owned_location = {
 						limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type } }
 						remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
 					}
@@ -784,10 +784,7 @@ cm_toggle_mass_auto_expand_for_building_type = {
 				# Turning ON - add to country list and clear per-location registrations for this type
 				scope:cm_country = {
 					add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type }
-					ordered_owned_location = {
-						order_by = max_control
-						max = cm_max_guess_at_number_of_locations
-						check_range_bounds = no
+					every_owned_location = {
 						limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type } }
 						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
 					}

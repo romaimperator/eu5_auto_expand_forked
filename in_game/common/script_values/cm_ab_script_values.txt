@@ -523,21 +523,34 @@ cm_ab_rd_movement_cost_value = {
 # against 7.71, 5.09 and 6.74 from the terms above: ratios 1.650, 1.659 and 1.641. Both divisor
 # branches were then checked whole against real costs, same area 81 against 80.5 and across an area
 # boundary 73 against 73.5, so the 10 and the 20 are right relative to each other as well.
-# Root is the location, expects scope:cm_ab_rd_from and scope:cm_ab_rd_to.
+# The market-access pass caches this edge's figure in cm_ab_rd_ed as it walks, so the read comes
+# from there whenever that map is live. Root is the location, expects scope:cm_ab_rd_from and
+# scope:cm_ab_rd_to.
 cm_ab_rd_unit_distance_value = {
-	value = "scope:cm_ab_rd_from.distance_to(scope:cm_ab_rd_to)"
-	multiply = {
-		value = cm_ab_rd_movement_cost_value
-		add = scope:cm_ab_rd_to.cm_ab_rd_movement_cost_value
-	}
 	if = {
-		limit = { area = scope:cm_ab_rd_to.area }
-		divide = 10
+		limit = {
+			scope:cm_ab_rd_from = {
+				has_variable_map = cm_ab_rd_ed
+				is_key_in_variable_map = { name = cm_ab_rd_ed target = scope:cm_ab_rd_to }
+			}
+		}
+		value = "scope:cm_ab_rd_from.variable_map(cm_ab_rd_ed|scope:cm_ab_rd_to)"
 	}
 	else = {
-		divide = 20
+		value = "scope:cm_ab_rd_from.distance_to(scope:cm_ab_rd_to)"
+		multiply = {
+			value = cm_ab_rd_movement_cost_value
+			add = scope:cm_ab_rd_to.cm_ab_rd_movement_cost_value
+		}
+		if = {
+			limit = { area = scope:cm_ab_rd_to.area }
+			divide = 10
+		}
+		else = {
+			divide = 20
+		}
+		multiply = 1.65
 	}
-	multiply = 1.65
 	min = 0.01
 }
 

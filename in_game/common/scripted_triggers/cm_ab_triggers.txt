@@ -216,14 +216,13 @@ cm_ab_custom_type_has_room = {
 
 # A max-control building can go up here right now: the bailiff survey, the bailiff monthly
 # staging and the unique types all share it, so a pick is only ever made on the terms it will
-# later be staged on. Not slot-gated, so a location takes its bailiff and its unique type in
-# the same pass. Root is the location, expects scope:cm_country, scope:cm_building_type.
+# later be staged on. Queueing several control buildings at one location is wanted, since it
+# reserves the location's slots and its labour for them.
+# Root is the location, expects scope:cm_country, scope:cm_building_type.
 cm_ab_max_control_site_ok = {
 	NOT = { integration_level = conquered }
 	NOT = { has_building = scope:cm_building_type }
 	cm_location_allowed_to_build = { target = scope:cm_building_type }
-	cm_location_has_enough_pops_available = yes
-	cm_check_location_meets_min_market_access = yes
 }
 
 # The country side of scope:cm_building_type's placement rules, which for a unique type is

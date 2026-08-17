@@ -61,12 +61,11 @@ cm_food_auto_build_in_location = {
 	} # end pause
 }
 
-# Iterate locations for a specific food RGO type and build optimally.
-# Root is the country. Expects scope:cm_food_good, the goods scope for this food type.
-cm_food_auto_build_for_rgo_type = {
+# This cycle's opted-in rural locations, most control first, each built out for whichever food
+# its own raw material is. Root is the country.
+cm_food_auto_build_pass = {
 	save_scope_as = cm_country
 
-	# Process this cycle's rural locations matching this food good
 	ordered_in_list = {
 		variable = cm_slice_locations
 		order_by = max_control
@@ -74,10 +73,11 @@ cm_food_auto_build_for_rgo_type = {
 		check_range_bounds = no
 		limit = {
 			location_rank = location_rank:rural_settlement
-			cm_food_location_matches_rgo_type = yes
 			exists = var:cm_auto_food_location_enabled
+			cm_food_location_rgo_is_on_roster = yes
 		}
 		save_scope_as = cm_location
+		raw_material = { save_scope_as = cm_food_good }
 		cm_food_auto_build_in_location = yes
 	}
 }

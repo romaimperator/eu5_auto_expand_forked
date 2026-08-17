@@ -70,15 +70,7 @@ cm_ab_run_custom = {
 			cm_ab_pick_bailiffs = yes
 		}
 		cm_ab_stage_bailiffs = yes
-		# The unique local_max_control buildings, most control first (game
-		# in_game/common/building_types/unique_buildings.txt: ostrog 0.10, zhixian 0.10,
-		# tur_kodjabashi_office 0.1, eng_royal_forest 0.05, eghabho_nore_mansion 0.05, tambo 0.05).
-		cm_ab_stage_max_control_type = { bt = ostrog }
-		cm_ab_stage_max_control_type = { bt = zhixian }
-		cm_ab_stage_max_control_type = { bt = tur_kodjabashi_office }
-		cm_ab_stage_max_control_type = { bt = eng_royal_forest }
-		cm_ab_stage_max_control_type = { bt = eghabho_nore_mansion }
-		cm_ab_stage_max_control_type = { bt = tambo }
+		cm_ab_stage_max_control_types = yes
 	}
 	if = {
 		limit = {
@@ -304,10 +296,11 @@ cm_ab_stage_roster_type_here = {
 	}
 }
 
-# The four-yearly bailiff survey, wealthiest locations first: local_max_control earns tax
-# base in proportion to the location's wealth. The country-wide num_bailiffs modifier caps
-# how many can stand (game in_game/common/building_types/rural_buildings.txt, bailiff
-# allow), so the survey stops at the remaining room and the cap goes to the best locations.
+# The four-yearly bailiff survey, richest RGO first at what its market pays for it now: the
+# bailiff stands only on rural land, where the raw material is what the location is worth.
+# The country-wide num_bailiffs modifier caps how many can stand (game
+# in_game/common/building_types/rural_buildings.txt, bailiff allow), so the survey stops at
+# the remaining room and the cap goes to the best locations.
 # That cap is also why this sweep is not sliced: a permanent cap handed to one slice's best
 # would never reach the country's. The cap fills slowly enough that re-ranking every owned
 # location every month changes nothing, hence the four-year cadence on the call.
@@ -318,7 +311,7 @@ cm_ab_pick_bailiffs = {
 	set_local_variable = { name = cm_ab_bailiff_room value = modifier:num_bailiffs }
 	change_local_variable = { name = cm_ab_bailiff_room subtract = total_building_levels_including_construction:bailiff }
 	ordered_owned_location = {
-		order_by = cm_location_raw_wealth
+		order_by = cm_location_rgo_market_value
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
 		save_scope_as = cm_location
@@ -333,7 +326,7 @@ cm_ab_pick_bailiffs = {
 	}
 }
 
-# Stages the surveyed picks the country can act on this month, wealthiest first. A pick the
+# Stages the surveyed picks the country can act on this month, richest RGO first. A pick the
 # Custom pool cannot cover is left in the list and staged again next month, so a survey
 # landing on a poor month is not lost; the room is re-read each month because bailiffs
 # finished since the survey have taken part of the cap. Root is the country.
@@ -349,7 +342,7 @@ cm_ab_stage_bailiffs = {
 		change_local_variable = { name = cm_ab_bailiff_room subtract = total_building_levels_including_construction:bailiff }
 		ordered_in_list = {
 			variable = cm_ab_bailiff_picks
-			order_by = cm_location_raw_wealth
+			order_by = cm_location_rgo_market_value
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_scope_as = cm_location
@@ -388,25 +381,61 @@ cm_ab_prune_bailiff_picks = {
 	}
 }
 
-# Stages one unique local_max_control type across owned locations, wealthiest first, on the
-# bailiff's terms: tax base over control is what a control building earns, and neither the
-# proximity gate nor the market slice applies. No country-wide cap limits these, so they take
-# no survey and a location newly meeting the type's own rules stages the next month. One level
-# per location. Root is the country. $bt$ = the type key.
-cm_ab_stage_max_control_type = {
-	building_type:$bt$ = { save_scope_as = cm_building_type }
+# The unique local_max_control types across owned locations, wealthiest first: tax base over
+# control is what a control building earns, and neither the proximity gate nor the market slice
+# applies. A location takes every type it can hold before the walk moves on. No country-wide cap
+# limits these, so they take no survey and a location newly meeting a type's own rules stages the
+# next month. One level per location. Root is the country.
+cm_ab_stage_max_control_types = {
+	cm_ab_build_control_types = yes
 	if = {
-		limit = { cm_ab_country_can_build_type = yes }
+		limit = {
+			has_variable_list = cm_ab_control_types
+			variable_list_size = { name = cm_ab_control_types value >= 1 }
+		}
 		ordered_owned_location = {
 			order_by = cm_location_raw_wealth
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
 			save_scope_as = cm_location
-			if = {
-				limit = { cm_ab_max_control_site_ok = yes }
-				cm_ab_stage_build_candidate = { cat = 4 }
+			scope:cm_country = {
+				every_in_list = {
+					variable = cm_ab_control_types
+					save_scope_as = cm_building_type
+					scope:cm_location = {
+						if = {
+							limit = { cm_ab_max_control_site_ok = yes }
+							cm_ab_stage_build_candidate = { cat = 4 }
+						}
+					}
+				}
 			}
 		}
+	}
+	clear_variable_list = cm_ab_control_types
+}
+
+# The unique types this country can build at all, most control first (game
+# in_game/common/building_types/unique_buildings.txt: ostrog 0.10, zhixian 0.10,
+# tur_kodjabashi_office 0.1, eng_royal_forest 0.05, eghabho_nore_mansion 0.05, tambo 0.05).
+# Resolving the country half of each type's placement rules once keeps can_build_building out of
+# the per-location walk, and leaves it empty for a country holding none. Root is the country.
+cm_ab_build_control_types = {
+	clear_variable_list = cm_ab_control_types
+	cm_ab_add_control_type = { bt = ostrog }
+	cm_ab_add_control_type = { bt = zhixian }
+	cm_ab_add_control_type = { bt = tur_kodjabashi_office }
+	cm_ab_add_control_type = { bt = eng_royal_forest }
+	cm_ab_add_control_type = { bt = eghabho_nore_mansion }
+	cm_ab_add_control_type = { bt = tambo }
+}
+
+# Root is the country. $bt$ = the type key.
+cm_ab_add_control_type = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	if = {
+		limit = { cm_ab_country_can_build_type = yes }
+		add_to_variable_list = { name = cm_ab_control_types target = scope:cm_building_type }
 	}
 }
 
@@ -434,13 +463,7 @@ cm_ab_pass_custom = {
 	}
 	if = {
 		limit = { exists = var:cm_ab_custom_control }
-		cm_ab_drain_max_control_type = { bt = bailiff }
-		cm_ab_drain_max_control_type = { bt = ostrog }
-		cm_ab_drain_max_control_type = { bt = zhixian }
-		cm_ab_drain_max_control_type = { bt = tur_kodjabashi_office }
-		cm_ab_drain_max_control_type = { bt = eng_royal_forest }
-		cm_ab_drain_max_control_type = { bt = eghabho_nore_mansion }
-		cm_ab_drain_max_control_type = { bt = tambo }
+		cm_ab_drain_max_control_types = yes
 	}
 	if = {
 		limit = { exists = var:cm_ab_custom_market_centers }
@@ -486,11 +509,11 @@ cm_ab_drain_custom_type = {
 	cm_ab_drain_custom_resolved = yes
 }
 
-# One max-control type, wealthiest locations first and past the location's open slots, so a
-# bailiff and a unique type both reach the queue in the pass that staged them.
-# Root is the country. $bt$ = the type key.
-cm_ab_drain_max_control_type = {
-	building_type:$bt$ = { save_scope_as = cm_building_type }
+# The control set, wealthiest locations first and past each location's open slots: a location
+# takes its bailiff and every unique type staged there before the walk moves on, so its slots and
+# labour go to the whole set. Inside a location the bailiff comes first, then the uniques by
+# local_max_control. Root is the country.
+cm_ab_drain_max_control_types = {
 	if = {
 		limit = {
 			local_var:cm_ab_cost_blocked = 0
@@ -503,10 +526,22 @@ cm_ab_drain_max_control_type = {
 			check_range_bounds = no
 			save_temporary_scope_as = cm_ab_drain_loc
 			scope:cm_ab_drain_loc = {
-				cm_ab_try_approve_build = { cat = 4 POOL = cm_ab_pool_custom GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = always }
+				cm_ab_drain_control_type_here = { bt = bailiff }
+				cm_ab_drain_control_type_here = { bt = ostrog }
+				cm_ab_drain_control_type_here = { bt = zhixian }
+				cm_ab_drain_control_type_here = { bt = tur_kodjabashi_office }
+				cm_ab_drain_control_type_here = { bt = eng_royal_forest }
+				cm_ab_drain_control_type_here = { bt = eghabho_nore_mansion }
+				cm_ab_drain_control_type_here = { bt = tambo }
 			}
 		}
 	}
+}
+
+# Root is the location. $bt$ = the type key.
+cm_ab_drain_control_type_here = {
+	building_type:$bt$ = { save_scope_as = cm_building_type }
+	cm_ab_try_approve_build = { cat = 4 POOL = cm_ab_pool_custom GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = always }
 }
 
 # Drains the roster in the player's order, so a row's position decides which types claim the pool

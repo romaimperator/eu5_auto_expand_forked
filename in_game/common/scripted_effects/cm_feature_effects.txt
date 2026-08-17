@@ -53,6 +53,7 @@ cm_run_construction_cycle = {
 		clear_variable_map = cm_ab_r_locations_set
 		clear_variable_list = cm_ab_food_rgo_locations
 		clear_variable_list = cm_ab_core_rgo_locations
+		remove_variable = cm_ab_food_staged
 		cm_q_clear_rgo_served = yes
 		cm_q_clear_foreign_queue = yes
 		# The upgrade queue carries two extra per-location lists alongside the drained one
@@ -428,10 +429,7 @@ cm_stage_upgrade_candidate = {
 				add_to_variable_list = { name = cm_q_upgrade_gated_types target = scope:cm_ae_staged_type }
 				scope:cm_country = { change_variable = { name = cm_q_staged add = 1 } }
 			}
-			if = {
-				limit = { NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type } } }
-				add_to_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type }
-			}
+			add_to_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type }
 		}
 		cm_stage_location_to_country_list = { COUNTRY_LIST = cm_gui_upgrade_locations SET = cm_gui_upgrade_locations_set }
 		if = {
@@ -616,9 +614,7 @@ cm_disable_auto_expand_for_building_type = {
 		}
 	} else = {
 		if = { limit = { owner = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_building_type } } }
-			if = { limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type } } }
-				add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
-			}
+			add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_building_type }
 		} else = {
 			remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_building_type }
 		}
@@ -710,11 +706,8 @@ cm_toggle_auto_expand_for_building_type_in_province = {
 # replacement types. Unresolvable types stay registered and the obsolete fallback
 # branches keep upgrading them. Expects scope:cm_country.
 cm_transfer_obsolete_auto_expand_registrations = {
-	ordered_in_list = {
+	every_in_list = {
 		variable = cm_slice_locations
-		order_by = max_control
-		max = cm_max_guess_at_number_of_locations
-		check_range_bounds = no
 		limit = { has_variable_list = cm_auto_expand_registered_building_types }
 		save_scope_as = cm_ae_transfer_location
 		every_in_list = {
@@ -729,10 +722,7 @@ cm_transfer_obsolete_auto_expand_registrations = {
 						remove_list_variable = { name = cm_auto_expand_registered_building_types target = scope:cm_ae_old_type }
 						# Mass coverage of the replacement supersedes a per-location entry
 						if = {
-							limit = {
-								NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_current_building_type } } }
-								NOT = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_current_building_type } }
-							}
+							limit = { NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_current_building_type } } } }
 							add_to_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_current_building_type }
 						}
 					}
@@ -751,21 +741,12 @@ cm_transfer_obsolete_auto_expand_registrations = {
 				if = {
 					limit = { NOT = { scope:cm_country = { building_type_is_obsolete = scope:cm_current_building_type } } }
 					scope:cm_country = {
-						if = {
-							limit = { NOT = { is_target_in_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_current_building_type } } }
-							add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_current_building_type }
-						}
-						ordered_owned_location = {
-							order_by = max_control
-							max = cm_max_guess_at_number_of_locations
-							check_range_bounds = no
+						add_to_variable_list = { name = cm_mass_auto_expand_building_types target = scope:cm_current_building_type }
+						every_owned_location = {
 							if = {
 								limit = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_ae_old_type } }
 								remove_list_variable = { name = cm_auto_expand_excluded_building_types target = scope:cm_ae_old_type }
-								if = {
-									limit = { NOT = { is_target_in_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_current_building_type } } }
-									add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_current_building_type }
-								}
+								add_to_variable_list = { name = cm_auto_expand_excluded_building_types target = scope:cm_current_building_type }
 							}
 							if = {
 								limit = { is_target_in_variable_list = { name = cm_auto_expand_registered_building_types target = scope:cm_current_building_type } }
@@ -785,11 +766,8 @@ cm_run_auto_expand_buildings = {
 	if = {
 		limit = { has_variable_list = cm_mass_auto_expand_building_types }
 		# -- Mass mode: iterate all existing buildings at this cycle's locations --
-		ordered_in_list = {
+		every_in_list = {
 			variable = cm_slice_locations
-			order_by = max_control
-			max = cm_max_guess_at_number_of_locations
-			check_range_bounds = no
 			save_scope_as = cm_location
 			cm_pop_track = yes
 			ordered_buildings_in_location = {
@@ -832,11 +810,8 @@ cm_run_auto_expand_buildings = {
 	}
 	# -- Normal mode: iterate per-location registered building types --
 	# Runs unconditionally - per-location registrations are processed alongside mass mode.
-	ordered_in_list = {
+	every_in_list = {
 		variable = cm_slice_locations
-		order_by = max_control
-		max = cm_max_guess_at_number_of_locations
-		check_range_bounds = no
 		limit = { has_variable_list = cm_auto_expand_registered_building_types }
 		save_scope_as = cm_location
 		cm_pop_track = yes
@@ -891,11 +866,8 @@ cm_run_auto_expand_rgos = {
 	if = {
 		limit = { exists = var:cm_mass_auto_expand_rgo }
 		# Mass mode: expand all non-excluded locations
-		ordered_in_list = {
+		every_in_list = {
 			variable = cm_slice_locations
-			order_by = max_control
-			max = cm_max_guess_at_number_of_locations
-			check_range_bounds = no
 			limit = { NOT = { exists = var:cm_auto_expand_rgo_excluded } }
 			save_scope_as = cm_location
 			cm_pop_track = yes
@@ -906,11 +878,8 @@ cm_run_auto_expand_rgos = {
 		}
 	} else = {
 		# Normal mode: expand only locations with cm_auto_expand_rgo enabled
-		ordered_in_list = {
+		every_in_list = {
 			variable = cm_slice_locations
-			order_by = max_control
-			max = cm_max_guess_at_number_of_locations
-			check_range_bounds = no
 			limit = { exists = var:cm_auto_expand_rgo }
 			save_scope_as = cm_location
 			cm_pop_track = yes
@@ -1012,10 +981,7 @@ cm_run_upgrade_all_buildings = {
 					scope:cm_location = { remove_list_variable = { name = cm_q_upgrade_gated_types target = scope:cm_building_type } }
 					# Record the replacement for the per-pulse construct dedupe
 					scope:cm_location = {
-						if = {
-							limit = { NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type } } }
-							add_to_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type }
-						}
+						add_to_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type }
 						if = {
 							limit = { NOT = { is_target_in_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_building_type } } }
 							add_to_variable_list = { name = cm_gui_upgrade_building_types target = scope:cm_building_type }
@@ -1039,13 +1005,7 @@ cm_run_upgrade_all_buildings = {
 cm_run_auto_food = {
 	if = {
 		limit = { has_variable_list = cm_auto_food_rgo_types_list }
-		every_in_list = {
-			variable = cm_auto_food_rgo_types_list
-			save_scope_as = cm_food_good
-			scope:cm_country = {
-				cm_food_auto_build_for_rgo_type = yes
-			}
-		}
+		cm_food_auto_build_pass = yes
 	}
 }
 
@@ -1116,14 +1076,13 @@ cm_run_auto_town_rights = {
 	if = {
 		limit = { modifier:can_grant_town_rights = yes }
 		if = {
-			limit = { has_variable_list = cm_auto_town_rights_list }
+			limit = { has_variable_list = cm_auto_town_rights_enabled }
 			every_in_list = {
-				variable = cm_auto_town_rights_list
+				variable = cm_auto_town_rights_enabled
 				save_scope_as = cm_town_right
 				scope:cm_country = {
 					if = {
 						limit = {
-							is_target_in_variable_list = { name = cm_auto_town_rights_enabled target = scope:cm_town_right }
 							cm_auto_town_rights_potential_passes = yes
 							cm_town_rights_grant_affordable = yes
 						}

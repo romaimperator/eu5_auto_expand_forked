@@ -29,10 +29,12 @@ cm_food_building_type_is_staffed = {
 
 # --- Location matching ---
 
-# Root is the location. Expects scope:cm_food_good, the goods scope from the CMM list.
-# True if this location's RGO produces the specified food good.
-cm_food_location_matches_rgo_type = {
-	raw_material = scope:cm_food_good
+# Root is the location. Expects scope:cm_country.
+# True if this location's RGO is one of the foods on the roster.
+cm_food_location_rgo_is_on_roster = {
+	exists = raw_material
+	raw_material = { save_temporary_scope_as = cm_food_roster_good }
+	scope:cm_country = { is_target_in_variable_list = { name = cm_auto_food_rgo_types_list target = scope:cm_food_roster_good } }
 }
 
 # --- Pool pop checks ---

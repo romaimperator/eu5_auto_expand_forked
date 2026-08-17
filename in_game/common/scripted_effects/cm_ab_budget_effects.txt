@@ -217,10 +217,19 @@ cm_ab_try_approve_build = {
 		if = {
 			# Approved by another feature this cycle: consume silently.
 			limit = { NOT = { is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type } } }
+			# Both branches want the same two gates and the goods one scans the market per good,
+			# so they are read once into a local.
+			set_local_variable = { name = cm_ab_ta_gates value = 0 }
 			if = {
 				limit = {
 					$SLOTS_GATE$ = yes
 					$GOODS_GATE$ = yes
+				}
+				set_local_variable = { name = cm_ab_ta_gates value = 1 }
+			}
+			if = {
+				limit = {
+					local_var:cm_ab_ta_gates = 1
 					cm_ab_can_afford = { POOL = $POOL$ }
 				}
 				cm_approve_gui_build = yes
@@ -233,8 +242,7 @@ cm_ab_try_approve_build = {
 			else_if = {
 				# The two gates pass here, so the cost is the only thing that failed.
 				limit = {
-					$SLOTS_GATE$ = yes
-					$GOODS_GATE$ = yes
+					local_var:cm_ab_ta_gates = 1
 					local_var:cm_ab_no_hold = 0
 				}
 				cm_ab_stop_on_cost = { COST = scope:cm_cost }

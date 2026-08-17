@@ -424,21 +424,25 @@ cm_ab_stage_core_rgos = {
 				cm_ab_core_rgo_pops_ok = yes
 				NOT = { exists = var:cm_ab_core_touched }
 				# The player's RGO auto-expand staged it this cycle.
-				NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_q_rgo_locations target = prev } } }
+				NOT = {
+					scope:cm_country = {
+						has_variable_map = cm_q_rgo_locations_set
+						is_key_in_variable_map = { name = cm_q_rgo_locations_set target = prev }
+					}
+				}
 			}
 			save_scope_as = cm_location
+			# Read once: the value walks every building in the location twice over.
+			set_local_variable = { name = cm_ab_rgo_room value = cm_ab_core_rgo_room }
 			if = {
 				limit = {
 					local_var:cm_ab_good_room > 0
-					cm_ab_core_rgo_room > 0
+					local_var:cm_ab_rgo_room > 0
 				}
-				set_local_variable = { name = cm_ab_lvl value = cm_ab_core_rgo_room }
+				set_local_variable = { name = cm_ab_lvl value = local_var:cm_ab_rgo_room }
 				change_local_variable = { name = cm_ab_lvl min = local_var:cm_ab_good_room }
 				scope:cm_country = {
-					if = {
-						limit = { NOT = { is_target_in_variable_list = { name = cm_ab_core_rgo_locations target = scope:cm_location } } }
-						add_to_variable_list = { name = cm_ab_core_rgo_locations target = scope:cm_location }
-					}
+					add_to_variable_list = { name = cm_ab_core_rgo_locations target = scope:cm_location }
 				}
 				scope:cm_location = {
 					set_variable = { name = cm_ab_core_touched value = yes }
@@ -490,7 +494,9 @@ cm_ab_stage_core_building = {
 					}
 				}
 			}
+			# Both values scan the location's buildings, so each is read once here.
 			change_local_variable = { name = cm_ab_good_room subtract = cm_ab_core_type_inflight }
+			set_local_variable = { name = cm_ab_type_room value = cm_ab_core_type_room }
 			if = {
 				limit = {
 					local_var:cm_ab_good_room > 0
@@ -501,11 +507,11 @@ cm_ab_stage_core_building = {
 					cm_location_has_no_auto_build_chain_predecessor = yes
 					cm_ab_core_pops_ok = yes
 					cm_check_location_meets_min_market_access = yes
-					cm_ab_core_type_room > 0
+					local_var:cm_ab_type_room > 0
 					NOT = { is_target_in_variable_list = { name = cm_q_building_types target = scope:cm_building_type } }
 					NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
 				}
-				set_local_variable = { name = cm_ab_lvl value = cm_ab_core_type_room }
+				set_local_variable = { name = cm_ab_lvl value = local_var:cm_ab_type_room }
 				change_local_variable = { name = cm_ab_lvl min = local_var:cm_ab_good_room }
 				cm_ab_core_claim_outcome = yes
 				cm_ab_stage_build_candidate = { cat = 2 }

@@ -452,6 +452,7 @@ cm_ab_food_stage_building_option = {
 				}
 			}
 			cm_ab_stage_build_candidate = { cat = 3 }
+			scope:cm_country = { set_variable = { name = cm_ab_food_staged value = yes } }
 		}
 	}
 }
@@ -460,10 +461,7 @@ cm_ab_food_stage_building_option = {
 # untouched. Root is the location. Expects scope:cm_country, scope:cm_location.
 cm_ab_stage_food_rgo = {
 	scope:cm_country = {
-		if = {
-			limit = { NOT = { is_target_in_variable_list = { name = cm_ab_food_rgo_locations target = scope:cm_location } } }
-			add_to_variable_list = { name = cm_ab_food_rgo_locations target = scope:cm_location }
-		}
+		add_to_variable_list = { name = cm_ab_food_rgo_locations target = scope:cm_location }
 	}
 }
 
@@ -473,6 +471,7 @@ cm_ab_pass_food = {
 	if = {
 		limit = {
 			local_var:cm_ab_cost_blocked = 0
+			exists = var:cm_ab_food_staged
 			has_variable_list = cm_ab_b_locations
 		}
 		every_in_list = {
@@ -498,6 +497,9 @@ cm_ab_pass_food = {
 			variable = cm_ab_food_rgo_locations
 			save_temporary_scope_as = cm_location
 			scope:cm_location = {
+				# Both branches want the same room gates, and two of them walk every building in
+				# the location, so they are read once into a local.
+				set_local_variable = { name = cm_ab_food_rgo_room value = 0 }
 				if = {
 					limit = {
 						local_var:cm_ab_cost_blocked = 0
@@ -507,6 +509,12 @@ cm_ab_pass_food = {
 						cm_location_rgo_free_this_cycle = yes
 						cm_location_rgo_promotion_buffer_slack >= 0
 						cm_market_has_construction_goods_for_rgo = yes
+					}
+					set_local_variable = { name = cm_ab_food_rgo_room value = 1 }
+				}
+				if = {
+					limit = {
+						local_var:cm_ab_food_rgo_room = 1
 						cm_ab_can_afford_rgo = { POOL = cm_ab_pool_food }
 					}
 					set_local_variable = { name = cm_ab_food_rgo_guard value = 0 }
@@ -533,15 +541,7 @@ cm_ab_pass_food = {
 				else_if = {
 					# The room is there and the level is wanted, so the cost is the only thing that
 					# failed and the category stops here.
-					limit = {
-						local_var:cm_ab_cost_blocked = 0
-						cm_get_open_build_queue_slots > 0
-						cm_is_rgo_not_max_level_already = yes
-						cm_is_rgo_under_construction = no
-						cm_location_rgo_free_this_cycle = yes
-						cm_location_rgo_promotion_buffer_slack >= 0
-						cm_market_has_construction_goods_for_rgo = yes
-					}
+					limit = { local_var:cm_ab_food_rgo_room = 1 }
 					cm_ab_stop_on_cost = { COST = glorpui_rgo_expand_cost }
 				}
 			}

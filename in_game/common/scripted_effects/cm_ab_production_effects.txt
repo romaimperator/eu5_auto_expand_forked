@@ -167,10 +167,7 @@ cm_ab_stage_upgrade_candidate = {
 		cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_ab_u_locations SET = cm_ab_u_locations_set LOCATION_LIST = cm_ab_u_types DONE_LIST = cm_ab_done_u_types }
 		# Shared marker so no feature from-zero-builds the replacement this pulse.
 		scope:cm_location = {
-			if = {
-				limit = { NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type } } }
-				add_to_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type }
-			}
+			add_to_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_current_building_type }
 		}
 	}
 }
@@ -288,7 +285,6 @@ cm_ab_prod_clear_memory = {
 # memory this feeds. The type reported is the one the off-slice bar resolves its good from, so an
 # upgrade reports its replacement tier. Root is the location.
 cm_ab_prod_loc_best = {
-	save_temporary_scope_as = cm_ab_rec_loc
 	set_local_variable = { name = cm_ab_rec_s value = -2000000 }
 	set_local_variable = { name = cm_ab_rec_c value = 0 }
 	set_local_variable = { name = cm_ab_rec_has_bt value = 0 }
@@ -298,16 +294,7 @@ cm_ab_prod_loc_best = {
 			has_variable_map = cm_ab_b_scores
 			var:cm_ab_b_best > local_var:cm_ab_rec_s
 		}
-		ordered_key_in_variable_map = {
-			variable = cm_ab_b_scores
-			order_by = {
-				save_temporary_scope_as = cm_ab_try_type
-				value = "scope:cm_ab_rec_loc.variable_map(cm_ab_b_scores|scope:cm_ab_try_type)"
-			}
-			position = 0
-			check_range_bounds = no
-			save_temporary_scope_as = cm_ab_rec_type
-		}
+		var:cm_ab_b_best_type = { save_temporary_scope_as = cm_ab_rec_type }
 		if = {
 			limit = {
 				has_variable_map = cm_ab_b_costs
@@ -325,16 +312,7 @@ cm_ab_prod_loc_best = {
 			has_variable_map = cm_ab_u_scores
 			var:cm_ab_u_best > local_var:cm_ab_rec_s
 		}
-		ordered_key_in_variable_map = {
-			variable = cm_ab_u_scores
-			order_by = {
-				save_temporary_scope_as = cm_ab_try_type
-				value = "scope:cm_ab_rec_loc.variable_map(cm_ab_u_scores|scope:cm_ab_try_type)"
-			}
-			position = 0
-			check_range_bounds = no
-			save_temporary_scope_as = cm_ab_rec_type
-		}
+		var:cm_ab_u_best_type = { save_temporary_scope_as = cm_ab_rec_type }
 		if = {
 			limit = {
 				has_variable_map = cm_ab_u_costs
@@ -732,20 +710,12 @@ cm_ab_rgo_why_line = {
 # the key is removed even when the gates fail, so every pick shrinks a map. Root is the
 # location.
 cm_ab_pick_best_build_item = {
-	save_temporary_scope_as = cm_ab_pick_loc
 	# The discount gate prices this location's market; another drain earlier in the pass leaves its
 	# own location in scope.
 	save_scope_as = cm_location
-	ordered_key_in_variable_map = {
-		variable = cm_ab_b_scores
-		order_by = {
-			save_temporary_scope_as = cm_ab_try_type
-			value = "scope:cm_ab_pick_loc.variable_map(cm_ab_b_scores|scope:cm_ab_try_type)"
-		}
-		position = 0
-		check_range_bounds = no
-		save_temporary_scope_as = cm_ab_pick_type
-	}
+	# cm_ab_b_best_type is the key that set cm_ab_b_best, kept in step with it by scoring and by
+	# cm_ab_refresh_build_best after every pick.
+	var:cm_ab_b_best_type = { save_temporary_scope_as = cm_ab_pick_type }
 	scope:cm_ab_pick_type = {
 		save_scope_as = cm_building_type
 		save_temporary_scope_as = cm_ab_anchor_type
@@ -781,10 +751,7 @@ cm_ab_pick_best_build_item = {
 						is_key_in_variable_map = { name = cm_ab_b_conv target = scope:cm_ab_pick_type }
 					}
 					"variable_map(cm_ab_b_conv|scope:cm_ab_pick_type)" = { save_temporary_scope_as = cm_ab_conv_pred }
-					if = {
-						limit = { NOT = { is_target_in_variable_list = { name = cm_upgrade_in_progress target = scope:cm_ab_conv_pred } } }
-						add_to_variable_list = { name = cm_upgrade_in_progress target = scope:cm_ab_conv_pred }
-					}
+					add_to_variable_list = { name = cm_upgrade_in_progress target = scope:cm_ab_conv_pred }
 					remove_from_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_ab_conv_pred }
 					add_to_variable_map = { name = cm_upgrade_in_progress_targets key = scope:cm_ab_conv_pred value = scope:cm_building_type }
 				} else = {
@@ -828,6 +795,7 @@ cm_ab_drain_prune_loc = {
 cm_ab_refresh_build_best = {
 	save_temporary_scope_as = cm_ab_refresh_loc
 	remove_variable = cm_ab_b_best
+	remove_variable = cm_ab_b_best_type
 	if = {
 		limit = {
 			has_variable_map = cm_ab_b_scores
@@ -844,26 +812,19 @@ cm_ab_refresh_build_best = {
 			save_temporary_scope_as = cm_ab_next_type
 		}
 		set_variable = { name = cm_ab_b_best value = "variable_map(cm_ab_b_scores|scope:cm_ab_next_type)" }
+		set_variable = { name = cm_ab_b_best_type value = scope:cm_ab_next_type }
 	}
 }
 
 # Upgrade twin of cm_ab_pick_best_build_item, keyed by the standing obsolete type. Root is
 # the location.
 cm_ab_pick_best_upgrade_item = {
-	save_temporary_scope_as = cm_ab_pick_loc
 	# The discount gate prices this location's market; another drain earlier in the pass leaves its
 	# own location in scope.
 	save_scope_as = cm_location
-	ordered_key_in_variable_map = {
-		variable = cm_ab_u_scores
-		order_by = {
-			save_temporary_scope_as = cm_ab_try_type
-			value = "scope:cm_ab_pick_loc.variable_map(cm_ab_u_scores|scope:cm_ab_try_type)"
-		}
-		position = 0
-		check_range_bounds = no
-		save_temporary_scope_as = cm_ab_pick_type
-	}
+	# cm_ab_u_best_type is the key that set cm_ab_u_best, kept in step with it by scoring and by
+	# cm_ab_refresh_upg_best after every pick.
+	var:cm_ab_u_best_type = { save_temporary_scope_as = cm_ab_pick_type }
 	if = {
 		limit = {
 			has_variable_map = cm_ab_u_new_types
@@ -915,6 +876,7 @@ cm_ab_pick_best_upgrade_item = {
 cm_ab_refresh_upg_best = {
 	save_temporary_scope_as = cm_ab_refresh_loc
 	remove_variable = cm_ab_u_best
+	remove_variable = cm_ab_u_best_type
 	if = {
 		limit = {
 			has_variable_map = cm_ab_u_scores
@@ -931,6 +893,7 @@ cm_ab_refresh_upg_best = {
 			save_temporary_scope_as = cm_ab_next_type
 		}
 		set_variable = { name = cm_ab_u_best value = "variable_map(cm_ab_u_scores|scope:cm_ab_next_type)" }
+		set_variable = { name = cm_ab_u_best_type value = scope:cm_ab_next_type }
 	}
 }
 

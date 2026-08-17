@@ -42,12 +42,11 @@ cm_pick_slice = {
 		set_variable = { name = cm_slice_cursor value = 0 }
 	}
 	set_local_variable = { name = cm_slice_room value = @cm_slice_location_budget }
+	set_local_variable = { name = cm_slice_rot value = 0 }
 	if = {
 		limit = { var:cm_slice_cursor < local_var:cm_slice_np }
 		cm_slice_take_priority = yes
-	}
-	else = {
-		cm_slice_take_rotation = yes
+		set_local_variable = { name = cm_slice_rot value = 1 }
 	}
 	change_variable = { name = cm_slice_cursor add = 1 }
 	cm_slice_fill_budget = yes
@@ -89,32 +88,22 @@ cm_slice_take_priority = {
 	}
 }
 
-# Admits the next market the rotation still owes a visit.
-# Root is the country, expects scope:cm_slice_country and the cm_slice_* locals.
-cm_slice_take_rotation = {
-	set_local_variable = { name = cm_slice_rot value = 0 }
-	every_market_present_in_country = {
-		if = {
-			limit = {
-				local_var:cm_slice_rot = 0
-				cm_market_unseen_this_rotation = yes
-			}
-			set_local_variable = { name = cm_slice_rot value = 1 }
-			cm_slice_admit = yes
-		}
-	}
-}
-
-# Spends whatever the cursor's market left of the location budget, which is what keeps a
-# country small enough to fit inside it staging every market every cycle.
+# Takes the next market the rotation owes a visit when the cursor is not on a priority one
+# (local_var:cm_slice_rot still 0), then spends whatever is left of the location budget, which is
+# what keeps a country small enough to fit inside it staging every market every cycle. Both tests
+# are inner ifs, not the iterator's limit, or every unseen market is admitted in one pass.
 # Root is the country, expects scope:cm_slice_country and the cm_slice_* locals.
 cm_slice_fill_budget = {
 	every_market_present_in_country = {
 		if = {
 			limit = {
 				cm_market_unseen_this_rotation = yes
-				local_var:cm_slice_room >= { value = market_location_count }
+				OR = {
+					local_var:cm_slice_rot = 0
+					local_var:cm_slice_room >= { value = market_location_count }
+				}
 			}
+			set_local_variable = { name = cm_slice_rot value = 1 }
 			cm_slice_admit = yes
 		}
 	}
@@ -174,20 +163,13 @@ cm_sub_pick_slice = {
 		variable = cm_sub_mkts
 		if = {
 			limit = {
-				local_var:cm_sub_slice_rot = 0
 				cm_sub_market_unseen_this_rotation = yes
+				OR = {
+					local_var:cm_sub_slice_rot = 0
+					local_var:cm_sub_slice_room >= { value = market_location_count }
+				}
 			}
 			set_local_variable = { name = cm_sub_slice_rot value = 1 }
-			cm_sub_slice_admit = yes
-		}
-	}
-	every_in_list = {
-		variable = cm_sub_mkts
-		if = {
-			limit = {
-				cm_sub_market_unseen_this_rotation = yes
-				local_var:cm_sub_slice_room >= { value = market_location_count }
-			}
 			cm_sub_slice_admit = yes
 		}
 	}
@@ -200,23 +182,28 @@ cm_sub_pick_slice = {
 # one entry. Root is the country, expects scope:cm_slice_country.
 cm_sub_build_markets = {
 	clear_variable_list = cm_sub_mkts
-	clear_variable_list = cm_sub_skip_mkts
+	clear_variable_map = cm_sub_skip_mkts
 	every_market_present_in_country = {
 		save_scope_as = cm_slice_mkt
-		scope:cm_slice_country = { add_to_variable_list = { name = cm_sub_skip_mkts target = scope:cm_slice_mkt } }
+		scope:cm_slice_country = { add_to_variable_map = { name = cm_sub_skip_mkts key = scope:cm_slice_mkt value = 1 } }
 	}
 	every_subject_or_below = {
 		every_market_present_in_country = {
 			save_scope_as = cm_slice_mkt
 			scope:cm_slice_country = {
 				if = {
-					limit = { NOT = { is_target_in_variable_list = { name = cm_sub_skip_mkts target = scope:cm_slice_mkt } } }
+					limit = {
+						NOT = {
+							has_variable_map = cm_sub_skip_mkts
+							is_key_in_variable_map = { name = cm_sub_skip_mkts target = scope:cm_slice_mkt }
+						}
+					}
 					add_to_variable_list = { name = cm_sub_mkts target = scope:cm_slice_mkt }
 				}
 			}
 		}
 	}
-	clear_variable_list = cm_sub_skip_mkts
+	clear_variable_map = cm_sub_skip_mkts
 }
 
 # Root is the market, expects scope:cm_slice_country and local_var:cm_sub_slice_room.
