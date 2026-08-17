@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Generate the auto-town-rights eligibility triggers from vanilla data.
 
-Reads every vanilla `town_rights_type` definition and emits two scripted triggers,
+Reads every vanilla `town_rights_type` definition and emits three scripted triggers,
 each a single branch chain keyed by town right:
 
   cm_can_grant_specific_town_right_at_location - the right's `allow` block, the
       per-location restriction the engine applies when granting.
+  cm_can_grant_specialization_right_at_location - the same over the royal
+      specialization rights alone.
   cm_auto_town_rights_potential_passes - the advance whose `unlock_town_rights`
       names the right, plus the right's `potential` block, the country-level
       prerequisites. Rights unlocked by an advance are read out of
@@ -27,6 +29,10 @@ import argparse
 import os
 import re
 import sys
+
+# The specialization chain covers exactly the rights the draw picks from, so both take
+# the one list rather than deriving the set twice.
+from cm_generate_town_rights_map_mode import ROYAL_RIGHTS
 
 try:
     import tomllib
@@ -60,6 +66,7 @@ POTENTIAL_OUTPUT_PATH = os.path.join(
     TRIGGERS_DIR, "cm_auto_town_rights_potential_triggers.txt")
 
 ALLOW_TRIGGER_NAME = "cm_can_grant_specific_town_right_at_location"
+SPECIALIZATION_TRIGGER_NAME = "cm_can_grant_specialization_right_at_location"
 POTENTIAL_TRIGGER_NAME = "cm_auto_town_rights_potential_passes"
 
 ASSIGN_BLOCK = re.compile(r"([A-Za-z_][A-Za-z0-9_.:]*)\s*=\s*\{")
@@ -78,6 +85,14 @@ ALLOW_HEADER = (
     "# only grants a right on a location the engine would allow it on.\n"
     "# Expects scope:cm_town_right (the right) and scope:target (the candidate location).\n"
     "# Rights with no `allow` restriction fall through to the trailing trigger_else.\n"
+)
+
+SPECIALIZATION_HEADER = (
+    "\n"
+    "# The same mirror over the royal specialization rights alone, the set the Auto-Grant\n"
+    "# Urban Rights draw picks from. Most of them carry no `allow` block, so answering\n"
+    "# through the chain above means walking every branch of it to reach the trigger_else.\n"
+    "# Expects scope:cm_town_right (the right) and scope:target (the candidate location).\n"
 )
 
 POTENTIAL_HEADER = (
@@ -230,6 +245,11 @@ def allow_branches(rights):
     return [(name, allow) for name, allow, _ in rights if allow]
 
 
+def specialization_allow_branches(rights):
+    allowed = {name: allow for name, allow, _ in rights if allow}
+    return [(name, allowed[name]) for name in ROYAL_RIGHTS if name in allowed]
+
+
 def potential_branches(rights, unlock_advances):
     branches = []
     for name, _, potential in rights:
@@ -298,9 +318,13 @@ def main():
     allow = allow_branches(rights)
     if not allow:
         sys.exit(f"No town rights with allow blocks found in {town_rights_dir}")
-    write_output(ALLOW_OUTPUT_PATH,
-                 render(ALLOW_HEADER, ALLOW_TRIGGER_NAME, allow))
+    specialization = specialization_allow_branches(rights)
+    write_output(
+        ALLOW_OUTPUT_PATH,
+        render(ALLOW_HEADER, ALLOW_TRIGGER_NAME, allow)
+        + render(SPECIALIZATION_HEADER, SPECIALIZATION_TRIGGER_NAME, specialization))
     report(ALLOW_OUTPUT_PATH, "allow", allow)
+    report(ALLOW_OUTPUT_PATH, "specialization allow", specialization)
 
     potential = potential_branches(rights, unlock_advances)
     if not potential:

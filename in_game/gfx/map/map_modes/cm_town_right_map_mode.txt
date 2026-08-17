@@ -70,7 +70,7 @@ cm_best_town_right = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_uright_assigned_count >= 1
+				cm_atr_ur_has_no_specialization = no
 			}
 			lerp = {
 				min_color = rgb { 60 220 60 }
@@ -82,7 +82,7 @@ cm_best_town_right = {
 			limit = {
 				is_land = yes
 				NOT = { has_variable = cm_trmm_best_idx }
-				cm_uright_assigned_count >= 1
+				cm_atr_ur_has_no_specialization = no
 			}
 			value = rgb { 60 220 60 }
 		}
@@ -90,11 +90,11 @@ cm_best_town_right = {
 			limit = {
 				is_land = yes
 				has_max_town_rights = yes
-				cm_uright_assigned_count = 0
 				OR = {
 					location_rank = location_rank:city
 					location_rank = location_rank:megalopolis
 				}
+				cm_atr_ur_has_no_specialization = yes
 			}
 			value = rgb { 170 70 210 }
 		}
@@ -302,9 +302,7 @@ cm_best_town_right = {
 	}
 
 	refresh_colors_on_selection_change = no
-	# The Day refresh counter (vanilla in_game/gfx/map/map_modes/
-	# map_modes.txt:1099) keeps the granted stripes current after grants.
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 # Hidden duplicate for the post-grant stripe refresh: setting the same
@@ -378,7 +376,7 @@ cm_best_town_right_refresh = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_uright_assigned_count >= 1
+				cm_atr_ur_has_no_specialization = no
 			}
 			lerp = {
 				min_color = rgb { 60 220 60 }
@@ -390,7 +388,7 @@ cm_best_town_right_refresh = {
 			limit = {
 				is_land = yes
 				NOT = { has_variable = cm_trmm_best_idx }
-				cm_uright_assigned_count >= 1
+				cm_atr_ur_has_no_specialization = no
 			}
 			value = rgb { 60 220 60 }
 		}
@@ -398,11 +396,11 @@ cm_best_town_right_refresh = {
 			limit = {
 				is_land = yes
 				has_max_town_rights = yes
-				cm_uright_assigned_count = 0
 				OR = {
 					location_rank = location_rank:city
 					location_rank = location_rank:megalopolis
 				}
+				cm_atr_ur_has_no_specialization = yes
 			}
 			value = rgb { 170 70 210 }
 		}
@@ -610,7 +608,7 @@ cm_best_town_right_refresh = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 # Per-right search variants of cm_best_town_right, hidden from the flyout
@@ -630,10 +628,6 @@ cm_trmm_search_tooling = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_tooling <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -685,8 +679,8 @@ cm_trmm_search_tooling = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_tooling > 0
 				has_max_town_rights = no
+				cm_trmm_right_tooling > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -781,7 +775,7 @@ cm_trmm_search_tooling = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_tooling_refresh = {
@@ -794,10 +788,6 @@ cm_trmm_search_tooling_refresh = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_tooling <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -849,8 +839,8 @@ cm_trmm_search_tooling_refresh = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_tooling > 0
 				has_max_town_rights = no
+				cm_trmm_right_tooling > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -945,7 +935,7 @@ cm_trmm_search_tooling_refresh = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_jewelry = {
@@ -958,10 +948,6 @@ cm_trmm_search_jewelry = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_jewelry <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -1020,8 +1006,8 @@ cm_trmm_search_jewelry = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_jewelry > 0
 				has_max_town_rights = no
+				cm_trmm_right_jewelry > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -1116,7 +1102,7 @@ cm_trmm_search_jewelry = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_jewelry_refresh = {
@@ -1129,10 +1115,6 @@ cm_trmm_search_jewelry_refresh = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_jewelry <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -1191,8 +1173,8 @@ cm_trmm_search_jewelry_refresh = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_jewelry > 0
 				has_max_town_rights = no
+				cm_trmm_right_jewelry > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -1287,7 +1269,7 @@ cm_trmm_search_jewelry_refresh = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_naval = {
@@ -1300,10 +1282,6 @@ cm_trmm_search_naval = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_naval <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -1362,8 +1340,8 @@ cm_trmm_search_naval = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_naval > 0
 				has_max_town_rights = no
+				cm_trmm_right_naval > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -1458,7 +1436,7 @@ cm_trmm_search_naval = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_naval_refresh = {
@@ -1471,10 +1449,6 @@ cm_trmm_search_naval_refresh = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_naval <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -1533,8 +1507,8 @@ cm_trmm_search_naval_refresh = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_naval > 0
 				has_max_town_rights = no
+				cm_trmm_right_naval > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -1629,7 +1603,7 @@ cm_trmm_search_naval_refresh = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_textile = {
@@ -1642,10 +1616,6 @@ cm_trmm_search_textile = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_textile <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -1704,8 +1674,8 @@ cm_trmm_search_textile = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_textile > 0
 				has_max_town_rights = no
+				cm_trmm_right_textile > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -1800,7 +1770,7 @@ cm_trmm_search_textile = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_textile_refresh = {
@@ -1813,10 +1783,6 @@ cm_trmm_search_textile_refresh = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_textile <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -1875,8 +1841,8 @@ cm_trmm_search_textile_refresh = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_textile > 0
 				has_max_town_rights = no
+				cm_trmm_right_textile > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -1971,7 +1937,7 @@ cm_trmm_search_textile_refresh = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_weaponry = {
@@ -1984,10 +1950,6 @@ cm_trmm_search_weaponry = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_weaponry <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -2046,8 +2008,8 @@ cm_trmm_search_weaponry = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_weaponry > 0
 				has_max_town_rights = no
+				cm_trmm_right_weaponry > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -2142,7 +2104,7 @@ cm_trmm_search_weaponry = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_weaponry_refresh = {
@@ -2155,10 +2117,6 @@ cm_trmm_search_weaponry_refresh = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_weaponry <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -2217,8 +2175,8 @@ cm_trmm_search_weaponry_refresh = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_weaponry > 0
 				has_max_town_rights = no
+				cm_trmm_right_weaponry > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -2313,7 +2271,7 @@ cm_trmm_search_weaponry_refresh = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_book = {
@@ -2326,10 +2284,6 @@ cm_trmm_search_book = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_book <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -2388,8 +2342,8 @@ cm_trmm_search_book = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_book > 0
 				has_max_town_rights = no
+				cm_trmm_right_book > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -2484,7 +2438,7 @@ cm_trmm_search_book = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_book_refresh = {
@@ -2497,10 +2451,6 @@ cm_trmm_search_book_refresh = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_book <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -2559,8 +2509,8 @@ cm_trmm_search_book_refresh = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_book > 0
 				has_max_town_rights = no
+				cm_trmm_right_book > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -2655,7 +2605,7 @@ cm_trmm_search_book_refresh = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_artisan = {
@@ -2668,10 +2618,6 @@ cm_trmm_search_artisan = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_artisan <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -2730,8 +2676,8 @@ cm_trmm_search_artisan = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_artisan > 0
 				has_max_town_rights = no
+				cm_trmm_right_artisan > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -2826,7 +2772,7 @@ cm_trmm_search_artisan = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_artisan_refresh = {
@@ -2839,10 +2785,6 @@ cm_trmm_search_artisan_refresh = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_artisan <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -2901,8 +2843,8 @@ cm_trmm_search_artisan_refresh = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_artisan > 0
 				has_max_town_rights = no
+				cm_trmm_right_artisan > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -2997,7 +2939,7 @@ cm_trmm_search_artisan_refresh = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_brewing = {
@@ -3010,10 +2952,6 @@ cm_trmm_search_brewing = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_brewing <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -3072,8 +3010,8 @@ cm_trmm_search_brewing = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_brewing > 0
 				has_max_town_rights = no
+				cm_trmm_right_brewing > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -3168,7 +3106,7 @@ cm_trmm_search_brewing = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_brewing_refresh = {
@@ -3181,10 +3119,6 @@ cm_trmm_search_brewing_refresh = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_brewing <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -3243,8 +3177,8 @@ cm_trmm_search_brewing_refresh = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_brewing > 0
 				has_max_town_rights = no
+				cm_trmm_right_brewing > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -3339,7 +3273,7 @@ cm_trmm_search_brewing_refresh = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_masonry = {
@@ -3352,10 +3286,6 @@ cm_trmm_search_masonry = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_masonry <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -3414,8 +3344,8 @@ cm_trmm_search_masonry = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_masonry > 0
 				has_max_town_rights = no
+				cm_trmm_right_masonry > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -3510,7 +3440,7 @@ cm_trmm_search_masonry = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }
 
 cm_trmm_search_masonry_refresh = {
@@ -3523,10 +3453,6 @@ cm_trmm_search_masonry_refresh = {
 			limit = { NOT = { has_variable = cm_trmm_best_idx } }
 			value = rgb { 0 0 0 }
 		}
-		else_if = {
-			limit = { cm_trmm_right_masonry <= 0 }
-			value = rgb { 0 0 0 }
-		}
 		else = {
 			lerp = {
 				min_color = rgb { 0 0 0 }
@@ -3585,8 +3511,8 @@ cm_trmm_search_masonry_refresh = {
 			limit = {
 				is_land = yes
 				has_variable = cm_trmm_best_idx
-				cm_trmm_right_masonry > 0
 				has_max_town_rights = no
+				cm_trmm_right_masonry > 0
 			}
 			value = rgb { 0 100 255 }
 		}
@@ -3681,5 +3607,5 @@ cm_trmm_search_masonry_refresh = {
 	}
 
 	refresh_colors_on_selection_change = no
-	color_refresh_counters = { Day }
+	color_refresh_counters = { }
 }

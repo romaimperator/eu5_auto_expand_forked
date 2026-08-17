@@ -1798,19 +1798,111 @@ cm_trmm_recompute_province_definition = {
 			# and which right holds it. Higher index wins score ties, so index order is
 			# the reverse of the priority order.
 			every_location_in_province = {
+				# Each right's score staged once: the encoding below, the tie count and
+				# the runner-up chain all read these rather than the score chain itself.
+				set_local_variable = {
+					name = cm_trmm_l_r_tooling
+					value = cm_trmm_right_tooling
+				}
+				set_local_variable = {
+					name = cm_trmm_l_r_jewelry
+					value = cm_trmm_right_jewelry
+				}
+				set_local_variable = {
+					name = cm_trmm_l_r_naval
+					value = cm_trmm_right_naval
+				}
+				set_local_variable = {
+					name = cm_trmm_l_r_textile
+					value = cm_trmm_right_textile
+				}
+				set_local_variable = {
+					name = cm_trmm_l_r_weaponry
+					value = cm_trmm_right_weaponry
+				}
+				set_local_variable = {
+					name = cm_trmm_l_r_book
+					value = cm_trmm_right_book
+				}
+				set_local_variable = {
+					name = cm_trmm_l_r_artisan
+					value = cm_trmm_right_artisan
+				}
+				set_local_variable = {
+					name = cm_trmm_l_r_brewing
+					value = cm_trmm_right_brewing
+				}
+				set_local_variable = {
+					name = cm_trmm_l_r_masonry
+					value = cm_trmm_right_masonry
+				}
 				set_local_variable = {
 					name = cm_trmm_enc
 					value = {
 						value = 0
-						min = cm_trmm_enc_tooling
-						min = cm_trmm_enc_jewelry
-						min = cm_trmm_enc_naval
-						min = cm_trmm_enc_textile
-						min = cm_trmm_enc_weaponry
-						min = cm_trmm_enc_book
-						min = cm_trmm_enc_artisan
-						min = cm_trmm_enc_brewing
-						min = cm_trmm_enc_masonry
+						min = {
+							value = local_var:cm_trmm_l_r_tooling
+							multiply = 1000
+							round = yes
+							multiply = 10
+							add = 9
+						}
+						min = {
+							value = local_var:cm_trmm_l_r_jewelry
+							multiply = 1000
+							round = yes
+							multiply = 10
+							add = 8
+						}
+						min = {
+							value = local_var:cm_trmm_l_r_naval
+							multiply = 1000
+							round = yes
+							multiply = 10
+							add = 7
+						}
+						min = {
+							value = local_var:cm_trmm_l_r_textile
+							multiply = 1000
+							round = yes
+							multiply = 10
+							add = 6
+						}
+						min = {
+							value = local_var:cm_trmm_l_r_weaponry
+							multiply = 1000
+							round = yes
+							multiply = 10
+							add = 5
+						}
+						min = {
+							value = local_var:cm_trmm_l_r_book
+							multiply = 1000
+							round = yes
+							multiply = 10
+							add = 4
+						}
+						min = {
+							value = local_var:cm_trmm_l_r_artisan
+							multiply = 1000
+							round = yes
+							multiply = 10
+							add = 3
+						}
+						min = {
+							value = local_var:cm_trmm_l_r_brewing
+							multiply = 1000
+							round = yes
+							multiply = 10
+							add = 2
+						}
+						min = {
+							value = local_var:cm_trmm_l_r_masonry
+							multiply = 1000
+							round = yes
+							multiply = 10
+							add = 1
+						}
 					}
 				}
 				set_variable = {
@@ -1841,64 +1933,102 @@ cm_trmm_recompute_province_definition = {
 					limit = { local_var:cm_trmm_enc >= 10 }
 					if = {
 						limit = { var:cm_trmm_best_idx = 9 }
+						set_local_variable = {
+							name = cm_trmm_l_ties
+							value = {
+								value = 0
+								if = {
+									limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_jewelry }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_naval }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_textile }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_weaponry }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_book }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_artisan }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_brewing }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_masonry }
+									add = 1
+								}
+							}
+						}
 						if = {
-							limit = { cm_trmm_tie_count_tooling >= 2 }
+							limit = { local_var:cm_trmm_l_ties >= 2 }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 10
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_tooling__jewelry = 0 }
+							limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_jewelry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 8
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_tooling__naval = 0 }
+							limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_naval }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 7
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_tooling__textile = 0 }
+							limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_textile }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 6
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_tooling__weaponry = 0 }
+							limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_weaponry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 5
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_tooling__book = 0 }
+							limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_book }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 4
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_tooling__artisan = 0 }
+							limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_artisan }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 3
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_tooling__brewing = 0 }
+							limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_brewing }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 2
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_tooling__masonry = 0 }
+							limit = { local_var:cm_trmm_l_r_tooling = local_var:cm_trmm_l_r_masonry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 1
@@ -1907,57 +2037,91 @@ cm_trmm_recompute_province_definition = {
 					}
 					else_if = {
 						limit = { var:cm_trmm_best_idx = 8 }
+						set_local_variable = {
+							name = cm_trmm_l_ties
+							value = {
+								value = 0
+								if = {
+									limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_naval }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_textile }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_weaponry }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_book }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_artisan }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_brewing }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_masonry }
+									add = 1
+								}
+							}
+						}
 						if = {
-							limit = { cm_trmm_tie_count_jewelry >= 2 }
+							limit = { local_var:cm_trmm_l_ties >= 2 }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 10
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_jewelry__naval = 0 }
+							limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_naval }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 7
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_jewelry__textile = 0 }
+							limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_textile }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 6
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_jewelry__weaponry = 0 }
+							limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_weaponry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 5
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_jewelry__book = 0 }
+							limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_book }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 4
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_jewelry__artisan = 0 }
+							limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_artisan }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 3
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_jewelry__brewing = 0 }
+							limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_brewing }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 2
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_jewelry__masonry = 0 }
+							limit = { local_var:cm_trmm_l_r_jewelry = local_var:cm_trmm_l_r_masonry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 1
@@ -1966,50 +2130,80 @@ cm_trmm_recompute_province_definition = {
 					}
 					else_if = {
 						limit = { var:cm_trmm_best_idx = 7 }
+						set_local_variable = {
+							name = cm_trmm_l_ties
+							value = {
+								value = 0
+								if = {
+									limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_textile }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_weaponry }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_book }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_artisan }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_brewing }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_masonry }
+									add = 1
+								}
+							}
+						}
 						if = {
-							limit = { cm_trmm_tie_count_naval >= 2 }
+							limit = { local_var:cm_trmm_l_ties >= 2 }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 10
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_naval__textile = 0 }
+							limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_textile }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 6
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_naval__weaponry = 0 }
+							limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_weaponry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 5
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_naval__book = 0 }
+							limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_book }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 4
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_naval__artisan = 0 }
+							limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_artisan }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 3
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_naval__brewing = 0 }
+							limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_brewing }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 2
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_naval__masonry = 0 }
+							limit = { local_var:cm_trmm_l_r_naval = local_var:cm_trmm_l_r_masonry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 1
@@ -2018,43 +2212,69 @@ cm_trmm_recompute_province_definition = {
 					}
 					else_if = {
 						limit = { var:cm_trmm_best_idx = 6 }
+						set_local_variable = {
+							name = cm_trmm_l_ties
+							value = {
+								value = 0
+								if = {
+									limit = { local_var:cm_trmm_l_r_textile = local_var:cm_trmm_l_r_weaponry }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_textile = local_var:cm_trmm_l_r_book }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_textile = local_var:cm_trmm_l_r_artisan }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_textile = local_var:cm_trmm_l_r_brewing }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_textile = local_var:cm_trmm_l_r_masonry }
+									add = 1
+								}
+							}
+						}
 						if = {
-							limit = { cm_trmm_tie_count_textile >= 2 }
+							limit = { local_var:cm_trmm_l_ties >= 2 }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 10
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_textile__weaponry = 0 }
+							limit = { local_var:cm_trmm_l_r_textile = local_var:cm_trmm_l_r_weaponry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 5
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_textile__book = 0 }
+							limit = { local_var:cm_trmm_l_r_textile = local_var:cm_trmm_l_r_book }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 4
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_textile__artisan = 0 }
+							limit = { local_var:cm_trmm_l_r_textile = local_var:cm_trmm_l_r_artisan }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 3
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_textile__brewing = 0 }
+							limit = { local_var:cm_trmm_l_r_textile = local_var:cm_trmm_l_r_brewing }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 2
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_textile__masonry = 0 }
+							limit = { local_var:cm_trmm_l_r_textile = local_var:cm_trmm_l_r_masonry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 1
@@ -2063,36 +2283,58 @@ cm_trmm_recompute_province_definition = {
 					}
 					else_if = {
 						limit = { var:cm_trmm_best_idx = 5 }
+						set_local_variable = {
+							name = cm_trmm_l_ties
+							value = {
+								value = 0
+								if = {
+									limit = { local_var:cm_trmm_l_r_weaponry = local_var:cm_trmm_l_r_book }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_weaponry = local_var:cm_trmm_l_r_artisan }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_weaponry = local_var:cm_trmm_l_r_brewing }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_weaponry = local_var:cm_trmm_l_r_masonry }
+									add = 1
+								}
+							}
+						}
 						if = {
-							limit = { cm_trmm_tie_count_weaponry >= 2 }
+							limit = { local_var:cm_trmm_l_ties >= 2 }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 10
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_weaponry__book = 0 }
+							limit = { local_var:cm_trmm_l_r_weaponry = local_var:cm_trmm_l_r_book }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 4
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_weaponry__artisan = 0 }
+							limit = { local_var:cm_trmm_l_r_weaponry = local_var:cm_trmm_l_r_artisan }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 3
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_weaponry__brewing = 0 }
+							limit = { local_var:cm_trmm_l_r_weaponry = local_var:cm_trmm_l_r_brewing }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 2
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_weaponry__masonry = 0 }
+							limit = { local_var:cm_trmm_l_r_weaponry = local_var:cm_trmm_l_r_masonry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 1
@@ -2101,29 +2343,47 @@ cm_trmm_recompute_province_definition = {
 					}
 					else_if = {
 						limit = { var:cm_trmm_best_idx = 4 }
+						set_local_variable = {
+							name = cm_trmm_l_ties
+							value = {
+								value = 0
+								if = {
+									limit = { local_var:cm_trmm_l_r_book = local_var:cm_trmm_l_r_artisan }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_book = local_var:cm_trmm_l_r_brewing }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_book = local_var:cm_trmm_l_r_masonry }
+									add = 1
+								}
+							}
+						}
 						if = {
-							limit = { cm_trmm_tie_count_book >= 2 }
+							limit = { local_var:cm_trmm_l_ties >= 2 }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 10
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_book__artisan = 0 }
+							limit = { local_var:cm_trmm_l_r_book = local_var:cm_trmm_l_r_artisan }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 3
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_book__brewing = 0 }
+							limit = { local_var:cm_trmm_l_r_book = local_var:cm_trmm_l_r_brewing }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 2
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_book__masonry = 0 }
+							limit = { local_var:cm_trmm_l_r_book = local_var:cm_trmm_l_r_masonry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 1
@@ -2132,22 +2392,36 @@ cm_trmm_recompute_province_definition = {
 					}
 					else_if = {
 						limit = { var:cm_trmm_best_idx = 3 }
+						set_local_variable = {
+							name = cm_trmm_l_ties
+							value = {
+								value = 0
+								if = {
+									limit = { local_var:cm_trmm_l_r_artisan = local_var:cm_trmm_l_r_brewing }
+									add = 1
+								}
+								if = {
+									limit = { local_var:cm_trmm_l_r_artisan = local_var:cm_trmm_l_r_masonry }
+									add = 1
+								}
+							}
+						}
 						if = {
-							limit = { cm_trmm_tie_count_artisan >= 2 }
+							limit = { local_var:cm_trmm_l_ties >= 2 }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 10
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_artisan__brewing = 0 }
+							limit = { local_var:cm_trmm_l_r_artisan = local_var:cm_trmm_l_r_brewing }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 2
 							}
 						}
 						else_if = {
-							limit = { cm_trmm_diff_artisan__masonry = 0 }
+							limit = { local_var:cm_trmm_l_r_artisan = local_var:cm_trmm_l_r_masonry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 1
@@ -2157,7 +2431,7 @@ cm_trmm_recompute_province_definition = {
 					else_if = {
 						limit = { var:cm_trmm_best_idx = 2 }
 						if = {
-							limit = { cm_trmm_diff_brewing__masonry = 0 }
+							limit = { local_var:cm_trmm_l_r_brewing = local_var:cm_trmm_l_r_masonry }
 							set_variable = {
 								name = cm_trmm_tie_idx
 								value = 1
@@ -2171,16 +2445,18 @@ cm_trmm_recompute_province_definition = {
 	else = {
 		every_province_in_province_definition = {
 			every_location_in_province = {
-				limit = { has_variable = cm_trmm_best_idx }
-				remove_variable = cm_trmm_best_idx
-			}
-			every_location_in_province = {
-				limit = { has_variable = cm_trmm_best_mil }
-				remove_variable = cm_trmm_best_mil
-			}
-			every_location_in_province = {
-				limit = { has_variable = cm_trmm_tie_idx }
-				remove_variable = cm_trmm_tie_idx
+				if = {
+					limit = { has_variable = cm_trmm_best_idx }
+					remove_variable = cm_trmm_best_idx
+				}
+				if = {
+					limit = { has_variable = cm_trmm_best_mil }
+					remove_variable = cm_trmm_best_mil
+				}
+				if = {
+					limit = { has_variable = cm_trmm_tie_idx }
+					remove_variable = cm_trmm_tie_idx
+				}
 			}
 		}
 	}

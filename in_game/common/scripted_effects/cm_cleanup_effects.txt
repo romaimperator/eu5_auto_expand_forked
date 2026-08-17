@@ -5,10 +5,11 @@
 # cm_construct_queue_window.gui; destroying is the script effect destroy_building and runs
 # inline.
 #
-# A market's survey and close passes walk every owned building, so the year's markets are
-# stepped a few a month rather than all in one tick. cm_cu_seen holds each market to one visit
-# a cycle, so spreading adds nothing to the year's work, and cm_cu_cycle holds the next cycle
-# to a year after this one opened rather than a year after it finished.
+# The year's markets are stepped a few a month rather than all in one tick. cm_cu_seen holds
+# each market to one visit a cycle, so spreading adds nothing to the year's work, and
+# cm_cu_cycle holds the next cycle to a year after this one opened rather than a year after
+# it finished. Locations carrying a closed building are listed in cm_cu_closed_locs, which is
+# what the reopen, delete and validation passes walk instead of every owned location.
 
 # Markets stepped per monthly pulse.
 @cm_cu_markets_per_pulse = 2
@@ -205,27 +206,42 @@ cm_cu_auto_food_pass = {
 # reopened by hand goes back to the player and a close that never landed becomes a fresh
 # candidate. Root is the country, scope:cm_country set.
 cm_cu_validate_tracking = {
-	every_owned_location = {
-		limit = { has_variable_list = cm_cu_closed_types }
-		save_scope_as = cm_location
+	if = {
+		limit = { has_variable_list = cm_cu_closed_locs }
+		clear_variable_list = cm_cu_untracked_locs
 		every_in_list = {
-			variable = cm_cu_closed_types
-			save_scope_as = cm_building_type
-			if = {
-				limit = {
-					scope:cm_location = {
-						NOT = {
-							any_buildings_in_location = {
-								owner = scope:cm_country
-								building_type = scope:cm_building_type
-								is_opened = no
+			variable = cm_cu_closed_locs
+			save_scope_as = cm_location
+			every_in_list = {
+				variable = cm_cu_closed_types
+				save_scope_as = cm_building_type
+				if = {
+					limit = {
+						scope:cm_location = {
+							NOT = {
+								any_buildings_in_location = {
+									owner = scope:cm_country
+									building_type = scope:cm_building_type
+									is_opened = no
+								}
 							}
 						}
 					}
+					scope:cm_location = { remove_list_variable = { name = cm_cu_closed_types target = scope:cm_building_type } }
 				}
-				scope:cm_location = { remove_list_variable = { name = cm_cu_closed_types target = scope:cm_building_type } }
+			}
+			# Staged rather than removed here, which would mutate the list being walked.
+			if = {
+				limit = { NOT = { variable_list_size = { name = cm_cu_closed_types value >= 1 } } }
+				scope:cm_country = { add_to_variable_list = { name = cm_cu_untracked_locs target = scope:cm_location } }
 			}
 		}
+		every_in_list = {
+			variable = cm_cu_untracked_locs
+			save_scope_as = cm_location
+			scope:cm_country = { remove_list_variable = { name = cm_cu_closed_locs target = scope:cm_location } }
+		}
+		clear_variable_list = cm_cu_untracked_locs
 	}
 }
 
@@ -238,7 +254,6 @@ cm_cu_survey_market = {
 	clear_variable_map = cm_cu_closed_n
 	clear_variable_map = cm_cu_acted
 	clear_variable_map = cm_cu_reop
-	# Iterating the market rather than the country matters here: this runs once per market.
 	# The iterator carries no ownership filter of its own.
 	scope:cm_ab_market = {
 		every_location_in_market = {
@@ -277,106 +292,118 @@ cm_cu_survey_market = {
 # village is cut back to one level instead, never closed or destroyed.
 # Root is the country, expects scope:cm_ab_market.
 cm_cu_close_pass = {
-	ordered_owned_building = {
-		order_by = cm_cu_neg_profit
-		max = cm_max_guess_at_number_of_buildings
-		check_range_bounds = no
-		limit = {
-			# The iterator walks every owned building once per market, so the market test
-			# leads: the profit read behind it is by far the most expensive check here.
-			location = {
-				owner = scope:cm_country
-				market = scope:cm_ab_market
+	scope:cm_ab_market = {
+		every_location_in_market = {
+			limit = {
+				owner ?= scope:cm_country
 				NOT = { integration_level = conquered }
 			}
-			is_opened = yes
-			is_subsidized = no
-			# A building exists and reads no profit from the moment its first level is
-			# queued, so without this the pass closes what it is still paying to build.
-			cm_is_not_under_construction = yes
-			cm_cu_core_good_protected = no
-			cm_cu_is_unprofitable = yes
-			building_type = {
-				cm_is_building_type_production_building = yes
-				cm_cu_is_never_removed = no
-			}
-			# market_village keeps its first level for the burghers it puts in the location.
-			trigger_if = {
-				limit = { building_type = building_type:market_village }
-				building_level > 1
-			}
-			cm_cu_close_pass_can_act = yes
-		}
-		save_scope_as = cm_building
-		building_type = { save_scope_as = cm_building_type }
-		location = { save_scope_as = cm_location }
-		# The iterator snapshots its limit; the share spent advances live.
-		if = {
-			limit = { scope:cm_country = { cm_cu_group_has_room = yes } }
-			scope:cm_country = { cm_cu_bump_acted = yes }
-			if = {
-				limit = { building_type = building_type:market_village }
-				cm_cu_log = { ACTION = cm_log_cu_trimmed }
-				scope:cm_location = {
-					change_building_level_in_location = {
-						building = building_type:market_village
-						value = { value = 1 subtract = scope:cm_building.building_level }
-						owner = scope:cm_country
+			save_scope_as = cm_location
+			ordered_buildings_in_location = {
+				order_by = cm_cu_neg_profit
+				max = cm_max_guess_at_number_of_buildings
+				check_range_bounds = no
+				limit = {
+					owner = scope:cm_country
+					# One map read that rejects most of what a location holds, so it leads
+					# the profit reads behind it.
+					building_type = {
+						cm_is_building_type_production_building = yes
+						cm_cu_is_never_removed = no
+					}
+					is_opened = yes
+					is_subsidized = no
+					# A building exists and reads no profit from the moment its first level is
+					# queued, so without this the pass closes what it is still paying to build.
+					cm_is_not_under_construction = yes
+					cm_cu_core_good_protected = no
+					cm_cu_is_unprofitable = yes
+					# market_village keeps its first level for the burghers it puts in the location.
+					trigger_if = {
+						limit = { building_type = building_type:market_village }
+						building_level > 1
+					}
+					cm_cu_close_pass_can_act = yes
+				}
+				save_scope_as = cm_building
+				building_type = { save_scope_as = cm_building_type }
+				# The iterator snapshots its limit; the share spent advances live.
+				if = {
+					limit = { scope:cm_country = { cm_cu_group_has_room = yes } }
+					scope:cm_country = { cm_cu_bump_acted = yes }
+					if = {
+						limit = { building_type = building_type:market_village }
+						cm_cu_log = { ACTION = cm_log_cu_trimmed }
+						scope:cm_location = {
+							change_building_level_in_location = {
+								building = building_type:market_village
+								value = { value = 1 subtract = scope:cm_building.building_level }
+								owner = scope:cm_country
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							scope:cm_country = { exists = var:cm_cu_destroy }
+							scope:cm_location = { cm_cu_location_near_cap = yes }
+						}
+						cm_cu_log = { ACTION = cm_log_cu_destroyed }
+						scope:cm_location = { destroy_building = scope:cm_building }
+					}
+					else = {
+						cm_cu_log = { ACTION = cm_log_cu_closed }
+						scope:cm_country = {
+							add_to_variable_list = { name = cm_cu_toggle target = scope:cm_building }
+						}
+						cm_cu_track_closed = yes
 					}
 				}
-			}
-			else_if = {
-				limit = {
-					scope:cm_country = { exists = var:cm_cu_destroy }
-					scope:cm_location = { cm_cu_location_near_cap = yes }
-				}
-				cm_cu_log = { ACTION = cm_log_cu_destroyed }
-				scope:cm_location = { destroy_building = scope:cm_building }
-			}
-			else = {
-				cm_cu_log = { ACTION = cm_log_cu_closed }
-				scope:cm_country = {
-					add_to_variable_list = { name = cm_cu_toggle target = scope:cm_building }
-				}
-				cm_cu_track_closed = yes
 			}
 		}
 	}
 }
 
 # Reopens the closed buildings of one market's recovered types, best potential profit first.
-# Root is the country, expects scope:cm_ab_market.
+# Walks the tracked locations rather than the market's, that being exactly where a closed
+# building can be. Root is the country, expects scope:cm_ab_market.
 cm_cu_reopen_pass = {
-	ordered_owned_building = {
-		order_by = building_potential_profit
-		max = cm_max_guess_at_number_of_buildings
-		check_range_bounds = no
-		limit = {
-			location = {
-				owner = scope:cm_country
+	if = {
+		limit = { has_variable_list = cm_cu_closed_locs }
+		every_in_list = {
+			variable = cm_cu_closed_locs
+			limit = {
+				owner ?= scope:cm_country
 				market = scope:cm_ab_market
 			}
-			cm_cu_is_tracked_closed = yes
-		}
-		save_scope_as = cm_building
-		building_type = { save_scope_as = cm_building_type }
-		location = { save_scope_as = cm_location }
-		if = {
-			# A protected core-goods producer is not judged on profit, so its group's recovery is
-			# not what decides it. This is also what restores the ones closed before the setting
-			# was turned on.
-			limit = {
-				OR = {
-					cm_cu_core_good_protected = yes
-					scope:cm_country = { cm_cu_group_reopen_room = yes }
+			save_scope_as = cm_location
+			ordered_buildings_in_location = {
+				order_by = building_potential_profit
+				max = cm_max_guess_at_number_of_buildings
+				check_range_bounds = no
+				limit = {
+					owner = scope:cm_country
+					cm_cu_is_tracked_closed = yes
+				}
+				save_scope_as = cm_building
+				building_type = { save_scope_as = cm_building_type }
+				if = {
+					# A protected core-goods producer is not judged on profit, so its group's recovery is
+					# not what decides it. This is also what restores the ones closed before the setting
+					# was turned on.
+					limit = {
+						OR = {
+							cm_cu_core_good_protected = yes
+							scope:cm_country = { cm_cu_group_reopen_room = yes }
+						}
+					}
+					cm_cu_log = { ACTION = cm_log_cu_reopened }
+					scope:cm_country = {
+						cm_cu_bump_reop = yes
+						add_to_variable_list = { name = cm_cu_toggle target = scope:cm_building }
+					}
+					cm_cu_untrack = yes
 				}
 			}
-			cm_cu_log = { ACTION = cm_log_cu_reopened }
-			scope:cm_country = {
-				cm_cu_bump_reop = yes
-				add_to_variable_list = { name = cm_cu_toggle target = scope:cm_building }
-			}
-			cm_cu_untrack = yes
 		}
 	}
 }
@@ -385,9 +412,10 @@ cm_cu_reopen_pass = {
 # building levels. Runs after the reopens, so a recovered type is restored rather than lost.
 # Root is the country, scope:cm_country set.
 cm_cu_delete_closed_pass = {
-	every_owned_location = {
+	every_in_list = {
+		variable = cm_cu_closed_locs
 		limit = {
-			has_variable_list = cm_cu_closed_types
+			owner ?= scope:cm_country
 			cm_cu_location_near_cap = yes
 		}
 		save_scope_as = cm_location
@@ -405,10 +433,15 @@ cm_cu_delete_closed_pass = {
 	}
 }
 
-# Expects scope:cm_location, scope:cm_building_type.
+# Expects scope:cm_location, scope:cm_building_type. The location is pruned from
+# cm_cu_closed_locs in cm_cu_validate_tracking, not in cm_cu_untrack, which runs inside
+# walks over that list.
 cm_cu_track_closed = {
 	scope:cm_location = {
 		add_to_variable_list = { name = cm_cu_closed_types target = scope:cm_building_type }
+	}
+	scope:cm_country = {
+		add_to_variable_list = { name = cm_cu_closed_locs target = scope:cm_location }
 	}
 }
 
@@ -467,17 +500,22 @@ cm_cu_bump_reop = {
 # the action, since a destroyed building reads nothing. $ACTION$ = the action's log key.
 # Root is the building, expects scope:cm_country and scope:cm_location.
 cm_cu_log = {
-	save_temporary_scope_value_as = { name = cm_cu_dbg_profit value = cm_cu_profit_per_level }
-	save_temporary_scope_value_as = { name = cm_cu_dbg_floor value = cm_cu_effective_floor }
-	building_type = { save_scope_as = cmf_log_bt }
-	scope:cm_location = { save_scope_as = cmf_log_loc }
-	scope:cm_country = {
-		cm_dbg_log_bld = { cat = cleanup
-			action = $ACTION$
-			arg1 = cm_log_cu_profit
-			arg2 = cm_log_cu_floor
-			value = scope:cm_cu_dbg_profit
-			value2 = scope:cm_cu_dbg_floor
+	if = {
+		# The two values are the pass's most expensive reads, so the category gate leads
+		# rather than sitting inside cm_dbg_log_bld.
+		limit = { exists = global_var:cm_dbg_cleanup }
+		save_temporary_scope_value_as = { name = cm_cu_dbg_profit value = cm_cu_profit_per_level }
+		save_temporary_scope_value_as = { name = cm_cu_dbg_floor value = cm_cu_effective_floor }
+		building_type = { save_scope_as = cmf_log_bt }
+		scope:cm_location = { save_scope_as = cmf_log_loc }
+		scope:cm_country = {
+			cm_dbg_log_bld = { cat = cleanup
+				action = $ACTION$
+				arg1 = cm_log_cu_profit
+				arg2 = cm_log_cu_floor
+				value = scope:cm_cu_dbg_profit
+				value2 = scope:cm_cu_dbg_floor
+			}
 		}
 	}
 }

@@ -394,3 +394,26 @@ cm_can_grant_specific_town_right_at_location = {
 		always = yes
 	}
 }
+
+# The same mirror over the royal specialization rights alone, the set the Auto-Grant
+# Urban Rights draw picks from. Most of them carry no `allow` block, so answering
+# through the chain above means walking every branch of it to reach the trigger_else.
+# Expects scope:cm_town_right (the right) and scope:target (the candidate location).
+cm_can_grant_specialization_right_at_location = {
+	trigger_if = {
+		limit = { scope:cm_town_right = town_rights_type:royal_naval_rights }
+		custom_tooltip = {
+			text = not_forcefully_revoked_last_10_years_tt
+			scope:target = {
+				NOT = { has_variable = recently_forced_to_revoke_town_rights_variable }
+			}
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:cm_town_right = town_rights_type:royal_textile_rights }
+		scope:target = { NOT = { has_town_rights = town_rights_type:flemish_cloth_industries_right } }
+	}
+	trigger_else = {
+		always = yes
+	}
+}

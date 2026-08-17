@@ -1036,6 +1036,13 @@ def tied_trigger(x, y, aliases):
     return f"{name} = 0"
 
 
+def local_tied_trigger(x, y, aliases):
+    """Trigger fragment testing score(x) == score(y) against the per-location staged
+    scores, for the load pass, which holds all nine in locals."""
+    return (f"local_var:cm_trmm_l_r_{aliases[x]} "
+            f"= local_var:cm_trmm_l_r_{aliases[y]}")
+
+
 def greater_trigger(x, y, aliases):
     """Trigger fragment testing score(x) > score(y)."""
     name, positive = _diff_var(x, y, aliases)
@@ -1126,7 +1133,7 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
         "# so a tradition like Damascus Bladesmithing scores as the extra producers it\n"
         "# is worth. A town right granted here is subtracted, or it would raise its own\n"
         "# fit. Floored because a penalty modifier reads negative, and a negative right\n"
-        "# score breaks the cm_trmm_enc_* encoding.")
+        "# score breaks the best-right encoding the load pass builds.")
     for good in boosted_goods:
         lines.extend(emit_location_bonus(good, boosts))
     lines.append("")
@@ -1220,17 +1227,6 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
     lines.append("\tmin = 0")
     lines.append("\tmax = 1")
     lines.append("}")
-    lines.append("")
-
-    n = len(ROYAL_RIGHTS)
-    for pos, right in enumerate(ROYAL_RIGHTS):
-        lines.append(f"cm_trmm_enc_{aliases[right]} = {{")
-        lines.append(f"\tvalue = cm_trmm_right_{aliases[right]}")
-        lines.append("\tmultiply = 1000")
-        lines.append("\tround = yes")
-        lines.append("\tmultiply = 10")
-        lines.append(f"\tadd = {n - pos}")
-        lines.append("}")
     lines.append("")
 
     lines.append(
@@ -1572,12 +1568,28 @@ def emit_effects(options, aliases, boosted_goods, relevant, expand_bases,
         "\t\t\t# and which right holds it. Higher index wins score ties, so index order is\n"
         "\t\t\t# the reverse of the priority order.")
     lines.append("\t\t\tevery_location_in_province = {")
+    lines.append(
+        "\t\t\t\t# Each right's score staged once: the encoding below, the tie count and\n"
+        "\t\t\t\t# the runner-up chain all read these rather than the score chain itself.")
+    n = len(ROYAL_RIGHTS)
+    for right in ROYAL_RIGHTS:
+        lines.append("\t\t\t\tset_local_variable = {")
+        lines.append(f"\t\t\t\t\tname = cm_trmm_l_r_{aliases[right]}")
+        lines.append(f"\t\t\t\t\tvalue = cm_trmm_right_{aliases[right]}")
+        lines.append("\t\t\t\t}")
     lines.append("\t\t\t\tset_local_variable = {")
     lines.append("\t\t\t\t\tname = cm_trmm_enc")
     lines.append("\t\t\t\t\tvalue = {")
     lines.append("\t\t\t\t\t\tvalue = 0")
-    for right in ROYAL_RIGHTS:
-        lines.append(f"\t\t\t\t\t\tmin = cm_trmm_enc_{aliases[right]}")
+    for pos, right in enumerate(ROYAL_RIGHTS):
+        lines.append("\t\t\t\t\t\tmin = {")
+        lines.append(
+            f"\t\t\t\t\t\t\tvalue = local_var:cm_trmm_l_r_{aliases[right]}")
+        lines.append("\t\t\t\t\t\t\tmultiply = 1000")
+        lines.append("\t\t\t\t\t\t\tround = yes")
+        lines.append("\t\t\t\t\t\t\tmultiply = 10")
+        lines.append(f"\t\t\t\t\t\t\tadd = {n - pos}")
+        lines.append("\t\t\t\t\t\t}")
     lines.append("\t\t\t\t\t}")
     lines.append("\t\t\t\t}")
     lines.append("\t\t\t\tset_variable = {")
@@ -1607,7 +1619,6 @@ def emit_effects(options, aliases, boosted_goods, relevant, expand_bases,
     lines.append("\t\t\t\tif = {")
     lines.append("\t\t\t\t\t# enc below 10 = best score rounds to 0.")
     lines.append("\t\t\t\t\tlimit = { local_var:cm_trmm_enc >= 10 }")
-    n = len(ROYAL_RIGHTS)
     for pos, right in enumerate(ROYAL_RIGHTS[:-1]):
         partners = ROYAL_RIGHTS[pos + 1:]
         kw = "if" if pos == 0 else "else_if"
@@ -1616,10 +1627,21 @@ def emit_effects(options, aliases, boosted_goods, relevant, expand_bases,
             f"\t\t\t\t\t\tlimit = {{ var:cm_trmm_best_idx = {n - pos} }}")
         inner = "if"
         if len(partners) > 1:
+            lines.append("\t\t\t\t\t\tset_local_variable = {")
+            lines.append("\t\t\t\t\t\t\tname = cm_trmm_l_ties")
+            lines.append("\t\t\t\t\t\t\tvalue = {")
+            lines.append("\t\t\t\t\t\t\t\tvalue = 0")
+            for partner in partners:
+                lines.append("\t\t\t\t\t\t\t\tif = {")
+                lines.append(
+                    "\t\t\t\t\t\t\t\t\tlimit = { "
+                    f"{local_tied_trigger(right, partner, aliases)} }}")
+                lines.append("\t\t\t\t\t\t\t\t\tadd = 1")
+                lines.append("\t\t\t\t\t\t\t\t}")
+            lines.append("\t\t\t\t\t\t\t}")
+            lines.append("\t\t\t\t\t\t}")
             lines.append("\t\t\t\t\t\tif = {")
-            lines.append(
-                "\t\t\t\t\t\t\tlimit = { "
-                f"cm_trmm_tie_count_{aliases[right]} >= 2 }}")
+            lines.append("\t\t\t\t\t\t\tlimit = { local_var:cm_trmm_l_ties >= 2 }")
             lines.append("\t\t\t\t\t\t\tset_variable = {")
             lines.append("\t\t\t\t\t\t\t\tname = cm_trmm_tie_idx")
             lines.append("\t\t\t\t\t\t\t\tvalue = 10")
@@ -1630,7 +1652,7 @@ def emit_effects(options, aliases, boosted_goods, relevant, expand_bases,
             lines.append(f"\t\t\t\t\t\t{inner} = {{")
             lines.append(
                 "\t\t\t\t\t\t\tlimit = { "
-                f"{tied_trigger(right, partner, aliases)} }}")
+                f"{local_tied_trigger(right, partner, aliases)} }}")
             lines.append("\t\t\t\t\t\t\tset_variable = {")
             lines.append("\t\t\t\t\t\t\t\tname = cm_trmm_tie_idx")
             lines.append(
@@ -1646,16 +1668,11 @@ def emit_effects(options, aliases, boosted_goods, relevant, expand_bases,
     lines.append("\telse = {")
     lines.append("\t\tevery_province_in_province_definition = {")
     lines.append("\t\t\tevery_location_in_province = {")
-    lines.append("\t\t\t\tlimit = { has_variable = cm_trmm_best_idx }")
-    lines.append("\t\t\t\tremove_variable = cm_trmm_best_idx")
-    lines.append("\t\t\t}")
-    lines.append("\t\t\tevery_location_in_province = {")
-    lines.append("\t\t\t\tlimit = { has_variable = cm_trmm_best_mil }")
-    lines.append("\t\t\t\tremove_variable = cm_trmm_best_mil")
-    lines.append("\t\t\t}")
-    lines.append("\t\t\tevery_location_in_province = {")
-    lines.append("\t\t\t\tlimit = { has_variable = cm_trmm_tie_idx }")
-    lines.append("\t\t\t\tremove_variable = cm_trmm_tie_idx")
+    for var in ("cm_trmm_best_idx", "cm_trmm_best_mil", "cm_trmm_tie_idx"):
+        lines.append("\t\t\t\tif = {")
+        lines.append(f"\t\t\t\t\tlimit = {{ has_variable = {var} }}")
+        lines.append(f"\t\t\t\t\tremove_variable = {var}")
+        lines.append("\t\t\t\t}")
     lines.append("\t\t\t}")
     lines.append("\t\t}")
     lines.append("\t}")
@@ -2158,6 +2175,11 @@ MODE_TAIL_BLOCKS = """
 
 	refresh_colors_on_selection_change = no"""
 
+# No tick refresh: these modes repaint on open and on the cm_trmm_refresh_armed swap
+# through the hidden twin, which needs no counter. The empty set is vanilla's own form,
+# in_game/gfx/map/map_modes/map_modes.txt:7180.
+REFRESH_COUNTERS = "\tcolor_refresh_counters = { }"
+
 
 # Emits a hidden-category mode: the search primaries and every _refresh twin.
 def _hidden_mode_lines(name, body):
@@ -2167,7 +2189,7 @@ def _hidden_mode_lines(name, body):
     lines.append("\tcategory = hidden")
     lines.append("\tallow_allocate_hotkey = no")
     lines.append(MODE_TAIL_BLOCKS)
-    lines.append("\tcolor_refresh_counters = { Day }")
+    lines.append(REFRESH_COUNTERS)
     lines.append("}")
     return lines
 
@@ -2209,7 +2231,7 @@ def emit_map_mode(rights, aliases, right_colors):
     body.append("\t\t\tlimit = {")
     body.append("\t\t\t\tis_land = yes")
     body.append("\t\t\t\thas_variable = cm_trmm_best_idx")
-    body.append("\t\t\t\tcm_uright_assigned_count >= 1")
+    body.append("\t\t\t\tcm_atr_ur_has_no_specialization = no")
     body.append("\t\t\t}")
     body.append("\t\t\tlerp = {")
     body.append(f"\t\t\t\tmin_color = {GRANTED_MISS_NONE_STRIPE}")
@@ -2222,7 +2244,7 @@ def emit_map_mode(rights, aliases, right_colors):
     body.append("\t\t\tlimit = {")
     body.append("\t\t\t\tis_land = yes")
     body.append("\t\t\t\tNOT = { has_variable = cm_trmm_best_idx }")
-    body.append("\t\t\t\tcm_uright_assigned_count >= 1")
+    body.append("\t\t\t\tcm_atr_ur_has_no_specialization = no")
     body.append("\t\t\t}")
     body.append(f"\t\t\tvalue = {GRANTED_MISS_NONE_STRIPE}")
     body.append("\t\t}")
@@ -2232,11 +2254,11 @@ def emit_map_mode(rights, aliases, right_colors):
     body.append("\t\t\tlimit = {")
     body.append("\t\t\t\tis_land = yes")
     body.append("\t\t\t\thas_max_town_rights = yes")
-    body.append("\t\t\t\tcm_uright_assigned_count = 0")
     body.append("\t\t\t\tOR = {")
     body.append("\t\t\t\t\tlocation_rank = location_rank:city")
     body.append("\t\t\t\t\tlocation_rank = location_rank:megalopolis")
     body.append("\t\t\t\t}")
+    body.append("\t\t\t\tcm_atr_ur_has_no_specialization = yes")
     body.append("\t\t\t}")
     body.append(f"\t\t\tvalue = {FULL_NO_SPEC_STRIPE}")
     body.append("\t\t}")
@@ -2304,9 +2326,7 @@ def emit_map_mode(rights, aliases, right_colors):
     lines.append("\tcategory = economy")
     lines.append("\tindex = 1")
     lines.append(MODE_TAIL_BLOCKS)
-    lines.append("\t# The Day refresh counter (vanilla in_game/gfx/map/map_modes/")
-    lines.append("\t# map_modes.txt:1099) keeps the granted stripes current after grants.")
-    lines.append("\tcolor_refresh_counters = { Day }")
+    lines.append(REFRESH_COUNTERS)
     lines.append("}")
     lines.append("")
     lines.append("# Hidden duplicate for the post-grant stripe refresh: setting the same")
@@ -2341,12 +2361,8 @@ def emit_search_map_modes(rights, aliases, right_colors):
         body.append("\t\t\tlimit = { NOT = { has_variable = cm_trmm_best_idx } }")
         body.append(f"\t\t\tvalue = {NO_MATCH_COLOR}")
         body.append("\t\t}")
-        # Kept after the has_variable branch so the score never reads unset
-        # province variables.
-        body.append("\t\telse_if = {")
-        body.append(f"\t\t\tlimit = {{ cm_trmm_right_{alias} <= 0 }}")
-        body.append(f"\t\t\tvalue = {NO_MATCH_COLOR}")
-        body.append("\t\t}")
+        # A zero score needs no arm of its own: the lerp below starts at
+        # NO_MATCH_COLOR, and cm_trmm_right_* cannot go negative.
         body.append("\t\telse = {")
         body.append("\t\t\tlerp = {")
         body.append(f"\t\t\t\tmin_color = {NO_MATCH_COLOR}")
@@ -2405,10 +2421,11 @@ def emit_search_map_modes(rights, aliases, right_colors):
         body.append("\t\t\tlimit = {")
         body.append("\t\t\t\tis_land = yes")
         # Gate able-to-grant on the searched right fitting here, so open slots
-        # with no coverage for it stay unpainted.
+        # with no coverage for it stay unpainted. The slot test is one engine read
+        # that rejects every rural location, so it leads the score.
         body.append("\t\t\t\thas_variable = cm_trmm_best_idx")
-        body.append(f"\t\t\t\tcm_trmm_right_{alias} > 0")
         body.append("\t\t\t\thas_max_town_rights = no")
+        body.append(f"\t\t\t\tcm_trmm_right_{alias} > 0")
         body.append("\t\t\t}")
         body.append(f"\t\t\tvalue = {OPEN_SLOT_STRIPE}")
         body.append("\t\t}")

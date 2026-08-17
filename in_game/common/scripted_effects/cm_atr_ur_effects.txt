@@ -38,93 +38,94 @@ cm_atr_ur_grant = {
 	}
 }
 
+# Stages $RIGHT$'s fit score into local_var:cm_atr_ur_v_$ALIAS$, leaving 0 where the right
+# cannot be granted here. Root is the location, expects scope:cm_country.
+cm_atr_ur_stage_right = {
+	set_local_variable = { name = cm_atr_ur_v_$ALIAS$ value = 0 }
+	if = {
+		limit = { cm_trmm_right_fits_location = { RIGHT = $RIGHT$ ALLOW = cm_can_grant_specialization_right_at_location } }
+		set_local_variable = { name = cm_atr_ur_v_$ALIAS$ value = cm_trmm_rightv_$ALIAS$ }
+	}
+}
+
 # Draws one right from those scoring within the player's window of the best right still
 # grantable here, weighted by fit. Root is the location, expects scope:cm_country.
 # Rights: in_game/common/town_rights/01_discovery.txt
 cm_atr_ur_draw_specialization = {
+	cm_atr_ur_stage_right = { RIGHT = royal_tooling_rights ALIAS = tooling }
+	cm_atr_ur_stage_right = { RIGHT = royal_jewelry_rights ALIAS = jewelry }
+	cm_atr_ur_stage_right = { RIGHT = royal_naval_rights ALIAS = naval }
+	cm_atr_ur_stage_right = { RIGHT = royal_textile_rights ALIAS = textile }
+	cm_atr_ur_stage_right = { RIGHT = royal_weaponry_rights ALIAS = weaponry }
+	cm_atr_ur_stage_right = { RIGHT = royal_book_rights ALIAS = book }
+	cm_atr_ur_stage_right = { RIGHT = royal_artisan_rights ALIAS = artisan }
+	cm_atr_ur_stage_right = { RIGHT = royal_brewing_rights ALIAS = brewing }
+	cm_atr_ur_stage_right = { RIGHT = royal_masonry_rights ALIAS = masonry }
+	set_local_variable = { name = cm_atr_ur_best value = local_var:cm_atr_ur_v_tooling }
+	change_local_variable = { name = cm_atr_ur_best max = local_var:cm_atr_ur_v_jewelry }
+	change_local_variable = { name = cm_atr_ur_best max = local_var:cm_atr_ur_v_naval }
+	change_local_variable = { name = cm_atr_ur_best max = local_var:cm_atr_ur_v_textile }
+	change_local_variable = { name = cm_atr_ur_best max = local_var:cm_atr_ur_v_weaponry }
+	change_local_variable = { name = cm_atr_ur_best max = local_var:cm_atr_ur_v_book }
+	change_local_variable = { name = cm_atr_ur_best max = local_var:cm_atr_ur_v_artisan }
+	change_local_variable = { name = cm_atr_ur_best max = local_var:cm_atr_ur_v_brewing }
+	change_local_variable = { name = cm_atr_ur_best max = local_var:cm_atr_ur_v_masonry }
 	if = {
-		limit = { cm_atr_ur_best_available > 0 }
+		limit = { local_var:cm_atr_ur_best > 0 }
 		# Floor at 0.001: fit scores carry three decimals (cm_trmm_best_mil holds them in
 		# thousandths), so a window of 0 still leaves out a right with no fit at all.
 		set_local_variable = {
 			name = cm_atr_ur_thresh
 			value = {
-				value = cm_atr_ur_best_available
+				value = local_var:cm_atr_ur_best
 				multiply = local_var:cm_atr_ur_win
 				min = 0.001
 			}
 		}
 		random_list = {
 			100 = {
-				trigger = {
-					cm_trmm_can_grant_right = { RIGHT = royal_tooling_rights }
-					cm_trmm_rightv_tooling >= local_var:cm_atr_ur_thresh
-				}
-				modifier = { factor = { value = cm_trmm_rightv_tooling } }
+				trigger = { local_var:cm_atr_ur_v_tooling >= local_var:cm_atr_ur_thresh }
+				modifier = { factor = { value = local_var:cm_atr_ur_v_tooling } }
 				cm_atr_ur_grant = { RIGHT = royal_tooling_rights ALIAS = tooling }
 			}
 			100 = {
-				trigger = {
-					cm_trmm_can_grant_right = { RIGHT = royal_jewelry_rights }
-					cm_trmm_rightv_jewelry >= local_var:cm_atr_ur_thresh
-				}
-				modifier = { factor = { value = cm_trmm_rightv_jewelry } }
+				trigger = { local_var:cm_atr_ur_v_jewelry >= local_var:cm_atr_ur_thresh }
+				modifier = { factor = { value = local_var:cm_atr_ur_v_jewelry } }
 				cm_atr_ur_grant = { RIGHT = royal_jewelry_rights ALIAS = jewelry }
 			}
 			100 = {
-				trigger = {
-					cm_trmm_can_grant_right = { RIGHT = royal_naval_rights }
-					cm_trmm_rightv_naval >= local_var:cm_atr_ur_thresh
-				}
-				modifier = { factor = { value = cm_trmm_rightv_naval } }
+				trigger = { local_var:cm_atr_ur_v_naval >= local_var:cm_atr_ur_thresh }
+				modifier = { factor = { value = local_var:cm_atr_ur_v_naval } }
 				cm_atr_ur_grant = { RIGHT = royal_naval_rights ALIAS = naval }
 			}
 			100 = {
-				trigger = {
-					cm_trmm_can_grant_right = { RIGHT = royal_textile_rights }
-					cm_trmm_rightv_textile >= local_var:cm_atr_ur_thresh
-				}
-				modifier = { factor = { value = cm_trmm_rightv_textile } }
+				trigger = { local_var:cm_atr_ur_v_textile >= local_var:cm_atr_ur_thresh }
+				modifier = { factor = { value = local_var:cm_atr_ur_v_textile } }
 				cm_atr_ur_grant = { RIGHT = royal_textile_rights ALIAS = textile }
 			}
 			100 = {
-				trigger = {
-					cm_trmm_can_grant_right = { RIGHT = royal_weaponry_rights }
-					cm_trmm_rightv_weaponry >= local_var:cm_atr_ur_thresh
-				}
-				modifier = { factor = { value = cm_trmm_rightv_weaponry } }
+				trigger = { local_var:cm_atr_ur_v_weaponry >= local_var:cm_atr_ur_thresh }
+				modifier = { factor = { value = local_var:cm_atr_ur_v_weaponry } }
 				cm_atr_ur_grant = { RIGHT = royal_weaponry_rights ALIAS = weaponry }
 			}
 			100 = {
-				trigger = {
-					cm_trmm_can_grant_right = { RIGHT = royal_book_rights }
-					cm_trmm_rightv_book >= local_var:cm_atr_ur_thresh
-				}
-				modifier = { factor = { value = cm_trmm_rightv_book } }
+				trigger = { local_var:cm_atr_ur_v_book >= local_var:cm_atr_ur_thresh }
+				modifier = { factor = { value = local_var:cm_atr_ur_v_book } }
 				cm_atr_ur_grant = { RIGHT = royal_book_rights ALIAS = book }
 			}
 			100 = {
-				trigger = {
-					cm_trmm_can_grant_right = { RIGHT = royal_artisan_rights }
-					cm_trmm_rightv_artisan >= local_var:cm_atr_ur_thresh
-				}
-				modifier = { factor = { value = cm_trmm_rightv_artisan } }
+				trigger = { local_var:cm_atr_ur_v_artisan >= local_var:cm_atr_ur_thresh }
+				modifier = { factor = { value = local_var:cm_atr_ur_v_artisan } }
 				cm_atr_ur_grant = { RIGHT = royal_artisan_rights ALIAS = artisan }
 			}
 			100 = {
-				trigger = {
-					cm_trmm_can_grant_right = { RIGHT = royal_brewing_rights }
-					cm_trmm_rightv_brewing >= local_var:cm_atr_ur_thresh
-				}
-				modifier = { factor = { value = cm_trmm_rightv_brewing } }
+				trigger = { local_var:cm_atr_ur_v_brewing >= local_var:cm_atr_ur_thresh }
+				modifier = { factor = { value = local_var:cm_atr_ur_v_brewing } }
 				cm_atr_ur_grant = { RIGHT = royal_brewing_rights ALIAS = brewing }
 			}
 			100 = {
-				trigger = {
-					cm_trmm_can_grant_right = { RIGHT = royal_masonry_rights }
-					cm_trmm_rightv_masonry >= local_var:cm_atr_ur_thresh
-				}
-				modifier = { factor = { value = cm_trmm_rightv_masonry } }
+				trigger = { local_var:cm_atr_ur_v_masonry >= local_var:cm_atr_ur_thresh }
+				modifier = { factor = { value = local_var:cm_atr_ur_v_masonry } }
 				cm_atr_ur_grant = { RIGHT = royal_masonry_rights ALIAS = masonry }
 			}
 		}

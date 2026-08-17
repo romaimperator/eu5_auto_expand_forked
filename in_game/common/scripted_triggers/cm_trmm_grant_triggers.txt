@@ -1,19 +1,31 @@
-﻿# Whether $RIGHT$ may be granted at the root location by scope:cm_country.
+﻿# The terms of a grant that vary by right. The caller must already have established that
+# scope:cm_country owns the root location, that it is unconquered and urban with a slot
+# free, and that the country may grant rights at all.
+# $ALLOW$ is the vanilla allow mirror to read, so a caller asking only about the royal
+# specialization rights passes the shorter chain.
 # Root is the location.
-cm_trmm_can_grant_right = {
+cm_trmm_right_fits_location = {
 	town_rights_type:$RIGHT$ = { save_temporary_scope_as = cm_town_right }
 	save_temporary_scope_as = target
+	NOT = { has_town_rights = town_rights_type:$RIGHT$ }
+	scope:cm_country = {
+		cm_auto_town_rights_potential_passes = yes
+		$ALLOW$ = yes
+	}
+}
+
+# Whether $RIGHT$ may be granted at the root location by scope:cm_country.
+# Root is the location.
+cm_trmm_can_grant_right = {
 	exists = owner
 	owner = scope:cm_country
 	NOT = { integration_level = conquered }
 	# Urban locations only, mirroring the vanilla grant button's Not(GetRank.IsDefault) gate: in_game/gui/location_window.gui:892
 	NOT = { location_rank = location_rank:rural_settlement }
 	has_max_town_rights = no
-	NOT = { has_town_rights = town_rights_type:$RIGHT$ }
+	cm_trmm_right_fits_location = { RIGHT = $RIGHT$ ALLOW = cm_can_grant_specific_town_right_at_location }
 	scope:cm_country = {
 		modifier:can_grant_town_rights = yes
-		cm_auto_town_rights_potential_passes = yes
-		cm_can_grant_specific_town_right_at_location = yes
 		# Cost only; the auto-grant gov-power floor does not apply to manual grants.
 		OR = {
 			cm_town_rights_grants_are_free = yes
