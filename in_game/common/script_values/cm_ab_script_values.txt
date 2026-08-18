@@ -582,12 +582,36 @@ cm_ab_rd_unit_distance_value = {
 	min = 0.01
 }
 
+# How much of each construction good one road order demands. Mirrors vanilla
+# build_gravel_road_demand: in_game/common/goods_demand/special_construction_demands.txt:28.
+# Every road tier demands the same three; railroad adds steel, which is not modelled.
+# Read by the cost model below and by the market shortage gate and its commit.
+# Taken as a flat per-order draw. Vanilla's own road_types/readme.txt qualifies
+# build_time_per_unit_distance and price_per_unit_distance as per unit distance and
+# construction_demand as plain "What goods are needed to build this road type", which is the
+# evidence for that reading; whether it scales with the span is unverified.
+cm_ab_rd_demand_lumber = {
+	value = 0.5
+}
+
+cm_ab_rd_demand_masonry = {
+	value = 1
+}
+
+cm_ab_rd_demand_sand = {
+	value = 0.25
+}
+
+cm_ab_rd_demand_total = {
+	value = cm_ab_rd_demand_lumber
+	add = cm_ab_rd_demand_masonry
+	add = cm_ab_rd_demand_sand
+}
+
 # What this market's construction-goods prices do to a road's cost, as a fraction: each good's
 # deviation from its default price weighted by how much of it a road demands, summed. Verified
 # against the game's own Build Gravel Road price tooltip (2026-07-27, Burgos market: lumber -8.33%,
 # masonry -13.79%, sand -4.71%, total -26.83%), which sums the three the same way.
-# Weights mirror vanilla build_gravel_road_demand: in_game/common/goods_demand/special_construction_demands.txt:28
-# Every road tier demands the same three; railroad adds steel, which is not modelled.
 # Root is the location.
 cm_ab_rd_goods_adjust_value = {
 	value = 0
@@ -595,19 +619,19 @@ cm_ab_rd_goods_adjust_value = {
 		value = "market.market_price(goods:lumber)"
 		divide = "default_price(goods:lumber)"
 		subtract = 1
-		multiply = 0.5
+		multiply = cm_ab_rd_demand_lumber
 	}
 	add = {
 		value = "market.market_price(goods:masonry)"
 		divide = "default_price(goods:masonry)"
 		subtract = 1
-		multiply = 1
+		multiply = cm_ab_rd_demand_masonry
 	}
 	add = {
 		value = "market.market_price(goods:sand)"
 		divide = "default_price(goods:sand)"
 		subtract = 1
-		multiply = 0.25
+		multiply = cm_ab_rd_demand_sand
 	}
 }
 
@@ -617,9 +641,7 @@ cm_ab_rd_goods_adjust_value = {
 # cost, where every weight counts in full. Root is the location.
 cm_ab_rd_goods_price_index_value = {
 	value = cm_ab_rd_goods_adjust_value
-	# 0.5 lumber + 1 masonry + 0.25 sand, vanilla build_gravel_road_demand:
-	# in_game/common/goods_demand/special_construction_demands.txt:28
-	divide = 1.75
+	divide = cm_ab_rd_demand_total
 }
 
 # Gold per unit distance for the best road type this country has unlocked, carrying that type's own

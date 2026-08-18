@@ -37,15 +37,18 @@ cm_market_has_construction_goods_for_building = {
 	}
 }
 
-# Root = the corridor's from location. Light snapshot for road orders, which carry no building type
-# to read a demand map with. Every road tier demands all three of these; railroad also demands steel,
-# which the road cost model does not carry either.
+# Root = the corridor's from location. Every road tier demands all three of these; railroad also
+# demands steel, which the road cost model does not carry either.
 # Mirrors vanilla build_gravel_road_demand: in_game/common/goods_demand/special_construction_demands.txt:28
+# Saved unconditionally rather than only when absent, as the building gate does: a temporary scope
+# lives for the whole execution, so a guarded save would judge every corridor in the pass against
+# the first one's market.
 cm_market_has_construction_goods_for_road = {
-	market = {
-		cm_market_lumber_snapshot_overage < 0
-		cm_market_masonry_snapshot_overage < 0
-		cm_market_sand_snapshot_overage < 0
+	market = { save_temporary_scope_as = cm_market }
+	scope:cm_market = {
+		cm_market_lumber_road_overage < 0
+		cm_market_masonry_road_overage < 0
+		cm_market_sand_road_overage < 0
 	}
 }
 

@@ -57,6 +57,28 @@ cm_commit_market_demand = {
 	}
 }
 
+# Root = the corridor's from location. The road twin of the above: a road carries no building type,
+# so its draw is the flat per-tier constant. It writes the same maps the builds do, so a corridor
+# and a building level compete for one market's headroom within a cycle.
+cm_commit_road_market_demand = {
+	market = { save_temporary_scope_as = cm_market }
+	set_local_variable = { name = cm_new_committed value = cm_ab_rd_demand_lumber }
+	if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_lumber is_key_in_global_variable_map = { name = cm_q_market_committed_lumber target = scope:cm_market } } }
+		change_local_variable = { name = cm_new_committed add = "global_variable_map(cm_q_market_committed_lumber|scope:cm_market)" }
+	}
+	add_to_global_variable_map = { name = cm_q_market_committed_lumber key = scope:cm_market value = local_var:cm_new_committed }
+	set_local_variable = { name = cm_new_committed value = cm_ab_rd_demand_masonry }
+	if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_masonry is_key_in_global_variable_map = { name = cm_q_market_committed_masonry target = scope:cm_market } } }
+		change_local_variable = { name = cm_new_committed add = "global_variable_map(cm_q_market_committed_masonry|scope:cm_market)" }
+	}
+	add_to_global_variable_map = { name = cm_q_market_committed_masonry key = scope:cm_market value = local_var:cm_new_committed }
+	set_local_variable = { name = cm_new_committed value = cm_ab_rd_demand_sand }
+	if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_sand is_key_in_global_variable_map = { name = cm_q_market_committed_sand target = scope:cm_market } } }
+		change_local_variable = { name = cm_new_committed add = "global_variable_map(cm_q_market_committed_sand|scope:cm_market)" }
+	}
+	add_to_global_variable_map = { name = cm_q_market_committed_sand key = scope:cm_market value = local_var:cm_new_committed }
+}
+
 # Only the first country to open a cycle in a period clears; the rest accumulate onto it,
 # because two countries building in the same market do compete for its goods.
 cm_q_reset_market_committed_for_cycle = {

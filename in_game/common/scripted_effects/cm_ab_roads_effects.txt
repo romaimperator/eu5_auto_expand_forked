@@ -548,7 +548,6 @@ cm_ab_rd_issue_pass = {
 			NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_ab_rd_building target = prev } } }
 			modifier:road_building_blocked = no
 			cm_ab_rd_meets_min_discount = yes
-			cm_market_has_construction_goods_for_road = yes
 			var:cm_ab_rd_par_$TGT$ = {
 				owner ?= scope:cm_country
 				modifier:road_building_blocked = no
@@ -562,7 +561,14 @@ cm_ab_rd_issue_pass = {
 # Root is the location, scope:cm_country set. Reads and sets the category's cost-block signal.
 cm_ab_rd_try_build = {
 	if = {
-		limit = { local_var:cm_ab_cost_blocked = 0 }
+		limit = {
+			local_var:cm_ab_cost_blocked = 0
+			# Here rather than in the issue pass limit, which an ordered_ iterator evaluates once
+			# for the whole candidate set: the committed totals move with every order this pass
+			# places. This if carries no else, so a shortage stays a skip and never reaches
+			# cm_ab_stop_on_cost, which would starve targets 2 and 3 over something gold cannot fix.
+			cm_market_has_construction_goods_for_road = yes
+		}
 		save_temporary_scope_as = cm_ab_rd_from
 		var:cm_ab_rd_par_$TGT$ = { save_temporary_scope_as = cm_ab_rd_to }
 		save_temporary_scope_value_as = { name = cm_cost value = cm_ab_rd_cost_value }
@@ -580,6 +586,7 @@ cm_ab_rd_try_build = {
 				# twice and halve the budget; that list is for the builds the queue window fires later.
 				add_to_variable_list = { name = cm_ab_rd_building target = scope:cm_ab_rd_from }
 			}
+			cm_commit_road_market_demand = yes
 			save_temporary_scope_as = cmf_log_loc
 			scope:cm_country = {
 				cm_dbg_log_loc = {

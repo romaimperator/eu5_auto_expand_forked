@@ -131,8 +131,39 @@ cm_market_masonry_snapshot_overage = {
   }
 }
 
-cm_market_sand_snapshot_overage = {
+# Market scope. The build shape for a road order, which has no building type to key a demand map
+# with: the corridor's own draw is the flat per-tier constant instead. Expects scope:cm_market.
+# >= 0 means the good would be short in this market once this corridor is ordered.
+cm_market_lumber_road_overage = {
+  value = "goods_demand_in_market(goods:lumber)"
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_lumber is_key_in_global_variable_map = { name = cm_q_market_committed_lumber target = scope:cm_market } } }
+    add = "global_variable_map(cm_q_market_committed_lumber|scope:cm_market)"
+  }
+  add = cm_ab_rd_demand_lumber
+  subtract = {
+    value = "goods_supply_in_market(goods:lumber)"
+    multiply = cm_get_market_shortage_factor
+  }
+}
+
+cm_market_masonry_road_overage = {
+  value = "goods_demand_in_market(goods:masonry)"
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_masonry is_key_in_global_variable_map = { name = cm_q_market_committed_masonry target = scope:cm_market } } }
+    add = "global_variable_map(cm_q_market_committed_masonry|scope:cm_market)"
+  }
+  add = cm_ab_rd_demand_masonry
+  subtract = {
+    value = "goods_supply_in_market(goods:masonry)"
+    multiply = cm_get_market_shortage_factor
+  }
+}
+
+cm_market_sand_road_overage = {
   value = "goods_demand_in_market(goods:sand)"
+  if = { limit = { AND = { has_global_variable_map = cm_q_market_committed_sand is_key_in_global_variable_map = { name = cm_q_market_committed_sand target = scope:cm_market } } }
+    add = "global_variable_map(cm_q_market_committed_sand|scope:cm_market)"
+  }
+  add = cm_ab_rd_demand_sand
   subtract = {
     value = "goods_supply_in_market(goods:sand)"
     multiply = cm_get_market_shortage_factor
