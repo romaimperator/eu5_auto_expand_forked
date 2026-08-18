@@ -105,3 +105,14 @@ cm_ln_open_river_advancing = {
 		NOT = { var:cm_ln_open_idx = global_var:cm_pf_river_idx }
 	}
 }
+
+# Root is the player's own country. In multiplayer the lucky-nation window's drivers gate on global
+# counters, so without this every client fires the same sweep and every machine runs all of them.
+# is_host reads false while observing, where the root is the AI country being watched, which is what
+# the singleplayer arm covers.
+cm_ln_client_drives = {
+	OR = {
+		is_multiplayer_session = no
+		is_host = yes
+	}
+}
