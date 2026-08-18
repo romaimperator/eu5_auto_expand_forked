@@ -64,7 +64,7 @@ cm_location_attacker_penalty = {
 # Mirrors vanilla Food Productivity: local_monthly_food_modifier holds general bonuses,
 # local_<good>_output_modifier holds rgo-specific ones. Hardcoded per-level rates below come from
 # in_game/common/production_methods/village_production_methods.txt and building max_building_level.
-# Subtracting dev to get base food potential.
+# Subtracting dev and normalizing rank to rural to get base food potential.
 # Windmill/irrigation: subtract effective contribution, add assumed-max.
 # farming_village has no food modifier; raw_material_output and livestock handled in
 # cm_location_food_potential_live.
@@ -88,6 +88,17 @@ cm_location_food_potential_food_multiplier = {
 	subtract = {
 		value = development
 		multiply = 0.01  # vanilla 1%/dev
+	}
+	# Rank normalized to rural so ranks compare on terrain alone.
+	# in_game/common/location_ranks/00_default.txt: rural_settlement 0.1 (:187),
+	# megalopolis -0.67 (:26); town and city grant none.
+	if = {
+		limit = { location_rank = location_rank:megalopolis }
+		add = 0.67
+	}
+	if = {
+		limit = { NOT = { location_rank = location_rank:rural_settlement } }
+		add = 0.1
 	}
 	subtract = {
 		value = "location_building_level(building_type:windmill)"
