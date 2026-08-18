@@ -1,11 +1,16 @@
 ﻿# Mapmode helper triggers.
 
 # Root is location. True if auto-food currently processes this location for its owner:
-# player-enabled or picked by Auto-Build.
+# player-enabled or picked by Auto-Build. The player branch takes the same rank test the system
+# branch carries in cm_ab_location_is_system_food_active, the toggle's own button being hidden
+# above rural rank.
 cm_location_is_auto_food_active = {
 	exists = owner
 	OR = {
-		exists = var:cm_auto_food_location_enabled
+		AND = {
+			exists = var:cm_auto_food_location_enabled
+			location_rank = location_rank:rural_settlement
+		}
 		cm_ab_location_is_system_food_active = yes
 	}
 }

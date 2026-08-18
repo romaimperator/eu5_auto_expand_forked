@@ -1,4 +1,10 @@
-﻿# Root is the location. Core RGO expansion prerequisites shared by the GUI-visibility trigger
+﻿# The live market price a location's RGO good has to fetch before the location's laborers are
+# held back for it. Set against vanilla's own default prices (in_game/common/goods/): gold is 8
+# and silver 6, the metals and cash crops sit at 3 and 4, while wheat and stone are 1 and no
+# staple food or construction material ever comes near it.
+@cm_rgo_reserve_price = 2.5
+
+# Root is the location. Core RGO expansion prerequisites shared by the GUI-visibility trigger
 # cm_is_able_to_auto_expand_rgo and the on-action trigger cm_should_rgo_auto_expand.
 cm_rgo_basic_expand_eligibility = {
 	AND = {
@@ -115,6 +121,46 @@ cm_rgo_meets_minimum_discount = {
 
 cm_is_rgo_not_max_level_already = {
 	cm_modifier_rgo_level < cm_get_max_rgo_workers_floor
+}
+
+# Root is the location, expects scope:cm_country. Some enabled feature would expand this RGO
+# once the pops were free: the player's Auto-Expand RGOs, or Auto-Build's Production or Core
+# Goods. Auto-food is left out because every good on its roster sits at or under 2 at base
+# (vanilla in_game/common/goods/), under @cm_rgo_reserve_price. Holding laborers for an RGO
+# nothing would grow costs the location its buildings for nothing.
+cm_location_rgo_expansion_is_wanted = {
+	scope:cm_country = {
+		OR = {
+			is_target_in_variable_list = { name = cm_priority_features_enabled target = flag:cm_feature_auto_expand_rgos }
+			is_target_in_variable_list = { name = cm_ab_categories_enabled target = flag:cm_ab_cat_production }
+			is_target_in_variable_list = { name = cm_ab_categories_enabled target = flag:cm_ab_cat_core }
+		}
+	}
+}
+
+# Root is the location, expects scope:cm_country. This location keeps laborers back for its own
+# RGO: the good is worth the pops and the RGO can still take a level on every count but pops.
+# The pop half is left out deliberately - cm_rgo_basic_expand_eligibility carries the very slack
+# test the reservation exists to protect, so reading it would lift the reservation the moment
+# buildings had taken the pops.
+cm_location_rgo_reserves_laborers = {
+	cm_location_rgo_market_value >= @cm_rgo_reserve_price
+	cm_is_rgo_advance_researched = yes
+	cm_is_rgo_not_max_level_already = yes
+	cm_location_rgo_expansion_is_wanted = yes
+}
+
+# Root is the location, expects scope:cm_building_type and scope:cm_country. A building drawing
+# laborers may not take the pool a reserved RGO is waiting on: the RGO's own next level comes off
+# the pool before the building's level is counted. A location reserving nothing is untouched, so
+# this is not a general pop gate.
+cm_location_laborers_free_for_building = {
+	trigger_if = { limit = { cm_location_rgo_laborer_reserve > 0 }
+		cm_location_laborers_or_slaves_available >= {
+			value = cm_location_rgo_laborer_reserve
+			add = scope:cm_building_type.employment_size
+		}
+	}
 }
 
 cm_is_rgo_under_construction = {

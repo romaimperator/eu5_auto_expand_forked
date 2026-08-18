@@ -257,11 +257,18 @@ cm_ab_try_approve_build = {
 # back. $POOL$ = the category pool variable name. Root is the location.
 # Expects scope:cm_country, scope:cm_building_type, scope:cm_cost.
 cm_ab_fill_build_slots = {
-	scope:cm_country = { set_variable = { name = cm_ab_copy_pool value = var:$POOL$ } }
-	cm_q_fill_build_slots = { AFFORD = cm_ab_copy_can_afford CLAIM = cm_ab_claim_build_copy }
-	scope:cm_country = {
-		set_variable = { name = $POOL$ value = var:cm_ab_copy_pool }
-		remove_variable = cm_ab_copy_pool
+	if = {
+		# A reserved location gets the one level the reservation let through and no batch behind
+		# it, the batch checking no pops at all. Reported as a room stop, which is what it is.
+		limit = { cm_location_rgo_laborer_reserve > 0 }
+		set_local_variable = { name = cm_q_copy_stop value = 1 }
+	} else = {
+		scope:cm_country = { set_variable = { name = cm_ab_copy_pool value = var:$POOL$ } }
+		cm_q_fill_build_slots = { AFFORD = cm_ab_copy_can_afford CLAIM = cm_ab_claim_build_copy }
+		scope:cm_country = {
+			set_variable = { name = $POOL$ value = var:cm_ab_copy_pool }
+			remove_variable = cm_ab_copy_pool
+		}
 	}
 }
 

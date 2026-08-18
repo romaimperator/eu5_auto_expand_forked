@@ -41,3 +41,18 @@
 		}
 	}
 }
+
+# root = location. The engine fires this on every rank change, including the ones vanilla's own
+# scripted helpers make (in_game/common/scripted_effects/location_effects.txt:20 and :112), which
+# is where a location carrying the auto-food lock can still leave rural rank.
+on_location_changed_rank = {
+	on_actions = {
+		cm_on_location_rank_changed
+	}
+}
+
+cm_on_location_rank_changed = {
+	effect = {
+		cm_drop_auto_food_toggle_off_rural = yes
+	}
+}

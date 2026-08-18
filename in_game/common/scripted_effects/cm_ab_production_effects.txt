@@ -122,6 +122,12 @@ cm_ab_stage_build_candidate = {
 			trigger_if = { limit = { NOT = { local_var:cm_ab_stage_cat = 3 } }
 				scope:cm_location = { cm_is_location_under_building_limit = yes }
 			}
+			# Food is the automation this one holds the location's pops for, and Custom is excused
+			# for the single level of market_village that puts burghers in a rural location.
+			trigger_if = { limit = { NOT = { local_var:cm_ab_stage_cat = 3  local_var:cm_ab_stage_cat = 4 } }
+				scope:cm_location = { cm_location_auto_food_workers_ok = yes }
+			}
+			scope:cm_location = { cm_location_laborers_free_for_building = yes }
 		}
 		cm_stage_location_and_type_to_queue = { COUNTRY_LIST = cm_ab_b_locations SET = cm_ab_b_locations_set LOCATION_LIST = cm_ab_b_types DONE_LIST = cm_ab_done_b_types }
 		scope:cm_location = {

@@ -296,11 +296,34 @@ cm_ab_core_slot_allowance = {
 	multiply = @cm_ab_core_slot_rounds
 }
 
+# Levels of scope:cm_building_type this location's own pops can staff, after the laborers its
+# RGO reserves. Unemployed pops and the pool that promotes into them count alike, for the reason
+# cm_ab_core_pops_ok gives. A type the classification holds no pop type for reads 0.
+# Root is the location, expects scope:cm_building_type and scope:cm_country.
+cm_ab_core_pop_room = {
+	value = 0
+	if = {
+		limit = {
+			has_global_variable_map = cm_building_type_to_pop_type
+			is_key_in_global_variable_map = { name = cm_building_type_to_pop_type target = scope:cm_building_type }
+		}
+		value = {
+			value = cm_location_unemployed_for_building_type
+			add = cm_location_promotion_source_pool_for_building_type
+			subtract = cm_location_rgo_laborer_reserve
+			divide = scope:cm_building_type.employment_size
+			floor = yes
+			min = 0
+		}
+	}
+}
+
 # Levels of scope:cm_building_type this location may still be given.
 # Root is the location, expects scope:cm_building_type and scope:cm_country.
 cm_ab_core_type_room = {
 	value = cm_ab_core_slot_allowance
 	subtract = cm_ab_core_type_inflight
+	max = cm_ab_core_pop_room
 	min = 0
 }
 

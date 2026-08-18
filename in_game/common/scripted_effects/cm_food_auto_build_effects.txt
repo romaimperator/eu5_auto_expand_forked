@@ -82,3 +82,17 @@ cm_food_auto_build_pass = {
 	}
 }
 
+# Root is the location. Drops the player's auto-food opt-in where the location is no longer
+# rural. Its cm_auto_food_locked_location modifier runs a thousand years and the toggle's button
+# is hidden above rural rank, so a location that ranks up anyway would block every later rank
+# step with nothing the player can reach to lift it.
+cm_drop_auto_food_toggle_off_rural = {
+	if = {
+		limit = {
+			exists = var:cm_auto_food_location_enabled
+			NOT = { location_rank = location_rank:rural_settlement }
+		}
+		remove_variable = cm_auto_food_location_enabled
+		remove_location_modifier = cm_auto_food_locked_location
+	}
+}
