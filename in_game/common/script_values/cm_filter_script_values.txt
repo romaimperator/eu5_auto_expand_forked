@@ -67,7 +67,7 @@ cm_location_attacker_penalty = {
 # Subtracting dev to get base food potential.
 # Windmill/irrigation: subtract effective contribution, add assumed-max.
 # farming_village has no food modifier; raw_material_output and livestock handled in
-# cm_location_food_potential.
+# cm_location_food_potential_live.
 # Other situational food buildings, namely bund, polders, and terraces, keep current contribution.
 cm_location_food_potential_food_multiplier = {
 	value = 1
@@ -153,7 +153,7 @@ cm_location_food_potential_raw_output_multiplier = {
 # Final score: [rgo food_value * raw_output_multiplier + farming_village livestock side
 # production] * food_multiplier. exists guard keeps locations without an rgo from erroring
 # on raw_material.food_value.
-cm_location_food_potential = {
+cm_location_food_potential_live = {
 	value = 0
 	if = {
 		limit = { exists = raw_material }
@@ -177,6 +177,19 @@ cm_location_food_potential = {
 		add = 3.45  # 0.5 livestock * 8 food * 0.75 ratio * 1.15 econ-scale, 16 FV
 	}
 	multiply = cm_location_food_potential_food_multiplier
+}
+
+# cm_fpot_recompute_all writes cm_fpot_score on every land location once per lobby, so the fallback
+# is reachable only on water, which the location search filter does not exclude.
+cm_location_food_potential = {
+	value = 0
+	if = {
+		limit = { has_variable = cm_fpot_score }
+		add = var:cm_fpot_score
+	}
+	else = {
+		add = cm_location_food_potential_live
+	}
 }
 
 # Topography component of the net terrain proximity penalty, scaled by the owner's

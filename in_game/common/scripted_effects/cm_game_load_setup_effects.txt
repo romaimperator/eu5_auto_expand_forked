@@ -151,6 +151,11 @@ cm_run_lobby_setup = {
     # Synchronous, so there is no partial state for the stamp to certify.
     set_global_variable = { name = cm_trmm_stamp value = cm_trmm_version_value }
   }
+  if = {
+    limit = { NOT = { cm_fpot_data_is_current = yes } }
+    cm_fpot_recompute_all = yes
+    set_global_variable = { name = cm_fpot_stamp value = cm_fpot_version_value }
+  }
   # A load that skipped every pass reaches no completion branch, so the readiness line would never
   # fire. The log pane renders the acting country per row and the guard inside makes it log once,
   # so handing it every human is enough.
@@ -218,6 +223,7 @@ cm_dbg_setup_probe = {
   cm_dbg_setup_stamp = { S = cm_rgob_stamp A = cm_log_setup_stamp_rgob }
   cm_dbg_setup_stamp = { S = cm_trmm_stamp A = cm_log_setup_stamp_trmm }
   cm_dbg_setup_stamp = { S = cm_ln_ids_stamp A = cm_log_setup_stamp_ids }
+  cm_dbg_setup_stamp = { S = cm_fpot_stamp A = cm_log_setup_stamp_fpot }
   if = {
     limit = { is_host = yes }
     cmf_log_value = { action = cm_log_setup_host value = 1 }
@@ -246,6 +252,7 @@ cm_setup_drop_stamps = {
   remove_global_variable = cm_rgob_stamp
   remove_global_variable = cm_pf_river_stamp
   remove_global_variable = cm_ln_ids_stamp
+  remove_global_variable = cm_fpot_stamp
 }
 
 # Numeric ids for every location, in both directions. Location.GetKey returns the runtime id
@@ -346,6 +353,17 @@ cm_pf_populate_river_locations = {
     }
     # Trigger the river-adjacency precompute in the hidden window GUI.
     set_global_variable = { name = cm_pf_river_process value = yes }
+  }
+}
+
+# The is_land gate is the map mode's own first branch, so nothing its colour ramp can paint is left
+# unwritten. Called from cm_run_lobby_setup.
+cm_fpot_recompute_all = {
+  every_province_definition = {
+    every_location_in_province_definition = {
+      limit = { is_land = yes }
+      set_variable = { name = cm_fpot_score value = cm_location_food_potential_live }
+    }
   }
 }
 
