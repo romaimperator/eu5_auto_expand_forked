@@ -131,11 +131,18 @@ cm_ln_c_read_rgo_profit = {
 
 # Expects scope:cm_ln_k. The sweep queues every country's rows before the one command that scores
 # them, so a pass walks several countries' rows and cm_ln_r_ctry is what tells them apart.
+# cm_ln_c_own reports whether THIS row resolved a country, which a nonzero id does not: a country
+# annexed between the sweep and the process command leaves the lookup empty, and the temporary scope
+# whichever row resolved before it left behind is still standing.
 cm_ln_c_row_common = {
 	set_local_variable = { name = cm_ln_c_y value = "global_variable_map(cm_ln_r_ctry|scope:cm_ln_k)" }
+	set_local_variable = { name = cm_ln_c_own value = 0 }
 	if = {
 		limit = { local_var:cm_ln_c_y > 0 }
-		"global_variable_map(cm_ln_ctry_of_id|local_var:cm_ln_c_y)" = { save_temporary_scope_as = cm_country }
+		"global_variable_map(cm_ln_ctry_of_id|local_var:cm_ln_c_y)" = {
+			save_temporary_scope_as = cm_country
+			set_local_variable = { name = cm_ln_c_own value = 1 }
+		}
 	}
 	set_local_variable = { name = cm_ln_c_l value = "global_variable_map(cm_ln_r_l|scope:cm_ln_k)" }
 }
@@ -152,7 +159,7 @@ cm_ln_c_process = {
 			if = {
 				limit = {
 					exists = global_var:cm_dbg_core
-					local_var:cm_ln_c_y > 0
+					local_var:cm_ln_c_own = 1
 				}
 				scope:cm_country = { cm_ab_core_count = { N = cm_ab_core_c_rows V = 1 } }
 				if = {
@@ -160,12 +167,9 @@ cm_ln_c_process = {
 					scope:cm_country = { cm_ab_core_count = { N = cm_ab_core_c_rows_b V = 1 } }
 				}
 			}
-			# A row whose country id renders 0 is dropped rather than scored. Nothing can unset a
-			# temporary scope, so scope:cm_country would otherwise still name whichever country the
-			# previous row in the walk resolved.
 			if = {
 				limit = {
-					local_var:cm_ln_c_y > 0
+					local_var:cm_ln_c_own = 1
 					local_var:cm_ln_c_l > 0
 				}
 				"global_variable_map(cm_ln_loc_of_id|local_var:cm_ln_c_l)" = {

@@ -26,18 +26,6 @@
 
 # Root is the country, scope:cm_country set.
 cm_gov_reorg_tick = {
-	# Three or four of the gates below reach cm_gov_no_finder_run_in_flight, which walks every
-	# living country, so the scan is read once here. A run is started and ended by the GUI drivers,
-	# never from script, so it cannot move inside one execution. cm_ln_monthly_cycle seeds the same
-	# local ahead of this call and its value stands.
-	if = {
-		limit = { NOT = { has_local_variable = cm_gov_finder_free } }
-		set_local_variable = { name = cm_gov_finder_free value = 0 }
-		if = {
-			limit = { cm_gov_finder_scan_clear = yes }
-			set_local_variable = { name = cm_gov_finder_free value = 1 }
-		}
-	}
 	if = {
 		limit = { NOT = { exists = var:cm_gov_phase } }
 		set_variable = { name = cm_gov_phase value = 0 }

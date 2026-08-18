@@ -64,6 +64,10 @@ cm_ab_run_custom = {
 	}
 	if = {
 		limit = { exists = var:cm_ab_custom_control }
+		# Each drain reads its own marker rather than walking the shared queue on the chance
+		# something is there: by drain time that queue holds every location any category staged.
+		remove_variable = cm_ab_bailiff_staged
+		remove_variable = cm_ab_ctrl_staged
 		if = {
 			limit = { NOT = { exists = var:cm_ab_bailiff_cd } }
 			set_variable = { name = cm_ab_bailiff_cd value = 1 days = @cm_ab_bailiff_days }
@@ -352,6 +356,7 @@ cm_ab_stage_bailiffs = {
 					cm_ab_max_control_site_ok = yes
 				}
 				cm_ab_stage_build_candidate = { cat = 4 }
+				scope:cm_country = { set_variable = { name = cm_ab_bailiff_staged value = 1 } }
 				change_local_variable = { name = cm_ab_bailiff_room subtract = 1 }
 			}
 		}
@@ -406,6 +411,7 @@ cm_ab_stage_max_control_types = {
 						if = {
 							limit = { cm_ab_max_control_site_ok = yes }
 							cm_ab_stage_build_candidate = { cat = 4 }
+							scope:cm_country = { set_variable = { name = cm_ab_ctrl_staged value = 1 } }
 						}
 					}
 				}
@@ -520,7 +526,7 @@ cm_ab_drain_bailiffs = {
 	if = {
 		limit = {
 			local_var:cm_ab_cost_blocked = 0
-			has_variable_list = cm_ab_b_locations
+			exists = var:cm_ab_bailiff_staged
 		}
 		ordered_in_list = {
 			variable = cm_ab_b_locations
@@ -542,7 +548,7 @@ cm_ab_drain_max_control_types = {
 	if = {
 		limit = {
 			local_var:cm_ab_cost_blocked = 0
-			has_variable_list = cm_ab_b_locations
+			exists = var:cm_ab_ctrl_staged
 		}
 		ordered_in_list = {
 			variable = cm_ab_b_locations

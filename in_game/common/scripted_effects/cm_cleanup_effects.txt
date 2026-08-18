@@ -76,25 +76,27 @@ cm_cu_arm_toggles = {
 
 # cm_cu_fire is cleared by the toggle driver's own end call, which for an observed lucky nation
 # rides a console command the engine drops when another is already running. A dropped one would
-# otherwise leave cm_cu_can_run refusing for the rest of the game, so a batch still pending two
-# pulses on is abandoned; cm_cu_validate_tracking then reads a close that never landed as a fresh
-# candidate. Root is the country.
+# otherwise hold the pass shut for the rest of the game, so a batch still pending two pulses on is
+# abandoned; cm_cu_validate_tracking then reads a close that never landed as a fresh candidate.
+# Root is the country.
 cm_cu_clear_stuck_fire = {
+	change_variable = { name = cm_cu_fire_skips add = 1 }
 	if = {
-		limit = { exists = var:cm_cu_fire }
-		change_variable = { name = cm_cu_fire_skips add = 1 }
-		if = {
-			limit = { var:cm_cu_fire_skips >= 2 }
-			remove_variable = cm_cu_fire
-		}
+		limit = { var:cm_cu_fire_skips >= 2 }
+		remove_variable = cm_cu_fire
 	}
 }
 
 # Steps this cycle's next few markets, opening a cycle once the last one is a year behind and
 # closing it once every market has been visited. Root is the country.
 cm_cu_monthly_pass = {
-	cm_cu_clear_stuck_fire = yes
+	# A pulse holding a batch runs nothing else. The toggle driver fires on a hidden->shown edge,
+	# so an abandon and a fresh arm in one execution leave its gate true throughout and the rebuilt
+	# list never fires.
 	if = {
+		limit = { exists = var:cm_cu_fire }
+		cm_cu_clear_stuck_fire = yes
+	} else_if = {
 		limit = { cm_cu_can_run = yes }
 		save_scope_as = cm_country
 		if = {
@@ -140,7 +142,13 @@ cm_cu_monthly_pass = {
 # fresh cycle, so a part-stepped one is superseded rather than resumed.
 # Root is the country.
 cm_cu_full_pass = {
+	# A press is deliberate, so a pending batch is abandoned outright rather than counted against
+	# the monthly skips. The pass itself waits for the next press, for the reason the monthly one
+	# does: the driver needs its gate to fall before a fresh arm can raise it.
 	if = {
+		limit = { exists = var:cm_cu_fire }
+		remove_variable = cm_cu_fire
+	} else_if = {
 		limit = { cm_cu_can_run = yes }
 		save_scope_as = cm_country
 		cm_cu_open_cycle = yes

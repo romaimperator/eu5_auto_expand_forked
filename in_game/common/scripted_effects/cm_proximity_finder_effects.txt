@@ -352,6 +352,10 @@ cm_pf_prep_core = {
 		}
 		every_in_list = {
 			variable = cm_ln_open_gov_sites
+			# Nothing prunes that list on ownership loss, and only owned locations are primed, so a site
+			# the country has since lost would relax out of an edge map this run never wrote and floor
+			# its still-owned neighbours at the source value for nothing.
+			limit = { owner ?= scope:cm_pf_c }
 			# 100 (the stacked-sources cap, main_menu/common/static_modifiers/location.txt:330)
 			# less the governor's 80 (in_game/common/building_types/capital_buildings.txt:681).
 			cm_pf_seed_d = { D = 20 }
@@ -984,13 +988,7 @@ cm_pf_bellman_g_multi = {
 		clear_variable_list = cm_pf_front
 		every_in_list = {
 			variable = cm_pf_reach
-			# A seed the caller took from somewhere other than this run's owned map - a committed
-			# opening-governor site the country has since lost - carries no priming, so relaxing
-			# out of it would read unset costs on every neighbour.
-			limit = {
-				has_variable = cm_pf_d
-				has_variable = cm_pf_cl_g
-			}
+			limit = { has_variable = cm_pf_d }
 			set_variable = { name = cm_pf_inf value = 1 }
 			scope:cm_pf_c = {
 				add_to_variable_list = { name = cm_pf_front target = prev }

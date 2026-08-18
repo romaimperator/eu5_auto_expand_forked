@@ -297,6 +297,9 @@ cm_ab_core_count_marks = {
 # cached here and restored at the top of each market.
 # Root is the country, expects scope:cm_ab_core_item.
 cm_ab_stage_core_material = {
+	# Each material names its own lead producer, the way the sizing and the drain name theirs, so one
+	# with no arm stages nothing rather than being staged as glass.
+	set_local_variable = { name = cm_ab_core_lead_set value = 1 }
 	if = {
 		limit = { scope:cm_ab_core_item = goods:masonry }
 		building_type:mason = { save_scope_as = cm_building_type }
@@ -311,31 +314,36 @@ cm_ab_stage_core_material = {
 		goods:sand = { save_scope_as = cm_ab_good }
 		building_type:sand_pit = { save_scope_as = cm_building_type }
 	}
-	else = {
+	else_if = {
+		limit = { scope:cm_ab_core_item = goods:glass }
 		building_type:glass_guild = { save_scope_as = cm_building_type }
 	}
-	scope:cm_building_type = { save_scope_as = cm_ab_core_base }
-	cm_ab_resolve_building_type = yes
-	scope:cm_building_type = { save_scope_as = cm_ab_core_lead }
-	clear_variable_list = cm_ab_core_lead_preds
-	every_in_list = {
-		variable = cm_ab_chain_predecessors
-		save_temporary_scope_as = cm_ab_core_pred
-		scope:cm_country = { add_to_variable_list = { name = cm_ab_core_lead_preds target = scope:cm_ab_core_pred } }
+	else = {
+		set_local_variable = { name = cm_ab_core_lead_set value = 0 }
 	}
-	every_market_center_in_country = {
-		limit = { cm_market_in_slice = yes }
-		save_scope_as = cm_ab_market
-		scope:cm_country = { cm_ab_stage_core_good = yes }
+	if = {
+		limit = { local_var:cm_ab_core_lead_set = 1 }
+		cm_ab_resolve_building_type = yes
+		scope:cm_building_type = { save_scope_as = cm_ab_core_lead }
+		clear_variable_list = cm_ab_core_lead_preds
+		every_in_list = {
+			variable = cm_ab_chain_predecessors
+			save_temporary_scope_as = cm_ab_core_pred
+			scope:cm_country = { add_to_variable_list = { name = cm_ab_core_lead_preds target = scope:cm_ab_core_pred } }
+		}
+		every_market_center_in_country = {
+			limit = { cm_market_in_slice = yes }
+			save_scope_as = cm_ab_market
+			scope:cm_country = { cm_ab_stage_core_good = yes }
+		}
+		clear_variable_list = cm_ab_core_lead_preds
 	}
-	clear_variable_list = cm_ab_core_lead_preds
 }
 
 # Puts the material's lead producer and the chain it was resolved from back in scope, a second
-# producer's own resolve having overwritten both. Root is the country, expects scope:cm_ab_core_base,
+# producer's own resolve having overwritten both. Root is the country, expects
 # scope:cm_ab_core_lead.
 cm_ab_core_restore_lead = {
-	scope:cm_ab_core_base = { save_scope_as = cm_ab_settings_type }
 	scope:cm_ab_core_lead = { save_scope_as = cm_building_type }
 	clear_variable_list = cm_ab_chain_predecessors
 	every_in_list = {
