@@ -1509,6 +1509,606 @@ cm_trmm_rightv_masonry = {
 	}
 }
 
+# What a right is worth here, in gold per level of the producers it
+# boosts. An output bonus lifts the output alone and never the inputs,
+# so a good's term is the bonus times the assumed method's output at the
+# live market price, and the input side cancels out of the comparison.
+# The method assumed is the one the map mode assumes, so the two agree.
+# A dyes or wine right also boosts that raw material's own RGO where the
+# location produces it, which coverage averages in and this cannot: an RGO
+# level has no per-type output to read, so those rights read a little low
+# there.
+cm_trmm_out_tools = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_tools = 2 } }
+		value = 0.6
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_tools = 3 } }
+		value = 2
+	}
+}
+cm_trmm_val_tools = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_tools
+		multiply = "market.market_price(goods:tools)"
+	}
+}
+cm_trmm_out_jewelry = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_jewelry = 2 } }
+		value = 1
+	}
+}
+cm_trmm_val_jewelry = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_jewelry
+		multiply = "market.market_price(goods:jewelry)"
+	}
+}
+cm_trmm_out_naval_supplies = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_naval_supplies = 2 } }
+		value = 4
+	}
+}
+cm_trmm_val_naval_supplies = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_naval_supplies
+		multiply = "market.market_price(goods:naval_supplies)"
+	}
+}
+cm_trmm_out_tar = {
+	value = 1
+}
+cm_trmm_val_tar = {
+	value = 0
+	# tar_kiln location_potential.
+	if = {
+		limit = { OR = { vegetation = woods vegetation = forest vegetation = jungle raw_material ?= goods:lumber } exists = market }
+		value = cm_trmm_out_tar
+		multiply = "market.market_price(goods:tar)"
+	}
+}
+cm_trmm_out_cloth = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_cloth = 2 } }
+		value = 1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_cloth = 3 } }
+		value = 0.8
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_cloth = 4 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_cloth = 5 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_cloth = 6 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_cloth = 7 } }
+		value = 3
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_cloth = 8 } }
+		value = 2.5
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_cloth = 9 } }
+		value = 2.5
+	}
+}
+cm_trmm_val_cloth = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_cloth
+		multiply = "market.market_price(goods:cloth)"
+	}
+}
+cm_trmm_out_fine_cloth = {
+	value = 0.5
+	if = {
+		limit = { province = { cm_trmm_pmv_fine_cloth = 2 } }
+		value = 0.7
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_fine_cloth = 3 } }
+		value = 4
+	}
+}
+cm_trmm_val_fine_cloth = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_fine_cloth
+		multiply = "market.market_price(goods:fine_cloth)"
+	}
+}
+cm_trmm_out_dyes = {
+	value = 0.2
+	if = {
+		limit = { province = { cm_trmm_pmv_dyes = 2 } }
+		value = 0.3
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_dyes = 3 } }
+		value = 0.4
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_dyes = 4 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_dyes = 5 } }
+		value = 4
+	}
+}
+cm_trmm_val_dyes = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_dyes
+		multiply = "market.market_price(goods:dyes)"
+	}
+}
+cm_trmm_out_weaponry = {
+	value = 1.1
+}
+cm_trmm_val_weaponry = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_weaponry
+		multiply = "market.market_price(goods:weaponry)"
+	}
+}
+cm_trmm_out_firearms = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_firearms = 2 } }
+		value = 1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_firearms = 3 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_firearms = 4 } }
+		value = 4
+	}
+}
+cm_trmm_val_firearms = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_firearms
+		multiply = "market.market_price(goods:firearms)"
+	}
+}
+cm_trmm_out_cannons = {
+	value = 1.1
+	if = {
+		limit = { province = { cm_trmm_pmv_cannons = 2 } }
+		value = 1.1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_cannons = 3 } }
+		value = 2
+	}
+}
+cm_trmm_val_cannons = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_cannons
+		multiply = "market.market_price(goods:cannons)"
+	}
+}
+cm_trmm_out_paper = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_paper = 2 } }
+		value = 1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_paper = 3 } }
+		value = 4.5
+	}
+}
+cm_trmm_val_paper = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_paper
+		multiply = "market.market_price(goods:paper)"
+	}
+}
+cm_trmm_out_books = {
+	value = 0.3
+	if = {
+		limit = { province = { cm_trmm_pmv_books = 2 } }
+		value = 1
+	}
+}
+cm_trmm_val_books = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_books
+		multiply = "market.market_price(goods:books)"
+	}
+}
+cm_trmm_out_furniture = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_furniture = 2 } }
+		value = 1.1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_furniture = 3 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_furniture = 4 } }
+		value = 4
+	}
+}
+cm_trmm_val_furniture = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_furniture
+		multiply = "market.market_price(goods:furniture)"
+	}
+}
+cm_trmm_out_pottery = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_pottery = 2 } }
+		value = 1.1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_pottery = 3 } }
+		value = 1.5
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_pottery = 4 } }
+		value = 3.25
+	}
+}
+cm_trmm_val_pottery = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_pottery
+		multiply = "market.market_price(goods:pottery)"
+	}
+}
+cm_trmm_out_leather = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_leather = 2 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_leather = 3 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_leather = 4 } }
+		value = 4
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_leather = 5 } }
+		value = 4
+	}
+}
+cm_trmm_val_leather = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_leather
+		multiply = "market.market_price(goods:leather)"
+	}
+}
+cm_trmm_out_liquor = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_liquor = 2 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_liquor = 3 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_liquor = 4 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_liquor = 5 } }
+		value = 4
+	}
+}
+cm_trmm_val_liquor = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_liquor
+		multiply = "market.market_price(goods:liquor)"
+	}
+}
+cm_trmm_out_beer = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_beer = 2 } }
+		value = 1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_beer = 3 } }
+		value = 1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_beer = 4 } }
+		value = 1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_beer = 5 } }
+		value = 1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_beer = 6 } }
+		value = 1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_beer = 7 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_beer = 8 } }
+		value = 4
+	}
+}
+cm_trmm_val_beer = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_beer
+		multiply = "market.market_price(goods:beer)"
+	}
+}
+cm_trmm_out_wine = {
+	value = 1
+	if = {
+		limit = { province = { cm_trmm_pmv_wine = 2 } }
+		value = 1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_wine = 3 } }
+		value = 1
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_wine = 4 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_wine = 5 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_wine = 6 } }
+		value = 2
+	}
+}
+cm_trmm_val_wine = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_wine
+		multiply = "market.market_price(goods:wine)"
+	}
+}
+cm_trmm_out_masonry = {
+	value = 0.5
+	if = {
+		limit = { province = { cm_trmm_pmv_masonry = 2 } }
+		value = 0.5
+	}
+}
+cm_trmm_val_masonry = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_masonry
+		multiply = "market.market_price(goods:masonry)"
+	}
+}
+cm_trmm_covg_glass_g1 = {
+	value = 0
+	if = {
+		limit = { province = { has_variable = cm_trmm_cov_glass } }
+		province = { add = var:cm_trmm_cov_glass }
+	}
+}
+cm_trmm_outg_glass_g1 = {
+	value = 1.1
+	if = {
+		limit = { province = { cm_trmm_pmv_glass = 2 } }
+		value = 2
+	}
+	else_if = {
+		limit = { province = { cm_trmm_pmv_glass = 3 } }
+		value = 4
+	}
+}
+cm_trmm_covg_glass_g2 = {
+	value = 0
+	# glass_guild location_potential.
+	if = {
+		limit = { is_produced_in_location_market = goods:sand province = { has_variable = cm_trmm_cov_glass_g2 } }
+		province = { add = var:cm_trmm_cov_glass_g2 }
+	}
+}
+cm_trmm_outg_glass_g2 = {
+	value = 0.75
+	if = {
+		limit = { province = { cm_trmm_pmv_glass_g2 = 5 } }
+		value = 1
+	}
+}
+cm_trmm_out_glass = {
+	value = cm_trmm_outg_glass_g1
+	if = {
+		limit = { cm_trmm_covg_glass_g2 > { value = cm_trmm_covg_glass_g1 } }
+		value = cm_trmm_outg_glass_g2
+	}
+}
+cm_trmm_val_glass = {
+	value = 0
+	if = {
+		limit = { exists = market }
+		value = cm_trmm_out_glass
+		multiply = "market.market_price(goods:glass)"
+	}
+}
+# royal_tooling_rights: in_game/common/town_rights/01_discovery.txt:7
+cm_trmm_rightval_tooling = {
+	value = 0
+	add = {
+		value = cm_trmm_val_tools
+		multiply = 0.3
+	}
+}
+# royal_jewelry_rights: in_game/common/town_rights/01_discovery.txt:17
+cm_trmm_rightval_jewelry = {
+	value = 0
+	add = {
+		value = cm_trmm_val_jewelry
+		multiply = 0.2
+	}
+}
+# royal_naval_rights: in_game/common/town_rights/01_discovery.txt:28
+cm_trmm_rightval_naval = {
+	value = 0
+	add = {
+		value = cm_trmm_val_naval_supplies
+		multiply = 0.3
+	}
+	add = {
+		value = cm_trmm_val_tar
+		multiply = 0.3
+	}
+}
+# royal_textile_rights: in_game/common/town_rights/01_discovery.txt:50
+cm_trmm_rightval_textile = {
+	value = 0
+	add = {
+		value = cm_trmm_val_cloth
+		multiply = 0.2
+	}
+	add = {
+		value = cm_trmm_val_fine_cloth
+		multiply = 0.2
+	}
+	add = {
+		value = cm_trmm_val_dyes
+		multiply = 0.2
+	}
+}
+# royal_weaponry_rights: in_game/common/town_rights/01_discovery.txt:67
+cm_trmm_rightval_weaponry = {
+	value = 0
+	add = {
+		value = cm_trmm_val_weaponry
+		multiply = 0.2
+	}
+	add = {
+		value = cm_trmm_val_firearms
+		multiply = 0.2
+	}
+	add = {
+		value = cm_trmm_val_cannons
+		multiply = 0.2
+	}
+}
+# royal_book_rights: in_game/common/town_rights/01_discovery.txt:79
+cm_trmm_rightval_book = {
+	value = 0
+	add = {
+		value = cm_trmm_val_paper
+		multiply = 0.2
+	}
+	add = {
+		value = cm_trmm_val_books
+		multiply = 0.2
+	}
+	add = {
+		value = cm_trmm_val_dyes
+		multiply = 0.2
+	}
+}
+# royal_artisan_rights: in_game/common/town_rights/01_discovery.txt:91
+cm_trmm_rightval_artisan = {
+	value = 0
+	add = {
+		value = cm_trmm_val_furniture
+		multiply = 0.2
+	}
+	add = {
+		value = cm_trmm_val_pottery
+		multiply = 0.2
+	}
+	add = {
+		value = cm_trmm_val_leather
+		multiply = 0.2
+	}
+}
+# royal_brewing_rights: in_game/common/town_rights/01_discovery.txt:103
+cm_trmm_rightval_brewing = {
+	value = 0
+	add = {
+		value = cm_trmm_val_liquor
+		multiply = 0.2
+	}
+	add = {
+		value = cm_trmm_val_beer
+		multiply = 0.2
+	}
+	add = {
+		value = cm_trmm_val_wine
+		multiply = 0.2
+	}
+}
+# royal_masonry_rights: in_game/common/town_rights/01_discovery.txt:115
+cm_trmm_rightval_masonry = {
+	value = 0
+	add = {
+		value = cm_trmm_val_masonry
+		multiply = 0.25
+	}
+	add = {
+		value = cm_trmm_val_glass
+		multiply = 0.25
+	}
+}
+
 # The granted royal right's fit versus the best specialization here:
 # the best score among granted rights, and the shortfall (0-1) the
 # granted stripe shades from green to red.

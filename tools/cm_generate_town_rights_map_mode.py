@@ -451,6 +451,21 @@ def parse_goods(goods_dir):
     return categories
 
 
+def parse_goods_prices(goods_dir):
+    """Map good -> default_market_price, for the run report's value figures."""
+    prices = {}
+    for _, path in iter_db_files(goods_dir):
+        for good, body, _ in child_blocks(read_pdx(path)):
+            for key, value in scalar_assignments(body):
+                if key == "default_market_price":
+                    try:
+                        prices[good] = float(value)
+                    except ValueError:
+                        pass
+                    break
+    return prices
+
+
 def parse_named_color_kinds(game_dir):
     """Map color name -> rgb/hsv keyword, from `name = hsv { ... }` forms."""
     kinds = {}
@@ -834,7 +849,7 @@ def fmt_amount(value):
 
 def collect_options(buildings, boosted_goods, goods_categories):
     """Return {good: [option]}, option = {shares {good: share_str}, others
-    {good: share_str}, gate, building, pm, comment}. shares holds the
+    {good: share_str}, gate, building, pm, output, comment}. shares holds the
     raw-material input shares that can be locally covered, others the
     remaining inputs' shares for the breakdown rows; dedup and domination use
     raw shares only."""
@@ -877,6 +892,7 @@ def collect_options(buildings, boosted_goods, goods_categories):
                 "gate": gate,
                 "building": building,
                 "pm": pm["name"],
+                "output": pm["output"],
                 "comment": (f"{pm['name']} ({building}), {pm['ref']} - "
                             f"{mix} of {fmt_amount(total)} total input"),
             })
@@ -1094,6 +1110,103 @@ def emit_location_bonus(good, boosts):
     return lines
 
 
+def output_groups(options, good):
+    """[(gi, gate, first_k, [option, ...])] for a good's option groups, first_k
+    carrying the same running option index the stored winner holds."""
+    out = []
+    k = 0
+    for gi, (gate, opts) in enumerate(group_options(options[good]), start=1):
+        out.append((gi, gate, k + 1, opts))
+        k += len(opts)
+    return out
+
+
+def emit_group_output(good, gi, opts, first_k, name):
+    """One option group's assumed output per level: the group's first option,
+    overridden where the load pass stored a different winner."""
+    suffix = "" if gi == 1 else f"_g{gi}"
+    lines = [f"{name} = {{", f"\tvalue = {fmt_amount(opts[0]['output'])}"]
+    for offset, option in enumerate(opts[1:], start=1):
+        lines.append(f"\t{'if' if offset == 1 else 'else_if'} = {{")
+        lines.append(f"\t\tlimit = {{ province = {{ cm_trmm_pmv_{good}{suffix} "
+                     f"= {first_k + offset} }} }}")
+        lines.append(f"\t\tvalue = {fmt_amount(option['output'])}")
+        lines.append("\t}")
+    lines.append("}")
+    return lines
+
+
+def emit_good_output(good, options):
+    """The output per level of the method the map mode assumes here. Where a
+    good has two option groups the group is picked by coverage, the way
+    cm_trmm_cov_<good> picks it, with a tie keeping the earlier group."""
+    groups = output_groups(options, good)
+    if len(groups) == 1:
+        gi, _gate, first_k, opts = groups[0]
+        return emit_group_output(good, gi, opts, first_k, f"cm_trmm_out_{good}")
+    if len(groups) > 2:
+        sys.exit(f"{good} has {len(groups)} option groups; the assumed-output "
+                 "group pick only resolves two")
+    lines = []
+    for gi, gate, first_k, opts in groups:
+        suffix = "" if gi == 1 else f"_g{gi}"
+        lines.append(f"cm_trmm_covg_{good}_g{gi} = {{")
+        lines.append("\tvalue = 0")
+        if gate is not None:
+            lines.append(f"\t# {gate_comment(opts)}")
+        lines.extend(province_cov_read(f"cm_trmm_cov_{good}{suffix}", gate=gate))
+        lines.append("}")
+        lines.extend(emit_group_output(good, gi, opts, first_k,
+                                       f"cm_trmm_outg_{good}_g{gi}"))
+    lines.append(f"cm_trmm_out_{good} = {{")
+    lines.append(f"\tvalue = cm_trmm_outg_{good}_g1")
+    lines.append("\tif = {")
+    lines.append(f"\t\tlimit = {{ cm_trmm_covg_{good}_g2 > "
+                 f"{{ value = cm_trmm_covg_{good}_g1 }} }}")
+    lines.append(f"\t\tvalue = cm_trmm_outg_{good}_g2")
+    lines.append("\t}")
+    lines.append("}")
+    return lines
+
+
+def emit_good_value(good, options):
+    """What one level of the assumed producer earns here: its output at the
+    live market price. 0 where no group's location gate holds, so a good whose
+    producer cannot stand here adds nothing."""
+    groups = output_groups(options, good)
+    gates = [gate for _gi, gate, _first_k, _opts in groups]
+    limit = "exists = market"
+    lines = [f"cm_trmm_val_{good} = {{", "\tvalue = 0"]
+    if all(gate is not None for gate in gates):
+        lines.append(f"\t# {gate_comment(groups[0][3])}")
+        if len(gates) == 1:
+            limit = f"{gates[0]} {limit}"
+        else:
+            limit = "OR = { " + " ".join(gates) + " } " + limit
+    lines.append("\tif = {")
+    lines.append(f"\t\tlimit = {{ {limit} }}")
+    lines.append(f"\t\tvalue = cm_trmm_out_{good}")
+    lines.append(f'\t\tmultiply = "market.market_price(goods:{good})"')
+    lines.append("\t}")
+    lines.append("}")
+    return lines
+
+
+def emit_right_value(right, alias, rights, boost_values):
+    """The gold a right adds per level of each producer it boosts, summed over
+    its goods. An output bonus lifts the output alone and never the inputs, so
+    the bonus times the output at the market price is the whole of it."""
+    lines = [f"# {right}: {rights[right]['file']}:{rights[right]['line']}",
+             f"cm_trmm_rightval_{alias} = {{", "\tvalue = 0"]
+    for good in rights[right]["goods"]:
+        lines.append("\tadd = {")
+        lines.append(f"\t\tvalue = cm_trmm_val_{good}")
+        lines.append(f"\t\tmultiply = {fmt_amount(boost_values[(right, good)])}")
+        lines.append("\t}")
+    lines.append("}")
+    return lines
+
+
 def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
                        relevant, boosts, base_rgo, rgo_advances):
     lines = [GENERATED_HEADER]
@@ -1202,6 +1315,27 @@ def emit_script_values(rights, options, aliases, boosted_goods, self_goods,
         lines.append(f"\t\tadd = cm_trmm_right_{alias}")
         lines.append("\t}")
         lines.append("}")
+    lines.append("")
+
+    lines.append("# What a right is worth here, in gold per level of the producers it")
+    lines.append("# boosts. An output bonus lifts the output alone and never the inputs,")
+    lines.append("# so a good's term is the bonus times the assumed method's output at the")
+    lines.append("# live market price, and the input side cancels out of the comparison.")
+    lines.append("# The method assumed is the one the map mode assumes, so the two agree.")
+    lines.append("# A dyes or wine right also boosts that raw material's own RGO where the")
+    lines.append("# location produces it, which coverage averages in and this cannot: an RGO")
+    lines.append("# level has no per-type output to read, so those rights read a little low")
+    lines.append("# there.")
+    boost_values = {}
+    for good, entries in boosts.items():
+        for right, value, _ref in entries:
+            boost_values[(right, good)] = value
+    for good in boosted_goods:
+        lines.extend(emit_good_output(good, options))
+        lines.extend(emit_good_value(good, options))
+    for right in ROYAL_RIGHTS:
+        lines.extend(emit_right_value(right, aliases[right], rights,
+                                      boost_values))
     lines.append("")
 
     lines.append(
@@ -2944,6 +3078,7 @@ def main():
 
     game_dir = resolve_game_dir(args.game_dir)
     goods_categories = parse_goods(os.path.join(game_dir, GOODS_SUBDIR))
+    goods_prices = parse_goods_prices(os.path.join(game_dir, GOODS_SUBDIR))
     if not goods_categories:
         sys.exit("No goods parsed")
 
@@ -3056,6 +3191,22 @@ def main():
             print(f"  {good} output bonus, granted rights subtracted: {names}")
         else:
             print(f"  {good} output bonus, no granting town right")
+    bonus_of = {(right, good): value for good, entries in boosts.items()
+                for right, value, _ref in entries}
+    print("  value added per level at base prices, default assumed methods:")
+    ranked = []
+    for right in ROYAL_RIGHTS:
+        total = 0.0
+        parts = []
+        for good in rights[right]["goods"]:
+            output = output_groups(options, good)[0][3][0]["output"]
+            price = goods_prices.get(good, 0.0)
+            term = bonus_of[(right, good)] * output * price
+            total += term
+            parts.append(f"{good} {term:.2f}")
+        ranked.append((total, right, ", ".join(parts)))
+    for total, right, parts in sorted(ranked, reverse=True):
+        print(f"    {right}: {total:.2f} ({parts})")
     total_rows = 0
     for good in boosted_goods:
         for _gi, _gate, _label, _fk, _mo, opts in why_groups(options, good):
