@@ -51,14 +51,23 @@ cm_ab_rd_cc_at_frontier = {
 }
 
 # Root is the country. The category's drain runs from cm_q_approval_pass, which only runs once a
-# cycle has opened, so this is what opens one in a month nothing else staged.
+# cycle has opened, so this is what opens one in a month nothing else staged. Target 3 is the one
+# that still needs a per-corridor test, a corridor off the frontier paying nothing until the chain
+# in front of it lands.
 cm_ab_rd_has_work = {
-	any_owned_location = {
-		OR = {
-			has_variable = cm_ab_rd_score_1
-			has_variable = cm_ab_rd_score_2
-			AND = {
-				has_variable = cm_ab_rd_score_3
+	OR = {
+		AND = {
+			has_variable_list = cm_ab_rd_queue_1
+			variable_list_size = { name = cm_ab_rd_queue_1 value >= 1 }
+		}
+		AND = {
+			has_variable_list = cm_ab_rd_queue_2
+			variable_list_size = { name = cm_ab_rd_queue_2 value >= 1 }
+		}
+		AND = {
+			has_variable_list = cm_ab_rd_queue_3
+			any_in_list = {
+				variable = cm_ab_rd_queue_3
 				cm_ab_rd_cc_at_frontier = yes
 			}
 		}

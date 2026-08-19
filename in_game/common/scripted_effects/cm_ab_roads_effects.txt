@@ -1,8 +1,9 @@
 ﻿# Auto-Build Roads: builds the road network worth the most per gold, across three targets that
 # run in a fixed order. Proximity first, then market access, then connecting locations to the
 # capital. Each one plans a parent tree, walks it from the leaves up so every corridor
-# carries the value of everything behind it, and the monthly drain buys the best corridors its budget
-# share reaches. A lower target gets a turn only in a month the one above it ordered nothing.
+# carries the value of everything behind it, and stores what it found as a queue. The monthly drain
+# walks that queue best first and stops at the first corridor it cannot start. A lower target gets a
+# turn only in a month the one above it ordered nothing.
 
 # Orders that produced nothing before a corridor is set aside.
 @cm_ab_rd_max_tries = 3
@@ -21,6 +22,9 @@ cm_ab_rd_plan = {
 			has_advance = road_building # Unlocks gravel_road: in_game/common/advances/3_road_unlocks.txt:1
 		}
 		save_scope_as = cm_country
+		# Cleared here rather than where it is asked for, so a country not yet holding road_building
+		# keeps the request and replans the month it does.
+		remove_variable = cm_ab_rd_replan
 		save_temporary_scope_value_as = { name = cm_ab_rd_tier value = cm_ab_rd_tier_cost_value }
 		# Each target records whether its pass ran at all, which is what tells a target that planned
 		# nothing apart from one that never got to look. Targets 1 and 2 both wait on the river
@@ -31,6 +35,17 @@ cm_ab_rd_plan = {
 		cm_ab_rd_plan_proximity = yes
 		cm_ab_rd_plan_market_access = yes
 		cm_ab_rd_plan_capital = yes
+	}
+}
+
+# A lucky nation plans on what the mod itself did rather than on a cadence: it places every one of
+# their governors and moves their capital, so it knows exactly when the proximity map moved. A human
+# keeps the four-yearly pulse and the button, which is why the gate is here.
+# Root is the country.
+cm_ab_rd_mark_replan = {
+	if = {
+		limit = { cm_ln_is_active = yes }
+		set_variable = { name = cm_ab_rd_replan value = 1 }
 	}
 }
 
@@ -93,6 +108,7 @@ cm_ab_rd_plan_proximity = {
 # carries each tile's own unrealized tax base onto every corridor behind it.
 # Root is the country, scope:cm_country set.
 cm_ab_rd_value_pass = {
+	clear_variable_list = cm_ab_rd_queue_1
 	every_owned_location = {
 		set_variable = { name = cm_ab_rd_sub value = 0 }
 		remove_variable = cm_ab_rd_par_1
@@ -140,6 +156,9 @@ cm_ab_rd_value_location = {
 			var:cm_pf_prev = { save_temporary_scope_as = cm_ab_rd_to }
 			set_variable = { name = cm_ab_rd_par_1 value = scope:cm_ab_rd_to }
 			set_variable = { name = cm_ab_rd_score_1 value = cm_ab_rd_score_value }
+			scope:cm_country = {
+				add_to_variable_list = { name = cm_ab_rd_queue_1 target = scope:cm_ab_rd_from }
+			}
 		}
 	}
 }
@@ -314,6 +333,7 @@ cm_ab_rd_front_residue_clear = {
 # Highest predicted loss is farthest from the centre, so ordering by it visits every tile before the
 # one it routes through. Root is the country, scope:cm_country set.
 cm_ab_rd_ma_value_pass = {
+	clear_variable_list = cm_ab_rd_queue_2
 	every_owned_location = {
 		set_variable = { name = cm_ab_rd_sub value = 0 }
 		remove_variable = cm_ab_rd_score_2
@@ -348,6 +368,9 @@ cm_ab_rd_ma_value_location = {
 			save_temporary_scope_as = cm_ab_rd_from
 			var:cm_ab_rd_par_2 = { save_temporary_scope_as = cm_ab_rd_to }
 			set_variable = { name = cm_ab_rd_score_2 value = cm_ab_rd_ma_score_value }
+			scope:cm_country = {
+				add_to_variable_list = { name = cm_ab_rd_queue_2 target = scope:cm_ab_rd_from }
+			}
 		}
 	}
 }
@@ -444,6 +467,7 @@ cm_ab_rd_cc_relax = {
 # Deepest first, so every location is visited before the one it reaches the connected set through.
 # Root is the country, scope:cm_country set.
 cm_ab_rd_cc_value_pass = {
+	clear_variable_list = cm_ab_rd_queue_3
 	every_owned_location = {
 		set_variable = { name = cm_ab_rd_sub value = 0 }
 		remove_variable = cm_ab_rd_score_3
@@ -474,6 +498,9 @@ cm_ab_rd_cc_value_location = {
 			save_temporary_scope_as = cm_ab_rd_from
 			var:cm_ab_rd_par_3 = { save_temporary_scope_as = cm_ab_rd_to }
 			set_variable = { name = cm_ab_rd_score_3 value = cm_ab_rd_score_value }
+			scope:cm_country = {
+				add_to_variable_list = { name = cm_ab_rd_queue_3 target = scope:cm_ab_rd_from }
+			}
 		}
 	}
 }
@@ -520,18 +547,39 @@ cm_ab_pass_roads = {
 	}
 }
 
-# Nothing bounds how many corridors a cycle orders or how many may be in flight: the pool is the
-# only limit, and the first corridor it cannot cover stops the pass through cm_ab_cost_blocked.
-# $TGT$ = the target's number, $RING$ = an extra per-candidate trigger or always.
+# The queue is a build order rather than a pool of candidates: it is walked best first and the walk
+# ends at the first corridor it cannot start, instead of passing over it for a cheaper one behind it.
+# Nothing bounds how many corridors a cycle orders or how many may be in flight; the pool is the only
+# limit. $TGT$ = the target's number, $RING$ = an extra per-candidate trigger or always.
 # Root is the country, scope:cm_country set.
 cm_ab_rd_issue_pass = {
-	ordered_owned_location = {
+	cm_ab_rd_prune_queue = { TGT = $TGT$ }
+	set_local_variable = { name = cm_ab_rd_stop value = 0 }
+	ordered_in_list = {
+		variable = cm_ab_rd_queue_$TGT$
+		# The sort key's own guard rather than a filter: an entry that lost its score would put an unset
+		# variable on the left of the order_by. Every other test is in the body, because an ordered_
+		# iterator evaluates its limit for the whole set before the first body runs, and a list
+		# iterator's limit never sees a local the body writes.
+		limit = { has_variable = cm_ab_rd_score_$TGT$ }
 		order_by = { value = var:cm_ab_rd_score_$TGT$ }
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
+		cm_ab_rd_walk_entry = { TGT = $TGT$ RING = $RING$ }
+	}
+}
+
+# One queued corridor. Everything tested here is a skip that leaves the walk running: the frontier
+# ring because target 3's best corridor only reaches it once the chain in front of it lands, and an
+# order already in flight because the corridor at the head of the queue is usually the one bought
+# last month. What ends the walk is scarcity, and that lives in cm_ab_rd_try_build.
+# $TGT$ = the target's number, $RING$ = an extra per-candidate trigger or always.
+# Root is the location, scope:cm_country set.
+cm_ab_rd_walk_entry = {
+	if = {
 		limit = {
-			has_variable = cm_ab_rd_score_$TGT$
-			has_variable = cm_ab_rd_par_$TGT$
+			local_var:cm_ab_rd_stop = 0
+			local_var:cm_ab_cost_blocked = 0
 			$RING$ = yes
 			# cm_ab_rd_bad condemns the corridor that kept producing nothing, not the location it
 			# starts at, which may have a perfectly buildable corridor to another neighbour.
@@ -544,17 +592,47 @@ cm_ab_rd_issue_pass = {
 			}
 			has_road_constructions = no
 			# An order placed earlier in this same execution: has_road_constructions is not a
-			# reliable guard against one, and the re-offer walks the plan a second time.
+			# reliable guard against one, and the re-offer walks the queue a second time.
 			NOT = { scope:cm_country = { is_target_in_variable_list = { name = cm_ab_rd_building target = prev } } }
 			modifier:road_building_blocked = no
-			cm_ab_rd_meets_min_discount = yes
-			var:cm_ab_rd_par_$TGT$ = {
-				owner ?= scope:cm_country
-				modifier:road_building_blocked = no
-			}
-			NOT = { has_latest_road_to = var:cm_ab_rd_par_$TGT$ }
+			var:cm_ab_rd_par_$TGT$ = { modifier:road_building_blocked = no }
 		}
 		cm_ab_rd_try_build = { TGT = $TGT$ }
+	}
+}
+
+# Drops the corridors that have left the plan, so a four-year-old queue does not spend the walk on
+# roads it has already laid. A keep list rather than a removal in place, because removing from the
+# list being walked mutates the collection. $TGT$ = the target's number.
+# Root is the country, scope:cm_country set.
+cm_ab_rd_prune_queue = {
+	if = {
+		limit = { has_variable_list = cm_ab_rd_queue_$TGT$ }
+		clear_variable_list = cm_ab_rd_keep
+		every_in_list = {
+			variable = cm_ab_rd_queue_$TGT$
+			if = {
+				limit = {
+					has_variable = cm_ab_rd_score_$TGT$
+					has_variable = cm_ab_rd_par_$TGT$
+					var:cm_ab_rd_par_$TGT$ = { owner ?= scope:cm_country }
+					NOT = { has_latest_road_to = var:cm_ab_rd_par_$TGT$ }
+				}
+				save_temporary_scope_as = cm_ab_rd_live
+				scope:cm_country = {
+					add_to_variable_list = { name = cm_ab_rd_keep target = scope:cm_ab_rd_live }
+				}
+			}
+		}
+		clear_variable_list = cm_ab_rd_queue_$TGT$
+		every_in_list = {
+			variable = cm_ab_rd_keep
+			save_temporary_scope_as = cm_ab_rd_live
+			scope:cm_country = {
+				add_to_variable_list = { name = cm_ab_rd_queue_$TGT$ target = scope:cm_ab_rd_live }
+			}
+		}
+		clear_variable_list = cm_ab_rd_keep
 	}
 }
 
@@ -562,12 +640,11 @@ cm_ab_rd_issue_pass = {
 cm_ab_rd_try_build = {
 	if = {
 		limit = {
-			local_var:cm_ab_cost_blocked = 0
-			# Here rather than in the issue pass limit, which an ordered_ iterator evaluates once
-			# for the whole candidate set: the committed totals move with every order this pass
-			# places. This if carries no else, so a shortage stays a skip and never reaches
-			# cm_ab_stop_on_cost, which would starve targets 2 and 3 over something gold cannot fix.
+			# Both belong here rather than in the walk's limit, which an ordered_ iterator evaluates for
+			# the whole queue before the first order is placed: the committed goods totals move with
+			# every order this pass makes.
 			cm_market_has_construction_goods_for_road = yes
+			cm_ab_rd_meets_min_discount = yes
 		}
 		save_temporary_scope_as = cm_ab_rd_from
 		var:cm_ab_rd_par_$TGT$ = { save_temporary_scope_as = cm_ab_rd_to }
@@ -602,6 +679,12 @@ cm_ab_rd_try_build = {
 			# Waiting for the best corridor beats laying a worse one, the same stop Production takes.
 			cm_ab_stop_on_cost = { COST = scope:cm_cost }
 		}
+	}
+	else = {
+		# The queue is walked in order, so a corridor its market cannot supply or whose materials cost too
+		# much ends this target's walk rather than yielding to a cheaper one behind it. Deliberately not
+		# cm_ab_cost_blocked, which would starve the targets below over something gold cannot fix.
+		set_local_variable = { name = cm_ab_rd_stop value = 1 }
 	}
 }
 
@@ -701,42 +784,33 @@ cm_ab_rd_probe = {
 	set_variable = { name = cm_ab_rd_p3r value = 0 }
 	set_variable = { name = cm_ab_rd_pf value = 0 }
 	set_variable = { name = cm_ab_rd_ps value = 0 }
+	# The market access tree's parent count, which separates a relaxation that improved nothing
+	# from one that improved plenty the store gate then rejected. It is the one figure here about the
+	# relaxation rather than about the queue the drain walks.
 	every_owned_location = {
-		if = {
-			limit = { has_variable = cm_ab_rd_score_1 }
-			scope:cm_country = { change_variable = { name = cm_ab_rd_p1 add = 1 } }
-		}
-		if = {
-			limit = { has_variable = cm_ab_rd_score_2 }
-			scope:cm_country = { change_variable = { name = cm_ab_rd_p2 add = 1 } }
-		}
-		# The market access tree's parent count, which separates a relaxation that improved nothing
-		# from one that improved plenty the store gate then rejected.
 		if = {
 			limit = { has_variable = cm_ab_rd_par_2 }
 			scope:cm_country = { change_variable = { name = cm_ab_rd_p2p add = 1 } }
 		}
+	}
+	every_in_list = {
+		variable = cm_ab_rd_queue_1
+		scope:cm_country = { change_variable = { name = cm_ab_rd_p1 add = 1 } }
+		cm_ab_rd_probe_count_short = yes
+	}
+	every_in_list = {
+		variable = cm_ab_rd_queue_2
+		scope:cm_country = { change_variable = { name = cm_ab_rd_p2 add = 1 } }
+		cm_ab_rd_probe_count_short = yes
+	}
+	every_in_list = {
+		variable = cm_ab_rd_queue_3
+		scope:cm_country = { change_variable = { name = cm_ab_rd_p3 add = 1 } }
 		if = {
-			limit = { has_variable = cm_ab_rd_score_3 }
-			scope:cm_country = { change_variable = { name = cm_ab_rd_p3 add = 1 } }
-			if = {
-				limit = { cm_ab_rd_cc_at_frontier = yes }
-				scope:cm_country = { change_variable = { name = cm_ab_rd_p3r add = 1 } }
-			}
+			limit = { cm_ab_rd_cc_at_frontier = yes }
+			scope:cm_country = { change_variable = { name = cm_ab_rd_p3r add = 1 } }
 		}
-		# A planned corridor the drain will pass over, which a count of 0 orders cannot tell apart
-		# from an empty plan or a spent pool.
-		if = {
-			limit = {
-				OR = {
-					has_variable = cm_ab_rd_score_1
-					has_variable = cm_ab_rd_score_2
-					has_variable = cm_ab_rd_score_3
-				}
-				cm_market_has_construction_goods_for_road = no
-			}
-			scope:cm_country = { change_variable = { name = cm_ab_rd_ps add = 1 } }
-		}
+		cm_ab_rd_probe_count_short = yes
 	}
 	if = {
 		limit = { has_variable_list = cm_ab_rd_building }
@@ -798,11 +872,24 @@ cm_ab_rd_probe = {
 	remove_variable = cm_ab_rd_ps
 }
 
+# A queued corridor the drain will pass over, which a count of 0 orders cannot tell apart from an
+# empty queue or a spent pool. Root is the location, scope:cm_country set.
+cm_ab_rd_probe_count_short = {
+	if = {
+		limit = { cm_market_has_construction_goods_for_road = no }
+		scope:cm_country = { change_variable = { name = cm_ab_rd_ps add = 1 } }
+	}
+}
+
 # Root is the country. Drops the plan on a tag switch and when the master toggle goes off.
 cm_ab_rd_clear_plan = {
 	remove_variable = cm_ab_rd_ran_1
 	remove_variable = cm_ab_rd_ran_2
 	remove_variable = cm_ab_rd_ran_3
+	remove_variable = cm_ab_rd_replan
+	clear_variable_list = cm_ab_rd_queue_1
+	clear_variable_list = cm_ab_rd_queue_2
+	clear_variable_list = cm_ab_rd_queue_3
 	clear_variable_list = cm_ab_rd_building
 	clear_variable_list = cm_ab_rd_keep
 	clear_variable_list = cm_ab_rd_front

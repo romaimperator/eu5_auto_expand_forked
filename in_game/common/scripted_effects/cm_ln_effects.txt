@@ -285,6 +285,12 @@ cm_ln_monthly_cycle = {
 		# Ahead of the budget refresh, so the month a reorganization claims the treasury is the
 		# month the pools go to zero.
 		cm_gov_reorg_tick = yes
+		# After everything that could have moved a governor or the capital, and ahead of the construction
+		# cycle, so this month's drain walks the new queue rather than next month's.
+		if = {
+			limit = { exists = var:cm_ab_rd_replan }
+			cm_ab_rd_plan = yes
+		}
 		if = {
 			limit = { cm_ab_master_active = yes }
 			cm_ab_monthly_budget_refresh = yes

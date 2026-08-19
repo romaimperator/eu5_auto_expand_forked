@@ -129,6 +129,7 @@ cm_ln_reorg_capital_move = {
 		}
 		set_capital = var:cm_ln_cap_target
 		capital = { cm_ln_capital_start_town_upgrade = yes }
+		cm_ab_rd_mark_replan = yes
 		cm_dbg_log = { cat = governors action = cm_ln_log_capital_moved }
 	}
 	remove_variable = cm_ln_cap_target
@@ -185,6 +186,7 @@ cm_ln_open_capital_tick = {
 			if = {
 				limit = { var:cm_ln_open_wait >= @cm_ln_open_max_wait }
 				set_variable = { name = cm_ln_open_done value = 1 }
+				cm_ab_rd_mark_replan = yes
 				remove_variable = cm_ln_open_idx
 				cm_dbg_log = { cat = governors action = cm_ln_log_open_gave_up }
 			}
@@ -242,6 +244,7 @@ cm_ln_open_capital_run = {
 	remove_variable = cm_ln_open_wait
 	remove_variable = cm_ln_open_idx
 	set_variable = { name = cm_ln_open_done value = 1 }
+	cm_ab_rd_mark_replan = yes
 }
 
 # A share of the vanilla capital_movement price, which is scaled_gold 12 (120% of economic base)
@@ -401,6 +404,7 @@ cm_ln_open_gov_place = {
 		# from here rather than from the live proximity.
 		add_to_variable_list = { name = cm_ln_open_gov_sites target = scope:cm_ln_open_gov_site }
 		add_to_variable_list = { name = cm_ln_seats target = scope:cm_ln_open_gov_site }
+		cm_ab_rd_mark_replan = yes
 		cm_dbg_log = { cat = governors action = cm_ln_log_open_gov_placed }
 	}
 	else = {
