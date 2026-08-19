@@ -138,7 +138,7 @@ cm_gui_try_build = {
 			if = {
 				limit = {
 					cm_gui_metric_gate_passes = yes
-					cm_building_type_profitable_or_subsidized = yes
+					cm_building_type_profitable_or_subsidized = { TYPE = scope:cm_building_type }
 					scope:cm_can_build = yes
 					# A staged upgrade already constructs this type here
 					NOT = { is_target_in_variable_list = { name = cm_q_upgrade_target_types target = scope:cm_building_type } }
@@ -450,7 +450,7 @@ cm_location_will_auto_expand_from_zero_levels = {
 			# Ends in cm_location_allowed_to_build, which vetoes every foreign type.
 			cm_location_will_auto_expand_from_zero_levels = yes
 			cm_gui_metric_gate_passes = yes
-			cm_building_type_profitable_or_subsidized = yes
+			cm_building_type_profitable_or_subsidized = { TYPE = scope:cm_building_type }
 			cm_country_can_afford_predicted_cost = yes
 			scope:cm_can_build = yes
 		}
@@ -524,7 +524,7 @@ cm_is_building_able_to_auto_expand = {
 			cm_gui_metric_gate_passes = yes
 			# Upgrades are not profit-gated.
 			trigger_if = { limit = { owner = { NOT = { building_type_is_obsolete = scope:cm_building_type } } }
-				location = { cm_building_type_profitable_or_subsidized = yes }
+				location = { cm_building_type_profitable_or_subsidized = { TYPE = scope:cm_building_type } }
 			}
 			is_opened = yes
 			is_lacking_goods = no
@@ -654,20 +654,20 @@ cm_building_expand_has_open_slot = {
 	}
 }
 
-# Root is the building. Expects scope:cm_profit.
+# Root is the building.
 cm_is_building_profitable_or_subsidized = {
 	is_shown = {
 		building_type = { save_temporary_scope_as = cm_building_type }
 		trigger_if = { limit = { owner = { NOT = { building_type_is_obsolete = scope:cm_building_type } } }
-			location = { cm_building_type_profitable_or_subsidized = yes }
+			location = { cm_building_type_profitable_or_subsidized = { TYPE = scope:cm_building_type } }
 		}
 	}
 }
 
-# Root is the location. Expects scope:cm_building_type and scope:cm_profit.
+# Root is the location. Expects scope:cm_building_type.
 cm_is_building_type_profitable_or_subsidized = {
 	is_shown = {
-		cm_building_type_profitable_or_subsidized = yes
+		cm_building_type_profitable_or_subsidized = { TYPE = scope:cm_building_type }
 	}
 }
 

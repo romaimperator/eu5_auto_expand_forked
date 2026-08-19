@@ -99,6 +99,22 @@ cm_location_unemployed_for_building_type = {
   if = { limit = { "global_variable_map(cm_building_type_to_pop_type|scope:cm_building_type)" = pop_type:tribesmen } value = "unemployed_pops_of_pop_type_in_location(pop_type:tribesmen)" }
 }
 
+# Every unemployed pop at the location, whatever its type. The engine offers no total-unemployment
+# read: employment_percentage is the only candidate and its own trigger localization calls it an
+# employment percentage while the vanilla filter built on it is named location_unemployed_percentage
+# (game/in_game/gui/filters/05_location.txt:64), so the eight types are summed instead.
+# Root is the location.
+cm_location_total_unemployed_pops = {
+  value = "unemployed_pops_of_pop_type_in_location(pop_type:nobles)"
+  add   = "unemployed_pops_of_pop_type_in_location(pop_type:clergy)"
+  add   = "unemployed_pops_of_pop_type_in_location(pop_type:burghers)"
+  add   = "unemployed_pops_of_pop_type_in_location(pop_type:laborers)"
+  add   = "unemployed_pops_of_pop_type_in_location(pop_type:soldiers)"
+  add   = "unemployed_pops_of_pop_type_in_location(pop_type:peasants)"
+  add   = "unemployed_pops_of_pop_type_in_location(pop_type:slaves)"
+  add   = "unemployed_pops_of_pop_type_in_location(pop_type:tribesmen)"
+}
+
 # Root is the location
 cm_combined_pop_promotion_speed = {
   value = modifier:local_pop_promotion_speed

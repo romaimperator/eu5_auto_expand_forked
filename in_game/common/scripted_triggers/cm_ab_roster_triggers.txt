@@ -24,22 +24,6 @@ cm_check_location_meets_min_market_access = {
 	market_access > 0
 }
 
-# Root is the location. True when unemployed laborers exist now, or the laborer deficit fills within six years.
-cm_check_location_has_laborers_available_or_will_be = {
-	OR = {
-		0 < { value = "unemployed_pops_of_pop_type_in_location(pop_type:laborers)" }
-		0 <= { value = cm_location_laborers_available add = { value = cm_location_fill_rate_for_laborers multiply = 72 } }
-	}
-}
-
-# Root is the location. True when unemployed peasants exist now, or the peasant deficit fills within six years.
-cm_check_location_has_peasants_available_or_will_be = {
-	OR = {
-		0 < { value = "unemployed_pops_of_pop_type_in_location(pop_type:peasants)" }
-		0 <= { value = cm_location_peasants_available add = { value = cm_location_fill_rate_for_peasants multiply = 72 } }
-	}
-}
-
 # Root is the location. Expects the raw auto-build list key as target and scope country. True when location has enough RGO/lumber levels for this building type: sawmill needs RGO or lumber_mill >= required; windmill/local_smelters need RGO >= required.
 # Non-RGO buildings always pass via the fallback.
 cm_ab_check_rgo_level_requirement_met = {

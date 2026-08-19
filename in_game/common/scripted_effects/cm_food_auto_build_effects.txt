@@ -82,6 +82,83 @@ cm_food_auto_build_pass = {
 	}
 }
 
+# --- Subsidies ---
+
+# Records a food building auto-food has just approved. The engine build action fires from the queue
+# window after this pass, so there is nothing standing to subsidize yet and the entry waits for the
+# next cycle. Root is the location. Expects scope:cm_country, scope:cm_building_type.
+cm_food_mark_subsidize = {
+	if = {
+		limit = {
+			scope:cm_country = { exists = var:cm_ab_food_subsidize }
+			scope:cm_building_type = { cm_is_building_type_production_building = yes }
+		}
+		save_temporary_scope_as = cm_food_sub_loc
+		add_to_variable_list = { name = cm_food_subsidize_types target = scope:cm_building_type }
+		scope:cm_country = { add_to_variable_list = { name = cm_food_subsidize_locs target = scope:cm_food_sub_loc } }
+	}
+}
+
+# Subsidizes the food buildings auto-food built, so one that is not earning still takes on its
+# workers and grows its food. An entry whose level has not appeared yet stays for the next cycle.
+# Root is the country.
+cm_food_apply_subsidies = {
+	if = {
+		limit = { has_variable_list = cm_food_subsidize_locs }
+		save_scope_as = cm_country
+		clear_variable_list = cm_food_sub_drop_locs
+		# Named apart from cm_location and cm_building_type, which the staging that follows in the
+		# same cycle owns.
+		every_in_list = {
+			variable = cm_food_subsidize_locs
+			save_temporary_scope_as = cm_food_sub_loc
+			every_in_list = {
+				variable = cm_food_subsidize_types
+				save_temporary_scope_as = cm_food_sub_type
+				if = {
+					limit = {
+						scope:cm_food_sub_loc = {
+							any_buildings_in_location = {
+								owner = scope:cm_country
+								building_type = scope:cm_food_sub_type
+							}
+						}
+					}
+					scope:cm_food_sub_loc = {
+						"building(scope:cm_food_sub_type|scope:cm_country)" = { set_subsidized = yes }
+						remove_list_variable = { name = cm_food_subsidize_types target = scope:cm_food_sub_type }
+					}
+				}
+			}
+			# A location whose list has emptied is staged rather than dropped where it is found,
+			# which would mutate the walk it is found in.
+			if = {
+				limit = { NOT = { variable_list_size = { name = cm_food_subsidize_types value >= 1 } } }
+				scope:cm_country = { add_to_variable_list = { name = cm_food_sub_drop_locs target = scope:cm_food_sub_loc } }
+			}
+		}
+		every_in_list = {
+			variable = cm_food_sub_drop_locs
+			save_temporary_scope_as = cm_food_sub_loc
+			scope:cm_country = { remove_list_variable = { name = cm_food_subsidize_locs target = scope:cm_food_sub_loc } }
+		}
+		clear_variable_list = cm_food_sub_drop_locs
+	}
+}
+
+# Root is the country. The new tag holds different locations, so the pending marks go with the old
+# one rather than subsidizing buildings it never built.
+cm_food_clear_subsidize_marks = {
+	if = {
+		limit = { has_variable_list = cm_food_subsidize_locs }
+		every_in_list = {
+			variable = cm_food_subsidize_locs
+			clear_variable_list = cm_food_subsidize_types
+		}
+		clear_variable_list = cm_food_subsidize_locs
+	}
+}
+
 # Root is the location. Drops the player's auto-food opt-in where the location is no longer
 # rural. Its cm_auto_food_locked_location modifier runs a thousand years and the toggle's button
 # is hidden above rural rank, so a location that ranks up anyway would block every later rank

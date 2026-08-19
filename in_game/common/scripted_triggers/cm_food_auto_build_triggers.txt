@@ -13,11 +13,12 @@ cm_food_location_buildable_for_building_type = {
 	cm_location_allowed_to_build = { target = $target$ }
 	cm_location_building_type_is_not_at_max_level = { target = $target$ }
 	cm_food_building_type_is_staffed = { target = $target$ }
+	cm_building_type_profitable_or_subsidized = { TYPE = $target$ }
 }
 
 # Root is the location. Expects $target$ = a building_type.
-# True when the existing instance has filled all but one level's worth of its jobs; a village
-# that stopped hiring (unprofitable) would leave a new level just as empty.
+# True when the existing instance has filled all but one level's worth of its jobs, so a new level
+# has somebody left to put in it.
 cm_food_building_type_is_staffed = {
 	$target$ = { save_temporary_scope_as = cm_food_staffed_check_type }
 	trigger_if = { limit = { has_building = $target$ }
@@ -39,11 +40,19 @@ cm_food_location_rgo_is_on_roster = {
 
 # --- Pool pop checks ---
 
-# Root is the location. Expects scope:cm_country.
-# True when no pop-restricted food option is buildable.
+# Auto-food gates on the pops a location has left over of any type, never on the type a building
+# draws. Open jobs are what speed promotion, and a location reaches its population cap long before
+# it reaches its building caps, so holding a level back until the right type has promoted costs
+# more food than it saves.
+# Root is the location. Expects $target$ = a building_type.
+cm_food_location_has_pops_for = {
+	$target$ = { save_temporary_scope_as = cm_food_pops_type }
+	cm_location_total_unemployed_pops >= scope:cm_food_pops_type.employment_size
+}
+
+# Root is the location. True when the location has nobody left to put in a new job.
 cm_food_location_pops_still_filling = {
-	NOT = { cm_check_location_has_peasants_available_or_will_be = yes }
-	NOT = { cm_check_location_has_laborers_available_or_will_be = yes }
+	NOT = { cm_location_total_unemployed_pops > 0 }
 }
 
 # --- Can-build checks per option ---
@@ -63,7 +72,8 @@ cm_food_option_rgo_but_for_pops = {
 
 cm_food_can_build_rgo = {
 	cm_food_option_rgo_but_for_pops = yes
-	cm_check_location_has_laborers_available_or_will_be = yes
+	# An RGO level takes one worker unit off the pool, per cm_location_rgo_laborer_reserve.
+	cm_location_total_unemployed_pops >= 1
 }
 
 # Option 2: +1 Farming Village level
@@ -88,7 +98,7 @@ cm_food_option_farming_village_but_for_pops = {
 
 cm_food_can_build_farming_village = {
 	cm_food_option_farming_village_but_for_pops = yes
-	cm_check_location_has_peasants_available_or_will_be = yes
+	cm_food_location_has_pops_for = { target = building_type:farming_village }
 }
 
 # Option 3: Windmill, 1 level max
@@ -108,7 +118,7 @@ cm_food_option_windmill_but_for_pops = {
 
 cm_food_can_build_windmill = {
 	cm_food_option_windmill_but_for_pops = yes
-	cm_check_location_has_laborers_available_or_will_be = yes
+	cm_food_location_has_pops_for = { target = building_type:windmill }
 }
 
 # Option 4: +1 Irrigation level
@@ -122,7 +132,7 @@ cm_food_option_irrigation_but_for_pops = {
 
 cm_food_can_build_irrigation = {
 	cm_food_option_irrigation_but_for_pops = yes
-	cm_check_location_has_peasants_available_or_will_be = yes
+	cm_food_location_has_pops_for = { target = building_type:irrigation_systems }
 }
 
 # Option 5: +1 Fishing Village level
@@ -137,7 +147,7 @@ cm_food_option_fishing_village_but_for_pops = {
 
 cm_food_can_build_fishing_village = {
 	cm_food_option_fishing_village_but_for_pops = yes
-	cm_check_location_has_peasants_available_or_will_be = yes
+	cm_food_location_has_pops_for = { target = building_type:fishing_village }
 }
 
 # True if any of the five options is valid here on every count but pops, which is auto-food
@@ -253,4 +263,15 @@ cm_food_location_has_buildable_option = {
 		cm_food_can_build_irrigation = yes
 		cm_food_can_build_fishing_village = yes
 	}
+}
+
+# True while every food building already standing here still clears the profit floor or is
+# subsidized. All four building options end in that floor, so this is what tells "nothing left to
+# build here" apart from "what is here has stopped earning".
+# Root is the location.
+cm_food_location_buildings_still_earn = {
+	cm_building_type_profitable_or_subsidized = { TYPE = building_type:farming_village }
+	cm_building_type_profitable_or_subsidized = { TYPE = building_type:windmill }
+	cm_building_type_profitable_or_subsidized = { TYPE = building_type:irrigation_systems }
+	cm_building_type_profitable_or_subsidized = { TYPE = building_type:fishing_village }
 }

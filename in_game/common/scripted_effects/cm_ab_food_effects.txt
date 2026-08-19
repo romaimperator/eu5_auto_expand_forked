@@ -482,7 +482,25 @@ cm_ab_pass_food = {
 					variable = cm_ab_b_types
 					save_scope_as = cm_building_type
 					scope:cm_ab_drain_loc = {
+						# The queue is shared, and the approver reports nothing back and consumes the
+						# claim on its way out, so the claim read before it is what says the item was
+						# this category's and the approved list is what says it took.
+						set_local_variable = { name = cm_food_sub_claim value = 0 }
+						if = {
+							limit = {
+								has_variable_map = cm_ab_b_cat_3
+								is_key_in_variable_map = { name = cm_ab_b_cat_3 target = scope:cm_building_type }
+							}
+							set_local_variable = { name = cm_food_sub_claim value = 1 }
+						}
 						cm_ab_try_approve_build = { cat = 3 POOL = cm_ab_pool_food GOODS_GATE = cm_market_has_construction_goods_for_building SLOTS_GATE = cm_ab_location_has_open_build_slot }
+						if = {
+							limit = {
+								local_var:cm_food_sub_claim = 1
+								is_target_in_variable_list = { name = cm_q_approved_build_types target = scope:cm_building_type }
+							}
+							cm_food_mark_subsidize = yes
+						}
 					}
 				}
 			}

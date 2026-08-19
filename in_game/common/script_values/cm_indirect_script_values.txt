@@ -294,6 +294,24 @@ cm_min_profit_per_level = {
 	value = 0.01
 }
 
+# What the profit floor judges: the standing building's own profit over its level count, never the
+# engine's next-level estimate. 0 where nothing of ours stands, which is the case the floor passes
+# outright. The requirement tooltip reads this so the printed number is the gated one.
+# Root is the location. Expects scope:cm_building_type.
+cm_bld_standing_profit_per_level = {
+	if = {
+		limit = {
+			has_building = scope:cm_building_type
+			"building(scope:cm_building_type|owner)" = { building_level >= 1 }
+		}
+		"building(scope:cm_building_type|owner)" = {
+			value = building_profit
+			divide = building_level
+		}
+	}
+	else = { value = 0 }
+}
+
 # Also expects scope:cm_income.
 cm_bld_income_value = {
 	if = {

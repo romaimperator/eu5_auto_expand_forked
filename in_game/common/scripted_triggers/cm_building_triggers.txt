@@ -295,23 +295,34 @@ cm_gui_metric_gate_passes = {
 	}
 }
 
-# Root is the location. Expects scope:cm_building_type and scope:cm_profit. The engine
-# does not staff an unprofitable unsubsidized building. Non-production types are exempt.
-# $FLOOR$ = the profit per level the building must reach when none of its type here is
+# Root is the location. $TYPE$ = the building type. The engine does not staff an unprofitable
+# unsubsidized building, so a level added to one stands empty while the pops it would have taken
+# still read as unemployed, which is what lets a location build past its own population.
+# Non-production types are exempt, and a type with nothing standing here yet has no profit to
+# read, so its first level is always allowed. The comparison is multiplied out rather than
+# dividing by building_level, which reads 0 while the first level is under construction.
+# $FLOOR$ = the profit per level a standing building must reach when none of its type here is
 # subsidized.
 cm_building_type_clears_profit_floor = {
+	$TYPE$ = { save_temporary_scope_as = cm_profit_floor_type }
 	OR = {
-		NOT = { scope:cm_building_type = { cm_is_building_type_production_building = yes } }
-		cm_bld_profit_value >= $FLOOR$
+		NOT = { scope:cm_profit_floor_type = { cm_is_building_type_production_building = yes } }
+		NOT = { has_building = scope:cm_profit_floor_type }
 		any_buildings_in_location = {
-			building_type = scope:cm_building_type
+			building_type = scope:cm_profit_floor_type
 			is_subsidized = yes
+		}
+		"building(scope:cm_profit_floor_type|owner)" = {
+			building_profit >= {
+				value = $FLOOR$
+				multiply = building_level
+			}
 		}
 	}
 }
 
 cm_building_type_profitable_or_subsidized = {
-	cm_building_type_clears_profit_floor = { FLOOR = cm_min_profit_per_level }
+	cm_building_type_clears_profit_floor = { FLOOR = cm_min_profit_per_level TYPE = $TYPE$ }
 }
 
 # Expects scope:cm_building_type. Checks if the building type produces a good that is also

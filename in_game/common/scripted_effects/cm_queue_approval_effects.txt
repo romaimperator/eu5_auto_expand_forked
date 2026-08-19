@@ -454,7 +454,8 @@ cm_q_pick_best_build_item = {
 # Queues further levels of a just-approved build until the location's construction room is
 # spent. Approving the first level settled the rest, so pops, the promotion buffer, the overbuild
 # allowance and the market goods gate do not stop a level that would otherwise leave a
-# construction slot idle.
+# construction slot idle. The profit floor does stop it: a standing building that is not earning
+# and not subsidized takes on nobody, so the batch would stack levels onto an empty building.
 # $AFFORD$ = the per-level affordability trigger, $CLAIM$ = the per-level claim effect.
 # Leaves local_var:cm_q_copy_stop = 2 when affordability alone ended the batch, which is what a
 # caller with an early stop reads; 1 when the room gates closed and 0 when it ran to the rank
@@ -489,6 +490,7 @@ cm_q_fill_build_slots = {
 			limit = {
 				cm_get_open_build_queue_slots > 0
 				scope:cm_building_type = { cm_building_type_batches_levels = yes }
+				cm_building_type_profitable_or_subsidized = { TYPE = scope:cm_building_type }
 				# The batch's own count against the engine cap. building_max_level is building scope
 				# and reports correctly where building_type_max_level reads 0 (cmf-engine-test 176),
 				# so a type with nothing of ours standing here yet cannot be read and is left to the
@@ -816,6 +818,7 @@ cm_q_pass_auto_food = {
 								construct_building = { building_type = scope:cm_building_type owner = scope:cm_country payer = scope:cm_country }
 								cm_commit_market_demand = yes
 							}
+							cm_food_mark_subsidize = yes
 							cm_q_fill_build_slots = { AFFORD = cm_q_food_can_afford_staged_cost CLAIM = cm_q_claim_build_copy }
 						}
 						remove_from_variable_map = { name = cm_q_food_costs key = scope:cm_building_type }
