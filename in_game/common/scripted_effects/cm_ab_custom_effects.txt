@@ -4,13 +4,17 @@
 # city_walls for its market_center_modifier), and the player's own roster (auto_build_list,
 # cm_cmm_effects.txt). Each of the four is a row of the ab_custom settings list.
 # The market-center block and every roster row walk one shared candidate list, built once per cycle
-# from the markets in the slice (cm_slice_effects.txt); the capital set and the control buildings
-# reach their locations their own way. The roster's subject branch takes its locations from that
-# same walk and from a rotation of its own over the markets only the subjects hold. Bailiffs survey
-# once every four years into a pick list that stages monthly until it empties.
+# from the markets in the slice (cm_slice_effects.txt); the unique control types walk that slice's
+# locations directly and the capital set reaches its own. The roster's subject branch takes its
+# locations from that same walk and from a rotation of its own over the markets only the subjects
+# hold. The bailiff surveys the slice every cycle into a pick list the country's best sites settle
+# into over a rotation, and stages from it once the whole map has been surveyed.
 
-# Four years, the bailiff survey cadence.
-@cm_ab_bailiff_days = 1460
+# How many sites the bailiff plan carries past the room it can fill right now. It keeps the plan
+# populated while the cap is full, so the next slot an urbanizing location opens goes to a site
+# the whole map was ranked for rather than to whatever this cycle's slice offered. Nothing is
+# lost below it: a site the trim drops is surveyed again when its market comes round.
+@cm_ab_bailiff_pool_slack = 20
 
 # Root is the country, scope:cm_country set.
 cm_ab_run_custom = {
@@ -68,11 +72,7 @@ cm_ab_run_custom = {
 		# something is there: by drain time that queue holds every location any category staged.
 		remove_variable = cm_ab_bailiff_staged
 		remove_variable = cm_ab_ctrl_staged
-		if = {
-			limit = { NOT = { exists = var:cm_ab_bailiff_cd } }
-			set_variable = { name = cm_ab_bailiff_cd value = 1 days = @cm_ab_bailiff_days }
-			cm_ab_pick_bailiffs = yes
-		}
+		cm_ab_survey_bailiffs = yes
 		cm_ab_stage_bailiffs = yes
 		cm_ab_stage_max_control_types = yes
 	}
@@ -300,48 +300,110 @@ cm_ab_stage_roster_type_here = {
 	}
 }
 
-# The four-yearly bailiff survey, richest RGO first at what its market pays for it now: the
-# bailiff stands only on rural land, where the raw material is what the location is worth.
+# The bailiff plan: this cycle's slice surveyed into a pick list the country's best remaining
+# sites settle into over a rotation, richest RGO first at what its market pays for it now, the
+# bailiff standing only on rural land where the raw material is what the location is worth.
+# A site the trim drops is offered again when its market comes round, at most one rotation away,
+# and re-ranking every cycle keeps the list honest against a price that moves.
 # The country-wide num_bailiffs modifier caps how many can stand (game
-# in_game/common/building_types/rural_buildings.txt, bailiff allow), so the survey stops at
-# the remaining room and the cap goes to the best locations.
-# That cap is also why this sweep is not sliced: a permanent cap handed to one slice's best
-# would never reach the country's. The cap fills slowly enough that re-ranking every owned
-# location every month changes nothing, hence the four-year cadence on the call.
-# Root is the country.
-cm_ab_pick_bailiffs = {
-	clear_variable_list = cm_ab_bailiff_picks
+# in_game/common/building_types/rural_buildings.txt, bailiff allow), which is what staging waits
+# on cm_ab_bailiff_open for: a cap is spent permanently, so spending it before the whole map has
+# been surveyed hands it to sites the country's own best beat.
+# Root is the country, expects scope:cm_country.
+cm_ab_survey_bailiffs = {
 	building_type:bailiff = { save_scope_as = cm_building_type }
-	set_local_variable = { name = cm_ab_bailiff_room value = modifier:num_bailiffs }
-	change_local_variable = { name = cm_ab_bailiff_room subtract = total_building_levels_including_construction:bailiff }
-	ordered_owned_location = {
+	if = {
+		limit = { NOT = { exists = var:cm_ab_bailiff_open } }
+		cm_ab_bailiff_mark_slice_surveyed = yes
+	}
+	# A variable list holds each target once, so a site already in the list re-enters as a no-op.
+	# An ordered_ iterator filters before it sorts, so the limit keeps the market price read off
+	# everything but rural sites without a bailiff.
+	ordered_in_list = {
+		variable = cm_slice_locations
 		order_by = cm_location_rgo_market_value
 		max = cm_max_guess_at_number_of_locations
 		check_range_bounds = no
-		save_scope_as = cm_location
-		if = {
-			limit = {
-				local_var:cm_ab_bailiff_room >= 1
-				cm_ab_max_control_site_ok = yes
-			}
-			scope:cm_country = { add_to_variable_list = { name = cm_ab_bailiff_picks target = scope:cm_location } }
-			change_local_variable = { name = cm_ab_bailiff_room subtract = 1 }
-		}
+		limit = { cm_ab_bailiff_site_viable = yes }
+		save_scope_as = cm_ab_bailiff_pick
+		scope:cm_country = { add_to_variable_list = { name = cm_ab_bailiff_picks target = scope:cm_ab_bailiff_pick } }
+	}
+	cm_ab_bailiff_trim_picks = yes
+}
+
+# Records this cycle's markets against the plan's own coverage and opens staging once every
+# market present has been surveyed. Its own map rather than cm_slice_seen, which resets at the
+# rotation boundary, so reading that one would make the opening a single cycle a skipped cycle
+# could miss. Opening is one-way, so conquest does not stall an established country: a new
+# market's sites reach the list on its turn and the trim ranks them against the rest.
+# Root is the country, expects scope:cm_country.
+cm_ab_bailiff_mark_slice_surveyed = {
+	every_market_present_in_country = {
+		limit = { cm_market_in_slice = yes }
+		save_scope_as = cm_ab_bailiff_mkt
+		scope:cm_country = { add_to_variable_map = { name = cm_ab_bailiff_seen key = scope:cm_ab_bailiff_mkt value = 1 } }
+	}
+	if = {
+		limit = { NOT = { cm_ab_bailiff_has_unseen_market = yes } }
+		set_variable = { name = cm_ab_bailiff_open value = 1 }
+		clear_variable_map = cm_ab_bailiff_seen
 	}
 }
 
-# Stages the surveyed picks the country can act on this month, richest RGO first. A pick the
-# Custom pool cannot cover is left in the list and staged again next month, so a survey
-# landing on a poor month is not lost; the room is re-read each month because bailiffs
-# finished since the survey have taken part of the cap. Root is the country.
+# Trims the list back to the cap's remaining room plus @cm_ab_bailiff_pool_slack, at this month's
+# prices. Rebuilt through a scratch list because a variable list cannot be trimmed in place, the
+# shape cm_ab_custom_build_candidates uses for the same reason. The viability test is what retires
+# a site lost, urbanized, or already carrying a bailiff.
+# Root is the country, expects scope:cm_country, scope:cm_building_type.
+cm_ab_bailiff_trim_picks = {
+	if = {
+		limit = { has_variable_list = cm_ab_bailiff_picks }
+		clear_variable_list = cm_ab_bailiff_raw
+		every_in_list = {
+			variable = cm_ab_bailiff_picks
+			save_scope_as = cm_ab_bailiff_pick
+			scope:cm_country = { add_to_variable_list = { name = cm_ab_bailiff_raw target = scope:cm_ab_bailiff_pick } }
+		}
+		clear_variable_list = cm_ab_bailiff_picks
+		set_local_variable = { name = cm_ab_bailiff_keep value = @cm_ab_bailiff_pool_slack }
+		# The room as a branch, so a cap that has fallen below what already stands leaves the
+		# slack rather than shortening the plan past it.
+		if = {
+			limit = { modifier:num_bailiffs > total_building_levels_including_construction:bailiff }
+			change_local_variable = { name = cm_ab_bailiff_keep add = modifier:num_bailiffs }
+			change_local_variable = { name = cm_ab_bailiff_keep subtract = total_building_levels_including_construction:bailiff }
+		}
+		# The count is an inner if rather than the iterator's max, every max in this codebase
+		# being a constant, so which scope one is read in has never had to be settled.
+		ordered_in_list = {
+			variable = cm_ab_bailiff_raw
+			order_by = cm_location_rgo_market_value
+			max = cm_max_guess_at_number_of_locations
+			check_range_bounds = no
+			limit = { cm_ab_bailiff_site_viable = yes }
+			save_scope_as = cm_ab_bailiff_pick
+			if = {
+				limit = { local_var:cm_ab_bailiff_keep >= 1 }
+				scope:cm_country = { add_to_variable_list = { name = cm_ab_bailiff_picks target = scope:cm_ab_bailiff_pick } }
+				change_local_variable = { name = cm_ab_bailiff_keep subtract = 1 }
+			}
+		}
+		clear_variable_list = cm_ab_bailiff_raw
+	}
+}
+
+# Stages the picks the country can act on this month, richest RGO first. A pick the Custom pool
+# cannot cover is left in the list and staged again next month; the room is re-read each month
+# because bailiffs finished since have taken part of the cap. This is where can_build_building
+# runs, over the plan rather than over the country. Root is the country.
 cm_ab_stage_bailiffs = {
 	if = {
 		limit = {
+			exists = var:cm_ab_bailiff_open
 			has_variable_list = cm_ab_bailiff_picks
 			variable_list_size = { name = cm_ab_bailiff_picks value >= 1 }
 		}
 		building_type:bailiff = { save_scope_as = cm_building_type }
-		cm_ab_prune_bailiff_picks = yes
 		set_local_variable = { name = cm_ab_bailiff_room value = modifier:num_bailiffs }
 		change_local_variable = { name = cm_ab_bailiff_room subtract = total_building_levels_including_construction:bailiff }
 		ordered_in_list = {
@@ -363,34 +425,22 @@ cm_ab_stage_bailiffs = {
 	}
 }
 
-# Drops picks a bailiff will never reach, so the list shrinks to empty over the four years:
-# lost to another owner, already carrying one (has_building holds from the moment the first
-# level is queued), or urbanized out of reach - bailiff lists only rural_settlement among
-# the four rank fields (game in_game/common/building_types/rural_buildings.txt:10), so a
-# rank upgrade retires the site for good. Root is the country, expects scope:cm_country,
-# scope:cm_building_type.
-cm_ab_prune_bailiff_picks = {
-	every_in_list = {
-		variable = cm_ab_bailiff_picks
-		save_scope_as = cm_ab_bailiff_pick
-		if = {
-			limit = {
-				OR = {
-					NOT = { owner ?= scope:cm_country }
-					has_building = scope:cm_building_type
-					NOT = { location_rank = location_rank:rural_settlement }
-				}
-			}
-			scope:cm_country = { remove_list_variable = { name = cm_ab_bailiff_picks target = scope:cm_ab_bailiff_pick } }
-		}
-	}
+# The plan and its coverage, dropped on a tag switch beside the market rotation: the new tag's
+# markets are different, so the plan is rebuilt and staging waits on the new map being surveyed
+# rather than on the old one. Root is the country.
+cm_ab_clear_bailiff_plan = {
+	clear_variable_list = cm_ab_bailiff_picks
+	clear_variable_list = cm_ab_bailiff_raw
+	clear_variable_map = cm_ab_bailiff_seen
+	remove_variable = cm_ab_bailiff_open
 }
 
-# The unique local_max_control types across owned locations, wealthiest first: tax base over
-# control is what a control building earns, and neither the proximity gate nor the market slice
-# applies. A location takes every type it can hold before the walk moves on. No country-wide cap
-# limits these, so they take no survey and a location newly meeting a type's own rules stages the
-# next month. One level per location. Root is the country.
+# The unique local_max_control types across this cycle's slice, wealthiest first: tax base over
+# control is what a control building earns, which is why the proximity gate does not apply - a
+# location carrying no control is the one such a building is for. A location takes every type it
+# can hold before the walk moves on. No country-wide cap limits these, so they take no survey and
+# a location newly meeting a type's own rules stages the cycle its market comes round.
+# One level per location. Root is the country.
 cm_ab_stage_max_control_types = {
 	cm_ab_build_control_types = yes
 	if = {
@@ -398,7 +448,8 @@ cm_ab_stage_max_control_types = {
 			has_variable_list = cm_ab_control_types
 			variable_list_size = { name = cm_ab_control_types value >= 1 }
 		}
-		ordered_owned_location = {
+		ordered_in_list = {
+			variable = cm_slice_locations
 			order_by = cm_location_raw_wealth
 			max = cm_max_guess_at_number_of_locations
 			check_range_bounds = no
@@ -516,11 +567,11 @@ cm_ab_drain_custom_type = {
 	cm_ab_drain_custom_resolved = yes
 }
 
-# The bailiff, richest RGO first at what its market pays for it now, which is the order its
-# four-yearly survey and its monthly staging both pick in. It drains on its own rather than taking
-# a turn in the raw-wealth walk below: the bailiff stands only on rural land and of the six unique
-# types can share a location with ostrog, eng_royal_forest (both country-exclusive) and tambo, so
-# grouping it with them buys nothing. Root is the country.
+# The bailiff, richest RGO first at what its market pays for it now, which is the order its survey
+# and its staging both pick in. It drains on its own rather than taking a turn in the raw-wealth
+# walk below: the bailiff stands only on rural land and of the six unique types can share a
+# location with ostrog, eng_royal_forest (both country-exclusive) and tambo, so grouping it with
+# them buys nothing. Root is the country.
 cm_ab_drain_bailiffs = {
 	building_type:bailiff = { save_scope_as = cm_building_type }
 	if = {

@@ -223,10 +223,41 @@ cm_ab_custom_type_has_room = {
 	}
 }
 
-# A max-control building can go up here right now: the bailiff survey, the bailiff monthly
-# staging and the unique types all share it, so a pick is only ever made on the terms it will
-# later be staged on. Queueing several control buildings at one location is wanted, since it
-# reserves the location's slots and its labour for them.
+# A site worth carrying in the bailiff plan. The cap-free half of cm_ab_max_control_site_ok:
+# can_build_building reads the country-wide num_bailiffs cap, so asking it here would empty the
+# plan every time the cap filled and the map would have to be relearned before the next slot
+# could be spent well. Bailiff lists only rural_settlement among the four rank fields (game
+# in_game/common/building_types/rural_buildings.txt:10), so a rank upgrade retires a site for
+# good, and has_building holds from the moment the first level is queued.
+# Root is the location, expects scope:cm_country, scope:cm_building_type.
+cm_ab_bailiff_site_viable = {
+	owner ?= scope:cm_country
+	NOT = { integration_level = conquered }
+	location_rank = location_rank:rural_settlement
+	NOT = { has_building = scope:cm_building_type }
+}
+
+# True while a market the bailiff plan has never surveyed is present, which is what holds staging
+# shut until the plan has seen the whole map. Mirrors cm_slice_has_unseen against the plan's own
+# map. Its temporary scopes carry their own names, cm_ab_survey_bailiffs saving permanent ones.
+# Root is the country.
+cm_ab_bailiff_has_unseen_market = {
+	save_temporary_scope_as = cm_ab_bf_ctry
+	any_market_present_in_country = {
+		save_temporary_scope_as = cm_ab_bf_mkt
+		scope:cm_ab_bf_ctry = {
+			OR = {
+				NOT = { has_variable_map = cm_ab_bailiff_seen }
+				NOT = { is_key_in_variable_map = { name = cm_ab_bailiff_seen target = scope:cm_ab_bf_mkt } }
+			}
+		}
+	}
+}
+
+# A max-control building can go up here right now: the bailiff staging and the unique types share
+# it, so a pick is only ever made on the terms it will later be staged on. Queueing several
+# control buildings at one location is wanted, since it reserves the location's slots and its
+# labour for them.
 # Root is the location, expects scope:cm_country, scope:cm_building_type.
 cm_ab_max_control_site_ok = {
 	NOT = { integration_level = conquered }
