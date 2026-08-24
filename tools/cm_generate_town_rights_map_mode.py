@@ -330,6 +330,9 @@ WORD_KEYS = [
     ' cm_trmm_grant_match_label: "Match:"',
     ' # Note to translators: follows a "Grant <urban right>" button title.',
     ' cm_trmm_grant_expand_suffix: "and enable matching auto-expands"',
+    ' # Note to translators: the name of an urban right and a full stop follow this.',
+    ' cm_trmm_search_none_head: "[ROOT.GetLocation.GetProvince.GetName] has no'
+    ' [raw_material|e] used by the industries boosted by"',
 ]
 
 
@@ -2817,11 +2820,11 @@ def emit_loc(rights, aliases, boosted_goods, options, self_goods):
             f"[ROOT.GetLocation.MakeScope.ScriptValue('cm_trmm_tier_total')|0]"
             f"[ROOT.GetLocation.Custom('cm_trmm_tie_prefix_{alias}')]{tie_items}"
             f"[ROOT.GetLocation.Custom('cm_trmm_search_reason_{alias}')]\"")
-        words.append(
+        lines.append(
             f" MAPMODE_CM_TRMM_SEARCH_{upper}_TT_NONE: "
-            f"\"[ROOT.GetLocation.GetProvince.GetName] has no [raw_material|e] "
-            f"used by the industries @{right}! [ShowTownRightsName('{right}')] "
-            f"boosts.[ROOT.GetLocation.Custom('cm_trmm_search_reason_{alias}')]\"")
+            f"\"$cm_trmm_search_none_head$ @{right}! "
+            f"[ShowTownRightsName('{right}')]."
+            f"[ROOT.GetLocation.Custom('cm_trmm_search_reason_{alias}')]\"")
 
     # The engine looks up mapmode_<name>_name and MAPMODE_<name> for hidden twins
     # too; alias each to its primary.
