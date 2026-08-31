@@ -31,6 +31,7 @@ ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 CONFIG_PATH = os.path.join(SCRIPT_DIR, "config.toml")
 METADATA_PATH = os.path.join(ROOT_DIR, ".metadata", "metadata.json")
 WORKSHOP_DESCRIPTION_PATH = os.path.join(ROOT_DIR, "assets", "workshop", "workshop-description.bbcode")
+WORKSHOP_DESCRIPTION_DEV_PATH = os.path.join(ROOT_DIR, "assets", "workshop", "workshop-description-dev.bbcode")
 CHANGE_NOTES_PATH = os.path.join(ROOT_DIR, "assets", "workshop", "change-notes.bbcode")
 TRANSLATIONS_DIR = os.path.join(ROOT_DIR, "assets", "workshop", "translations")
 APP_ID = 3450310
@@ -50,6 +51,7 @@ WORKSHOP_TITLE_MARKER = "===WORKSHOP_TITLE==="
 WORKSHOP_DESCRIPTION_MARKER = "===WORKSHOP_DESCRIPTION==="
 WORKSHOP_NO_TRANSLATE_BELOW = "--NO-TRANSLATE-BELOW--"
 WORKSHOP_ITEM_ID_TOKEN = "$item-id$"
+WORKSHOP_DESCRIPTION_TOKEN = "$release-description$"
 MAX_DESCRIPTION_LENGTH = 8000
 MAX_TITLE_LENGTH = 128
 UPLOAD_MOD_DEFAULT_KEY = "upload_mod_by_default"
@@ -1134,15 +1136,50 @@ def enforce_title_length(title, lang_label, fallback=None):
         return None
     return title
 
+def load_dev_description_template(dev_mode=False):
+    """The dev description, or None when a dev upload has nothing usable in it.
+
+    An empty file reads as absent, so a placeholder never blanks the dev page.
+    """
+    if not dev_mode:
+        return None
+    text = read_text(WORKSHOP_DESCRIPTION_DEV_PATH)
+    return text if (text and text.strip()) else None
+
+def apply_dev_description(template, description):
+    """Fill the dev template's $release-description$ slot with one language's description.
+
+    The template is the same for every language, so the dev text stays in the source
+    language while the description it wraps is whichever one was passed in.
+    """
+    if template is None or description is None:
+        return description
+    if WORKSHOP_DESCRIPTION_TOKEN not in template:
+        return template
+    return template.replace(WORKSHOP_DESCRIPTION_TOKEN, description)
+
+def load_workshop_description(dev_mode=False):
+    """Return (text, source_path) for a channel's description, or (None, missing_path)."""
+    template = load_dev_description_template(dev_mode)
+    if template is not None and WORKSHOP_DESCRIPTION_TOKEN not in template:
+        return template, WORKSHOP_DESCRIPTION_DEV_PATH
+
+    release_text = read_text(WORKSHOP_DESCRIPTION_PATH)
+    if release_text is None:
+        return None, WORKSHOP_DESCRIPTION_PATH
+    if template is not None:
+        return apply_dev_description(template, release_text), WORKSHOP_DESCRIPTION_DEV_PATH
+    return release_text, WORKSHOP_DESCRIPTION_PATH
+
 def build_workshop_page_updates(config, item_id, dev_mode=False, dev_name=None, workshop_name=None, version_card=""):
     """Collect source and translated workshop title/description payloads."""
     source_language = load_source_language(config)
     if source_language is None:
         return None
 
-    base_description = read_text(WORKSHOP_DESCRIPTION_PATH)
+    base_description, description_path = load_workshop_description(dev_mode)
     if base_description is None:
-        print(f"Error: Workshop description file not found: {WORKSHOP_DESCRIPTION_PATH}")
+        print(f"Error: Workshop description file not found: {description_path}")
         return None
 
     base_description = split_workshop_description(base_description)
@@ -1163,6 +1200,10 @@ def build_workshop_page_updates(config, item_id, dev_mode=False, dev_name=None, 
         print(f"Warning: Translations folder not found: {TRANSLATIONS_DIR}")
         return updates
 
+    # Every language's description goes through the same dev wrapper, so the dev
+    # notice reaches translated pages too.
+    dev_template = load_dev_description_template(dev_mode)
+
     translations = {}
     for filename in os.listdir(TRANSLATIONS_DIR):
         match = WORKSHOP_TRANSLATION_FILENAME_RE.match(filename)
@@ -1175,6 +1216,7 @@ def build_workshop_page_updates(config, item_id, dev_mode=False, dev_name=None, 
             continue
 
         title_text, desc_text = parse_workshop_translation(text)
+        desc_text = apply_dev_description(dev_template, desc_text)
         title_text = apply_workshop_item_id(title_text, item_id)
         desc_text = apply_workshop_item_id(desc_text, item_id)
         if title_text is None and desc_text is None:
@@ -1410,6 +1452,9 @@ def main():
                                   workshop_title, change_note=change_note, tags=main_tags):
                 return 1
             uploaded_main = True
+            if upload_only_on_version_change:
+                set_uploaded_version(version_cache, main_cache_key, main_version)
+                save_upload_versions(UPLOAD_VERSIONS_PATH, version_cache)
 
         if upload_workshop_pages:
             page_updates = build_workshop_page_updates(
@@ -1425,9 +1470,6 @@ def main():
             page_tags = [] if uploaded_main else main_tags
             if not upload_workshop_pages_for_item(steam, page_updates, item_id, tags=page_tags):
                 return 1
-            if upload_only_on_version_change:
-                set_uploaded_version(version_cache, main_cache_key, main_version)
-                save_upload_versions(UPLOAD_VERSIONS_PATH, version_cache)
 
         if upload_submods_selected:
             submods_ok, submod_cache_changed = upload_submods(
