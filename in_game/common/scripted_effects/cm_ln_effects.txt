@@ -11,16 +11,32 @@ cm_ln_seed_marks = {
 		limit = { exists = var:cm_ln_want }
 		remove_variable = cm_ln_want
 	}
+	# Each tag's formables are listed lowest first, so a country that has passed through two ends up
+	# holding the seat at the furthest.
+	cm_ln_seed_claim_formable = { TAG = BRA FORM = PRU }
+	cm_ln_seed_claim_formable = { TAG = BRA FORM = GER }
+	cm_ln_seed_claim_formable = { TAG = CAS FORM = SPA }
+	cm_ln_seed_claim_formable = { TAG = ENG FORM = GBR }
+	cm_ln_seed_claim_formable = { TAG = HOL FORM = NED }
+	cm_ln_seed_claim_formable = { TAG = MOS FORM = RUS }
+	cm_ln_seed_claim_formable = { TAG = POL FORM = PLC }
+	cm_ln_seed_claim_formable = { TAG = SWE FORM = SCA }
 	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_brandenburg TAG = BRA }
 	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_castile TAG = CAS }
 	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_china TAG = CHI }
 	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_england TAG = ENG }
 	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_ottomans TAG = TUR }
-	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_europe_centric TAG = BRA }
-	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_europe_centric TAG = CAS }
-	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_europe_centric TAG = ENG }
-	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_europe_centric TAG = FRA }
-	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_europe_centric TAG = TUR }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_european_powers TAG = BRA }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_european_powers TAG = CAS }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_european_powers TAG = ENG }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_european_powers TAG = FRA }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_european_powers TAG = HAB }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_european_powers TAG = HOL }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_european_powers TAG = MOS }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_european_powers TAG = POL }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_european_powers TAG = POR }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_european_powers TAG = SWE }
+	cm_ln_seed_mark_seat = { RULE = cm_ln_lucky_nations_european_powers TAG = TUR }
 	# Nothing else on designation: cm_ln_open_done is never removed, so a country marked for the
 	# first time runs the opening capital move from its own next monthly pulse, and one marked
 	# again after a rule change correctly does not repeat it.
@@ -65,6 +81,65 @@ cm_ln_seed_mark_seat = {
 			}
 			set_variable = { name = cm_ln_want value = yes }
 		}
+	}
+}
+
+# Hands a seat to the AI country now holding a formable's tag, which is what transfers a lucky nation
+# to whoever formed its successor: the Teutonic Order forming Prussia becomes the lucky nation and a
+# living Brandenburg stops being one. Refusing a human holder is what keeps a player forming Prussia
+# from taking a lucky nation out of the game. It reads no rule, since which country a seat's heir is
+# does not depend on which settings are on. No scope.
+cm_ln_seed_claim_formable = {
+	# Nested rather than a second condition beside country_exists, so nothing reads a tag no living
+	# country holds, which most of these are in most games.
+	if = {
+		limit = { country_exists = c:$FORM$ }
+		c:$FORM$ = {
+			if = {
+				limit = {
+					is_ai = yes
+					NOT = { exists = var:cm_ln_seat_$TAG$ }
+				}
+				every_country = {
+					limit = { exists = var:cm_ln_seat_$TAG$ }
+					remove_variable = cm_ln_seat_$TAG$
+				}
+				set_variable = { name = cm_ln_seat_$TAG$ value = yes }
+			}
+		}
+	}
+}
+
+# Everything a game is handed at the start on a lucky nation's behalf, which is the half of the
+# system the Decisions and Setup rule setting adds. Each change carries its own gate below, since
+# nothing here makes sense unless the country it is for is one of the lucky ones. No scope.
+cm_ln_run_setup_changes = {
+	if = {
+		limit = { has_game_rule = cm_ln_lucky_nation_effects_decisions_and_setup }
+		cm_ln_seed_portugal_guarantees = yes
+	}
+}
+
+# An experiment against Portugal dying to Castile: the preset opens with four guarantees on it.
+# Nothing renews or replaces one a guarantor lets lapse or breaks. No scope.
+cm_ln_seed_portugal_guarantees = {
+	if = {
+		limit = { has_game_rule = cm_ln_lucky_nations_european_powers }
+		cm_ln_guarantee_portugal = { TAG = FRA }
+		cm_ln_guarantee_portugal = { TAG = ENG }
+		cm_ln_guarantee_portugal = { TAG = ARA }
+		cm_ln_guarantee_portugal = { TAG = MOR }
+	}
+}
+
+# first is the giving side of a one-way relation, so $TAG$ is the guarantor; vanilla's Auld Alliance
+# places France's guarantee of Scotland the same way (in_game/events/DHE/flavor_SCO.txt:1676).
+# No scope.
+cm_ln_guarantee_portugal = {
+	create_relation = {
+		first = c:$TAG$
+		second = c:POR
+		type = relation_type:guarantee
 	}
 }
 
